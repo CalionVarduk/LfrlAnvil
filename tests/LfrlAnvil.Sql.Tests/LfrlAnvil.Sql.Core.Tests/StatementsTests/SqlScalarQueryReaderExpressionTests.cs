@@ -23,12 +23,11 @@ public class SqlScalarQueryReaderExpressionTests : TestsBase
         var queryReader = sut.Compile();
         var result = queryReader.Read( reader );
 
-        using ( new AssertionScope() )
-        {
-            sut.Dialect.Should().BeSameAs( dialect );
-            sut.Expression.Should().BeSameAs( expression );
-            queryReader.Dialect.Should().BeSameAs( dialect );
-            result.Should().BeEquivalentTo( expected );
-        }
+        Assertion.All(
+                sut.Dialect.TestRefEquals( dialect ),
+                sut.Expression.TestRefEquals( expression ),
+                queryReader.Dialect.TestRefEquals( dialect ),
+                result.TestEquals( expected ) )
+            .Go();
     }
 }

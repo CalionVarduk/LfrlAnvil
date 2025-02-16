@@ -20,7 +20,7 @@ public partial class ObjectExpressionsTests
 
             var result = sut.ToString();
 
-            result.Should().Be( expected );
+            result.TestEquals( expected ).Go();
         }
 
         [Fact]
@@ -34,11 +34,10 @@ public partial class ObjectExpressionsTests
 
             var result = sut.GetKnownFields();
 
-            using ( new AssertionScope() )
-            {
-                result.Should().HaveCount( 2 );
-                result.Should().BeEquivalentTo( sut.GetField( "Col0" ), sut.GetField( "Col1" ) );
-            }
+            Assertion.All(
+                    result.Count.TestEquals( 2 ),
+                    result.TestSetEqual( [ sut.GetField( "Col0" ), sut.GetField( "Col1" ) ] ) )
+                .Go();
         }
 
         [Fact]
@@ -48,16 +47,15 @@ public partial class ObjectExpressionsTests
             var sut = table.AsSet();
             var result = sut.As( "bar" );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().NotBeSameAs( sut );
-                result.CreationNode.Should().BeSameAs( sut.CreationNode );
-                result.Info.Should().Be( sut.CreationNode.Info );
-                result.Alias.Should().Be( "bar" );
-                result.Identifier.Should().Be( "bar" );
-                result.IsOptional.Should().Be( sut.IsOptional );
-                result.IsAliased.Should().BeTrue();
-            }
+            Assertion.All(
+                    result.TestNotRefEquals( sut ),
+                    result.CreationNode.TestRefEquals( sut.CreationNode ),
+                    result.Info.TestEquals( sut.CreationNode.Info ),
+                    result.Alias.TestEquals( "bar" ),
+                    result.Identifier.TestEquals( "bar" ),
+                    result.IsOptional.TestEquals( sut.IsOptional ),
+                    result.IsAliased.TestTrue() )
+                .Go();
         }
 
         [Fact]
@@ -67,16 +65,15 @@ public partial class ObjectExpressionsTests
             var sut = table.AsSet( "qux" );
             var result = sut.AsSelf();
 
-            using ( new AssertionScope() )
-            {
-                result.Should().NotBeSameAs( sut );
-                result.CreationNode.Should().BeSameAs( sut.CreationNode );
-                result.Info.Should().Be( sut.CreationNode.Info );
-                result.Alias.Should().BeNull();
-                result.Identifier.Should().Be( "foo.bar" );
-                result.IsOptional.Should().Be( sut.IsOptional );
-                result.IsAliased.Should().BeFalse();
-            }
+            Assertion.All(
+                    result.TestNotRefEquals( sut ),
+                    result.CreationNode.TestRefEquals( sut.CreationNode ),
+                    result.Info.TestEquals( sut.CreationNode.Info ),
+                    result.Alias.TestNull(),
+                    result.Identifier.TestEquals( "foo.bar" ),
+                    result.IsOptional.TestEquals( sut.IsOptional ),
+                    result.IsAliased.TestFalse() )
+                .Go();
         }
 
         [Theory]
@@ -90,15 +87,14 @@ public partial class ObjectExpressionsTests
             var result = sut.GetUnsafeField( "Col0" );
             var text = result.ToString();
 
-            using ( new AssertionScope() )
-            {
-                result.NodeType.Should().Be( SqlNodeType.RawDataField );
-                result.Name.Should().Be( "Col0" );
-                result.RecordSet.Should().BeSameAs( sut );
-                var dataField = result as SqlRawDataFieldNode;
-                (dataField?.Type).Should().Be( TypeNullability.Create<int>() );
-                text.Should().Be( expectedText );
-            }
+            Assertion.All(
+                    result.NodeType.TestEquals( SqlNodeType.RawDataField ),
+                    result.Name.TestEquals( "Col0" ),
+                    result.RecordSet.TestRefEquals( sut ),
+                    result.TestType()
+                        .AssignableTo<SqlRawDataFieldNode>( dataField => dataField.Type.TestEquals( TypeNullability.Create<int>() ) ),
+                    text.TestEquals( expectedText ) )
+                .Go();
         }
 
         [Theory]
@@ -112,15 +108,13 @@ public partial class ObjectExpressionsTests
             var result = sut.GetUnsafeField( "x" );
             var text = result.ToString();
 
-            using ( new AssertionScope() )
-            {
-                result.NodeType.Should().Be( SqlNodeType.RawDataField );
-                result.Name.Should().Be( "x" );
-                result.RecordSet.Should().BeSameAs( sut );
-                var dataField = result as SqlRawDataFieldNode;
-                (dataField?.Type).Should().BeNull();
-                text.Should().Be( expected );
-            }
+            Assertion.All(
+                    result.NodeType.TestEquals( SqlNodeType.RawDataField ),
+                    result.Name.TestEquals( "x" ),
+                    result.RecordSet.TestRefEquals( sut ),
+                    result.TestType().AssignableTo<SqlRawDataFieldNode>( dataField => dataField.Type.TestNull() ),
+                    text.TestEquals( expected ) )
+                .Go();
         }
 
         [Theory]
@@ -134,14 +128,13 @@ public partial class ObjectExpressionsTests
             var result = sut.GetField( "Col0" );
             var text = result.ToString();
 
-            using ( new AssertionScope() )
-            {
-                result.NodeType.Should().Be( SqlNodeType.RawDataField );
-                result.Name.Should().Be( "Col0" );
-                result.RecordSet.Should().BeSameAs( sut );
-                result.Type.Should().Be( TypeNullability.Create<int>() );
-                text.Should().Be( expected );
-            }
+            Assertion.All(
+                    result.NodeType.TestEquals( SqlNodeType.RawDataField ),
+                    result.Name.TestEquals( "Col0" ),
+                    result.RecordSet.TestRefEquals( sut ),
+                    result.Type.TestEquals( TypeNullability.Create<int>() ),
+                    text.TestEquals( expected ) )
+                .Go();
         }
 
         [Theory]
@@ -156,14 +149,13 @@ public partial class ObjectExpressionsTests
             var result = sut.GetField( "Col0" );
             var text = result.ToString();
 
-            using ( new AssertionScope() )
-            {
-                result.NodeType.Should().Be( SqlNodeType.RawDataField );
-                result.Name.Should().Be( "Col0" );
-                result.RecordSet.Should().BeSameAs( sut );
-                result.Type.Should().Be( TypeNullability.Create<int>( isNullable: true ) );
-                text.Should().Be( expected );
-            }
+            Assertion.All(
+                    result.NodeType.TestEquals( SqlNodeType.RawDataField ),
+                    result.Name.TestEquals( "Col0" ),
+                    result.RecordSet.TestRefEquals( sut ),
+                    result.Type.TestEquals( TypeNullability.Create<int>( isNullable: true ) ),
+                    text.TestEquals( expected ) )
+                .Go();
         }
 
         [Theory]
@@ -177,14 +169,13 @@ public partial class ObjectExpressionsTests
             var result = sut.GetField( "Col0" );
             var text = result.ToString();
 
-            using ( new AssertionScope() )
-            {
-                result.NodeType.Should().Be( SqlNodeType.RawDataField );
-                result.Name.Should().Be( "Col0" );
-                result.RecordSet.Should().BeSameAs( sut );
-                result.Type.Should().Be( TypeNullability.Create<int>( isNullable: true ) );
-                text.Should().Be( expected );
-            }
+            Assertion.All(
+                    result.NodeType.TestEquals( SqlNodeType.RawDataField ),
+                    result.Name.TestEquals( "Col0" ),
+                    result.RecordSet.TestRefEquals( sut ),
+                    result.Type.TestEquals( TypeNullability.Create<int>( isNullable: true ) ),
+                    text.TestEquals( expected ) )
+                .Go();
         }
 
         [Theory]
@@ -198,14 +189,13 @@ public partial class ObjectExpressionsTests
             var result = sut.GetField( "Col0" );
             var text = result.ToString();
 
-            using ( new AssertionScope() )
-            {
-                result.NodeType.Should().Be( SqlNodeType.RawDataField );
-                result.Name.Should().Be( "Col0" );
-                result.RecordSet.Should().BeSameAs( sut );
-                result.Type.Should().Be( TypeNullability.Create<int>() );
-                text.Should().Be( "[qux].[Col0] : System.Int32" );
-            }
+            Assertion.All(
+                    result.NodeType.TestEquals( SqlNodeType.RawDataField ),
+                    result.Name.TestEquals( "Col0" ),
+                    result.RecordSet.TestRefEquals( sut ),
+                    result.Type.TestEquals( TypeNullability.Create<int>() ),
+                    text.TestEquals( "[qux].[Col0] : System.Int32" ) )
+                .Go();
         }
 
         [Fact]
@@ -216,7 +206,7 @@ public partial class ObjectExpressionsTests
 
             var action = Lambda.Of( () => sut.GetField( "Col1" ) );
 
-            action.Should().ThrowExactly<KeyNotFoundException>();
+            action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
         }
 
         [Fact]
@@ -227,7 +217,7 @@ public partial class ObjectExpressionsTests
 
             var result = sut["Col0"];
 
-            result.Should().BeSameAs( sut.GetField( "Col0" ) );
+            result.TestRefEquals( sut.GetField( "Col0" ) ).Go();
         }
 
         [Theory]
@@ -241,14 +231,13 @@ public partial class ObjectExpressionsTests
             var result = sut.GetRawField( "x", TypeNullability.Create<int>() );
             var text = result.ToString();
 
-            using ( new AssertionScope() )
-            {
-                result.NodeType.Should().Be( SqlNodeType.RawDataField );
-                result.Name.Should().Be( "x" );
-                result.RecordSet.Should().BeSameAs( sut );
-                result.Type.Should().Be( TypeNullability.Create<int>() );
-                text.Should().Be( expected );
-            }
+            Assertion.All(
+                    result.NodeType.TestEquals( SqlNodeType.RawDataField ),
+                    result.Name.TestEquals( "x" ),
+                    result.RecordSet.TestRefEquals( sut ),
+                    result.Type.TestEquals( TypeNullability.Create<int>() ),
+                    text.TestEquals( expected ) )
+                .Go();
         }
 
         [Theory]
@@ -259,7 +248,7 @@ public partial class ObjectExpressionsTests
             var table = SqlNode.CreateTable( SqlRecordSetInfo.Create( "foo" ), Array.Empty<SqlColumnDefinitionNode>() );
             var sut = table.AsSet().MarkAsOptional( optional );
             var result = sut.MarkAsOptional( optional );
-            result.Should().BeSameAs( sut );
+            result.TestRefEquals( sut ).Go();
         }
 
         [Theory]
@@ -271,16 +260,15 @@ public partial class ObjectExpressionsTests
             var sut = table.AsSet().MarkAsOptional( ! optional );
             var result = sut.MarkAsOptional( optional );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().NotBeSameAs( sut );
-                result.CreationNode.Should().BeSameAs( sut.CreationNode );
-                result.Info.Should().Be( sut.CreationNode.Info );
-                result.Alias.Should().BeNull();
-                result.Identifier.Should().Be( "foo" );
-                result.IsAliased.Should().BeFalse();
-                result.IsOptional.Should().Be( optional );
-            }
+            Assertion.All(
+                    result.TestNotRefEquals( sut ),
+                    result.CreationNode.TestRefEquals( sut.CreationNode ),
+                    result.Info.TestEquals( sut.CreationNode.Info ),
+                    result.Alias.TestNull(),
+                    result.Identifier.TestEquals( "foo" ),
+                    result.IsAliased.TestFalse(),
+                    result.IsOptional.TestEquals( optional ) )
+                .Go();
         }
 
         [Theory]
@@ -292,16 +280,15 @@ public partial class ObjectExpressionsTests
             var sut = table.AsSet( "bar" ).MarkAsOptional( ! optional );
             var result = sut.MarkAsOptional( optional );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().NotBeSameAs( sut );
-                result.CreationNode.Should().BeSameAs( sut.CreationNode );
-                result.Info.Should().Be( sut.CreationNode.Info );
-                result.Alias.Should().Be( "bar" );
-                result.Identifier.Should().Be( "bar" );
-                result.IsAliased.Should().BeTrue();
-                result.IsOptional.Should().Be( optional );
-            }
+            Assertion.All(
+                    result.TestNotRefEquals( sut ),
+                    result.CreationNode.TestRefEquals( sut.CreationNode ),
+                    result.Info.TestEquals( sut.CreationNode.Info ),
+                    result.Alias.TestEquals( "bar" ),
+                    result.Identifier.TestEquals( "bar" ),
+                    result.IsAliased.TestTrue(),
+                    result.IsOptional.TestEquals( optional ) )
+                .Go();
         }
     }
 }

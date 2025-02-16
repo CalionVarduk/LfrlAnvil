@@ -8,23 +8,21 @@ public class SqlParameterTests : TestsBase
     public void Named_ShouldCreateNamedParameter()
     {
         var result = SqlParameter.Named( "foo", 1 );
-        using ( new AssertionScope() )
-        {
-            result.Name.Should().Be( "foo" );
-            result.Value.Should().Be( 1 );
-            result.IsPositional.Should().BeFalse();
-        }
+        Assertion.All(
+                result.Name.TestEquals( "foo" ),
+                result.Value.TestEquals( 1 ),
+                result.IsPositional.TestFalse() )
+            .Go();
     }
 
     [Fact]
     public void Positional_ShouldCreatePositionalParameter()
     {
         var result = SqlParameter.Positional( "foo" );
-        using ( new AssertionScope() )
-        {
-            result.Name.Should().BeNull();
-            result.Value.Should().Be( "foo" );
-            result.IsPositional.Should().BeTrue();
-        }
+        Assertion.All(
+                result.Name.TestNull(),
+                result.Value.TestEquals( "foo" ),
+                result.IsPositional.TestTrue() )
+            .Go();
     }
 }

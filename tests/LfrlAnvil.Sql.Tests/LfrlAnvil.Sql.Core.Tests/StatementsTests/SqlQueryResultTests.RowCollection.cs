@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Statements;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sql.Tests.StatementsTests;
 
@@ -33,7 +32,7 @@ public partial class SqlQueryResultTests
 
             var result = sut.ContainsField( name );
 
-            result.Should().Be( expected );
+            result.TestEquals( expected ).Go();
         }
 
         [Theory]
@@ -58,7 +57,7 @@ public partial class SqlQueryResultTests
 
             var result = sut.GetOrdinal( name );
 
-            result.Should().Be( expected );
+            result.TestEquals( expected ).Go();
         }
 
         [Fact]
@@ -80,7 +79,7 @@ public partial class SqlQueryResultTests
 
             var action = Lambda.Of( () => sut.GetOrdinal( "x" ) );
 
-            action.Should().ThrowExactly<KeyNotFoundException>();
+            action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
         }
 
         [Theory]
@@ -107,11 +106,10 @@ public partial class SqlQueryResultTests
 
             var result = sut.TryGetOrdinal( name, out var outResult );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().Be( expected );
-                outResult.Should().Be( expectedOrdinal );
-            }
+            Assertion.All(
+                    result.TestEquals( expected ),
+                    outResult.TestEquals( expectedOrdinal ) )
+                .Go();
         }
 
         [Theory]
@@ -147,7 +145,7 @@ public partial class SqlQueryResultTests
 
             var action = Lambda.Of( () => sut[index] );
 
-            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+            action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
         }
 
         [Theory]
@@ -184,11 +182,10 @@ public partial class SqlQueryResultTests
 
             var result = sut[index];
 
-            using ( new AssertionScope() )
-            {
-                result.Source.Should().BeSameAs( sut );
-                result.Index.Should().Be( index );
-            }
+            Assertion.All(
+                    result.Source.TestRefEquals( sut ),
+                    result.Index.TestEquals( index ) )
+                .Go();
         }
 
         [Fact]
@@ -220,7 +217,7 @@ public partial class SqlQueryResultTests
 
             var sut = new SqlQueryResult( resultSetFields, cells ).Rows!;
 
-            sut.Should().BeSequentiallyEqualTo( sut[0], sut[1], sut[2] );
+            sut.TestSequence( [ sut[0], sut[1], sut[2] ] ).Go();
         }
     }
 }

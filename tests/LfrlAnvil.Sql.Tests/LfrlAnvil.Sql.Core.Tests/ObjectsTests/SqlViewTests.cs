@@ -3,7 +3,6 @@ using System.Linq;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.ObjectsTests;
@@ -28,24 +27,22 @@ public class SqlViewTests : TestsBase
         var x = sut.DataFields.Get( "x" );
         var c = sut.DataFields.Get( "c" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Database.Should().BeSameAs( db );
-            sut.Schema.Should().BeSameAs( schema );
-            sut.Type.Should().Be( SqlObjectType.View );
-            sut.Name.Should().Be( "V" );
-            sut.Info.Should().Be( viewBuilder.Info );
-            sut.Node.View.Should().BeSameAs( sut );
-            sut.Node.Info.Should().Be( sut.Info );
-            sut.Node.Alias.Should().BeNull();
-            sut.Node.Identifier.Should().Be( sut.Info.Identifier );
-            sut.Node.IsOptional.Should().BeFalse();
-            sut.ToString().Should().Be( "[View] foo.V" );
-
-            sut.DataFields.Count.Should().Be( 3 );
-            sut.DataFields.View.Should().BeSameAs( sut );
-            sut.DataFields.Should().BeSequentiallyEqualTo( a, x, c );
-        }
+        Assertion.All(
+                sut.Database.TestRefEquals( db ),
+                sut.Schema.TestRefEquals( schema ),
+                sut.Type.TestEquals( SqlObjectType.View ),
+                sut.Name.TestEquals( "V" ),
+                sut.Info.TestEquals( viewBuilder.Info ),
+                sut.Node.View.TestRefEquals( sut ),
+                sut.Node.Info.TestEquals( sut.Info ),
+                sut.Node.Alias.TestNull(),
+                sut.Node.Identifier.TestEquals( sut.Info.Identifier ),
+                sut.Node.IsOptional.TestFalse(),
+                sut.ToString().TestEquals( "[View] foo.V" ),
+                sut.DataFields.Count.TestEquals( 3 ),
+                sut.DataFields.View.TestRefEquals( sut ),
+                sut.DataFields.TestSequence( [ a, x, c ] ) )
+            .Go();
     }
 
     [Theory]
@@ -64,7 +61,7 @@ public class SqlViewTests : TestsBase
 
         var result = sut.Contains( name );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -80,7 +77,7 @@ public class SqlViewTests : TestsBase
 
         var result = sut.Get( "F2" );
 
-        result.Should().BeSameAs( sut.First( f => f.Name == "F2" ) );
+        result.TestRefEquals( sut.First( f => f.Name == "F2" ) ).Go();
     }
 
     [Fact]
@@ -96,7 +93,7 @@ public class SqlViewTests : TestsBase
 
         var action = Lambda.Of( () => sut.Get( "F2" ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -112,7 +109,7 @@ public class SqlViewTests : TestsBase
 
         var result = sut.TryGet( "F2" );
 
-        result.Should().BeSameAs( sut.First( f => f.Name == "F2" ) );
+        result.TestRefEquals( sut.First( f => f.Name == "F2" ) ).Go();
     }
 
     [Fact]
@@ -128,6 +125,6 @@ public class SqlViewTests : TestsBase
 
         var result = sut.TryGet( "F2" );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 }

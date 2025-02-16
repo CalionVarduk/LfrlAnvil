@@ -1,7 +1,6 @@
 ﻿using System.Linq;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Traits;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
@@ -31,40 +30,46 @@ public partial class BaseExpressionsTests
 
             var result = sut.Selection.ToArray();
 
-            using ( new AssertionScope() )
-            {
-                result.Should().HaveCount( 2 );
-
-                var element1 = result.ElementAtOrDefault( 0 ) as SqlSelectCompoundFieldNode;
-                (element1?.ToString()).Should().Be( "[a]" );
-                (element1?.NodeType).Should().Be( SqlNodeType.SelectCompoundField );
-                (element1?.Name).Should().Be( "a" );
-                (element1?.Origins.Count).Should().Be( 2 );
-
-                var origin1 = element1?.Origins[0];
-                (origin1?.QueryIndex).Should().Be( 0 );
-                (origin1?.Selection).Should().BeSameAs( a1Select );
-                (origin1?.Expression).Should().BeSameAs( a1 );
-                var origin2 = element1?.Origins[1];
-                (origin2?.QueryIndex).Should().Be( 1 );
-                (origin2?.Selection).Should().BeSameAs( a2Select );
-                (origin2?.Expression).Should().BeSameAs( a2 );
-
-                var element2 = result.ElementAtOrDefault( 1 ) as SqlSelectCompoundFieldNode;
-                (element2?.ToString()).Should().Be( "[b]" );
-                (element2?.NodeType).Should().Be( SqlNodeType.SelectCompoundField );
-                (element2?.Name).Should().Be( "b" );
-                (element2?.Origins.Count).Should().Be( 2 );
-
-                var origin3 = element2?.Origins[0];
-                (origin3?.QueryIndex).Should().Be( 0 );
-                (origin3?.Selection).Should().BeSameAs( b1Select );
-                (origin3?.Expression).Should().BeSameAs( b1 );
-                var origin4 = element2?.Origins[1];
-                (origin4?.QueryIndex).Should().Be( 1 );
-                (origin4?.Selection).Should().BeSameAs( b2Select );
-                (origin4?.Expression).Should().BeSameAs( b2 );
-            }
+            result.TestCount( count => count.TestEquals( 2 ) )
+                .Then(
+                    r => Assertion.All(
+                        r[0]
+                            .TestType()
+                            .AssignableTo<SqlSelectCompoundFieldNode>(
+                                n => Assertion.All(
+                                    "firstNode",
+                                    n.ToString().TestEquals( "[a]" ),
+                                    n.NodeType.TestEquals( SqlNodeType.SelectCompoundField ),
+                                    n.Name.TestEquals( "a" ),
+                                    n.Origins.TestCount( count => count.TestEquals( 2 ) )
+                                        .Then(
+                                            o => Assertion.All(
+                                                "origins",
+                                                o[0].QueryIndex.TestEquals( 0 ),
+                                                o[0].Selection.TestRefEquals( a1Select ),
+                                                o[0].Expression.TestRefEquals( a1 ),
+                                                o[1].QueryIndex.TestEquals( 1 ),
+                                                o[1].Selection.TestRefEquals( a2Select ),
+                                                o[1].Expression.TestRefEquals( a2 ) ) ) ) ),
+                        r[1]
+                            .TestType()
+                            .AssignableTo<SqlSelectCompoundFieldNode>(
+                                n => Assertion.All(
+                                    "secondNode",
+                                    n.ToString().TestEquals( "[b]" ),
+                                    n.NodeType.TestEquals( SqlNodeType.SelectCompoundField ),
+                                    n.Name.TestEquals( "b" ),
+                                    n.Origins.TestCount( count => count.TestEquals( 2 ) )
+                                        .Then(
+                                            o => Assertion.All(
+                                                "origins",
+                                                o[0].QueryIndex.TestEquals( 0 ),
+                                                o[0].Selection.TestRefEquals( b1Select ),
+                                                o[0].Expression.TestRefEquals( b1 ),
+                                                o[1].QueryIndex.TestEquals( 1 ),
+                                                o[1].Selection.TestRefEquals( b2Select ),
+                                                o[1].Expression.TestRefEquals( b2 ) ) ) ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -85,26 +90,48 @@ public partial class BaseExpressionsTests
 
             var result = sut.Selection.ToArray();
 
-            using ( new AssertionScope() )
-            {
-                result.Should().HaveCount( 2 );
-
-                var element1 = result.ElementAtOrDefault( 0 ) as SqlSelectCompoundFieldNode;
-                (element1?.NodeType).Should().Be( SqlNodeType.SelectCompoundField );
-                (element1?.Name).Should().Be( "a" );
-                (element1?.Origins.ToArray()).Should()
-                    .BeSequentiallyEqualTo(
-                        new SqlSelectCompoundFieldNode.Origin( QueryIndex: 0, Selection: select1, Expression: set1["common.T1"]["a"] ),
-                        new SqlSelectCompoundFieldNode.Origin( QueryIndex: 1, Selection: select2, Expression: set2["common.T2"]["a"] ) );
-
-                var element2 = result.ElementAtOrDefault( 1 ) as SqlSelectCompoundFieldNode;
-                (element2?.NodeType).Should().Be( SqlNodeType.SelectCompoundField );
-                (element2?.Name).Should().Be( "b" );
-                (element2?.Origins.ToArray()).Should()
-                    .BeSequentiallyEqualTo(
-                        new SqlSelectCompoundFieldNode.Origin( QueryIndex: 0, Selection: select1, Expression: set1["common.T1"]["b"] ),
-                        new SqlSelectCompoundFieldNode.Origin( QueryIndex: 1, Selection: select2, Expression: set2["common.T2"]["b"] ) );
-            }
+            result.TestCount( count => count.TestEquals( 2 ) )
+                .Then(
+                    r => Assertion.All(
+                        r[0]
+                            .TestType()
+                            .AssignableTo<SqlSelectCompoundFieldNode>(
+                                n =>
+                                    Assertion.All(
+                                        "firstNode",
+                                        n.NodeType.TestEquals( SqlNodeType.SelectCompoundField ),
+                                        n.Name.TestEquals( "a" ),
+                                        n.Origins.TestSequence(
+                                        [
+                                            new SqlSelectCompoundFieldNode.Origin(
+                                                QueryIndex: 0,
+                                                Selection: select1,
+                                                Expression: set1["common.T1"]["a"] ),
+                                            new SqlSelectCompoundFieldNode.Origin(
+                                                QueryIndex: 1,
+                                                Selection: select2,
+                                                Expression: set2["common.T2"]["a"] )
+                                        ] ) ) ),
+                        r[1]
+                            .TestType()
+                            .AssignableTo<SqlSelectCompoundFieldNode>(
+                                n =>
+                                    Assertion.All(
+                                        "secondNode",
+                                        n.NodeType.TestEquals( SqlNodeType.SelectCompoundField ),
+                                        n.Name.TestEquals( "b" ),
+                                        n.Origins.TestSequence(
+                                        [
+                                            new SqlSelectCompoundFieldNode.Origin(
+                                                QueryIndex: 0,
+                                                Selection: select1,
+                                                Expression: set1["common.T1"]["b"] ),
+                                            new SqlSelectCompoundFieldNode.Origin(
+                                                QueryIndex: 1,
+                                                Selection: select2,
+                                                Expression: set2["common.T2"]["b"] )
+                                        ] ) ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -115,19 +142,17 @@ public partial class BaseExpressionsTests
             var result = sut.AddTrait( trait );
             var text = result.ToString();
 
-            using ( new AssertionScope() )
-            {
-                result.Should().NotBeSameAs( sut );
-                result.Traits.Should().BeSequentiallyEqualTo( trait );
-                text.Should()
-                    .Be(
+            Assertion.All(
+                    result.TestNotRefEquals( sut ),
+                    result.Traits.TestSequence( [ trait ] ),
+                    text.TestEquals(
                         """
                         SELECT * FROM foo
                         UNION
                         SELECT * FROM bar
                         LIMIT ("10" : System.Int32)
-                        """ );
-            }
+                        """ ) )
+                .Go();
         }
 
         [Fact]
@@ -142,20 +167,18 @@ public partial class BaseExpressionsTests
             var result = sut.AddTrait( secondTrait );
             var text = result.ToString();
 
-            using ( new AssertionScope() )
-            {
-                result.Should().NotBeSameAs( sut );
-                result.Traits.Should().BeSequentiallyEqualTo( firstTrait, secondTrait );
-                text.Should()
-                    .Be(
+            Assertion.All(
+                    result.TestNotRefEquals( sut ),
+                    result.Traits.TestSequence( [ firstTrait, secondTrait ] ),
+                    text.TestEquals(
                         """
                         SELECT * FROM foo
                         UNION
                         SELECT * FROM bar
                         LIMIT ("10" : System.Int32)
                         OFFSET ("15" : System.Int32)
-                        """ );
-            }
+                        """ ) )
+                .Go();
         }
 
         [Fact]
@@ -171,20 +194,18 @@ public partial class BaseExpressionsTests
             var result = sut.SetTraits( traits );
             var text = result.ToString();
 
-            using ( new AssertionScope() )
-            {
-                result.Should().NotBeSameAs( sut );
-                result.Traits.Should().BeSequentiallyEqualTo( traits );
-                text.Should()
-                    .Be(
+            Assertion.All(
+                    result.TestNotRefEquals( sut ),
+                    result.Traits.TestSequence( traits ),
+                    text.TestEquals(
                         """
                         SELECT * FROM foo
                         UNION
                         SELECT * FROM bar
                         LIMIT ("10" : System.Int32)
                         OFFSET ("15" : System.Int32)
-                        """ );
-            }
+                        """ ) )
+                .Go();
         }
     }
 }

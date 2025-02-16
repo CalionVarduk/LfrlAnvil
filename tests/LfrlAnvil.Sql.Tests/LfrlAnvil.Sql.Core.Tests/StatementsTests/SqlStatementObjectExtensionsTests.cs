@@ -3,7 +3,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using LfrlAnvil.Sql.Statements;
 using LfrlAnvil.Sql.Statements.Compilers;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 using LfrlAnvil.TestExtensions.Sql.Mocks.System;
 
@@ -16,7 +15,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
     {
         var sut = new DbConnectionMock();
         var result = await (( IDbConnection )sut).BeginTransactionAsync( IsolationLevel.Serializable );
-        result.Should().BeSameAs( sut.CreatedTransactions[0] );
+        result.TestRefEquals( sut.CreatedTransactions[0] ).Go();
     }
 
     [Fact]
@@ -24,7 +23,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
     {
         IDbTransaction sut = new DbConnectionMock().BeginTransaction();
         var result = sut.CreateCommand();
-        result.Transaction.Should().BeSameAs( sut );
+        result.Transaction.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -32,7 +31,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
     {
         var sut = new DbConnectionMock().BeginTransaction();
         var result = sut.CreateCommand();
-        result.Transaction.Should().BeSameAs( sut );
+        result.Transaction.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -44,14 +43,15 @@ public class SqlStatementObjectExtensionsTests : TestsBase
         var factory = SqlQueryReaderFactoryMock.CreateInstance();
         var result = command.Query( factory.Create() );
 
-        using ( new AssertionScope() )
-        {
-            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
-            result.Rows.Should().NotBeNull();
-            (result.Rows?.Count).Should().Be( 2 );
-            (result.Rows?[0].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( 1, "foo" );
-            (result.Rows?[1].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( 2, "bar" );
-        }
+        Assertion.All(
+                command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => r.AsSpan().TestSequence( [ 1, "foo" ] ),
+                        (r, _) => r.AsSpan().TestSequence( [ 2, "bar" ] )
+                    ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -63,11 +63,10 @@ public class SqlStatementObjectExtensionsTests : TestsBase
         var factory = SqlQueryReaderFactoryMock.CreateInstance();
         var result = command.Query( factory.Create<Row>() );
 
-        using ( new AssertionScope() )
-        {
-            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
-            result.Rows.Should().BeSequentiallyEqualTo( new Row( 1, "foo" ), new Row( 2, "bar" ) );
-        }
+        Assertion.All(
+                command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
+                result.Rows.TestNotNull( rows => rows.TestSequence( [ new Row( 1, "foo" ), new Row( 2, "bar" ) ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -80,15 +79,16 @@ public class SqlStatementObjectExtensionsTests : TestsBase
         var factory = SqlQueryReaderFactoryMock.CreateInstance();
         var result = command.Query( factory.Create().Bind( sql ) );
 
-        using ( new AssertionScope() )
-        {
-            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
-            command.CommandText.Should().BeSameAs( sql );
-            result.Rows.Should().NotBeNull();
-            (result.Rows?.Count).Should().Be( 2 );
-            (result.Rows?[0].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( 1, "foo" );
-            (result.Rows?[1].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( 2, "bar" );
-        }
+        Assertion.All(
+                command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
+                command.CommandText.TestRefEquals( sql ),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => r.AsSpan().TestSequence( [ 1, "foo" ] ),
+                        (r, _) => r.AsSpan().TestSequence( [ 2, "bar" ] )
+                    ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -101,12 +101,11 @@ public class SqlStatementObjectExtensionsTests : TestsBase
         var factory = SqlQueryReaderFactoryMock.CreateInstance();
         var result = command.Query( factory.Create<Row>().Bind( sql ) );
 
-        using ( new AssertionScope() )
-        {
-            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
-            command.CommandText.Should().BeSameAs( sql );
-            result.Rows.Should().BeSequentiallyEqualTo( new Row( 1, "foo" ), new Row( 2, "bar" ) );
-        }
+        Assertion.All(
+                command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
+                command.CommandText.TestRefEquals( sql ),
+                result.Rows.TestNotNull( rows => rows.TestSequence( [ new Row( 1, "foo" ), new Row( 2, "bar" ) ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -118,12 +117,11 @@ public class SqlStatementObjectExtensionsTests : TestsBase
         var factory = SqlQueryReaderFactoryMock.CreateInstance();
         var result = command.Query( factory.CreateScalar() );
 
-        using ( new AssertionScope() )
-        {
-            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
-            result.HasValue.Should().BeTrue();
-            result.Value.Should().Be( 1 );
-        }
+        Assertion.All(
+                command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
+                result.HasValue.TestTrue(),
+                result.Value.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -135,12 +133,11 @@ public class SqlStatementObjectExtensionsTests : TestsBase
         var factory = SqlQueryReaderFactoryMock.CreateInstance();
         var result = command.Query( factory.CreateScalar<int>() );
 
-        using ( new AssertionScope() )
-        {
-            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
-            result.HasValue.Should().BeTrue();
-            result.Value.Should().Be( 1 );
-        }
+        Assertion.All(
+                command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
+                result.HasValue.TestTrue(),
+                result.Value.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -153,13 +150,12 @@ public class SqlStatementObjectExtensionsTests : TestsBase
         var factory = SqlQueryReaderFactoryMock.CreateInstance();
         var result = command.Query( factory.CreateScalar().Bind( sql ) );
 
-        using ( new AssertionScope() )
-        {
-            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
-            command.CommandText.Should().BeSameAs( sql );
-            result.HasValue.Should().BeTrue();
-            result.Value.Should().Be( 1 );
-        }
+        Assertion.All(
+                command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
+                command.CommandText.TestRefEquals( sql ),
+                result.HasValue.TestTrue(),
+                result.Value.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -172,13 +168,12 @@ public class SqlStatementObjectExtensionsTests : TestsBase
         var factory = SqlQueryReaderFactoryMock.CreateInstance();
         var result = command.Query( factory.CreateScalar<int>().Bind( sql ) );
 
-        using ( new AssertionScope() )
-        {
-            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
-            command.CommandText.Should().BeSameAs( sql );
-            result.HasValue.Should().BeTrue();
-            result.Value.Should().Be( 1 );
-        }
+        Assertion.All(
+                command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
+                command.CommandText.TestRefEquals( sql ),
+                result.HasValue.TestTrue(),
+                result.Value.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -190,14 +185,15 @@ public class SqlStatementObjectExtensionsTests : TestsBase
         var factory = SqlQueryReaderFactoryMock.CreateInstance();
         var result = await command.QueryAsync( factory.CreateAsync() );
 
-        using ( new AssertionScope() )
-        {
-            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
-            result.Rows.Should().NotBeNull();
-            (result.Rows?.Count).Should().Be( 2 );
-            (result.Rows?[0].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( 1, "foo" );
-            (result.Rows?[1].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( 2, "bar" );
-        }
+        Assertion.All(
+                command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => r.AsSpan().TestSequence( [ 1, "foo" ] ),
+                        (r, _) => r.AsSpan().TestSequence( [ 2, "bar" ] )
+                    ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -209,11 +205,10 @@ public class SqlStatementObjectExtensionsTests : TestsBase
         var factory = SqlQueryReaderFactoryMock.CreateInstance();
         var result = await command.QueryAsync( factory.CreateAsync<Row>() );
 
-        using ( new AssertionScope() )
-        {
-            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
-            result.Rows.Should().BeSequentiallyEqualTo( new Row( 1, "foo" ), new Row( 2, "bar" ) );
-        }
+        Assertion.All(
+                command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
+                result.Rows.TestNotNull( rows => rows.TestSequence( [ new Row( 1, "foo" ), new Row( 2, "bar" ) ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -226,15 +221,16 @@ public class SqlStatementObjectExtensionsTests : TestsBase
         var factory = SqlQueryReaderFactoryMock.CreateInstance();
         var result = await command.QueryAsync( factory.CreateAsync().Bind( sql ) );
 
-        using ( new AssertionScope() )
-        {
-            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
-            command.CommandText.Should().BeSameAs( sql );
-            result.Rows.Should().NotBeNull();
-            (result.Rows?.Count).Should().Be( 2 );
-            (result.Rows?[0].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( 1, "foo" );
-            (result.Rows?[1].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( 2, "bar" );
-        }
+        Assertion.All(
+                command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
+                command.CommandText.TestRefEquals( sql ),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => r.AsSpan().TestSequence( [ 1, "foo" ] ),
+                        (r, _) => r.AsSpan().TestSequence( [ 2, "bar" ] )
+                    ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -247,12 +243,11 @@ public class SqlStatementObjectExtensionsTests : TestsBase
         var factory = SqlQueryReaderFactoryMock.CreateInstance();
         var result = await command.QueryAsync( factory.CreateAsync<Row>().Bind( sql ) );
 
-        using ( new AssertionScope() )
-        {
-            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
-            command.CommandText.Should().BeSameAs( sql );
-            result.Rows.Should().BeSequentiallyEqualTo( new Row( 1, "foo" ), new Row( 2, "bar" ) );
-        }
+        Assertion.All(
+                command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
+                command.CommandText.TestRefEquals( sql ),
+                result.Rows.TestNotNull( rows => rows.TestSequence( [ new Row( 1, "foo" ), new Row( 2, "bar" ) ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -264,12 +259,11 @@ public class SqlStatementObjectExtensionsTests : TestsBase
         var factory = SqlQueryReaderFactoryMock.CreateInstance();
         var result = await command.QueryAsync( factory.CreateAsyncScalar() );
 
-        using ( new AssertionScope() )
-        {
-            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
-            result.HasValue.Should().BeTrue();
-            result.Value.Should().Be( 1 );
-        }
+        Assertion.All(
+                command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
+                result.HasValue.TestTrue(),
+                result.Value.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -281,12 +275,11 @@ public class SqlStatementObjectExtensionsTests : TestsBase
         var factory = SqlQueryReaderFactoryMock.CreateInstance();
         var result = await command.QueryAsync( factory.CreateAsyncScalar<int>() );
 
-        using ( new AssertionScope() )
-        {
-            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
-            result.HasValue.Should().BeTrue();
-            result.Value.Should().Be( 1 );
-        }
+        Assertion.All(
+                command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
+                result.HasValue.TestTrue(),
+                result.Value.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -299,13 +292,12 @@ public class SqlStatementObjectExtensionsTests : TestsBase
         var factory = SqlQueryReaderFactoryMock.CreateInstance();
         var result = await command.QueryAsync( factory.CreateAsyncScalar().Bind( sql ) );
 
-        using ( new AssertionScope() )
-        {
-            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
-            command.CommandText.Should().BeSameAs( sql );
-            result.HasValue.Should().BeTrue();
-            result.Value.Should().Be( 1 );
-        }
+        Assertion.All(
+                command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
+                command.CommandText.TestRefEquals( sql ),
+                result.HasValue.TestTrue(),
+                result.Value.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -318,13 +310,12 @@ public class SqlStatementObjectExtensionsTests : TestsBase
         var factory = SqlQueryReaderFactoryMock.CreateInstance();
         var result = await command.QueryAsync( factory.CreateAsyncScalar<int>().Bind( sql ) );
 
-        using ( new AssertionScope() )
-        {
-            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
-            command.CommandText.Should().BeSameAs( sql );
-            result.HasValue.Should().BeTrue();
-            result.Value.Should().Be( 1 );
-        }
+        Assertion.All(
+                command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
+                command.CommandText.TestRefEquals( sql ),
+                result.HasValue.TestTrue(),
+                result.Value.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -335,7 +326,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
 
         var result = command.Execute();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -346,7 +337,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
 
         var result = await command.ExecuteAsync();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -357,11 +348,10 @@ public class SqlStatementObjectExtensionsTests : TestsBase
 
         var result = command.SetText( sql );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( command );
-            result.CommandText.Should().BeSameAs( sql );
-        }
+        Assertion.All(
+                result.TestRefEquals( command ),
+                result.CommandText.TestRefEquals( sql ) )
+            .Go();
     }
 
     [Theory]
@@ -377,11 +367,10 @@ public class SqlStatementObjectExtensionsTests : TestsBase
 
         var result = command.SetTimeout( timeout );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( command );
-            result.CommandTimeout.Should().Be( expectedSeconds );
-        }
+        Assertion.All(
+                result.TestRefEquals( command ),
+                result.CommandTimeout.TestEquals( expectedSeconds ) )
+            .Go();
     }
 
     [Fact]
@@ -392,16 +381,15 @@ public class SqlStatementObjectExtensionsTests : TestsBase
 
         var result = command.Parameterize( factory.Create().Bind( new[] { SqlParameter.Named( "a", 1 ) } ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( command );
-            result.Parameters.Should().HaveCount( 1 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "a" );
-            command.Parameters[0].Value.Should().Be( 1 );
-        }
+        Assertion.All(
+                result.TestRefEquals( command ),
+                result.Parameters.Count.TestEquals( 1 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "a" ),
+                command.Parameters[0].Value.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -412,16 +400,15 @@ public class SqlStatementObjectExtensionsTests : TestsBase
 
         var result = command.Parameterize( factory.Create<Source>().Bind( new Source { A = 1 } ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( command );
-            result.Parameters.Should().HaveCount( 1 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "A" );
-            command.Parameters[0].Value.Should().Be( 1 );
-        }
+        Assertion.All(
+                result.TestRefEquals( command ),
+                result.Parameters.Count.TestEquals( 1 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "A" ),
+                command.Parameters[0].Value.TestEquals( 1 ) )
+            .Go();
     }
 
     public sealed record Row(int A, string B);

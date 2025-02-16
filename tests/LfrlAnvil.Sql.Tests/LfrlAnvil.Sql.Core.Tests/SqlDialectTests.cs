@@ -9,14 +9,14 @@ public class SqlDialectTests : TestsBase
     {
         var name = Fixture.Create<string>();
         var sut = new SqlDialect( name );
-        sut.Name.Should().BeSameAs( name );
+        sut.Name.TestRefEquals( name ).Go();
     }
 
     [Fact]
     public void Ctor_ShouldThrowArgumentException_WhenNameIsEmpty()
     {
         var action = Lambda.Of( () => new SqlDialect( string.Empty ) );
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -27,7 +27,7 @@ public class SqlDialectTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().BeSameAs( name );
+        result.TestRefEquals( name ).Go();
     }
 
     [Fact]
@@ -38,7 +38,7 @@ public class SqlDialectTests : TestsBase
 
         var result = sut.GetHashCode();
 
-        result.Should().Be( name.GetHashCode() );
+        result.TestEquals( name.GetHashCode() ).Go();
     }
 
     [Theory]
@@ -51,7 +51,7 @@ public class SqlDialectTests : TestsBase
 
         var result = sut.Equals( other );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -59,7 +59,7 @@ public class SqlDialectTests : TestsBase
     {
         var sut = new SqlDialect( Fixture.Create<string>() );
         var result = sut.Equals( ( SqlDialect? )null );
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Theory]
@@ -72,7 +72,7 @@ public class SqlDialectTests : TestsBase
 
         var result = sut == other;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -80,7 +80,7 @@ public class SqlDialectTests : TestsBase
     {
         var sut = new SqlDialect( Fixture.Create<string>() );
         var result = sut == ( SqlDialect? )null;
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -88,14 +88,14 @@ public class SqlDialectTests : TestsBase
     {
         var sut = new SqlDialect( Fixture.Create<string>() );
         var result = ( SqlDialect? )null == sut;
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
     public void EqualityOperator_ShouldReturnTrue_WhenFirstIsNullAndSecondIsNull()
     {
         var result = ( SqlDialect? )null == null;
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Theory]
@@ -108,7 +108,7 @@ public class SqlDialectTests : TestsBase
 
         var result = sut != other;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -116,7 +116,7 @@ public class SqlDialectTests : TestsBase
     {
         var sut = new SqlDialect( Fixture.Create<string>() );
         var result = sut != ( SqlDialect? )null;
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -124,13 +124,13 @@ public class SqlDialectTests : TestsBase
     {
         var sut = new SqlDialect( Fixture.Create<string>() );
         var result = ( SqlDialect? )null != sut;
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
     public void InequalityOperator_ShouldReturnFalse_WhenFirstIsNullAndSecondIsNull()
     {
         var result = ( SqlDialect? )null != null;
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 }

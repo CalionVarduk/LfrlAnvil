@@ -19,13 +19,12 @@ public class SqlPrimaryKeyTests : TestsBase
         ISqlPrimaryKey sut = schema.Objects.GetTable( "T" ).Constraints.PrimaryKey;
         var index = schema.Objects.GetIndex( "UIX_T_C1A" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Database.Should().BeSameAs( db );
-            sut.Index.Should().BeSameAs( index );
-            sut.Type.Should().Be( SqlObjectType.PrimaryKey );
-            sut.Name.Should().Be( "PK_TEST" );
-            sut.ToString().Should().Be( "[PrimaryKey] foo.PK_TEST" );
-        }
+        Assertion.All(
+                sut.Database.TestRefEquals( db ),
+                sut.Index.TestRefEquals( index ),
+                sut.Type.TestEquals( SqlObjectType.PrimaryKey ),
+                sut.Name.TestEquals( "PK_TEST" ),
+                sut.ToString().TestEquals( "[PrimaryKey] foo.PK_TEST" ) )
+            .Go();
     }
 }

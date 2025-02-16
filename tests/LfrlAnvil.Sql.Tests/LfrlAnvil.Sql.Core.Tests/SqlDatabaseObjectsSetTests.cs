@@ -1,6 +1,6 @@
-﻿using LfrlAnvil.Sql.Internal;
+﻿using System.Diagnostics.Contracts;
+using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests;
@@ -12,11 +12,10 @@ public class SqlDatabaseObjectsSetTests : TestsBase
     {
         var sut = SqlDatabaseObjectsSet<SqlObjectBuilder>.Create();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            ToArray( sut ).Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                ToArray( sut ).TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -27,12 +26,11 @@ public class SqlDatabaseObjectsSetTests : TestsBase
 
         var result = sut.Add( obj );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 1 );
-            ToArray( sut ).Should().BeSequentiallyEqualTo( obj );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 1 ),
+                ToArray( sut ).TestSequence( [ obj ] ) )
+            .Go();
     }
 
     [Fact]
@@ -44,12 +42,11 @@ public class SqlDatabaseObjectsSetTests : TestsBase
 
         var result = sut.Add( obj );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Count.Should().Be( 1 );
-            ToArray( sut ).Should().BeSequentiallyEqualTo( obj );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.Count.TestEquals( 1 ),
+                ToArray( sut ).TestSequence( [ obj ] ) )
+            .Go();
     }
 
     [Fact]
@@ -61,12 +58,11 @@ public class SqlDatabaseObjectsSetTests : TestsBase
 
         var result = sut.Remove( obj );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 0 );
-            ToArray( sut ).Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 0 ),
+                ToArray( sut ).TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -77,12 +73,11 @@ public class SqlDatabaseObjectsSetTests : TestsBase
 
         var result = sut.Remove( obj );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Count.Should().Be( 0 );
-            ToArray( sut ).Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.Count.TestEquals( 0 ),
+                ToArray( sut ).TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -94,7 +89,7 @@ public class SqlDatabaseObjectsSetTests : TestsBase
 
         var result = sut.Contains( obj );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -105,7 +100,7 @@ public class SqlDatabaseObjectsSetTests : TestsBase
 
         var result = sut.Contains( obj );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -117,13 +112,13 @@ public class SqlDatabaseObjectsSetTests : TestsBase
 
         sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            ToArray( sut ).Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                ToArray( sut ).TestEmpty() )
+            .Go();
     }
 
+    [Pure]
     private static T[] ToArray<T>(SqlDatabaseObjectsSet<T> set)
         where T : SqlObjectBuilder
     {

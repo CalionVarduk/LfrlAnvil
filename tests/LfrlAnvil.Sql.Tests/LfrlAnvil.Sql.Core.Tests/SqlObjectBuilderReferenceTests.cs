@@ -13,11 +13,10 @@ public class SqlObjectBuilderReferenceTests : TestsBase
 
         var result = SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( table ), column );
 
-        using ( new AssertionScope() )
-        {
-            result.Source.Should().Be( SqlObjectBuilderReferenceSource.Create( table ) );
-            result.Target.Should().BeSameAs( column );
-        }
+        Assertion.All(
+                result.Source.TestEquals( SqlObjectBuilderReferenceSource.Create( table ) ),
+                result.Target.TestRefEquals( column ) )
+            .Go();
     }
 
     [Fact]
@@ -29,7 +28,7 @@ public class SqlObjectBuilderReferenceTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( "[Table] common.T => [Column] common.T.C" );
+        result.TestEquals( "[Table] common.T => [Column] common.T.C" ).Go();
     }
 
     [Fact]
@@ -41,11 +40,10 @@ public class SqlObjectBuilderReferenceTests : TestsBase
 
         var result = sut.UnsafeReinterpretAs<ISqlObjectBuilder>();
 
-        using ( new AssertionScope() )
-        {
-            result.Source.Should().Be( SqlObjectBuilderReferenceSource.Create( table ).UnsafeReinterpretAs<ISqlObjectBuilder>() );
-            result.Target.Should().BeSameAs( column );
-        }
+        Assertion.All(
+                result.Source.TestEquals( SqlObjectBuilderReferenceSource.Create( table ).UnsafeReinterpretAs<ISqlObjectBuilder>() ),
+                result.Target.TestRefEquals( column ) )
+            .Go();
     }
 
     [Fact]
@@ -57,10 +55,9 @@ public class SqlObjectBuilderReferenceTests : TestsBase
 
         SqlObjectBuilderReference<ISqlObjectBuilder> result = sut;
 
-        using ( new AssertionScope() )
-        {
-            result.Source.Should().Be( SqlObjectBuilderReferenceSource.Create( table ).UnsafeReinterpretAs<ISqlObjectBuilder>() );
-            result.Target.Should().BeSameAs( column );
-        }
+        Assertion.All(
+                result.Source.TestEquals( SqlObjectBuilderReferenceSource.Create( table ).UnsafeReinterpretAs<ISqlObjectBuilder>() ),
+                result.Target.TestRefEquals( column ) )
+            .Go();
     }
 }

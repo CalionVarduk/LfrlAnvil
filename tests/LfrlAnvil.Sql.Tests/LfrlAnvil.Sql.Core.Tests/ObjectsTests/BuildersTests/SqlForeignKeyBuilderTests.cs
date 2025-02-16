@@ -3,7 +3,6 @@ using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.ObjectsTests.BuildersTests;
@@ -21,7 +20,7 @@ public class SqlForeignKeyBuilderTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( "[ForeignKey] foo.bar" );
+        result.TestEquals( "[ForeignKey] foo.bar" ).Go();
     }
 
     [Fact]
@@ -36,32 +35,27 @@ public class SqlForeignKeyBuilderTests : TestsBase
         var sut = table.Constraints.CreateForeignKey( ix2, ix1 );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            table.Constraints.TryGet( sut.Name ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.Name.Should().Be( "FK_T_C2_REF_T" );
-            sut.OriginIndex.Should().BeSameAs( ix2 );
-            sut.ReferencedIndex.Should().BeSameAs( ix1 );
-
-            ix1.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
-
-            ix2.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) );
-
-            table.ReferencingObjects.Should().BeEmpty();
-            schema.ReferencingObjects.Should().BeEmpty();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      CREATE [ForeignKey] foo.FK_T_C2_REF_T;
-                    """ );
-        }
+        Assertion.All(
+                table.Constraints.TryGet( sut.Name ).TestRefEquals( sut ),
+                schema.Objects.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.Name.TestEquals( "FK_T_C2_REF_T" ),
+                sut.OriginIndex.TestRefEquals( ix2 ),
+                sut.ReferencedIndex.TestRefEquals( ix1 ),
+                ix1.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) ] ),
+                ix2.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) ] ),
+                table.ReferencingObjects.TestEmpty(),
+                schema.ReferencingObjects.TestEmpty(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          CREATE [ForeignKey] foo.FK_T_C2_REF_T;
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -77,34 +71,28 @@ public class SqlForeignKeyBuilderTests : TestsBase
         var sut = t2.Constraints.CreateForeignKey( ix2, ix1 );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            t2.Constraints.TryGet( sut.Name ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.Name.Should().Be( "FK_T2_C2_REF_T" );
-            sut.OriginIndex.Should().BeSameAs( ix2 );
-            sut.ReferencedIndex.Should().BeSameAs( ix1 );
-
-            ix1.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
-
-            ix2.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) );
-
-            table.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
-
-            schema.ReferencingObjects.Should().BeEmpty();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T2
-                      CREATE [ForeignKey] foo.FK_T2_C2_REF_T;
-                    """ );
-        }
+        Assertion.All(
+                t2.Constraints.TryGet( sut.Name ).TestRefEquals( sut ),
+                schema.Objects.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.Name.TestEquals( "FK_T2_C2_REF_T" ),
+                sut.OriginIndex.TestRefEquals( ix2 ),
+                sut.ReferencedIndex.TestRefEquals( ix1 ),
+                ix1.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) ] ),
+                ix2.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) ] ),
+                table.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) ] ),
+                schema.ReferencingObjects.TestEmpty(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T2
+                          CREATE [ForeignKey] foo.FK_T2_C2_REF_T;
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -121,35 +109,29 @@ public class SqlForeignKeyBuilderTests : TestsBase
         var sut = t2.Constraints.CreateForeignKey( ix2, ix1 );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            t2.Constraints.TryGet( sut.Name ).Should().BeSameAs( sut );
-            s2.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.Name.Should().Be( "FK_T2_C2_REF_foo_T" );
-            sut.OriginIndex.Should().BeSameAs( ix2 );
-            sut.ReferencedIndex.Should().BeSameAs( ix1 );
-
-            ix1.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
-
-            ix2.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) );
-
-            table.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
-
-            schema.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] bar.T2
-                      CREATE [ForeignKey] bar.FK_T2_C2_REF_foo_T;
-                    """ );
-        }
+        Assertion.All(
+                t2.Constraints.TryGet( sut.Name ).TestRefEquals( sut ),
+                s2.Objects.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.Name.TestEquals( "FK_T2_C2_REF_foo_T" ),
+                sut.OriginIndex.TestRefEquals( ix2 ),
+                sut.ReferencedIndex.TestRefEquals( ix1 ),
+                ix1.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) ] ),
+                ix2.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) ] ),
+                table.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) ] ),
+                schema.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) ] ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] bar.T2
+                          CREATE [ForeignKey] bar.FK_T2_C2_REF_foo_T;
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -165,7 +147,7 @@ public class SqlForeignKeyBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Fact]
@@ -181,11 +163,10 @@ public class SqlForeignKeyBuilderTests : TestsBase
         var result = sut.SetName( sut.Name );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -203,11 +184,10 @@ public class SqlForeignKeyBuilderTests : TestsBase
         var result = sut.SetName( oldName );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -224,24 +204,22 @@ public class SqlForeignKeyBuilderTests : TestsBase
         var result = sut.SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            table.Constraints.TryGet( "bar" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( oldName ).Should().BeNull();
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( oldName ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [ForeignKey] foo.bar ([1] : 'Name' (System.String) FROM FK_T_C2_REF_T);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                table.Constraints.TryGet( "bar" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( oldName ).TestNull(),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( oldName ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [ForeignKey] foo.bar ([1] : 'Name' (System.String) FROM FK_T_C2_REF_T);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Theory]
@@ -259,9 +237,11 @@ public class SqlForeignKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( name ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -276,9 +256,11 @@ public class SqlForeignKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "bar" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -292,9 +274,11 @@ public class SqlForeignKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "T" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -310,11 +294,10 @@ public class SqlForeignKeyBuilderTests : TestsBase
         var result = sut.SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -331,11 +314,10 @@ public class SqlForeignKeyBuilderTests : TestsBase
         var result = sut.SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -351,24 +333,22 @@ public class SqlForeignKeyBuilderTests : TestsBase
         var result = sut.SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "FK_T_C2_REF_T" );
-            table.Constraints.TryGet( "FK_T_C2_REF_T" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( "bar" ).Should().BeNull();
-            schema.Objects.TryGet( "FK_T_C2_REF_T" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "bar" ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [ForeignKey] foo.FK_T_C2_REF_T ([1] : 'Name' (System.String) FROM bar);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "FK_T_C2_REF_T" ),
+                table.Constraints.TryGet( "FK_T_C2_REF_T" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( "bar" ).TestNull(),
+                schema.Objects.TryGet( "FK_T_C2_REF_T" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "bar" ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [ForeignKey] foo.FK_T_C2_REF_T ([1] : 'Name' (System.String) FROM bar);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -383,9 +363,11 @@ public class SqlForeignKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetDefaultName() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -400,9 +382,11 @@ public class SqlForeignKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetDefaultName() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Theory]
@@ -422,20 +406,18 @@ public class SqlForeignKeyBuilderTests : TestsBase
         var result = sut.SetOnDeleteBehavior( behavior );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.OnDeleteBehavior.Should().Be( behavior );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [ForeignKey] foo.FK_T_C2_REF_T ([10] : 'OnDeleteBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.OnDeleteBehavior.TestEquals( behavior ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [ForeignKey] foo.FK_T_C2_REF_T ([10] : 'OnDeleteBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -451,11 +433,10 @@ public class SqlForeignKeyBuilderTests : TestsBase
         var result = sut.SetOnDeleteBehavior( ReferenceBehavior.Restrict );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -472,11 +453,10 @@ public class SqlForeignKeyBuilderTests : TestsBase
         var result = sut.SetOnDeleteBehavior( ReferenceBehavior.Restrict );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -490,9 +470,11 @@ public class SqlForeignKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetOnDeleteBehavior( ReferenceBehavior.SetNull ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -507,9 +489,11 @@ public class SqlForeignKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetOnDeleteBehavior( ReferenceBehavior.Cascade ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Theory]
@@ -529,20 +513,18 @@ public class SqlForeignKeyBuilderTests : TestsBase
         var result = sut.SetOnUpdateBehavior( behavior );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.OnUpdateBehavior.Should().Be( behavior );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [ForeignKey] foo.FK_T_C2_REF_T ([11] : 'OnUpdateBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.OnUpdateBehavior.TestEquals( behavior ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [ForeignKey] foo.FK_T_C2_REF_T ([11] : 'OnUpdateBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -558,11 +540,10 @@ public class SqlForeignKeyBuilderTests : TestsBase
         var result = sut.SetOnUpdateBehavior( ReferenceBehavior.Restrict );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -579,11 +560,10 @@ public class SqlForeignKeyBuilderTests : TestsBase
         var result = sut.SetOnUpdateBehavior( ReferenceBehavior.Restrict );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -597,9 +577,11 @@ public class SqlForeignKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetOnUpdateBehavior( ReferenceBehavior.SetNull ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -614,9 +596,11 @@ public class SqlForeignKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetOnUpdateBehavior( ReferenceBehavior.Cascade ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -632,23 +616,21 @@ public class SqlForeignKeyBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            table.Constraints.TryGet( sut.Name ).Should().BeNull();
-            schema.Objects.TryGet( sut.Name ).Should().BeNull();
-            sut.IsRemoved.Should().BeTrue();
-            ix1.ReferencingObjects.Should().BeEmpty();
-            ix2.ReferencingObjects.Should().BeEmpty();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      REMOVE [ForeignKey] foo.FK_T_C2_REF_T;
-                    """ );
-        }
+        Assertion.All(
+                table.Constraints.TryGet( sut.Name ).TestNull(),
+                schema.Objects.TryGet( sut.Name ).TestNull(),
+                sut.IsRemoved.TestTrue(),
+                ix1.ReferencingObjects.TestEmpty(),
+                ix2.ReferencingObjects.TestEmpty(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          REMOVE [ForeignKey] foo.FK_T_C2_REF_T;
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -665,24 +647,22 @@ public class SqlForeignKeyBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            t2.Constraints.TryGet( sut.Name ).Should().BeNull();
-            schema.Objects.TryGet( sut.Name ).Should().BeNull();
-            sut.IsRemoved.Should().BeTrue();
-            ix1.ReferencingObjects.Should().BeEmpty();
-            ix2.ReferencingObjects.Should().BeEmpty();
-            table.ReferencingObjects.Should().BeEmpty();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T2
-                      REMOVE [ForeignKey] foo.FK_T2_C2_REF_T;
-                    """ );
-        }
+        Assertion.All(
+                t2.Constraints.TryGet( sut.Name ).TestNull(),
+                schema.Objects.TryGet( sut.Name ).TestNull(),
+                sut.IsRemoved.TestTrue(),
+                ix1.ReferencingObjects.TestEmpty(),
+                ix2.ReferencingObjects.TestEmpty(),
+                table.ReferencingObjects.TestEmpty(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T2
+                          REMOVE [ForeignKey] foo.FK_T2_C2_REF_T;
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -700,25 +680,23 @@ public class SqlForeignKeyBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            t2.Constraints.TryGet( sut.Name ).Should().BeNull();
-            s2.Objects.TryGet( sut.Name ).Should().BeNull();
-            sut.IsRemoved.Should().BeTrue();
-            ix1.ReferencingObjects.Should().BeEmpty();
-            ix2.ReferencingObjects.Should().BeEmpty();
-            table.ReferencingObjects.Should().BeEmpty();
-            schema.ReferencingObjects.Should().BeEmpty();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] bar.T2
-                      REMOVE [ForeignKey] bar.FK_T2_C2_REF_foo_T;
-                    """ );
-        }
+        Assertion.All(
+                t2.Constraints.TryGet( sut.Name ).TestNull(),
+                s2.Objects.TryGet( sut.Name ).TestNull(),
+                sut.IsRemoved.TestTrue(),
+                ix1.ReferencingObjects.TestEmpty(),
+                ix2.ReferencingObjects.TestEmpty(),
+                table.ReferencingObjects.TestEmpty(),
+                schema.ReferencingObjects.TestEmpty(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] bar.T2
+                          REMOVE [ForeignKey] bar.FK_T2_C2_REF_foo_T;
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -737,7 +715,7 @@ public class SqlForeignKeyBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Fact]
@@ -753,9 +731,11 @@ public class SqlForeignKeyBuilderTests : TestsBase
         schema.Database.Changes.CompletePendingChanges();
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -772,21 +752,17 @@ public class SqlForeignKeyBuilderTests : TestsBase
         SqlDatabaseBuilderMock.QuickRemove( sut );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            table.Constraints.TryGet( sut.Name ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.IsRemoved.Should().BeTrue();
-            sut.ReferencingObjects.Should().BeEmpty();
-
-            ix2.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) );
-
-            ix1.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
-
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                table.Constraints.TryGet( sut.Name ).TestRefEquals( sut ),
+                schema.Objects.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.IsRemoved.TestTrue(),
+                sut.ReferencingObjects.TestEmpty(),
+                ix2.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) ] ),
+                ix1.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) ] ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -805,22 +781,18 @@ public class SqlForeignKeyBuilderTests : TestsBase
         SqlDatabaseBuilderMock.QuickRemove( sut );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            t2.Constraints.TryGet( sut.Name ).Should().BeSameAs( sut );
-            s2.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.IsRemoved.Should().BeTrue();
-            sut.ReferencingObjects.Should().BeEmpty();
-
-            ix2.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) );
-
-            ix1.ReferencingObjects.Should().BeEmpty();
-            table.ReferencingObjects.Should().BeEmpty();
-            schema.ReferencingObjects.Should().BeEmpty();
-
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                t2.Constraints.TryGet( sut.Name ).TestRefEquals( sut ),
+                s2.Objects.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.IsRemoved.TestTrue(),
+                sut.ReferencingObjects.TestEmpty(),
+                ix2.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) ] ),
+                ix1.ReferencingObjects.TestEmpty(),
+                table.ReferencingObjects.TestEmpty(),
+                schema.ReferencingObjects.TestEmpty(),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -839,7 +811,7 @@ public class SqlForeignKeyBuilderTests : TestsBase
         SqlDatabaseBuilderMock.QuickRemove( sut );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Fact]
@@ -855,19 +827,18 @@ public class SqlForeignKeyBuilderTests : TestsBase
 
         var result = sut.ToDefinitionNode( table.Node );
 
-        using ( new AssertionScope() )
-        {
-            result.Name.Should().Be( SqlSchemaObjectName.Create( "foo", "FK_T_C2_REF_T" ) );
-            result.Columns.ToArray().Should().HaveCount( 1 );
-            (result.Columns.ToArray().ElementAtOrDefault( 0 )?.Name).Should().Be( c2.Name );
-            (result.Columns.ToArray().ElementAtOrDefault( 0 )?.RecordSet).Should().BeSameAs( table.Node );
-            result.ReferencedTable.Should().BeSameAs( table.Node );
-            result.ReferencedColumns.ToArray().Should().HaveCount( 1 );
-            (result.ReferencedColumns.ToArray().ElementAtOrDefault( 0 )?.Name).Should().Be( c1.Name );
-            (result.ReferencedColumns.ToArray().ElementAtOrDefault( 0 )?.RecordSet).Should().BeSameAs( table.Node );
-            result.OnDeleteBehavior.Should().BeSameAs( sut.OnDeleteBehavior );
-            result.OnUpdateBehavior.Should().BeSameAs( sut.OnUpdateBehavior );
-        }
+        Assertion.All(
+                result.Name.TestEquals( SqlSchemaObjectName.Create( "foo", "FK_T_C2_REF_T" ) ),
+                result.Columns.Count.TestEquals( 1 ),
+                (result.Columns.ElementAtOrDefault( 0 )?.Name).TestEquals( c2.Name ),
+                (result.Columns.ElementAtOrDefault( 0 )?.RecordSet).TestRefEquals( table.Node ),
+                result.ReferencedTable.TestRefEquals( table.Node ),
+                result.ReferencedColumns.Count.TestEquals( 1 ),
+                (result.ReferencedColumns.ElementAtOrDefault( 0 )?.Name).TestEquals( c1.Name ),
+                (result.ReferencedColumns.ElementAtOrDefault( 0 )?.RecordSet).TestRefEquals( table.Node ),
+                result.OnDeleteBehavior.TestRefEquals( sut.OnDeleteBehavior ),
+                result.OnUpdateBehavior.TestRefEquals( sut.OnUpdateBehavior ) )
+            .Go();
     }
 
     [Fact]
@@ -884,19 +855,18 @@ public class SqlForeignKeyBuilderTests : TestsBase
 
         var result = sut.ToDefinitionNode( t2.Node );
 
-        using ( new AssertionScope() )
-        {
-            result.Name.Should().Be( SqlSchemaObjectName.Create( "foo", "FK_T2_C2_REF_T" ) );
-            result.Columns.ToArray().Should().HaveCount( 1 );
-            (result.Columns.ToArray().ElementAtOrDefault( 0 )?.Name).Should().Be( c2.Name );
-            (result.Columns.ToArray().ElementAtOrDefault( 0 )?.RecordSet).Should().BeSameAs( t2.Node );
-            result.ReferencedTable.Should().BeSameAs( table.Node );
-            result.ReferencedColumns.ToArray().Should().HaveCount( 1 );
-            (result.ReferencedColumns.ToArray().ElementAtOrDefault( 0 )?.Name).Should().Be( c1.Name );
-            (result.ReferencedColumns.ToArray().ElementAtOrDefault( 0 )?.RecordSet).Should().BeSameAs( table.Node );
-            result.OnDeleteBehavior.Should().BeSameAs( sut.OnDeleteBehavior );
-            result.OnUpdateBehavior.Should().BeSameAs( sut.OnUpdateBehavior );
-        }
+        Assertion.All(
+                result.Name.TestEquals( SqlSchemaObjectName.Create( "foo", "FK_T2_C2_REF_T" ) ),
+                result.Columns.Count.TestEquals( 1 ),
+                (result.Columns.ElementAtOrDefault( 0 )?.Name).TestEquals( c2.Name ),
+                (result.Columns.ElementAtOrDefault( 0 )?.RecordSet).TestRefEquals( t2.Node ),
+                result.ReferencedTable.TestRefEquals( table.Node ),
+                result.ReferencedColumns.Count.TestEquals( 1 ),
+                (result.ReferencedColumns.ElementAtOrDefault( 0 )?.Name).TestEquals( c1.Name ),
+                (result.ReferencedColumns.ElementAtOrDefault( 0 )?.RecordSet).TestRefEquals( table.Node ),
+                result.OnDeleteBehavior.TestRefEquals( sut.OnDeleteBehavior ),
+                result.OnUpdateBehavior.TestRefEquals( sut.OnUpdateBehavior ) )
+            .Go();
     }
 
     [Fact]
@@ -913,24 +883,22 @@ public class SqlForeignKeyBuilderTests : TestsBase
         var result = (( ISqlForeignKeyBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            table.Constraints.TryGet( "bar" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( oldName ).Should().BeNull();
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( oldName ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [ForeignKey] foo.bar ([1] : 'Name' (System.String) FROM FK_T_C2_REF_T);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                table.Constraints.TryGet( "bar" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( oldName ).TestNull(),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( oldName ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [ForeignKey] foo.bar ([1] : 'Name' (System.String) FROM FK_T_C2_REF_T);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -947,24 +915,22 @@ public class SqlForeignKeyBuilderTests : TestsBase
         var result = (( ISqlConstraintBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            table.Constraints.TryGet( "bar" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( oldName ).Should().BeNull();
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( oldName ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [ForeignKey] foo.bar ([1] : 'Name' (System.String) FROM FK_T_C2_REF_T);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                table.Constraints.TryGet( "bar" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( oldName ).TestNull(),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( oldName ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [ForeignKey] foo.bar ([1] : 'Name' (System.String) FROM FK_T_C2_REF_T);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -981,24 +947,22 @@ public class SqlForeignKeyBuilderTests : TestsBase
         var result = (( ISqlObjectBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            table.Constraints.TryGet( "bar" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( oldName ).Should().BeNull();
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( oldName ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [ForeignKey] foo.bar ([1] : 'Name' (System.String) FROM FK_T_C2_REF_T);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                table.Constraints.TryGet( "bar" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( oldName ).TestNull(),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( oldName ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [ForeignKey] foo.bar ([1] : 'Name' (System.String) FROM FK_T_C2_REF_T);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1014,24 +978,22 @@ public class SqlForeignKeyBuilderTests : TestsBase
         var result = (( ISqlForeignKeyBuilder )sut).SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "FK_T_C2_REF_T" );
-            table.Constraints.TryGet( "FK_T_C2_REF_T" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( "bar" ).Should().BeNull();
-            schema.Objects.TryGet( "FK_T_C2_REF_T" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "bar" ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [ForeignKey] foo.FK_T_C2_REF_T ([1] : 'Name' (System.String) FROM bar);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "FK_T_C2_REF_T" ),
+                table.Constraints.TryGet( "FK_T_C2_REF_T" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( "bar" ).TestNull(),
+                schema.Objects.TryGet( "FK_T_C2_REF_T" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "bar" ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [ForeignKey] foo.FK_T_C2_REF_T ([1] : 'Name' (System.String) FROM bar);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1047,24 +1009,22 @@ public class SqlForeignKeyBuilderTests : TestsBase
         var result = (( ISqlConstraintBuilder )sut).SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "FK_T_C2_REF_T" );
-            table.Constraints.TryGet( "FK_T_C2_REF_T" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( "bar" ).Should().BeNull();
-            schema.Objects.TryGet( "FK_T_C2_REF_T" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "bar" ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [ForeignKey] foo.FK_T_C2_REF_T ([1] : 'Name' (System.String) FROM bar);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "FK_T_C2_REF_T" ),
+                table.Constraints.TryGet( "FK_T_C2_REF_T" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( "bar" ).TestNull(),
+                schema.Objects.TryGet( "FK_T_C2_REF_T" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "bar" ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [ForeignKey] foo.FK_T_C2_REF_T ([1] : 'Name' (System.String) FROM bar);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1080,20 +1040,18 @@ public class SqlForeignKeyBuilderTests : TestsBase
         var result = (( ISqlForeignKeyBuilder )sut).SetOnDeleteBehavior( ReferenceBehavior.Cascade );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.OnDeleteBehavior.Should().Be( ReferenceBehavior.Cascade );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [ForeignKey] foo.FK_T_C2_REF_T ([10] : 'OnDeleteBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.OnDeleteBehavior.TestEquals( ReferenceBehavior.Cascade ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [ForeignKey] foo.FK_T_C2_REF_T ([10] : 'OnDeleteBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1109,19 +1067,17 @@ public class SqlForeignKeyBuilderTests : TestsBase
         var result = (( ISqlForeignKeyBuilder )sut).SetOnUpdateBehavior( ReferenceBehavior.Cascade );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.OnUpdateBehavior.Should().Be( ReferenceBehavior.Cascade );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [ForeignKey] foo.FK_T_C2_REF_T ([11] : 'OnUpdateBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.OnUpdateBehavior.TestEquals( ReferenceBehavior.Cascade ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [ForeignKey] foo.FK_T_C2_REF_T ([11] : 'OnUpdateBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));
+                        """
+                    ] ) )
+            .Go();
     }
 }

@@ -6,12 +6,11 @@ public class SqlDataTypeParameterTests : TestsBase
     public void Default_ShouldReturnEmptyParameter()
     {
         var sut = default( SqlDataTypeParameter );
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().BeEmpty();
-            sut.Bounds.Min.Should().Be( 0 );
-            sut.Bounds.Max.Should().Be( 0 );
-        }
+        Assertion.All(
+                sut.Name.TestEmpty(),
+                sut.Bounds.Min.TestEquals( 0 ),
+                sut.Bounds.Max.TestEquals( 0 ) )
+            .Go();
     }
 
     [Theory]
@@ -21,12 +20,11 @@ public class SqlDataTypeParameterTests : TestsBase
     public void Ctor_ShouldCreateCorrectParameter(string name, int min, int max)
     {
         var sut = new SqlDataTypeParameter( name, Bounds.Create( min, max ) );
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( name );
-            sut.Bounds.Min.Should().Be( min );
-            sut.Bounds.Max.Should().Be( max );
-        }
+        Assertion.All(
+                sut.Name.TestEquals( name ),
+                sut.Bounds.Min.TestEquals( min ),
+                sut.Bounds.Max.TestEquals( max ) )
+            .Go();
     }
 
     [Fact]
@@ -34,6 +32,6 @@ public class SqlDataTypeParameterTests : TestsBase
     {
         var sut = new SqlDataTypeParameter( "foo", Bounds.Create( 0, 60 ) );
         var result = sut.ToString();
-        result.Should().Be( "'foo' [0, 60]" );
+        result.TestEquals( "'foo' [0, 60]" ).Go();
     }
 }

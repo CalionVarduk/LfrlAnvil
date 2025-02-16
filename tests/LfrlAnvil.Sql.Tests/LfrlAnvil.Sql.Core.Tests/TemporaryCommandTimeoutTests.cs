@@ -14,11 +14,10 @@ public class TemporaryCommandTimeoutTests : TestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            timeout.Should().Be( 123 );
-            command.CommandTimeout.Should().Be( 123 );
-        }
+        Assertion.All(
+                timeout.TestEquals( 123 ),
+                command.CommandTimeout.TestEquals( 123 ) )
+            .Go();
     }
 
     [Theory]
@@ -33,10 +32,9 @@ public class TemporaryCommandTimeoutTests : TestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            timeout.Should().Be( expectedTimeout );
-            command.CommandTimeout.Should().Be( 123 );
-        }
+        Assertion.All(
+                timeout.TestEquals( expectedTimeout ),
+                command.CommandTimeout.TestEquals( 123 ) )
+            .Go();
     }
 }

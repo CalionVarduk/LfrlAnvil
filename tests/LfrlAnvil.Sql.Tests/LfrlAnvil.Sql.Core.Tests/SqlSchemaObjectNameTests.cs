@@ -7,11 +7,10 @@ public class SqlSchemaObjectNameTests : TestsBase
     {
         var sut = default( SqlSchemaObjectName );
 
-        using ( new AssertionScope() )
-        {
-            sut.Schema.Should().BeEmpty();
-            sut.Object.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Schema.TestEmpty(),
+                sut.Object.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -19,11 +18,10 @@ public class SqlSchemaObjectNameTests : TestsBase
     {
         var sut = SqlSchemaObjectName.Create( "foo" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Schema.Should().BeEmpty();
-            sut.Object.Should().Be( "foo" );
-        }
+        Assertion.All(
+                sut.Schema.TestEmpty(),
+                sut.Object.TestEquals( "foo" ) )
+            .Go();
     }
 
     [Fact]
@@ -31,11 +29,10 @@ public class SqlSchemaObjectNameTests : TestsBase
     {
         var sut = SqlSchemaObjectName.Create( "foo", "bar" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Schema.Should().Be( "foo" );
-            sut.Object.Should().Be( "bar" );
-        }
+        Assertion.All(
+                sut.Schema.TestEquals( "foo" ),
+                sut.Object.TestEquals( "bar" ) )
+            .Go();
     }
 
     [Theory]
@@ -45,7 +42,7 @@ public class SqlSchemaObjectNameTests : TestsBase
     {
         var sut = SqlSchemaObjectName.Create( schema, obj );
         var result = sut.ToString();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -58,7 +55,7 @@ public class SqlSchemaObjectNameTests : TestsBase
 
         var result = sut.GetHashCode();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -69,7 +66,7 @@ public class SqlSchemaObjectNameTests : TestsBase
     public void Equals_ShouldReturnCorrectResult(string schema1, string name1, string schema2, string name2, bool expected)
     {
         var result = SqlSchemaObjectName.Create( schema1, name1 ).Equals( SqlSchemaObjectName.Create( schema2, name2 ) );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -80,7 +77,7 @@ public class SqlSchemaObjectNameTests : TestsBase
     public void EqualityOperator_ShouldReturnCorrectResult(string schema1, string name1, string schema2, string name2, bool expected)
     {
         var result = SqlSchemaObjectName.Create( schema1, name1 ) == SqlSchemaObjectName.Create( schema2, name2 );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -91,6 +88,6 @@ public class SqlSchemaObjectNameTests : TestsBase
     public void InequalityOperator_ShouldReturnCorrectResult(string schema1, string name1, string schema2, string name2, bool expected)
     {
         var result = SqlSchemaObjectName.Create( schema1, name1 ) != SqlSchemaObjectName.Create( schema2, name2 );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

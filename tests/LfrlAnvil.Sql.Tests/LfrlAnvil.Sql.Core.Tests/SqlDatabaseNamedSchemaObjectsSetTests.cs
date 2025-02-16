@@ -1,6 +1,6 @@
-﻿using LfrlAnvil.Sql.Internal;
+﻿using System.Diagnostics.Contracts;
+using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests;
@@ -12,11 +12,10 @@ public class SqlDatabaseNamedSchemaObjectsSetTests : TestsBase
     {
         var sut = SqlDatabaseNamedSchemaObjectsSet<SqlObjectBuilder>.Create();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            ToArray( sut ).Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                ToArray( sut ).TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -27,14 +26,12 @@ public class SqlDatabaseNamedSchemaObjectsSetTests : TestsBase
 
         var result = sut.Add( SqlSchemaObjectName.Create( "foo", "bar" ), obj );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 1 );
-            ToArray( sut )
-                .Should()
-                .BeSequentiallyEqualTo( new SqlNamedSchemaObject<SqlObjectBuilder>( SqlSchemaObjectName.Create( "foo", "bar" ), obj ) );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 1 ),
+                ToArray( sut )
+                    .TestSequence( [ new SqlNamedSchemaObject<SqlObjectBuilder>( SqlSchemaObjectName.Create( "foo", "bar" ), obj ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -46,14 +43,12 @@ public class SqlDatabaseNamedSchemaObjectsSetTests : TestsBase
 
         var result = sut.Add( SqlSchemaObjectName.Create( "foo", "bar" ), obj.Objects.CreateTable( "T" ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Count.Should().Be( 1 );
-            ToArray( sut )
-                .Should()
-                .BeSequentiallyEqualTo( new SqlNamedSchemaObject<SqlObjectBuilder>( SqlSchemaObjectName.Create( "foo", "bar" ), obj ) );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.Count.TestEquals( 1 ),
+                ToArray( sut )
+                    .TestSequence( [ new SqlNamedSchemaObject<SqlObjectBuilder>( SqlSchemaObjectName.Create( "foo", "bar" ), obj ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -65,12 +60,11 @@ public class SqlDatabaseNamedSchemaObjectsSetTests : TestsBase
 
         var result = sut.Remove( SqlSchemaObjectName.Create( "foo", "bar" ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( obj );
-            sut.Count.Should().Be( 0 );
-            ToArray( sut ).Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( obj ),
+                sut.Count.TestEquals( 0 ),
+                ToArray( sut ).TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -80,12 +74,11 @@ public class SqlDatabaseNamedSchemaObjectsSetTests : TestsBase
 
         var result = sut.Remove( SqlSchemaObjectName.Create( "foo", "bar" ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeNull();
-            sut.Count.Should().Be( 0 );
-            ToArray( sut ).Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestNull(),
+                sut.Count.TestEquals( 0 ),
+                ToArray( sut ).TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -97,7 +90,7 @@ public class SqlDatabaseNamedSchemaObjectsSetTests : TestsBase
 
         var result = sut.TryGetObject( SqlSchemaObjectName.Create( "foo", "bar" ) );
 
-        result.Should().BeSameAs( obj );
+        result.TestRefEquals( obj ).Go();
     }
 
     [Fact]
@@ -105,7 +98,7 @@ public class SqlDatabaseNamedSchemaObjectsSetTests : TestsBase
     {
         var sut = SqlDatabaseNamedSchemaObjectsSet<SqlObjectBuilder>.Create();
         var result = sut.TryGetObject( SqlSchemaObjectName.Create( "foo", "bar" ) );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -117,13 +110,13 @@ public class SqlDatabaseNamedSchemaObjectsSetTests : TestsBase
 
         sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            ToArray( sut ).Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                ToArray( sut ).TestEmpty() )
+            .Go();
     }
 
+    [Pure]
     private static SqlNamedSchemaObject<T>[] ToArray<T>(SqlDatabaseNamedSchemaObjectsSet<T> set)
         where T : SqlObjectBuilder
     {

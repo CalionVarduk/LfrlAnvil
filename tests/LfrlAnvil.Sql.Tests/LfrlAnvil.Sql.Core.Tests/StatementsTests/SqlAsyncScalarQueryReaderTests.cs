@@ -2,7 +2,6 @@
 using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Sql.Statements;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 using LfrlAnvil.TestExtensions.Sql.Mocks.System;
 
@@ -24,18 +23,12 @@ public class SqlAsyncScalarQueryReaderTests : TestsBase
 
         var result = await sut.ReadAsync( reader, cancellationTokenSource.Token );
 
-        using ( new AssertionScope() )
-        {
-            sut.Dialect.Should().BeSameAs( dialect );
-            sut.Delegate.Should().BeSameAs( @delegate );
-            @delegate.Verify()
-                .CallAt( 0 )
-                .Exists()
-                .And.Arguments.Should()
-                .BeSequentiallyEqualTo( reader, cancellationTokenSource.Token );
-
-            result.Should().BeEquivalentTo( expected );
-        }
+        Assertion.All(
+                sut.Dialect.TestRefEquals( dialect ),
+                sut.Delegate.TestRefEquals( @delegate ),
+                @delegate.CallAt( 0 ).Arguments.TestSequence( [ reader, cancellationTokenSource.Token ] ),
+                result.TestEquals( expected ) )
+            .Go();
     }
 
     [Fact]
@@ -52,17 +45,11 @@ public class SqlAsyncScalarQueryReaderTests : TestsBase
 
         var result = await sut.ReadAsync( reader, cancellationTokenSource.Token );
 
-        using ( new AssertionScope() )
-        {
-            sut.Dialect.Should().BeSameAs( dialect );
-            sut.Delegate.Should().BeSameAs( @delegate );
-            @delegate.Verify()
-                .CallAt( 0 )
-                .Exists()
-                .And.Arguments.Should()
-                .BeSequentiallyEqualTo( reader, cancellationTokenSource.Token );
-
-            result.Should().BeEquivalentTo( expected );
-        }
+        Assertion.All(
+                sut.Dialect.TestRefEquals( dialect ),
+                sut.Delegate.TestRefEquals( @delegate ),
+                @delegate.CallAt( 0 ).Arguments.TestSequence( [ reader, cancellationTokenSource.Token ] ),
+                result.TestEquals( expected ) )
+            .Go();
     }
 }

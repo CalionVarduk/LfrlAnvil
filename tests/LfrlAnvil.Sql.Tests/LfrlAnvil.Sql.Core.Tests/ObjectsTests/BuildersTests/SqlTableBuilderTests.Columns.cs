@@ -4,7 +4,6 @@ using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.ObjectsTests.BuildersTests;
@@ -22,32 +21,29 @@ public partial class SqlTableBuilderTests
 
             var result = sut.Create( "C" );
 
-            using ( new AssertionScope() )
-            {
-                result.Table.Should().BeSameAs( table );
-                result.Database.Should().BeSameAs( table.Database );
-                result.Type.Should().Be( SqlObjectType.Column );
-                result.Name.Should().Be( "C" );
-                result.IsNullable.Should().BeFalse();
-                result.TypeDefinition.Should().BeSameAs( sut.DefaultTypeDefinition );
-                result.DefaultValue.Should().BeNull();
-                result.Node.Should().BeEquivalentTo( table.Node["C"] );
-                result.ReferencingObjects.Should().BeEmpty();
-                result.Computation.Should().BeNull();
-                result.ReferencedComputationColumns.Should().BeEmpty();
-
-                (( ISqlColumnBuilder )result).Table.Should().BeSameAs( result.Table );
-                (( ISqlColumnBuilder )result).TypeDefinition.Should().BeSameAs( result.TypeDefinition );
-                (( ISqlColumnBuilder )result).ReferencedComputationColumns.Should()
-                    .BeSequentiallyEqualTo( result.ReferencedComputationColumns );
-
-                (( ISqlObjectBuilder )result).Database.Should().BeSameAs( result.Database );
-                (( ISqlObjectBuilder )result).ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo( result.ReferencingObjects.UnsafeReinterpretAs<ISqlObjectBuilder>() );
-
-                sut.Count.Should().Be( 1 );
-                sut.Should().BeSequentiallyEqualTo( result );
-            }
+            Assertion.All(
+                    result.Table.TestRefEquals( table ),
+                    result.Database.TestRefEquals( table.Database ),
+                    result.Type.TestEquals( SqlObjectType.Column ),
+                    result.Name.TestEquals( "C" ),
+                    result.IsNullable.TestFalse(),
+                    result.TypeDefinition.TestRefEquals( sut.DefaultTypeDefinition ),
+                    result.DefaultValue.TestNull(),
+                    result.Node.Name.TestEquals( "C" ),
+                    result.Node.Value.TestRefEquals( result ),
+                    result.Node.RecordSet.TestRefEquals( table.Node ),
+                    result.ReferencingObjects.TestEmpty(),
+                    result.Computation.TestNull(),
+                    result.ReferencedComputationColumns.TestEmpty(),
+                    (( ISqlColumnBuilder )result).Table.TestRefEquals( result.Table ),
+                    (( ISqlColumnBuilder )result).TypeDefinition.TestRefEquals( result.TypeDefinition ),
+                    (( ISqlColumnBuilder )result).ReferencedComputationColumns.TestSequence( result.ReferencedComputationColumns ),
+                    (( ISqlObjectBuilder )result).Database.TestRefEquals( result.Database ),
+                    (( ISqlObjectBuilder )result).ReferencingObjects.TestSequence(
+                        result.ReferencingObjects.UnsafeReinterpretAs<ISqlObjectBuilder>() ),
+                    sut.Count.TestEquals( 1 ),
+                    sut.TestSequence( [ result ] ) )
+                .Go();
         }
 
         [Fact]
@@ -60,9 +56,11 @@ public partial class SqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.Create( "C" ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -75,9 +73,11 @@ public partial class SqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.Create( "C" ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Theory]
@@ -93,9 +93,11 @@ public partial class SqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.Create( name ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -107,32 +109,29 @@ public partial class SqlTableBuilderTests
 
             var result = sut.GetOrCreate( "C" );
 
-            using ( new AssertionScope() )
-            {
-                result.Table.Should().BeSameAs( table );
-                result.Database.Should().BeSameAs( table.Database );
-                result.Type.Should().Be( SqlObjectType.Column );
-                result.Name.Should().Be( "C" );
-                result.IsNullable.Should().BeFalse();
-                result.TypeDefinition.Should().BeSameAs( sut.DefaultTypeDefinition );
-                result.DefaultValue.Should().BeNull();
-                result.Node.Should().BeEquivalentTo( table.Node["C"] );
-                result.ReferencingObjects.Should().BeEmpty();
-                result.Computation.Should().BeNull();
-                result.ReferencedComputationColumns.Should().BeEmpty();
-
-                (( ISqlColumnBuilder )result).Table.Should().BeSameAs( result.Table );
-                (( ISqlColumnBuilder )result).TypeDefinition.Should().BeSameAs( result.TypeDefinition );
-                (( ISqlColumnBuilder )result).ReferencedComputationColumns.Should()
-                    .BeSequentiallyEqualTo( result.ReferencedComputationColumns );
-
-                (( ISqlObjectBuilder )result).Database.Should().BeSameAs( result.Database );
-                (( ISqlObjectBuilder )result).ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo( result.ReferencingObjects.UnsafeReinterpretAs<ISqlObjectBuilder>() );
-
-                sut.Count.Should().Be( 1 );
-                sut.Should().BeSequentiallyEqualTo( result );
-            }
+            Assertion.All(
+                    result.Table.TestRefEquals( table ),
+                    result.Database.TestRefEquals( table.Database ),
+                    result.Type.TestEquals( SqlObjectType.Column ),
+                    result.Name.TestEquals( "C" ),
+                    result.IsNullable.TestFalse(),
+                    result.TypeDefinition.TestRefEquals( sut.DefaultTypeDefinition ),
+                    result.DefaultValue.TestNull(),
+                    result.Node.Name.TestEquals( "C" ),
+                    result.Node.Value.TestRefEquals( result ),
+                    result.Node.RecordSet.TestRefEquals( table.Node ),
+                    result.ReferencingObjects.TestEmpty(),
+                    result.Computation.TestNull(),
+                    result.ReferencedComputationColumns.TestEmpty(),
+                    (( ISqlColumnBuilder )result).Table.TestRefEquals( result.Table ),
+                    (( ISqlColumnBuilder )result).TypeDefinition.TestRefEquals( result.TypeDefinition ),
+                    (( ISqlColumnBuilder )result).ReferencedComputationColumns.TestSequence( result.ReferencedComputationColumns ),
+                    (( ISqlObjectBuilder )result).Database.TestRefEquals( result.Database ),
+                    (( ISqlObjectBuilder )result).ReferencingObjects.TestSequence(
+                        result.ReferencingObjects.UnsafeReinterpretAs<ISqlObjectBuilder>() ),
+                    sut.Count.TestEquals( 1 ),
+                    sut.TestSequence( [ result ] ) )
+                .Go();
         }
 
         [Fact]
@@ -145,11 +144,10 @@ public partial class SqlTableBuilderTests
 
             var result = sut.GetOrCreate( "C" );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeSameAs( expected );
-                sut.Count.Should().Be( 1 );
-            }
+            Assertion.All(
+                    result.TestRefEquals( expected ),
+                    sut.Count.TestEquals( 1 ) )
+                .Go();
         }
 
         [Fact]
@@ -162,9 +160,11 @@ public partial class SqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.GetOrCreate( "C" ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Theory]
@@ -180,9 +180,11 @@ public partial class SqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.GetOrCreate( name ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Theory]
@@ -197,7 +199,7 @@ public partial class SqlTableBuilderTests
 
             var result = sut.Contains( name );
 
-            result.Should().Be( expected );
+            result.TestEquals( expected ).Go();
         }
 
         [Fact]
@@ -210,7 +212,7 @@ public partial class SqlTableBuilderTests
 
             var result = (( ISqlColumnBuilderCollection )sut).Get( "C" );
 
-            result.Should().BeSameAs( expected );
+            result.TestRefEquals( expected ).Go();
         }
 
         [Fact]
@@ -223,7 +225,7 @@ public partial class SqlTableBuilderTests
 
             var action = Lambda.Of( () => (( ISqlColumnBuilderCollection )sut).Get( "D" ) );
 
-            action.Should().ThrowExactly<KeyNotFoundException>();
+            action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
         }
 
         [Fact]
@@ -236,7 +238,7 @@ public partial class SqlTableBuilderTests
 
             var result = (( ISqlColumnBuilderCollection )sut).TryGet( "C" );
 
-            result.Should().BeSameAs( expected );
+            result.TestRefEquals( expected ).Go();
         }
 
         [Fact]
@@ -249,7 +251,7 @@ public partial class SqlTableBuilderTests
 
             var result = (( ISqlColumnBuilderCollection )sut).TryGet( "D" );
 
-            result.Should().BeNull();
+            result.TestNull().Go();
         }
 
         [Fact]
@@ -262,12 +264,11 @@ public partial class SqlTableBuilderTests
 
             var result = sut.Remove( "C" );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeTrue();
-                sut.TryGet( column.Name ).Should().BeNull();
-                column.IsRemoved.Should().BeTrue();
-            }
+            Assertion.All(
+                    result.TestTrue(),
+                    sut.TryGet( column.Name ).TestNull(),
+                    column.IsRemoved.TestTrue() )
+                .Go();
         }
 
         [Fact]
@@ -279,7 +280,7 @@ public partial class SqlTableBuilderTests
 
             var result = sut.Remove( "C" );
 
-            result.Should().BeFalse();
+            result.TestFalse().Go();
         }
 
         [Fact]
@@ -294,12 +295,11 @@ public partial class SqlTableBuilderTests
 
             var result = sut.Remove( "C2" );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeFalse();
-                column.IsRemoved.Should().BeFalse();
-                sut.Count.Should().Be( 2 );
-            }
+            Assertion.All(
+                    result.TestFalse(),
+                    column.IsRemoved.TestFalse(),
+                    sut.Count.TestEquals( 2 ) )
+                .Go();
         }
 
         [Fact]
@@ -314,12 +314,11 @@ public partial class SqlTableBuilderTests
 
             var result = sut.Remove( "C2" );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeFalse();
-                column.IsRemoved.Should().BeFalse();
-                sut.Count.Should().Be( 3 );
-            }
+            Assertion.All(
+                    result.TestFalse(),
+                    column.IsRemoved.TestFalse(),
+                    sut.Count.TestEquals( 3 ) )
+                .Go();
         }
 
         [Fact]
@@ -334,12 +333,11 @@ public partial class SqlTableBuilderTests
 
             var result = sut.Remove( "C2" );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeFalse();
-                column.IsRemoved.Should().BeFalse();
-                sut.Count.Should().Be( 2 );
-            }
+            Assertion.All(
+                    result.TestFalse(),
+                    column.IsRemoved.TestFalse(),
+                    sut.Count.TestEquals( 2 ) )
+                .Go();
         }
 
         [Fact]
@@ -354,12 +352,11 @@ public partial class SqlTableBuilderTests
 
             var result = sut.Remove( "C2" );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeFalse();
-                column.IsRemoved.Should().BeFalse();
-                sut.Count.Should().Be( 2 );
-            }
+            Assertion.All(
+                    result.TestFalse(),
+                    column.IsRemoved.TestFalse(),
+                    sut.Count.TestEquals( 2 ) )
+                .Go();
         }
 
         [Fact]
@@ -372,11 +369,10 @@ public partial class SqlTableBuilderTests
 
             var result = (( ISqlColumnBuilderCollection )sut).SetDefaultTypeDefinition( definition );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeSameAs( sut );
-                result.DefaultTypeDefinition.Should().BeSameAs( definition );
-            }
+            Assertion.All(
+                    result.TestRefEquals( sut ),
+                    result.DefaultTypeDefinition.TestRefEquals( definition ) )
+                .Go();
         }
 
         [Fact]
@@ -389,9 +385,11 @@ public partial class SqlTableBuilderTests
 
             var action = Lambda.Of( () => (( ISqlColumnBuilderCollection )sut).SetDefaultTypeDefinition( definition ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -404,9 +402,13 @@ public partial class SqlTableBuilderTests
 
             var action = Lambda.Of( () => (( ISqlColumnBuilderCollection )sut).SetDefaultTypeDefinition( definition ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectCastException>()
-                .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Expected == typeof( SqlColumnTypeDefinition ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectCastException>(
+                            e => Assertion.All(
+                                e.Dialect.TestEquals( SqlDialectMock.Instance ),
+                                e.Expected.TestEquals( typeof( SqlColumnTypeDefinition ) ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -418,23 +420,23 @@ public partial class SqlTableBuilderTests
 
             var result = (( ISqlColumnBuilderCollection )sut).Create( "C" );
 
-            using ( new AssertionScope() )
-            {
-                result.Table.Should().BeSameAs( table );
-                result.Database.Should().BeSameAs( table.Database );
-                result.Type.Should().Be( SqlObjectType.Column );
-                result.Name.Should().Be( "C" );
-                result.IsNullable.Should().BeFalse();
-                result.TypeDefinition.Should().BeSameAs( sut.DefaultTypeDefinition );
-                result.DefaultValue.Should().BeNull();
-                result.Node.Should().BeEquivalentTo( table.Node["C"] );
-                result.ReferencingObjects.Should().BeEmpty();
-                result.Computation.Should().BeNull();
-                result.ReferencedComputationColumns.Should().BeEmpty();
-
-                sut.Count.Should().Be( 1 );
-                sut.Should().BeSequentiallyEqualTo( result );
-            }
+            Assertion.All(
+                    result.Table.TestRefEquals( table ),
+                    result.Database.TestRefEquals( table.Database ),
+                    result.Type.TestEquals( SqlObjectType.Column ),
+                    result.Name.TestEquals( "C" ),
+                    result.IsNullable.TestFalse(),
+                    result.TypeDefinition.TestRefEquals( sut.DefaultTypeDefinition ),
+                    result.DefaultValue.TestNull(),
+                    result.Node.Name.TestEquals( "C" ),
+                    result.Node.Value.TestRefEquals( result ),
+                    result.Node.RecordSet.TestRefEquals( table.Node ),
+                    result.ReferencingObjects.TestEmpty(),
+                    result.Computation.TestNull(),
+                    result.ReferencedComputationColumns.TestEmpty(),
+                    sut.Count.TestEquals( 1 ),
+                    sut.TestSequence( [ result ] ) )
+                .Go();
         }
 
         [Fact]
@@ -447,11 +449,10 @@ public partial class SqlTableBuilderTests
 
             var result = (( ISqlColumnBuilderCollection )sut).GetOrCreate( "C" );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeSameAs( expected );
-                sut.Count.Should().Be( 1 );
-            }
+            Assertion.All(
+                    result.TestRefEquals( expected ),
+                    sut.Count.TestEquals( 1 ) )
+                .Go();
         }
     }
 }

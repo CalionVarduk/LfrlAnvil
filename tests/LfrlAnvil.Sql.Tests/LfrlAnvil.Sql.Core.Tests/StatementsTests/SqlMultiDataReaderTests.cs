@@ -2,7 +2,6 @@
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Statements;
 using LfrlAnvil.Sql.Statements.Compilers;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 using LfrlAnvil.TestExtensions.Sql.Mocks.System;
 
@@ -15,7 +14,7 @@ public class SqlMultiDataReaderTests : TestsBase
     {
         var reader = new DbDataReaderMock();
         var sut = reader.Multi();
-        sut.Reader.Should().BeSameAs( reader );
+        sut.Reader.TestRefEquals( reader ).Go();
     }
 
     [Fact]
@@ -24,7 +23,7 @@ public class SqlMultiDataReaderTests : TestsBase
         var reader = new DbDataReaderMock { ThrowOnDispose = true };
         var sut = reader.Multi();
         var action = Lambda.Of( () => sut.Dispose() );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -33,7 +32,7 @@ public class SqlMultiDataReaderTests : TestsBase
         var reader = new DbDataReaderMock( new ResultSet( new[] { "A" }, new[] { new object[] { "foo" }, new object[] { "bar" } } ) );
         var sut = reader.Multi();
         sut.Dispose();
-        reader.IsClosed.Should().BeTrue();
+        reader.IsClosed.TestTrue().Go();
     }
 
     [Fact]
@@ -52,25 +51,27 @@ public class SqlMultiDataReaderTests : TestsBase
         var set2 = sut.Read( reader );
         var set3 = sut.Read( reader );
 
-        using ( new AssertionScope() )
-        {
-            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
-
-            set1.Rows.Should().NotBeNull();
-            (set1.Rows?.Count).Should().Be( 2 );
-            (set1.Rows?[0].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( 1, "foo" );
-            (set1.Rows?[1].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( 2, "bar" );
-
-            set2.Rows.Should().NotBeNull();
-            (set2.Rows?.Count).Should().Be( 2 );
-            (set2.Rows?[0].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( "x1", "y1" );
-            (set2.Rows?[1].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( "x2", null );
-
-            set3.Rows.Should().NotBeNull();
-            (set3.Rows?.Count).Should().Be( 2 );
-            (set3.Rows?[0].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( true, 5.0 );
-            (set3.Rows?[1].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( false, null );
-        }
+        Assertion.All(
+                command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
+                set1.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => r.AsSpan().TestSequence( [ 1, "foo" ] ),
+                        (r, _) => r.AsSpan().TestSequence( [ 2, "bar" ] )
+                    ] ) ),
+                set2.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => r.AsSpan().TestSequence( [ "x1", "y1" ] ),
+                        (r, _) => r.AsSpan().TestSequence( [ "x2", null ] )
+                    ] ) ),
+                set3.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => r.AsSpan().TestSequence( [ true, 5.0 ] ),
+                        (r, _) => r.AsSpan().TestSequence( [ false, null ] )
+                    ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -88,13 +89,12 @@ public class SqlMultiDataReaderTests : TestsBase
         var set2 = sut.Read( factory.Create<SecondRow>() );
         var set3 = sut.Read( factory.Create<ThirdRow>() );
 
-        using ( new AssertionScope() )
-        {
-            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
-            set1.Rows.Should().BeSequentiallyEqualTo( new FirstRow( 1, "foo" ), new FirstRow( 2, "bar" ) );
-            set2.Rows.Should().BeSequentiallyEqualTo( new SecondRow( "x1", "y1" ), new SecondRow( "x2", null ) );
-            set3.Rows.Should().BeSequentiallyEqualTo( new ThirdRow( true, 5.0 ), new ThirdRow( false, null ) );
-        }
+        Assertion.All(
+                command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
+                set1.Rows.TestNotNull( rows => rows.TestSequence( [ new FirstRow( 1, "foo" ), new FirstRow( 2, "bar" ) ] ) ),
+                set2.Rows.TestNotNull( rows => rows.TestSequence( [ new SecondRow( "x1", "y1" ), new SecondRow( "x2", null ) ] ) ),
+                set3.Rows.TestNotNull( rows => rows.TestSequence( [ new ThirdRow( true, 5.0 ), new ThirdRow( false, null ) ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -113,19 +113,15 @@ public class SqlMultiDataReaderTests : TestsBase
         var result2 = sut.Read( reader );
         var result3 = sut.Read( reader );
 
-        using ( new AssertionScope() )
-        {
-            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
-
-            result1.HasValue.Should().BeTrue();
-            result1.Value.Should().Be( 1 );
-
-            result2.HasValue.Should().BeTrue();
-            result2.Value.Should().Be( "x1" );
-
-            result3.HasValue.Should().BeTrue();
-            result3.Value.Should().Be( true );
-        }
+        Assertion.All(
+                command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
+                result1.HasValue.TestTrue(),
+                result1.Value.TestEquals( 1 ),
+                result2.HasValue.TestTrue(),
+                result2.Value.TestEquals( "x1" ),
+                result3.HasValue.TestTrue(),
+                result3.Value.TestEquals( true ) )
+            .Go();
     }
 
     [Fact]
@@ -143,19 +139,15 @@ public class SqlMultiDataReaderTests : TestsBase
         var result2 = sut.Read( factory.CreateScalar<string>() );
         var result3 = sut.Read( factory.CreateScalar<bool>() );
 
-        using ( new AssertionScope() )
-        {
-            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
-
-            result1.HasValue.Should().BeTrue();
-            result1.Value.Should().Be( 1 );
-
-            result2.HasValue.Should().BeTrue();
-            result2.Value.Should().Be( "x1" );
-
-            result3.HasValue.Should().BeTrue();
-            result3.Value.Should().Be( true );
-        }
+        Assertion.All(
+                command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
+                result1.HasValue.TestTrue(),
+                result1.Value.TestEquals( 1 ),
+                result2.HasValue.TestTrue(),
+                result2.Value.TestEquals( "x1" ),
+                result3.HasValue.TestTrue(),
+                result3.Value.TestEquals( true ) )
+            .Go();
     }
 
     [Fact]
@@ -172,13 +164,12 @@ public class SqlMultiDataReaderTests : TestsBase
         var set2 = sut.Read( _ => "foo" );
         var set3 = sut.Read( _ => true );
 
-        using ( new AssertionScope() )
-        {
-            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
-            set1.Should().Be( 1 );
-            set2.Should().Be( "foo" );
-            set3.Should().Be( true );
-        }
+        Assertion.All(
+                command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
+                set1.TestEquals( 1 ),
+                set2.TestEquals( "foo" ),
+                set3.TestEquals( true ) )
+            .Go();
     }
 
     [Fact]
@@ -194,29 +185,30 @@ public class SqlMultiDataReaderTests : TestsBase
 
         var result = sut.ReadAll( factory.Create() );
 
-        using ( new AssertionScope() )
-        {
-            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
-            result.Should().HaveCount( 3 );
-            var set1 = result.ElementAtOrDefault( 0 );
-            var set2 = result.ElementAtOrDefault( 1 );
-            var set3 = result.ElementAtOrDefault( 2 );
-
-            set1.Rows.Should().NotBeNull();
-            (set1.Rows?.Count).Should().Be( 2 );
-            (set1.Rows?[0].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( 1, "foo" );
-            (set1.Rows?[1].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( 2, "bar" );
-
-            set2.Rows.Should().NotBeNull();
-            (set2.Rows?.Count).Should().Be( 2 );
-            (set2.Rows?[0].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( "x1", "y1" );
-            (set2.Rows?[1].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( "x2", null );
-
-            set3.Rows.Should().NotBeNull();
-            (set3.Rows?.Count).Should().Be( 2 );
-            (set3.Rows?[0].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( true, 5.0 );
-            (set3.Rows?[1].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( false, null );
-        }
+        Assertion.All(
+                command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
+                result.TestSequence(
+                [
+                    (set1, _) => set1.Rows.TestNotNull(
+                        rows => rows.TestSequence(
+                        [
+                            (r, _) => r.AsSpan().TestSequence( [ 1, "foo" ] ),
+                            (r, _) => r.AsSpan().TestSequence( [ 2, "bar" ] )
+                        ] ) ),
+                    (set2, _) => set2.Rows.TestNotNull(
+                        rows => rows.TestSequence(
+                        [
+                            (r, _) => r.AsSpan().TestSequence( [ "x1", "y1" ] ),
+                            (r, _) => r.AsSpan().TestSequence( [ "x2", null ] )
+                        ] ) ),
+                    (set3, _) => set3.Rows.TestNotNull(
+                        rows => rows.TestSequence(
+                        [
+                            (r, _) => r.AsSpan().TestSequence( [ true, 5.0 ] ),
+                            (r, _) => r.AsSpan().TestSequence( [ false, null ] )
+                        ] ) )
+                ] ) )
+            .Go();
     }
 
     public sealed record FirstRow(int A, string B);

@@ -2,7 +2,7 @@
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Functions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
+using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
@@ -16,13 +16,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = SqlNode.Functions.Named( SqlSchemaObjectName.Create( "foo", "bar" ), arguments );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Named );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arguments );
-            text.Should().Be( "[foo].[bar]((\"10\" : System.Int32), (\"20\" : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Named ),
+                sut.Arguments.TestSequence( arguments ),
+                text.TestEquals( "[foo].[bar]((\"10\" : System.Int32), (\"20\" : System.Int32))" ) )
+            .Go();
     }
 
     [Fact]
@@ -33,26 +32,24 @@ public class FunctionExpressionTests : TestsBase
         var sut = SqlNode.AggregateFunctions.Named( SqlSchemaObjectName.Create( "foo", "bar" ), arguments ).AddTrait( trait );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Named );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arguments );
-            sut.Traits.Should().BeSequentiallyEqualTo( trait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Named ),
+                sut.Arguments.TestSequence( arguments ),
+                sut.Traits.TestSequence( [ trait ] ),
+                text.TestEquals(
                     """
                     AGG_[foo].[bar](("10" : System.Int32), ("20" : System.Int32))
                       DISTINCT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
     public void Coalesce_ShouldThrowArgumentException_WhenArgumentsAreEmpty()
     {
         var action = Lambda.Of( () => SqlNode.Functions.Coalesce() );
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -62,13 +59,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Coalesce();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Coalesce );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            text.Should().Be( "COALESCE((\"10\" : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Coalesce ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                text.TestEquals( "COALESCE((\"10\" : System.Int32))" ) )
+            .Go();
     }
 
     [Fact]
@@ -82,13 +78,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = args[0].Coalesce( args[1], args[2] );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Coalesce );
-            sut.Arguments.Should().BeSequentiallyEqualTo( args );
-            text.Should().Be( "COALESCE((@a : Nullable<System.Int32>), (@b : ?), (@c : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Coalesce ),
+                sut.Arguments.TestSequence( args ),
+                text.TestEquals( "COALESCE((@a : Nullable<System.Int32>), (@b : ?), (@c : System.Int32))" ) )
+            .Go();
     }
 
     [Fact]
@@ -97,13 +92,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = SqlNode.Functions.CurrentDate();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.CurrentDate );
-            sut.Arguments.Should().BeEmpty();
-            text.Should().Be( "CURRENT_DATE()" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.CurrentDate ),
+                sut.Arguments.TestEmpty(),
+                text.TestEquals( "CURRENT_DATE()" ) )
+            .Go();
     }
 
     [Fact]
@@ -112,13 +106,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = SqlNode.Functions.CurrentTime();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.CurrentTime );
-            sut.Arguments.Should().BeEmpty();
-            text.Should().Be( "CURRENT_TIME()" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.CurrentTime ),
+                sut.Arguments.TestEmpty(),
+                text.TestEquals( "CURRENT_TIME()" ) )
+            .Go();
     }
 
     [Fact]
@@ -127,13 +120,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = SqlNode.Functions.CurrentDateTime();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.CurrentDateTime );
-            sut.Arguments.Should().BeEmpty();
-            text.Should().Be( "CURRENT_DATETIME()" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.CurrentDateTime ),
+                sut.Arguments.TestEmpty(),
+                text.TestEquals( "CURRENT_DATETIME()" ) )
+            .Go();
     }
 
     [Fact]
@@ -142,13 +134,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = SqlNode.Functions.CurrentUtcDateTime();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.CurrentUtcDateTime );
-            sut.Arguments.Should().BeEmpty();
-            text.Should().Be( "CURRENT_UTC_DATETIME()" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.CurrentUtcDateTime ),
+                sut.Arguments.TestEmpty(),
+                text.TestEquals( "CURRENT_UTC_DATETIME()" ) )
+            .Go();
     }
 
     [Fact]
@@ -157,13 +148,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = SqlNode.Functions.CurrentTimestamp();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.CurrentTimestamp );
-            sut.Arguments.Should().BeEmpty();
-            text.Should().Be( "CURRENT_TIMESTAMP()" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.CurrentTimestamp ),
+                sut.Arguments.TestEmpty(),
+                text.TestEquals( "CURRENT_TIMESTAMP()" ) )
+            .Go();
     }
 
     [Fact]
@@ -173,13 +163,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.ExtractDate();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.ExtractDate );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            text.Should().Be( "EXTRACT_DATE((\"10\" : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.ExtractDate ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                text.TestEquals( "EXTRACT_DATE((\"10\" : System.Int32))" ) )
+            .Go();
     }
 
     [Fact]
@@ -189,13 +178,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.ExtractTimeOfDay();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.ExtractTimeOfDay );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            text.Should().Be( "EXTRACT_TIME_OF_DAY((\"10\" : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.ExtractTimeOfDay ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                text.TestEquals( "EXTRACT_TIME_OF_DAY((\"10\" : System.Int32))" ) )
+            .Go();
     }
 
     [Fact]
@@ -205,14 +193,13 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.ExtractDayOfYear();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.ExtractDay );
-            sut.Unit.Should().Be( SqlTemporalUnit.Year );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            text.Should().Be( "EXTRACT_DAY_OF_YEAR((\"10\" : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.ExtractDay ),
+                sut.Unit.TestEquals( SqlTemporalUnit.Year ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                text.TestEquals( "EXTRACT_DAY_OF_YEAR((\"10\" : System.Int32))" ) )
+            .Go();
     }
 
     [Fact]
@@ -222,14 +209,13 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.ExtractDayOfMonth();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.ExtractDay );
-            sut.Unit.Should().Be( SqlTemporalUnit.Month );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            text.Should().Be( "EXTRACT_DAY_OF_MONTH((\"10\" : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.ExtractDay ),
+                sut.Unit.TestEquals( SqlTemporalUnit.Month ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                text.TestEquals( "EXTRACT_DAY_OF_MONTH((\"10\" : System.Int32))" ) )
+            .Go();
     }
 
     [Fact]
@@ -239,14 +225,13 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.ExtractDayOfWeek();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.ExtractDay );
-            sut.Unit.Should().Be( SqlTemporalUnit.Week );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            text.Should().Be( "EXTRACT_DAY_OF_WEEK((\"10\" : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.ExtractDay ),
+                sut.Unit.TestEquals( SqlTemporalUnit.Week ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                text.TestEquals( "EXTRACT_DAY_OF_WEEK((\"10\" : System.Int32))" ) )
+            .Go();
     }
 
     [Theory]
@@ -266,14 +251,13 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.ExtractTemporalUnit( unit );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.ExtractTemporalUnit );
-            sut.Unit.Should().Be( unit );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            text.Should().Be( $"EXTRACT_TEMPORAL_{expectedUnit}((\"10\" : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.ExtractTemporalUnit ),
+                sut.Unit.TestEquals( unit ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                text.TestEquals( $"EXTRACT_TEMPORAL_{expectedUnit}((\"10\" : System.Int32))" ) )
+            .Go();
     }
 
     [Theory]
@@ -293,14 +277,13 @@ public class FunctionExpressionTests : TestsBase
         var sut = args[0].TemporalAdd( args[1], unit );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.TemporalAdd );
-            sut.Unit.Should().Be( unit );
-            sut.Arguments.Should().BeSequentiallyEqualTo( args[0], args[1] );
-            text.Should().Be( $"TEMPORAL_ADD_{expectedUnit}((\"10\" : System.Int32), (\"20\" : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.TemporalAdd ),
+                sut.Unit.TestEquals( unit ),
+                sut.Arguments.TestSequence( [ args[0], args[1] ] ),
+                text.TestEquals( $"TEMPORAL_ADD_{expectedUnit}((\"10\" : System.Int32), (\"20\" : System.Int32))" ) )
+            .Go();
     }
 
     [Theory]
@@ -320,14 +303,13 @@ public class FunctionExpressionTests : TestsBase
         var sut = args[0].TemporalDiff( args[1], unit );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.TemporalDiff );
-            sut.Unit.Should().Be( unit );
-            sut.Arguments.Should().BeSequentiallyEqualTo( args[0], args[1] );
-            text.Should().Be( $"TEMPORAL_DIFF_{expectedUnit}((\"10\" : System.Int32), (\"20\" : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.TemporalDiff ),
+                sut.Unit.TestEquals( unit ),
+                sut.Arguments.TestSequence( [ args[0], args[1] ] ),
+                text.TestEquals( $"TEMPORAL_DIFF_{expectedUnit}((\"10\" : System.Int32), (\"20\" : System.Int32))" ) )
+            .Go();
     }
 
     [Fact]
@@ -336,13 +318,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = SqlNode.Functions.NewGuid();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.NewGuid );
-            sut.Arguments.Should().BeEmpty();
-            text.Should().Be( "NEW_GUID()" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.NewGuid ),
+                sut.Arguments.TestEmpty(),
+                text.TestEquals( "NEW_GUID()" ) )
+            .Go();
     }
 
     [Fact]
@@ -352,13 +333,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Length();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Length );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            text.Should().Be( "LENGTH((\"foo\" : System.String))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Length ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                text.TestEquals( "LENGTH((\"foo\" : System.String))" ) )
+            .Go();
     }
 
     [Fact]
@@ -368,13 +348,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.ByteLength();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.ByteLength );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            text.Should().Be( "BYTE_LENGTH((\"foo\" : System.String))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.ByteLength ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                text.TestEquals( "BYTE_LENGTH((\"foo\" : System.String))" ) )
+            .Go();
     }
 
     [Fact]
@@ -384,13 +363,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.ToLower();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.ToLower );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            text.Should().Be( "TO_LOWER((\"FOO\" : System.String))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.ToLower ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                text.TestEquals( "TO_LOWER((\"FOO\" : System.String))" ) )
+            .Go();
     }
 
     [Fact]
@@ -400,13 +378,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.ToUpper();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.ToUpper );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            text.Should().Be( "TO_UPPER((\"foo\" : System.String))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.ToUpper ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                text.TestEquals( "TO_UPPER((\"foo\" : System.String))" ) )
+            .Go();
     }
 
     [Fact]
@@ -416,13 +393,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.TrimStart();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.TrimStart );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            text.Should().Be( "TRIM_START((\"foo\" : System.String))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.TrimStart ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                text.TestEquals( "TRIM_START((\"foo\" : System.String))" ) )
+            .Go();
     }
 
     [Fact]
@@ -433,13 +409,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.TrimStart( characters );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.TrimStart );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg, characters );
-            text.Should().Be( "TRIM_START((\"foo\" : System.String), (\"f\" : System.String))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.TrimStart ),
+                sut.Arguments.TestSequence( [ arg, characters ] ),
+                text.TestEquals( "TRIM_START((\"foo\" : System.String), (\"f\" : System.String))" ) )
+            .Go();
     }
 
     [Fact]
@@ -449,13 +424,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.TrimEnd();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.TrimEnd );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            text.Should().Be( "TRIM_END((\"foo\" : System.String))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.TrimEnd ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                text.TestEquals( "TRIM_END((\"foo\" : System.String))" ) )
+            .Go();
     }
 
     [Fact]
@@ -466,13 +440,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.TrimEnd( characters );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.TrimEnd );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg, characters );
-            text.Should().Be( "TRIM_END((\"foo\" : System.String), (\"o\" : System.String))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.TrimEnd ),
+                sut.Arguments.TestSequence( [ arg, characters ] ),
+                text.TestEquals( "TRIM_END((\"foo\" : System.String), (\"o\" : System.String))" ) )
+            .Go();
     }
 
     [Fact]
@@ -482,13 +455,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Trim();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Trim );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            text.Should().Be( "TRIM((\"foo\" : System.String))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Trim ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                text.TestEquals( "TRIM((\"foo\" : System.String))" ) )
+            .Go();
     }
 
     [Fact]
@@ -499,13 +471,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Trim( characters );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Trim );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg, characters );
-            text.Should().Be( "TRIM((\"foo\" : System.String), (\"o\" : System.String))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Trim ),
+                sut.Arguments.TestSequence( [ arg, characters ] ),
+                text.TestEquals( "TRIM((\"foo\" : System.String), (\"o\" : System.String))" ) )
+            .Go();
     }
 
     [Fact]
@@ -516,13 +487,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Substring( startIndex );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Substring );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg, startIndex );
-            text.Should().Be( "SUBSTRING((\"foo\" : System.String), (\"5\" : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Substring ),
+                sut.Arguments.TestSequence( [ arg, startIndex ] ),
+                text.TestEquals( "SUBSTRING((\"foo\" : System.String), (\"5\" : System.Int32))" ) )
+            .Go();
     }
 
     [Fact]
@@ -534,13 +504,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Substring( startIndex, length );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Substring );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg, startIndex, length );
-            text.Should().Be( "SUBSTRING((\"foo\" : System.String), (\"5\" : System.Int32), (\"10\" : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Substring ),
+                sut.Arguments.TestSequence( [ arg, startIndex, length ] ),
+                text.TestEquals( "SUBSTRING((\"foo\" : System.String), (\"5\" : System.Int32), (\"10\" : System.Int32))" ) )
+            .Go();
     }
 
     [Fact]
@@ -552,13 +521,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Replace( oldValue, newValue );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Replace );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg, oldValue, newValue );
-            text.Should().Be( "REPLACE((\"foo\" : System.String), (\"f\" : System.String), (\"b\" : System.String))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Replace ),
+                sut.Arguments.TestSequence( [ arg, oldValue, newValue ] ),
+                text.TestEquals( "REPLACE((\"foo\" : System.String), (\"f\" : System.String), (\"b\" : System.String))" ) )
+            .Go();
     }
 
     [Fact]
@@ -568,13 +536,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Reverse();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Reverse );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            text.Should().Be( "REVERSE((\"foo\" : System.String))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Reverse ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                text.TestEquals( "REVERSE((\"foo\" : System.String))" ) )
+            .Go();
     }
 
     [Fact]
@@ -585,13 +552,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.IndexOf( value );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.IndexOf );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg, value );
-            text.Should().Be( "INDEX_OF((\"foo\" : System.String), (\"o\" : System.String))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.IndexOf ),
+                sut.Arguments.TestSequence( [ arg, value ] ),
+                text.TestEquals( "INDEX_OF((\"foo\" : System.String), (\"o\" : System.String))" ) )
+            .Go();
     }
 
     [Fact]
@@ -602,13 +568,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.LastIndexOf( value );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.LastIndexOf );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg, value );
-            text.Should().Be( "LAST_INDEX_OF((\"foo\" : System.String), (\"o\" : System.String))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.LastIndexOf ),
+                sut.Arguments.TestSequence( [ arg, value ] ),
+                text.TestEquals( "LAST_INDEX_OF((\"foo\" : System.String), (\"o\" : System.String))" ) )
+            .Go();
     }
 
     [Fact]
@@ -618,13 +583,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Sign();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Sign );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            text.Should().Be( "SIGN((@a : System.Double))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Sign ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                text.TestEquals( "SIGN((@a : System.Double))" ) )
+            .Go();
     }
 
     [Fact]
@@ -634,13 +598,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Abs();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Abs );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            text.Should().Be( "ABS((\"-10\" : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Abs ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                text.TestEquals( "ABS((\"-10\" : System.Int32))" ) )
+            .Go();
     }
 
     [Fact]
@@ -650,13 +613,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Floor();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Floor );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            text.Should().Be( "FLOOR((@a : System.Double))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Floor ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                text.TestEquals( "FLOOR((@a : System.Double))" ) )
+            .Go();
     }
 
     [Fact]
@@ -666,13 +628,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Ceiling();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Ceiling );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            text.Should().Be( "CEILING((@a : System.Double))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Ceiling ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                text.TestEquals( "CEILING((@a : System.Double))" ) )
+            .Go();
     }
 
     [Fact]
@@ -682,13 +643,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Truncate();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Truncate );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            text.Should().Be( "TRUNCATE((@a : System.Double))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Truncate ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                text.TestEquals( "TRUNCATE((@a : System.Double))" ) )
+            .Go();
     }
 
     [Fact]
@@ -699,13 +659,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Truncate( precision );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Truncate );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg, precision );
-            text.Should().Be( "TRUNCATE((@a : System.Double), (@p : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Truncate ),
+                sut.Arguments.TestSequence( [ arg, precision ] ),
+                text.TestEquals( "TRUNCATE((@a : System.Double), (@p : System.Int32))" ) )
+            .Go();
     }
 
     [Fact]
@@ -716,13 +675,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Round( precision );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Round );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg, precision );
-            text.Should().Be( "ROUND((@a : System.Double), (@p : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Round ),
+                sut.Arguments.TestSequence( [ arg, precision ] ),
+                text.TestEquals( "ROUND((@a : System.Double), (@p : System.Int32))" ) )
+            .Go();
     }
 
     [Fact]
@@ -733,13 +691,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Power( power );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Power );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg, power );
-            text.Should().Be( "POWER((@a : System.Int32), (@b : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Power ),
+                sut.Arguments.TestSequence( [ arg, power ] ),
+                text.TestEquals( "POWER((@a : System.Int32), (@b : System.Int32))" ) )
+            .Go();
     }
 
     [Fact]
@@ -749,13 +706,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.SquareRoot();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.SquareRoot );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            text.Should().Be( "SQUARE_ROOT((@a : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.SquareRoot ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                text.TestEquals( "SQUARE_ROOT((@a : System.Int32))" ) )
+            .Go();
     }
 
     [Fact]
@@ -765,14 +721,13 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Count();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Count );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            sut.Traits.Should().BeEmpty();
-            text.Should().Be( "AGG_COUNT((@a : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Count ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                sut.Traits.TestEmpty(),
+                text.TestEquals( "AGG_COUNT((@a : System.Int32))" ) )
+            .Go();
     }
 
     [Fact]
@@ -782,20 +737,18 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Count().Distinct();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Count );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Count ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                sut.Traits.Count.TestEquals( 1 ),
+                (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).TestEquals( SqlNodeType.DistinctTrait ),
+                text.TestEquals(
                     """
                     AGG_COUNT((@a : System.Int32))
                       DISTINCT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -805,14 +758,13 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Min();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Min );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            sut.Traits.Should().BeEmpty();
-            text.Should().Be( "AGG_MIN((@a : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Min ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                sut.Traits.TestEmpty(),
+                text.TestEquals( "AGG_MIN((@a : System.Int32))" ) )
+            .Go();
     }
 
     [Fact]
@@ -822,27 +774,25 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Min().Distinct();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Min );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Min ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                sut.Traits.Count.TestEquals( 1 ),
+                (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).TestEquals( SqlNodeType.DistinctTrait ),
+                text.TestEquals(
                     """
                     AGG_MIN((@a : System.Int32))
                       DISTINCT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
     public void Min_ShouldThrowArgumentException_WhenArgumentsAreEmpty()
     {
         var action = Lambda.Of( () => SqlNode.Functions.Min() );
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -852,13 +802,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = SqlNode.Functions.Min( arg );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Min );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            text.Should().Be( "MIN((@a : ?))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Min ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                text.TestEquals( "MIN((@a : ?))" ) )
+            .Go();
     }
 
     [Fact]
@@ -872,13 +821,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = args[0].Min( args[1], args[2] );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Min );
-            sut.Arguments.Should().BeSequentiallyEqualTo( args );
-            text.Should().Be( "MIN((@a : Nullable<System.Int32>), (@b : ?), (@c : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Min ),
+                sut.Arguments.TestSequence( args ),
+                text.TestEquals( "MIN((@a : Nullable<System.Int32>), (@b : ?), (@c : System.Int32))" ) )
+            .Go();
     }
 
     [Fact]
@@ -888,14 +836,13 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Max();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Max );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            sut.Traits.Should().BeEmpty();
-            text.Should().Be( "AGG_MAX((@a : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Max ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                sut.Traits.TestEmpty(),
+                text.TestEquals( "AGG_MAX((@a : System.Int32))" ) )
+            .Go();
     }
 
     [Fact]
@@ -905,27 +852,25 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Max().Distinct();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Max );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Max ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                sut.Traits.Count.TestEquals( 1 ),
+                (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).TestEquals( SqlNodeType.DistinctTrait ),
+                text.TestEquals(
                     """
                     AGG_MAX((@a : System.Int32))
                       DISTINCT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
     public void Max_ShouldThrowArgumentException_WhenArgumentsAreEmpty()
     {
         var action = Lambda.Of( () => SqlNode.Functions.Max() );
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -935,13 +880,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = SqlNode.Functions.Max( arg );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Max );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            text.Should().Be( "MAX((@a : ?))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Max ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                text.TestEquals( "MAX((@a : ?))" ) )
+            .Go();
     }
 
     [Fact]
@@ -955,13 +899,12 @@ public class FunctionExpressionTests : TestsBase
         var sut = args[0].Max( args[1], args[2] );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Max );
-            sut.Arguments.Should().BeSequentiallyEqualTo( args );
-            text.Should().Be( "MAX((@a : Nullable<System.Int32>), (@b : ?), (@c : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Max ),
+                sut.Arguments.TestSequence( args ),
+                text.TestEquals( "MAX((@a : Nullable<System.Int32>), (@b : ?), (@c : System.Int32))" ) )
+            .Go();
     }
 
     [Fact]
@@ -971,14 +914,13 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Sum();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Sum );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            sut.Traits.Should().BeEmpty();
-            text.Should().Be( "AGG_SUM((@a : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Sum ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                sut.Traits.TestEmpty(),
+                text.TestEquals( "AGG_SUM((@a : System.Int32))" ) )
+            .Go();
     }
 
     [Fact]
@@ -988,20 +930,18 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Sum().Distinct();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Sum );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Sum ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                sut.Traits.Count.TestEquals( 1 ),
+                (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).TestEquals( SqlNodeType.DistinctTrait ),
+                text.TestEquals(
                     """
                     AGG_SUM((@a : System.Int32))
                       DISTINCT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1011,14 +951,13 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Average();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Average );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            sut.Traits.Should().BeEmpty();
-            text.Should().Be( "AGG_AVERAGE((@a : Nullable<System.Int32>))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Average ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                sut.Traits.TestEmpty(),
+                text.TestEquals( "AGG_AVERAGE((@a : Nullable<System.Int32>))" ) )
+            .Go();
     }
 
     [Fact]
@@ -1028,20 +967,18 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Average().Distinct();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Average );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Average ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                sut.Traits.Count.TestEquals( 1 ),
+                (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).TestEquals( SqlNodeType.DistinctTrait ),
+                text.TestEquals(
                     """
                     AGG_AVERAGE((@a : System.Int32))
                       DISTINCT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1051,14 +988,13 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.StringConcat();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.StringConcat );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            sut.Traits.Should().BeEmpty();
-            text.Should().Be( "AGG_STRING_CONCAT((@a : System.String))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.StringConcat ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                sut.Traits.TestEmpty(),
+                text.TestEquals( "AGG_STRING_CONCAT((@a : System.String))" ) )
+            .Go();
     }
 
     [Fact]
@@ -1069,14 +1005,13 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.StringConcat( separator );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.StringConcat );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg, separator );
-            sut.Traits.Should().BeEmpty();
-            text.Should().Be( "AGG_STRING_CONCAT((@a : System.String), (\",\" : System.String))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.StringConcat ),
+                sut.Arguments.TestSequence( [ arg, separator ] ),
+                sut.Traits.TestEmpty(),
+                text.TestEquals( "AGG_STRING_CONCAT((@a : System.String), (\",\" : System.String))" ) )
+            .Go();
     }
 
     [Fact]
@@ -1086,20 +1021,18 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.StringConcat().Distinct();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.StringConcat );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.StringConcat ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                sut.Traits.Count.TestEquals( 1 ),
+                (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).TestEquals( SqlNodeType.DistinctTrait ),
+                text.TestEquals(
                     """
                     AGG_STRING_CONCAT((@a : System.String))
                       DISTINCT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1108,14 +1041,13 @@ public class FunctionExpressionTests : TestsBase
         var sut = SqlNode.WindowFunctions.RowNumber();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.RowNumber );
-            sut.Arguments.Should().BeEmpty();
-            sut.Traits.Should().BeEmpty();
-            text.Should().Be( "WND_ROW_NUMBER()" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.RowNumber ),
+                sut.Arguments.TestEmpty(),
+                sut.Traits.TestEmpty(),
+                text.TestEquals( "WND_ROW_NUMBER()" ) )
+            .Go();
     }
 
     [Fact]
@@ -1124,20 +1056,18 @@ public class FunctionExpressionTests : TestsBase
         var sut = SqlNode.WindowFunctions.RowNumber().Distinct();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.RowNumber );
-            sut.Arguments.Should().BeEmpty();
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.RowNumber ),
+                sut.Arguments.TestEmpty(),
+                sut.Traits.Count.TestEquals( 1 ),
+                (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).TestEquals( SqlNodeType.DistinctTrait ),
+                text.TestEquals(
                     """
                     WND_ROW_NUMBER()
                       DISTINCT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1146,14 +1076,13 @@ public class FunctionExpressionTests : TestsBase
         var sut = SqlNode.WindowFunctions.Rank();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Rank );
-            sut.Arguments.Should().BeEmpty();
-            sut.Traits.Should().BeEmpty();
-            text.Should().Be( "WND_RANK()" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Rank ),
+                sut.Arguments.TestEmpty(),
+                sut.Traits.TestEmpty(),
+                text.TestEquals( "WND_RANK()" ) )
+            .Go();
     }
 
     [Fact]
@@ -1162,20 +1091,18 @@ public class FunctionExpressionTests : TestsBase
         var sut = SqlNode.WindowFunctions.Rank().Distinct();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Rank );
-            sut.Arguments.Should().BeEmpty();
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Rank ),
+                sut.Arguments.TestEmpty(),
+                sut.Traits.Count.TestEquals( 1 ),
+                (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).TestEquals( SqlNodeType.DistinctTrait ),
+                text.TestEquals(
                     """
                     WND_RANK()
                       DISTINCT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1184,14 +1111,13 @@ public class FunctionExpressionTests : TestsBase
         var sut = SqlNode.WindowFunctions.DenseRank();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.DenseRank );
-            sut.Arguments.Should().BeEmpty();
-            sut.Traits.Should().BeEmpty();
-            text.Should().Be( "WND_DENSE_RANK()" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.DenseRank ),
+                sut.Arguments.TestEmpty(),
+                sut.Traits.TestEmpty(),
+                text.TestEquals( "WND_DENSE_RANK()" ) )
+            .Go();
     }
 
     [Fact]
@@ -1200,20 +1126,18 @@ public class FunctionExpressionTests : TestsBase
         var sut = SqlNode.WindowFunctions.DenseRank().Distinct();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.DenseRank );
-            sut.Arguments.Should().BeEmpty();
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.DenseRank ),
+                sut.Arguments.TestEmpty(),
+                sut.Traits.Count.TestEquals( 1 ),
+                (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).TestEquals( SqlNodeType.DistinctTrait ),
+                text.TestEquals(
                     """
                     WND_DENSE_RANK()
                       DISTINCT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1222,14 +1146,13 @@ public class FunctionExpressionTests : TestsBase
         var sut = SqlNode.WindowFunctions.CumulativeDistribution();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.CumulativeDistribution );
-            sut.Arguments.Should().BeEmpty();
-            sut.Traits.Should().BeEmpty();
-            text.Should().Be( "WND_CUMULATIVE_DISTRIBUTION()" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.CumulativeDistribution ),
+                sut.Arguments.TestEmpty(),
+                sut.Traits.TestEmpty(),
+                text.TestEquals( "WND_CUMULATIVE_DISTRIBUTION()" ) )
+            .Go();
     }
 
     [Fact]
@@ -1238,20 +1161,18 @@ public class FunctionExpressionTests : TestsBase
         var sut = SqlNode.WindowFunctions.CumulativeDistribution().Distinct();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.CumulativeDistribution );
-            sut.Arguments.Should().BeEmpty();
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.CumulativeDistribution ),
+                sut.Arguments.TestEmpty(),
+                sut.Traits.Count.TestEquals( 1 ),
+                (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).TestEquals( SqlNodeType.DistinctTrait ),
+                text.TestEquals(
                     """
                     WND_CUMULATIVE_DISTRIBUTION()
                       DISTINCT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1261,14 +1182,13 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.NTile();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.NTile );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            sut.Traits.Should().BeEmpty();
-            text.Should().Be( "WND_N_TILE((@a : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.NTile ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                sut.Traits.TestEmpty(),
+                text.TestEquals( "WND_N_TILE((@a : System.Int32))" ) )
+            .Go();
     }
 
     [Fact]
@@ -1278,20 +1198,18 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.NTile().Distinct();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.NTile );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.NTile ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                sut.Traits.Count.TestEquals( 1 ),
+                (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).TestEquals( SqlNodeType.DistinctTrait ),
+                text.TestEquals(
                     """
                     WND_N_TILE((@a : System.Int32))
                       DISTINCT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1301,16 +1219,15 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Lag();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Lag );
-            sut.Arguments.Count.Should().Be( 2 );
-            sut.Arguments.ElementAtOrDefault( 0 ).Should().BeSameAs( arg );
-            sut.Arguments.ElementAtOrDefault( 1 ).Should().BeEquivalentTo( SqlNode.Literal( 1 ) );
-            sut.Traits.Should().BeEmpty();
-            text.Should().Be( "WND_LAG((@a : System.String), (\"1\" : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Lag ),
+                sut.Arguments.Count.TestEquals( 2 ),
+                sut.Arguments.ElementAtOrDefault( 0 ).TestRefEquals( arg ),
+                sut.Arguments.ElementAtOrDefault( 1 ).TestType().AssignableTo<SqlLiteralNode<int>>( n => n.Value.TestEquals( 1 ) ),
+                sut.Traits.TestEmpty(),
+                text.TestEquals( "WND_LAG((@a : System.String), (\"1\" : System.Int32))" ) )
+            .Go();
     }
 
     [Fact]
@@ -1321,14 +1238,13 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Lag( offset );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Lag );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg, offset );
-            sut.Traits.Should().BeEmpty();
-            text.Should().Be( "WND_LAG((@a : System.String), (@b : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Lag ),
+                sut.Arguments.TestSequence( [ arg, offset ] ),
+                sut.Traits.TestEmpty(),
+                text.TestEquals( "WND_LAG((@a : System.String), (@b : System.Int32))" ) )
+            .Go();
     }
 
     [Fact]
@@ -1340,14 +1256,13 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Lag( offset, @default );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Lag );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg, offset, @default );
-            sut.Traits.Should().BeEmpty();
-            text.Should().Be( "WND_LAG((@a : System.String), (@b : System.Int32), (@c : System.String))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Lag ),
+                sut.Arguments.TestSequence( [ arg, offset, @default ] ),
+                sut.Traits.TestEmpty(),
+                text.TestEquals( "WND_LAG((@a : System.String), (@b : System.Int32), (@c : System.String))" ) )
+            .Go();
     }
 
     [Fact]
@@ -1358,17 +1273,16 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Lag( offset: null, @default );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Lag );
-            sut.Arguments.Count.Should().Be( 3 );
-            sut.Arguments.ElementAtOrDefault( 0 ).Should().BeSameAs( arg );
-            sut.Arguments.ElementAtOrDefault( 1 ).Should().BeEquivalentTo( SqlNode.Literal( 1 ) );
-            sut.Arguments.ElementAtOrDefault( 2 ).Should().BeSameAs( @default );
-            sut.Traits.Should().BeEmpty();
-            text.Should().Be( "WND_LAG((@a : System.String), (\"1\" : System.Int32), (@c : System.String))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Lag ),
+                sut.Arguments.Count.TestEquals( 3 ),
+                sut.Arguments.ElementAtOrDefault( 0 ).TestRefEquals( arg ),
+                sut.Arguments.ElementAtOrDefault( 1 ).TestType().AssignableTo<SqlLiteralNode<int>>( n => n.Value.TestEquals( 1 ) ),
+                sut.Arguments.ElementAtOrDefault( 2 ).TestRefEquals( @default ),
+                sut.Traits.TestEmpty(),
+                text.TestEquals( "WND_LAG((@a : System.String), (\"1\" : System.Int32), (@c : System.String))" ) )
+            .Go();
     }
 
     [Fact]
@@ -1380,20 +1294,18 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Lag( offset, @default ).Distinct();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Lag );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg, offset, @default );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Lag ),
+                sut.Arguments.TestSequence( [ arg, offset, @default ] ),
+                sut.Traits.Count.TestEquals( 1 ),
+                (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).TestEquals( SqlNodeType.DistinctTrait ),
+                text.TestEquals(
                     """
                     WND_LAG((@a : System.String), (@b : System.Int32), (@c : System.String))
                       DISTINCT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1403,16 +1315,15 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Lead();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Lead );
-            sut.Arguments.Count.Should().Be( 2 );
-            sut.Arguments.ElementAtOrDefault( 0 ).Should().BeSameAs( arg );
-            sut.Arguments.ElementAtOrDefault( 1 ).Should().BeEquivalentTo( SqlNode.Literal( 1 ) );
-            sut.Traits.Should().BeEmpty();
-            text.Should().Be( "WND_LEAD((@a : System.String), (\"1\" : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Lead ),
+                sut.Arguments.Count.TestEquals( 2 ),
+                sut.Arguments.ElementAtOrDefault( 0 ).TestRefEquals( arg ),
+                sut.Arguments.ElementAtOrDefault( 1 ).TestType().AssignableTo<SqlLiteralNode<int>>( n => n.Value.TestEquals( 1 ) ),
+                sut.Traits.TestEmpty(),
+                text.TestEquals( "WND_LEAD((@a : System.String), (\"1\" : System.Int32))" ) )
+            .Go();
     }
 
     [Fact]
@@ -1423,14 +1334,13 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Lead( offset );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Lead );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg, offset );
-            sut.Traits.Should().BeEmpty();
-            text.Should().Be( "WND_LEAD((@a : System.String), (@b : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Lead ),
+                sut.Arguments.TestSequence( [ arg, offset ] ),
+                sut.Traits.TestEmpty(),
+                text.TestEquals( "WND_LEAD((@a : System.String), (@b : System.Int32))" ) )
+            .Go();
     }
 
     [Fact]
@@ -1442,14 +1352,13 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Lead( offset, @default );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Lead );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg, offset, @default );
-            sut.Traits.Should().BeEmpty();
-            text.Should().Be( "WND_LEAD((@a : System.String), (@b : System.Int32), (@c : System.String))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Lead ),
+                sut.Arguments.TestSequence( [ arg, offset, @default ] ),
+                sut.Traits.TestEmpty(),
+                text.TestEquals( "WND_LEAD((@a : System.String), (@b : System.Int32), (@c : System.String))" ) )
+            .Go();
     }
 
     [Fact]
@@ -1460,17 +1369,16 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Lead( offset: null, @default );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Lead );
-            sut.Arguments.Count.Should().Be( 3 );
-            sut.Arguments.ElementAtOrDefault( 0 ).Should().BeSameAs( arg );
-            sut.Arguments.ElementAtOrDefault( 1 ).Should().BeEquivalentTo( SqlNode.Literal( 1 ) );
-            sut.Arguments.ElementAtOrDefault( 2 ).Should().BeSameAs( @default );
-            sut.Traits.Should().BeEmpty();
-            text.Should().Be( "WND_LEAD((@a : System.String), (\"1\" : System.Int32), (@c : System.String))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Lead ),
+                sut.Arguments.Count.TestEquals( 3 ),
+                sut.Arguments.ElementAtOrDefault( 0 ).TestRefEquals( arg ),
+                sut.Arguments.ElementAtOrDefault( 1 ).TestType().AssignableTo<SqlLiteralNode<int>>( n => n.Value.TestEquals( 1 ) ),
+                sut.Arguments.ElementAtOrDefault( 2 ).TestRefEquals( @default ),
+                sut.Traits.TestEmpty(),
+                text.TestEquals( "WND_LEAD((@a : System.String), (\"1\" : System.Int32), (@c : System.String))" ) )
+            .Go();
     }
 
     [Fact]
@@ -1482,20 +1390,18 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.Lead( offset, @default ).Distinct();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Lead );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg, offset, @default );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Lead ),
+                sut.Arguments.TestSequence( [ arg, offset, @default ] ),
+                sut.Traits.Count.TestEquals( 1 ),
+                (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).TestEquals( SqlNodeType.DistinctTrait ),
+                text.TestEquals(
                     """
                     WND_LEAD((@a : System.String), (@b : System.Int32), (@c : System.String))
                       DISTINCT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1505,14 +1411,13 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.FirstValue();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.FirstValue );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            sut.Traits.Should().BeEmpty();
-            text.Should().Be( "WND_FIRST_VALUE((@a : System.String))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.FirstValue ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                sut.Traits.TestEmpty(),
+                text.TestEquals( "WND_FIRST_VALUE((@a : System.String))" ) )
+            .Go();
     }
 
     [Fact]
@@ -1522,20 +1427,18 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.FirstValue().Distinct();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.FirstValue );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.FirstValue ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                sut.Traits.Count.TestEquals( 1 ),
+                (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).TestEquals( SqlNodeType.DistinctTrait ),
+                text.TestEquals(
                     """
                     WND_FIRST_VALUE((@a : System.String))
                       DISTINCT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1545,14 +1448,13 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.LastValue();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.LastValue );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            sut.Traits.Should().BeEmpty();
-            text.Should().Be( "WND_LAST_VALUE((@a : System.String))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.LastValue ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                sut.Traits.TestEmpty(),
+                text.TestEquals( "WND_LAST_VALUE((@a : System.String))" ) )
+            .Go();
     }
 
     [Fact]
@@ -1562,20 +1464,18 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.LastValue().Distinct();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.LastValue );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.LastValue ),
+                sut.Arguments.TestSequence( [ arg ] ),
+                sut.Traits.Count.TestEquals( 1 ),
+                (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).TestEquals( SqlNodeType.DistinctTrait ),
+                text.TestEquals(
                     """
                     WND_LAST_VALUE((@a : System.String))
                       DISTINCT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1586,14 +1486,13 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.NthValue( n );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.NthValue );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg, n );
-            sut.Traits.Should().BeEmpty();
-            text.Should().Be( "WND_NTH_VALUE((@a : System.String), (@b : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.NthValue ),
+                sut.Arguments.TestSequence( [ arg, n ] ),
+                sut.Traits.TestEmpty(),
+                text.TestEquals( "WND_NTH_VALUE((@a : System.String), (@b : System.Int32))" ) )
+            .Go();
     }
 
     [Fact]
@@ -1604,20 +1503,18 @@ public class FunctionExpressionTests : TestsBase
         var sut = arg.NthValue( n ).Distinct();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.NthValue );
-            sut.Arguments.Should().BeSequentiallyEqualTo( arg, n );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.NthValue ),
+                sut.Arguments.TestSequence( [ arg, n ] ),
+                sut.Traits.Count.TestEquals( 1 ),
+                (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).TestEquals( SqlNodeType.DistinctTrait ),
+                text.TestEquals(
                     """
                     WND_NTH_VALUE((@a : System.String), (@b : System.Int32))
                       DISTINCT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1625,13 +1522,12 @@ public class FunctionExpressionTests : TestsBase
     {
         var sut = new SqlAggregateFunctionNodeMock().AddTrait( SqlNode.DistinctTrait() );
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Custom );
-            sut.Arguments.Should().BeEmpty();
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregateFunctionExpression ),
+                sut.FunctionType.TestEquals( SqlFunctionType.Custom ),
+                sut.Arguments.TestEmpty(),
+                sut.Traits.Count.TestEquals( 1 ),
+                (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).TestEquals( SqlNodeType.DistinctTrait ) )
+            .Go();
     }
 }

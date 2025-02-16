@@ -61,16 +61,15 @@ public class SqlParameterBinderExpressionTests : TestsBase
         var parameterBinder = sut.Compile();
         parameterBinder.Bind( command, "lorem" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Dialect.Should().BeSameAs( dialect );
-            sut.Expression.Should().BeSameAs( expression );
-            parameterBinder.Dialect.Should().BeSameAs( dialect );
-            command.Parameters.Should().HaveCount( 2 );
-            command.Parameters[0].ParameterName.Should().Be( "length" );
-            command.Parameters[0].Value.Should().Be( 5 );
-            command.Parameters[1].ParameterName.Should().Be( "value" );
-            command.Parameters[1].Value.Should().Be( "lorem" );
-        }
+        Assertion.All(
+                sut.Dialect.TestRefEquals( dialect ),
+                sut.Expression.TestRefEquals( expression ),
+                parameterBinder.Dialect.TestRefEquals( dialect ),
+                command.Parameters.Count.TestEquals( 2 ),
+                command.Parameters[0].ParameterName.TestEquals( "length" ),
+                command.Parameters[0].Value.TestEquals( 5 ),
+                command.Parameters[1].ParameterName.TestEquals( "value" ),
+                command.Parameters[1].Value.TestEquals( "lorem" ) )
+            .Go();
     }
 }

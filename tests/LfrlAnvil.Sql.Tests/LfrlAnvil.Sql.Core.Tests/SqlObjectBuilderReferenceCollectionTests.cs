@@ -1,7 +1,6 @@
 ﻿using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests;
@@ -14,11 +13,10 @@ public class SqlObjectBuilderReferenceCollectionTests : TestsBase
         var obj = SqlDatabaseBuilderMock.Create().Schemas.Default;
         var sut = obj.ReferencingObjects;
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -31,11 +29,10 @@ public class SqlObjectBuilderReferenceCollectionTests : TestsBase
         SqlDatabaseBuilderMock.AddReference( obj, r2 );
         var sut = obj.ReferencingObjects;
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 2 );
-            sut.Should().BeEquivalentTo( SqlObjectBuilderReference.Create( r1, obj ), SqlObjectBuilderReference.Create( r2, obj ) );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 2 ),
+                sut.TestSetEqual( [ SqlObjectBuilderReference.Create( r1, obj ), SqlObjectBuilderReference.Create( r2, obj ) ] ) )
+            .Go();
     }
 
     [Theory]
@@ -48,7 +45,7 @@ public class SqlObjectBuilderReferenceCollectionTests : TestsBase
 
         var result = sut.Contains( SqlObjectBuilderReferenceSource.Create( obj.Objects.CreateTable( "T" ), property ) );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Theory]
@@ -64,7 +61,7 @@ public class SqlObjectBuilderReferenceCollectionTests : TestsBase
 
         var result = sut.Contains( SqlObjectBuilderReferenceSource.Create( table, property ) );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Theory]
@@ -78,9 +75,11 @@ public class SqlObjectBuilderReferenceCollectionTests : TestsBase
         var action = Lambda.Of(
             () => sut.GetReference( SqlObjectBuilderReferenceSource.Create( obj.Objects.CreateTable( "T" ), property ) ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Theory]
@@ -96,11 +95,10 @@ public class SqlObjectBuilderReferenceCollectionTests : TestsBase
 
         var result = sut.GetReference( SqlObjectBuilderReferenceSource.Create( table, property ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Source.Should().Be( SqlObjectBuilderReferenceSource.Create( table, property ) );
-            result.Target.Should().BeSameAs( obj );
-        }
+        Assertion.All(
+                result.Source.TestEquals( SqlObjectBuilderReferenceSource.Create( table, property ) ),
+                result.Target.TestRefEquals( obj ) )
+            .Go();
     }
 
     [Theory]
@@ -113,7 +111,7 @@ public class SqlObjectBuilderReferenceCollectionTests : TestsBase
 
         var result = sut.TryGetReference( SqlObjectBuilderReferenceSource.Create( obj.Objects.CreateTable( "T" ), property ) );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -129,12 +127,11 @@ public class SqlObjectBuilderReferenceCollectionTests : TestsBase
 
         var result = sut.TryGetReference( SqlObjectBuilderReferenceSource.Create( table, property ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull();
-            (result?.Source).Should().Be( SqlObjectBuilderReferenceSource.Create( table, property ) );
-            (result?.Target).Should().BeSameAs( obj );
-        }
+        Assertion.All(
+                result.TestNotNull(),
+                (result?.Source).TestEquals( SqlObjectBuilderReferenceSource.Create( table, property ) ),
+                (result?.Target).TestRefEquals( obj ) )
+            .Go();
     }
 
     [Fact]
@@ -149,14 +146,14 @@ public class SqlObjectBuilderReferenceCollectionTests : TestsBase
 
         var result = sut.UnsafeReinterpretAs<ISqlObjectBuilder>();
 
-        using ( new AssertionScope() )
-        {
-            result.Count.Should().Be( sut.Count );
-            result.Should()
-                .BeEquivalentTo(
+        Assertion.All(
+                result.Count.TestEquals( sut.Count ),
+                result.TestSetEqual(
+                [
                     SqlObjectBuilderReference.Create<ISqlObjectBuilder>( r1, obj ),
-                    SqlObjectBuilderReference.Create<ISqlObjectBuilder>( r2, obj ) );
-        }
+                    SqlObjectBuilderReference.Create<ISqlObjectBuilder>( r2, obj )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -171,13 +168,13 @@ public class SqlObjectBuilderReferenceCollectionTests : TestsBase
 
         SqlObjectBuilderReferenceCollection<ISqlObjectBuilder> result = sut;
 
-        using ( new AssertionScope() )
-        {
-            result.Count.Should().Be( sut.Count );
-            result.Should()
-                .BeEquivalentTo(
+        Assertion.All(
+                result.Count.TestEquals( sut.Count ),
+                result.TestSetEqual(
+                [
                     SqlObjectBuilderReference.Create<ISqlObjectBuilder>( r1, obj ),
-                    SqlObjectBuilderReference.Create<ISqlObjectBuilder>( r2, obj ) );
-        }
+                    SqlObjectBuilderReference.Create<ISqlObjectBuilder>( r2, obj )
+                ] ) )
+            .Go();
     }
 }

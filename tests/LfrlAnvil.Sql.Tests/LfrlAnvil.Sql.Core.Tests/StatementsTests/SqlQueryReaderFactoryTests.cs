@@ -7,7 +7,6 @@ using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Statements;
 using LfrlAnvil.Sql.Statements.Compilers;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 using LfrlAnvil.TestExtensions.Sql.Mocks.System;
 
@@ -24,13 +23,12 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = queryReader.Read( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeTrue();
-            result.Rows.Should().BeNull();
-            result.ResultSetFields.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestTrue(),
+                result.Rows.TestNull(),
+                result.ResultSetFields.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -51,23 +49,22 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = queryReader.Read( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeFalse();
-            result.Rows.Should().NotBeNull();
-            (result.Rows?.Count).Should().Be( 3 );
-            (result.Rows?[0].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( 1, "foo", 5.0, true );
-            (result.Rows?[1].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( 2, "bar", null, false );
-            (result.Rows?[2].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( 3, "lorem", 10.0, null );
-            result.ResultSetFields.ToArray()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    new SqlResultSetField( 0, "a" ),
-                    new SqlResultSetField( 1, "b" ),
-                    new SqlResultSetField( 2, "c" ),
-                    new SqlResultSetField( 3, "d" ) );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestFalse(),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => r.AsSpan().TestSequence( [ 1, "foo", 5.0, true ] ),
+                        (r, _) => r.AsSpan().TestSequence( [ 2, "bar", null, false ] ),
+                        (r, _) => r.AsSpan().TestSequence( [ 3, "lorem", 10.0, null ] )
+                    ] ) ),
+                result.ResultSetFields.TestSequence(
+                [
+                    new SqlResultSetField( 0, "a" ), new SqlResultSetField( 1, "b" ), new SqlResultSetField( 2, "c" ),
+                    new SqlResultSetField( 3, "d" )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -81,13 +78,12 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = queryReader.Read( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeTrue();
-            result.Rows.Should().BeNull();
-            result.ResultSetFields.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestTrue(),
+                result.Rows.TestNull(),
+                result.ResultSetFields.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -110,31 +106,33 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = queryReader.Read( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeFalse();
-            result.Rows.Should().HaveCount( 3 );
-            (result.Rows?[0].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( 1, "foo", 5.0, true );
-            (result.Rows?[1].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( 2, "bar", null, false );
-            (result.Rows?[2].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( 3, "lorem", 10.0, null );
-            result.ResultSetFields[0].Ordinal.Should().Be( 0 );
-            result.ResultSetFields[0].Name.Should().Be( "a" );
-            result.ResultSetFields[0].IsUsed.Should().BeTrue();
-            result.ResultSetFields[0].TypeNames.ToArray().Should().BeSequentiallyEqualTo( "int32" );
-            result.ResultSetFields[1].Ordinal.Should().Be( 1 );
-            result.ResultSetFields[1].Name.Should().Be( "b" );
-            result.ResultSetFields[1].IsUsed.Should().BeTrue();
-            result.ResultSetFields[1].TypeNames.ToArray().Should().BeSequentiallyEqualTo( "string" );
-            result.ResultSetFields[2].Ordinal.Should().Be( 2 );
-            result.ResultSetFields[2].Name.Should().Be( "c" );
-            result.ResultSetFields[2].IsUsed.Should().BeTrue();
-            result.ResultSetFields[2].TypeNames.ToArray().Should().BeSequentiallyEqualTo( "double", "NULL" );
-            result.ResultSetFields[3].Ordinal.Should().Be( 3 );
-            result.ResultSetFields[3].Name.Should().Be( "d" );
-            result.ResultSetFields[3].IsUsed.Should().BeTrue();
-            result.ResultSetFields[3].TypeNames.ToArray().Should().BeSequentiallyEqualTo( "boolean", "NULL" );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestFalse(),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => r.AsSpan().TestSequence( [ 1, "foo", 5.0, true ] ),
+                        (r, _) => r.AsSpan().TestSequence( [ 2, "bar", null, false ] ),
+                        (r, _) => r.AsSpan().TestSequence( [ 3, "lorem", 10.0, null ] )
+                    ] ) ),
+                result.ResultSetFields[0].Ordinal.TestEquals( 0 ),
+                result.ResultSetFields[0].Name.TestEquals( "a" ),
+                result.ResultSetFields[0].IsUsed.TestTrue(),
+                result.ResultSetFields[0].TypeNames.ToArray().TestSequence( [ "int32" ] ),
+                result.ResultSetFields[1].Ordinal.TestEquals( 1 ),
+                result.ResultSetFields[1].Name.TestEquals( "b" ),
+                result.ResultSetFields[1].IsUsed.TestTrue(),
+                result.ResultSetFields[1].TypeNames.ToArray().TestSequence( [ "string" ] ),
+                result.ResultSetFields[2].Ordinal.TestEquals( 2 ),
+                result.ResultSetFields[2].Name.TestEquals( "c" ),
+                result.ResultSetFields[2].IsUsed.TestTrue(),
+                result.ResultSetFields[2].TypeNames.ToArray().TestSequence( [ "double", "NULL" ] ),
+                result.ResultSetFields[3].Ordinal.TestEquals( 3 ),
+                result.ResultSetFields[3].Name.TestEquals( "d" ),
+                result.ResultSetFields[3].IsUsed.TestTrue(),
+                result.ResultSetFields[3].TypeNames.ToArray().TestSequence( [ "boolean", "NULL" ] ) )
+            .Go();
     }
 
     [Fact]
@@ -146,13 +144,12 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = queryReader.Read( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeTrue();
-            result.Rows.Should().BeNull();
-            result.ResultSetFields.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestTrue(),
+                result.Rows.TestNull(),
+                result.ResultSetFields.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -166,13 +163,12 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = queryReader.Read( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeTrue();
-            result.Rows.Should().BeNull();
-            result.ResultSetFields.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestTrue(),
+                result.Rows.TestNull(),
+                result.ResultSetFields.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -192,38 +188,22 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var queryReader = sut.Create<Row>();
         var result = queryReader.Read( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeFalse();
-            result.Rows.Should().HaveCount( 3 );
-            result.Rows.Should().BeInAscendingOrder( r => r.A );
-            result.Rows.Should()
-                .BeEquivalentTo(
-                    new Row
-                    {
-                        A = 1,
-                        B = "foo",
-                        C = 5.0,
-                        D = true
-                    },
-                    new Row
-                    {
-                        A = 2,
-                        B = "bar",
-                        C = null,
-                        D = false
-                    },
-                    new Row
-                    {
-                        A = 3,
-                        B = "lorem",
-                        C = 10.0,
-                        D = null
-                    } );
-
-            result.ResultSetFields.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestFalse(),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => Assertion.All(
+                            r.A.TestEquals( 1 ),
+                            r.B.TestEquals( "foo" ),
+                            r.C.TestEquals( 5.0 ),
+                            r.D.TestEquals( true ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
+                    ] ) ),
+                result.ResultSetFields.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -246,44 +226,26 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = queryReader.Read( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeFalse();
-            result.Rows.Should().HaveCount( 3 );
-            result.Rows.Should().BeInAscendingOrder( r => r.A );
-            result.Rows.Should()
-                .BeEquivalentTo(
-                    new Row
-                    {
-                        A = 1,
-                        B = "foo",
-                        C = 5.0,
-                        D = true
-                    },
-                    new Row
-                    {
-                        A = 2,
-                        B = "bar",
-                        C = null,
-                        D = false
-                    },
-                    new Row
-                    {
-                        A = 3,
-                        B = "lorem",
-                        C = 10.0,
-                        D = null
-                    } );
-
-            result.ResultSetFields.ToArray()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    new SqlResultSetField( 0, "a" ),
-                    new SqlResultSetField( 1, "b" ),
-                    new SqlResultSetField( 2, "c" ),
-                    new SqlResultSetField( 3, "d" ) );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestFalse(),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => Assertion.All(
+                            r.A.TestEquals( 1 ),
+                            r.B.TestEquals( "foo" ),
+                            r.C.TestEquals( 5.0 ),
+                            r.D.TestEquals( true ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
+                    ] ) ),
+                result.ResultSetFields.TestSequence(
+                [
+                    new SqlResultSetField( 0, "a" ), new SqlResultSetField( 1, "b" ), new SqlResultSetField( 2, "c" ),
+                    new SqlResultSetField( 3, "d" )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -306,53 +268,37 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = queryReader.Read( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeFalse();
-            result.Rows.Should().HaveCount( 3 );
-            result.Rows.Should().BeInAscendingOrder( r => r.A );
-            result.Rows.Should()
-                .BeEquivalentTo(
-                    new Row
-                    {
-                        A = 1,
-                        B = "foo",
-                        C = 5.0,
-                        D = true
-                    },
-                    new Row
-                    {
-                        A = 2,
-                        B = "bar",
-                        C = null,
-                        D = false
-                    },
-                    new Row
-                    {
-                        A = 3,
-                        B = "lorem",
-                        C = 10.0,
-                        D = null
-                    } );
-
-            result.ResultSetFields[0].Ordinal.Should().Be( 0 );
-            result.ResultSetFields[0].Name.Should().Be( "a" );
-            result.ResultSetFields[0].IsUsed.Should().BeTrue();
-            result.ResultSetFields[0].TypeNames.ToArray().Should().BeSequentiallyEqualTo( "int32" );
-            result.ResultSetFields[1].Ordinal.Should().Be( 1 );
-            result.ResultSetFields[1].Name.Should().Be( "b" );
-            result.ResultSetFields[1].IsUsed.Should().BeTrue();
-            result.ResultSetFields[1].TypeNames.ToArray().Should().BeSequentiallyEqualTo( "string" );
-            result.ResultSetFields[2].Ordinal.Should().Be( 2 );
-            result.ResultSetFields[2].Name.Should().Be( "c" );
-            result.ResultSetFields[2].IsUsed.Should().BeTrue();
-            result.ResultSetFields[2].TypeNames.ToArray().Should().BeSequentiallyEqualTo( "double", "NULL" );
-            result.ResultSetFields[3].Ordinal.Should().Be( 3 );
-            result.ResultSetFields[3].Name.Should().Be( "d" );
-            result.ResultSetFields[3].IsUsed.Should().BeTrue();
-            result.ResultSetFields[3].TypeNames.ToArray().Should().BeSequentiallyEqualTo( "boolean", "NULL" );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestFalse(),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => Assertion.All(
+                            r.A.TestEquals( 1 ),
+                            r.B.TestEquals( "foo" ),
+                            r.C.TestEquals( 5.0 ),
+                            r.D.TestEquals( true ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
+                    ] ) ),
+                result.ResultSetFields[0].Ordinal.TestEquals( 0 ),
+                result.ResultSetFields[0].Name.TestEquals( "a" ),
+                result.ResultSetFields[0].IsUsed.TestTrue(),
+                result.ResultSetFields[0].TypeNames.ToArray().TestSequence( [ "int32" ] ),
+                result.ResultSetFields[1].Ordinal.TestEquals( 1 ),
+                result.ResultSetFields[1].Name.TestEquals( "b" ),
+                result.ResultSetFields[1].IsUsed.TestTrue(),
+                result.ResultSetFields[1].TypeNames.ToArray().TestSequence( [ "string" ] ),
+                result.ResultSetFields[2].Ordinal.TestEquals( 2 ),
+                result.ResultSetFields[2].Name.TestEquals( "c" ),
+                result.ResultSetFields[2].IsUsed.TestTrue(),
+                result.ResultSetFields[2].TypeNames.ToArray().TestSequence( [ "double", "NULL" ] ),
+                result.ResultSetFields[3].Ordinal.TestEquals( 3 ),
+                result.ResultSetFields[3].Name.TestEquals( "d" ),
+                result.ResultSetFields[3].IsUsed.TestTrue(),
+                result.ResultSetFields[3].TypeNames.ToArray().TestSequence( [ "boolean", "NULL" ] ) )
+            .Go();
     }
 
     [Fact]
@@ -372,18 +318,21 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var queryReader = sut.Create<RowRecord>();
         var result = queryReader.Read( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeFalse();
-            result.Rows.Should().HaveCount( 3 );
-            result.Rows.Should().BeInAscendingOrder( r => r.A );
-            result.Rows.Should()
-                .BeEquivalentTo(
-                    new RowRecord( 1, "foo", 5.0, true ),
-                    new RowRecord( 2, "bar", null, false ),
-                    new RowRecord( 3, "lorem", 10.0, null ) );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestFalse(),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => Assertion.All(
+                            r.A.TestEquals( 1 ),
+                            r.B.TestEquals( "foo" ),
+                            r.C.TestEquals( 5.0 ),
+                            r.D.TestEquals( true ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
+                    ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -403,36 +352,21 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var queryReader = sut.Create<RowWithDifferentMemberTypes>();
         var result = queryReader.Read( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeFalse();
-            result.Rows.Should().HaveCount( 3 );
-            result.Rows.Should().BeInAscendingOrder( r => r.A );
-            result.Rows.Should()
-                .BeEquivalentTo(
-                    new
-                    {
-                        A = 1,
-                        B = "foo",
-                        C = ( double? )5.0,
-                        D = "x"
-                    },
-                    new
-                    {
-                        A = 2,
-                        B = "bar",
-                        C = ( double? )null,
-                        D = "y"
-                    },
-                    new
-                    {
-                        A = 3,
-                        B = "lorem",
-                        C = ( double? )10.0,
-                        D = ( string? )null
-                    } );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestFalse(),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => Assertion.All(
+                            r.A.TestEquals( 1 ),
+                            r.B.TestEquals( "foo" ),
+                            r.C.TestEquals( 5.0 ),
+                            r.D.TestEquals( "x" ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( "y" ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
+                    ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -453,37 +387,31 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = queryReader.Read( reader, new SqlQueryReaderOptions( InitialBufferCapacity: 50 ) );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeFalse();
-            (result.Rows?.Capacity).Should().Be( 50 );
-            result.Rows.Should().HaveCount( 3 );
-            result.Rows.Should().BeInAscendingOrder( r => r.A );
-            result.Rows.Should()
-                .BeEquivalentTo(
-                    new Row
-                    {
-                        A = 1,
-                        B = "foo",
-                        C = 5.0,
-                        D = true
-                    },
-                    new Row
-                    {
-                        A = 2,
-                        B = "bar",
-                        C = null,
-                        D = false
-                    },
-                    new Row
-                    {
-                        A = 3,
-                        B = "lorem",
-                        C = 10.0,
-                        D = null
-                    } );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestFalse(),
+                result.Rows.TestNotNull(
+                    rows => Assertion.All(
+                        rows.Capacity.TestEquals( 50 ),
+                        rows.TestSequence(
+                        [
+                            (r, _) => Assertion.All(
+                                r.A.TestEquals( 1 ),
+                                r.B.TestEquals( "foo" ),
+                                r.C.TestEquals( 5.0 ),
+                                r.D.TestEquals( true ) ),
+                            (r, _) => Assertion.All(
+                                r.A.TestEquals( 2 ),
+                                r.B.TestEquals( "bar" ),
+                                r.C.TestNull(),
+                                r.D.TestEquals( false ) ),
+                            (r, _) => Assertion.All(
+                                r.A.TestEquals( 3 ),
+                                r.B.TestEquals( "lorem" ),
+                                r.C.TestEquals( 10.0 ),
+                                r.D.TestNull() )
+                        ] ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -504,36 +432,17 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = queryReader.Read( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeFalse();
-            result.Rows.Should().HaveCount( 3 );
-            result.Rows.Should().BeInAscendingOrder( r => r.A );
-            result.Rows.Should()
-                .BeEquivalentTo(
-                    new Row
-                    {
-                        A = 1,
-                        B = "foo",
-                        C = null,
-                        D = true
-                    },
-                    new Row
-                    {
-                        A = 2,
-                        B = "bar",
-                        C = null,
-                        D = false
-                    },
-                    new Row
-                    {
-                        A = 3,
-                        B = "lorem",
-                        C = null,
-                        D = null
-                    } );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestFalse(),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => Assertion.All( r.A.TestEquals( 1 ), r.B.TestEquals( "foo" ), r.C.TestNull(), r.D.TestEquals( true ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestNull(), r.D.TestNull() )
+                    ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -554,36 +463,21 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = queryReader.Read( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeFalse();
-            result.Rows.Should().HaveCount( 3 );
-            result.Rows.Should().BeInAscendingOrder( r => r.A );
-            result.Rows.Should()
-                .BeEquivalentTo(
-                    new Row
-                    {
-                        A = 1,
-                        B = "foo",
-                        C = 5.0,
-                        D = true
-                    },
-                    new Row
-                    {
-                        A = 2,
-                        B = "bar",
-                        C = null,
-                        D = false
-                    },
-                    new Row
-                    {
-                        A = 3,
-                        B = "lorem",
-                        C = 10.0,
-                        D = null
-                    } );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestFalse(),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => Assertion.All(
+                            r.A.TestEquals( 1 ),
+                            r.B.TestEquals( "foo" ),
+                            r.C.TestEquals( 5.0 ),
+                            r.D.TestEquals( true ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
+                    ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -610,36 +504,25 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = queryReader.Read( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeFalse();
-            result.Rows.Should().HaveCount( 3 );
-            result.Rows.Should().BeInAscendingOrder( r => r.A );
-            result.Rows.Should()
-                .BeEquivalentTo(
-                    new Row
-                    {
-                        A = 1,
-                        B = "foo",
-                        C = 4.0,
-                        D = true
-                    },
-                    new Row
-                    {
-                        A = 2,
-                        B = "bar",
-                        C = 5.0,
-                        D = false
-                    },
-                    new Row
-                    {
-                        A = 3,
-                        B = "lorem",
-                        C = 8.0,
-                        D = null
-                    } );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestFalse(),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => Assertion.All(
+                            r.A.TestEquals( 1 ),
+                            r.B.TestEquals( "foo" ),
+                            r.C.TestEquals( 4.0 ),
+                            r.D.TestEquals( true ) ),
+                        (r, _) => Assertion.All(
+                            r.A.TestEquals( 2 ),
+                            r.B.TestEquals( "bar" ),
+                            r.C.TestEquals( 5.0 ),
+                            r.D.TestEquals( false ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 8.0 ), r.D.TestNull() )
+                    ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -668,36 +551,25 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = queryReader.Read( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeFalse();
-            result.Rows.Should().HaveCount( 3 );
-            result.Rows.Should().BeInAscendingOrder( r => r.A );
-            result.Rows.Should()
-                .BeEquivalentTo(
-                    new Row
-                    {
-                        A = 1,
-                        B = "foo",
-                        C = 11.0,
-                        D = true
-                    },
-                    new Row
-                    {
-                        A = 2,
-                        B = "bar",
-                        C = 1.0,
-                        D = false
-                    },
-                    new Row
-                    {
-                        A = 3,
-                        B = "lorem",
-                        C = 10.0,
-                        D = null
-                    } );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestFalse(),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => Assertion.All(
+                            r.A.TestEquals( 1 ),
+                            r.B.TestEquals( "foo" ),
+                            r.C.TestEquals( 11.0 ),
+                            r.D.TestEquals( true ) ),
+                        (r, _) => Assertion.All(
+                            r.A.TestEquals( 2 ),
+                            r.B.TestEquals( "bar" ),
+                            r.C.TestEquals( 1.0 ),
+                            r.D.TestEquals( false ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
+                    ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -722,17 +594,21 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = queryReader.Read( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeFalse();
-            result.Rows.Should().HaveCount( 3 );
-            result.Rows.Should()
-                .BeEquivalentTo(
-                    new UnsafeRow( 1, "foo", 0.0, "x" ),
-                    new UnsafeRow( 0, "bar", 5.0, null! ),
-                    new UnsafeRow( 3, null!, 10.0, "y" ) );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestFalse(),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => Assertion.All(
+                            r.A.TestEquals( 1 ),
+                            r.B.TestEquals( "foo" ),
+                            r.C.TestEquals( 0.0 ),
+                            r.D.TestEquals( "x" ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 0 ), r.B.TestEquals( "bar" ), r.C.TestEquals( 5.0 ), r.D.TestNull() ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestNull(), r.C.TestEquals( 10.0 ), r.D.TestEquals( "y" ) )
+                    ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -753,17 +629,21 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = queryReader.Read( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeFalse();
-            result.Rows.Should().HaveCount( 3 );
-            result.Rows.Should()
-                .BeEquivalentTo(
-                    new UnsafeRow( 1, "foo", 0.0, "x" ),
-                    new UnsafeRow( 0, "bar", 5.0, null! ),
-                    new UnsafeRow( 3, null!, 10.0, "y" ) );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestFalse(),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => Assertion.All(
+                            r.A.TestEquals( 1 ),
+                            r.B.TestEquals( "foo" ),
+                            r.C.TestEquals( 0.0 ),
+                            r.D.TestEquals( "x" ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 0 ), r.B.TestEquals( "bar" ), r.C.TestEquals( 5.0 ), r.D.TestNull() ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestNull(), r.C.TestEquals( 10.0 ), r.D.TestEquals( "y" ) )
+                    ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -771,7 +651,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     {
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var action = Lambda.Of( () => sut.CreateExpression<IEnumerable>() );
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -779,7 +659,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     {
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var action = Lambda.Of( () => sut.CreateExpression( typeof( IEnumerable<> ) ) );
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -787,7 +667,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     {
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var action = Lambda.Of( () => sut.CreateExpression( typeof( int? ) ) );
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -797,7 +677,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var action = Lambda.Of(
             () => sut.CreateExpression<RowRecord>( SqlQueryReaderCreationOptions.Default.SetRowTypeConstructorPredicate( _ => false ) ) );
 
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -805,7 +685,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     {
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var action = Lambda.Of( () => sut.CreateExpression<object>() );
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -815,7 +695,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var action = Lambda.Of(
             () => sut.CreateExpression<Row>( SqlQueryReaderCreationOptions.Default.SetRowTypeMemberPredicate( _ => false ) ) );
 
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -827,13 +707,12 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = await queryReader.ReadAsync( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeTrue();
-            result.Rows.Should().BeNull();
-            result.ResultSetFields.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestTrue(),
+                result.Rows.TestNull(),
+                result.ResultSetFields.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -854,23 +733,22 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = await queryReader.ReadAsync( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeFalse();
-            result.Rows.Should().NotBeNull();
-            (result.Rows?.Count).Should().Be( 3 );
-            (result.Rows?[0].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( 1, "foo", 5.0, true );
-            (result.Rows?[1].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( 2, "bar", null, false );
-            (result.Rows?[2].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( 3, "lorem", 10.0, null );
-            result.ResultSetFields.ToArray()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    new SqlResultSetField( 0, "a" ),
-                    new SqlResultSetField( 1, "b" ),
-                    new SqlResultSetField( 2, "c" ),
-                    new SqlResultSetField( 3, "d" ) );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestFalse(),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => r.AsSpan().TestSequence( [ 1, "foo", 5.0, true ] ),
+                        (r, _) => r.AsSpan().TestSequence( [ 2, "bar", null, false ] ),
+                        (r, _) => r.AsSpan().TestSequence( [ 3, "lorem", 10.0, null ] )
+                    ] ) ),
+                result.ResultSetFields.TestSequence(
+                [
+                    new SqlResultSetField( 0, "a" ), new SqlResultSetField( 1, "b" ), new SqlResultSetField( 2, "c" ),
+                    new SqlResultSetField( 3, "d" )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -885,13 +763,12 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = await queryReader.ReadAsync( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeTrue();
-            result.Rows.Should().BeNull();
-            result.ResultSetFields.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestTrue(),
+                result.Rows.TestNull(),
+                result.ResultSetFields.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -915,31 +792,33 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = await queryReader.ReadAsync( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeFalse();
-            result.Rows.Should().HaveCount( 3 );
-            (result.Rows?[0].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( 1, "foo", 5.0, true );
-            (result.Rows?[1].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( 2, "bar", null, false );
-            (result.Rows?[2].AsSpan().ToArray()).Should().BeSequentiallyEqualTo( 3, "lorem", 10.0, null );
-            result.ResultSetFields[0].Ordinal.Should().Be( 0 );
-            result.ResultSetFields[0].Name.Should().Be( "a" );
-            result.ResultSetFields[0].IsUsed.Should().BeTrue();
-            result.ResultSetFields[0].TypeNames.ToArray().Should().BeSequentiallyEqualTo( "int32" );
-            result.ResultSetFields[1].Ordinal.Should().Be( 1 );
-            result.ResultSetFields[1].Name.Should().Be( "b" );
-            result.ResultSetFields[1].IsUsed.Should().BeTrue();
-            result.ResultSetFields[1].TypeNames.ToArray().Should().BeSequentiallyEqualTo( "string" );
-            result.ResultSetFields[2].Ordinal.Should().Be( 2 );
-            result.ResultSetFields[2].Name.Should().Be( "c" );
-            result.ResultSetFields[2].IsUsed.Should().BeTrue();
-            result.ResultSetFields[2].TypeNames.ToArray().Should().BeSequentiallyEqualTo( "double", "NULL" );
-            result.ResultSetFields[3].Ordinal.Should().Be( 3 );
-            result.ResultSetFields[3].Name.Should().Be( "d" );
-            result.ResultSetFields[3].IsUsed.Should().BeTrue();
-            result.ResultSetFields[3].TypeNames.ToArray().Should().BeSequentiallyEqualTo( "boolean", "NULL" );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestFalse(),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => r.AsSpan().TestSequence( [ 1, "foo", 5.0, true ] ),
+                        (r, _) => r.AsSpan().TestSequence( [ 2, "bar", null, false ] ),
+                        (r, _) => r.AsSpan().TestSequence( [ 3, "lorem", 10.0, null ] )
+                    ] ) ),
+                result.ResultSetFields[0].Ordinal.TestEquals( 0 ),
+                result.ResultSetFields[0].Name.TestEquals( "a" ),
+                result.ResultSetFields[0].IsUsed.TestTrue(),
+                result.ResultSetFields[0].TypeNames.ToArray().TestSequence( [ "int32" ] ),
+                result.ResultSetFields[1].Ordinal.TestEquals( 1 ),
+                result.ResultSetFields[1].Name.TestEquals( "b" ),
+                result.ResultSetFields[1].IsUsed.TestTrue(),
+                result.ResultSetFields[1].TypeNames.ToArray().TestSequence( [ "string" ] ),
+                result.ResultSetFields[2].Ordinal.TestEquals( 2 ),
+                result.ResultSetFields[2].Name.TestEquals( "c" ),
+                result.ResultSetFields[2].IsUsed.TestTrue(),
+                result.ResultSetFields[2].TypeNames.ToArray().TestSequence( [ "double", "NULL" ] ),
+                result.ResultSetFields[3].Ordinal.TestEquals( 3 ),
+                result.ResultSetFields[3].Name.TestEquals( "d" ),
+                result.ResultSetFields[3].IsUsed.TestTrue(),
+                result.ResultSetFields[3].TypeNames.ToArray().TestSequence( [ "boolean", "NULL" ] ) )
+            .Go();
     }
 
     [Fact]
@@ -951,13 +830,12 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = await queryReader.ReadAsync( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeTrue();
-            result.Rows.Should().BeNull();
-            result.ResultSetFields.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestTrue(),
+                result.Rows.TestNull(),
+                result.ResultSetFields.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -971,13 +849,12 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = await queryReader.ReadAsync( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeTrue();
-            result.Rows.Should().BeNull();
-            result.ResultSetFields.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestTrue(),
+                result.Rows.TestNull(),
+                result.ResultSetFields.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -997,38 +874,22 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var queryReader = sut.CreateAsync<Row>();
         var result = await queryReader.ReadAsync( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeFalse();
-            result.Rows.Should().HaveCount( 3 );
-            result.Rows.Should().BeInAscendingOrder( r => r.A );
-            result.Rows.Should()
-                .BeEquivalentTo(
-                    new Row
-                    {
-                        A = 1,
-                        B = "foo",
-                        C = 5.0,
-                        D = true
-                    },
-                    new Row
-                    {
-                        A = 2,
-                        B = "bar",
-                        C = null,
-                        D = false
-                    },
-                    new Row
-                    {
-                        A = 3,
-                        B = "lorem",
-                        C = 10.0,
-                        D = null
-                    } );
-
-            result.ResultSetFields.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestFalse(),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => Assertion.All(
+                            r.A.TestEquals( 1 ),
+                            r.B.TestEquals( "foo" ),
+                            r.C.TestEquals( 5.0 ),
+                            r.D.TestEquals( true ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
+                    ] ) ),
+                result.ResultSetFields.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1051,44 +912,26 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = await queryReader.ReadAsync( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeFalse();
-            result.Rows.Should().HaveCount( 3 );
-            result.Rows.Should().BeInAscendingOrder( r => r.A );
-            result.Rows.Should()
-                .BeEquivalentTo(
-                    new Row
-                    {
-                        A = 1,
-                        B = "foo",
-                        C = 5.0,
-                        D = true
-                    },
-                    new Row
-                    {
-                        A = 2,
-                        B = "bar",
-                        C = null,
-                        D = false
-                    },
-                    new Row
-                    {
-                        A = 3,
-                        B = "lorem",
-                        C = 10.0,
-                        D = null
-                    } );
-
-            result.ResultSetFields.ToArray()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    new SqlResultSetField( 0, "a" ),
-                    new SqlResultSetField( 1, "b" ),
-                    new SqlResultSetField( 2, "c" ),
-                    new SqlResultSetField( 3, "d" ) );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestFalse(),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => Assertion.All(
+                            r.A.TestEquals( 1 ),
+                            r.B.TestEquals( "foo" ),
+                            r.C.TestEquals( 5.0 ),
+                            r.D.TestEquals( true ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
+                    ] ) ),
+                result.ResultSetFields.TestSequence(
+                [
+                    new SqlResultSetField( 0, "a" ), new SqlResultSetField( 1, "b" ), new SqlResultSetField( 2, "c" ),
+                    new SqlResultSetField( 3, "d" )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1112,53 +955,37 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = await queryReader.ReadAsync( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeFalse();
-            result.Rows.Should().HaveCount( 3 );
-            result.Rows.Should().BeInAscendingOrder( r => r.A );
-            result.Rows.Should()
-                .BeEquivalentTo(
-                    new Row
-                    {
-                        A = 1,
-                        B = "foo",
-                        C = 5.0,
-                        D = true
-                    },
-                    new Row
-                    {
-                        A = 2,
-                        B = "bar",
-                        C = null,
-                        D = false
-                    },
-                    new Row
-                    {
-                        A = 3,
-                        B = "lorem",
-                        C = 10.0,
-                        D = null
-                    } );
-
-            result.ResultSetFields[0].Ordinal.Should().Be( 0 );
-            result.ResultSetFields[0].Name.Should().Be( "a" );
-            result.ResultSetFields[0].IsUsed.Should().BeTrue();
-            result.ResultSetFields[0].TypeNames.ToArray().Should().BeSequentiallyEqualTo( "int32" );
-            result.ResultSetFields[1].Ordinal.Should().Be( 1 );
-            result.ResultSetFields[1].Name.Should().Be( "b" );
-            result.ResultSetFields[1].IsUsed.Should().BeTrue();
-            result.ResultSetFields[1].TypeNames.ToArray().Should().BeSequentiallyEqualTo( "string" );
-            result.ResultSetFields[2].Ordinal.Should().Be( 2 );
-            result.ResultSetFields[2].Name.Should().Be( "c" );
-            result.ResultSetFields[2].IsUsed.Should().BeTrue();
-            result.ResultSetFields[2].TypeNames.ToArray().Should().BeSequentiallyEqualTo( "double", "NULL" );
-            result.ResultSetFields[3].Ordinal.Should().Be( 3 );
-            result.ResultSetFields[3].Name.Should().Be( "d" );
-            result.ResultSetFields[3].IsUsed.Should().BeTrue();
-            result.ResultSetFields[3].TypeNames.ToArray().Should().BeSequentiallyEqualTo( "boolean", "NULL" );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestFalse(),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => Assertion.All(
+                            r.A.TestEquals( 1 ),
+                            r.B.TestEquals( "foo" ),
+                            r.C.TestEquals( 5.0 ),
+                            r.D.TestEquals( true ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
+                    ] ) ),
+                result.ResultSetFields[0].Ordinal.TestEquals( 0 ),
+                result.ResultSetFields[0].Name.TestEquals( "a" ),
+                result.ResultSetFields[0].IsUsed.TestTrue(),
+                result.ResultSetFields[0].TypeNames.ToArray().TestSequence( [ "int32" ] ),
+                result.ResultSetFields[1].Ordinal.TestEquals( 1 ),
+                result.ResultSetFields[1].Name.TestEquals( "b" ),
+                result.ResultSetFields[1].IsUsed.TestTrue(),
+                result.ResultSetFields[1].TypeNames.ToArray().TestSequence( [ "string" ] ),
+                result.ResultSetFields[2].Ordinal.TestEquals( 2 ),
+                result.ResultSetFields[2].Name.TestEquals( "c" ),
+                result.ResultSetFields[2].IsUsed.TestTrue(),
+                result.ResultSetFields[2].TypeNames.ToArray().TestSequence( [ "double", "NULL" ] ),
+                result.ResultSetFields[3].Ordinal.TestEquals( 3 ),
+                result.ResultSetFields[3].Name.TestEquals( "d" ),
+                result.ResultSetFields[3].IsUsed.TestTrue(),
+                result.ResultSetFields[3].TypeNames.ToArray().TestSequence( [ "boolean", "NULL" ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1178,18 +1005,21 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var queryReader = sut.CreateAsync<RowRecord>();
         var result = await queryReader.ReadAsync( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeFalse();
-            result.Rows.Should().HaveCount( 3 );
-            result.Rows.Should().BeInAscendingOrder( r => r.A );
-            result.Rows.Should()
-                .BeEquivalentTo(
-                    new RowRecord( 1, "foo", 5.0, true ),
-                    new RowRecord( 2, "bar", null, false ),
-                    new RowRecord( 3, "lorem", 10.0, null ) );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestFalse(),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => Assertion.All(
+                            r.A.TestEquals( 1 ),
+                            r.B.TestEquals( "foo" ),
+                            r.C.TestEquals( 5.0 ),
+                            r.D.TestEquals( true ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
+                    ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1210,36 +1040,21 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var queryReader = sut.CreateAsync<RowWithDifferentMemberTypes>();
         var result = await queryReader.ReadAsync( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeFalse();
-            result.Rows.Should().HaveCount( 3 );
-            result.Rows.Should().BeInAscendingOrder( r => r.A );
-            result.Rows.Should()
-                .BeEquivalentTo(
-                    new
-                    {
-                        A = 1,
-                        B = "foo",
-                        C = ( double? )5.0,
-                        D = "x"
-                    },
-                    new
-                    {
-                        A = 2,
-                        B = "bar",
-                        C = ( double? )null,
-                        D = "y"
-                    },
-                    new
-                    {
-                        A = 3,
-                        B = "lorem",
-                        C = ( double? )10.0,
-                        D = ( string? )null
-                    } );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestFalse(),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => Assertion.All(
+                            r.A.TestEquals( 1 ),
+                            r.B.TestEquals( "foo" ),
+                            r.C.TestEquals( 5.0 ),
+                            r.D.TestEquals( "x" ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( "y" ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
+                    ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1260,37 +1075,31 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = await queryReader.ReadAsync( reader, new SqlQueryReaderOptions( InitialBufferCapacity: 50 ) );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeFalse();
-            (result.Rows?.Capacity).Should().Be( 50 );
-            result.Rows.Should().HaveCount( 3 );
-            result.Rows.Should().BeInAscendingOrder( r => r.A );
-            result.Rows.Should()
-                .BeEquivalentTo(
-                    new Row
-                    {
-                        A = 1,
-                        B = "foo",
-                        C = 5.0,
-                        D = true
-                    },
-                    new Row
-                    {
-                        A = 2,
-                        B = "bar",
-                        C = null,
-                        D = false
-                    },
-                    new Row
-                    {
-                        A = 3,
-                        B = "lorem",
-                        C = 10.0,
-                        D = null
-                    } );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestFalse(),
+                result.Rows.TestNotNull(
+                    rows => Assertion.All(
+                        rows.Capacity.TestEquals( 50 ),
+                        rows.TestSequence(
+                        [
+                            (r, _) => Assertion.All(
+                                r.A.TestEquals( 1 ),
+                                r.B.TestEquals( "foo" ),
+                                r.C.TestEquals( 5.0 ),
+                                r.D.TestEquals( true ) ),
+                            (r, _) => Assertion.All(
+                                r.A.TestEquals( 2 ),
+                                r.B.TestEquals( "bar" ),
+                                r.C.TestNull(),
+                                r.D.TestEquals( false ) ),
+                            (r, _) => Assertion.All(
+                                r.A.TestEquals( 3 ),
+                                r.B.TestEquals( "lorem" ),
+                                r.C.TestEquals( 10.0 ),
+                                r.D.TestNull() )
+                        ] ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1311,36 +1120,17 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = await queryReader.ReadAsync( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeFalse();
-            result.Rows.Should().HaveCount( 3 );
-            result.Rows.Should().BeInAscendingOrder( r => r.A );
-            result.Rows.Should()
-                .BeEquivalentTo(
-                    new Row
-                    {
-                        A = 1,
-                        B = "foo",
-                        C = null,
-                        D = true
-                    },
-                    new Row
-                    {
-                        A = 2,
-                        B = "bar",
-                        C = null,
-                        D = false
-                    },
-                    new Row
-                    {
-                        A = 3,
-                        B = "lorem",
-                        C = null,
-                        D = null
-                    } );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestFalse(),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => Assertion.All( r.A.TestEquals( 1 ), r.B.TestEquals( "foo" ), r.C.TestNull(), r.D.TestEquals( true ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestNull(), r.D.TestNull() )
+                    ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1362,36 +1152,21 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = await queryReader.ReadAsync( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeFalse();
-            result.Rows.Should().HaveCount( 3 );
-            result.Rows.Should().BeInAscendingOrder( r => r.A );
-            result.Rows.Should()
-                .BeEquivalentTo(
-                    new Row
-                    {
-                        A = 1,
-                        B = "foo",
-                        C = 5.0,
-                        D = true
-                    },
-                    new Row
-                    {
-                        A = 2,
-                        B = "bar",
-                        C = null,
-                        D = false
-                    },
-                    new Row
-                    {
-                        A = 3,
-                        B = "lorem",
-                        C = 10.0,
-                        D = null
-                    } );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestFalse(),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => Assertion.All(
+                            r.A.TestEquals( 1 ),
+                            r.B.TestEquals( "foo" ),
+                            r.C.TestEquals( 5.0 ),
+                            r.D.TestEquals( true ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
+                    ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1418,36 +1193,25 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = await queryReader.ReadAsync( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeFalse();
-            result.Rows.Should().HaveCount( 3 );
-            result.Rows.Should().BeInAscendingOrder( r => r.A );
-            result.Rows.Should()
-                .BeEquivalentTo(
-                    new Row
-                    {
-                        A = 1,
-                        B = "foo",
-                        C = 4.0,
-                        D = true
-                    },
-                    new Row
-                    {
-                        A = 2,
-                        B = "bar",
-                        C = 5.0,
-                        D = false
-                    },
-                    new Row
-                    {
-                        A = 3,
-                        B = "lorem",
-                        C = 8.0,
-                        D = null
-                    } );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestFalse(),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => Assertion.All(
+                            r.A.TestEquals( 1 ),
+                            r.B.TestEquals( "foo" ),
+                            r.C.TestEquals( 4.0 ),
+                            r.D.TestEquals( true ) ),
+                        (r, _) => Assertion.All(
+                            r.A.TestEquals( 2 ),
+                            r.B.TestEquals( "bar" ),
+                            r.C.TestEquals( 5.0 ),
+                            r.D.TestEquals( false ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 8.0 ), r.D.TestNull() )
+                    ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1476,36 +1240,25 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = await queryReader.ReadAsync( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeFalse();
-            result.Rows.Should().HaveCount( 3 );
-            result.Rows.Should().BeInAscendingOrder( r => r.A );
-            result.Rows.Should()
-                .BeEquivalentTo(
-                    new Row
-                    {
-                        A = 1,
-                        B = "foo",
-                        C = 11.0,
-                        D = true
-                    },
-                    new Row
-                    {
-                        A = 2,
-                        B = "bar",
-                        C = 1.0,
-                        D = false
-                    },
-                    new Row
-                    {
-                        A = 3,
-                        B = "lorem",
-                        C = 10.0,
-                        D = null
-                    } );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestFalse(),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => Assertion.All(
+                            r.A.TestEquals( 1 ),
+                            r.B.TestEquals( "foo" ),
+                            r.C.TestEquals( 11.0 ),
+                            r.D.TestEquals( true ) ),
+                        (r, _) => Assertion.All(
+                            r.A.TestEquals( 2 ),
+                            r.B.TestEquals( "bar" ),
+                            r.C.TestEquals( 1.0 ),
+                            r.D.TestEquals( false ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
+                    ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1530,17 +1283,21 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = await queryReader.ReadAsync( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeFalse();
-            result.Rows.Should().HaveCount( 3 );
-            result.Rows.Should()
-                .BeEquivalentTo(
-                    new UnsafeRow( 1, "foo", 0.0, "x" ),
-                    new UnsafeRow( 0, "bar", 5.0, null! ),
-                    new UnsafeRow( 3, null!, 10.0, "y" ) );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestFalse(),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => Assertion.All(
+                            r.A.TestEquals( 1 ),
+                            r.B.TestEquals( "foo" ),
+                            r.C.TestEquals( 0.0 ),
+                            r.D.TestEquals( "x" ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 0 ), r.B.TestEquals( "bar" ), r.C.TestEquals( 5.0 ), r.D.TestNull() ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestNull(), r.C.TestEquals( 10.0 ), r.D.TestEquals( "y" ) )
+                    ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1562,17 +1319,21 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = await queryReader.ReadAsync( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.IsEmpty.Should().BeFalse();
-            result.Rows.Should().HaveCount( 3 );
-            result.Rows.Should()
-                .BeEquivalentTo(
-                    new UnsafeRow( 1, "foo", 0.0, "x" ),
-                    new UnsafeRow( 0, "bar", 5.0, null! ),
-                    new UnsafeRow( 3, null!, 10.0, "y" ) );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestFalse(),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => Assertion.All(
+                            r.A.TestEquals( 1 ),
+                            r.B.TestEquals( "foo" ),
+                            r.C.TestEquals( 0.0 ),
+                            r.D.TestEquals( "x" ) ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 0 ), r.B.TestEquals( "bar" ), r.C.TestEquals( 5.0 ), r.D.TestNull() ),
+                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestNull(), r.C.TestEquals( 10.0 ), r.D.TestEquals( "y" ) )
+                    ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1585,7 +1346,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
             new SqlColumnTypeDefinitionProviderMock( new SqlColumnTypeDefinitionProviderBuilderMock() ) );
 
         var action = Lambda.Of( () => sut.CreateAsyncExpression<Row>() );
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -1593,7 +1354,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     {
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var action = Lambda.Of( () => sut.CreateAsyncExpression<IEnumerable>() );
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -1601,7 +1362,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     {
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var action = Lambda.Of( () => sut.CreateAsyncExpression( typeof( IEnumerable<> ) ) );
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -1609,7 +1370,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     {
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var action = Lambda.Of( () => sut.CreateAsyncExpression( typeof( int? ) ) );
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -1620,7 +1381,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
             () => sut.CreateAsyncExpression<RowRecord>(
                 SqlQueryReaderCreationOptions.Default.SetRowTypeConstructorPredicate( _ => false ) ) );
 
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -1628,7 +1389,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     {
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var action = Lambda.Of( () => sut.CreateAsyncExpression<object>() );
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -1638,7 +1399,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var action = Lambda.Of(
             () => sut.CreateAsyncExpression<Row>( SqlQueryReaderCreationOptions.Default.SetRowTypeMemberPredicate( _ => false ) ) );
 
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -1650,11 +1411,10 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = scalarReader.Read( reader );
 
-        using ( new AssertionScope() )
-        {
-            scalarReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.Should().Be( SqlScalarQueryResult.Empty );
-        }
+        Assertion.All(
+                scalarReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.TestEquals( SqlScalarQueryResult.Empty ) )
+            .Go();
     }
 
     [Fact]
@@ -1670,12 +1430,11 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = scalarReader.Read( reader );
 
-        using ( new AssertionScope() )
-        {
-            scalarReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.HasValue.Should().BeTrue();
-            result.Value.Should().Be( 1 );
-        }
+        Assertion.All(
+                scalarReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.HasValue.TestTrue(),
+                result.Value.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1691,12 +1450,11 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = scalarReader.Read( reader );
 
-        using ( new AssertionScope() )
-        {
-            scalarReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.HasValue.Should().BeTrue();
-            result.Value.Should().BeNull();
-        }
+        Assertion.All(
+                scalarReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.HasValue.TestTrue(),
+                result.Value.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -1708,11 +1466,10 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = queryReader.Read( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.Should().Be( SqlScalarQueryResult<int>.Empty );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.TestEquals( SqlScalarQueryResult<int>.Empty ) )
+            .Go();
     }
 
     [Fact]
@@ -1727,12 +1484,11 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var queryReader = sut.CreateScalar<int>();
         var result = queryReader.Read( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.HasValue.Should().BeTrue();
-            result.Value.Should().Be( 1 );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.HasValue.TestTrue(),
+                result.Value.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1748,12 +1504,11 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var queryReader = sut.CreateScalar<int>( isNullable: true );
         var result = queryReader.Read( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.HasValue.Should().BeTrue();
-            result.Value.Should().Be( 0 );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.HasValue.TestTrue(),
+                result.Value.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -1768,12 +1523,11 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var queryReader = sut.CreateScalar<int?>();
         var result = queryReader.Read( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.HasValue.Should().BeTrue();
-            result.Value.Should().Be( 1 );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.HasValue.TestTrue(),
+                result.Value.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1789,12 +1543,11 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var queryReader = sut.CreateScalar<int?>();
         var result = queryReader.Read( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.HasValue.Should().BeTrue();
-            result.Value.Should().BeNull();
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.HasValue.TestTrue(),
+                result.Value.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -1809,12 +1562,11 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var queryReader = sut.CreateScalar<string>();
         var result = queryReader.Read( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.HasValue.Should().BeTrue();
-            result.Value.Should().Be( "foo" );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.HasValue.TestTrue(),
+                result.Value.TestEquals( "foo" ) )
+            .Go();
     }
 
     [Fact]
@@ -1830,12 +1582,11 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var queryReader = sut.CreateScalar<string>( isNullable: true );
         var result = queryReader.Read( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.HasValue.Should().BeTrue();
-            result.Value.Should().BeNull();
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.HasValue.TestTrue(),
+                result.Value.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -1843,7 +1594,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     {
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var action = Lambda.Of( () => sut.CreateScalarExpression<IEnumerable>() );
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -1851,7 +1602,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     {
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var action = Lambda.Of( () => sut.CreateScalarExpression( typeof( IEnumerable<> ) ) );
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -1863,11 +1614,10 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = await scalarReader.ReadAsync( reader );
 
-        using ( new AssertionScope() )
-        {
-            scalarReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.Should().Be( SqlScalarQueryResult.Empty );
-        }
+        Assertion.All(
+                scalarReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.TestEquals( SqlScalarQueryResult.Empty ) )
+            .Go();
     }
 
     [Fact]
@@ -1883,12 +1633,11 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = await scalarReader.ReadAsync( reader );
 
-        using ( new AssertionScope() )
-        {
-            scalarReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.HasValue.Should().BeTrue();
-            result.Value.Should().Be( 1 );
-        }
+        Assertion.All(
+                scalarReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.HasValue.TestTrue(),
+                result.Value.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1905,12 +1654,11 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = await scalarReader.ReadAsync( reader );
 
-        using ( new AssertionScope() )
-        {
-            scalarReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.HasValue.Should().BeTrue();
-            result.Value.Should().BeNull();
-        }
+        Assertion.All(
+                scalarReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.HasValue.TestTrue(),
+                result.Value.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -1922,11 +1670,10 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
         var result = await queryReader.ReadAsync( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.Should().Be( SqlScalarQueryResult<int>.Empty );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.TestEquals( SqlScalarQueryResult<int>.Empty ) )
+            .Go();
     }
 
     [Fact]
@@ -1942,12 +1689,11 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var queryReader = sut.CreateAsyncScalar<int>();
         var result = await queryReader.ReadAsync( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.HasValue.Should().BeTrue();
-            result.Value.Should().Be( 1 );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.HasValue.TestTrue(),
+                result.Value.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1963,12 +1709,11 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var queryReader = sut.CreateAsyncScalar<int>( isNullable: true );
         var result = await queryReader.ReadAsync( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.HasValue.Should().BeTrue();
-            result.Value.Should().Be( 0 );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.HasValue.TestTrue(),
+                result.Value.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -1984,12 +1729,11 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var queryReader = sut.CreateAsyncScalar<int?>();
         var result = await queryReader.ReadAsync( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.HasValue.Should().BeTrue();
-            result.Value.Should().Be( 1 );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.HasValue.TestTrue(),
+                result.Value.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -2005,12 +1749,11 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var queryReader = sut.CreateAsyncScalar<int?>();
         var result = await queryReader.ReadAsync( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.HasValue.Should().BeTrue();
-            result.Value.Should().BeNull();
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.HasValue.TestTrue(),
+                result.Value.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -2026,12 +1769,11 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var queryReader = sut.CreateAsyncScalar<string>();
         var result = await queryReader.ReadAsync( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.HasValue.Should().BeTrue();
-            result.Value.Should().Be( "foo" );
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.HasValue.TestTrue(),
+                result.Value.TestEquals( "foo" ) )
+            .Go();
     }
 
     [Fact]
@@ -2047,12 +1789,11 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var queryReader = sut.CreateAsyncScalar<string>( isNullable: true );
         var result = await queryReader.ReadAsync( reader );
 
-        using ( new AssertionScope() )
-        {
-            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.HasValue.Should().BeTrue();
-            result.Value.Should().BeNull();
-        }
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.HasValue.TestTrue(),
+                result.Value.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -2065,7 +1806,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
             new SqlColumnTypeDefinitionProviderMock( new SqlColumnTypeDefinitionProviderBuilderMock() ) );
 
         var action = Lambda.Of( () => sut.CreateAsyncScalarExpression<int>() );
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -2073,7 +1814,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     {
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var action = Lambda.Of( () => sut.CreateAsyncScalarExpression<IEnumerable>() );
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -2081,7 +1822,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     {
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var action = Lambda.Of( () => sut.CreateAsyncScalarExpression( typeof( IEnumerable<> ) ) );
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -2089,7 +1830,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     {
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var action = Lambda.Of( () => sut.CreateAsyncScalarExpression<Row>() );
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     public sealed class Row

@@ -13,11 +13,10 @@ public class SqlObjectBuilderReferenceSourceTests : TestsBase
         var table = SqlDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
         var result = SqlObjectBuilderReferenceSource.Create( table, property );
 
-        using ( new AssertionScope() )
-        {
-            result.Object.Should().BeSameAs( table );
-            result.Property.Should().BeSameAs( property );
-        }
+        Assertion.All(
+                result.Object.TestRefEquals( table ),
+                result.Property.TestRefEquals( property ) )
+            .Go();
     }
 
     [Fact]
@@ -28,7 +27,7 @@ public class SqlObjectBuilderReferenceSourceTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( "[Table] common.T" );
+        result.TestEquals( "[Table] common.T" ).Go();
     }
 
     [Fact]
@@ -39,7 +38,7 @@ public class SqlObjectBuilderReferenceSourceTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( "[Table] common.T (foo)" );
+        result.TestEquals( "[Table] common.T (foo)" ).Go();
     }
 
     [Fact]
@@ -51,7 +50,7 @@ public class SqlObjectBuilderReferenceSourceTests : TestsBase
 
         var result = sut.GetHashCode();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -62,11 +61,10 @@ public class SqlObjectBuilderReferenceSourceTests : TestsBase
 
         var result = sut.WithProperty( "bar" );
 
-        using ( new AssertionScope() )
-        {
-            result.Object.Should().BeSameAs( table );
-            result.Property.Should().Be( "bar" );
-        }
+        Assertion.All(
+                result.Object.TestRefEquals( table ),
+                result.Property.TestEquals( "bar" ) )
+            .Go();
     }
 
     [Theory]
@@ -79,11 +77,10 @@ public class SqlObjectBuilderReferenceSourceTests : TestsBase
 
         var result = sut.UnsafeReinterpretAs<ISqlObjectBuilder>();
 
-        using ( new AssertionScope() )
-        {
-            result.Object.Should().BeSameAs( table );
-            result.Property.Should().BeSameAs( property );
-        }
+        Assertion.All(
+                result.Object.TestRefEquals( table ),
+                result.Property.TestRefEquals( property ) )
+            .Go();
     }
 
     [Theory]
@@ -96,11 +93,10 @@ public class SqlObjectBuilderReferenceSourceTests : TestsBase
 
         SqlObjectBuilderReferenceSource<ISqlObjectBuilder> result = sut;
 
-        using ( new AssertionScope() )
-        {
-            result.Object.Should().BeSameAs( table );
-            result.Property.Should().BeSameAs( property );
-        }
+        Assertion.All(
+                result.Object.TestRefEquals( table ),
+                result.Property.TestRefEquals( property ) )
+            .Go();
     }
 
     [Fact]
@@ -112,7 +108,7 @@ public class SqlObjectBuilderReferenceSourceTests : TestsBase
 
         var result = a == b;
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -125,7 +121,7 @@ public class SqlObjectBuilderReferenceSourceTests : TestsBase
 
         var result = a == b;
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -137,7 +133,7 @@ public class SqlObjectBuilderReferenceSourceTests : TestsBase
 
         var result = a == b;
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -149,7 +145,7 @@ public class SqlObjectBuilderReferenceSourceTests : TestsBase
 
         var result = a != b;
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -162,7 +158,7 @@ public class SqlObjectBuilderReferenceSourceTests : TestsBase
 
         var result = a != b;
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -174,6 +170,6 @@ public class SqlObjectBuilderReferenceSourceTests : TestsBase
 
         var result = a != b;
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 }

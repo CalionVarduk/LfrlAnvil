@@ -7,12 +7,11 @@ public class SqlRecordSetInfoTests : TestsBase
     {
         var sut = default( SqlRecordSetInfo );
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( default( SqlSchemaObjectName ) );
-            sut.Identifier.Should().BeEmpty();
-            sut.IsTemporary.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Name.TestEquals( default( SqlSchemaObjectName ) ),
+                sut.Identifier.TestEmpty(),
+                sut.IsTemporary.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -20,12 +19,11 @@ public class SqlRecordSetInfoTests : TestsBase
     {
         var sut = SqlRecordSetInfo.Create( "foo" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( SqlSchemaObjectName.Create( "foo" ) );
-            sut.Identifier.Should().Be( "foo" );
-            sut.IsTemporary.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Name.TestEquals( SqlSchemaObjectName.Create( "foo" ) ),
+                sut.Identifier.TestEquals( "foo" ),
+                sut.IsTemporary.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -33,12 +31,11 @@ public class SqlRecordSetInfoTests : TestsBase
     {
         var sut = SqlRecordSetInfo.Create( "foo", "bar" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( SqlSchemaObjectName.Create( "foo", "bar" ) );
-            sut.Identifier.Should().Be( "foo.bar" );
-            sut.IsTemporary.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Name.TestEquals( SqlSchemaObjectName.Create( "foo", "bar" ) ),
+                sut.Identifier.TestEquals( "foo.bar" ),
+                sut.IsTemporary.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -47,12 +44,11 @@ public class SqlRecordSetInfoTests : TestsBase
         var name = SqlSchemaObjectName.Create( "foo", "bar" );
         var sut = SqlRecordSetInfo.Create( name );
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( name );
-            sut.Identifier.Should().Be( "foo.bar" );
-            sut.IsTemporary.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Name.TestEquals( name ),
+                sut.Identifier.TestEquals( "foo.bar" ),
+                sut.IsTemporary.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -60,12 +56,11 @@ public class SqlRecordSetInfoTests : TestsBase
     {
         var sut = SqlRecordSetInfo.CreateTemporary( "foo" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( SqlSchemaObjectName.Create( "foo" ) );
-            sut.Identifier.Should().Be( "TEMP.foo" );
-            sut.IsTemporary.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Name.TestEquals( SqlSchemaObjectName.Create( "foo" ) ),
+                sut.Identifier.TestEquals( "TEMP.foo" ),
+                sut.IsTemporary.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -73,7 +68,7 @@ public class SqlRecordSetInfoTests : TestsBase
     {
         var sut = SqlRecordSetInfo.Create( "foo", "bar" );
         var result = sut.ToString();
-        result.Should().Be( sut.Identifier );
+        result.TestEquals( sut.Identifier ).Go();
     }
 
     [Fact]
@@ -84,7 +79,7 @@ public class SqlRecordSetInfoTests : TestsBase
 
         var result = sut.GetHashCode();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -95,7 +90,7 @@ public class SqlRecordSetInfoTests : TestsBase
     public void Equals_ShouldReturnCorrectResult(string schema1, string name1, string schema2, string name2, bool expected)
     {
         var result = SqlRecordSetInfo.Create( schema1, name1 ).Equals( SqlRecordSetInfo.Create( schema2, name2 ) );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -106,7 +101,7 @@ public class SqlRecordSetInfoTests : TestsBase
     public void EqualityOperator_ShouldReturnCorrectResult(string schema1, string name1, string schema2, string name2, bool expected)
     {
         var result = SqlRecordSetInfo.Create( schema1, name1 ) == SqlRecordSetInfo.Create( schema2, name2 );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -117,6 +112,6 @@ public class SqlRecordSetInfoTests : TestsBase
     public void InequalityOperator_ShouldReturnCorrectResult(string schema1, string name1, string schema2, string name2, bool expected)
     {
         var result = SqlRecordSetInfo.Create( schema1, name1 ) != SqlRecordSetInfo.Create( schema2, name2 );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

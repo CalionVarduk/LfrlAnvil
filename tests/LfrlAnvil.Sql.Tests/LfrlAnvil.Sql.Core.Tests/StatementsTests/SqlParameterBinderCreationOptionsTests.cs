@@ -2,7 +2,6 @@
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Statements.Compilers;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sql.Tests.StatementsTests;
 
@@ -13,14 +12,13 @@ public class SqlParameterBinderCreationOptionsTests : TestsBase
     {
         var sut = SqlParameterBinderCreationOptions.Default;
 
-        using ( new AssertionScope() )
-        {
-            sut.IgnoreNullValues.Should().BeTrue();
-            sut.ReduceCollections.Should().BeFalse();
-            sut.Context.Should().BeNull();
-            sut.SourceTypeMemberPredicate.Should().BeNull();
-            sut.ParameterConfigurations.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.IgnoreNullValues.TestTrue(),
+                sut.ReduceCollections.TestFalse(),
+                sut.Context.TestNull(),
+                sut.SourceTypeMemberPredicate.TestNull(),
+                sut.ParameterConfigurations.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Theory]
@@ -30,14 +28,13 @@ public class SqlParameterBinderCreationOptionsTests : TestsBase
     {
         var sut = SqlParameterBinderCreationOptions.Default.EnableIgnoringOfNullValues( enabled );
 
-        using ( new AssertionScope() )
-        {
-            sut.IgnoreNullValues.Should().Be( enabled );
-            sut.ReduceCollections.Should().BeFalse();
-            sut.Context.Should().BeNull();
-            sut.SourceTypeMemberPredicate.Should().BeNull();
-            sut.ParameterConfigurations.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.IgnoreNullValues.TestEquals( enabled ),
+                sut.ReduceCollections.TestFalse(),
+                sut.Context.TestNull(),
+                sut.SourceTypeMemberPredicate.TestNull(),
+                sut.ParameterConfigurations.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Theory]
@@ -47,14 +44,13 @@ public class SqlParameterBinderCreationOptionsTests : TestsBase
     {
         var sut = SqlParameterBinderCreationOptions.Default.EnableCollectionReduction( enabled );
 
-        using ( new AssertionScope() )
-        {
-            sut.IgnoreNullValues.Should().BeTrue();
-            sut.ReduceCollections.Should().Be( enabled );
-            sut.Context.Should().BeNull();
-            sut.SourceTypeMemberPredicate.Should().BeNull();
-            sut.ParameterConfigurations.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.IgnoreNullValues.TestTrue(),
+                sut.ReduceCollections.TestEquals( enabled ),
+                sut.Context.TestNull(),
+                sut.SourceTypeMemberPredicate.TestNull(),
+                sut.ParameterConfigurations.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -63,14 +59,13 @@ public class SqlParameterBinderCreationOptionsTests : TestsBase
         var context = SqlNodeInterpreterContext.Create();
         var sut = SqlParameterBinderCreationOptions.Default.SetContext( context );
 
-        using ( new AssertionScope() )
-        {
-            sut.IgnoreNullValues.Should().BeTrue();
-            sut.ReduceCollections.Should().BeFalse();
-            sut.Context.Should().BeSameAs( context );
-            sut.SourceTypeMemberPredicate.Should().BeNull();
-            sut.ParameterConfigurations.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.IgnoreNullValues.TestTrue(),
+                sut.ReduceCollections.TestFalse(),
+                sut.Context.TestRefEquals( context ),
+                sut.SourceTypeMemberPredicate.TestNull(),
+                sut.ParameterConfigurations.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -79,14 +74,13 @@ public class SqlParameterBinderCreationOptionsTests : TestsBase
         var predicate = Lambda.Of( (MemberInfo member) => member.MemberType == MemberTypes.Property );
         var sut = SqlParameterBinderCreationOptions.Default.SetSourceTypeMemberPredicate( predicate );
 
-        using ( new AssertionScope() )
-        {
-            sut.IgnoreNullValues.Should().BeTrue();
-            sut.ReduceCollections.Should().BeFalse();
-            sut.Context.Should().BeNull();
-            sut.SourceTypeMemberPredicate.Should().BeSameAs( predicate );
-            sut.ParameterConfigurations.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.IgnoreNullValues.TestTrue(),
+                sut.ReduceCollections.TestFalse(),
+                sut.Context.TestNull(),
+                sut.SourceTypeMemberPredicate.TestRefEquals( predicate ),
+                sut.ParameterConfigurations.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -95,15 +89,14 @@ public class SqlParameterBinderCreationOptionsTests : TestsBase
         var cfg = SqlParameterConfiguration.IgnoreMember( "foo" );
         var sut = SqlParameterBinderCreationOptions.Default.With( cfg );
 
-        using ( new AssertionScope() )
-        {
-            SqlParameterBinderCreationOptions.Default.ParameterConfigurations.ToArray().Should().BeEmpty();
-            sut.IgnoreNullValues.Should().BeTrue();
-            sut.ReduceCollections.Should().BeFalse();
-            sut.Context.Should().BeNull();
-            sut.SourceTypeMemberPredicate.Should().BeNull();
-            sut.ParameterConfigurations.ToArray().Should().BeSequentiallyEqualTo( cfg );
-        }
+        Assertion.All(
+                SqlParameterBinderCreationOptions.Default.ParameterConfigurations.ToArray().TestEmpty(),
+                sut.IgnoreNullValues.TestTrue(),
+                sut.ReduceCollections.TestFalse(),
+                sut.Context.TestNull(),
+                sut.SourceTypeMemberPredicate.TestNull(),
+                sut.ParameterConfigurations.ToArray().TestSequence( [ cfg ] ) )
+            .Go();
     }
 
     [Fact]
@@ -114,15 +107,14 @@ public class SqlParameterBinderCreationOptionsTests : TestsBase
         var prev = SqlParameterBinderCreationOptions.Default.With( cfg1 );
         var sut = prev.With( cfg2 );
 
-        using ( new AssertionScope() )
-        {
-            prev.ParameterConfigurations.ToArray().Should().BeSequentiallyEqualTo( cfg1 );
-            sut.IgnoreNullValues.Should().BeTrue();
-            sut.ReduceCollections.Should().BeFalse();
-            sut.Context.Should().BeNull();
-            sut.SourceTypeMemberPredicate.Should().BeNull();
-            sut.ParameterConfigurations.ToArray().Should().BeSequentiallyEqualTo( cfg1, cfg2 );
-        }
+        Assertion.All(
+                prev.ParameterConfigurations.ToArray().TestSequence( [ cfg1 ] ),
+                sut.IgnoreNullValues.TestTrue(),
+                sut.ReduceCollections.TestFalse(),
+                sut.Context.TestNull(),
+                sut.SourceTypeMemberPredicate.TestNull(),
+                sut.ParameterConfigurations.ToArray().TestSequence( [ cfg1, cfg2 ] ) )
+            .Go();
     }
 
     [Theory]
@@ -133,11 +125,10 @@ public class SqlParameterBinderCreationOptionsTests : TestsBase
         var sut = SqlParameterBinderCreationOptions.Default;
         var result = sut.CreateParameterConfigurationLookups( sourceType );
 
-        using ( new AssertionScope() )
-        {
-            result.MembersByMemberName.Should().BeNull();
-            result.SelectorsByParameterName.Should().BeNull();
-        }
+        Assertion.All(
+                result.MembersByMemberName.TestNull(),
+                result.SelectorsByParameterName.TestNull() )
+            .Go();
     }
 
     [Theory]
@@ -154,14 +145,13 @@ public class SqlParameterBinderCreationOptionsTests : TestsBase
 
         var result = sut.CreateParameterConfigurationLookups( sourceType );
 
-        using ( new AssertionScope() )
-        {
-            result.SelectorsByParameterName.Should().BeNull();
-            result.MembersByMemberName.Should().NotBeNull();
-            result.MembersByMemberName.Should().HaveCount( 3 );
-            (result.MembersByMemberName?.Keys).Should().BeEquivalentTo( "foo", "bar", "lorem" );
-            (result.MembersByMemberName?.Values).Should().BeEquivalentTo( cfg1, cfg2, cfg3 );
-        }
+        Assertion.All(
+                result.SelectorsByParameterName.TestNull(),
+                result.MembersByMemberName.TestNotNull(
+                    members => Assertion.All(
+                        members.Keys.TestSetEqual( [ "foo", "bar", "lorem" ] ),
+                        members.Values.TestSetEqual( [ cfg1, cfg2, cfg3 ] ) ) ) )
+            .Go();
     }
 
     [Theory]
@@ -176,14 +166,13 @@ public class SqlParameterBinderCreationOptionsTests : TestsBase
 
         var result = sut.CreateParameterConfigurationLookups( sourceType );
 
-        using ( new AssertionScope() )
-        {
-            result.SelectorsByParameterName.Should().BeNull();
-            result.MembersByMemberName.Should().NotBeNull();
-            result.MembersByMemberName.Should().HaveCount( 2 );
-            (result.MembersByMemberName?.Keys).Should().BeEquivalentTo( "foo", "bar" );
-            (result.MembersByMemberName?.Values).Should().BeEquivalentTo( cfg1, cfg3 );
-        }
+        Assertion.All(
+                result.SelectorsByParameterName.TestNull(),
+                result.MembersByMemberName.TestNotNull(
+                    members => Assertion.All(
+                        members.Keys.TestSetEqual( [ "foo", "bar" ] ),
+                        members.Values.TestSetEqual( [ cfg1, cfg3 ] ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -194,11 +183,10 @@ public class SqlParameterBinderCreationOptionsTests : TestsBase
 
         var result = sut.CreateParameterConfigurationLookups( null );
 
-        using ( new AssertionScope() )
-        {
-            result.MembersByMemberName.Should().BeNull();
-            result.SelectorsByParameterName.Should().BeNull();
-        }
+        Assertion.All(
+                result.MembersByMemberName.TestNull(),
+                result.SelectorsByParameterName.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -209,14 +197,13 @@ public class SqlParameterBinderCreationOptionsTests : TestsBase
 
         var result = sut.CreateParameterConfigurationLookups( typeof( string ) );
 
-        using ( new AssertionScope() )
-        {
-            result.MembersByMemberName.Should().BeNull();
-            result.SelectorsByParameterName.Should().NotBeNull();
-            result.SelectorsByParameterName.Should().HaveCount( 1 );
-            (result.SelectorsByParameterName?.Keys).Should().BeEquivalentTo( "foo" );
-            (result.SelectorsByParameterName?.Values).Should().BeEquivalentTo( cfg );
-        }
+        Assertion.All(
+                result.MembersByMemberName.TestNull(),
+                result.SelectorsByParameterName.TestNotNull(
+                    selectors => Assertion.All(
+                        selectors.Keys.TestSetEqual( [ "foo" ] ),
+                        selectors.Values.TestSetEqual( [ cfg ] ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -227,11 +214,10 @@ public class SqlParameterBinderCreationOptionsTests : TestsBase
 
         var result = sut.CreateParameterConfigurationLookups( typeof( object ) );
 
-        using ( new AssertionScope() )
-        {
-            result.MembersByMemberName.Should().BeNull();
-            result.SelectorsByParameterName.Should().BeNull();
-        }
+        Assertion.All(
+                result.MembersByMemberName.TestNull(),
+                result.SelectorsByParameterName.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -243,14 +229,14 @@ public class SqlParameterBinderCreationOptionsTests : TestsBase
 
         var result = sut.CreateParameterConfigurationLookups( typeof( string ) );
 
-        using ( new AssertionScope() )
-        {
-            result.MembersByMemberName.Should().BeNull();
-            result.SelectorsByParameterName.Should().NotBeNull();
-            result.SelectorsByParameterName.Should().HaveCount( 1 );
-            (result.SelectorsByParameterName?.Keys).Should().BeEquivalentTo( "foo" );
-            (result.SelectorsByParameterName?.Values).Should().BeEquivalentTo( cfg2 );
-        }
+        Assertion.All(
+                result.MembersByMemberName.TestNull(),
+                result.SelectorsByParameterName.TestNotNull(),
+                result.SelectorsByParameterName.TestNotNull(
+                    selectors => Assertion.All(
+                        selectors.Keys.TestSetEqual( [ "foo" ] ),
+                        selectors.Values.TestSetEqual( [ cfg2 ] ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -264,17 +250,17 @@ public class SqlParameterBinderCreationOptionsTests : TestsBase
 
         var result = sut.CreateParameterConfigurationLookups( typeof( string ) );
 
-        using ( new AssertionScope() )
-        {
-            result.MembersByMemberName.Should().NotBeNull();
-            result.MembersByMemberName.Should().HaveCount( 2 );
-            (result.MembersByMemberName?.Keys).Should().BeEquivalentTo( "foo", "bar" );
-            (result.MembersByMemberName?.Values).Should().BeEquivalentTo( cfg1, cfg2 );
-            result.SelectorsByParameterName.Should().NotBeNull();
-            result.SelectorsByParameterName.Should().HaveCount( 2 );
-            (result.SelectorsByParameterName?.Keys).Should().BeEquivalentTo( "foo", "qux" );
-            (result.SelectorsByParameterName?.Values).Should().BeEquivalentTo( cfg3, cfg4 );
-        }
+        Assertion.All(
+                result.MembersByMemberName.TestNotNull(),
+                result.MembersByMemberName.TestNotNull(
+                    members => Assertion.All(
+                        members.Keys.TestSetEqual( [ "foo", "bar" ] ),
+                        members.Values.TestSetEqual( [ cfg1, cfg2 ] ) ) ),
+                result.SelectorsByParameterName.TestNotNull(
+                    selectors => Assertion.All(
+                        selectors.Keys.TestSetEqual( [ "foo", "qux" ] ),
+                        selectors.Values.TestSetEqual( [ cfg3, cfg4 ] ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -285,7 +271,7 @@ public class SqlParameterBinderCreationOptionsTests : TestsBase
 
         var result = sut.GetMemberConfiguration( "foo" );
 
-        result.Should().BeEquivalentTo( SqlParameterConfiguration.From( "foo", "foo" ) );
+        result.TestEquals( SqlParameterConfiguration.From( "foo", "foo" ) ).Go();
     }
 
     [Fact]
@@ -297,7 +283,7 @@ public class SqlParameterBinderCreationOptionsTests : TestsBase
 
         var result = sut.GetMemberConfiguration( "foo" );
 
-        result.Should().BeEquivalentTo( cfg );
+        result.TestEquals( cfg ).Go();
     }
 
     [Fact]
@@ -310,7 +296,7 @@ public class SqlParameterBinderCreationOptionsTests : TestsBase
 
         var result = sut.GetMemberConfiguration( "bar" );
 
-        result.Should().BeEquivalentTo( SqlParameterConfiguration.From( "bar", "bar" ) );
+        result.TestEquals( SqlParameterConfiguration.From( "bar", "bar" ) ).Go();
     }
 
     [Fact]
@@ -324,7 +310,7 @@ public class SqlParameterBinderCreationOptionsTests : TestsBase
 
         var result = sut.GetMemberConfiguration( "foo" );
 
-        result.Should().BeEquivalentTo( cfg1 );
+        result.TestEquals( cfg1 ).Go();
     }
 
     [Fact]
@@ -338,7 +324,7 @@ public class SqlParameterBinderCreationOptionsTests : TestsBase
 
         var result = sut.GetMemberConfiguration( "foo" );
 
-        result.Should().BeEquivalentTo( cfg1 );
+        result.TestEquals( cfg1 ).Go();
     }
 
     [Fact]
@@ -352,7 +338,7 @@ public class SqlParameterBinderCreationOptionsTests : TestsBase
 
         var result = sut.GetMemberConfiguration( "foo" );
 
-        result.Should().BeEquivalentTo( SqlParameterConfiguration.IgnoreMember( "foo" ) );
+        result.TestEquals( SqlParameterConfiguration.IgnoreMember( "foo" ) ).Go();
     }
 
     [Fact]
@@ -366,7 +352,7 @@ public class SqlParameterBinderCreationOptionsTests : TestsBase
 
         var result = sut.GetMemberConfiguration( "foo" );
 
-        result.Should().BeEquivalentTo( SqlParameterConfiguration.IgnoreMember( "foo" ) );
+        result.TestEquals( SqlParameterConfiguration.IgnoreMember( "foo" ) ).Go();
     }
 
     [Fact]
@@ -380,7 +366,7 @@ public class SqlParameterBinderCreationOptionsTests : TestsBase
 
         var result = sut.GetMemberConfiguration( "qux" );
 
-        result.Should().BeEquivalentTo( SqlParameterConfiguration.From( "qux", "qux" ) );
+        result.TestEquals( SqlParameterConfiguration.From( "qux", "qux" ) ).Go();
     }
 
     [Fact]
@@ -394,6 +380,6 @@ public class SqlParameterBinderCreationOptionsTests : TestsBase
 
         var result = sut.GetMemberConfiguration( "bar" );
 
-        result.Should().BeEquivalentTo( cfg1 );
+        result.TestEquals( cfg1 ).Go();
     }
 }

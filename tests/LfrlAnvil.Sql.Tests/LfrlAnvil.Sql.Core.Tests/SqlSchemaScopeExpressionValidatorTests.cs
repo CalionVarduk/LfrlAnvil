@@ -27,11 +27,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.RawExpression( "foo.a + @a + @b", SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ) );
         _sut.VisitRawExpression( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -40,11 +39,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.RawRecordSet( "foo" ).GetField( "a" );
         _sut.VisitRawDataField( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().BeEmpty();
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().TestEmpty(),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -56,11 +54,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitRawDataField( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -68,11 +65,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitNull( SqlNode.Null() );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().BeEmpty();
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().TestEmpty(),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -80,11 +76,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitLiteral( ( SqlLiteralNode )SqlNode.Literal( 10 ) );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().BeEmpty();
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().TestEmpty(),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -93,11 +88,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "b" );
         _sut.VisitParameter( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -109,11 +103,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitColumn( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -125,11 +118,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitColumnBuilder( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().BeEmpty();
-            _sut.GetReferencedObjects().Should().BeEquivalentTo( column, table );
-        }
+        Assertion.All(
+                _sut.GetErrors().TestEmpty(),
+                _sut.GetReferencedObjects().TestSetEqual( [ column, table ] ) )
+            .Go();
     }
 
     [Fact]
@@ -142,11 +134,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitColumnBuilder( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().BeEmpty();
-            _sut.GetReferencedObjects().Should().BeEquivalentTo( column, table, schema );
-        }
+        Assertion.All(
+                _sut.GetErrors().TestEmpty(),
+                _sut.GetReferencedObjects().TestSetEqual( [ column, table, schema ] ) )
+            .Go();
     }
 
     [Fact]
@@ -158,11 +149,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitColumnBuilder( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -175,11 +165,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitColumnBuilder( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEquivalentTo( table );
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestSetEqual( [ table ] ) )
+            .Go();
     }
 
     [Fact]
@@ -193,11 +182,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitQueryDataField( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().BeEmpty();
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().TestEmpty(),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -212,29 +200,25 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitQueryDataField( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
     public void VisitViewDataField_ShouldRegisterError()
     {
-        _schema.Objects.CreateView(
-            "V",
-            SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["a"].AsSelf() } ) );
+        _schema.Objects.CreateView( "V", SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["a"].AsSelf() } ) );
 
         var node = SqlDatabaseMock.Create( _schema.Database ).Schemas.Default.Objects.GetView( "V" ).Node.GetField( "a" );
 
         _sut.VisitViewDataField( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -243,11 +227,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).Negate();
         _sut.VisitNegate( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -256,11 +239,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ) + SqlNode.Parameter( "b" );
         _sut.VisitAdd( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -269,11 +251,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).Concat( SqlNode.Parameter( "b" ) );
         _sut.VisitConcat( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -282,11 +263,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ) - SqlNode.Parameter( "b" );
         _sut.VisitSubtract( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -295,11 +275,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ) * SqlNode.Parameter( "b" );
         _sut.VisitMultiply( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -308,11 +287,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ) / SqlNode.Parameter( "b" );
         _sut.VisitDivide( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -321,11 +299,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ) % SqlNode.Parameter( "b" );
         _sut.VisitModulo( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -334,11 +311,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).BitwiseNot();
         _sut.VisitBitwiseNot( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -347,11 +323,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ) & SqlNode.Parameter( "b" );
         _sut.VisitBitwiseAnd( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -360,11 +335,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ) | SqlNode.Parameter( "b" );
         _sut.VisitBitwiseOr( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -373,11 +347,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ) ^ SqlNode.Parameter( "b" );
         _sut.VisitBitwiseXor( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -386,11 +359,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).BitwiseLeftShift( SqlNode.Parameter( "b" ) );
         _sut.VisitBitwiseLeftShift( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -399,11 +371,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).BitwiseRightShift( SqlNode.Parameter( "b" ) );
         _sut.VisitBitwiseRightShift( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -412,11 +383,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.SwitchCase( SqlNode.RawCondition( "foo.a < @a", SqlNode.Parameter( "a" ) ), SqlNode.Parameter( "b" ) );
         _sut.VisitSwitchCase( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -432,11 +402,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitSwitch( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 4 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 4 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -445,11 +414,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Functions.Named( SqlSchemaObjectName.Create( "foo" ), SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ) );
         _sut.VisitNamedFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -458,11 +426,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).Coalesce( SqlNode.Parameter( "b" ) );
         _sut.VisitCoalesceFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -470,11 +437,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitCurrentDateFunction( SqlNode.Functions.CurrentDate() );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().BeEmpty();
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().TestEmpty(),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -482,11 +448,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitCurrentTimeFunction( SqlNode.Functions.CurrentTime() );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().BeEmpty();
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().TestEmpty(),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -494,11 +459,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitCurrentDateTimeFunction( SqlNode.Functions.CurrentDateTime() );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().BeEmpty();
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().TestEmpty(),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -506,11 +470,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitCurrentUtcDateTimeFunction( SqlNode.Functions.CurrentUtcDateTime() );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().BeEmpty();
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().TestEmpty(),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -518,11 +481,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitCurrentTimestampFunction( SqlNode.Functions.CurrentTimestamp() );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().BeEmpty();
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().TestEmpty(),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -531,11 +493,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).ExtractDate();
         _sut.VisitExtractDateFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -544,11 +505,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).ExtractTimeOfDay();
         _sut.VisitExtractTimeOfDayFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -557,11 +517,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).ExtractDayOfYear();
         _sut.VisitExtractDayFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -570,11 +529,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).ExtractTemporalUnit( SqlTemporalUnit.Year );
         _sut.VisitExtractTemporalUnitFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -583,11 +541,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).TemporalAdd( SqlNode.Parameter( "b" ), SqlTemporalUnit.Year );
         _sut.VisitTemporalAddFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -596,11 +553,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).TemporalDiff( SqlNode.Parameter( "b" ), SqlTemporalUnit.Year );
         _sut.VisitTemporalDiffFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -608,11 +564,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitNewGuidFunction( SqlNode.Functions.NewGuid() );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().BeEmpty();
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().TestEmpty(),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -621,11 +576,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).Length();
         _sut.VisitLengthFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -634,11 +588,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).ByteLength();
         _sut.VisitByteLengthFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -647,11 +600,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).ToLower();
         _sut.VisitToLowerFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -660,11 +612,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).ToUpper();
         _sut.VisitToUpperFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -673,11 +624,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).TrimStart( SqlNode.Parameter( "b" ) );
         _sut.VisitTrimStartFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -686,11 +636,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).TrimEnd( SqlNode.Parameter( "b" ) );
         _sut.VisitTrimEndFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -699,11 +648,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).Trim( SqlNode.Parameter( "b" ) );
         _sut.VisitTrimFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -712,11 +660,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).Substring( SqlNode.Parameter( "b" ), SqlNode.Parameter( "c" ) );
         _sut.VisitSubstringFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 3 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 3 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -725,11 +672,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).Replace( SqlNode.Parameter( "b" ), SqlNode.Parameter( "c" ) );
         _sut.VisitReplaceFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 3 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 3 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -738,11 +684,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).Reverse();
         _sut.VisitReverseFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -751,11 +696,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).IndexOf( SqlNode.Parameter( "b" ) );
         _sut.VisitIndexOfFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -764,11 +708,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).LastIndexOf( SqlNode.Parameter( "b" ) );
         _sut.VisitLastIndexOfFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -777,11 +720,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).Sign();
         _sut.VisitSignFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -790,11 +732,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).Abs();
         _sut.VisitAbsFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -803,11 +744,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).Ceiling();
         _sut.VisitCeilingFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -816,11 +756,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).Floor();
         _sut.VisitFloorFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -829,11 +768,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).Truncate( SqlNode.Parameter( "b" ) );
         _sut.VisitTruncateFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -842,11 +780,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).Round( SqlNode.Parameter( "b" ) );
         _sut.VisitRoundFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -855,11 +792,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).Power( SqlNode.Parameter( "b" ) );
         _sut.VisitPowerFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -868,11 +804,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).SquareRoot();
         _sut.VisitSquareRootFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -881,11 +816,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).Min( SqlNode.Parameter( "b" ) );
         _sut.VisitMinFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -894,11 +828,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).Max( SqlNode.Parameter( "b" ) );
         _sut.VisitMaxFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -907,11 +840,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = new FunctionMock( SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ) );
         _sut.VisitCustomFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -923,11 +855,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitNamedAggregateFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 3 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 3 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -936,11 +867,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).Min().AndWhere( SqlNode.RawCondition( "foo.a > @b", SqlNode.Parameter( "b" ) ) );
         _sut.VisitMinAggregateFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -949,11 +879,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).Max().AndWhere( SqlNode.RawCondition( "foo.a > @b", SqlNode.Parameter( "b" ) ) );
         _sut.VisitMaxAggregateFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -962,11 +891,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).Average().AndWhere( SqlNode.RawCondition( "foo.a > @b", SqlNode.Parameter( "b" ) ) );
         _sut.VisitAverageAggregateFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -975,11 +903,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).Sum().AndWhere( SqlNode.RawCondition( "foo.a > @b", SqlNode.Parameter( "b" ) ) );
         _sut.VisitSumAggregateFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -988,11 +915,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).Count().AndWhere( SqlNode.RawCondition( "foo.a > @b", SqlNode.Parameter( "b" ) ) );
         _sut.VisitCountAggregateFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1004,11 +930,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitStringConcatAggregateFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 3 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 3 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1017,11 +942,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.WindowFunctions.RowNumber().AndWhere( SqlNode.RawCondition( "foo.a > @c", SqlNode.Parameter( "c" ) ) );
         _sut.VisitRowNumberWindowFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1030,11 +954,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.WindowFunctions.Rank().AndWhere( SqlNode.RawCondition( "foo.a > @c", SqlNode.Parameter( "c" ) ) );
         _sut.VisitRankWindowFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1043,11 +966,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.WindowFunctions.DenseRank().AndWhere( SqlNode.RawCondition( "foo.a > @c", SqlNode.Parameter( "c" ) ) );
         _sut.VisitDenseRankWindowFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1058,11 +980,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitCumulativeDistributionWindowFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1071,11 +992,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).NTile().AndWhere( SqlNode.RawCondition( "foo.a > @c", SqlNode.Parameter( "c" ) ) );
         _sut.VisitNTileWindowFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1087,11 +1007,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitLagWindowFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 4 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 4 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1103,11 +1022,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitLeadWindowFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 4 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 4 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1116,11 +1034,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).FirstValue().AndWhere( SqlNode.RawCondition( "foo.a > @c", SqlNode.Parameter( "c" ) ) );
         _sut.VisitFirstValueWindowFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1129,11 +1046,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).LastValue().AndWhere( SqlNode.RawCondition( "foo.a > @c", SqlNode.Parameter( "c" ) ) );
         _sut.VisitLastValueWindowFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1145,11 +1061,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitNthValueWindowFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 3 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 3 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1162,11 +1077,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitCustomAggregateFunction( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 3 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 3 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1175,11 +1089,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.RawCondition( "@a > @b", SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ) );
         _sut.VisitRawCondition( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1187,11 +1100,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitTrue( SqlNode.True() );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().BeEmpty();
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().TestEmpty(),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1199,11 +1111,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitFalse( SqlNode.False() );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().BeEmpty();
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().TestEmpty(),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1212,11 +1123,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).IsEqualTo( SqlNode.Parameter( "b" ) );
         _sut.VisitEqualTo( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1225,11 +1135,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).IsNotEqualTo( SqlNode.Parameter( "b" ) );
         _sut.VisitNotEqualTo( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1238,11 +1147,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).IsGreaterThan( SqlNode.Parameter( "b" ) );
         _sut.VisitGreaterThan( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1251,11 +1159,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).IsLessThan( SqlNode.Parameter( "b" ) );
         _sut.VisitLessThan( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1264,11 +1171,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).IsGreaterThanOrEqualTo( SqlNode.Parameter( "b" ) );
         _sut.VisitGreaterThanOrEqualTo( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1277,11 +1183,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).IsLessThanOrEqualTo( SqlNode.Parameter( "b" ) );
         _sut.VisitLessThanOrEqualTo( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1292,11 +1197,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitAnd( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1307,11 +1211,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitOr( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1320,11 +1223,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.RawCondition( "foo.a > @a", SqlNode.Parameter( "a" ) ).ToValue();
         _sut.VisitConditionValue( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1333,11 +1235,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).IsBetween( SqlNode.Parameter( "b" ), SqlNode.Parameter( "c" ) );
         _sut.VisitBetween( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 3 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 3 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1346,11 +1247,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.RawQuery( "SELECT * FROM foo WHERE foo.a > @a", SqlNode.Parameter( "a" ) ).Exists();
         _sut.VisitExists( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1359,11 +1259,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).Like( SqlNode.Parameter( "b" ), SqlNode.Parameter( "c" ) );
         _sut.VisitLike( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 3 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 3 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1372,11 +1271,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = ( SqlInConditionNode )SqlNode.Parameter( "a" ).In( SqlNode.Parameter( "b" ), SqlNode.Parameter( "c" ) );
         _sut.VisitIn( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 3 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 3 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1387,11 +1285,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitInQuery( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1400,11 +1297,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.RawRecordSet( "foo" );
         _sut.VisitRawRecordSet( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().BeEmpty();
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().TestEmpty(),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1413,11 +1309,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Functions.Named( SqlSchemaObjectName.Create( "foo" ), SqlNode.Parameter( "a" ) ).AsSet( "bar" );
         _sut.VisitNamedFunctionRecordSet( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1429,11 +1324,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitTable( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1444,11 +1338,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitTableBuilder( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().BeEmpty();
-            _sut.GetReferencedObjects().Should().BeEquivalentTo( table );
-        }
+        Assertion.All(
+                _sut.GetErrors().TestEmpty(),
+                _sut.GetReferencedObjects().TestSetEqual( [ table ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1460,11 +1353,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitTableBuilder( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().BeEmpty();
-            _sut.GetReferencedObjects().Should().BeEquivalentTo( table, schema );
-        }
+        Assertion.All(
+                _sut.GetErrors().TestEmpty(),
+                _sut.GetReferencedObjects().TestSetEqual( [ table, schema ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1475,11 +1367,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitTableBuilder( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1491,11 +1382,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitTableBuilder( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1506,11 +1396,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitView( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1521,11 +1410,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitViewBuilder( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().BeEmpty();
-            _sut.GetReferencedObjects().Should().BeEquivalentTo( view );
-        }
+        Assertion.All(
+                _sut.GetErrors().TestEmpty(),
+                _sut.GetReferencedObjects().TestSetEqual( [ view ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1537,11 +1425,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitViewBuilder( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().BeEmpty();
-            _sut.GetReferencedObjects().Should().BeEquivalentTo( view, schema );
-        }
+        Assertion.All(
+                _sut.GetErrors().TestEmpty(),
+                _sut.GetReferencedObjects().TestSetEqual( [ view, schema ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1552,11 +1439,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitViewBuilder( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1568,11 +1454,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitViewBuilder( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1581,11 +1466,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.RawQuery( "SELECT * FROM foo WHERE foo.a > @a", SqlNode.Parameter( "a" ) ).AsSet( "bar" );
         _sut.VisitQueryRecordSet( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1594,11 +1478,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.RawQuery( "SELECT * FROM foo" ).ToCte( "bar" ).RecordSet;
         _sut.VisitCommonTableExpressionRecordSet( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().BeEmpty();
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().TestEmpty(),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1607,11 +1490,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.CreateTable( SqlRecordSetInfo.Create( "foo" ), new[] { SqlNode.Column<int>( "a" ) } ).AsSet( "bar" );
         _sut.VisitNewTable( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1620,11 +1502,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.CreateView( SqlRecordSetInfo.Create( "foo" ), SqlNode.RawQuery( "SELECT * FROM qux" ) ).AsSet( "bar" );
         _sut.VisitNewView( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1636,11 +1517,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitJoinOn( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1656,11 +1536,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitDataSource( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 4 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 4 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1669,11 +1548,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.DummyDataSource().AndWhere( SqlNode.RawCondition( "@a > 10", SqlNode.Parameter( "a" ) ) );
         _sut.VisitDataSource( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1682,11 +1560,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.RawExpression( "foo.a + @a", SqlNode.Parameter( "a" ) ).As( "bar" );
         _sut.VisitSelectField( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1700,11 +1577,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitSelectCompoundField( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().BeEmpty();
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().TestEmpty(),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1713,11 +1589,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.RawRecordSet( "foo" ).GetAll();
         _sut.VisitSelectRecordSet( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().BeEmpty();
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().TestEmpty(),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1726,11 +1601,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.RawRecordSet( "foo" ).ToDataSource().GetAll();
         _sut.VisitSelectAll( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().BeEmpty();
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().TestEmpty(),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1739,11 +1613,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.RawExpression( "foo.a + @a", SqlNode.Parameter( "a" ) ).As( "bar" ).ToExpression();
         _sut.VisitSelectExpression( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1756,11 +1629,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitRawQuery( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1773,11 +1645,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitDataSourceQuery( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 3 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 3 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1792,11 +1663,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitCompoundQuery( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 3 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 3 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1805,11 +1675,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.RawQuery( "SELECT * FROM foo WHERE foo.a > @a", SqlNode.Parameter( "a" ) ).ToUnionAll();
         _sut.VisitCompoundQueryComponent( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1817,11 +1686,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitDistinctTrait( SqlNode.DistinctTrait() );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().BeEmpty();
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().TestEmpty(),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1830,11 +1698,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.FilterTrait( SqlNode.RawCondition( "foo.a > @a", SqlNode.Parameter( "a" ) ), isConjunction: true );
         _sut.VisitFilterTrait( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1843,11 +1710,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.AggregationTrait( SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ) );
         _sut.VisitAggregationTrait( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1856,11 +1722,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.AggregationFilterTrait( SqlNode.RawCondition( "foo.a > @a", SqlNode.Parameter( "a" ) ), isConjunction: true );
         _sut.VisitAggregationFilterTrait( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1869,11 +1734,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.SortTrait( SqlNode.Parameter( "a" ).Asc(), SqlNode.Parameter( "b" ).Desc() );
         _sut.VisitSortTrait( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1882,11 +1746,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.LimitTrait( SqlNode.Parameter( "a" ) );
         _sut.VisitLimitTrait( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1895,11 +1758,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.OffsetTrait( SqlNode.Parameter( "a" ) );
         _sut.VisitOffsetTrait( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1911,11 +1773,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitCommonTableExpressionTrait( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1927,11 +1788,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitWindowDefinitionTrait( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1940,11 +1800,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.WindowTrait( SqlNode.WindowDefinition( "foo", new[] { SqlNode.Parameter( "a" ).Asc() } ) );
         _sut.VisitWindowTrait( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1953,11 +1812,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).Asc();
         _sut.VisitOrderBy( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1966,11 +1824,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.RawQuery( "SELECT * FROM foo WHERE foo.a > @a", SqlNode.Parameter( "a" ) ).ToCte( "bar" );
         _sut.VisitCommonTableExpression( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1984,11 +1841,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitWindowDefinition( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 2 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 2 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1997,11 +1853,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.RowsWindowFrame( SqlWindowFrameBoundary.CurrentRow, SqlWindowFrameBoundary.CurrentRow );
         _sut.VisitWindowFrame( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().BeEmpty();
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().TestEmpty(),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -2010,11 +1865,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Parameter( "a" ).CastTo<int>();
         _sut.VisitTypeCast( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -2023,11 +1877,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.Values( SqlNode.Literal( 10 ) );
         _sut.VisitValues( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -2036,11 +1889,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         var node = SqlNode.RawStatement( "INSERT INTO foo (a, b) VALUES (1, 2)" );
         _sut.VisitRawStatement( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -2053,11 +1905,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitInsertInto( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -2069,11 +1920,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitUpdate( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -2087,11 +1937,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
         _sut.VisitUpsert( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -2099,11 +1948,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitValueAssignment( SqlNode.ValueAssignment( SqlNode.RawRecordSet( "foo" ).GetField( "a" ), SqlNode.Literal( 10 ) ) );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -2111,11 +1959,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitDeleteFrom( SqlNode.DeleteFrom( SqlNode.RawRecordSet( "foo" ).ToDataSource() ) );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -2123,11 +1970,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitTruncate( SqlNode.Truncate( SqlNode.RawRecordSet( "foo" ) ) );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -2135,11 +1981,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitColumnDefinition( SqlNode.Column<int>( "a" ) );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -2147,11 +1992,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitPrimaryKeyDefinition( SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), ReadOnlyArray<SqlOrderByNode>.Empty ) );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -2164,11 +2008,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
                 SqlNode.RawRecordSet( "foo" ),
                 Array.Empty<SqlDataFieldNode>() ) );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -2176,11 +2019,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitCheckDefinition( SqlNode.Check( SqlSchemaObjectName.Create( "CHK" ), SqlNode.True() ) );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -2188,11 +2030,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitCreateTable( SqlNode.CreateTable( SqlRecordSetInfo.Create( "foo" ), new[] { SqlNode.Column<int>( "a" ) } ) );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -2200,11 +2041,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitCreateView( SqlNode.CreateView( SqlRecordSetInfo.Create( "foo" ), SqlNode.RawQuery( "SELECT * FROM bar" ) ) );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -2217,11 +2057,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
                 SqlNode.RawRecordSet( "bar" ),
                 Array.Empty<SqlOrderByNode>() ) );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -2229,11 +2068,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitRenameTable( SqlNode.RenameTable( SqlRecordSetInfo.Create( "foo" ), SqlSchemaObjectName.Create( "bar" ) ) );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -2241,11 +2079,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitRenameColumn( SqlNode.RenameColumn( SqlRecordSetInfo.Create( "foo" ), "bar", "qux" ) );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -2253,11 +2090,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitAddColumn( SqlNode.AddColumn( SqlRecordSetInfo.Create( "foo" ), SqlNode.Column<int>( "a" ) ) );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -2265,11 +2101,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitDropColumn( SqlNode.DropColumn( SqlRecordSetInfo.Create( "foo" ), "bar" ) );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -2277,11 +2112,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitDropTable( SqlNode.DropTable( SqlRecordSetInfo.Create( "foo" ) ) );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -2289,11 +2123,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitDropView( SqlNode.DropView( SqlRecordSetInfo.Create( "foo" ) ) );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -2301,11 +2134,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitDropIndex( SqlNode.DropIndex( SqlRecordSetInfo.Create( "bar" ), SqlSchemaObjectName.Create( "foo" ) ) );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -2313,11 +2145,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitStatementBatch( SqlNode.Batch() );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -2325,11 +2156,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitBeginTransaction( SqlNode.BeginTransaction( IsolationLevel.Serializable ) );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -2337,11 +2167,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitCommitTransaction( SqlNode.CommitTransaction() );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -2349,11 +2178,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitRollbackTransaction( SqlNode.RollbackTransaction() );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -2361,11 +2189,10 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     {
         _sut.VisitCustom( new NodeMock() );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().BeEmpty();
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
+        Assertion.All(
+                _sut.GetErrors().TestEmpty(),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
     }
 
     private sealed class FunctionMock : SqlFunctionExpressionNode

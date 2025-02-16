@@ -11,12 +11,11 @@ public class ArithmeticExpressionsTests : TestsBase
         var sut = -node;
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Negate );
-            sut.Value.Should().BeSameAs( node );
-            text.Should().Be( $"-({node})" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.Negate ),
+                sut.Value.TestRefEquals( node ),
+                text.TestEquals( $"-({node})" ) )
+            .Go();
     }
 
     [Fact]
@@ -26,12 +25,11 @@ public class ArithmeticExpressionsTests : TestsBase
         var sut = ~node;
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.BitwiseNot );
-            sut.Value.Should().BeSameAs( node );
-            text.Should().Be( $"~({node})" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.BitwiseNot ),
+                sut.Value.TestRefEquals( node ),
+                text.TestEquals( $"~({node})" ) )
+            .Go();
     }
 
     [Fact]
@@ -42,13 +40,12 @@ public class ArithmeticExpressionsTests : TestsBase
         var sut = left + right;
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Add );
-            sut.Left.Should().BeSameAs( left );
-            sut.Right.Should().BeSameAs( right );
-            text.Should().Be( $"({left}) + ({right})" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.Add ),
+                sut.Left.TestRefEquals( left ),
+                sut.Right.TestRefEquals( right ),
+                text.TestEquals( $"({left}) + ({right})" ) )
+            .Go();
     }
 
     [Fact]
@@ -59,13 +56,12 @@ public class ArithmeticExpressionsTests : TestsBase
         var sut = left.Concat( right );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Concat );
-            sut.Left.Should().BeSameAs( left );
-            sut.Right.Should().BeSameAs( right );
-            text.Should().Be( $"({left}) || ({right})" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.Concat ),
+                sut.Left.TestRefEquals( left ),
+                sut.Right.TestRefEquals( right ),
+                text.TestEquals( $"({left}) || ({right})" ) )
+            .Go();
     }
 
     [Fact]
@@ -76,13 +72,12 @@ public class ArithmeticExpressionsTests : TestsBase
         var sut = left - right;
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Subtract );
-            sut.Left.Should().BeSameAs( left );
-            sut.Right.Should().BeSameAs( right );
-            text.Should().Be( $"({left}) - ({right})" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.Subtract ),
+                sut.Left.TestRefEquals( left ),
+                sut.Right.TestRefEquals( right ),
+                text.TestEquals( $"({left}) - ({right})" ) )
+            .Go();
     }
 
     [Fact]
@@ -93,13 +88,12 @@ public class ArithmeticExpressionsTests : TestsBase
         var sut = left * right;
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Multiply );
-            sut.Left.Should().BeSameAs( left );
-            sut.Right.Should().BeSameAs( right );
-            text.Should().Be( $"({left}) * ({right})" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.Multiply ),
+                sut.Left.TestRefEquals( left ),
+                sut.Right.TestRefEquals( right ),
+                text.TestEquals( $"({left}) * ({right})" ) )
+            .Go();
     }
 
     [Fact]
@@ -110,13 +104,12 @@ public class ArithmeticExpressionsTests : TestsBase
         var sut = left / right;
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Divide );
-            sut.Left.Should().BeSameAs( left );
-            sut.Right.Should().BeSameAs( right );
-            text.Should().Be( $"({left}) / ({right})" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.Divide ),
+                sut.Left.TestRefEquals( left ),
+                sut.Right.TestRefEquals( right ),
+                text.TestEquals( $"({left}) / ({right})" ) )
+            .Go();
     }
 
     [Fact]
@@ -127,13 +120,12 @@ public class ArithmeticExpressionsTests : TestsBase
         var sut = left % right;
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Modulo );
-            sut.Left.Should().BeSameAs( left );
-            sut.Right.Should().BeSameAs( right );
-            text.Should().Be( $"({left}) % ({right})" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.Modulo ),
+                sut.Left.TestRefEquals( left ),
+                sut.Right.TestRefEquals( right ),
+                text.TestEquals( $"({left}) % ({right})" ) )
+            .Go();
     }
 
     [Fact]
@@ -144,13 +136,12 @@ public class ArithmeticExpressionsTests : TestsBase
         var sut = left & right;
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.BitwiseAnd );
-            sut.Left.Should().BeSameAs( left );
-            sut.Right.Should().BeSameAs( right );
-            text.Should().Be( $"({left}) & ({right})" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.BitwiseAnd ),
+                sut.Left.TestRefEquals( left ),
+                sut.Right.TestRefEquals( right ),
+                text.TestEquals( $"({left}) & ({right})" ) )
+            .Go();
     }
 
     [Fact]
@@ -161,13 +152,12 @@ public class ArithmeticExpressionsTests : TestsBase
         var sut = left | right;
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.BitwiseOr );
-            sut.Left.Should().BeSameAs( left );
-            sut.Right.Should().BeSameAs( right );
-            text.Should().Be( $"({left}) | ({right})" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.BitwiseOr ),
+                sut.Left.TestRefEquals( left ),
+                sut.Right.TestRefEquals( right ),
+                text.TestEquals( $"({left}) | ({right})" ) )
+            .Go();
     }
 
     [Fact]
@@ -178,13 +168,12 @@ public class ArithmeticExpressionsTests : TestsBase
         var sut = left ^ right;
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.BitwiseXor );
-            sut.Left.Should().BeSameAs( left );
-            sut.Right.Should().BeSameAs( right );
-            text.Should().Be( $"({left}) ^ ({right})" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.BitwiseXor ),
+                sut.Left.TestRefEquals( left ),
+                sut.Right.TestRefEquals( right ),
+                text.TestEquals( $"({left}) ^ ({right})" ) )
+            .Go();
     }
 
     [Fact]
@@ -195,13 +184,12 @@ public class ArithmeticExpressionsTests : TestsBase
         var sut = left.BitwiseLeftShift( right );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.BitwiseLeftShift );
-            sut.Left.Should().BeSameAs( left );
-            sut.Right.Should().BeSameAs( right );
-            text.Should().Be( $"({left}) << ({right})" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.BitwiseLeftShift ),
+                sut.Left.TestRefEquals( left ),
+                sut.Right.TestRefEquals( right ),
+                text.TestEquals( $"({left}) << ({right})" ) )
+            .Go();
     }
 
     [Fact]
@@ -212,12 +200,11 @@ public class ArithmeticExpressionsTests : TestsBase
         var sut = left.BitwiseRightShift( right );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.BitwiseRightShift );
-            sut.Left.Should().BeSameAs( left );
-            sut.Right.Should().BeSameAs( right );
-            text.Should().Be( $"({left}) >> ({right})" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.BitwiseRightShift ),
+                sut.Left.TestRefEquals( left ),
+                sut.Right.TestRefEquals( right ),
+                text.TestEquals( $"({left}) >> ({right})" ) )
+            .Go();
     }
 }

@@ -11,14 +11,13 @@ public class SqlNamedParameterCollectionTests : TestsBase
 
         var result = sut.TryAdd( "foo", 1 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 1 );
-            sut.Should().BeEquivalentTo( SqlParameter.Named( "foo", 1 ) );
-            sut.Contains( "foo" ).Should().BeTrue();
-            sut.TryGet( "foo" ).Should().BeEquivalentTo( SqlParameter.Named( "foo", 1 ) );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 1 ),
+                sut.TestSetEqual( [ SqlParameter.Named( "foo", 1 ) ] ),
+                sut.Contains( "foo" ).TestTrue(),
+                sut.TryGet( "foo" ).TestEquals( SqlParameter.Named( "foo", 1 ) ) )
+            .Go();
     }
 
     [Fact]
@@ -29,14 +28,13 @@ public class SqlNamedParameterCollectionTests : TestsBase
 
         var result = sut.TryAdd( "foo", 2 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Count.Should().Be( 1 );
-            sut.Should().BeEquivalentTo( SqlParameter.Named( "foo", 1 ) );
-            sut.Contains( "foo" ).Should().BeTrue();
-            sut.TryGet( "foo" ).Should().BeEquivalentTo( SqlParameter.Named( "foo", 1 ) );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.Count.TestEquals( 1 ),
+                sut.TestSetEqual( [ SqlParameter.Named( "foo", 1 ) ] ),
+                sut.Contains( "foo" ).TestTrue(),
+                sut.TryGet( "foo" ).TestEquals( SqlParameter.Named( "foo", 1 ) ) )
+            .Go();
     }
 
     [Fact]
@@ -46,13 +44,12 @@ public class SqlNamedParameterCollectionTests : TestsBase
 
         sut.AddOrUpdate( "foo", 1 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut.Should().BeEquivalentTo( SqlParameter.Named( "foo", 1 ) );
-            sut.Contains( "foo" ).Should().BeTrue();
-            sut.TryGet( "foo" ).Should().BeEquivalentTo( SqlParameter.Named( "foo", 1 ) );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut.TestSetEqual( [ SqlParameter.Named( "foo", 1 ) ] ),
+                sut.Contains( "foo" ).TestTrue(),
+                sut.TryGet( "foo" ).TestEquals( SqlParameter.Named( "foo", 1 ) ) )
+            .Go();
     }
 
     [Fact]
@@ -63,13 +60,12 @@ public class SqlNamedParameterCollectionTests : TestsBase
 
         sut.AddOrUpdate( "foo", 2 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut.Should().BeEquivalentTo( SqlParameter.Named( "foo", 2 ) );
-            sut.Contains( "foo" ).Should().BeTrue();
-            sut.TryGet( "foo" ).Should().BeEquivalentTo( SqlParameter.Named( "foo", 2 ) );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut.TestSetEqual( [ SqlParameter.Named( "foo", 2 ) ] ),
+                sut.Contains( "foo" ).TestTrue(),
+                sut.TryGet( "foo" ).TestEquals( SqlParameter.Named( "foo", 2 ) ) )
+            .Go();
     }
 
     [Fact]
@@ -81,10 +77,9 @@ public class SqlNamedParameterCollectionTests : TestsBase
 
         sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.TestEmpty() )
+            .Go();
     }
 }

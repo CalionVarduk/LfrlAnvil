@@ -1,7 +1,5 @@
 ﻿using System.Text;
-using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Visitors;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
 
@@ -12,14 +10,13 @@ public class SqlNodeInterpreterContextTests : TestsBase
     {
         var sut = SqlNodeInterpreterContext.Create();
 
-        using ( new AssertionScope() )
-        {
-            sut.Indent.Should().Be( 0 );
-            sut.ChildDepth.Should().Be( 0 );
-            sut.Parameters.Should().BeEmpty();
-            sut.Sql.Length.Should().Be( 0 );
-            sut.Sql.Capacity.Should().Be( 1024 );
-        }
+        Assertion.All(
+                sut.Indent.TestEquals( 0 ),
+                sut.ChildDepth.TestEquals( 0 ),
+                sut.Parameters.TestEmpty(),
+                sut.Sql.Length.TestEquals( 0 ),
+                sut.Sql.Capacity.TestEquals( 1024 ) )
+            .Go();
     }
 
     [Fact]
@@ -28,13 +25,12 @@ public class SqlNodeInterpreterContextTests : TestsBase
         var builder = new StringBuilder();
         var sut = SqlNodeInterpreterContext.Create( builder );
 
-        using ( new AssertionScope() )
-        {
-            sut.Indent.Should().Be( 0 );
-            sut.ChildDepth.Should().Be( 0 );
-            sut.Parameters.Should().BeEmpty();
-            sut.Sql.Should().BeSameAs( builder );
-        }
+        Assertion.All(
+                sut.Indent.TestEquals( 0 ),
+                sut.ChildDepth.TestEquals( 0 ),
+                sut.Parameters.TestEmpty(),
+                sut.Sql.TestRefEquals( builder ) )
+            .Go();
     }
 
     [Fact]
@@ -42,7 +38,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
     {
         var sut = SqlNodeInterpreterContext.Create();
         sut.IncreaseIndent();
-        sut.Indent.Should().Be( 2 );
+        sut.Indent.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -53,7 +49,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
 
         sut.IncreaseIndent();
 
-        sut.Indent.Should().Be( 4 );
+        sut.Indent.TestEquals( 4 ).Go();
     }
 
     [Fact]
@@ -61,7 +57,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
     {
         var sut = SqlNodeInterpreterContext.Create();
         sut.DecreaseIndent();
-        sut.Indent.Should().Be( 0 );
+        sut.Indent.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -72,7 +68,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
 
         sut.DecreaseIndent();
 
-        sut.Indent.Should().Be( 0 );
+        sut.Indent.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -84,7 +80,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
 
         sut.DecreaseIndent();
 
-        sut.Indent.Should().Be( 2 );
+        sut.Indent.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -96,11 +92,10 @@ public class SqlNodeInterpreterContextTests : TestsBase
         using ( sut.TempIndentIncrease() )
             indent = sut.Indent;
 
-        using ( new AssertionScope() )
-        {
-            sut.Indent.Should().Be( 0 );
-            indent.Should().Be( 2 );
-        }
+        Assertion.All(
+                sut.Indent.TestEquals( 0 ),
+                indent.TestEquals( 2 ) )
+            .Go();
     }
 
     [Fact]
@@ -108,7 +103,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
     {
         var sut = SqlNodeInterpreterContext.Create();
         sut.IncreaseChildDepth();
-        sut.ChildDepth.Should().Be( 1 );
+        sut.ChildDepth.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -119,7 +114,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
 
         sut.IncreaseChildDepth();
 
-        sut.ChildDepth.Should().Be( 2 );
+        sut.ChildDepth.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -127,7 +122,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
     {
         var sut = SqlNodeInterpreterContext.Create();
         sut.DecreaseChildDepth();
-        sut.ChildDepth.Should().Be( 0 );
+        sut.ChildDepth.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -138,7 +133,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
 
         sut.DecreaseChildDepth();
 
-        sut.ChildDepth.Should().Be( 0 );
+        sut.ChildDepth.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -150,7 +145,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
 
         sut.DecreaseChildDepth();
 
-        sut.ChildDepth.Should().Be( 1 );
+        sut.ChildDepth.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -162,11 +157,10 @@ public class SqlNodeInterpreterContextTests : TestsBase
         using ( sut.TempChildDepthIncrease() )
             depth = sut.ChildDepth;
 
-        using ( new AssertionScope() )
-        {
-            sut.ChildDepth.Should().Be( 0 );
-            depth.Should().Be( 1 );
-        }
+        Assertion.All(
+                sut.ChildDepth.TestEquals( 0 ),
+                depth.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -177,11 +171,10 @@ public class SqlNodeInterpreterContextTests : TestsBase
 
         var result = sut.AppendIndent();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut.Sql );
-            result.ToString().Should().Be( $"{Environment.NewLine}  " );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut.Sql ),
+                result.ToString().TestEquals( $"{Environment.NewLine}  " ) )
+            .Go();
     }
 
     [Fact]
@@ -193,11 +186,10 @@ public class SqlNodeInterpreterContextTests : TestsBase
 
         var result = sut.AppendShortIndent();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut.Sql );
-            result.ToString().Should().Be( $"{Environment.NewLine}  " );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut.Sql ),
+                result.ToString().TestEquals( $"{Environment.NewLine}  " ) )
+            .Go();
     }
 
     [Fact]
@@ -207,11 +199,10 @@ public class SqlNodeInterpreterContextTests : TestsBase
 
         var result = sut.AppendShortIndent();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut.Sql );
-            result.ToString().Should().Be( Environment.NewLine );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut.Sql ),
+                result.ToString().TestEquals( Environment.NewLine ) )
+            .Go();
     }
 
     [Theory]
@@ -226,7 +217,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
 
         sut.AddParameter( name, type, index );
 
-        sut.Parameters.Should().BeSequentiallyEqualTo( new SqlNodeInterpreterContextParameter( name, type, index ) );
+        sut.Parameters.TestSequence( [ new SqlNodeInterpreterContextParameter( name, type, index ) ] ).Go();
     }
 
     [Theory]
@@ -242,7 +233,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
 
         sut.AddParameter( name, type, index );
 
-        sut.Parameters.Should().BeSequentiallyEqualTo( new SqlNodeInterpreterContextParameter( name, type, index ) );
+        sut.Parameters.TestSequence( [ new SqlNodeInterpreterContextParameter( name, type, index ) ] ).Go();
     }
 
     [Theory]
@@ -259,7 +250,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
 
         sut.AddParameter( name, newType, index );
 
-        sut.Parameters.Should().BeSequentiallyEqualTo( new SqlNodeInterpreterContextParameter( name, null, index ) );
+        sut.Parameters.TestSequence( [ new SqlNodeInterpreterContextParameter( name, null, index ) ] ).Go();
     }
 
     [Theory]
@@ -275,7 +266,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
 
         sut.AddParameter( name, type, index: 2 );
 
-        sut.Parameters.Should().BeSequentiallyEqualTo( new SqlNodeInterpreterContextParameter( name, type, null ) );
+        sut.Parameters.TestSequence( [ new SqlNodeInterpreterContextParameter( name, type, null ) ] ).Go();
     }
 
     [Fact]
@@ -290,10 +281,12 @@ public class SqlNodeInterpreterContextTests : TestsBase
 
         sut.AddParameter( secondName, secondType, null );
 
-        sut.Parameters.Should()
-            .BeSequentiallyEqualTo(
+        sut.Parameters.TestSequence(
+            [
                 new SqlNodeInterpreterContextParameter( firstName, firstType, null ),
-                new SqlNodeInterpreterContextParameter( secondName, secondType, null ) );
+                new SqlNodeInterpreterContextParameter( secondName, secondType, null )
+            ] )
+            .Go();
     }
 
     [Fact]
@@ -303,11 +296,10 @@ public class SqlNodeInterpreterContextTests : TestsBase
 
         var result = sut.TryGetParameter( "foo", out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().Be( default( SqlNodeInterpreterContextParameter ) );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -318,11 +310,10 @@ public class SqlNodeInterpreterContextTests : TestsBase
 
         var result = sut.TryGetParameter( "bar", out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().Be( default( SqlNodeInterpreterContextParameter ) );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -335,11 +326,10 @@ public class SqlNodeInterpreterContextTests : TestsBase
 
         var result = sut.TryGetParameter( name, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( new SqlNodeInterpreterContextParameter( name, type, Index: 2 ) );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( new SqlNodeInterpreterContextParameter( name, type, Index: 2 ) ) )
+            .Go();
     }
 
     [Fact]
@@ -353,13 +343,12 @@ public class SqlNodeInterpreterContextTests : TestsBase
 
         sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            sut.Indent.Should().Be( 0 );
-            sut.ChildDepth.Should().Be( 0 );
-            sut.Sql.Length.Should().Be( 0 );
-            sut.Parameters.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Indent.TestEquals( 0 ),
+                sut.ChildDepth.TestEquals( 0 ),
+                sut.Sql.Length.TestEquals( 0 ),
+                sut.Parameters.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -373,20 +362,24 @@ public class SqlNodeInterpreterContextTests : TestsBase
 
         var result = sut.ToSnapshot();
 
-        using ( new AssertionScope() )
-        {
-            result.Sql.Should().Be( "SELECT * FROM bar" );
-            result.Parameters.ToArray().Should().HaveCount( 3 );
-            result.Parameters[0].Should().BeEquivalentTo( SqlNode.Parameter( "a", TypeNullability.Create<int>() ) );
-            result.Parameters[1]
-                .Should()
-                .BeEquivalentTo( SqlNode.Parameter( "b", TypeNullability.Create<string>( isNullable: true ), index: 1 ) );
-
-            result.Parameters[2].Should().BeEquivalentTo( SqlNode.Parameter( "c", index: 2 ) );
-            result.ToString().Should().Be( result.Sql );
-            sut.Sql.ToString().Should().Be( result.Sql );
-            sut.Parameters.Should().HaveCount( 3 );
-        }
+        Assertion.All(
+                result.Sql.TestEquals( "SELECT * FROM bar" ),
+                result.Parameters.TestCount( count => count.TestEquals( 3 ) )
+                    .Then(
+                        p => Assertion.All(
+                            p[0].Name.TestEquals( "a" ),
+                            p[0].Type.TestEquals( TypeNullability.Create<int>() ),
+                            p[0].Index.TestNull(),
+                            p[1].Name.TestEquals( "b" ),
+                            p[1].Type.TestEquals( TypeNullability.Create<string>( isNullable: true ) ),
+                            p[1].Index.TestEquals( 1 ),
+                            p[2].Name.TestEquals( "c" ),
+                            p[2].Type.TestNull(),
+                            p[2].Index.TestEquals( 2 ) ) ),
+                result.ToString().TestEquals( result.Sql ),
+                sut.Sql.ToString().TestEquals( result.Sql ),
+                sut.Parameters.Count.TestEquals( 3 ) )
+            .Go();
     }
 
     [Fact]
@@ -399,12 +392,11 @@ public class SqlNodeInterpreterContextTests : TestsBase
 
         var result = sut.ToExpression();
 
-        using ( new AssertionScope() )
-        {
-            result.Sql.Should().Be( "SELECT * FROM bar" );
-            result.Parameters.Should().BeSequentiallyEqualTo( result.Parameters );
-            result.Type.Should().BeNull();
-        }
+        Assertion.All(
+                result.Sql.TestEquals( "SELECT * FROM bar" ),
+                result.Parameters.TestSequence( sut.Parameters.ToArray() ),
+                result.Type.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -417,12 +409,11 @@ public class SqlNodeInterpreterContextTests : TestsBase
 
         var result = sut.ToExpression( TypeNullability.Create<string>() );
 
-        using ( new AssertionScope() )
-        {
-            result.Sql.Should().Be( "SELECT * FROM bar" );
-            result.Parameters.Should().BeSequentiallyEqualTo( result.Parameters );
-            result.Type.Should().Be( TypeNullability.Create<string>() );
-        }
+        Assertion.All(
+                result.Sql.TestEquals( "SELECT * FROM bar" ),
+                result.Parameters.TestSequence( sut.Parameters.ToArray() ),
+                result.Type.TestEquals( TypeNullability.Create<string>() ) )
+            .Go();
     }
 
     [Fact]
@@ -435,11 +426,10 @@ public class SqlNodeInterpreterContextTests : TestsBase
 
         var result = sut.ToCondition();
 
-        using ( new AssertionScope() )
-        {
-            result.Sql.Should().Be( "SELECT * FROM bar" );
-            result.Parameters.Should().BeSequentiallyEqualTo( result.Parameters );
-        }
+        Assertion.All(
+                result.Sql.TestEquals( "SELECT * FROM bar" ),
+                result.Parameters.TestSequence( sut.Parameters.ToArray() ) )
+            .Go();
     }
 
     [Fact]
@@ -452,11 +442,10 @@ public class SqlNodeInterpreterContextTests : TestsBase
 
         var result = sut.ToStatement();
 
-        using ( new AssertionScope() )
-        {
-            result.Sql.Should().Be( "SELECT * FROM bar" );
-            result.Parameters.Should().BeSequentiallyEqualTo( result.Parameters );
-        }
+        Assertion.All(
+                result.Sql.TestEquals( "SELECT * FROM bar" ),
+                result.Parameters.TestSequence( sut.Parameters.ToArray() ) )
+            .Go();
     }
 
     [Fact]
@@ -469,10 +458,9 @@ public class SqlNodeInterpreterContextTests : TestsBase
 
         var result = sut.ToQuery();
 
-        using ( new AssertionScope() )
-        {
-            result.Sql.Should().Be( "SELECT * FROM bar" );
-            result.Parameters.Should().BeSequentiallyEqualTo( result.Parameters );
-        }
+        Assertion.All(
+                result.Sql.TestEquals( "SELECT * FROM bar" ),
+                result.Parameters.TestSequence( sut.Parameters.ToArray() ) )
+            .Go();
     }
 }

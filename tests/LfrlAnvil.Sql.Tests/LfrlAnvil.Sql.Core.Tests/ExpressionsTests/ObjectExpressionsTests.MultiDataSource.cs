@@ -5,7 +5,6 @@ using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Traits;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
 
@@ -18,7 +17,7 @@ public partial class ObjectExpressionsTests
         {
             var from = SqlNode.RawRecordSet( "foo" );
             var action = Lambda.Of( () => from.Join( from.InnerOn( SqlNode.True() ) ) );
-            action.Should().ThrowExactly<ArgumentException>();
+            action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
         }
 
         [Fact]
@@ -44,48 +43,150 @@ public partial class ObjectExpressionsTests
                 SqlJoinDefinition.Full( g, p => AddOngoing( p, "a", "b", "c", "d", "e", "f" ) ),
                 SqlJoinDefinition.Cross( h ) );
 
-            using ( new AssertionScope() )
-            {
-                sut.From.Should().BeEquivalentTo( a.MarkAsOptional() );
-
-                sut.Joins.ToArray()
-                    .Select( j => j.JoinType )
-                    .Should()
-                    .BeSequentiallyEqualTo(
-                        SqlJoinType.Inner,
-                        SqlJoinType.Left,
-                        SqlJoinType.Inner,
-                        SqlJoinType.Right,
-                        SqlJoinType.Inner,
-                        SqlJoinType.Full,
-                        SqlJoinType.Cross );
-
-                sut.Joins.ToArray().Select( j => j.InnerRecordSet ).Should().BeSequentiallyEqualTo( b, c, d, e, f, g, h );
-
-                sut.GetRecordSet( "a" ).Should().BeEquivalentTo( a.MarkAsOptional() );
-                sut.GetRecordSet( "b" ).Should().BeEquivalentTo( b.MarkAsOptional() );
-                sut.GetRecordSet( "c" ).Should().BeEquivalentTo( c.MarkAsOptional() );
-                sut.GetRecordSet( "d" ).Should().BeEquivalentTo( d.MarkAsOptional() );
-                sut.GetRecordSet( "e" ).Should().BeEquivalentTo( e.MarkAsOptional() );
-                sut.GetRecordSet( "f" ).Should().BeEquivalentTo( f.MarkAsOptional() );
-                sut.GetRecordSet( "g" ).Should().BeEquivalentTo( g.MarkAsOptional() );
-                sut.GetRecordSet( "h" ).Should().BeSameAs( h );
-
-                ongoingInners.Should().BeSequentiallyEqualTo( b, c, d, e, f, g );
-
-                ongoingSets.Should().HaveCount( 6 );
-                ongoingSets.ElementAtOrDefault( 0 ).Should().BeEquivalentTo( a );
-                ongoingSets.ElementAtOrDefault( 1 ).Should().BeEquivalentTo( a, b );
-                ongoingSets.ElementAtOrDefault( 2 ).Should().BeEquivalentTo( a, b, c.MarkAsOptional() );
-                ongoingSets.ElementAtOrDefault( 3 ).Should().BeEquivalentTo( a, b, c.MarkAsOptional(), d );
-                ongoingSets.ElementAtOrDefault( 4 )
-                    .Should()
-                    .BeEquivalentTo( a.MarkAsOptional(), b.MarkAsOptional(), c.MarkAsOptional(), d.MarkAsOptional(), e );
-
-                ongoingSets.ElementAtOrDefault( 5 )
-                    .Should()
-                    .BeEquivalentTo( a.MarkAsOptional(), b.MarkAsOptional(), c.MarkAsOptional(), d.MarkAsOptional(), e, f );
-            }
+            Assertion.All(
+                    sut.From.TestType()
+                        .AssignableTo<SqlRawRecordSetNode>(
+                            s => Assertion.All(
+                                s.IsOptional.TestTrue(),
+                                s.Info.TestEquals( SqlRecordSetInfo.Create( "a" ) ) ) ),
+                    sut.Joins.Select( j => j.JoinType )
+                        .TestSequence(
+                        [
+                            SqlJoinType.Inner,
+                            SqlJoinType.Left,
+                            SqlJoinType.Inner,
+                            SqlJoinType.Right,
+                            SqlJoinType.Inner,
+                            SqlJoinType.Full,
+                            SqlJoinType.Cross
+                        ] ),
+                    sut.Joins.Select( j => j.InnerRecordSet ).TestSequence( [ b, c, d, e, f, g, h ] ),
+                    sut.GetRecordSet( "a" )
+                        .TestType()
+                        .AssignableTo<SqlRawRecordSetNode>(
+                            s => Assertion.All(
+                                s.IsOptional.TestTrue(),
+                                s.Info.TestEquals( SqlRecordSetInfo.Create( "a" ) ) ) ),
+                    sut.GetRecordSet( "b" )
+                        .TestType()
+                        .AssignableTo<SqlRawRecordSetNode>(
+                            s => Assertion.All(
+                                s.IsOptional.TestTrue(),
+                                s.Info.TestEquals( SqlRecordSetInfo.Create( "b" ) ) ) ),
+                    sut.GetRecordSet( "c" )
+                        .TestType()
+                        .AssignableTo<SqlRawRecordSetNode>(
+                            s => Assertion.All(
+                                s.IsOptional.TestTrue(),
+                                s.Info.TestEquals( SqlRecordSetInfo.Create( "c" ) ) ) ),
+                    sut.GetRecordSet( "d" )
+                        .TestType()
+                        .AssignableTo<SqlRawRecordSetNode>(
+                            s => Assertion.All(
+                                s.IsOptional.TestTrue(),
+                                s.Info.TestEquals( SqlRecordSetInfo.Create( "d" ) ) ) ),
+                    sut.GetRecordSet( "e" )
+                        .TestType()
+                        .AssignableTo<SqlRawRecordSetNode>(
+                            s => Assertion.All(
+                                s.IsOptional.TestTrue(),
+                                s.Info.TestEquals( SqlRecordSetInfo.Create( "e" ) ) ) ),
+                    sut.GetRecordSet( "f" )
+                        .TestType()
+                        .AssignableTo<SqlRawRecordSetNode>(
+                            s => Assertion.All(
+                                s.IsOptional.TestTrue(),
+                                s.Info.TestEquals( SqlRecordSetInfo.Create( "f" ) ) ) ),
+                    sut.GetRecordSet( "g" )
+                        .TestType()
+                        .AssignableTo<SqlRawRecordSetNode>(
+                            s => Assertion.All(
+                                s.IsOptional.TestTrue(),
+                                s.Info.TestEquals( SqlRecordSetInfo.Create( "g" ) ) ) ),
+                    sut.GetRecordSet( "h" ).TestRefEquals( h ),
+                    ongoingInners.TestSequence( [ b, c, d, e, f, g ] ),
+                    ongoingSets.TestCount( count => count.TestEquals( 6 ) )
+                        .Then(
+                            sets =>
+                                Assertion.All(
+                                    "ongoingSets",
+                                    sets[0].TestSequence( [ a ] ),
+                                    sets[1].TestSequence( [ a, b ] ),
+                                    sets[2]
+                                        .TestSequence(
+                                        [
+                                            (s, _) => s.TestRefEquals( a ),
+                                            (s, _) => s.TestRefEquals( b ),
+                                            (s, _) => s.TestType()
+                                                .AssignableTo<SqlRawRecordSetNode>(
+                                                    rs => Assertion.All(
+                                                        rs.IsOptional.TestTrue(),
+                                                        rs.Info.TestEquals( SqlRecordSetInfo.Create( "c" ) ) ) )
+                                        ] ),
+                                    sets[3]
+                                        .TestSequence(
+                                        [
+                                            (s, _) => s.TestRefEquals( a ),
+                                            (s, _) => s.TestRefEquals( b ),
+                                            (s, _) => s.TestType()
+                                                .AssignableTo<SqlRawRecordSetNode>(
+                                                    rs => Assertion.All(
+                                                        rs.IsOptional.TestTrue(),
+                                                        rs.Info.TestEquals( SqlRecordSetInfo.Create( "c" ) ) ) ),
+                                            (s, _) => s.TestRefEquals( d )
+                                        ] ),
+                                    sets[4]
+                                        .TestSequence(
+                                        [
+                                            (s, _) => s.TestType()
+                                                .AssignableTo<SqlRawRecordSetNode>(
+                                                    rs => Assertion.All(
+                                                        rs.IsOptional.TestTrue(),
+                                                        rs.Info.TestEquals( SqlRecordSetInfo.Create( "a" ) ) ) ),
+                                            (s, _) => s.TestType()
+                                                .AssignableTo<SqlRawRecordSetNode>(
+                                                    rs => Assertion.All(
+                                                        rs.IsOptional.TestTrue(),
+                                                        rs.Info.TestEquals( SqlRecordSetInfo.Create( "b" ) ) ) ),
+                                            (s, _) => s.TestType()
+                                                .AssignableTo<SqlRawRecordSetNode>(
+                                                    rs => Assertion.All(
+                                                        rs.IsOptional.TestTrue(),
+                                                        rs.Info.TestEquals( SqlRecordSetInfo.Create( "c" ) ) ) ),
+                                            (s, _) => s.TestType()
+                                                .AssignableTo<SqlRawRecordSetNode>(
+                                                    rs => Assertion.All(
+                                                        rs.IsOptional.TestTrue(),
+                                                        rs.Info.TestEquals( SqlRecordSetInfo.Create( "d" ) ) ) ),
+                                            (s, _) => s.TestRefEquals( e )
+                                        ] ),
+                                    sets[5]
+                                        .TestSequence(
+                                        [
+                                            (s, _) => s.TestType()
+                                                .AssignableTo<SqlRawRecordSetNode>(
+                                                    rs => Assertion.All(
+                                                        rs.IsOptional.TestTrue(),
+                                                        rs.Info.TestEquals( SqlRecordSetInfo.Create( "a" ) ) ) ),
+                                            (s, _) => s.TestType()
+                                                .AssignableTo<SqlRawRecordSetNode>(
+                                                    rs => Assertion.All(
+                                                        rs.IsOptional.TestTrue(),
+                                                        rs.Info.TestEquals( SqlRecordSetInfo.Create( "b" ) ) ) ),
+                                            (s, _) => s.TestType()
+                                                .AssignableTo<SqlRawRecordSetNode>(
+                                                    rs => Assertion.All(
+                                                        rs.IsOptional.TestTrue(),
+                                                        rs.Info.TestEquals( SqlRecordSetInfo.Create( "c" ) ) ) ),
+                                            (s, _) => s.TestType()
+                                                .AssignableTo<SqlRawRecordSetNode>(
+                                                    rs => Assertion.All(
+                                                        rs.IsOptional.TestTrue(),
+                                                        rs.Info.TestEquals( SqlRecordSetInfo.Create( "d" ) ) ) ),
+                                            (s, _) => s.TestRefEquals( e ),
+                                            (s, _) => s.TestRefEquals( f )
+                                        ] ) ) ) )
+                .Go();
 
             SqlConditionNode AddOngoing(SqlJoinDefinition.ExpressionParams @params, params string[] outerSetNames)
             {
@@ -104,7 +205,7 @@ public partial class ObjectExpressionsTests
 
             var result = sut.GetRecordSet( "foo" );
 
-            result.Should().BeSameAs( from );
+            result.TestRefEquals( from ).Go();
         }
 
         [Fact]
@@ -116,7 +217,7 @@ public partial class ObjectExpressionsTests
 
             var result = sut.GetRecordSet( "bar" );
 
-            result.Should().BeSameAs( inner );
+            result.TestRefEquals( inner ).Go();
         }
 
         [Fact]
@@ -128,7 +229,7 @@ public partial class ObjectExpressionsTests
 
             var action = Lambda.Of( () => sut.GetRecordSet( "qux" ) );
 
-            action.Should().ThrowExactly<KeyNotFoundException>();
+            action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
         }
 
         [Theory]
@@ -142,7 +243,7 @@ public partial class ObjectExpressionsTests
 
             var result = sut[name];
 
-            result.Should().BeSameAs( sut.GetRecordSet( name ) );
+            result.TestRefEquals( sut.GetRecordSet( name ) ).Go();
         }
 
         [Fact]
@@ -153,18 +254,16 @@ public partial class ObjectExpressionsTests
             var result = sut.AddTrait( trait );
             var text = result.ToString();
 
-            using ( new AssertionScope() )
-            {
-                result.Should().NotBeSameAs( sut );
-                result.Traits.Should().BeSequentiallyEqualTo( trait );
-                text.Should()
-                    .Be(
+            Assertion.All(
+                    result.TestNotRefEquals( sut ),
+                    result.Traits.TestSequence( [ trait ] ),
+                    text.TestEquals(
                         """
                         FROM [foo]
                         INNER JOIN [bar] ON TRUE
                         AND WHERE a > 10
-                        """ );
-            }
+                        """ ) )
+                .Go();
         }
 
         [Fact]
@@ -179,19 +278,17 @@ public partial class ObjectExpressionsTests
             var result = sut.AddTrait( secondTrait );
             var text = result.ToString();
 
-            using ( new AssertionScope() )
-            {
-                result.Should().NotBeSameAs( sut );
-                result.Traits.Should().BeSequentiallyEqualTo( firstTrait, secondTrait );
-                text.Should()
-                    .Be(
+            Assertion.All(
+                    result.TestNotRefEquals( sut ),
+                    result.Traits.TestSequence( [ firstTrait, secondTrait ] ),
+                    text.TestEquals(
                         """
                         FROM [foo]
                         INNER JOIN [bar] ON TRUE
                         AND WHERE a > 10
                         OR WHERE b > 15
-                        """ );
-            }
+                        """ ) )
+                .Go();
         }
 
         [Fact]
@@ -207,19 +304,17 @@ public partial class ObjectExpressionsTests
             var result = sut.SetTraits( traits );
             var text = result.ToString();
 
-            using ( new AssertionScope() )
-            {
-                result.Should().NotBeSameAs( sut );
-                result.Traits.Should().BeSequentiallyEqualTo( traits );
-                text.Should()
-                    .Be(
+            Assertion.All(
+                    result.TestNotRefEquals( sut ),
+                    result.Traits.TestSequence( traits ),
+                    text.TestEquals(
                         """
                         FROM [foo]
                         INNER JOIN [bar] ON TRUE
                         AND WHERE a > 10
                         OR WHERE b > 15
-                        """ );
-            }
+                        """ ) )
+                .Go();
         }
     }
 }

@@ -34,18 +34,17 @@ public class SqlForeignKeyTests : TestsBase
         var index = schema.Objects.GetIndex( "IX_T_C1A" );
         var refIndex = schema.Objects.GetIndex( "UIX_T_C2A" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Database.Should().BeSameAs( db );
-            sut.OriginIndex.Should().BeSameAs( index );
-            sut.ReferencedIndex.Should().BeSameAs( refIndex );
-            sut.OnDeleteBehavior.Should().BeSameAs( onDeleteBehavior );
-            sut.OnUpdateBehavior.Should().BeSameAs( onUpdateBehavior );
-            sut.Type.Should().Be( SqlObjectType.ForeignKey );
-            sut.Name.Should().Be( "FK_TEST" );
-            sut.ToString().Should().Be( "[ForeignKey] foo.FK_TEST" );
-            sut.IsSelfReference().Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Database.TestRefEquals( db ),
+                sut.OriginIndex.TestRefEquals( index ),
+                sut.ReferencedIndex.TestRefEquals( refIndex ),
+                sut.OnDeleteBehavior.TestRefEquals( onDeleteBehavior ),
+                sut.OnUpdateBehavior.TestRefEquals( onUpdateBehavior ),
+                sut.Type.TestEquals( SqlObjectType.ForeignKey ),
+                sut.Name.TestEquals( "FK_TEST" ),
+                sut.ToString().TestEquals( "[ForeignKey] foo.FK_TEST" ),
+                sut.IsSelfReference().TestTrue() )
+            .Go();
     }
 
     [Theory]
@@ -78,18 +77,17 @@ public class SqlForeignKeyTests : TestsBase
         var index = schema.Objects.GetIndex( "IX_T1_C2A" );
         var refIndex = schema.Objects.GetIndex( "UIX_T2_C3A" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Database.Should().BeSameAs( db );
-            sut.OriginIndex.Should().BeSameAs( index );
-            sut.ReferencedIndex.Should().BeSameAs( refIndex );
-            sut.OnDeleteBehavior.Should().BeSameAs( onDeleteBehavior );
-            sut.OnUpdateBehavior.Should().BeSameAs( onUpdateBehavior );
-            sut.Type.Should().Be( SqlObjectType.ForeignKey );
-            sut.Name.Should().Be( "FK_TEST" );
-            sut.ToString().Should().Be( "[ForeignKey] foo.FK_TEST" );
-            sut.IsSelfReference().Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Database.TestRefEquals( db ),
+                sut.OriginIndex.TestRefEquals( index ),
+                sut.ReferencedIndex.TestRefEquals( refIndex ),
+                sut.OnDeleteBehavior.TestRefEquals( onDeleteBehavior ),
+                sut.OnUpdateBehavior.TestRefEquals( onUpdateBehavior ),
+                sut.Type.TestEquals( SqlObjectType.ForeignKey ),
+                sut.Name.TestEquals( "FK_TEST" ),
+                sut.ToString().TestEquals( "[ForeignKey] foo.FK_TEST" ),
+                sut.IsSelfReference().TestFalse() )
+            .Go();
     }
 
     [Theory]
@@ -125,17 +123,16 @@ public class SqlForeignKeyTests : TestsBase
         var index = schema1.Objects.GetIndex( "IX_T1_C2A" );
         var refIndex = schema2.Objects.GetIndex( "UIX_T2_C3A" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Database.Should().BeSameAs( db );
-            sut.OriginIndex.Should().BeSameAs( index );
-            sut.ReferencedIndex.Should().BeSameAs( refIndex );
-            sut.OnDeleteBehavior.Should().BeSameAs( onDeleteBehavior );
-            sut.OnUpdateBehavior.Should().BeSameAs( onUpdateBehavior );
-            sut.Type.Should().Be( SqlObjectType.ForeignKey );
-            sut.Name.Should().Be( "FK_TEST" );
-            sut.ToString().Should().Be( "[ForeignKey] foo.FK_TEST" );
-            sut.IsSelfReference().Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Database.TestRefEquals( db ),
+                sut.OriginIndex.TestRefEquals( index ),
+                sut.ReferencedIndex.TestRefEquals( refIndex ),
+                sut.OnDeleteBehavior.TestRefEquals( onDeleteBehavior ),
+                sut.OnUpdateBehavior.TestRefEquals( onUpdateBehavior ),
+                sut.Type.TestEquals( SqlObjectType.ForeignKey ),
+                sut.Name.TestEquals( "FK_TEST" ),
+                sut.ToString().TestEquals( "[ForeignKey] foo.FK_TEST" ),
+                sut.IsSelfReference().TestFalse() )
+            .Go();
     }
 }

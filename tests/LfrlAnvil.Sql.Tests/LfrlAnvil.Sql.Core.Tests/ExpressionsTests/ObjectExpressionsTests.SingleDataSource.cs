@@ -2,7 +2,6 @@
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Traits;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
 
@@ -18,7 +17,7 @@ public partial class ObjectExpressionsTests
 
             var result = sut.GetRecordSet( "foo" );
 
-            result.Should().BeSameAs( from );
+            result.TestRefEquals( from ).Go();
         }
 
         [Fact]
@@ -29,7 +28,7 @@ public partial class ObjectExpressionsTests
 
             var action = Lambda.Of( () => sut.GetRecordSet( "bar" ) );
 
-            action.Should().ThrowExactly<KeyNotFoundException>();
+            action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
         }
 
         [Fact]
@@ -40,7 +39,10 @@ public partial class ObjectExpressionsTests
 
             var result = sut["foo"]["bar"];
 
-            result.Should().BeEquivalentTo( from["bar"] );
+            Assertion.All(
+                    result.Name.TestEquals( "bar" ),
+                    result.RecordSet.TestRefEquals( from ) )
+                .Go();
         }
 
         [Fact]
@@ -51,17 +53,15 @@ public partial class ObjectExpressionsTests
             var result = sut.AddTrait( trait );
             var text = result.ToString();
 
-            using ( new AssertionScope() )
-            {
-                result.Should().NotBeSameAs( sut );
-                result.Traits.Should().BeSequentiallyEqualTo( trait );
-                text.Should()
-                    .Be(
+            Assertion.All(
+                    result.TestNotRefEquals( sut ),
+                    result.Traits.TestSequence( [ trait ] ),
+                    text.TestEquals(
                         """
                         FROM [foo]
                         AND WHERE a > 10
-                        """ );
-            }
+                        """ ) )
+                .Go();
         }
 
         [Fact]
@@ -73,18 +73,16 @@ public partial class ObjectExpressionsTests
             var result = sut.AddTrait( secondTrait );
             var text = result.ToString();
 
-            using ( new AssertionScope() )
-            {
-                result.Should().NotBeSameAs( sut );
-                result.Traits.Should().BeSequentiallyEqualTo( firstTrait, secondTrait );
-                text.Should()
-                    .Be(
+            Assertion.All(
+                    result.TestNotRefEquals( sut ),
+                    result.Traits.TestSequence( [ firstTrait, secondTrait ] ),
+                    text.TestEquals(
                         """
                         FROM [foo]
                         AND WHERE a > 10
                         OR WHERE b > 15
-                        """ );
-            }
+                        """ ) )
+                .Go();
         }
 
         [Fact]
@@ -97,18 +95,16 @@ public partial class ObjectExpressionsTests
             var result = sut.SetTraits( traits );
             var text = result.ToString();
 
-            using ( new AssertionScope() )
-            {
-                result.Should().NotBeSameAs( sut );
-                result.Traits.Should().BeSequentiallyEqualTo( traits );
-                text.Should()
-                    .Be(
+            Assertion.All(
+                    result.TestNotRefEquals( sut ),
+                    result.Traits.TestSequence( traits ),
+                    text.TestEquals(
                         """
                         FROM [foo]
                         AND WHERE a > 10
                         OR WHERE b > 15
-                        """ );
-            }
+                        """ ) )
+                .Go();
         }
     }
 }

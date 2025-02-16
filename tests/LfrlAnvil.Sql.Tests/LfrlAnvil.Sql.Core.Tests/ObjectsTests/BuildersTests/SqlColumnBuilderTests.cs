@@ -2,9 +2,9 @@
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
+using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.ObjectsTests.BuildersTests;
@@ -20,7 +20,7 @@ public class SqlColumnBuilderTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( "[Column] foo.T.C" );
+        result.TestEquals( "[Column] foo.T.C" ).Go();
     }
 
     [Fact]
@@ -32,11 +32,10 @@ public class SqlColumnBuilderTests : TestsBase
 
         var result = sut.Asc();
 
-        using ( new AssertionScope() )
-        {
-            result.Expression.Should().BeSameAs( sut.Node );
-            result.Ordering.Should().BeSameAs( OrderBy.Asc );
-        }
+        Assertion.All(
+                result.Expression.TestRefEquals( sut.Node ),
+                result.Ordering.TestRefEquals( OrderBy.Asc ) )
+            .Go();
     }
 
     [Fact]
@@ -49,7 +48,7 @@ public class SqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Asc() );
 
-        action.Should().ThrowExactly<SqlObjectBuilderException>();
+        action.Test( exc => exc.TestType().Exact<SqlObjectBuilderException>() ).Go();
     }
 
     [Fact]
@@ -61,11 +60,10 @@ public class SqlColumnBuilderTests : TestsBase
 
         var result = sut.Desc();
 
-        using ( new AssertionScope() )
-        {
-            result.Expression.Should().BeSameAs( sut.Node );
-            result.Ordering.Should().BeSameAs( OrderBy.Desc );
-        }
+        Assertion.All(
+                result.Expression.TestRefEquals( sut.Node ),
+                result.Ordering.TestRefEquals( OrderBy.Desc ) )
+            .Go();
     }
 
     [Fact]
@@ -78,7 +76,7 @@ public class SqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Desc() );
 
-        action.Should().ThrowExactly<SqlObjectBuilderException>();
+        action.Test( exc => exc.TestType().Exact<SqlObjectBuilderException>() ).Go();
     }
 
     [Fact]
@@ -92,20 +90,18 @@ public class SqlColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            table.Columns.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.Name.Should().Be( "C2" );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      CREATE [Column] foo.T.C2;
-                    """ );
-        }
+        Assertion.All(
+                table.Columns.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.Name.TestEquals( "C2" ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          CREATE [Column] foo.T.C2;
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -120,7 +116,7 @@ public class SqlColumnBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Fact]
@@ -135,11 +131,10 @@ public class SqlColumnBuilderTests : TestsBase
         var result = sut.SetName( sut.Name );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -156,11 +151,10 @@ public class SqlColumnBuilderTests : TestsBase
         var result = sut.SetName( oldName );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -176,23 +170,21 @@ public class SqlColumnBuilderTests : TestsBase
         var result = sut.SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            table.Columns.TryGet( "bar" ).Should().BeSameAs( sut );
-            table.Columns.TryGet( "C2" ).Should().BeNull();
-            node.Name.Should().Be( "bar" );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Column] foo.T.bar ([1] : 'Name' (System.String) FROM C2);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                table.Columns.TryGet( "bar" ).TestRefEquals( sut ),
+                table.Columns.TryGet( "C2" ).TestNull(),
+                node.Name.TestEquals( "bar" ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.bar ([1] : 'Name' (System.String) FROM C2);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Theory]
@@ -209,9 +201,11 @@ public class SqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( name ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -225,9 +219,11 @@ public class SqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "bar" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -240,9 +236,11 @@ public class SqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "C1" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -256,9 +254,11 @@ public class SqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "C3" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -272,9 +272,11 @@ public class SqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "C3" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -289,11 +291,10 @@ public class SqlColumnBuilderTests : TestsBase
         var result = sut.SetType( schema.Database.TypeDefinitions.GetByType<object>() );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -309,11 +310,10 @@ public class SqlColumnBuilderTests : TestsBase
         var result = sut.SetType( schema.Database.TypeDefinitions.GetByType<object>() );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -328,22 +328,20 @@ public class SqlColumnBuilderTests : TestsBase
         var result = sut.SetType<int>();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.TypeDefinition.Should().BeSameAs( schema.Database.TypeDefinitions.GetByType<int>() );
-            sut.DefaultValue.Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Column] foo.T.C2 ([3] : 'DataType' (LfrlAnvil.Sql.ISqlDataType) FROM OBJECT)
-                      ALTER [Column] foo.T.C2 ([4] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM "123" : System.Int32);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.TypeDefinition.TestRefEquals( schema.Database.TypeDefinitions.GetByType<int>() ),
+                sut.DefaultValue.TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.C2 ([3] : 'DataType' (LfrlAnvil.Sql.ISqlDataType) FROM OBJECT)
+                          ALTER [Column] foo.T.C2 ([4] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM "123" : System.Int32);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -358,12 +356,11 @@ public class SqlColumnBuilderTests : TestsBase
         var result = sut.SetType<long>();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.TypeDefinition.Should().BeSameAs( schema.Database.TypeDefinitions.GetByType<long>() );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.TypeDefinition.TestRefEquals( schema.Database.TypeDefinitions.GetByType<long>() ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -377,9 +374,11 @@ public class SqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetType<int>() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -393,9 +392,11 @@ public class SqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetType<int>() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -409,9 +410,11 @@ public class SqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetType<int>() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -425,9 +428,11 @@ public class SqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetType( definition ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -441,9 +446,13 @@ public class SqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => (( ISqlColumnBuilder )sut).SetType( definition ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectCastException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Expected == typeof( SqlColumnTypeDefinition ) );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectCastException>(
+                        e => Assertion.All(
+                            e.Dialect.TestEquals( SqlDialectMock.Instance ),
+                            e.Expected.TestEquals( typeof( SqlColumnTypeDefinition ) ) ) ) )
+            .Go();
     }
 
     [Theory]
@@ -460,11 +469,10 @@ public class SqlColumnBuilderTests : TestsBase
         var result = sut.MarkAsNullable( value );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Theory]
@@ -482,11 +490,10 @@ public class SqlColumnBuilderTests : TestsBase
         var result = sut.MarkAsNullable( value );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -501,20 +508,18 @@ public class SqlColumnBuilderTests : TestsBase
         var result = sut.MarkAsNullable();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.IsNullable.Should().BeTrue();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Column] foo.T.C2 ([2] : 'IsNullable' (System.Boolean) FROM False);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.IsNullable.TestTrue(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.C2 ([2] : 'IsNullable' (System.Boolean) FROM False);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -529,20 +534,18 @@ public class SqlColumnBuilderTests : TestsBase
         var result = sut.MarkAsNullable( false );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.IsNullable.Should().BeFalse();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Column] foo.T.C2 ([2] : 'IsNullable' (System.Boolean) FROM True);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.IsNullable.TestFalse(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.C2 ([2] : 'IsNullable' (System.Boolean) FROM True);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Theory]
@@ -558,9 +561,11 @@ public class SqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.MarkAsNullable( value ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Theory]
@@ -576,9 +581,11 @@ public class SqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.MarkAsNullable( value ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Theory]
@@ -594,9 +601,11 @@ public class SqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.MarkAsNullable( value ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -611,11 +620,10 @@ public class SqlColumnBuilderTests : TestsBase
         var result = sut.SetDefaultValue( sut.DefaultValue );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -632,11 +640,10 @@ public class SqlColumnBuilderTests : TestsBase
         var result = sut.SetDefaultValue( originalDefaultValue );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -651,20 +658,18 @@ public class SqlColumnBuilderTests : TestsBase
         var result = sut.SetDefaultValue( 42 );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.DefaultValue.Should().BeEquivalentTo( SqlNode.Literal( 42 ) );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Column] foo.T.C2 ([4] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM "123" : System.Int32);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.DefaultValue.TestType().AssignableTo<SqlLiteralNode<int>>( n => n.Value.TestEquals( 42 ) ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.C2 ([4] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM "123" : System.Int32);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -679,20 +684,18 @@ public class SqlColumnBuilderTests : TestsBase
         var result = sut.SetDefaultValue( null );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.DefaultValue.Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Column] foo.T.C2 ([4] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM "123" : System.Int32);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.DefaultValue.TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.C2 ([4] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM "123" : System.Int32);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -707,20 +710,18 @@ public class SqlColumnBuilderTests : TestsBase
         var result = sut.SetDefaultValue( 123 );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.DefaultValue.Should().BeEquivalentTo( SqlNode.Literal( 123 ) );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Column] foo.T.C2 ([4] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM <null>);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.DefaultValue.TestType().AssignableTo<SqlLiteralNode<int>>( n => n.Value.TestEquals( 123 ) ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.C2 ([4] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM <null>);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -736,20 +737,18 @@ public class SqlColumnBuilderTests : TestsBase
         var result = sut.SetDefaultValue( defaultValue );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.DefaultValue.Should().BeSameAs( defaultValue );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Column] foo.T.C2 ([4] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM <null>);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.DefaultValue.TestRefEquals( defaultValue ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.C2 ([4] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM <null>);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -765,20 +764,18 @@ public class SqlColumnBuilderTests : TestsBase
         var result = sut.SetDefaultValue( 123 );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.DefaultValue.Should().BeEquivalentTo( SqlNode.Literal( 123 ) );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Column] foo.T.C2 ([4] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM <null>);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.DefaultValue.TestType().AssignableTo<SqlLiteralNode<int>>( n => n.Value.TestEquals( 123 ) ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.C2 ([4] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM <null>);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -794,20 +791,18 @@ public class SqlColumnBuilderTests : TestsBase
         var result = sut.SetDefaultValue( ( int? )123 );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.DefaultValue.Should().BeEquivalentTo( SqlNode.Literal( 123 ) );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Column] foo.T.C2 ([4] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM <null>);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.DefaultValue.TestType().AssignableTo<SqlLiteralNode<int>>( n => n.Value.TestEquals( 123 ) ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.C2 ([4] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM <null>);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -821,9 +816,11 @@ public class SqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetDefaultValue( 42 ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -836,9 +833,11 @@ public class SqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetDefaultValue( 42 ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -851,9 +850,11 @@ public class SqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetDefaultValue( table.ToRecordSet().GetField( "C1" ) ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -868,11 +869,10 @@ public class SqlColumnBuilderTests : TestsBase
         var result = sut.SetComputation( null );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -887,11 +887,10 @@ public class SqlColumnBuilderTests : TestsBase
         var result = sut.SetComputation( sut.Computation );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -908,11 +907,10 @@ public class SqlColumnBuilderTests : TestsBase
         var result = sut.SetComputation( originalComputation );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -928,22 +926,20 @@ public class SqlColumnBuilderTests : TestsBase
         var result = sut.SetComputation( null );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Computation.Should().BeNull();
-            sut.ReferencedComputationColumns.Should().BeEmpty();
-            other.ReferencingObjects.Should().BeEmpty();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Column] foo.T.C3 ([5] : 'Computation' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnComputation]) FROM SqlColumnComputation { Expression = ([foo].[T].[C2] : System.Object) + ("1" : System.Int32), Storage = Stored });
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Computation.TestNull(),
+                sut.ReferencedComputationColumns.TestEmpty(),
+                other.ReferencingObjects.TestEmpty(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.C3 ([5] : 'Computation' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnComputation]) FROM SqlColumnComputation { Expression = ([foo].[T].[C2] : System.Object) + ("1" : System.Int32), Storage = Stored });
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -959,22 +955,20 @@ public class SqlColumnBuilderTests : TestsBase
         var result = sut.SetComputation( null );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Computation.Should().BeNull();
-            sut.ReferencedComputationColumns.Should().BeEmpty();
-            other.ReferencingObjects.Should().BeEmpty();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Column] foo.T.C3 ([5] : 'Computation' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnComputation]) FROM SqlColumnComputation { Expression = ([foo].[T].[C2] : System.Object) + ("1" : System.Int32), Storage = Virtual });
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Computation.TestNull(),
+                sut.ReferencedComputationColumns.TestEmpty(),
+                other.ReferencingObjects.TestEmpty(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.C3 ([5] : 'Computation' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnComputation]) FROM SqlColumnComputation { Expression = ([foo].[T].[C2] : System.Object) + ("1" : System.Int32), Storage = Virtual });
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -991,25 +985,21 @@ public class SqlColumnBuilderTests : TestsBase
         var result = sut.SetComputation( computation );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Computation.Should().Be( computation );
-            sut.ReferencedComputationColumns.Should().BeSequentiallyEqualTo( other );
-
-            other.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut, property: "Computation" ), other ) );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Column] foo.T.C3 ([5] : 'Computation' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnComputation]) FROM <null>);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Computation.TestEquals( computation ),
+                sut.ReferencedComputationColumns.TestSequence( [ other ] ),
+                other.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut, property: "Computation" ), other ) ] ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.C3 ([5] : 'Computation' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnComputation]) FROM <null>);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1026,25 +1016,21 @@ public class SqlColumnBuilderTests : TestsBase
         var result = sut.SetComputation( computation );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Computation.Should().Be( computation );
-            sut.ReferencedComputationColumns.Should().BeSequentiallyEqualTo( other );
-
-            other.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut, property: "Computation" ), other ) );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Column] foo.T.C3 ([5] : 'Computation' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnComputation]) FROM <null>);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Computation.TestEquals( computation ),
+                sut.ReferencedComputationColumns.TestSequence( [ other ] ),
+                other.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut, property: "Computation" ), other ) ] ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.C3 ([5] : 'Computation' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnComputation]) FROM <null>);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Theory]
@@ -1064,26 +1050,22 @@ public class SqlColumnBuilderTests : TestsBase
         var result = sut.SetComputation( computation );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Computation.Should().Be( computation );
-            sut.ReferencedComputationColumns.Should().BeSequentiallyEqualTo( other );
-
-            oldOther.ReferencingObjects.Should().BeEmpty();
-            other.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut, property: "Computation" ), other ) );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    $$"""
-                      ALTER [Table] foo.T
-                        ALTER [Column] foo.T.C3 ([5] : 'Computation' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnComputation]) FROM SqlColumnComputation { Expression = ([foo].[T].[C4] : System.Object) + ("1" : System.Int32), Storage = {{storage}} });
-                      """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Computation.TestEquals( computation ),
+                sut.ReferencedComputationColumns.TestSequence( [ other ] ),
+                oldOther.ReferencingObjects.TestEmpty(),
+                other.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut, property: "Computation" ), other ) ] ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        $$"""
+                          ALTER [Table] foo.T
+                            ALTER [Column] foo.T.C3 ([5] : 'Computation' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnComputation]) FROM SqlColumnComputation { Expression = ([foo].[T].[C4] : System.Object) + ("1" : System.Int32), Storage = {{storage}} });
+                          """
+                    ] ) )
+            .Go();
     }
 
     [Theory]
@@ -1105,25 +1087,21 @@ public class SqlColumnBuilderTests : TestsBase
         var result = sut.SetComputation( new SqlColumnComputation( expression, newStorage ) );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Computation.Should().Be( new SqlColumnComputation( expression, newStorage ) );
-            sut.ReferencedComputationColumns.Should().BeSequentiallyEqualTo( other );
-
-            other.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut, property: "Computation" ), other ) );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    $$"""
-                      ALTER [Table] foo.T
-                        ALTER [Column] foo.T.C3 ([5] : 'Computation' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnComputation]) FROM SqlColumnComputation { Expression = ([foo].[T].[C2] : System.Object) + ("1" : System.Int32), Storage = {{oldStorage}} });
-                      """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Computation.TestEquals( new SqlColumnComputation( expression, newStorage ) ),
+                sut.ReferencedComputationColumns.TestSequence( [ other ] ),
+                other.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut, property: "Computation" ), other ) ] ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        $$"""
+                          ALTER [Table] foo.T
+                            ALTER [Column] foo.T.C3 ([5] : 'Computation' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnComputation]) FROM SqlColumnComputation { Expression = ([foo].[T].[C2] : System.Object) + ("1" : System.Int32), Storage = {{oldStorage}} });
+                          """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1140,27 +1118,23 @@ public class SqlColumnBuilderTests : TestsBase
         var result = sut.SetComputation( computation );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.DefaultValue.Should().BeNull();
-            sut.Computation.Should().Be( computation );
-            sut.ReferencedComputationColumns.Should().BeSequentiallyEqualTo( other );
-
-            other.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut, property: "Computation" ), other ) );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Column] foo.T.C3 ([4] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM "42" : System.Int32)
-                      ALTER [Column] foo.T.C3 ([5] : 'Computation' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnComputation]) FROM <null>);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.DefaultValue.TestNull(),
+                sut.Computation.TestEquals( computation ),
+                sut.ReferencedComputationColumns.TestSequence( [ other ] ),
+                other.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut, property: "Computation" ), other ) ] ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.C3 ([4] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM "42" : System.Int32)
+                          ALTER [Column] foo.T.C3 ([5] : 'Computation' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnComputation]) FROM <null>);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1174,9 +1148,11 @@ public class SqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetComputation( SqlColumnComputation.Virtual( SqlNode.Literal( 1 ) ) ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1190,9 +1166,11 @@ public class SqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetComputation( SqlColumnComputation.Virtual( SqlNode.Literal( 1 ) ) ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1205,9 +1183,11 @@ public class SqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetComputation( SqlColumnComputation.Virtual( SqlNode.RawRecordSet( "bar" )["x"] ) ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1221,9 +1201,11 @@ public class SqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetComputation( SqlColumnComputation.Virtual( SqlNode.Literal( 1 ) ) ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1236,9 +1218,11 @@ public class SqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetComputation( SqlColumnComputation.Virtual( SqlNode.RawRecordSet( "bar" )["x"] ) ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1252,9 +1236,11 @@ public class SqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetComputation( null ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1267,9 +1253,11 @@ public class SqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetComputation( SqlColumnComputation.Virtual( sut.Node + SqlNode.Literal( 1 ) ) ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1285,25 +1273,22 @@ public class SqlColumnBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            table.Columns.TryGet( sut.Name ).Should().BeNull();
-            sut.ReferencedComputationColumns.Should().BeEmpty();
-            sut.Computation.Should().BeNull();
-            sut.IsRemoved.Should().BeTrue();
-
-            other.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( pk.Index ), other ) );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      REMOVE [Column] foo.T.C2;
-                    """ );
-        }
+        Assertion.All(
+                table.Columns.TryGet( sut.Name ).TestNull(),
+                sut.ReferencedComputationColumns.TestEmpty(),
+                sut.Computation.TestNull(),
+                sut.IsRemoved.TestTrue(),
+                other.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( pk.Index ), other ) ] ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          REMOVE [Column] foo.T.C2;
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1321,7 +1306,7 @@ public class SqlColumnBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Fact]
@@ -1335,9 +1320,11 @@ public class SqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1351,9 +1338,11 @@ public class SqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1367,9 +1356,11 @@ public class SqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1383,9 +1374,11 @@ public class SqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1404,25 +1397,22 @@ public class SqlColumnBuilderTests : TestsBase
         SqlDatabaseBuilderMock.QuickRemove( sut );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            table.Columns.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.ReferencedComputationColumns.Should().BeEmpty();
-            sut.Computation.Should().BeNull();
-            sut.IsRemoved.Should().BeTrue();
-            sut.ReferencingObjects.Should().BeEmpty();
-
-            ix.Columns.Expressions.Should().BeSequentiallyEqualTo( ixColumn );
-            chk.ReferencedColumns.Should().BeSequentiallyEqualTo( sut );
-
-            other.ReferencingObjects.Should().HaveCount( 2 );
-            other.ReferencingObjects.Should()
-                .BeEquivalentTo(
+        Assertion.All(
+                table.Columns.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.ReferencedComputationColumns.TestEmpty(),
+                sut.Computation.TestNull(),
+                sut.IsRemoved.TestTrue(),
+                sut.ReferencingObjects.TestEmpty(),
+                ix.Columns.Expressions.TestSequence( [ ixColumn ] ),
+                chk.ReferencedColumns.TestSequence( [ sut ] ),
+                other.ReferencingObjects.Count.TestEquals( 2 ),
+                other.ReferencingObjects.TestSetEqual(
+                [
                     SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( pk.Index ), other ),
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut, property: "Computation" ), other ) );
-
-            actions.Should().BeEmpty();
-        }
+                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut, property: "Computation" ), other )
+                ] ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1440,7 +1430,7 @@ public class SqlColumnBuilderTests : TestsBase
         SqlDatabaseBuilderMock.QuickRemove( sut );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Theory]
@@ -1457,14 +1447,13 @@ public class SqlColumnBuilderTests : TestsBase
 
         var result = sut.ToDefinitionNode();
 
-        using ( new AssertionScope() )
-        {
-            result.Name.Should().BeSameAs( sut.Name );
-            result.Type.Should().Be( TypeNullability.Create<object>( isNullable ) );
-            result.TypeDefinition.Should().BeSameAs( sut.TypeDefinition );
-            result.DefaultValue.Should().BeSameAs( sut.DefaultValue );
-            result.Computation.Should().Be( sut.Computation );
-        }
+        Assertion.All(
+                result.Name.TestRefEquals( sut.Name ),
+                result.Type.TestEquals( TypeNullability.Create<object>( isNullable ) ),
+                result.TypeDefinition.TestRefEquals( sut.TypeDefinition ),
+                result.DefaultValue.TestRefEquals( sut.DefaultValue ),
+                result.Computation.TestEquals( sut.Computation ) )
+            .Go();
     }
 
     [Fact]
@@ -1480,23 +1469,21 @@ public class SqlColumnBuilderTests : TestsBase
         var result = (( ISqlColumnBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            table.Columns.TryGet( "bar" ).Should().BeSameAs( sut );
-            table.Columns.TryGet( "C2" ).Should().BeNull();
-            node.Name.Should().Be( "bar" );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Column] foo.T.bar ([1] : 'Name' (System.String) FROM C2);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                table.Columns.TryGet( "bar" ).TestRefEquals( sut ),
+                table.Columns.TryGet( "C2" ).TestNull(),
+                node.Name.TestEquals( "bar" ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.bar ([1] : 'Name' (System.String) FROM C2);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1512,23 +1499,21 @@ public class SqlColumnBuilderTests : TestsBase
         var result = (( ISqlObjectBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            table.Columns.TryGet( "bar" ).Should().BeSameAs( sut );
-            table.Columns.TryGet( "C2" ).Should().BeNull();
-            node.Name.Should().Be( "bar" );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Column] foo.T.bar ([1] : 'Name' (System.String) FROM C2);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                table.Columns.TryGet( "bar" ).TestRefEquals( sut ),
+                table.Columns.TryGet( "C2" ).TestNull(),
+                node.Name.TestEquals( "bar" ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.bar ([1] : 'Name' (System.String) FROM C2);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1543,21 +1528,19 @@ public class SqlColumnBuilderTests : TestsBase
         var result = (( ISqlColumnBuilder )sut).SetType<int>();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.TypeDefinition.Should().BeSameAs( schema.Database.TypeDefinitions.GetByType<int>() );
-            sut.DefaultValue.Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Column] foo.T.C2 ([3] : 'DataType' (LfrlAnvil.Sql.ISqlDataType) FROM OBJECT);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.TypeDefinition.TestRefEquals( schema.Database.TypeDefinitions.GetByType<int>() ),
+                sut.DefaultValue.TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.C2 ([3] : 'DataType' (LfrlAnvil.Sql.ISqlDataType) FROM OBJECT);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1572,21 +1555,19 @@ public class SqlColumnBuilderTests : TestsBase
         var result = (( ISqlColumnBuilder )sut).SetType( SqlDataTypeMock.Integer );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.TypeDefinition.Should().BeSameAs( schema.Database.TypeDefinitions.GetByDataType( SqlDataTypeMock.Integer ) );
-            sut.DefaultValue.Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Column] foo.T.C2 ([3] : 'DataType' (LfrlAnvil.Sql.ISqlDataType) FROM OBJECT);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.TypeDefinition.TestRefEquals( schema.Database.TypeDefinitions.GetByDataType( SqlDataTypeMock.Integer ) ),
+                sut.DefaultValue.TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.C2 ([3] : 'DataType' (LfrlAnvil.Sql.ISqlDataType) FROM OBJECT);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1601,20 +1582,18 @@ public class SqlColumnBuilderTests : TestsBase
         var result = (( ISqlColumnBuilder )sut).MarkAsNullable();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.IsNullable.Should().BeTrue();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Column] foo.T.C2 ([2] : 'IsNullable' (System.Boolean) FROM False);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.IsNullable.TestTrue(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.C2 ([2] : 'IsNullable' (System.Boolean) FROM False);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1629,20 +1608,18 @@ public class SqlColumnBuilderTests : TestsBase
         var result = (( ISqlColumnBuilder )sut).SetDefaultValue( ( int? )123 ).SetDefaultValue( 42 );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.DefaultValue.Should().BeEquivalentTo( SqlNode.Literal( 42 ) );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Column] foo.T.C2 ([4] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM <null>);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.DefaultValue.TestType().AssignableTo<SqlLiteralNode<int>>( n => n.Value.TestEquals( 42 ) ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.C2 ([4] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM <null>);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1658,19 +1635,17 @@ public class SqlColumnBuilderTests : TestsBase
         var result = (( ISqlColumnBuilder )sut).SetComputation( computation );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Computation.Should().Be( computation );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Column] foo.T.C2 ([5] : 'Computation' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnComputation]) FROM <null>);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Computation.TestEquals( computation ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.C2 ([5] : 'Computation' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnComputation]) FROM <null>);
+                        """
+                    ] ) )
+            .Go();
     }
 }

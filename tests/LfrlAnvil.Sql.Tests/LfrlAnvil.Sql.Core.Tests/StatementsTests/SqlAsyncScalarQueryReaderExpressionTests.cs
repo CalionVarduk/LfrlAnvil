@@ -27,13 +27,12 @@ public class SqlAsyncScalarQueryReaderExpressionTests : TestsBase
         var scalarReader = sut.Compile();
         var result = await scalarReader.ReadAsync( reader );
 
-        using ( new AssertionScope() )
-        {
-            sut.Dialect.Should().BeSameAs( dialect );
-            sut.Expression.Should().BeSameAs( expression );
-            scalarReader.Dialect.Should().BeSameAs( dialect );
-            result.HasValue.Should().BeTrue();
-            result.Value.Should().Be( "foo" );
-        }
+        Assertion.All(
+                sut.Dialect.TestRefEquals( dialect ),
+                sut.Expression.TestRefEquals( expression ),
+                scalarReader.Dialect.TestRefEquals( dialect ),
+                result.HasValue.TestTrue(),
+                result.Value.TestEquals( "foo" ) )
+            .Go();
     }
 }

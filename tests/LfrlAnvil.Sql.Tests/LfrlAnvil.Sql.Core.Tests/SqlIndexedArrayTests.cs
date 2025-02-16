@@ -1,6 +1,5 @@
 ﻿using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests;
@@ -23,14 +22,13 @@ public class SqlIndexedArrayTests : TestsBase
 
         var sut = SqlIndexedArray<SqlColumnMock>.From( new SqlIndexed<ISqlColumn>[] { c1, c2, c3 } );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 3 );
-            sut.Should().BeSequentiallyEqualTo( c1, c2, c3 );
-            sut[0].Should().Be( c1 );
-            sut[1].Should().Be( c2 );
-            sut[2].Should().Be( c3 );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 3 ),
+                sut.TestSequence( [ c1, c2, c3 ] ),
+                sut[0].TestEquals( c1 ),
+                sut[1].TestEquals( c2 ),
+                sut[2].TestEquals( c3 ) )
+            .Go();
     }
 
     [Fact]
@@ -50,14 +48,14 @@ public class SqlIndexedArrayTests : TestsBase
 
         var result = sut.UnsafeReinterpretAs<SqlColumn>();
 
-        using ( new AssertionScope() )
-        {
-            result.Count.Should().Be( 3 );
-            result.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                result.Count.TestEquals( 3 ),
+                result.TestSequence(
+                [
                     new SqlIndexed<SqlColumn>( table.Columns.Get( "C1" ), OrderBy.Asc ),
                     new SqlIndexed<SqlColumn>( table.Columns.Get( "C2" ), OrderBy.Desc ),
-                    new SqlIndexed<SqlColumn>( null, OrderBy.Asc ) );
-        }
+                    new SqlIndexed<SqlColumn>( null, OrderBy.Asc )
+                ] ) )
+            .Go();
     }
 }

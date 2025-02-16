@@ -6,7 +6,6 @@ using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Events;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Versioning;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 using LfrlAnvil.TestExtensions.Sql.Mocks.System;
 
@@ -28,21 +27,20 @@ public class SqlDatabaseFactoryTests : TestsBase
 
         var result = sut.Create( "DataSource=testing", history, SqlCreateDatabaseOptions.Default.SetMode( mode ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Database.Dialect.Should().BeSameAs( sut.Dialect );
-            result.Database.Schemas.Should().BeSequentiallyEqualTo( result.Database.Schemas.Default );
-            result.Database.Schemas.Default.Name.Should().Be( "common" );
-            result.Database.Schemas.Default.Objects.Should().BeEmpty();
-            result.Database.Version.Should().Be( result.NewVersion );
-            result.Database.ServerVersion.Should().Be( "0.0.0" );
-            result.Exception.Should().BeNull();
-            result.OldVersion.Should().BeSameAs( SqlDatabaseVersionHistory.InitialVersion );
-            result.NewVersion.Should().BeSameAs( SqlDatabaseVersionHistory.InitialVersion );
-            result.OriginalVersions.ToArray().Should().BeEmpty();
-            result.CommittedVersions.ToArray().Should().BeEmpty();
-            result.PendingVersions.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                result.Database.Dialect.TestRefEquals( sut.Dialect ),
+                result.Database.Schemas.TestSequence( [ result.Database.Schemas.Default ] ),
+                result.Database.Schemas.Default.Name.TestEquals( "common" ),
+                result.Database.Schemas.Default.Objects.TestEmpty(),
+                result.Database.Version.TestEquals( result.NewVersion ),
+                result.Database.ServerVersion.TestEquals( "0.0.0" ),
+                result.Exception.TestNull(),
+                result.OldVersion.TestRefEquals( SqlDatabaseVersionHistory.InitialVersion ),
+                result.NewVersion.TestRefEquals( SqlDatabaseVersionHistory.InitialVersion ),
+                result.OriginalVersions.ToArray().TestEmpty(),
+                result.CommittedVersions.ToArray().TestEmpty(),
+                result.PendingVersions.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Theory]
@@ -56,11 +54,10 @@ public class SqlDatabaseFactoryTests : TestsBase
 
         sut.Create( "DataSource=testing", history, SqlCreateDatabaseOptions.Default.SetMode( mode ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.Connection.State.Should().Be( ConnectionState.Closed );
-            sut.Connection.Audit.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                sut.Connection.State.TestEquals( ConnectionState.Closed ),
+                sut.Connection.Audit.TestSequence(
+                [
                     "ChangeState(Closed => Open)",
                     "BeginDbTransaction(DbTransaction[0].Serializable)",
                     "CreateDbCommand(DbTransaction[0]:DbCommand[0])",
@@ -78,8 +75,9 @@ public class SqlDatabaseFactoryTests : TestsBase
                     "DbCommand[1].DbDataReader[0].Close",
                     "DbCommand[1].Dispose(True)",
                     "ChangeState(Open => Closed)",
-                    "Dispose(True)" );
-        }
+                    "Dispose(True)"
+                ] ) )
+            .Go();
     }
 
     [Theory]
@@ -98,11 +96,10 @@ public class SqlDatabaseFactoryTests : TestsBase
                 .SetMode( mode )
                 .SetVersionHistoryName( SqlSchemaObjectName.Create( "foo", "bar" ) ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.Connection.State.Should().Be( ConnectionState.Closed );
-            sut.Connection.Audit.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                sut.Connection.State.TestEquals( ConnectionState.Closed ),
+                sut.Connection.Audit.TestSequence(
+                [
                     "ChangeState(Closed => Open)",
                     "BeginDbTransaction(DbTransaction[0].Serializable)",
                     "CreateDbCommand(DbTransaction[0]:DbCommand[0])",
@@ -120,8 +117,9 @@ public class SqlDatabaseFactoryTests : TestsBase
                     "DbCommand[1].DbDataReader[0].Close",
                     "DbCommand[1].Dispose(True)",
                     "ChangeState(Open => Closed)",
-                    "Dispose(True)" );
-        }
+                    "Dispose(True)"
+                ] ) )
+            .Go();
     }
 
     [Theory]
@@ -135,11 +133,10 @@ public class SqlDatabaseFactoryTests : TestsBase
 
         sut.Create( "DataSource=testing", history, SqlCreateDatabaseOptions.Default.SetMode( mode ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.Connection.State.Should().Be( ConnectionState.Closed );
-            sut.Connection.Audit.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                sut.Connection.State.TestEquals( ConnectionState.Closed ),
+                sut.Connection.Audit.TestSequence(
+                [
                     "ChangeState(Closed => Open)",
                     "CreateDbCommand(DbCommand[0])",
                     """
@@ -151,8 +148,9 @@ public class SqlDatabaseFactoryTests : TestsBase
                     "DbCommand[0].DbDataReader[0].Close",
                     "DbCommand[0].Dispose(True)",
                     "ChangeState(Open => Closed)",
-                    "Dispose(True)" );
-        }
+                    "Dispose(True)"
+                ] ) )
+            .Go();
     }
 
     [Theory]
@@ -171,11 +169,10 @@ public class SqlDatabaseFactoryTests : TestsBase
                 .SetMode( mode )
                 .SetVersionHistoryQueryMode( SqlDatabaseVersionHistoryMode.LastRecordOnly ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.Connection.State.Should().Be( ConnectionState.Closed );
-            sut.Connection.Audit.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                sut.Connection.State.TestEquals( ConnectionState.Closed ),
+                sut.Connection.Audit.TestSequence(
+                [
                     "ChangeState(Closed => Open)",
                     "CreateDbCommand(DbCommand[0])",
                     """
@@ -188,8 +185,9 @@ public class SqlDatabaseFactoryTests : TestsBase
                     "DbCommand[0].DbDataReader[0].Close",
                     "DbCommand[0].Dispose(True)",
                     "ChangeState(Open => Closed)",
-                    "Dispose(True)" );
-        }
+                    "Dispose(True)"
+                ] ) )
+            .Go();
     }
 
     [Theory]
@@ -207,11 +205,11 @@ public class SqlDatabaseFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create( "DataSource=testing", history, SqlCreateDatabaseOptions.Default.SetMode( mode ) ) );
 
-        using ( new AssertionScope() )
-        {
-            action.Should().ThrowExactly<Exception>().And.Should().BeSameAs( exception );
-            sut.Connection.State.Should().Be( ConnectionState.Closed );
-        }
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestRefEquals( exception ),
+                    sut.Connection.State.TestEquals( ConnectionState.Closed ) ) )
+            .Go();
     }
 
     [Theory]
@@ -271,11 +269,10 @@ public class SqlDatabaseFactoryTests : TestsBase
                 .SetMode( mode )
                 .SetVersionHistoryPersistenceMode( persistenceMode ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.Connection.State.Should().Be( ConnectionState.Closed );
-            sut.Connection.Audit.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                sut.Connection.State.TestEquals( ConnectionState.Closed ),
+                sut.Connection.Audit.TestSequence(
+                [
                     "ChangeState(Closed => Open)",
                     "CreateDbCommand(DbCommand[0])",
                     """
@@ -287,27 +284,27 @@ public class SqlDatabaseFactoryTests : TestsBase
                     "DbCommand[0].DbDataReader[0].Close",
                     "DbCommand[0].Dispose(True)",
                     "ChangeState(Open => Closed)",
-                    "Dispose(True)" );
-
-            result.Database.Schemas.Should().BeSequentiallyEqualTo( result.Database.Schemas.Default );
-            result.Database.Schemas.Default.Objects.Select( o => o.ToString() )
-                .Should()
-                .BeEquivalentTo(
-                    "[Table] common.T1",
-                    "[Index] common.UIX_T1_C1A",
-                    "[PrimaryKey] common.PK_T1",
-                    "[Table] common.T2",
-                    "[Index] common.UIX_T2_C2A",
-                    "[PrimaryKey] common.PK_T2" );
-
-            result.Database.Version.Should().Be( result.NewVersion );
-            result.Exception.Should().BeNull();
-            result.OldVersion.Should().Be( new Version( "0.2" ) );
-            result.NewVersion.Should().Be( new Version( "0.2" ) );
-            result.OriginalVersions.ToArray().Should().BeSequentiallyEqualTo( history.Versions.ToArray() );
-            result.CommittedVersions.ToArray().Should().BeEmpty();
-            result.PendingVersions.ToArray().Should().BeEmpty();
-        }
+                    "Dispose(True)"
+                ] ),
+                result.Database.Schemas.TestSequence( [ result.Database.Schemas.Default ] ),
+                result.Database.Schemas.Default.Objects.Select( o => o.ToString() )
+                    .TestSetEqual(
+                    [
+                        "[Table] common.T1",
+                        "[Index] common.UIX_T1_C1A",
+                        "[PrimaryKey] common.PK_T1",
+                        "[Table] common.T2",
+                        "[Index] common.UIX_T2_C2A",
+                        "[PrimaryKey] common.PK_T2"
+                    ] ),
+                result.Database.Version.TestEquals( result.NewVersion ),
+                result.Exception.TestNull(),
+                result.OldVersion.TestEquals( new Version( "0.2" ) ),
+                result.NewVersion.TestEquals( new Version( "0.2" ) ),
+                result.OriginalVersions.TestSequence( history.Versions.ToArray() ),
+                result.CommittedVersions.TestEmpty(),
+                result.PendingVersions.TestEmpty() )
+            .Go();
     }
 
     [Theory]
@@ -340,11 +337,10 @@ public class SqlDatabaseFactoryTests : TestsBase
                 .SetMode( SqlDatabaseCreateMode.NoChanges )
                 .SetVersionHistoryPersistenceMode( persistenceMode ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.Connection.State.Should().Be( ConnectionState.Closed );
-            sut.Connection.Audit.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                sut.Connection.State.TestEquals( ConnectionState.Closed ),
+                sut.Connection.Audit.TestSequence(
+                [
                     "ChangeState(Closed => Open)",
                     "CreateDbCommand(DbCommand[0])",
                     """
@@ -356,18 +352,18 @@ public class SqlDatabaseFactoryTests : TestsBase
                     "DbCommand[0].DbDataReader[0].Close",
                     "DbCommand[0].Dispose(True)",
                     "ChangeState(Open => Closed)",
-                    "Dispose(True)" );
-
-            result.Database.Schemas.Should().BeSequentiallyEqualTo( result.Database.Schemas.Default );
-            result.Database.Schemas.Default.Objects.Should().BeEmpty();
-            result.Database.Version.Should().Be( result.NewVersion );
-            result.Exception.Should().BeNull();
-            result.OldVersion.Should().BeSameAs( SqlDatabaseVersionHistory.InitialVersion );
-            result.NewVersion.Should().BeSameAs( SqlDatabaseVersionHistory.InitialVersion );
-            result.OriginalVersions.ToArray().Should().BeEmpty();
-            result.CommittedVersions.ToArray().Should().BeEmpty();
-            result.PendingVersions.ToArray().Should().BeSequentiallyEqualTo( history.Versions.ToArray() );
-        }
+                    "Dispose(True)"
+                ] ),
+                result.Database.Schemas.TestSequence( [ result.Database.Schemas.Default ] ),
+                result.Database.Schemas.Default.Objects.TestEmpty(),
+                result.Database.Version.TestEquals( result.NewVersion ),
+                result.Exception.TestNull(),
+                result.OldVersion.TestRefEquals( SqlDatabaseVersionHistory.InitialVersion ),
+                result.NewVersion.TestRefEquals( SqlDatabaseVersionHistory.InitialVersion ),
+                result.OriginalVersions.TestEmpty(),
+                result.CommittedVersions.TestEmpty(),
+                result.PendingVersions.TestSequence( history.Versions.ToArray() ) )
+            .Go();
     }
 
     [Theory]
@@ -400,11 +396,10 @@ public class SqlDatabaseFactoryTests : TestsBase
                 .SetMode( SqlDatabaseCreateMode.DryRun )
                 .SetVersionHistoryPersistenceMode( persistenceMode ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.Connection.State.Should().Be( ConnectionState.Closed );
-            sut.Connection.Audit.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                sut.Connection.State.TestEquals( ConnectionState.Closed ),
+                sut.Connection.Audit.TestSequence(
+                [
                     "ChangeState(Closed => Open)",
                     "CreateDbCommand(DbCommand[0])",
                     """
@@ -416,27 +411,27 @@ public class SqlDatabaseFactoryTests : TestsBase
                     "DbCommand[0].DbDataReader[0].Close",
                     "DbCommand[0].Dispose(True)",
                     "ChangeState(Open => Closed)",
-                    "Dispose(True)" );
-
-            result.Database.Schemas.Should().BeSequentiallyEqualTo( result.Database.Schemas.Default );
-            result.Database.Schemas.Default.Objects.Select( o => o.ToString() )
-                .Should()
-                .BeEquivalentTo(
-                    "[Table] common.T1",
-                    "[Index] common.UIX_T1_C1A",
-                    "[PrimaryKey] common.PK_T1",
-                    "[Table] common.T2",
-                    "[Index] common.UIX_T2_C2A",
-                    "[PrimaryKey] common.PK_T2" );
-
-            result.Database.Version.Should().Be( result.NewVersion );
-            result.Exception.Should().BeNull();
-            result.OldVersion.Should().BeSameAs( SqlDatabaseVersionHistory.InitialVersion );
-            result.NewVersion.Should().BeSameAs( SqlDatabaseVersionHistory.InitialVersion );
-            result.OriginalVersions.ToArray().Should().BeEmpty();
-            result.CommittedVersions.ToArray().Should().BeEmpty();
-            result.PendingVersions.ToArray().Should().BeSequentiallyEqualTo( history.Versions.ToArray() );
-        }
+                    "Dispose(True)"
+                ] ),
+                result.Database.Schemas.TestSequence( [ result.Database.Schemas.Default ] ),
+                result.Database.Schemas.Default.Objects.Select( o => o.ToString() )
+                    .TestSetEqual(
+                    [
+                        "[Table] common.T1",
+                        "[Index] common.UIX_T1_C1A",
+                        "[PrimaryKey] common.PK_T1",
+                        "[Table] common.T2",
+                        "[Index] common.UIX_T2_C2A",
+                        "[PrimaryKey] common.PK_T2"
+                    ] ),
+                result.Database.Version.TestEquals( result.NewVersion ),
+                result.Exception.TestNull(),
+                result.OldVersion.TestRefEquals( SqlDatabaseVersionHistory.InitialVersion ),
+                result.NewVersion.TestRefEquals( SqlDatabaseVersionHistory.InitialVersion ),
+                result.OriginalVersions.TestEmpty(),
+                result.CommittedVersions.TestEmpty(),
+                result.PendingVersions.TestSequence( history.Versions.ToArray() ) )
+            .Go();
     }
 
     [Fact]
@@ -466,11 +461,10 @@ public class SqlDatabaseFactoryTests : TestsBase
                 .SetMode( SqlDatabaseCreateMode.Commit )
                 .SetVersionHistoryPersistenceMode( SqlDatabaseVersionHistoryMode.AllRecords ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.Connection.State.Should().Be( ConnectionState.Closed );
-            sut.Connection.Audit.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                sut.Connection.State.TestEquals( ConnectionState.Closed ),
+                sut.Connection.Audit.TestSequence(
+                [
                     "ChangeState(Closed => Open)",
                     "CreateDbCommand(DbCommand[0])",
                     """
@@ -559,27 +553,27 @@ public class SqlDatabaseFactoryTests : TestsBase
                     "DbCommand[1].Dispose(True)",
                     "DbCommand[2].Dispose(True)",
                     "ChangeState(Open => Closed)",
-                    "Dispose(True)" );
-
-            result.Database.Schemas.Should().BeSequentiallyEqualTo( result.Database.Schemas.Default );
-            result.Database.Schemas.Default.Objects.Select( o => o.ToString() )
-                .Should()
-                .BeEquivalentTo(
-                    "[Table] common.T1",
-                    "[Index] common.UIX_T1_C1A",
-                    "[PrimaryKey] common.PK_T1",
-                    "[Table] common.T2",
-                    "[Index] common.UIX_T2_C2A",
-                    "[PrimaryKey] common.PK_T2" );
-
-            result.Database.Version.Should().Be( result.NewVersion );
-            result.Exception.Should().BeNull();
-            result.OldVersion.Should().BeSameAs( SqlDatabaseVersionHistory.InitialVersion );
-            result.NewVersion.Should().Be( new Version( "0.2" ) );
-            result.OriginalVersions.ToArray().Should().BeEmpty();
-            result.CommittedVersions.ToArray().Should().BeSequentiallyEqualTo( history.Versions.ToArray() );
-            result.PendingVersions.ToArray().Should().BeEmpty();
-        }
+                    "Dispose(True)"
+                ] ),
+                result.Database.Schemas.TestSequence( [ result.Database.Schemas.Default ] ),
+                result.Database.Schemas.Default.Objects.Select( o => o.ToString() )
+                    .TestSetEqual(
+                    [
+                        "[Table] common.T1",
+                        "[Index] common.UIX_T1_C1A",
+                        "[PrimaryKey] common.PK_T1",
+                        "[Table] common.T2",
+                        "[Index] common.UIX_T2_C2A",
+                        "[PrimaryKey] common.PK_T2"
+                    ] ),
+                result.Database.Version.TestEquals( result.NewVersion ),
+                result.Exception.TestNull(),
+                result.OldVersion.TestRefEquals( SqlDatabaseVersionHistory.InitialVersion ),
+                result.NewVersion.TestEquals( new Version( "0.2" ) ),
+                result.OriginalVersions.TestEmpty(),
+                result.CommittedVersions.TestSequence( history.Versions.ToArray() ),
+                result.PendingVersions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -609,11 +603,10 @@ public class SqlDatabaseFactoryTests : TestsBase
                 .SetMode( SqlDatabaseCreateMode.Commit )
                 .SetVersionHistoryPersistenceMode( SqlDatabaseVersionHistoryMode.LastRecordOnly ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.Connection.State.Should().Be( ConnectionState.Closed );
-            sut.Connection.Audit.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                sut.Connection.State.TestEquals( ConnectionState.Closed ),
+                sut.Connection.Audit.TestSequence(
+                [
                     "ChangeState(Closed => Open)",
                     "CreateDbCommand(DbCommand[0])",
                     """
@@ -701,27 +694,27 @@ public class SqlDatabaseFactoryTests : TestsBase
                     "DbCommand[2].Dispose(True)",
                     "DbCommand[3].Dispose(True)",
                     "ChangeState(Open => Closed)",
-                    "Dispose(True)" );
-
-            result.Database.Schemas.Should().BeSequentiallyEqualTo( result.Database.Schemas.Default );
-            result.Database.Schemas.Default.Objects.Select( o => o.ToString() )
-                .Should()
-                .BeEquivalentTo(
-                    "[Table] common.T1",
-                    "[Index] common.UIX_T1_C1A",
-                    "[PrimaryKey] common.PK_T1",
-                    "[Table] common.T2",
-                    "[Index] common.UIX_T2_C2A",
-                    "[PrimaryKey] common.PK_T2" );
-
-            result.Database.Version.Should().Be( result.NewVersion );
-            result.Exception.Should().BeNull();
-            result.OldVersion.Should().BeSameAs( SqlDatabaseVersionHistory.InitialVersion );
-            result.NewVersion.Should().Be( new Version( "0.2" ) );
-            result.OriginalVersions.ToArray().Should().BeEmpty();
-            result.CommittedVersions.ToArray().Should().BeSequentiallyEqualTo( history.Versions.ToArray() );
-            result.PendingVersions.ToArray().Should().BeEmpty();
-        }
+                    "Dispose(True)"
+                ] ),
+                result.Database.Schemas.TestSequence( [ result.Database.Schemas.Default ] ),
+                result.Database.Schemas.Default.Objects.Select( o => o.ToString() )
+                    .TestSetEqual(
+                    [
+                        "[Table] common.T1",
+                        "[Index] common.UIX_T1_C1A",
+                        "[PrimaryKey] common.PK_T1",
+                        "[Table] common.T2",
+                        "[Index] common.UIX_T2_C2A",
+                        "[PrimaryKey] common.PK_T2"
+                    ] ),
+                result.Database.Version.TestEquals( result.NewVersion ),
+                result.Exception.TestNull(),
+                result.OldVersion.TestRefEquals( SqlDatabaseVersionHistory.InitialVersion ),
+                result.NewVersion.TestEquals( new Version( "0.2" ) ),
+                result.OriginalVersions.TestEmpty(),
+                result.CommittedVersions.TestSequence( history.Versions.ToArray() ),
+                result.PendingVersions.TestEmpty() )
+            .Go();
     }
 
     [Theory]
@@ -766,11 +759,10 @@ public class SqlDatabaseFactoryTests : TestsBase
                 .SetMode( SqlDatabaseCreateMode.NoChanges )
                 .SetVersionHistoryPersistenceMode( persistenceMode ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.Connection.State.Should().Be( ConnectionState.Closed );
-            sut.Connection.Audit.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                sut.Connection.State.TestEquals( ConnectionState.Closed ),
+                sut.Connection.Audit.TestSequence(
+                [
                     "ChangeState(Closed => Open)",
                     "CreateDbCommand(DbCommand[0])",
                     """
@@ -782,21 +774,19 @@ public class SqlDatabaseFactoryTests : TestsBase
                     "DbCommand[0].DbDataReader[0].Close",
                     "DbCommand[0].Dispose(True)",
                     "ChangeState(Open => Closed)",
-                    "Dispose(True)" );
-
-            result.Database.Schemas.Should().BeSequentiallyEqualTo( result.Database.Schemas.Default );
-            result.Database.Schemas.Default.Objects.Select( o => o.ToString() )
-                .Should()
-                .BeEquivalentTo( "[Table] common.T1", "[Index] common.UIX_T1_C1A", "[PrimaryKey] common.PK_T1" );
-
-            result.Database.Version.Should().Be( result.NewVersion );
-            result.Exception.Should().BeNull();
-            result.OldVersion.Should().Be( new Version( "0.1" ) );
-            result.NewVersion.Should().BeSameAs( result.OldVersion );
-            result.OriginalVersions.ToArray().Should().BeSequentiallyEqualTo( history.Versions.Slice( 0, 1 ).ToArray() );
-            result.CommittedVersions.ToArray().Should().BeEmpty();
-            result.PendingVersions.ToArray().Should().BeSequentiallyEqualTo( history.Versions.Slice( 1 ).ToArray() );
-        }
+                    "Dispose(True)"
+                ] ),
+                result.Database.Schemas.TestSequence( [ result.Database.Schemas.Default ] ),
+                result.Database.Schemas.Default.Objects.Select( o => o.ToString() )
+                    .TestSetEqual( [ "[Table] common.T1", "[Index] common.UIX_T1_C1A", "[PrimaryKey] common.PK_T1" ] ),
+                result.Database.Version.TestEquals( result.NewVersion ),
+                result.Exception.TestNull(),
+                result.OldVersion.TestEquals( new Version( "0.1" ) ),
+                result.NewVersion.TestRefEquals( result.OldVersion ),
+                result.OriginalVersions.TestSequence( history.Versions.Slice( 0, 1 ).ToArray() ),
+                result.CommittedVersions.TestEmpty(),
+                result.PendingVersions.TestSequence( history.Versions.Slice( 1 ).ToArray() ) )
+            .Go();
     }
 
     [Theory]
@@ -841,11 +831,10 @@ public class SqlDatabaseFactoryTests : TestsBase
                 .SetMode( SqlDatabaseCreateMode.DryRun )
                 .SetVersionHistoryPersistenceMode( persistenceMode ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.Connection.State.Should().Be( ConnectionState.Closed );
-            sut.Connection.Audit.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                sut.Connection.State.TestEquals( ConnectionState.Closed ),
+                sut.Connection.Audit.TestSequence(
+                [
                     "ChangeState(Closed => Open)",
                     "CreateDbCommand(DbCommand[0])",
                     """
@@ -857,27 +846,27 @@ public class SqlDatabaseFactoryTests : TestsBase
                     "DbCommand[0].DbDataReader[0].Close",
                     "DbCommand[0].Dispose(True)",
                     "ChangeState(Open => Closed)",
-                    "Dispose(True)" );
-
-            result.Database.Schemas.Should().BeSequentiallyEqualTo( result.Database.Schemas.Default );
-            result.Database.Schemas.Default.Objects.Select( o => o.ToString() )
-                .Should()
-                .BeEquivalentTo(
-                    "[Table] common.T1",
-                    "[Index] common.UIX_T1_C1A",
-                    "[PrimaryKey] common.PK_T1",
-                    "[Table] common.T2",
-                    "[Index] common.UIX_T2_C2A",
-                    "[PrimaryKey] common.PK_T2" );
-
-            result.Database.Version.Should().Be( result.NewVersion );
-            result.Exception.Should().BeNull();
-            result.OldVersion.Should().Be( new Version( "0.1" ) );
-            result.NewVersion.Should().BeSameAs( result.OldVersion );
-            result.OriginalVersions.ToArray().Should().BeSequentiallyEqualTo( history.Versions.Slice( 0, 1 ).ToArray() );
-            result.CommittedVersions.ToArray().Should().BeEmpty();
-            result.PendingVersions.ToArray().Should().BeSequentiallyEqualTo( history.Versions.Slice( 1 ).ToArray() );
-        }
+                    "Dispose(True)"
+                ] ),
+                result.Database.Schemas.TestSequence( [ result.Database.Schemas.Default ] ),
+                result.Database.Schemas.Default.Objects.Select( o => o.ToString() )
+                    .TestSetEqual(
+                    [
+                        "[Table] common.T1",
+                        "[Index] common.UIX_T1_C1A",
+                        "[PrimaryKey] common.PK_T1",
+                        "[Table] common.T2",
+                        "[Index] common.UIX_T2_C2A",
+                        "[PrimaryKey] common.PK_T2"
+                    ] ),
+                result.Database.Version.TestEquals( result.NewVersion ),
+                result.Exception.TestNull(),
+                result.OldVersion.TestEquals( new Version( "0.1" ) ),
+                result.NewVersion.TestRefEquals( result.OldVersion ),
+                result.OriginalVersions.TestSequence( history.Versions.Slice( 0, 1 ).ToArray() ),
+                result.CommittedVersions.TestEmpty(),
+                result.PendingVersions.TestSequence( history.Versions.Slice( 1 ).ToArray() ) )
+            .Go();
     }
 
     [Fact]
@@ -919,11 +908,10 @@ public class SqlDatabaseFactoryTests : TestsBase
                 .SetMode( SqlDatabaseCreateMode.Commit )
                 .SetVersionHistoryPersistenceMode( SqlDatabaseVersionHistoryMode.AllRecords ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.Connection.State.Should().Be( ConnectionState.Closed );
-            sut.Connection.Audit.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                sut.Connection.State.TestEquals( ConnectionState.Closed ),
+                sut.Connection.Audit.TestSequence(
+                [
                     "ChangeState(Closed => Open)",
                     "CreateDbCommand(DbCommand[0])",
                     """
@@ -997,27 +985,27 @@ public class SqlDatabaseFactoryTests : TestsBase
                     "DbCommand[1].Dispose(True)",
                     "DbCommand[2].Dispose(True)",
                     "ChangeState(Open => Closed)",
-                    "Dispose(True)" );
-
-            result.Database.Schemas.Should().BeSequentiallyEqualTo( result.Database.Schemas.Default );
-            result.Database.Schemas.Default.Objects.Select( o => o.ToString() )
-                .Should()
-                .BeEquivalentTo(
-                    "[Table] common.T1",
-                    "[Index] common.UIX_T1_C1A",
-                    "[PrimaryKey] common.PK_T1",
-                    "[Table] common.T2",
-                    "[Index] common.UIX_T2_C2A",
-                    "[PrimaryKey] common.PK_T2" );
-
-            result.Database.Version.Should().Be( result.NewVersion );
-            result.Exception.Should().BeNull();
-            result.OldVersion.Should().Be( new Version( "0.1" ) );
-            result.NewVersion.Should().Be( new Version( "0.2" ) );
-            result.OriginalVersions.ToArray().Should().BeSequentiallyEqualTo( history.Versions.Slice( 0, 1 ).ToArray() );
-            result.CommittedVersions.ToArray().Should().BeSequentiallyEqualTo( history.Versions.Slice( 1 ).ToArray() );
-            result.PendingVersions.ToArray().Should().BeEmpty();
-        }
+                    "Dispose(True)"
+                ] ),
+                result.Database.Schemas.TestSequence( [ result.Database.Schemas.Default ] ),
+                result.Database.Schemas.Default.Objects.Select( o => o.ToString() )
+                    .TestSetEqual(
+                    [
+                        "[Table] common.T1",
+                        "[Index] common.UIX_T1_C1A",
+                        "[PrimaryKey] common.PK_T1",
+                        "[Table] common.T2",
+                        "[Index] common.UIX_T2_C2A",
+                        "[PrimaryKey] common.PK_T2"
+                    ] ),
+                result.Database.Version.TestEquals( result.NewVersion ),
+                result.Exception.TestNull(),
+                result.OldVersion.TestEquals( new Version( "0.1" ) ),
+                result.NewVersion.TestEquals( new Version( "0.2" ) ),
+                result.OriginalVersions.TestSequence( history.Versions.Slice( 0, 1 ).ToArray() ),
+                result.CommittedVersions.TestSequence( history.Versions.Slice( 1 ).ToArray() ),
+                result.PendingVersions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1059,11 +1047,10 @@ public class SqlDatabaseFactoryTests : TestsBase
                 .SetMode( SqlDatabaseCreateMode.Commit )
                 .SetVersionHistoryPersistenceMode( SqlDatabaseVersionHistoryMode.LastRecordOnly ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.Connection.State.Should().Be( ConnectionState.Closed );
-            sut.Connection.Audit.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                sut.Connection.State.TestEquals( ConnectionState.Closed ),
+                sut.Connection.Audit.TestSequence(
+                [
                     "ChangeState(Closed => Open)",
                     "CreateDbCommand(DbCommand[0])",
                     """
@@ -1141,27 +1128,27 @@ public class SqlDatabaseFactoryTests : TestsBase
                     "DbCommand[2].Dispose(True)",
                     "DbCommand[3].Dispose(True)",
                     "ChangeState(Open => Closed)",
-                    "Dispose(True)" );
-
-            result.Database.Schemas.Should().BeSequentiallyEqualTo( result.Database.Schemas.Default );
-            result.Database.Schemas.Default.Objects.Select( o => o.ToString() )
-                .Should()
-                .BeEquivalentTo(
-                    "[Table] common.T1",
-                    "[Index] common.UIX_T1_C1A",
-                    "[PrimaryKey] common.PK_T1",
-                    "[Table] common.T2",
-                    "[Index] common.UIX_T2_C2A",
-                    "[PrimaryKey] common.PK_T2" );
-
-            result.Database.Version.Should().Be( result.NewVersion );
-            result.Exception.Should().BeNull();
-            result.OldVersion.Should().Be( new Version( "0.1" ) );
-            result.NewVersion.Should().Be( new Version( "0.2" ) );
-            result.OriginalVersions.ToArray().Should().BeSequentiallyEqualTo( history.Versions.Slice( 0, 1 ).ToArray() );
-            result.CommittedVersions.ToArray().Should().BeSequentiallyEqualTo( history.Versions.Slice( 1 ).ToArray() );
-            result.PendingVersions.ToArray().Should().BeEmpty();
-        }
+                    "Dispose(True)"
+                ] ),
+                result.Database.Schemas.TestSequence( [ result.Database.Schemas.Default ] ),
+                result.Database.Schemas.Default.Objects.Select( o => o.ToString() )
+                    .TestSetEqual(
+                    [
+                        "[Table] common.T1",
+                        "[Index] common.UIX_T1_C1A",
+                        "[PrimaryKey] common.PK_T1",
+                        "[Table] common.T2",
+                        "[Index] common.UIX_T2_C2A",
+                        "[PrimaryKey] common.PK_T2"
+                    ] ),
+                result.Database.Version.TestEquals( result.NewVersion ),
+                result.Exception.TestNull(),
+                result.OldVersion.TestEquals( new Version( "0.1" ) ),
+                result.NewVersion.TestEquals( new Version( "0.2" ) ),
+                result.OriginalVersions.TestSequence( history.Versions.Slice( 0, 1 ).ToArray() ),
+                result.CommittedVersions.TestSequence( history.Versions.Slice( 1 ).ToArray() ),
+                result.PendingVersions.TestEmpty() )
+            .Go();
     }
 
     [Theory]
@@ -1223,7 +1210,7 @@ public class SqlDatabaseFactoryTests : TestsBase
 
         sut.Create( "DataSource=testing", history, SqlCreateDatabaseOptions.Default.SetMode( mode ) );
 
-        isAttached.Should().BeSequentiallyEqualTo( true, true, true, true );
+        isAttached.TestSequence( [ true, true, true, true ] ).Go();
     }
 
     [Fact]
@@ -1254,24 +1241,18 @@ public class SqlDatabaseFactoryTests : TestsBase
                         },
                         onAfter: null ) ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Database.Schemas.Should().BeSequentiallyEqualTo( result.Database.Schemas.Default );
-            result.Database.Schemas.Default.Objects.Select( o => o.ToString() )
-                .Should()
-                .BeEquivalentTo(
-                    "[Table] common.T",
-                    "[Index] common.UIX_T_CA",
-                    "[PrimaryKey] common.PK_T" );
-
-            result.Database.Version.Should().Be( result.NewVersion );
-            result.Exception.Should().BeSameAs( exception );
-            result.OldVersion.Should().BeSameAs( SqlDatabaseVersionHistory.InitialVersion );
-            result.NewVersion.Should().BeSameAs( SqlDatabaseVersionHistory.InitialVersion );
-            result.OriginalVersions.ToArray().Should().BeEmpty();
-            result.CommittedVersions.ToArray().Should().BeEmpty();
-            result.PendingVersions.ToArray().Should().BeSequentiallyEqualTo( history.Versions.ToArray() );
-        }
+        Assertion.All(
+                result.Database.Schemas.TestSequence( [ result.Database.Schemas.Default ] ),
+                result.Database.Schemas.Default.Objects.Select( o => o.ToString() )
+                    .TestSetEqual( [ "[Table] common.T", "[Index] common.UIX_T_CA", "[PrimaryKey] common.PK_T" ] ),
+                result.Database.Version.TestEquals( result.NewVersion ),
+                result.Exception.TestRefEquals( exception ),
+                result.OldVersion.TestRefEquals( SqlDatabaseVersionHistory.InitialVersion ),
+                result.NewVersion.TestRefEquals( SqlDatabaseVersionHistory.InitialVersion ),
+                result.OriginalVersions.TestEmpty(),
+                result.CommittedVersions.TestEmpty(),
+                result.PendingVersions.TestSequence( history.Versions.ToArray() ) )
+            .Go();
     }
 
     [Fact]
@@ -1303,24 +1284,18 @@ public class SqlDatabaseFactoryTests : TestsBase
                         },
                         onAfter: null ) ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Database.Schemas.Should().BeSequentiallyEqualTo( result.Database.Schemas.Default );
-            result.Database.Schemas.Default.Objects.Select( o => o.ToString() )
-                .Should()
-                .BeEquivalentTo(
-                    "[Table] common.T",
-                    "[Index] common.UIX_T_CA",
-                    "[PrimaryKey] common.PK_T" );
-
-            result.Database.Version.Should().Be( result.NewVersion );
-            result.Exception.Should().BeSameAs( exception );
-            result.OldVersion.Should().BeSameAs( SqlDatabaseVersionHistory.InitialVersion );
-            result.NewVersion.Should().Be( new Version( "0.1" ) );
-            result.OriginalVersions.ToArray().Should().BeEmpty();
-            result.CommittedVersions.ToArray().Should().BeSequentiallyEqualTo( history.Versions.ToArray() );
-            result.PendingVersions.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                result.Database.Schemas.TestSequence( [ result.Database.Schemas.Default ] ),
+                result.Database.Schemas.Default.Objects.Select( o => o.ToString() )
+                    .TestSetEqual( [ "[Table] common.T", "[Index] common.UIX_T_CA", "[PrimaryKey] common.PK_T" ] ),
+                result.Database.Version.TestEquals( result.NewVersion ),
+                result.Exception.TestRefEquals( exception ),
+                result.OldVersion.TestRefEquals( SqlDatabaseVersionHistory.InitialVersion ),
+                result.NewVersion.TestEquals( new Version( "0.1" ) ),
+                result.OriginalVersions.TestEmpty(),
+                result.CommittedVersions.TestSequence( history.Versions.ToArray() ),
+                result.PendingVersions.TestEmpty() )
+            .Go();
     }
 
     [Theory]
@@ -1371,8 +1346,8 @@ public class SqlDatabaseFactoryTests : TestsBase
                         onAfter: (e, _, _) =>
                             caughtEvents.Add( $"[After] [{e.Key.Version}, {e.Key.Ordinal}] [{e.Type}]{Environment.NewLine}{e.Sql}" ) ) ) );
 
-        caughtEvents.Should()
-            .BeSequentiallyEqualTo(
+        caughtEvents.TestSequence(
+            [
                 """
                 [Before] [0.0, 1] [VersionHistory]
                 CREATE [Table] common.__VersionHistory;
@@ -1394,7 +1369,9 @@ public class SqlDatabaseFactoryTests : TestsBase
                 ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
                 SELECT
                   *;
-                """ );
+                """
+            ] )
+            .Go();
     }
 
     [Fact]
@@ -1443,8 +1420,8 @@ public class SqlDatabaseFactoryTests : TestsBase
                         onAfter: (e, _, _) =>
                             caughtEvents.Add( $"[After] [{e.Key.Version}, {e.Key.Ordinal}] [{e.Type}]{Environment.NewLine}{e.Sql}" ) ) ) );
 
-        caughtEvents.Should()
-            .BeSequentiallyEqualTo(
+        caughtEvents.TestSequence(
+            [
                 """
                 [Before] [0.0, 1] [VersionHistory]
                 CREATE [Table] common.__VersionHistory;
@@ -1500,7 +1477,9 @@ public class SqlDatabaseFactoryTests : TestsBase
                 AND WHERE ([common].[__VersionHistory].[Ordinal] : System.Int32) == (@Ordinal : System.Int32)
                 SET
                   ([common].[__VersionHistory].[CommitDurationInTicks] : System.Int64) = (@CommitDurationInTicks : System.Int64);
-                """ );
+                """
+            ] )
+            .Go();
     }
 
     [Theory]
@@ -1538,12 +1517,9 @@ public class SqlDatabaseFactoryTests : TestsBase
 
         sut.Create( "DataSource=testing", history, SqlCreateDatabaseOptions.Default.SetMode( mode ) );
 
-        caughtEvents.Should()
-            .BeSequentiallyEqualTo(
-                "[Initial] Closed => Open",
-                "[0.1] Closed => Open",
-                "[Initial] Open => Closed",
-                "[0.1] Open => Closed" );
+        caughtEvents.TestSequence(
+                [ "[Initial] Closed => Open", "[0.1] Closed => Open", "[Initial] Open => Closed", "[0.1] Open => Closed" ] )
+            .Go();
     }
 
     [Theory]
@@ -1568,7 +1544,7 @@ public class SqlDatabaseFactoryTests : TestsBase
 
         sut.Create( "DataSource=testing", history, SqlCreateDatabaseOptions.Default.SetMode( mode ) );
 
-        caughtEvents.Should().BeSequentiallyEqualTo( "[Initial] Closed => Open", "[Initial] Open => Closed" );
+        caughtEvents.TestSequence( [ "[Initial] Closed => Open", "[Initial] Open => Closed" ] ).Go();
     }
 
     [Fact]
@@ -1591,12 +1567,9 @@ public class SqlDatabaseFactoryTests : TestsBase
 
         sut.Create( "DataSource=testing", history, SqlCreateDatabaseOptions.Default.SetMode( SqlDatabaseCreateMode.Commit ) );
 
-        caughtEvents.Should()
-            .BeSequentiallyEqualTo(
-                "[Initial] Closed => Open",
-                "[0.1] Closed => Open",
-                "[Initial] Open => Closed",
-                "[0.1] Open => Closed" );
+        caughtEvents.TestSequence(
+                [ "[Initial] Closed => Open", "[0.1] Closed => Open", "[Initial] Open => Closed", "[0.1] Open => Closed" ] )
+            .Go();
     }
 
     [Fact]
@@ -1615,7 +1588,7 @@ public class SqlDatabaseFactoryTests : TestsBase
 
         sut.Create( "DataSource=testing", history, SqlCreateDatabaseOptions.Default.SetMode( SqlDatabaseCreateMode.Commit ) );
 
-        caughtData.Should().BeSameAs( data );
+        caughtData.TestRefEquals( data ).Go();
     }
 
     [Pure]

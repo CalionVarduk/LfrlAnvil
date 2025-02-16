@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Statements;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sql.Tests.StatementsTests;
 
@@ -12,12 +11,11 @@ public partial class SqlQueryResultTests : TestsBase
     {
         var sut = default( SqlQueryResult );
 
-        using ( new AssertionScope() )
-        {
-            sut.Rows.Should().BeNull();
-            sut.ResultSetFields.ToArray().Should().BeEmpty();
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Rows.TestNull(),
+                sut.ResultSetFields.ToArray().TestEmpty(),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -25,12 +23,11 @@ public partial class SqlQueryResultTests : TestsBase
     {
         var sut = SqlQueryResult.Empty;
 
-        using ( new AssertionScope() )
-        {
-            sut.Rows.Should().BeNull();
-            sut.ResultSetFields.ToArray().Should().BeEmpty();
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Rows.TestNull(),
+                sut.ResultSetFields.ToArray().TestEmpty(),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -40,12 +37,11 @@ public partial class SqlQueryResultTests : TestsBase
 
         var sut = new SqlQueryResult( resultSetFields, new List<object?>() );
 
-        using ( new AssertionScope() )
-        {
-            sut.Rows.Should().BeNull();
-            sut.ResultSetFields.ToArray().Should().BeSequentiallyEqualTo( resultSetFields );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Rows.TestNull(),
+                sut.ResultSetFields.TestSequence( resultSetFields ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -60,7 +56,7 @@ public partial class SqlQueryResultTests : TestsBase
                     3
                 } ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -78,7 +74,7 @@ public partial class SqlQueryResultTests : TestsBase
                     true
                 } ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -110,14 +106,14 @@ public partial class SqlQueryResultTests : TestsBase
 
         var sut = new SqlQueryResult( resultSetFields, cells );
 
-        using ( new AssertionScope() )
-        {
-            sut.Rows.Should().NotBeNull();
-            (sut.Rows?.Count).Should().Be( 3 );
-            (sut.Rows?.Fields.ToArray()).Should().BeSequentiallyEqualTo( resultSetFields );
-            sut.ResultSetFields.ToArray().Should().BeSequentiallyEqualTo( resultSetFields );
-            sut.IsEmpty.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Rows.TestNotNull(
+                    rows => Assertion.All(
+                        rows.Count.TestEquals( 3 ),
+                        rows.Fields.TestSequence( resultSetFields ) ) ),
+                sut.ResultSetFields.TestSequence( resultSetFields ),
+                sut.IsEmpty.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -125,12 +121,11 @@ public partial class SqlQueryResultTests : TestsBase
     {
         var sut = default( SqlQueryResult<object[]> );
 
-        using ( new AssertionScope() )
-        {
-            sut.Rows.Should().BeNull();
-            sut.ResultSetFields.ToArray().Should().BeEmpty();
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Rows.TestNull(),
+                sut.ResultSetFields.ToArray().TestEmpty(),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -138,12 +133,11 @@ public partial class SqlQueryResultTests : TestsBase
     {
         var sut = SqlQueryResult<object[]>.Empty;
 
-        using ( new AssertionScope() )
-        {
-            sut.Rows.Should().BeNull();
-            sut.ResultSetFields.ToArray().Should().BeEmpty();
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Rows.TestNull(),
+                sut.ResultSetFields.ToArray().TestEmpty(),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -151,12 +145,11 @@ public partial class SqlQueryResultTests : TestsBase
     {
         var sut = new SqlQueryResult<object[]>( null, new List<object[]>() );
 
-        using ( new AssertionScope() )
-        {
-            sut.Rows.Should().BeNull();
-            sut.ResultSetFields.ToArray().Should().BeEmpty();
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Rows.TestNull(),
+                sut.ResultSetFields.ToArray().TestEmpty(),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -172,11 +165,10 @@ public partial class SqlQueryResultTests : TestsBase
 
         var sut = new SqlQueryResult<object[]>( resultSetFields, rows );
 
-        using ( new AssertionScope() )
-        {
-            sut.Rows.Should().BeSameAs( rows );
-            sut.ResultSetFields.ToArray().Should().BeSequentiallyEqualTo( resultSetFields );
-            sut.IsEmpty.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Rows.TestRefEquals( rows ),
+                sut.ResultSetFields.TestSequence( resultSetFields ),
+                sut.IsEmpty.TestFalse() )
+            .Go();
     }
 }

@@ -4,7 +4,6 @@ using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Traits;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
@@ -17,11 +16,10 @@ public class ExpressionTraitsTests : TestsBase
         var sut = SqlNode.DistinctTrait();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.DistinctTrait );
-            text.Should().Be( "DISTINCT" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.DistinctTrait ),
+                text.TestEquals( "DISTINCT" ) )
+            .Go();
     }
 
     [Fact]
@@ -31,13 +29,12 @@ public class ExpressionTraitsTests : TestsBase
         var sut = SqlNode.FilterTrait( condition, isConjunction: true );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FilterTrait );
-            sut.Filter.Should().BeSameAs( condition );
-            sut.IsConjunction.Should().BeTrue();
-            text.Should().Be( "AND WHERE bar > 10" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FilterTrait ),
+                sut.Filter.TestRefEquals( condition ),
+                sut.IsConjunction.TestTrue(),
+                text.TestEquals( "AND WHERE bar > 10" ) )
+            .Go();
     }
 
     [Fact]
@@ -47,13 +44,12 @@ public class ExpressionTraitsTests : TestsBase
         var sut = SqlNode.FilterTrait( condition, isConjunction: false );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FilterTrait );
-            sut.Filter.Should().BeSameAs( condition );
-            sut.IsConjunction.Should().BeFalse();
-            text.Should().Be( "OR WHERE bar > 10" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.FilterTrait ),
+                sut.Filter.TestRefEquals( condition ),
+                sut.IsConjunction.TestFalse(),
+                text.TestEquals( "OR WHERE bar > 10" ) )
+            .Go();
     }
 
     [Fact]
@@ -63,12 +59,11 @@ public class ExpressionTraitsTests : TestsBase
         var sut = SqlNode.AggregationTrait( expressions );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregationTrait );
-            sut.Expressions.ToArray().Should().BeSequentiallyEqualTo( expressions );
-            text.Should().Be( "GROUP BY (a), (b)" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregationTrait ),
+                sut.Expressions.ToArray().TestSequence( expressions ),
+                text.TestEquals( "GROUP BY (a), (b)" ) )
+            .Go();
     }
 
     [Fact]
@@ -77,12 +72,11 @@ public class ExpressionTraitsTests : TestsBase
         var sut = SqlNode.AggregationTrait();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregationTrait );
-            sut.Expressions.ToArray().Should().BeEmpty();
-            text.Should().Be( "GROUP BY" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregationTrait ),
+                sut.Expressions.ToArray().TestEmpty(),
+                text.TestEquals( "GROUP BY" ) )
+            .Go();
     }
 
     [Fact]
@@ -92,13 +86,12 @@ public class ExpressionTraitsTests : TestsBase
         var sut = SqlNode.AggregationFilterTrait( condition, isConjunction: true );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregationFilterTrait );
-            sut.Filter.Should().BeSameAs( condition );
-            sut.IsConjunction.Should().BeTrue();
-            text.Should().Be( "AND HAVING bar > 10" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregationFilterTrait ),
+                sut.Filter.TestRefEquals( condition ),
+                sut.IsConjunction.TestTrue(),
+                text.TestEquals( "AND HAVING bar > 10" ) )
+            .Go();
     }
 
     [Fact]
@@ -108,13 +101,12 @@ public class ExpressionTraitsTests : TestsBase
         var sut = SqlNode.AggregationFilterTrait( condition, isConjunction: false );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AggregationFilterTrait );
-            sut.Filter.Should().BeSameAs( condition );
-            sut.IsConjunction.Should().BeFalse();
-            text.Should().Be( "OR HAVING bar > 10" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AggregationFilterTrait ),
+                sut.Filter.TestRefEquals( condition ),
+                sut.IsConjunction.TestFalse(),
+                text.TestEquals( "OR HAVING bar > 10" ) )
+            .Go();
     }
 
     [Fact]
@@ -124,12 +116,11 @@ public class ExpressionTraitsTests : TestsBase
         var sut = SqlNode.SortTrait( ordering );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.SortTrait );
-            sut.Ordering.ToArray().Should().BeSequentiallyEqualTo( ordering );
-            text.Should().Be( "ORDER BY (a) ASC, (b) DESC" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.SortTrait ),
+                sut.Ordering.ToArray().TestSequence( ordering ),
+                text.TestEquals( "ORDER BY (a) ASC, (b) DESC" ) )
+            .Go();
     }
 
     [Fact]
@@ -138,12 +129,11 @@ public class ExpressionTraitsTests : TestsBase
         var sut = SqlNode.SortTrait();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.SortTrait );
-            sut.Ordering.ToArray().Should().BeEmpty();
-            text.Should().Be( "ORDER BY" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.SortTrait ),
+                sut.Ordering.ToArray().TestEmpty(),
+                text.TestEquals( "ORDER BY" ) )
+            .Go();
     }
 
     [Fact]
@@ -153,12 +143,11 @@ public class ExpressionTraitsTests : TestsBase
         var sut = SqlNode.LimitTrait( value );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.LimitTrait );
-            sut.Value.Should().BeSameAs( value );
-            text.Should().Be( "LIMIT (\"10\" : System.Int32)" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.LimitTrait ),
+                sut.Value.TestRefEquals( value ),
+                text.TestEquals( "LIMIT (\"10\" : System.Int32)" ) )
+            .Go();
     }
 
     [Fact]
@@ -168,12 +157,11 @@ public class ExpressionTraitsTests : TestsBase
         var sut = SqlNode.OffsetTrait( value );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.OffsetTrait );
-            sut.Value.Should().BeSameAs( value );
-            text.Should().Be( "OFFSET (\"10\" : System.Int32)" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.OffsetTrait ),
+                sut.Value.TestRefEquals( value ),
+                text.TestEquals( "OFFSET (\"10\" : System.Int32)" ) )
+            .Go();
     }
 
     [Fact]
@@ -188,13 +176,11 @@ public class ExpressionTraitsTests : TestsBase
         var sut = SqlNode.CommonTableExpressionTrait( cte );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.CommonTableExpressionTrait );
-            sut.CommonTableExpressions.ToArray().Should().BeSequentiallyEqualTo( cte );
-            sut.ContainsRecursive.Should().BeFalse();
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.CommonTableExpressionTrait ),
+                sut.CommonTableExpressions.ToArray().TestSequence( cte ),
+                sut.ContainsRecursive.TestFalse(),
+                text.TestEquals(
                     """
                     WITH ORDINAL [A] (
                       SELECT * FROM foo
@@ -202,8 +188,8 @@ public class ExpressionTraitsTests : TestsBase
                     ORDINAL [B] (
                       SELECT * FROM bar
                     )
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -219,13 +205,11 @@ public class ExpressionTraitsTests : TestsBase
         var sut = SqlNode.CommonTableExpressionTrait( cte );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.CommonTableExpressionTrait );
-            sut.CommonTableExpressions.ToArray().Should().BeSequentiallyEqualTo( cte );
-            sut.ContainsRecursive.Should().BeTrue();
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.CommonTableExpressionTrait ),
+                sut.CommonTableExpressions.ToArray().TestSequence( cte ),
+                sut.ContainsRecursive.TestTrue(),
+                text.TestEquals(
                     """
                     WITH ORDINAL [A] (
                       SELECT * FROM foo
@@ -239,8 +223,8 @@ public class ExpressionTraitsTests : TestsBase
                       SELECT * FROM B
 
                     )
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -249,13 +233,12 @@ public class ExpressionTraitsTests : TestsBase
         var sut = SqlNode.CommonTableExpressionTrait();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.CommonTableExpressionTrait );
-            sut.CommonTableExpressions.ToArray().Should().BeEmpty();
-            sut.ContainsRecursive.Should().BeFalse();
-            text.Should().Be( "WITH" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.CommonTableExpressionTrait ),
+                sut.CommonTableExpressions.ToArray().TestEmpty(),
+                sut.ContainsRecursive.TestFalse(),
+                text.TestEquals( "WITH" ) )
+            .Go();
     }
 
     [Fact]
@@ -279,17 +262,15 @@ public class ExpressionTraitsTests : TestsBase
         var sut = SqlNode.WindowDefinitionTrait( windows );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.WindowDefinitionTrait );
-            sut.Windows.ToArray().Should().BeSequentiallyEqualTo( windows );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.WindowDefinitionTrait ),
+                sut.Windows.ToArray().TestSequence( windows ),
+                text.TestEquals(
                     """
                     WINDOW [foo] AS (PARTITION BY ([qux].[a] : ?) ORDER BY ([qux].[b] : ?) ASC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
                       [bar] AS (PARTITION BY ([qux].[x] : ?) ORDER BY ([qux].[y] : ?) DESC RANGE BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING)
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -298,12 +279,11 @@ public class ExpressionTraitsTests : TestsBase
         var sut = SqlNode.WindowDefinitionTrait();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.WindowDefinitionTrait );
-            sut.Windows.ToArray().Should().BeEmpty();
-            text.Should().Be( "WINDOW" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.WindowDefinitionTrait ),
+                sut.Windows.ToArray().TestEmpty(),
+                text.TestEquals( "WINDOW" ) )
+            .Go();
     }
 
     [Fact]
@@ -313,12 +293,11 @@ public class ExpressionTraitsTests : TestsBase
         var sut = SqlNode.WindowTrait( definition );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.WindowTrait );
-            sut.Definition.Should().BeSameAs( definition );
-            text.Should().Be( "OVER [foo] AS (ORDER BY ([qux].[a] : ?) ASC)" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.WindowTrait ),
+                sut.Definition.TestRefEquals( definition ),
+                text.TestEquals( "OVER [foo] AS (ORDER BY ([qux].[a] : ?) ASC)" ) )
+            .Go();
     }
 
     [Fact]
@@ -328,13 +307,12 @@ public class ExpressionTraitsTests : TestsBase
         var sut = expression.Asc();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.OrderBy );
-            sut.Expression.Should().BeSameAs( expression );
-            sut.Ordering.Should().BeSameAs( OrderBy.Asc );
-            text.Should().Be( "(@a : System.Int32) ASC" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.OrderBy ),
+                sut.Expression.TestRefEquals( expression ),
+                sut.Ordering.TestRefEquals( OrderBy.Asc ),
+                text.TestEquals( "(@a : System.Int32) ASC" ) )
+            .Go();
     }
 
     [Fact]
@@ -344,13 +322,12 @@ public class ExpressionTraitsTests : TestsBase
         var sut = expression.Desc();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.OrderBy );
-            sut.Expression.Should().BeSameAs( expression );
-            sut.Ordering.Should().BeSameAs( OrderBy.Desc );
-            text.Should().Be( "(@a : System.Int32) DESC" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.OrderBy ),
+                sut.Expression.TestRefEquals( expression ),
+                sut.Ordering.TestRefEquals( OrderBy.Desc ),
+                text.TestEquals( "(@a : System.Int32) DESC" ) )
+            .Go();
     }
 
     [Fact]
@@ -361,13 +338,12 @@ public class ExpressionTraitsTests : TestsBase
         var sut = selection.Asc();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.OrderBy );
-            sut.Expression.Should().BeEquivalentTo( selection.ToExpression() );
-            sut.Ordering.Should().BeSameAs( OrderBy.Asc );
-            text.Should().Be( "([qux]) ASC" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.OrderBy ),
+                sut.Expression.TestType().AssignableTo<SqlSelectExpressionNode>( n => n.Selection.TestRefEquals( selection ) ),
+                sut.Ordering.TestRefEquals( OrderBy.Asc ),
+                text.TestEquals( "([qux]) ASC" ) )
+            .Go();
     }
 
     [Fact]
@@ -378,13 +354,12 @@ public class ExpressionTraitsTests : TestsBase
         var sut = selection.Desc();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.OrderBy );
-            sut.Expression.Should().BeEquivalentTo( selection.ToExpression() );
-            sut.Ordering.Should().BeSameAs( OrderBy.Desc );
-            text.Should().Be( "([qux]) DESC" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.OrderBy ),
+                sut.Expression.TestType().AssignableTo<SqlSelectExpressionNode>( n => n.Selection.TestRefEquals( selection ) ),
+                sut.Ordering.TestRefEquals( OrderBy.Desc ),
+                text.TestEquals( "([qux]) DESC" ) )
+            .Go();
     }
 
     [Fact]
@@ -397,17 +372,15 @@ public class ExpressionTraitsTests : TestsBase
         var sut = SqlNode.WindowDefinition( "wnd", partitioning, ordering, frame );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.WindowDefinition );
-            sut.Name.Should().Be( "wnd" );
-            sut.Partitioning.ToArray().Should().BeSequentiallyEqualTo( partitioning );
-            sut.Ordering.ToArray().Should().BeSequentiallyEqualTo( ordering );
-            sut.Frame.Should().BeSameAs( frame );
-            text.Should()
-                .Be(
-                    "[wnd] AS (PARTITION BY ([foo].[a] : ?), ([foo].[b] : ?) ORDER BY ([foo].[x] : ?) ASC, ([foo].[y] : ?) DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.WindowDefinition ),
+                sut.Name.TestEquals( "wnd" ),
+                sut.Partitioning.ToArray().TestSequence( partitioning ),
+                sut.Ordering.ToArray().TestSequence( ordering ),
+                sut.Frame.TestRefEquals( frame ),
+                text.TestEquals(
+                    "[wnd] AS (PARTITION BY ([foo].[a] : ?), ([foo].[b] : ?) ORDER BY ([foo].[x] : ?) ASC, ([foo].[y] : ?) DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)" ) )
+            .Go();
     }
 
     [Fact]
@@ -419,16 +392,15 @@ public class ExpressionTraitsTests : TestsBase
         var sut = SqlNode.WindowDefinition( "wnd", ordering, frame );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.WindowDefinition );
-            sut.Name.Should().Be( "wnd" );
-            sut.Partitioning.ToArray().Should().BeEmpty();
-            sut.Ordering.ToArray().Should().BeSequentiallyEqualTo( ordering );
-            sut.Frame.Should().BeSameAs( frame );
-            text.Should()
-                .Be( "[wnd] AS (ORDER BY ([foo].[x] : ?) ASC, ([foo].[y] : ?) DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.WindowDefinition ),
+                sut.Name.TestEquals( "wnd" ),
+                sut.Partitioning.ToArray().TestEmpty(),
+                sut.Ordering.ToArray().TestSequence( ordering ),
+                sut.Frame.TestRefEquals( frame ),
+                text.TestEquals(
+                    "[wnd] AS (ORDER BY ([foo].[x] : ?) ASC, ([foo].[y] : ?) DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)" ) )
+            .Go();
     }
 
     [Fact]
@@ -440,16 +412,15 @@ public class ExpressionTraitsTests : TestsBase
         var sut = SqlNode.WindowDefinition( "wnd", partitioning, ordering );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.WindowDefinition );
-            sut.Name.Should().Be( "wnd" );
-            sut.Partitioning.ToArray().Should().BeSequentiallyEqualTo( partitioning );
-            sut.Ordering.ToArray().Should().BeSequentiallyEqualTo( ordering );
-            sut.Frame.Should().BeNull();
-            text.Should()
-                .Be( "[wnd] AS (PARTITION BY ([foo].[a] : ?), ([foo].[b] : ?) ORDER BY ([foo].[x] : ?) ASC, ([foo].[y] : ?) DESC)" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.WindowDefinition ),
+                sut.Name.TestEquals( "wnd" ),
+                sut.Partitioning.ToArray().TestSequence( partitioning ),
+                sut.Ordering.ToArray().TestSequence( ordering ),
+                sut.Frame.TestNull(),
+                text.TestEquals(
+                    "[wnd] AS (PARTITION BY ([foo].[a] : ?), ([foo].[b] : ?) ORDER BY ([foo].[x] : ?) ASC, ([foo].[y] : ?) DESC)" ) )
+            .Go();
     }
 
     [Fact]
@@ -458,14 +429,13 @@ public class ExpressionTraitsTests : TestsBase
         var sut = SqlNode.RowsWindowFrame( SqlWindowFrameBoundary.UnboundedPreceding, SqlWindowFrameBoundary.UnboundedFollowing );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.WindowFrame );
-            sut.FrameType.Should().Be( SqlWindowFrameType.Rows );
-            sut.Start.Should().BeEquivalentTo( SqlWindowFrameBoundary.UnboundedPreceding );
-            sut.End.Should().BeEquivalentTo( SqlWindowFrameBoundary.UnboundedFollowing );
-            text.Should().Be( "ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.WindowFrame ),
+                sut.FrameType.TestEquals( SqlWindowFrameType.Rows ),
+                sut.Start.TestEquals( SqlWindowFrameBoundary.UnboundedPreceding ),
+                sut.End.TestEquals( SqlWindowFrameBoundary.UnboundedFollowing ),
+                text.TestEquals( "ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING" ) )
+            .Go();
     }
 
     [Fact]
@@ -474,14 +444,13 @@ public class ExpressionTraitsTests : TestsBase
         var sut = SqlNode.RangeWindowFrame( SqlWindowFrameBoundary.CurrentRow, SqlWindowFrameBoundary.UnboundedFollowing );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.WindowFrame );
-            sut.FrameType.Should().Be( SqlWindowFrameType.Range );
-            sut.Start.Should().BeEquivalentTo( SqlWindowFrameBoundary.CurrentRow );
-            sut.End.Should().BeEquivalentTo( SqlWindowFrameBoundary.UnboundedFollowing );
-            text.Should().Be( "RANGE BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.WindowFrame ),
+                sut.FrameType.TestEquals( SqlWindowFrameType.Range ),
+                sut.Start.TestEquals( SqlWindowFrameBoundary.CurrentRow ),
+                sut.End.TestEquals( SqlWindowFrameBoundary.UnboundedFollowing ),
+                text.TestEquals( "RANGE BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING" ) )
+            .Go();
     }
 
     [Fact]
@@ -492,14 +461,13 @@ public class ExpressionTraitsTests : TestsBase
         var sut = SqlNode.RangeWindowFrame( start, end );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.WindowFrame );
-            sut.FrameType.Should().Be( SqlWindowFrameType.Range );
-            sut.Start.Should().BeEquivalentTo( start );
-            sut.End.Should().BeEquivalentTo( end );
-            text.Should().Be( "RANGE BETWEEN (\"3\" : System.Int32) PRECEDING AND (\"5\" : System.Int32) FOLLOWING" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.WindowFrame ),
+                sut.FrameType.TestEquals( SqlWindowFrameType.Range ),
+                sut.Start.TestEquals( start ),
+                sut.End.TestEquals( end ),
+                text.TestEquals( "RANGE BETWEEN (\"3\" : System.Int32) PRECEDING AND (\"5\" : System.Int32) FOLLOWING" ) )
+            .Go();
     }
 
     [Fact]
@@ -509,22 +477,20 @@ public class ExpressionTraitsTests : TestsBase
         var sut = dataSource.Distinct();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.Should().NotBeSameAs( dataSource );
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( dataSource.From );
-            sut.Joins.Should().BeSequentiallyEqualTo( dataSource.Joins );
-            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.TestNotRefEquals( dataSource ),
+                sut.NodeType.TestEquals( SqlNodeType.DataSource ),
+                sut.From.TestRefEquals( dataSource.From ),
+                sut.Joins.TestSequence( dataSource.Joins ),
+                sut.RecordSets.TestRefEquals( dataSource.RecordSets ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.DistinctTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     DISTINCT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -534,23 +500,21 @@ public class ExpressionTraitsTests : TestsBase
         var sut = dataSource.Distinct();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.Should().NotBeSameAs( dataSource );
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( dataSource.From );
-            sut.Joins.Should().BeSequentiallyEqualTo( dataSource.Joins );
-            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.TestNotRefEquals( dataSource ),
+                sut.NodeType.TestEquals( SqlNodeType.DataSource ),
+                sut.From.TestRefEquals( dataSource.From ),
+                sut.Joins.TestSequence( dataSource.Joins ),
+                sut.RecordSets.TestRefEquals( dataSource.RecordSets ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.DistinctTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     INNER JOIN [bar] ON TRUE
                     DISTINCT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -560,21 +524,19 @@ public class ExpressionTraitsTests : TestsBase
         var sut = function.Distinct();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.Should().NotBeSameAs( function );
-            sut.NodeType.Should().Be( function.NodeType );
-            sut.FunctionType.Should().Be( function.FunctionType );
-            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( function.Arguments.ToArray() );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.TestNotRefEquals( function ),
+                sut.NodeType.TestEquals( function.NodeType ),
+                sut.FunctionType.TestEquals( function.FunctionType ),
+                sut.Arguments.TestSequence( function.Arguments ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.DistinctTrait ) ),
+                text.TestEquals(
                     """
                     AGG_COUNT((*))
                       DISTINCT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -587,23 +549,21 @@ public class ExpressionTraitsTests : TestsBase
         var sut = dataSource.AndWhere( selector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.Should().NotBeSameAs( dataSource );
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( dataSource.From );
-            sut.Joins.Should().BeSequentiallyEqualTo( dataSource.Joins );
-            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.FilterTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ dataSource ] ),
+                sut.TestNotRefEquals( dataSource ),
+                sut.NodeType.TestEquals( SqlNodeType.DataSource ),
+                sut.From.TestRefEquals( dataSource.From ),
+                sut.Joins.TestSequence( dataSource.Joins ),
+                sut.RecordSets.TestRefEquals( dataSource.RecordSets ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.FilterTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     AND WHERE a > 10
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -616,24 +576,22 @@ public class ExpressionTraitsTests : TestsBase
         var sut = dataSource.AndWhere( selector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.Should().NotBeSameAs( dataSource );
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( dataSource.From );
-            sut.Joins.Should().BeSequentiallyEqualTo( dataSource.Joins );
-            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.FilterTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ dataSource ] ),
+                sut.TestNotRefEquals( dataSource ),
+                sut.NodeType.TestEquals( SqlNodeType.DataSource ),
+                sut.From.TestRefEquals( dataSource.From ),
+                sut.Joins.TestSequence( dataSource.Joins ),
+                sut.RecordSets.TestRefEquals( dataSource.RecordSets ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.FilterTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     INNER JOIN [bar] ON TRUE
                     AND WHERE a > 10
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -644,21 +602,19 @@ public class ExpressionTraitsTests : TestsBase
         var sut = function.AndWhere( filter );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.Should().NotBeSameAs( function );
-            sut.NodeType.Should().Be( function.NodeType );
-            sut.FunctionType.Should().Be( function.FunctionType );
-            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( function.Arguments.ToArray() );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.FilterTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.TestNotRefEquals( function ),
+                sut.NodeType.TestEquals( function.NodeType ),
+                sut.FunctionType.TestEquals( function.FunctionType ),
+                sut.Arguments.TestSequence( function.Arguments ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.FilterTrait ) ),
+                text.TestEquals(
                     """
                     AGG_COUNT((*))
                       AND WHERE a > 10
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -671,23 +627,21 @@ public class ExpressionTraitsTests : TestsBase
         var sut = dataSource.OrWhere( selector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.Should().NotBeSameAs( dataSource );
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( dataSource.From );
-            sut.Joins.Should().BeSequentiallyEqualTo( dataSource.Joins );
-            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.FilterTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ dataSource ] ),
+                sut.TestNotRefEquals( dataSource ),
+                sut.NodeType.TestEquals( SqlNodeType.DataSource ),
+                sut.From.TestRefEquals( dataSource.From ),
+                sut.Joins.TestSequence( dataSource.Joins ),
+                sut.RecordSets.TestRefEquals( dataSource.RecordSets ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.FilterTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     OR WHERE a > 10
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -700,24 +654,22 @@ public class ExpressionTraitsTests : TestsBase
         var sut = dataSource.OrWhere( selector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.Should().NotBeSameAs( dataSource );
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( dataSource.From );
-            sut.Joins.Should().BeSequentiallyEqualTo( dataSource.Joins );
-            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.FilterTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ dataSource ] ),
+                sut.TestNotRefEquals( dataSource ),
+                sut.NodeType.TestEquals( SqlNodeType.DataSource ),
+                sut.From.TestRefEquals( dataSource.From ),
+                sut.Joins.TestSequence( dataSource.Joins ),
+                sut.RecordSets.TestRefEquals( dataSource.RecordSets ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.FilterTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     INNER JOIN [bar] ON TRUE
                     OR WHERE a > 10
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -728,21 +680,19 @@ public class ExpressionTraitsTests : TestsBase
         var sut = function.OrWhere( filter );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.Should().NotBeSameAs( function );
-            sut.NodeType.Should().Be( function.NodeType );
-            sut.FunctionType.Should().Be( function.FunctionType );
-            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( function.Arguments.ToArray() );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.FilterTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.TestNotRefEquals( function ),
+                sut.NodeType.TestEquals( function.NodeType ),
+                sut.FunctionType.TestEquals( function.FunctionType ),
+                sut.Arguments.TestSequence( function.Arguments ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.FilterTrait ) ),
+                text.TestEquals(
                     """
                     AGG_COUNT((*))
                       OR WHERE a > 10
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -755,21 +705,19 @@ public class ExpressionTraitsTests : TestsBase
         var sut = function.OrderBy( ordering );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.Should().NotBeSameAs( function );
-            sut.NodeType.Should().Be( function.NodeType );
-            sut.FunctionType.Should().Be( function.FunctionType );
-            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( function.Arguments.ToArray() );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SortTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.TestNotRefEquals( function ),
+                sut.NodeType.TestEquals( function.NodeType ),
+                sut.FunctionType.TestEquals( function.FunctionType ),
+                sut.Arguments.TestSequence( function.Arguments ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.SortTrait ) ),
+                text.TestEquals(
                     """
                     AGG_COUNT((*))
                       ORDER BY ("10" : System.Int32) ASC
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -782,23 +730,21 @@ public class ExpressionTraitsTests : TestsBase
         var sut = dataSource.GroupBy( selector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.Should().NotBeSameAs( dataSource );
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( dataSource.From );
-            sut.Joins.Should().BeSequentiallyEqualTo( dataSource.Joins );
-            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.AggregationTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ dataSource ] ),
+                sut.TestNotRefEquals( dataSource ),
+                sut.NodeType.TestEquals( SqlNodeType.DataSource ),
+                sut.From.TestRefEquals( dataSource.From ),
+                sut.Joins.TestSequence( dataSource.Joins ),
+                sut.RecordSets.TestRefEquals( dataSource.RecordSets ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.AggregationTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     GROUP BY ([foo].[a] : ?)
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -809,11 +755,10 @@ public class ExpressionTraitsTests : TestsBase
         selector.WithAnyArgs( _ => Enumerable.Empty<SqlExpressionNode>() );
         var sut = dataSource.GroupBy( selector );
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.Should().BeSameAs( dataSource );
-        }
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ dataSource ] ),
+                sut.TestRefEquals( dataSource ) )
+            .Go();
     }
 
     [Fact]
@@ -826,24 +771,22 @@ public class ExpressionTraitsTests : TestsBase
         var sut = dataSource.GroupBy( selector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.Should().NotBeSameAs( dataSource );
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( dataSource.From );
-            sut.Joins.Should().BeSequentiallyEqualTo( dataSource.Joins );
-            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.AggregationTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ dataSource ] ),
+                sut.TestNotRefEquals( dataSource ),
+                sut.NodeType.TestEquals( SqlNodeType.DataSource ),
+                sut.From.TestRefEquals( dataSource.From ),
+                sut.Joins.TestSequence( dataSource.Joins ),
+                sut.RecordSets.TestRefEquals( dataSource.RecordSets ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.AggregationTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     INNER JOIN [bar] ON TRUE
                     GROUP BY ([foo].[a] : ?)
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -854,11 +797,10 @@ public class ExpressionTraitsTests : TestsBase
         selector.WithAnyArgs( _ => Enumerable.Empty<SqlExpressionNode>() );
         var sut = dataSource.GroupBy( selector );
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.Should().BeSameAs( dataSource );
-        }
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ dataSource ] ),
+                sut.TestRefEquals( dataSource ) )
+            .Go();
     }
 
     [Fact]
@@ -871,23 +813,21 @@ public class ExpressionTraitsTests : TestsBase
         var sut = dataSource.AndHaving( selector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.Should().NotBeSameAs( dataSource );
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( dataSource.From );
-            sut.Joins.Should().BeSequentiallyEqualTo( dataSource.Joins );
-            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.AggregationFilterTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ dataSource ] ),
+                sut.TestNotRefEquals( dataSource ),
+                sut.NodeType.TestEquals( SqlNodeType.DataSource ),
+                sut.From.TestRefEquals( dataSource.From ),
+                sut.Joins.TestSequence( dataSource.Joins ),
+                sut.RecordSets.TestRefEquals( dataSource.RecordSets ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.AggregationFilterTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     AND HAVING a > 10
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -900,24 +840,22 @@ public class ExpressionTraitsTests : TestsBase
         var sut = dataSource.AndHaving( selector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.Should().NotBeSameAs( dataSource );
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( dataSource.From );
-            sut.Joins.Should().BeSequentiallyEqualTo( dataSource.Joins );
-            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.AggregationFilterTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ dataSource ] ),
+                sut.TestNotRefEquals( dataSource ),
+                sut.NodeType.TestEquals( SqlNodeType.DataSource ),
+                sut.From.TestRefEquals( dataSource.From ),
+                sut.Joins.TestSequence( dataSource.Joins ),
+                sut.RecordSets.TestRefEquals( dataSource.RecordSets ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.AggregationFilterTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     INNER JOIN [bar] ON TRUE
                     AND HAVING a > 10
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -930,23 +868,21 @@ public class ExpressionTraitsTests : TestsBase
         var sut = dataSource.OrHaving( selector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.Should().NotBeSameAs( dataSource );
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( dataSource.From );
-            sut.Joins.Should().BeSequentiallyEqualTo( dataSource.Joins );
-            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.AggregationFilterTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ dataSource ] ),
+                sut.TestNotRefEquals( dataSource ),
+                sut.NodeType.TestEquals( SqlNodeType.DataSource ),
+                sut.From.TestRefEquals( dataSource.From ),
+                sut.Joins.TestSequence( dataSource.Joins ),
+                sut.RecordSets.TestRefEquals( dataSource.RecordSets ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.AggregationFilterTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     OR HAVING a > 10
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -959,24 +895,22 @@ public class ExpressionTraitsTests : TestsBase
         var sut = dataSource.OrHaving( selector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.Should().NotBeSameAs( dataSource );
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( dataSource.From );
-            sut.Joins.Should().BeSequentiallyEqualTo( dataSource.Joins );
-            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.AggregationFilterTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ dataSource ] ),
+                sut.TestNotRefEquals( dataSource ),
+                sut.NodeType.TestEquals( SqlNodeType.DataSource ),
+                sut.From.TestRefEquals( dataSource.From ),
+                sut.Joins.TestSequence( dataSource.Joins ),
+                sut.RecordSets.TestRefEquals( dataSource.RecordSets ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.AggregationFilterTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     INNER JOIN [bar] ON TRUE
                     OR HAVING a > 10
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -989,22 +923,20 @@ public class ExpressionTraitsTests : TestsBase
         var sut = dataSource.Window( selector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( dataSource.From );
-            sut.Joins.Should().BeSequentiallyEqualTo( dataSource.Joins );
-            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.WindowDefinitionTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ dataSource ] ),
+                sut.NodeType.TestEquals( SqlNodeType.DataSource ),
+                sut.From.TestRefEquals( dataSource.From ),
+                sut.Joins.TestSequence( dataSource.Joins ),
+                sut.RecordSets.TestRefEquals( dataSource.RecordSets ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.WindowDefinitionTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     WINDOW [x] AS (ORDER BY ([foo].[a] : ?) ASC)
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1014,15 +946,14 @@ public class ExpressionTraitsTests : TestsBase
         var sut = dataSource.Window( Enumerable.Empty<SqlWindowDefinitionNode>() );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( dataSource.From );
-            sut.Joins.Should().BeSequentiallyEqualTo( dataSource.Joins );
-            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.Traits.Should().BeEmpty();
-            text.Should().Be( "FROM [foo]" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.DataSource ),
+                sut.From.TestRefEquals( dataSource.From ),
+                sut.Joins.TestSequence( dataSource.Joins ),
+                sut.RecordSets.TestRefEquals( dataSource.RecordSets ),
+                sut.Traits.TestEmpty(),
+                text.TestEquals( "FROM [foo]" ) )
+            .Go();
     }
 
     [Fact]
@@ -1040,24 +971,22 @@ public class ExpressionTraitsTests : TestsBase
         var sut = dataSource.Window( selector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( dataSource.From );
-            sut.Joins.Should().BeSequentiallyEqualTo( dataSource.Joins );
-            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.WindowDefinitionTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ dataSource ] ),
+                sut.NodeType.TestEquals( SqlNodeType.DataSource ),
+                sut.From.TestRefEquals( dataSource.From ),
+                sut.Joins.TestSequence( dataSource.Joins ),
+                sut.RecordSets.TestRefEquals( dataSource.RecordSets ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.WindowDefinitionTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     INNER JOIN [bar] ON TRUE
                     WINDOW [x] AS (ORDER BY ([foo].[a] : ?) ASC),
                       [y] AS (ORDER BY ([bar].[b] : ?) DESC)
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1067,20 +996,18 @@ public class ExpressionTraitsTests : TestsBase
         var sut = dataSource.Window( Enumerable.Empty<SqlWindowDefinitionNode>() );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( dataSource.From );
-            sut.Joins.Should().BeSequentiallyEqualTo( dataSource.Joins );
-            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.Traits.Should().BeEmpty();
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.DataSource ),
+                sut.From.TestRefEquals( dataSource.From ),
+                sut.Joins.TestSequence( dataSource.Joins ),
+                sut.RecordSets.TestRefEquals( dataSource.RecordSets ),
+                sut.Traits.TestEmpty(),
+                text.TestEquals(
                     """
                     FROM [foo]
                     INNER JOIN [bar] ON TRUE
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1090,21 +1017,19 @@ public class ExpressionTraitsTests : TestsBase
         var sut = function.Over( SqlNode.WindowDefinition( "x", new[] { SqlNode.RawRecordSet( "foo" )["a"].Asc() } ) );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.Should().NotBeSameAs( function );
-            sut.NodeType.Should().Be( function.NodeType );
-            sut.FunctionType.Should().Be( function.FunctionType );
-            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( function.Arguments.ToArray() );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.WindowTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.TestNotRefEquals( function ),
+                sut.NodeType.TestEquals( function.NodeType ),
+                sut.FunctionType.TestEquals( function.FunctionType ),
+                sut.Arguments.TestSequence( function.Arguments ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.WindowTrait ) ),
+                text.TestEquals(
                     """
                     AGG_COUNT((*))
                       OVER [x] AS (ORDER BY ([foo].[a] : ?) ASC)
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1117,22 +1042,20 @@ public class ExpressionTraitsTests : TestsBase
         var sut = dataSource.OrderBy( selector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( dataSource.From );
-            sut.Joins.Should().BeSequentiallyEqualTo( dataSource.Joins );
-            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SortTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ dataSource ] ),
+                sut.NodeType.TestEquals( SqlNodeType.DataSource ),
+                sut.From.TestRefEquals( dataSource.From ),
+                sut.Joins.TestSequence( dataSource.Joins ),
+                sut.RecordSets.TestRefEquals( dataSource.RecordSets ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.SortTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     ORDER BY ([foo].[a] : ?) ASC
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1142,15 +1065,14 @@ public class ExpressionTraitsTests : TestsBase
         var sut = dataSource.OrderBy( Enumerable.Empty<SqlOrderByNode>() );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( dataSource.From );
-            sut.Joins.Should().BeSequentiallyEqualTo( dataSource.Joins );
-            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.Traits.Should().BeEmpty();
-            text.Should().Be( "FROM [foo]" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.DataSource ),
+                sut.From.TestRefEquals( dataSource.From ),
+                sut.Joins.TestSequence( dataSource.Joins ),
+                sut.RecordSets.TestRefEquals( dataSource.RecordSets ),
+                sut.Traits.TestEmpty(),
+                text.TestEquals( "FROM [foo]" ) )
+            .Go();
     }
 
     [Fact]
@@ -1163,23 +1085,21 @@ public class ExpressionTraitsTests : TestsBase
         var sut = dataSource.OrderBy( selector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( dataSource.From );
-            sut.Joins.Should().BeSequentiallyEqualTo( dataSource.Joins );
-            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SortTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ dataSource ] ),
+                sut.NodeType.TestEquals( SqlNodeType.DataSource ),
+                sut.From.TestRefEquals( dataSource.From ),
+                sut.Joins.TestSequence( dataSource.Joins ),
+                sut.RecordSets.TestRefEquals( dataSource.RecordSets ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.SortTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     INNER JOIN [bar] ON TRUE
                     ORDER BY ([foo].[a] : ?) ASC, ([bar].[b] : ?) DESC
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1189,20 +1109,18 @@ public class ExpressionTraitsTests : TestsBase
         var sut = dataSource.OrderBy( Enumerable.Empty<SqlOrderByNode>() );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( dataSource.From );
-            sut.Joins.Should().BeSequentiallyEqualTo( dataSource.Joins );
-            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.Traits.Should().BeEmpty();
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.DataSource ),
+                sut.From.TestRefEquals( dataSource.From ),
+                sut.Joins.TestSequence( dataSource.Joins ),
+                sut.RecordSets.TestRefEquals( dataSource.RecordSets ),
+                sut.Traits.TestEmpty(),
+                text.TestEquals(
                     """
                     FROM [foo]
                     INNER JOIN [bar] ON TRUE
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1215,24 +1133,22 @@ public class ExpressionTraitsTests : TestsBase
         var sut = dataSource.With( selector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( dataSource.From );
-            sut.Joins.Should().BeSequentiallyEqualTo( dataSource.Joins );
-            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.CommonTableExpressionTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ dataSource ] ),
+                sut.NodeType.TestEquals( SqlNodeType.DataSource ),
+                sut.From.TestRefEquals( dataSource.From ),
+                sut.Joins.TestSequence( dataSource.Joins ),
+                sut.RecordSets.TestRefEquals( dataSource.RecordSets ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.CommonTableExpressionTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     WITH ORDINAL [A] (
                       SELECT * FROM bar
                     )
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1242,11 +1158,10 @@ public class ExpressionTraitsTests : TestsBase
         var sut = dataSource.With( Enumerable.Empty<SqlCommonTableExpressionNode>() );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.Should().BeSameAs( dataSource );
-            text.Should().Be( "FROM [foo]" );
-        }
+        Assertion.All(
+                sut.TestRefEquals( dataSource ),
+                text.TestEquals( "FROM [foo]" ) )
+            .Go();
     }
 
     [Fact]
@@ -1260,17 +1175,15 @@ public class ExpressionTraitsTests : TestsBase
         var sut = dataSource.With( selector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( dataSource.From );
-            sut.Joins.Should().BeSequentiallyEqualTo( dataSource.Joins );
-            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.CommonTableExpressionTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ dataSource ] ),
+                sut.NodeType.TestEquals( SqlNodeType.DataSource ),
+                sut.From.TestRefEquals( dataSource.From ),
+                sut.Joins.TestSequence( dataSource.Joins ),
+                sut.RecordSets.TestRefEquals( dataSource.RecordSets ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.CommonTableExpressionTrait ) ),
+                text.TestEquals(
                     """
                     FROM [A]
                     INNER JOIN [B] AS [C] ON TRUE
@@ -1280,8 +1193,8 @@ public class ExpressionTraitsTests : TestsBase
                     ORDINAL [B] (
                       SELECT * FROM bar
                     )
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1291,20 +1204,18 @@ public class ExpressionTraitsTests : TestsBase
         var sut = dataSource.With( Enumerable.Empty<SqlCommonTableExpressionNode>() );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( dataSource.From );
-            sut.Joins.Should().BeSequentiallyEqualTo( dataSource.Joins );
-            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.Traits.Should().BeEmpty();
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.DataSource ),
+                sut.From.TestRefEquals( dataSource.From ),
+                sut.Joins.TestSequence( dataSource.Joins ),
+                sut.RecordSets.TestRefEquals( dataSource.RecordSets ),
+                sut.Traits.TestEmpty(),
+                text.TestEquals(
                     """
                     FROM [foo]
                     INNER JOIN [bar] ON TRUE
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1315,21 +1226,19 @@ public class ExpressionTraitsTests : TestsBase
         var sut = dataSource.Limit( value );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( dataSource.From );
-            sut.Joins.Should().BeSequentiallyEqualTo( dataSource.Joins );
-            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.LimitTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.DataSource ),
+                sut.From.TestRefEquals( dataSource.From ),
+                sut.Joins.TestSequence( dataSource.Joins ),
+                sut.RecordSets.TestRefEquals( dataSource.RecordSets ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.LimitTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     LIMIT ("10" : System.Int32)
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1340,22 +1249,20 @@ public class ExpressionTraitsTests : TestsBase
         var sut = dataSource.Limit( value );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( dataSource.From );
-            sut.Joins.Should().BeSequentiallyEqualTo( dataSource.Joins );
-            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.LimitTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.DataSource ),
+                sut.From.TestRefEquals( dataSource.From ),
+                sut.Joins.TestSequence( dataSource.Joins ),
+                sut.RecordSets.TestRefEquals( dataSource.RecordSets ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.LimitTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     INNER JOIN [bar] ON TRUE
                     LIMIT ("10" : System.Int32)
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1366,21 +1273,19 @@ public class ExpressionTraitsTests : TestsBase
         var sut = dataSource.Offset( value );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( dataSource.From );
-            sut.Joins.Should().BeSequentiallyEqualTo( dataSource.Joins );
-            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.OffsetTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.DataSource ),
+                sut.From.TestRefEquals( dataSource.From ),
+                sut.Joins.TestSequence( dataSource.Joins ),
+                sut.RecordSets.TestRefEquals( dataSource.RecordSets ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.OffsetTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     OFFSET ("10" : System.Int32)
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1391,22 +1296,20 @@ public class ExpressionTraitsTests : TestsBase
         var sut = dataSource.Offset( value );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( dataSource.From );
-            sut.Joins.Should().BeSequentiallyEqualTo( dataSource.Joins );
-            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.OffsetTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.DataSource ),
+                sut.From.TestRefEquals( dataSource.From ),
+                sut.Joins.TestSequence( dataSource.Joins ),
+                sut.RecordSets.TestRefEquals( dataSource.RecordSets ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.OffsetTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     INNER JOIN [bar] ON TRUE
                     OFFSET ("10" : System.Int32)
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1417,22 +1320,20 @@ public class ExpressionTraitsTests : TestsBase
         var sut = query.Distinct();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.Should().NotBeSameAs( query );
-            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.Selection.Should().BeSequentiallyEqualTo( query.Selection );
-            sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.TestNotRefEquals( query ),
+                sut.NodeType.TestEquals( SqlNodeType.DataSourceQuery ),
+                sut.Selection.TestSequence( query.Selection ),
+                sut.DataSource.TestRefEquals( dataSource ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.DistinctTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     DISTINCT
                     SELECT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1446,23 +1347,21 @@ public class ExpressionTraitsTests : TestsBase
         var sut = query.AndWhere( selector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.Should().NotBeSameAs( query );
-            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.Selection.Should().BeSequentiallyEqualTo( query.Selection );
-            sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.FilterTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ dataSource ] ),
+                sut.TestNotRefEquals( query ),
+                sut.NodeType.TestEquals( SqlNodeType.DataSourceQuery ),
+                sut.Selection.TestSequence( query.Selection ),
+                sut.DataSource.TestRefEquals( dataSource ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.FilterTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     AND WHERE a > 10
                     SELECT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1476,23 +1375,21 @@ public class ExpressionTraitsTests : TestsBase
         var sut = query.OrWhere( selector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.Should().NotBeSameAs( query );
-            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.Selection.Should().BeSequentiallyEqualTo( query.Selection );
-            sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.FilterTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ dataSource ] ),
+                sut.TestNotRefEquals( query ),
+                sut.NodeType.TestEquals( SqlNodeType.DataSourceQuery ),
+                sut.Selection.TestSequence( query.Selection ),
+                sut.DataSource.TestRefEquals( dataSource ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.FilterTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     OR WHERE a > 10
                     SELECT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1506,23 +1403,21 @@ public class ExpressionTraitsTests : TestsBase
         var sut = query.GroupBy( selector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.Should().NotBeSameAs( query );
-            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.Selection.Should().BeSequentiallyEqualTo( query.Selection );
-            sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.AggregationTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ dataSource ] ),
+                sut.TestNotRefEquals( query ),
+                sut.NodeType.TestEquals( SqlNodeType.DataSourceQuery ),
+                sut.Selection.TestSequence( query.Selection ),
+                sut.DataSource.TestRefEquals( dataSource ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.AggregationTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     GROUP BY ([foo].[a] : ?), ([foo].[b] : ?)
                     SELECT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1534,11 +1429,10 @@ public class ExpressionTraitsTests : TestsBase
         selector.WithAnyArgs( _ => Enumerable.Empty<SqlExpressionNode>() );
         var sut = query.GroupBy( selector );
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.Should().BeSameAs( query );
-        }
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ dataSource ] ),
+                sut.TestRefEquals( query ) )
+            .Go();
     }
 
     [Fact]
@@ -1552,23 +1446,21 @@ public class ExpressionTraitsTests : TestsBase
         var sut = query.AndHaving( selector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.Should().NotBeSameAs( query );
-            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.Selection.Should().BeSequentiallyEqualTo( query.Selection );
-            sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.AggregationFilterTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ dataSource ] ),
+                sut.TestNotRefEquals( query ),
+                sut.NodeType.TestEquals( SqlNodeType.DataSourceQuery ),
+                sut.Selection.TestSequence( query.Selection ),
+                sut.DataSource.TestRefEquals( dataSource ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.AggregationFilterTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     AND HAVING a > 10
                     SELECT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1582,23 +1474,21 @@ public class ExpressionTraitsTests : TestsBase
         var sut = query.OrHaving( selector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.Should().NotBeSameAs( query );
-            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.Selection.Should().BeSequentiallyEqualTo( query.Selection );
-            sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.AggregationFilterTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ dataSource ] ),
+                sut.TestNotRefEquals( query ),
+                sut.NodeType.TestEquals( SqlNodeType.DataSourceQuery ),
+                sut.Selection.TestSequence( query.Selection ),
+                sut.DataSource.TestRefEquals( dataSource ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.AggregationFilterTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     OR HAVING a > 10
                     SELECT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1617,24 +1507,22 @@ public class ExpressionTraitsTests : TestsBase
         var sut = query.Window( selector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.Should().NotBeSameAs( query );
-            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.DataSource.Should().BeSameAs( query.DataSource );
-            sut.Selection.Should().BeSequentiallyEqualTo( query.Selection );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.WindowDefinitionTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ dataSource ] ),
+                sut.TestNotRefEquals( query ),
+                sut.NodeType.TestEquals( SqlNodeType.DataSourceQuery ),
+                sut.DataSource.TestRefEquals( query.DataSource ),
+                sut.Selection.TestSequence( query.Selection ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.WindowDefinitionTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     WINDOW [x] AS (ORDER BY ([foo].[a] : ?) ASC),
                       [y] AS (ORDER BY ([foo].[b] : ?) DESC)
                     SELECT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1646,11 +1534,10 @@ public class ExpressionTraitsTests : TestsBase
         selector.WithAnyArgs( _ => Enumerable.Empty<SqlWindowDefinitionNode>() );
         var sut = query.Window( selector );
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.Should().BeSameAs( query );
-        }
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ dataSource ] ),
+                sut.TestRefEquals( query ) )
+            .Go();
     }
 
     [Fact]
@@ -1666,23 +1553,21 @@ public class ExpressionTraitsTests : TestsBase
         var sut = query.OrderBy( selector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( query );
-            sut.Should().NotBeSameAs( query );
-            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.DataSource.Should().BeSameAs( query.DataSource );
-            sut.Selection.Should().BeSequentiallyEqualTo( query.Selection );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SortTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ query ] ),
+                sut.TestNotRefEquals( query ),
+                sut.NodeType.TestEquals( SqlNodeType.DataSourceQuery ),
+                sut.DataSource.TestRefEquals( query.DataSource ),
+                sut.Selection.TestSequence( query.Selection ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.SortTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     ORDER BY ([foo].[a] : ?) ASC, ([foo].[b] : ?) DESC
                     SELECT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1690,17 +1575,16 @@ public class ExpressionTraitsTests : TestsBase
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
         var query = dataSource.Select();
-        var selector = Substitute.For<
-            Func<SqlDataSourceQueryExpressionNode<SqlSingleDataSourceNode<SqlRawRecordSetNode>>, IEnumerable<SqlOrderByNode>>>();
+        var selector = Substitute
+            .For<Func<SqlDataSourceQueryExpressionNode<SqlSingleDataSourceNode<SqlRawRecordSetNode>>, IEnumerable<SqlOrderByNode>>>();
 
         selector.WithAnyArgs( _ => Enumerable.Empty<SqlOrderByNode>() );
         var sut = query.OrderBy( selector );
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( query );
-            sut.Should().BeSameAs( query );
-        }
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ query ] ),
+                sut.TestRefEquals( query ) )
+            .Go();
     }
 
     [Fact]
@@ -1713,25 +1597,23 @@ public class ExpressionTraitsTests : TestsBase
         var sut = query.OrderBy( selector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( query );
-            sut.Should().NotBeSameAs( query );
-            sut.NodeType.Should().Be( SqlNodeType.CompoundQuery );
-            sut.FirstQuery.Should().BeSameAs( query.FirstQuery );
-            sut.FollowingQueries.Should().BeSequentiallyEqualTo( query.FollowingQueries );
-            sut.Selection.Should().BeSequentiallyEqualTo( query.Selection );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SortTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ query ] ),
+                sut.TestNotRefEquals( query ),
+                sut.NodeType.TestEquals( SqlNodeType.CompoundQuery ),
+                sut.FirstQuery.TestRefEquals( query.FirstQuery ),
+                sut.FollowingQueries.TestSequence( query.FollowingQueries ),
+                sut.Selection.TestSequence( query.Selection ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.SortTrait ) ),
+                text.TestEquals(
                     """
                     SELECT * FROM foo
                     UNION
                     SELECT * FROM bar
                     ORDER BY (a) ASC, (b) DESC
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1742,11 +1624,10 @@ public class ExpressionTraitsTests : TestsBase
         selector.WithAnyArgs( _ => Enumerable.Empty<SqlOrderByNode>() );
         var sut = query.OrderBy( selector );
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( query );
-            sut.Should().BeSameAs( query );
-        }
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ query ] ),
+                sut.TestRefEquals( query ) )
+            .Go();
     }
 
     [Fact]
@@ -1763,25 +1644,23 @@ public class ExpressionTraitsTests : TestsBase
         var sut = query.With( selector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( query );
-            sut.Should().NotBeSameAs( query );
-            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.DataSource.Should().BeSameAs( query.DataSource );
-            sut.Selection.Should().BeSequentiallyEqualTo( query.Selection );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.CommonTableExpressionTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ query ] ),
+                sut.TestNotRefEquals( query ),
+                sut.NodeType.TestEquals( SqlNodeType.DataSourceQuery ),
+                sut.DataSource.TestRefEquals( query.DataSource ),
+                sut.Selection.TestSequence( query.Selection ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.CommonTableExpressionTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     WITH ORDINAL [A] (
                       SELECT * FROM bar
                     )
                     SELECT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1796,11 +1675,10 @@ public class ExpressionTraitsTests : TestsBase
         selector.WithAnyArgs( _ => Enumerable.Empty<SqlCommonTableExpressionNode>() );
         var sut = query.With( selector );
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( query );
-            sut.Should().BeSameAs( query );
-        }
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ query ] ),
+                sut.TestRefEquals( query ) )
+            .Go();
     }
 
     [Fact]
@@ -1813,18 +1691,16 @@ public class ExpressionTraitsTests : TestsBase
         var sut = query.With( selector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( query );
-            sut.Should().NotBeSameAs( query );
-            sut.NodeType.Should().Be( SqlNodeType.CompoundQuery );
-            sut.FirstQuery.Should().BeSameAs( query.FirstQuery );
-            sut.FollowingQueries.Should().BeSequentiallyEqualTo( query.FollowingQueries );
-            sut.Selection.Should().BeSequentiallyEqualTo( query.Selection );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.CommonTableExpressionTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ query ] ),
+                sut.TestNotRefEquals( query ),
+                sut.NodeType.TestEquals( SqlNodeType.CompoundQuery ),
+                sut.FirstQuery.TestRefEquals( query.FirstQuery ),
+                sut.FollowingQueries.TestSequence( query.FollowingQueries ),
+                sut.Selection.TestSequence( query.Selection ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.CommonTableExpressionTrait ) ),
+                text.TestEquals(
                     """
                     SELECT * FROM foo
                     UNION
@@ -1832,8 +1708,8 @@ public class ExpressionTraitsTests : TestsBase
                     WITH ORDINAL [A] (
                       SELECT * FROM qux
                     )
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1844,11 +1720,10 @@ public class ExpressionTraitsTests : TestsBase
         selector.WithAnyArgs( _ => Enumerable.Empty<SqlCommonTableExpressionNode>() );
         var sut = query.With( selector );
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( query );
-            sut.Should().BeSameAs( query );
-        }
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ query ] ),
+                sut.TestRefEquals( query ) )
+            .Go();
     }
 
     [Fact]
@@ -1860,22 +1735,20 @@ public class ExpressionTraitsTests : TestsBase
         var sut = query.Limit( value );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.Should().NotBeSameAs( query );
-            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.DataSource.Should().BeSameAs( query.DataSource );
-            sut.Selection.Should().BeSequentiallyEqualTo( query.Selection );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.LimitTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.TestNotRefEquals( query ),
+                sut.NodeType.TestEquals( SqlNodeType.DataSourceQuery ),
+                sut.DataSource.TestRefEquals( query.DataSource ),
+                sut.Selection.TestSequence( query.Selection ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.LimitTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     LIMIT ("10" : System.Int32)
                     SELECT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1886,24 +1759,22 @@ public class ExpressionTraitsTests : TestsBase
         var sut = query.Limit( value );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.Should().NotBeSameAs( query );
-            sut.NodeType.Should().Be( SqlNodeType.CompoundQuery );
-            sut.FirstQuery.Should().BeSameAs( query.FirstQuery );
-            sut.FollowingQueries.Should().BeSequentiallyEqualTo( query.FollowingQueries );
-            sut.Selection.Should().BeSequentiallyEqualTo( query.Selection );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.LimitTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.TestNotRefEquals( query ),
+                sut.NodeType.TestEquals( SqlNodeType.CompoundQuery ),
+                sut.FirstQuery.TestRefEquals( query.FirstQuery ),
+                sut.FollowingQueries.TestSequence( query.FollowingQueries ),
+                sut.Selection.TestSequence( query.Selection ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.LimitTrait ) ),
+                text.TestEquals(
                     """
                     SELECT * FROM foo
                     UNION
                     SELECT * FROM bar
                     LIMIT ("10" : System.Int32)
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1915,22 +1786,20 @@ public class ExpressionTraitsTests : TestsBase
         var sut = query.Offset( value );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.Should().NotBeSameAs( query );
-            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.DataSource.Should().BeSameAs( query.DataSource );
-            sut.Selection.Should().BeSequentiallyEqualTo( query.Selection );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.OffsetTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.TestNotRefEquals( query ),
+                sut.NodeType.TestEquals( SqlNodeType.DataSourceQuery ),
+                sut.DataSource.TestRefEquals( query.DataSource ),
+                sut.Selection.TestSequence( query.Selection ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.OffsetTrait ) ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     OFFSET ("10" : System.Int32)
                     SELECT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1941,23 +1810,21 @@ public class ExpressionTraitsTests : TestsBase
         var sut = query.Offset( value );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.Should().NotBeSameAs( query );
-            sut.NodeType.Should().Be( SqlNodeType.CompoundQuery );
-            sut.FirstQuery.Should().BeSameAs( query.FirstQuery );
-            sut.FollowingQueries.Should().BeSequentiallyEqualTo( query.FollowingQueries );
-            sut.Selection.Should().BeSequentiallyEqualTo( query.Selection );
-            sut.Traits.Should().HaveCount( 1 );
-            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.OffsetTrait );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.TestNotRefEquals( query ),
+                sut.NodeType.TestEquals( SqlNodeType.CompoundQuery ),
+                sut.FirstQuery.TestRefEquals( query.FirstQuery ),
+                sut.FollowingQueries.TestSequence( query.FollowingQueries ),
+                sut.Selection.TestSequence( query.Selection ),
+                sut.Traits.Count.TestEquals( 1 ),
+                sut.Traits.TestAll( (t, _) => t.NodeType.TestEquals( SqlNodeType.OffsetTrait ) ),
+                text.TestEquals(
                     """
                     SELECT * FROM foo
                     UNION
                     SELECT * FROM bar
                     OFFSET ("10" : System.Int32)
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 }

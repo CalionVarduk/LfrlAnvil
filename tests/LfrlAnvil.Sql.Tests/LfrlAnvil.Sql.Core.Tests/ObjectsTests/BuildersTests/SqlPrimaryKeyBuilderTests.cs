@@ -3,7 +3,6 @@ using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.ObjectsTests.BuildersTests;
@@ -19,7 +18,7 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( "[PrimaryKey] foo.bar" );
+        result.TestEquals( "[PrimaryKey] foo.bar" ).Go();
     }
 
     [Fact]
@@ -35,24 +34,22 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
         var sut = table.Constraints.SetPrimaryKey( c2.Asc() );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            table.Constraints.TryGet( sut.Name ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.Name.Should().Be( "PK_T" );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      CREATE [Index] foo.UIX_T_C2A
-                      CREATE [PrimaryKey] foo.PK_T
-                      REMOVE [Index] foo.UIX_T_C1A
-                      REMOVE [PrimaryKey] foo.bar;
-                    """ );
-        }
+        Assertion.All(
+                table.Constraints.TryGet( sut.Name ).TestRefEquals( sut ),
+                schema.Objects.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.Name.TestEquals( "PK_T" ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          CREATE [Index] foo.UIX_T_C2A
+                          CREATE [PrimaryKey] foo.PK_T
+                          REMOVE [Index] foo.UIX_T_C1A
+                          REMOVE [PrimaryKey] foo.bar;
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -66,11 +63,10 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
         var result = sut.SetName( sut.Name );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -86,11 +82,10 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
         var result = sut.SetName( oldName );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -105,24 +100,22 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
         var result = sut.SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            table.Constraints.TryGet( "bar" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( oldName ).Should().BeNull();
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( oldName ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [PrimaryKey] foo.bar ([1] : 'Name' (System.String) FROM PK_T);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                table.Constraints.TryGet( "bar" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( oldName ).TestNull(),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( oldName ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [PrimaryKey] foo.bar ([1] : 'Name' (System.String) FROM PK_T);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Theory]
@@ -138,9 +131,11 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( name ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -153,9 +148,11 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "bar" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -167,9 +164,11 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "T" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -183,11 +182,10 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
         var result = sut.SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -202,11 +200,10 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
         var result = sut.SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -220,24 +217,22 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
         var result = sut.SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "PK_T" );
-            table.Constraints.TryGet( "PK_T" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( "bar" ).Should().BeNull();
-            schema.Objects.TryGet( "PK_T" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "bar" ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [PrimaryKey] foo.PK_T ([1] : 'Name' (System.String) FROM bar);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "PK_T" ),
+                table.Constraints.TryGet( "PK_T" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( "bar" ).TestNull(),
+                schema.Objects.TryGet( "PK_T" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "bar" ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [PrimaryKey] foo.PK_T ([1] : 'Name' (System.String) FROM bar);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -250,9 +245,11 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetDefaultName() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -265,9 +262,11 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetDefaultName() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -282,29 +281,27 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            table.Constraints.TryGetPrimaryKey().Should().BeNull();
-            table.Constraints.TryGet( sut.Name ).Should().BeNull();
-            table.Constraints.TryGet( sut.Index.Name ).Should().BeNull();
-            schema.Objects.TryGet( sut.Name ).Should().BeNull();
-            schema.Objects.TryGet( sut.Index.Name ).Should().BeNull();
-            sut.IsRemoved.Should().BeTrue();
-            sut.Index.IsRemoved.Should().BeTrue();
-            sut.Index.PrimaryKey.Should().BeNull();
-            sut.Index.Columns.Expressions.Should().BeEmpty();
-            column.ReferencingObjects.Should().BeEmpty();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      REMOVE [Index] foo.UIX_T_C1A
-                      REMOVE [PrimaryKey] foo.PK_T;
-                    """ );
-        }
+        Assertion.All(
+                table.Constraints.TryGetPrimaryKey().TestNull(),
+                table.Constraints.TryGet( sut.Name ).TestNull(),
+                table.Constraints.TryGet( sut.Index.Name ).TestNull(),
+                schema.Objects.TryGet( sut.Name ).TestNull(),
+                schema.Objects.TryGet( sut.Index.Name ).TestNull(),
+                sut.IsRemoved.TestTrue(),
+                sut.Index.IsRemoved.TestTrue(),
+                sut.Index.PrimaryKey.TestNull(),
+                sut.Index.Columns.Expressions.TestEmpty(),
+                column.ReferencingObjects.TestEmpty(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          REMOVE [Index] foo.UIX_T_C1A
+                          REMOVE [PrimaryKey] foo.PK_T;
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -321,7 +318,7 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Fact]
@@ -335,9 +332,11 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
         schema.Database.Changes.CompletePendingChanges();
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -352,9 +351,11 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -369,9 +370,11 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -386,16 +389,14 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
         SqlDatabaseBuilderMock.QuickRemove( sut );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            table.Constraints.TryGet( sut.Name ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.IsRemoved.Should().BeTrue();
-            sut.ReferencingObjects.Should().BeEmpty();
-            sut.Index.IsRemoved.Should().BeFalse();
-
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                table.Constraints.TryGet( sut.Name ).TestRefEquals( sut ),
+                schema.Objects.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.IsRemoved.TestTrue(),
+                sut.ReferencingObjects.TestEmpty(),
+                sut.Index.IsRemoved.TestFalse(),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -412,7 +413,7 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
         SqlDatabaseBuilderMock.QuickRemove( sut );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Fact]
@@ -424,11 +425,10 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
 
         var result = sut.ToDefinitionNode();
 
-        using ( new AssertionScope() )
-        {
-            result.Name.Should().Be( SqlSchemaObjectName.Create( "foo", "PK_T" ) );
-            result.Columns.Should().BeSequentiallyEqualTo( sut.Index.Columns.Expressions );
-        }
+        Assertion.All(
+                result.Name.TestEquals( SqlSchemaObjectName.Create( "foo", "PK_T" ) ),
+                result.Columns.TestSequence( sut.Index.Columns.Expressions ) )
+            .Go();
     }
 
     [Fact]
@@ -443,24 +443,22 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
         var result = (( ISqlPrimaryKeyBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            table.Constraints.TryGet( "bar" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( oldName ).Should().BeNull();
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( oldName ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [PrimaryKey] foo.bar ([1] : 'Name' (System.String) FROM PK_T);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                table.Constraints.TryGet( "bar" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( oldName ).TestNull(),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( oldName ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [PrimaryKey] foo.bar ([1] : 'Name' (System.String) FROM PK_T);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -475,24 +473,22 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
         var result = (( ISqlConstraintBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            table.Constraints.TryGet( "bar" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( oldName ).Should().BeNull();
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( oldName ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [PrimaryKey] foo.bar ([1] : 'Name' (System.String) FROM PK_T);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                table.Constraints.TryGet( "bar" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( oldName ).TestNull(),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( oldName ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [PrimaryKey] foo.bar ([1] : 'Name' (System.String) FROM PK_T);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -507,24 +503,22 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
         var result = (( ISqlObjectBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            table.Constraints.TryGet( "bar" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( oldName ).Should().BeNull();
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( oldName ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [PrimaryKey] foo.bar ([1] : 'Name' (System.String) FROM PK_T);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                table.Constraints.TryGet( "bar" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( oldName ).TestNull(),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( oldName ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [PrimaryKey] foo.bar ([1] : 'Name' (System.String) FROM PK_T);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -538,24 +532,22 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
         var result = (( ISqlPrimaryKeyBuilder )sut).SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "PK_T" );
-            table.Constraints.TryGet( "PK_T" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( "bar" ).Should().BeNull();
-            schema.Objects.TryGet( "PK_T" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "bar" ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [PrimaryKey] foo.PK_T ([1] : 'Name' (System.String) FROM bar);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "PK_T" ),
+                table.Constraints.TryGet( "PK_T" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( "bar" ).TestNull(),
+                schema.Objects.TryGet( "PK_T" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "bar" ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [PrimaryKey] foo.PK_T ([1] : 'Name' (System.String) FROM bar);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -569,23 +561,21 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
         var result = (( ISqlConstraintBuilder )sut).SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "PK_T" );
-            table.Constraints.TryGet( "PK_T" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( "bar" ).Should().BeNull();
-            schema.Objects.TryGet( "PK_T" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "bar" ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [PrimaryKey] foo.PK_T ([1] : 'Name' (System.String) FROM bar);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "PK_T" ),
+                table.Constraints.TryGet( "PK_T" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( "bar" ).TestNull(),
+                schema.Objects.TryGet( "PK_T" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "bar" ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [PrimaryKey] foo.PK_T ([1] : 'Name' (System.String) FROM bar);
+                        """
+                    ] ) )
+            .Go();
     }
 }

@@ -4,7 +4,6 @@ using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.ObjectsTests.BuildersTests;
@@ -19,7 +18,7 @@ public class SqlViewBuilderTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( "[View] foo.bar" );
+        result.TestEquals( "[View] foo.bar" ).Go();
     }
 
     [Fact]
@@ -31,15 +30,12 @@ public class SqlViewBuilderTests : TestsBase
         var sut = schema.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM bar" ) );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.Name.Should().Be( "V" );
-            sut.ReferencedObjects.Should().BeEmpty();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().Be( "CREATE [View] foo.V;" );
-        }
+        Assertion.All(
+                schema.Objects.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.Name.TestEquals( "V" ),
+                sut.ReferencedObjects.TestEmpty(),
+                actions.Select( a => a.Sql ).TestSequence( [ "CREATE [View] foo.V;" ] ) )
+            .Go();
     }
 
     [Fact]
@@ -52,7 +48,7 @@ public class SqlViewBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Fact]
@@ -65,11 +61,10 @@ public class SqlViewBuilderTests : TestsBase
         var result = sut.SetName( sut.Name );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -84,11 +79,10 @@ public class SqlViewBuilderTests : TestsBase
         var result = sut.SetName( oldName );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -104,24 +98,22 @@ public class SqlViewBuilderTests : TestsBase
         var result = sut.SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            sut.Info.Should().Be( SqlRecordSetInfo.Create( "foo", "bar" ) );
-            recordSet.Info.Should().Be( sut.Info );
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( oldName ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [View] foo.bar
-                      ALTER [View] foo.bar ([1] : 'Name' (System.String) FROM V);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                sut.Info.TestEquals( SqlRecordSetInfo.Create( "foo", "bar" ) ),
+                recordSet.Info.TestEquals( sut.Info ),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( oldName ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [View] foo.bar
+                          ALTER [View] foo.bar ([1] : 'Name' (System.String) FROM V);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Theory]
@@ -136,9 +128,11 @@ public class SqlViewBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( name ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -150,9 +144,11 @@ public class SqlViewBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "bar" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -165,9 +161,11 @@ public class SqlViewBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "T" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -182,19 +180,15 @@ public class SqlViewBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            schema.Objects.TryGet( sut.Name ).Should().BeNull();
-            schema.Objects.Count.Should().Be( 1 );
-            sut.IsRemoved.Should().BeTrue();
-            sut.ReferencedObjects.Should().BeEmpty();
-
-            table.ReferencingObjects.Should().BeEmpty();
-            column.ReferencingObjects.Should().BeEmpty();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().Be( "REMOVE [View] foo.V;" );
-        }
+        Assertion.All(
+                schema.Objects.TryGet( sut.Name ).TestNull(),
+                schema.Objects.Count.TestEquals( 1 ),
+                sut.IsRemoved.TestTrue(),
+                sut.ReferencedObjects.TestEmpty(),
+                table.ReferencingObjects.TestEmpty(),
+                column.ReferencingObjects.TestEmpty(),
+                actions.Select( a => a.Sql ).TestSequence( [ "REMOVE [View] foo.V;" ] ) )
+            .Go();
     }
 
     [Fact]
@@ -210,7 +204,7 @@ public class SqlViewBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Fact]
@@ -222,9 +216,11 @@ public class SqlViewBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -240,23 +236,18 @@ public class SqlViewBuilderTests : TestsBase
         SqlDatabaseBuilderMock.QuickRemove( sut );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.IsRemoved.Should().BeTrue();
-            sut.ReferencingObjects.Should().BeEmpty();
-            sut.ReferencedObjects.Should().BeEmpty();
-
-            column.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), column ) );
-
-            table.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), table ) );
-
-            other.ReferencedObjects.Should().BeSequentiallyEqualTo( sut );
-
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                schema.Objects.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.IsRemoved.TestTrue(),
+                sut.ReferencingObjects.TestEmpty(),
+                sut.ReferencedObjects.TestEmpty(),
+                column.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), column ) ] ),
+                table.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), table ) ] ),
+                other.ReferencedObjects.TestSequence( [ sut ] ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -272,7 +263,7 @@ public class SqlViewBuilderTests : TestsBase
         SqlDatabaseBuilderMock.QuickRemove( sut );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Theory]
@@ -285,12 +276,11 @@ public class SqlViewBuilderTests : TestsBase
 
         var result = sut.ToCreateNode( replaceIfExists );
 
-        using ( new AssertionScope() )
-        {
-            result.Info.Should().Be( sut.Info );
-            result.Source.Should().BeSameAs( sut.Source );
-            result.ReplaceIfExists.Should().Be( replaceIfExists );
-        }
+        Assertion.All(
+                result.Info.TestEquals( sut.Info ),
+                result.Source.TestRefEquals( sut.Source ),
+                result.ReplaceIfExists.TestEquals( replaceIfExists ) )
+            .Go();
     }
 
     [Fact]
@@ -305,24 +295,22 @@ public class SqlViewBuilderTests : TestsBase
         var result = (( ISqlViewBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            sut.Info.Should().Be( SqlRecordSetInfo.Create( "foo", "bar" ) );
-            recordSet.Info.Should().Be( sut.Info );
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "V" ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [View] foo.bar
-                      ALTER [View] foo.bar ([1] : 'Name' (System.String) FROM V);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                sut.Info.TestEquals( SqlRecordSetInfo.Create( "foo", "bar" ) ),
+                recordSet.Info.TestEquals( sut.Info ),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "V" ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [View] foo.bar
+                          ALTER [View] foo.bar ([1] : 'Name' (System.String) FROM V);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -337,23 +325,21 @@ public class SqlViewBuilderTests : TestsBase
         var result = (( ISqlObjectBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            sut.Info.Should().Be( SqlRecordSetInfo.Create( "foo", "bar" ) );
-            recordSet.Info.Should().Be( sut.Info );
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "V" ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [View] foo.bar
-                      ALTER [View] foo.bar ([1] : 'Name' (System.String) FROM V);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                sut.Info.TestEquals( SqlRecordSetInfo.Create( "foo", "bar" ) ),
+                recordSet.Info.TestEquals( sut.Info ),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "V" ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [View] foo.bar
+                          ALTER [View] foo.bar ([1] : 'Name' (System.String) FROM V);
+                        """
+                    ] ) )
+            .Go();
     }
 }

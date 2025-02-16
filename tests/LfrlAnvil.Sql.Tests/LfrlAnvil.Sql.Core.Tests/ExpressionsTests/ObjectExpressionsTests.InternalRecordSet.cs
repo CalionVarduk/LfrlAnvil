@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using LfrlAnvil.Functional;
+﻿using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
@@ -17,14 +16,13 @@ public partial class ObjectExpressionsTests
             var sut = new SqlInternalRecordSetNode( @base );
             var text = sut.ToString();
 
-            using ( new AssertionScope() )
-            {
-                sut.Info.Should().Be( SqlRecordSetInfo.Create( "<internal>" ) );
-                sut.Base.Should().BeSameAs( @base );
-                sut.IsAliased.Should().BeFalse();
-                sut.IsOptional.Should().Be( @base.IsOptional );
-                text.Should().Be( "([<internal>] FROM [foo])" );
-            }
+            Assertion.All(
+                    sut.Info.TestEquals( SqlRecordSetInfo.Create( "<internal>" ) ),
+                    sut.Base.TestRefEquals( @base ),
+                    sut.IsAliased.TestFalse(),
+                    sut.IsOptional.TestEquals( @base.IsOptional ),
+                    text.TestEquals( "([<internal>] FROM [foo])" ) )
+                .Go();
         }
 
         [Fact]
@@ -33,7 +31,7 @@ public partial class ObjectExpressionsTests
             var @base = SqlNode.RawRecordSet( "foo" );
             var sut = new SqlInternalRecordSetNode( @base );
             var result = sut.GetKnownFields();
-            result.Should().BeEmpty();
+            result.TestEmpty().Go();
         }
 
         [Fact]
@@ -44,12 +42,14 @@ public partial class ObjectExpressionsTests
 
             var result = sut.GetKnownFields();
 
-            using ( new AssertionScope() )
-            {
-                result.Should().HaveCount( 2 );
-                result.ElementAtOrDefault( 0 ).Should().BeEquivalentTo( @base["a"].ReplaceRecordSet( sut ) );
-                result.ElementAtOrDefault( 1 ).Should().BeEquivalentTo( @base["b"].ReplaceRecordSet( sut ) );
-            }
+            result.TestCount( count => count.TestEquals( 2 ) )
+                .Then(
+                    r => Assertion.All(
+                        r[0].Name.TestEquals( "a" ),
+                        r[0].RecordSet.TestRefEquals( sut ),
+                        r[1].Name.TestEquals( "b" ),
+                        r[1].RecordSet.TestRefEquals( sut ) ) )
+                .Go();
         }
 
         [Fact]
@@ -57,7 +57,7 @@ public partial class ObjectExpressionsTests
         {
             var sut = new SqlInternalRecordSetNode( SqlNode.RawRecordSet( "foo" ) );
             var action = Lambda.Of( () => sut.As( "bar" ) );
-            action.Should().ThrowExactly<NotSupportedException>();
+            action.Test( exc => exc.TestType().Exact<NotSupportedException>() ).Go();
         }
 
         [Fact]
@@ -65,7 +65,7 @@ public partial class ObjectExpressionsTests
         {
             var sut = new SqlInternalRecordSetNode( SqlNode.RawRecordSet( "foo" ) );
             var result = sut.AsSelf();
-            result.Should().BeSameAs( sut );
+            result.TestRefEquals( sut ).Go();
         }
 
         [Fact]
@@ -73,8 +73,13 @@ public partial class ObjectExpressionsTests
         {
             var @base = SqlTableMock.Create<int>( "foo", new[] { "a", "b" } ).Node;
             var sut = new SqlInternalRecordSetNode( @base );
+
             var result = sut.GetUnsafeField( "bar" );
-            result.Should().BeEquivalentTo( sut.GetUnsafeField( "bar" ).ReplaceRecordSet( sut ) );
+
+            Assertion.All(
+                    result.Name.TestEquals( "bar" ),
+                    result.RecordSet.TestRefEquals( sut ) )
+                .Go();
         }
 
         [Fact]
@@ -82,8 +87,13 @@ public partial class ObjectExpressionsTests
         {
             var @base = SqlTableMock.Create<int>( "foo", new[] { "a", "b" } ).Node;
             var sut = new SqlInternalRecordSetNode( @base );
+
             var result = sut.GetField( "a" );
-            result.Should().BeEquivalentTo( sut.GetField( "a" ).ReplaceRecordSet( sut ) );
+
+            Assertion.All(
+                    result.Name.TestEquals( "a" ),
+                    result.RecordSet.TestRefEquals( sut ) )
+                .Go();
         }
 
         [Fact]
@@ -91,8 +101,13 @@ public partial class ObjectExpressionsTests
         {
             var @base = SqlTableMock.Create<int>( "foo", new[] { "a", "b" } ).Node;
             var sut = new SqlInternalRecordSetNode( @base );
+
             var result = sut["a"];
-            result.Should().BeEquivalentTo( sut.GetField( "a" ) );
+
+            Assertion.All(
+                    result.Name.TestEquals( "a" ),
+                    result.RecordSet.TestRefEquals( sut ) )
+                .Go();
         }
 
         [Theory]
@@ -103,7 +118,7 @@ public partial class ObjectExpressionsTests
             var @base = SqlTableMock.Create<int>( "foo", new[] { "a", "b" } ).Node.MarkAsOptional( optional );
             var sut = new SqlInternalRecordSetNode( @base );
             var result = sut.MarkAsOptional( optional );
-            result.Should().BeSameAs( sut );
+            result.TestRefEquals( sut ).Go();
         }
 
         [Theory]
@@ -115,11 +130,10 @@ public partial class ObjectExpressionsTests
             var sut = new SqlInternalRecordSetNode( @base );
             var result = sut.MarkAsOptional( optional );
 
-            using ( new AssertionScope() )
-            {
-                result.Base.IsOptional.Should().Be( optional );
-                result.IsOptional.Should().Be( optional );
-            }
+            Assertion.All(
+                    result.Base.IsOptional.TestEquals( optional ),
+                    result.IsOptional.TestEquals( optional ) )
+                .Go();
         }
     }
 }

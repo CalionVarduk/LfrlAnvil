@@ -20,7 +20,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.RawExpression( "foo.a + @a + @b", SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ) );
         _sut.VisitRawExpression( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -28,21 +28,21 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.RawRecordSet( "foo" ).GetField( "a" );
         _sut.VisitRawDataField( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
     public void VisitNull_ShouldDoNothing()
     {
         _sut.VisitNull( SqlNode.Null() );
-        _sut.GetErrors().Should().BeEmpty();
+        _sut.GetErrors().TestEmpty().Go();
     }
 
     [Fact]
     public void VisitLiteral_ShouldDoNothing()
     {
         _sut.VisitLiteral( ( SqlLiteralNode )SqlNode.Literal( 10 ) );
-        _sut.GetErrors().Should().BeEmpty();
+        _sut.GetErrors().TestEmpty().Go();
     }
 
     [Fact]
@@ -50,7 +50,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "b" );
         _sut.VisitParameter( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -62,7 +62,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
 
         _sut.VisitColumn( node );
 
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -74,7 +74,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
 
         _sut.VisitColumnBuilder( node );
 
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -88,7 +88,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
 
         _sut.VisitQueryDataField( node );
 
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -102,7 +102,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
 
         _sut.VisitViewDataField( node );
 
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -110,7 +110,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).Negate();
         _sut.VisitNegate( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -118,7 +118,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ) + SqlNode.Parameter( "b" );
         _sut.VisitAdd( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -126,7 +126,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).Concat( SqlNode.Parameter( "b" ) );
         _sut.VisitConcat( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -134,7 +134,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ) - SqlNode.Parameter( "b" );
         _sut.VisitSubtract( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -142,7 +142,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ) * SqlNode.Parameter( "b" );
         _sut.VisitMultiply( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -150,7 +150,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ) / SqlNode.Parameter( "b" );
         _sut.VisitDivide( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -158,7 +158,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ) % SqlNode.Parameter( "b" );
         _sut.VisitModulo( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -166,7 +166,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).BitwiseNot();
         _sut.VisitBitwiseNot( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -174,7 +174,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ) & SqlNode.Parameter( "b" );
         _sut.VisitBitwiseAnd( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -182,7 +182,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ) | SqlNode.Parameter( "b" );
         _sut.VisitBitwiseOr( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -190,7 +190,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ) ^ SqlNode.Parameter( "b" );
         _sut.VisitBitwiseXor( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -198,7 +198,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).BitwiseLeftShift( SqlNode.Parameter( "b" ) );
         _sut.VisitBitwiseLeftShift( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -206,7 +206,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).BitwiseRightShift( SqlNode.Parameter( "b" ) );
         _sut.VisitBitwiseRightShift( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -214,7 +214,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.SwitchCase( SqlNode.RawCondition( "foo.a < @a", SqlNode.Parameter( "a" ) ), SqlNode.Parameter( "b" ) );
         _sut.VisitSwitchCase( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -230,7 +230,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
 
         _sut.VisitSwitch( node );
 
-        _sut.GetErrors().Should().HaveCount( 4 );
+        _sut.GetErrors().Count.TestEquals( 4 ).Go();
     }
 
     [Fact]
@@ -238,7 +238,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Functions.Named( SqlSchemaObjectName.Create( "foo" ), SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ) );
         _sut.VisitNamedFunction( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -246,42 +246,42 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).Coalesce( SqlNode.Parameter( "b" ) );
         _sut.VisitCoalesceFunction( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
     public void VisitCurrentDateFunction_ShouldDoNothing()
     {
         _sut.VisitCurrentDateFunction( SqlNode.Functions.CurrentDate() );
-        _sut.GetErrors().Should().BeEmpty();
+        _sut.GetErrors().TestEmpty().Go();
     }
 
     [Fact]
     public void VisitCurrentTimeFunction_ShouldDoNothing()
     {
         _sut.VisitCurrentTimeFunction( SqlNode.Functions.CurrentTime() );
-        _sut.GetErrors().Should().BeEmpty();
+        _sut.GetErrors().TestEmpty().Go();
     }
 
     [Fact]
     public void VisitCurrentDateTimeFunction_ShouldDoNothing()
     {
         _sut.VisitCurrentDateTimeFunction( SqlNode.Functions.CurrentDateTime() );
-        _sut.GetErrors().Should().BeEmpty();
+        _sut.GetErrors().TestEmpty().Go();
     }
 
     [Fact]
     public void VisitCurrentUtcDateTimeFunction_ShouldDoNothing()
     {
         _sut.VisitCurrentUtcDateTimeFunction( SqlNode.Functions.CurrentUtcDateTime() );
-        _sut.GetErrors().Should().BeEmpty();
+        _sut.GetErrors().TestEmpty().Go();
     }
 
     [Fact]
     public void VisitCurrentTimestampFunction_ShouldDoNothing()
     {
         _sut.VisitCurrentTimestampFunction( SqlNode.Functions.CurrentTimestamp() );
-        _sut.GetErrors().Should().BeEmpty();
+        _sut.GetErrors().TestEmpty().Go();
     }
 
     [Fact]
@@ -289,7 +289,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).ExtractDate();
         _sut.VisitExtractDateFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -297,7 +297,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).ExtractTimeOfDay();
         _sut.VisitExtractTimeOfDayFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -305,7 +305,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).ExtractDayOfYear();
         _sut.VisitExtractDayFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -313,7 +313,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).ExtractTemporalUnit( SqlTemporalUnit.Year );
         _sut.VisitExtractTemporalUnitFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -321,7 +321,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).TemporalAdd( SqlNode.Parameter( "b" ), SqlTemporalUnit.Year );
         _sut.VisitTemporalAddFunction( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -329,14 +329,14 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).TemporalDiff( SqlNode.Parameter( "b" ), SqlTemporalUnit.Year );
         _sut.VisitTemporalDiffFunction( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
     public void VisitNewGuidFunction_ShouldDoNothing()
     {
         _sut.VisitNewGuidFunction( SqlNode.Functions.NewGuid() );
-        _sut.GetErrors().Should().BeEmpty();
+        _sut.GetErrors().TestEmpty().Go();
     }
 
     [Fact]
@@ -344,7 +344,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).Length();
         _sut.VisitLengthFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -352,7 +352,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).ByteLength();
         _sut.VisitByteLengthFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -360,7 +360,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).ToLower();
         _sut.VisitToLowerFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -368,7 +368,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).ToUpper();
         _sut.VisitToUpperFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -376,7 +376,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).TrimStart( SqlNode.Parameter( "b" ) );
         _sut.VisitTrimStartFunction( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -384,7 +384,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).TrimEnd( SqlNode.Parameter( "b" ) );
         _sut.VisitTrimEndFunction( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -392,7 +392,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).Trim( SqlNode.Parameter( "b" ) );
         _sut.VisitTrimFunction( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -400,7 +400,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).Substring( SqlNode.Parameter( "b" ), SqlNode.Parameter( "c" ) );
         _sut.VisitSubstringFunction( node );
-        _sut.GetErrors().Should().HaveCount( 3 );
+        _sut.GetErrors().Count.TestEquals( 3 ).Go();
     }
 
     [Fact]
@@ -408,7 +408,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).Replace( SqlNode.Parameter( "b" ), SqlNode.Parameter( "c" ) );
         _sut.VisitReplaceFunction( node );
-        _sut.GetErrors().Should().HaveCount( 3 );
+        _sut.GetErrors().Count.TestEquals( 3 ).Go();
     }
 
     [Fact]
@@ -416,7 +416,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).Reverse();
         _sut.VisitReverseFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -424,7 +424,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).IndexOf( SqlNode.Parameter( "b" ) );
         _sut.VisitIndexOfFunction( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -432,7 +432,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).LastIndexOf( SqlNode.Parameter( "b" ) );
         _sut.VisitLastIndexOfFunction( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -440,7 +440,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).Sign();
         _sut.VisitSignFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -448,7 +448,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).Abs();
         _sut.VisitAbsFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -456,7 +456,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).Ceiling();
         _sut.VisitCeilingFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -464,7 +464,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).Floor();
         _sut.VisitFloorFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -472,7 +472,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).Truncate( SqlNode.Parameter( "b" ) );
         _sut.VisitTruncateFunction( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -480,7 +480,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).Round( SqlNode.Parameter( "b" ) );
         _sut.VisitRoundFunction( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -488,7 +488,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).Power( SqlNode.Parameter( "b" ) );
         _sut.VisitPowerFunction( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -496,7 +496,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).SquareRoot();
         _sut.VisitSquareRootFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -504,7 +504,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).Min( SqlNode.Parameter( "b" ) );
         _sut.VisitMinFunction( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -512,7 +512,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).Max( SqlNode.Parameter( "b" ) );
         _sut.VisitMaxFunction( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -520,7 +520,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = new FunctionMock( SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ) );
         _sut.VisitCustomFunction( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -533,7 +533,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
 
         _sut.VisitNamedAggregateFunction( node );
 
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -541,7 +541,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).Min();
         _sut.VisitMinAggregateFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -549,7 +549,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).Max();
         _sut.VisitMaxAggregateFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -557,7 +557,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).Average();
         _sut.VisitAverageAggregateFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -565,7 +565,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).Sum();
         _sut.VisitSumAggregateFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -573,7 +573,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).Count();
         _sut.VisitCountAggregateFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -581,7 +581,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).StringConcat( SqlNode.Parameter( "b" ) );
         _sut.VisitStringConcatAggregateFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -589,7 +589,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.WindowFunctions.RowNumber();
         _sut.VisitRowNumberWindowFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -597,7 +597,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.WindowFunctions.Rank();
         _sut.VisitRankWindowFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -605,7 +605,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.WindowFunctions.DenseRank();
         _sut.VisitDenseRankWindowFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -613,7 +613,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.WindowFunctions.CumulativeDistribution();
         _sut.VisitCumulativeDistributionWindowFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -621,7 +621,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).NTile();
         _sut.VisitNTileWindowFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -629,7 +629,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).Lag();
         _sut.VisitLagWindowFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -637,7 +637,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).Lead();
         _sut.VisitLeadWindowFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -645,7 +645,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).FirstValue();
         _sut.VisitFirstValueWindowFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -653,7 +653,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).LastValue();
         _sut.VisitLastValueWindowFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -661,7 +661,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).NthValue( SqlNode.Literal( 5 ) );
         _sut.VisitNthValueWindowFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -673,7 +673,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
 
         _sut.VisitCustomAggregateFunction( node );
 
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -681,21 +681,21 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.RawCondition( "@a > @b", SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ) );
         _sut.VisitRawCondition( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
     public void VisitTrue_ShouldDoNothing()
     {
         _sut.VisitTrue( SqlNode.True() );
-        _sut.GetErrors().Should().BeEmpty();
+        _sut.GetErrors().TestEmpty().Go();
     }
 
     [Fact]
     public void VisitFalse_ShouldDoNothing()
     {
         _sut.VisitFalse( SqlNode.False() );
-        _sut.GetErrors().Should().BeEmpty();
+        _sut.GetErrors().TestEmpty().Go();
     }
 
     [Fact]
@@ -703,7 +703,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).IsEqualTo( SqlNode.Parameter( "b" ) );
         _sut.VisitEqualTo( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -711,7 +711,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).IsNotEqualTo( SqlNode.Parameter( "b" ) );
         _sut.VisitNotEqualTo( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -719,7 +719,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).IsGreaterThan( SqlNode.Parameter( "b" ) );
         _sut.VisitGreaterThan( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -727,7 +727,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).IsLessThan( SqlNode.Parameter( "b" ) );
         _sut.VisitLessThan( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -735,7 +735,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).IsGreaterThanOrEqualTo( SqlNode.Parameter( "b" ) );
         _sut.VisitGreaterThanOrEqualTo( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -743,7 +743,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).IsLessThanOrEqualTo( SqlNode.Parameter( "b" ) );
         _sut.VisitLessThanOrEqualTo( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -754,7 +754,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
 
         _sut.VisitAnd( node );
 
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -765,7 +765,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
 
         _sut.VisitOr( node );
 
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -773,7 +773,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.RawCondition( "foo.a > @a", SqlNode.Parameter( "a" ) ).ToValue();
         _sut.VisitConditionValue( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -781,7 +781,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).IsBetween( SqlNode.Parameter( "b" ), SqlNode.Parameter( "c" ) );
         _sut.VisitBetween( node );
-        _sut.GetErrors().Should().HaveCount( 3 );
+        _sut.GetErrors().Count.TestEquals( 3 ).Go();
     }
 
     [Fact]
@@ -789,7 +789,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.RawQuery( "SELECT * FROM foo WHERE foo.a > 5" ).Exists();
         _sut.VisitExists( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -797,7 +797,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).Like( SqlNode.Parameter( "b" ), SqlNode.Parameter( "c" ) );
         _sut.VisitLike( node );
-        _sut.GetErrors().Should().HaveCount( 3 );
+        _sut.GetErrors().Count.TestEquals( 3 ).Go();
     }
 
     [Fact]
@@ -805,7 +805,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = ( SqlInConditionNode )SqlNode.Parameter( "a" ).In( SqlNode.Parameter( "b" ), SqlNode.Parameter( "c" ) );
         _sut.VisitIn( node );
-        _sut.GetErrors().Should().HaveCount( 3 );
+        _sut.GetErrors().Count.TestEquals( 3 ).Go();
     }
 
     [Fact]
@@ -813,7 +813,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).InQuery( SqlNode.RawQuery( "SELECT foo.b FROM foo WHERE foo.b > 5" ) );
         _sut.VisitInQuery( node );
-        _sut.GetErrors().Should().HaveCount( 2 );
+        _sut.GetErrors().Count.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -821,7 +821,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.RawRecordSet( "foo" );
         _sut.VisitRawRecordSet( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -829,7 +829,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Functions.Named( SqlSchemaObjectName.Create( "foo" ) ).AsSet( "bar" );
         _sut.VisitNamedFunctionRecordSet( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -841,7 +841,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
 
         _sut.VisitTable( node );
 
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -852,7 +852,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
 
         _sut.VisitTableBuilder( node );
 
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -863,7 +863,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
 
         _sut.VisitView( node );
 
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -874,7 +874,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
 
         _sut.VisitViewBuilder( node );
 
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -882,7 +882,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.RawQuery( "SELECT * FROM foo WHERE foo.a > 5" ).AsSet( "bar" );
         _sut.VisitQueryRecordSet( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -890,7 +890,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.RawQuery( "SELECT * FROM foo" ).ToCte( "bar" ).RecordSet;
         _sut.VisitCommonTableExpressionRecordSet( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -898,7 +898,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.CreateTable( SqlRecordSetInfo.Create( "foo" ), new[] { SqlNode.Column<int>( "a" ) } ).AsSet( "bar" );
         _sut.VisitNewTable( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -906,7 +906,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.CreateView( SqlRecordSetInfo.Create( "foo" ), SqlNode.RawQuery( "SELECT * FROM qux" ) ).AsSet( "bar" );
         _sut.VisitNewView( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -914,7 +914,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.RawQuery( "SELECT * FROM foo WHERE foo.a > @a" ).AsSet( "bar" ).LeftOn( SqlNode.RawCondition( "qux.x = 5" ) );
         _sut.VisitJoinOn( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -922,7 +922,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.DummyDataSource();
         _sut.VisitDataSource( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -930,7 +930,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.RawExpression( "foo.a + 5" ).As( "bar" );
         _sut.VisitSelectField( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -944,7 +944,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
 
         _sut.VisitSelectCompoundField( node );
 
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -952,7 +952,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.RawRecordSet( "foo" ).GetAll();
         _sut.VisitSelectRecordSet( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -960,7 +960,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.RawRecordSet( "foo" ).ToDataSource().GetAll();
         _sut.VisitSelectAll( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -968,7 +968,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.RawExpression( "foo.a + 5" ).As( "bar" ).ToExpression();
         _sut.VisitSelectExpression( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -976,7 +976,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.RawQuery( "SELECT * FROM foo" );
         _sut.VisitRawQuery( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -984,7 +984,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.GetAll() } );
         _sut.VisitDataSourceQuery( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -997,7 +997,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
 
         _sut.VisitCompoundQuery( node );
 
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -1005,14 +1005,14 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.RawQuery( "SELECT * FROM foo" ).ToUnionAll();
         _sut.VisitCompoundQueryComponent( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
     public void VisitDistinctTrait_ShouldRegisterError()
     {
         _sut.VisitDistinctTrait( SqlNode.DistinctTrait() );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -1020,7 +1020,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.FilterTrait( SqlNode.RawCondition( "foo.a > 5" ), isConjunction: true );
         _sut.VisitFilterTrait( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -1028,7 +1028,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.AggregationTrait( SqlNode.Literal( 10 ), SqlNode.Literal( 20 ) );
         _sut.VisitAggregationTrait( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -1036,7 +1036,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.AggregationFilterTrait( SqlNode.RawCondition( "foo.a > 5" ), isConjunction: true );
         _sut.VisitAggregationFilterTrait( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -1044,7 +1044,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.SortTrait( SqlNode.Literal( 10 ).Asc(), SqlNode.Literal( 20 ).Desc() );
         _sut.VisitSortTrait( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -1052,7 +1052,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.LimitTrait( SqlNode.Literal( 10 ) );
         _sut.VisitLimitTrait( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -1060,7 +1060,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.OffsetTrait( SqlNode.Literal( 10 ) );
         _sut.VisitOffsetTrait( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -1072,7 +1072,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
 
         _sut.VisitCommonTableExpressionTrait( node );
 
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -1084,7 +1084,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
 
         _sut.VisitWindowDefinitionTrait( node );
 
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -1095,7 +1095,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
 
         _sut.VisitWindowTrait( node );
 
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -1103,7 +1103,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Literal( 10 ).Asc();
         _sut.VisitOrderBy( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -1111,7 +1111,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.RawQuery( "SELECT * FROM foo" ).ToCte( "bar" );
         _sut.VisitCommonTableExpression( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -1119,7 +1119,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.WindowDefinition( "foo", Array.Empty<SqlExpressionNode>(), Array.Empty<SqlOrderByNode>() );
         _sut.VisitWindowDefinition( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -1127,7 +1127,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.RowsWindowFrame( SqlWindowFrameBoundary.CurrentRow, SqlWindowFrameBoundary.CurrentRow );
         _sut.VisitWindowFrame( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -1135,7 +1135,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Parameter( "a" ).CastTo<int>();
         _sut.VisitTypeCast( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -1143,7 +1143,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.Values( SqlNode.Literal( 10 ) );
         _sut.VisitValues( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -1151,7 +1151,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.RawStatement( "INSERT INTO foo (a, b) VALUES (1, 2)" );
         _sut.VisitRawStatement( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -1164,7 +1164,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
 
         _sut.VisitInsertInto( node );
 
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -1176,7 +1176,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
 
         _sut.VisitUpdate( node );
 
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -1190,42 +1190,42 @@ public class SqlConstantExpressionValidatorTests : TestsBase
 
         _sut.VisitUpsert( node );
 
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
     public void VisitValueAssignment_ShouldRegisterError()
     {
         _sut.VisitValueAssignment( SqlNode.ValueAssignment( SqlNode.RawRecordSet( "foo" ).GetField( "a" ), SqlNode.Literal( 10 ) ) );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
     public void VisitDeleteFrom_ShouldRegisterError()
     {
         _sut.VisitDeleteFrom( SqlNode.DeleteFrom( SqlNode.RawRecordSet( "foo" ).ToDataSource() ) );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
     public void VisitTruncate_ShouldRegisterError()
     {
         _sut.VisitTruncate( SqlNode.Truncate( SqlNode.RawRecordSet( "foo" ) ) );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
     public void VisitColumnDefinition_ShouldRegisterError()
     {
         _sut.VisitColumnDefinition( SqlNode.Column<int>( "a" ) );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
     public void VisitPrimaryKeyDefinition_ShouldRegisterError()
     {
         _sut.VisitPrimaryKeyDefinition( SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), ReadOnlyArray<SqlOrderByNode>.Empty ) );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -1238,28 +1238,28 @@ public class SqlConstantExpressionValidatorTests : TestsBase
                 SqlNode.RawRecordSet( "foo" ),
                 Array.Empty<SqlDataFieldNode>() ) );
 
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
     public void VisitCheckDefinition_ShouldRegisterError()
     {
         _sut.VisitCheckDefinition( SqlNode.Check( SqlSchemaObjectName.Create( "CHK" ), SqlNode.True() ) );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
     public void VisitCreateTable_ShouldRegisterError()
     {
         _sut.VisitCreateTable( SqlNode.CreateTable( SqlRecordSetInfo.Create( "foo" ), new[] { SqlNode.Column<int>( "a" ) } ) );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
     public void VisitCreateView_ShouldRegisterError()
     {
         _sut.VisitCreateView( SqlNode.CreateView( SqlRecordSetInfo.Create( "foo" ), SqlNode.RawQuery( "SELECT * FROM bar" ) ) );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -1272,91 +1272,91 @@ public class SqlConstantExpressionValidatorTests : TestsBase
                 SqlNode.RawRecordSet( "bar" ),
                 Array.Empty<SqlOrderByNode>() ) );
 
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
     public void VisitRenameTable_ShouldRegisterError()
     {
         _sut.VisitRenameTable( SqlNode.RenameTable( SqlRecordSetInfo.Create( "foo" ), SqlSchemaObjectName.Create( "bar" ) ) );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
     public void VisitRenameColumn_ShouldRegisterError()
     {
         _sut.VisitRenameColumn( SqlNode.RenameColumn( SqlRecordSetInfo.Create( "foo" ), "bar", "qux" ) );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
     public void VisitAddColumn_ShouldRegisterError()
     {
         _sut.VisitAddColumn( SqlNode.AddColumn( SqlRecordSetInfo.Create( "foo" ), SqlNode.Column<int>( "a" ) ) );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
     public void VisitDropColumn_ShouldRegisterError()
     {
         _sut.VisitDropColumn( SqlNode.DropColumn( SqlRecordSetInfo.Create( "foo" ), "bar" ) );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
     public void VisitDropTable_ShouldRegisterError()
     {
         _sut.VisitDropTable( SqlNode.DropTable( SqlRecordSetInfo.Create( "foo" ) ) );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
     public void VisitDropView_ShouldRegisterError()
     {
         _sut.VisitDropView( SqlNode.DropView( SqlRecordSetInfo.Create( "foo" ) ) );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
     public void VisitDropIndex_ShouldRegisterError()
     {
         _sut.VisitDropIndex( SqlNode.DropIndex( SqlRecordSetInfo.Create( "bar" ), SqlSchemaObjectName.Create( "foo" ) ) );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
     public void VisitStatementBatch_ShouldRegisterError()
     {
         _sut.VisitStatementBatch( SqlNode.Batch() );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
     public void VisitBeginTransaction_ShouldRegisterError()
     {
         _sut.VisitBeginTransaction( SqlNode.BeginTransaction( IsolationLevel.Serializable ) );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
     public void VisitCommitTransaction_ShouldRegisterError()
     {
         _sut.VisitCommitTransaction( SqlNode.CommitTransaction() );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
     public void VisitRollbackTransaction_ShouldRegisterError()
     {
         _sut.VisitRollbackTransaction( SqlNode.RollbackTransaction() );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
     public void VisitCustom_ShouldDoNothing()
     {
         _sut.VisitCustom( new NodeMock() );
-        _sut.GetErrors().Should().BeEmpty();
+        _sut.GetErrors().TestEmpty().Go();
     }
 
     private sealed class FunctionMock : SqlFunctionExpressionNode

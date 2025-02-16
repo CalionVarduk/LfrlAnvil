@@ -4,7 +4,6 @@ using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.ObjectsTests.BuildersTests;
@@ -20,25 +19,22 @@ public partial class SqlDatabaseBuilderTests
 
             var result = sut.Create( "foo" );
 
-            using ( new AssertionScope() )
-            {
-                result.Database.Should().BeSameAs( sut.Database );
-                result.Type.Should().Be( SqlObjectType.Schema );
-                result.Name.Should().Be( "foo" );
-                result.Objects.Should().BeEmpty();
-                result.Objects.Schema.Should().BeSameAs( result );
-                result.ReferencingObjects.Should().BeEmpty();
-
-                (( ISqlSchemaBuilder )result).Objects.Should().BeSameAs( result.Objects );
-                (( ISqlObjectBuilderCollection )result.Objects).Schema.Should().BeSameAs( result.Objects.Schema );
-                (( ISqlObjectBuilder )result).Database.Should().BeSameAs( result.Database );
-                (( ISqlObjectBuilder )result).ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo( result.ReferencingObjects.UnsafeReinterpretAs<ISqlObjectBuilder>() );
-
-                sut.Count.Should().Be( 2 );
-                sut.Should().BeEquivalentTo( sut.Database.Schemas.Default, result );
-                sut.TryGet( result.Name ).Should().BeSameAs( result );
-            }
+            Assertion.All(
+                    result.Database.TestRefEquals( sut.Database ),
+                    result.Type.TestEquals( SqlObjectType.Schema ),
+                    result.Name.TestEquals( "foo" ),
+                    result.Objects.TestEmpty(),
+                    result.Objects.Schema.TestRefEquals( result ),
+                    result.ReferencingObjects.TestEmpty(),
+                    (( ISqlSchemaBuilder )result).Objects.TestRefEquals( result.Objects ),
+                    (( ISqlObjectBuilderCollection )result.Objects).Schema.TestRefEquals( result.Objects.Schema ),
+                    (( ISqlObjectBuilder )result).Database.TestRefEquals( result.Database ),
+                    (( ISqlObjectBuilder )result).ReferencingObjects.TestSequence(
+                        result.ReferencingObjects.UnsafeReinterpretAs<ISqlObjectBuilder>() ),
+                    sut.Count.TestEquals( 2 ),
+                    sut.TestSetEqual( [ sut.Database.Schemas.Default, result ] ),
+                    sut.TryGet( result.Name ).TestRefEquals( result ) )
+                .Go();
         }
 
         [Fact]
@@ -48,9 +44,11 @@ public partial class SqlDatabaseBuilderTests
 
             var action = Lambda.Of( () => sut.Create( sut.Database.Schemas.Default.Name ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Theory]
@@ -64,9 +62,11 @@ public partial class SqlDatabaseBuilderTests
 
             var action = Lambda.Of( () => sut.Create( name ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -76,25 +76,22 @@ public partial class SqlDatabaseBuilderTests
 
             var result = sut.GetOrCreate( "foo" );
 
-            using ( new AssertionScope() )
-            {
-                result.Database.Should().BeSameAs( sut.Database );
-                result.Type.Should().Be( SqlObjectType.Schema );
-                result.Name.Should().Be( "foo" );
-                result.Objects.Should().BeEmpty();
-                result.Objects.Schema.Should().BeSameAs( result );
-                result.ReferencingObjects.Should().BeEmpty();
-
-                (( ISqlSchemaBuilder )result).Objects.Should().BeSameAs( result.Objects );
-                (( ISqlObjectBuilderCollection )result.Objects).Schema.Should().BeSameAs( result.Objects.Schema );
-                (( ISqlObjectBuilder )result).Database.Should().BeSameAs( result.Database );
-                (( ISqlObjectBuilder )result).ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo( result.ReferencingObjects.UnsafeReinterpretAs<ISqlObjectBuilder>() );
-
-                sut.Count.Should().Be( 2 );
-                sut.Should().BeEquivalentTo( sut.Database.Schemas.Default, result );
-                sut.TryGet( result.Name ).Should().BeSameAs( result );
-            }
+            Assertion.All(
+                    result.Database.TestRefEquals( sut.Database ),
+                    result.Type.TestEquals( SqlObjectType.Schema ),
+                    result.Name.TestEquals( "foo" ),
+                    result.Objects.TestEmpty(),
+                    result.Objects.Schema.TestRefEquals( result ),
+                    result.ReferencingObjects.TestEmpty(),
+                    (( ISqlSchemaBuilder )result).Objects.TestRefEquals( result.Objects ),
+                    (( ISqlObjectBuilderCollection )result.Objects).Schema.TestRefEquals( result.Objects.Schema ),
+                    (( ISqlObjectBuilder )result).Database.TestRefEquals( result.Database ),
+                    (( ISqlObjectBuilder )result).ReferencingObjects.TestSequence(
+                        result.ReferencingObjects.UnsafeReinterpretAs<ISqlObjectBuilder>() ),
+                    sut.Count.TestEquals( 2 ),
+                    sut.TestSetEqual( [ sut.Database.Schemas.Default, result ] ),
+                    sut.TryGet( result.Name ).TestRefEquals( result ) )
+                .Go();
         }
 
         [Fact]
@@ -105,11 +102,10 @@ public partial class SqlDatabaseBuilderTests
 
             var result = sut.GetOrCreate( expected.Name );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeSameAs( expected );
-                sut.Count.Should().Be( 1 );
-            }
+            Assertion.All(
+                    result.TestRefEquals( expected ),
+                    sut.Count.TestEquals( 1 ) )
+                .Go();
         }
 
         [Theory]
@@ -123,9 +119,11 @@ public partial class SqlDatabaseBuilderTests
 
             var action = Lambda.Of( () => sut.GetOrCreate( name ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Theory]
@@ -139,7 +137,7 @@ public partial class SqlDatabaseBuilderTests
 
             var result = sut.Contains( name );
 
-            result.Should().Be( expected );
+            result.TestEquals( expected ).Go();
         }
 
         [Fact]
@@ -150,7 +148,7 @@ public partial class SqlDatabaseBuilderTests
 
             var result = (( ISqlSchemaBuilderCollection )sut).Get( "foo" );
 
-            result.Should().BeSameAs( expected );
+            result.TestRefEquals( expected ).Go();
         }
 
         [Fact]
@@ -158,7 +156,7 @@ public partial class SqlDatabaseBuilderTests
         {
             var sut = SqlDatabaseBuilderMock.Create().Schemas;
             var action = Lambda.Of( () => (( ISqlSchemaBuilderCollection )sut).Get( "foo" ) );
-            action.Should().ThrowExactly<KeyNotFoundException>();
+            action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
         }
 
         [Fact]
@@ -169,7 +167,7 @@ public partial class SqlDatabaseBuilderTests
 
             var result = (( ISqlSchemaBuilderCollection )sut).TryGet( "foo" );
 
-            result.Should().BeSameAs( expected );
+            result.TestRefEquals( expected ).Go();
         }
 
         [Fact]
@@ -177,7 +175,7 @@ public partial class SqlDatabaseBuilderTests
         {
             var sut = SqlDatabaseBuilderMock.Create().Schemas;
             var result = (( ISqlSchemaBuilderCollection )sut).TryGet( "foo" );
-            result.Should().BeNull();
+            result.TestNull().Go();
         }
 
         [Fact]
@@ -199,42 +197,39 @@ public partial class SqlDatabaseBuilderTests
 
             var result = sut.Remove( schema.Name );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeTrue();
-                sut.TryGet( schema.Name ).Should().BeNull();
-
-                schema.IsRemoved.Should().BeTrue();
-                schema.ReferencingObjects.Should().BeEmpty();
-                schema.Objects.Should().BeEmpty();
-                c1.IsRemoved.Should().BeTrue();
-                c1.ReferencingObjects.Should().BeEmpty();
-                c2.IsRemoved.Should().BeTrue();
-                c2.ReferencingObjects.Should().BeEmpty();
-                pk.IsRemoved.Should().BeTrue();
-                pk.ReferencingObjects.Should().BeEmpty();
-                pk.Index.IsRemoved.Should().BeTrue();
-                pk.Index.ReferencingObjects.Should().BeEmpty();
-                pk.Index.Columns.Expressions.Should().BeEmpty();
-                pk.Index.PrimaryKey.Should().BeNull();
-                ix.IsRemoved.Should().BeTrue();
-                ix.ReferencingObjects.Should().BeEmpty();
-                ix.Columns.Expressions.Should().BeEmpty();
-                selfFk.IsRemoved.Should().BeTrue();
-                selfFk.ReferencingObjects.Should().BeEmpty();
-                externalFk.IsRemoved.Should().BeTrue();
-                externalFk.ReferencingObjects.Should().BeEmpty();
-                chk.IsRemoved.Should().BeTrue();
-                chk.ReferencingObjects.Should().BeEmpty();
-                chk.ReferencedColumns.Should().BeEmpty();
-                view.IsRemoved.Should().BeTrue();
-                view.ReferencingObjects.Should().BeEmpty();
-                view.ReferencedObjects.Should().BeEmpty();
-
-                otherPk.Index.ReferencingObjects.Should().BeEmpty();
-                otherTable.ReferencingObjects.Should().BeEmpty();
-                table.ReferencingObjects.Should().BeEmpty();
-            }
+            Assertion.All(
+                    result.TestTrue(),
+                    sut.TryGet( schema.Name ).TestNull(),
+                    schema.IsRemoved.TestTrue(),
+                    schema.ReferencingObjects.TestEmpty(),
+                    schema.Objects.TestEmpty(),
+                    c1.IsRemoved.TestTrue(),
+                    c1.ReferencingObjects.TestEmpty(),
+                    c2.IsRemoved.TestTrue(),
+                    c2.ReferencingObjects.TestEmpty(),
+                    pk.IsRemoved.TestTrue(),
+                    pk.ReferencingObjects.TestEmpty(),
+                    pk.Index.IsRemoved.TestTrue(),
+                    pk.Index.ReferencingObjects.TestEmpty(),
+                    pk.Index.Columns.Expressions.TestEmpty(),
+                    pk.Index.PrimaryKey.TestNull(),
+                    ix.IsRemoved.TestTrue(),
+                    ix.ReferencingObjects.TestEmpty(),
+                    ix.Columns.Expressions.TestEmpty(),
+                    selfFk.IsRemoved.TestTrue(),
+                    selfFk.ReferencingObjects.TestEmpty(),
+                    externalFk.IsRemoved.TestTrue(),
+                    externalFk.ReferencingObjects.TestEmpty(),
+                    chk.IsRemoved.TestTrue(),
+                    chk.ReferencingObjects.TestEmpty(),
+                    chk.ReferencedColumns.TestEmpty(),
+                    view.IsRemoved.TestTrue(),
+                    view.ReferencingObjects.TestEmpty(),
+                    view.ReferencedObjects.TestEmpty(),
+                    otherPk.Index.ReferencingObjects.TestEmpty(),
+                    otherTable.ReferencingObjects.TestEmpty(),
+                    table.ReferencingObjects.TestEmpty() )
+                .Go();
         }
 
         [Fact]
@@ -242,7 +237,7 @@ public partial class SqlDatabaseBuilderTests
         {
             var sut = SqlDatabaseBuilderMock.Create().Schemas;
             var result = sut.Remove( "foo" );
-            result.Should().BeFalse();
+            result.TestFalse().Go();
         }
 
         [Fact]
@@ -252,13 +247,12 @@ public partial class SqlDatabaseBuilderTests
 
             var result = sut.Remove( sut.Database.Schemas.Default.Name );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeFalse();
-                sut.Database.Schemas.Default.IsRemoved.Should().BeFalse();
-                sut.Count.Should().Be( 1 );
-                sut.TryGet( sut.Database.Schemas.Default.Name ).Should().BeSameAs( sut.Database.Schemas.Default );
-            }
+            Assertion.All(
+                    result.TestFalse(),
+                    sut.Database.Schemas.Default.IsRemoved.TestFalse(),
+                    sut.Count.TestEquals( 1 ),
+                    sut.TryGet( sut.Database.Schemas.Default.Name ).TestRefEquals( sut.Database.Schemas.Default ) )
+                .Go();
         }
 
         [Fact]
@@ -275,13 +269,12 @@ public partial class SqlDatabaseBuilderTests
 
             var result = sut.Remove( schema.Name );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeFalse();
-                schema.IsRemoved.Should().BeFalse();
-                sut.Count.Should().Be( 2 );
-                sut.TryGet( schema.Name ).Should().BeSameAs( schema );
-            }
+            Assertion.All(
+                    result.TestFalse(),
+                    schema.IsRemoved.TestFalse(),
+                    sut.Count.TestEquals( 2 ),
+                    sut.TryGet( schema.Name ).TestRefEquals( schema ) )
+                .Go();
         }
 
         [Fact]
@@ -296,13 +289,12 @@ public partial class SqlDatabaseBuilderTests
 
             var result = sut.Remove( schema.Name );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeFalse();
-                schema.IsRemoved.Should().BeFalse();
-                sut.Count.Should().Be( 2 );
-                sut.TryGet( schema.Name ).Should().BeSameAs( schema );
-            }
+            Assertion.All(
+                    result.TestFalse(),
+                    schema.IsRemoved.TestFalse(),
+                    sut.Count.TestEquals( 2 ),
+                    sut.TryGet( schema.Name ).TestRefEquals( schema ) )
+                .Go();
         }
 
         [Fact]
@@ -315,11 +307,10 @@ public partial class SqlDatabaseBuilderTests
             foreach ( var s in sut )
                 result.Add( s );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().HaveCount( 2 );
-                result.Should().BeEquivalentTo( sut.Default, schema );
-            }
+            Assertion.All(
+                    result.Count.TestEquals( 2 ),
+                    result.TestSetEqual( [ sut.Default, schema ] ) )
+                .Go();
         }
 
         [Fact]
@@ -329,19 +320,17 @@ public partial class SqlDatabaseBuilderTests
 
             var result = (( ISqlSchemaBuilderCollection )sut).Create( "foo" );
 
-            using ( new AssertionScope() )
-            {
-                result.Database.Should().BeSameAs( sut.Database );
-                result.Type.Should().Be( SqlObjectType.Schema );
-                result.Name.Should().Be( "foo" );
-                result.Objects.Should().BeEmpty();
-                result.Objects.Schema.Should().BeSameAs( result );
-                result.ReferencingObjects.Should().BeEmpty();
-
-                sut.Count.Should().Be( 2 );
-                sut.Should().BeEquivalentTo( sut.Database.Schemas.Default, result );
-                sut.TryGet( result.Name ).Should().BeSameAs( result );
-            }
+            Assertion.All(
+                    result.Database.TestRefEquals( sut.Database ),
+                    result.Type.TestEquals( SqlObjectType.Schema ),
+                    result.Name.TestEquals( "foo" ),
+                    result.Objects.TestEmpty(),
+                    result.Objects.Schema.TestRefEquals( result ),
+                    result.ReferencingObjects.TestEmpty(),
+                    sut.Count.TestEquals( 2 ),
+                    sut.TestSetEqual( [ sut.Database.Schemas.Default, result ] ),
+                    sut.TryGet( result.Name ).TestRefEquals( result ) )
+                .Go();
         }
 
         [Fact]
@@ -352,11 +341,10 @@ public partial class SqlDatabaseBuilderTests
 
             var result = (( ISqlSchemaBuilderCollection )sut).GetOrCreate( expected.Name );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeSameAs( expected );
-                sut.Count.Should().Be( 1 );
-            }
+            Assertion.All(
+                    result.TestRefEquals( expected ),
+                    sut.Count.TestEquals( 1 ) )
+                .Go();
         }
     }
 }

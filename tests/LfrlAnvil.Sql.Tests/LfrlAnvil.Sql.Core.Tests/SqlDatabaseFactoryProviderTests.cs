@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sql.Tests;
 
@@ -10,7 +9,7 @@ public class SqlDatabaseFactoryProviderTests : TestsBase
     public void Ctor_ShouldReturnEmptyProvider()
     {
         var sut = new SqlDatabaseFactoryProvider();
-        sut.SupportedDialects.Should().BeEmpty();
+        sut.SupportedDialects.TestEmpty().Go();
     }
 
     [Fact]
@@ -24,12 +23,11 @@ public class SqlDatabaseFactoryProviderTests : TestsBase
 
         var result = sut.RegisterFactory( factory );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.SupportedDialects.Should().BeSequentiallyEqualTo( dialect );
-            result.GetFor( dialect ).Should().BeSameAs( factory );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.SupportedDialects.TestSequence( [ dialect ] ),
+                result.GetFor( dialect ).TestRefEquals( factory ) )
+            .Go();
     }
 
     [Fact]
@@ -48,14 +46,13 @@ public class SqlDatabaseFactoryProviderTests : TestsBase
 
         var result = sut.RegisterFactory( factory );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.SupportedDialects.Should().HaveCount( 2 );
-            result.SupportedDialects.Should().BeEquivalentTo( otherDialect, dialect );
-            result.GetFor( dialect ).Should().BeSameAs( factory );
-            result.GetFor( otherDialect ).Should().BeSameAs( otherFactory );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.SupportedDialects.Count.TestEquals( 2 ),
+                result.SupportedDialects.TestSetEqual( [ otherDialect, dialect ] ),
+                result.GetFor( dialect ).TestRefEquals( factory ),
+                result.GetFor( otherDialect ).TestRefEquals( otherFactory ) )
+            .Go();
     }
 
     [Fact]
@@ -73,12 +70,11 @@ public class SqlDatabaseFactoryProviderTests : TestsBase
 
         var result = sut.RegisterFactory( factory );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.SupportedDialects.Should().BeSequentiallyEqualTo( dialect );
-            result.GetFor( dialect ).Should().BeSameAs( factory );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.SupportedDialects.TestSequence( [ dialect ] ),
+                result.GetFor( dialect ).TestRefEquals( factory ) )
+            .Go();
     }
 
     [Fact]
@@ -89,6 +85,6 @@ public class SqlDatabaseFactoryProviderTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetFor( dialect ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 }

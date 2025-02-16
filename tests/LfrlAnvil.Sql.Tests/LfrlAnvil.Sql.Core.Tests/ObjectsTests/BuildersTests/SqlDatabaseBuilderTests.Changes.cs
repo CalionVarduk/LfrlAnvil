@@ -8,7 +8,6 @@ using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Statements;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.ObjectsTests.BuildersTests;
@@ -28,15 +27,13 @@ public partial class SqlDatabaseBuilderTests
             var activeObject = sut.ActiveObject;
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeSameAs( sut );
-                sut.ActiveObject.Should().BeNull();
-                sut.ActiveObjectExistenceState.Should().Be( default( SqlObjectExistenceState ) );
-                activeObject.Should().BeNull();
-                actions.Should().HaveCount( 1 );
-                actions.ElementAtOrDefault( 0 ).Sql.Should().Be( "CREATE [Table] common.T;" );
-            }
+            Assertion.All(
+                    result.TestRefEquals( sut ),
+                    sut.ActiveObject.TestNull(),
+                    sut.ActiveObjectExistenceState.TestEquals( default ),
+                    activeObject.TestNull(),
+                    actions.Select( a => a.Sql ).TestSequence( [ "CREATE [Table] common.T;" ] ) )
+                .Go();
         }
 
         [Fact]
@@ -53,15 +50,13 @@ public partial class SqlDatabaseBuilderTests
             var activeObject = sut.ActiveObject;
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeSameAs( sut );
-                sut.ActiveObject.Should().BeNull();
-                sut.ActiveObjectExistenceState.Should().Be( default( SqlObjectExistenceState ) );
-                activeObject.Should().BeNull();
-                actions.Should().HaveCount( 1 );
-                actions.ElementAtOrDefault( 0 ).Sql.Should().Be( "REMOVE [Table] common.T;" );
-            }
+            Assertion.All(
+                    result.TestRefEquals( sut ),
+                    sut.ActiveObject.TestNull(),
+                    sut.ActiveObjectExistenceState.TestEquals( default ),
+                    activeObject.TestNull(),
+                    actions.Select( a => a.Sql ).TestSequence( [ "REMOVE [Table] common.T;" ] ) )
+                .Go();
         }
 
         [Fact]
@@ -78,21 +73,20 @@ public partial class SqlDatabaseBuilderTests
             var activeObject = sut.ActiveObject;
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeSameAs( sut );
-                sut.ActiveObject.Should().BeNull();
-                sut.ActiveObjectExistenceState.Should().Be( default( SqlObjectExistenceState ) );
-                activeObject.Should().BeNull();
-                actions.Should().HaveCount( 1 );
-                actions.ElementAtOrDefault( 0 )
-                    .Sql.Should()
-                    .Be(
-                        """
-                        ALTER [Table] common.U
-                          ALTER [Table] common.U ([1] : 'Name' (System.String) FROM T);
-                        """ );
-            }
+            Assertion.All(
+                    result.TestRefEquals( sut ),
+                    sut.ActiveObject.TestNull(),
+                    sut.ActiveObjectExistenceState.TestEquals( default ),
+                    activeObject.TestNull(),
+                    actions.Select( a => a.Sql )
+                        .TestSequence(
+                        [
+                            """
+                            ALTER [Table] common.U
+                              ALTER [Table] common.U ([1] : 'Name' (System.String) FROM T);
+                            """
+                        ] ) )
+                .Go();
         }
 
         [Fact]
@@ -105,12 +99,11 @@ public partial class SqlDatabaseBuilderTests
             var activeObject = sut.ActiveObject;
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeSameAs( sut );
-                activeObject.Should().BeNull();
-                actions.Should().BeEmpty();
-            }
+            Assertion.All(
+                    result.TestRefEquals( sut ),
+                    activeObject.TestNull(),
+                    actions.TestEmpty() )
+                .Go();
         }
 
         [Fact]
@@ -122,13 +115,11 @@ public partial class SqlDatabaseBuilderTests
             sut.Database.Schemas.Default.Objects.CreateTable( "T" );
             var result = sut.GetPendingActions().ToArray();
 
-            using ( new AssertionScope() )
-            {
-                sut.ActiveObject.Should().BeNull();
-                sut.ActiveObjectExistenceState.Should().Be( default( SqlObjectExistenceState ) );
-                result.Should().HaveCount( previous.Length + 1 );
-                result.ElementAtOrDefault( result.Length - 1 ).Sql.Should().Be( "CREATE [Table] common.T;" );
-            }
+            Assertion.All(
+                    sut.ActiveObject.TestNull(),
+                    sut.ActiveObjectExistenceState.TestEquals( default ),
+                    result.Skip( previous.Length ).Select( a => a.Sql ).TestSequence( [ "CREATE [Table] common.T;" ] ) )
+                .Go();
         }
 
         [Fact]
@@ -139,7 +130,7 @@ public partial class SqlDatabaseBuilderTests
 
             var result = sut.GetPendingActions().ToArray();
 
-            result.Should().BeSequentiallyEqualTo( expected );
+            result.TestSequence( expected ).Go();
         }
 
         [Theory]
@@ -157,16 +148,17 @@ public partial class SqlDatabaseBuilderTests
             var result = (( ISqlDatabaseChangeTracker )sut).AddAction( actionCallback, setupCallback );
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeSameAs( sut );
-                sut.ActiveObject.Should().BeNull();
-                sut.ActiveObjectExistenceState.Should().Be( default( SqlObjectExistenceState ) );
-                actions.Should().HaveCount( 1 );
-                actions.ElementAtOrDefault( 0 ).Sql.Should().BeNull();
-                actions.ElementAtOrDefault( 0 ).OnCommandSetup.Should().BeSameAs( setupCallback );
-                actions.ElementAtOrDefault( 0 ).Timeout.Should().Be( timeout );
-            }
+            Assertion.All(
+                    result.TestRefEquals( sut ),
+                    sut.ActiveObject.TestNull(),
+                    sut.ActiveObjectExistenceState.TestEquals( default ),
+                    actions.Length.TestEquals( 1 ),
+                    actions.TestAll(
+                        (a, _) => Assertion.All(
+                            a.Sql.TestNull(),
+                            a.OnCommandSetup.TestRefEquals( setupCallback ),
+                            a.Timeout.TestEquals( timeout ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -182,17 +174,19 @@ public partial class SqlDatabaseBuilderTests
             var result = sut.AddAction( actionCallback, setupCallback );
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeSameAs( sut );
-                sut.ActiveObject.Should().BeNull();
-                sut.ActiveObjectExistenceState.Should().Be( default( SqlObjectExistenceState ) );
-                actions.Should().HaveCount( 2 );
-                actions.ElementAtOrDefault( 0 ).Sql.Should().Be( "CREATE [Table] common.T;" );
-                actions.ElementAtOrDefault( 1 ).Sql.Should().BeNull();
-                actions.ElementAtOrDefault( 1 ).OnCommandSetup.Should().BeSameAs( setupCallback );
-                actions.ElementAtOrDefault( 1 ).Timeout.Should().Be( timeout );
-            }
+            Assertion.All(
+                    result.TestRefEquals( sut ),
+                    sut.ActiveObject.TestNull(),
+                    sut.ActiveObjectExistenceState.TestEquals( default ),
+                    actions.TestSequence(
+                    [
+                        (a, _) => a.Sql.TestEquals( "CREATE [Table] common.T;" ),
+                        (a, _) => Assertion.All(
+                            a.Sql.TestNull(),
+                            a.OnCommandSetup.TestRefEquals( setupCallback ),
+                            a.Timeout.TestEquals( timeout ) )
+                    ] ) )
+                .Go();
         }
 
         [Fact]
@@ -206,7 +200,7 @@ public partial class SqlDatabaseBuilderTests
             sut.AddAction( callback );
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
-            actions.Should().BeEmpty();
+            actions.TestEmpty().Go();
         }
 
         [Fact]
@@ -220,7 +214,7 @@ public partial class SqlDatabaseBuilderTests
             sut.AddAction( callback );
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
-            actions.Should().BeEmpty();
+            actions.TestEmpty().Go();
         }
 
         [Theory]
@@ -237,15 +231,16 @@ public partial class SqlDatabaseBuilderTests
             var result = (( ISqlDatabaseChangeTracker )sut).AddStatement( statement );
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeSameAs( sut );
-                sut.ActiveObject.Should().BeNull();
-                sut.ActiveObjectExistenceState.Should().Be( default( SqlObjectExistenceState ) );
-                actions.Should().HaveCount( 1 );
-                actions.ElementAtOrDefault( 0 ).Sql.Should().Be( $"{statement}{Environment.NewLine}" );
-                actions.ElementAtOrDefault( 0 ).Timeout.Should().Be( timeout );
-            }
+            Assertion.All(
+                    result.TestRefEquals( sut ),
+                    sut.ActiveObject.TestNull(),
+                    sut.ActiveObjectExistenceState.TestEquals( default ),
+                    actions.Length.TestEquals( 1 ),
+                    actions.TestAll(
+                        (a, _) => Assertion.All(
+                            a.Sql.TestEquals( $"{statement}{Environment.NewLine}" ),
+                            a.Timeout.TestEquals( timeout ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -260,16 +255,18 @@ public partial class SqlDatabaseBuilderTests
             var result = sut.AddStatement( statement );
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeSameAs( sut );
-                sut.ActiveObject.Should().BeNull();
-                sut.ActiveObjectExistenceState.Should().Be( default( SqlObjectExistenceState ) );
-                actions.Should().HaveCount( 2 );
-                actions.ElementAtOrDefault( 0 ).Sql.Should().Be( "CREATE [Table] common.T;" );
-                actions.ElementAtOrDefault( 1 ).Sql.Should().Be( $"{statement}{Environment.NewLine}" );
-                actions.ElementAtOrDefault( 1 ).Timeout.Should().Be( timeout );
-            }
+            Assertion.All(
+                    result.TestRefEquals( sut ),
+                    sut.ActiveObject.TestNull(),
+                    sut.ActiveObjectExistenceState.TestEquals( default ),
+                    actions.TestSequence(
+                    [
+                        (a, _) => a.Sql.TestEquals( "CREATE [Table] common.T;" ),
+                        (a, _) => Assertion.All(
+                            a.Sql.TestEquals( $"{statement}{Environment.NewLine}" ),
+                            a.Timeout.TestEquals( timeout ) )
+                    ] ) )
+                .Go();
         }
 
         [Fact]
@@ -283,7 +280,7 @@ public partial class SqlDatabaseBuilderTests
             sut.AddStatement( statement );
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
-            actions.Should().BeEmpty();
+            actions.TestEmpty().Go();
         }
 
         [Fact]
@@ -297,7 +294,7 @@ public partial class SqlDatabaseBuilderTests
             sut.AddStatement( statement );
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
-            actions.Should().BeEmpty();
+            actions.TestEmpty().Go();
         }
 
         [Fact]
@@ -306,9 +303,11 @@ public partial class SqlDatabaseBuilderTests
             var sut = SqlDatabaseBuilderMock.Create().Changes;
             var action = Lambda.Of( () => sut.AddStatement( SqlNode.RawStatement( Fixture.Create<string>(), SqlNode.Parameter( "a" ) ) ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Theory]
@@ -328,16 +327,17 @@ public partial class SqlDatabaseBuilderTests
 
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeSameAs( sut );
-                sut.ActiveObject.Should().BeNull();
-                sut.ActiveObjectExistenceState.Should().Be( default( SqlObjectExistenceState ) );
-                actions.Should().HaveCount( 1 );
-                actions.ElementAtOrDefault( 0 ).Sql.Should().Be( $"{statement}{Environment.NewLine}" );
-                actions.ElementAtOrDefault( 0 ).OnCommandSetup.Should().NotBeNull();
-                actions.ElementAtOrDefault( 0 ).Timeout.Should().Be( timeout );
-            }
+            Assertion.All(
+                    result.TestRefEquals( sut ),
+                    sut.ActiveObject.TestNull(),
+                    sut.ActiveObjectExistenceState.TestEquals( default ),
+                    actions.Length.TestEquals( 1 ),
+                    actions.TestAll(
+                        (a, _) => Assertion.All(
+                            a.Sql.TestEquals( $"{statement}{Environment.NewLine}" ),
+                            a.OnCommandSetup.TestNotNull(),
+                            a.Timeout.TestEquals( timeout ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -355,17 +355,19 @@ public partial class SqlDatabaseBuilderTests
 
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeSameAs( sut );
-                sut.ActiveObject.Should().BeNull();
-                sut.ActiveObjectExistenceState.Should().Be( default( SqlObjectExistenceState ) );
-                actions.Should().HaveCount( 2 );
-                actions.ElementAtOrDefault( 0 ).Sql.Should().Be( "CREATE [Table] common.T;" );
-                actions.ElementAtOrDefault( 1 ).Sql.Should().Be( $"{statement}{Environment.NewLine}" );
-                actions.ElementAtOrDefault( 1 ).OnCommandSetup.Should().NotBeNull();
-                actions.ElementAtOrDefault( 1 ).Timeout.Should().Be( timeout );
-            }
+            Assertion.All(
+                    result.TestRefEquals( sut ),
+                    sut.ActiveObject.TestNull(),
+                    sut.ActiveObjectExistenceState.TestEquals( default ),
+                    actions.TestSequence(
+                    [
+                        (a, _) => a.Sql.TestEquals( "CREATE [Table] common.T;" ),
+                        (a, _) => Assertion.All(
+                            a.Sql.TestEquals( $"{statement}{Environment.NewLine}" ),
+                            a.OnCommandSetup.TestNotNull(),
+                            a.Timeout.TestEquals( timeout ) )
+                    ] ) )
+                .Go();
         }
 
         [Fact]
@@ -382,7 +384,7 @@ public partial class SqlDatabaseBuilderTests
 
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
-            actions.Should().BeEmpty();
+            actions.TestEmpty().Go();
         }
 
         [Fact]
@@ -399,7 +401,7 @@ public partial class SqlDatabaseBuilderTests
 
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
-            actions.Should().BeEmpty();
+            actions.TestEmpty().Go();
         }
 
         [Theory]
@@ -419,16 +421,17 @@ public partial class SqlDatabaseBuilderTests
 
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeSameAs( sut );
-                sut.ActiveObject.Should().BeNull();
-                sut.ActiveObjectExistenceState.Should().Be( default( SqlObjectExistenceState ) );
-                actions.Should().HaveCount( 1 );
-                actions.ElementAtOrDefault( 0 ).Sql.Should().Be( $"{statement}{Environment.NewLine}" );
-                actions.ElementAtOrDefault( 0 ).OnCommandSetup.Should().NotBeNull();
-                actions.ElementAtOrDefault( 0 ).Timeout.Should().Be( timeout );
-            }
+            Assertion.All(
+                    result.TestRefEquals( sut ),
+                    sut.ActiveObject.TestNull(),
+                    sut.ActiveObjectExistenceState.TestEquals( default ),
+                    actions.Length.TestEquals( 1 ),
+                    actions.TestAll(
+                        (a, _) => Assertion.All(
+                            a.Sql.TestEquals( $"{statement}{Environment.NewLine}" ),
+                            a.OnCommandSetup.TestNotNull(),
+                            a.Timeout.TestEquals( timeout ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -447,17 +450,19 @@ public partial class SqlDatabaseBuilderTests
 
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeSameAs( sut );
-                sut.ActiveObject.Should().BeNull();
-                sut.ActiveObjectExistenceState.Should().Be( default( SqlObjectExistenceState ) );
-                actions.Should().HaveCount( 2 );
-                actions.ElementAtOrDefault( 0 ).Sql.Should().Be( "CREATE [Table] common.T;" );
-                actions.ElementAtOrDefault( 1 ).Sql.Should().Be( $"{statement}{Environment.NewLine}" );
-                actions.ElementAtOrDefault( 1 ).OnCommandSetup.Should().NotBeNull();
-                actions.ElementAtOrDefault( 1 ).Timeout.Should().Be( timeout );
-            }
+            Assertion.All(
+                    result.TestRefEquals( sut ),
+                    sut.ActiveObject.TestNull(),
+                    sut.ActiveObjectExistenceState.TestEquals( default ),
+                    actions.TestSequence(
+                    [
+                        (a, _) => a.Sql.TestEquals( "CREATE [Table] common.T;" ),
+                        (a, _) => Assertion.All(
+                            a.Sql.TestEquals( $"{statement}{Environment.NewLine}" ),
+                            a.OnCommandSetup.TestNotNull(),
+                            a.Timeout.TestEquals( timeout ) )
+                    ] ) )
+                .Go();
         }
 
         [Fact]
@@ -471,7 +476,7 @@ public partial class SqlDatabaseBuilderTests
             sut.AddParameterizedStatement( SqlNode.RawStatement( statement, SqlNode.Parameter<int>( "a" ) ), new Source { A = 1 } );
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
-            actions.Should().BeEmpty();
+            actions.TestEmpty().Go();
         }
 
         [Fact]
@@ -485,7 +490,7 @@ public partial class SqlDatabaseBuilderTests
             sut.AddParameterizedStatement( SqlNode.RawStatement( statement, SqlNode.Parameter<int>( "a" ) ), new Source { A = 1 } );
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
-            actions.Should().BeEmpty();
+            actions.TestEmpty().Go();
         }
 
         [Fact]
@@ -498,7 +503,7 @@ public partial class SqlDatabaseBuilderTests
                     SqlNode.RawStatement( Fixture.Create<string>(), SqlNode.Parameter<string>( "a" ) ),
                     new Source { A = 1 } ) );
 
-            action.Should().ThrowExactly<SqlCompilerException>();
+            action.Test( exc => exc.TestType().Exact<SqlCompilerException>() ).Go();
         }
 
         [Fact]
@@ -509,7 +514,7 @@ public partial class SqlDatabaseBuilderTests
             var target = sut.Database.Schemas.Default.Objects.CreateTable( "T" );
             var result = (( ISqlDatabaseChangeTracker )sut).GetExistenceState( target );
 
-            result.Should().Be( SqlObjectExistenceState.Unchanged );
+            result.TestEquals( SqlObjectExistenceState.Unchanged ).Go();
         }
 
         [Fact]
@@ -522,7 +527,7 @@ public partial class SqlDatabaseBuilderTests
             target.Remove();
             var result = (( ISqlDatabaseChangeTracker )sut).GetExistenceState( target );
 
-            result.Should().Be( SqlObjectExistenceState.Unchanged );
+            result.TestEquals( SqlObjectExistenceState.Unchanged ).Go();
         }
 
         [Fact]
@@ -535,7 +540,7 @@ public partial class SqlDatabaseBuilderTests
             target.SetName( "U" );
             var result = (( ISqlDatabaseChangeTracker )sut).GetExistenceState( target );
 
-            result.Should().Be( SqlObjectExistenceState.Unchanged );
+            result.TestEquals( SqlObjectExistenceState.Unchanged ).Go();
         }
 
         [Fact]
@@ -548,7 +553,7 @@ public partial class SqlDatabaseBuilderTests
             var target = table.Columns.Create( "C" );
             var result = (( ISqlDatabaseChangeTracker )sut).GetExistenceState( target );
 
-            result.Should().Be( SqlObjectExistenceState.Created );
+            result.TestEquals( SqlObjectExistenceState.Created ).Go();
         }
 
         [Fact]
@@ -561,7 +566,7 @@ public partial class SqlDatabaseBuilderTests
             target.Remove();
             var result = (( ISqlDatabaseChangeTracker )sut).GetExistenceState( target );
 
-            result.Should().Be( SqlObjectExistenceState.Removed );
+            result.TestEquals( SqlObjectExistenceState.Removed ).Go();
         }
 
         [Fact]
@@ -574,7 +579,7 @@ public partial class SqlDatabaseBuilderTests
             target.SetName( "U" );
             var result = (( ISqlDatabaseChangeTracker )sut).GetExistenceState( target );
 
-            result.Should().Be( SqlObjectExistenceState.Unchanged );
+            result.TestEquals( SqlObjectExistenceState.Unchanged ).Go();
         }
 
         [Fact]
@@ -587,7 +592,7 @@ public partial class SqlDatabaseBuilderTests
             target.Remove();
             var result = (( ISqlDatabaseChangeTracker )sut).GetExistenceState( target );
 
-            result.Should().Be( SqlObjectExistenceState.Unchanged );
+            result.TestEquals( SqlObjectExistenceState.Unchanged ).Go();
         }
 
         [Fact]
@@ -598,7 +603,7 @@ public partial class SqlDatabaseBuilderTests
 
             var result = (( ISqlDatabaseChangeTracker )sut).ContainsChange( target, SqlObjectChangeDescriptor.IsRemoved );
 
-            result.Should().BeFalse();
+            result.TestFalse().Go();
         }
 
         [Fact]
@@ -611,7 +616,7 @@ public partial class SqlDatabaseBuilderTests
 
             var result = (( ISqlDatabaseChangeTracker )sut).ContainsChange( target, SqlObjectChangeDescriptor.Name );
 
-            result.Should().BeTrue();
+            result.TestTrue().Go();
         }
 
         [Fact]
@@ -624,7 +629,7 @@ public partial class SqlDatabaseBuilderTests
 
             var result = (( ISqlDatabaseChangeTracker )sut).ContainsChange( target, SqlObjectChangeDescriptor.IsRemoved );
 
-            result.Should().BeTrue();
+            result.TestTrue().Go();
         }
 
         [Fact]
@@ -637,7 +642,7 @@ public partial class SqlDatabaseBuilderTests
 
             var result = (( ISqlDatabaseChangeTracker )sut).ContainsChange( target, SqlObjectChangeDescriptor.IsNullable );
 
-            result.Should().BeTrue();
+            result.TestTrue().Go();
         }
 
         [Fact]
@@ -650,7 +655,7 @@ public partial class SqlDatabaseBuilderTests
 
             var result = (( ISqlDatabaseChangeTracker )sut).ContainsChange( target, SqlObjectChangeDescriptor.Name );
 
-            result.Should().BeFalse();
+            result.TestFalse().Go();
         }
 
         [Fact]
@@ -661,7 +666,7 @@ public partial class SqlDatabaseBuilderTests
 
             var result = sut.GetOriginalValue( target, SqlObjectChangeDescriptor.IsRemoved );
 
-            result.Should().Be( SqlObjectOriginalValue<bool>.CreateEmpty() );
+            result.TestEquals( SqlObjectOriginalValue<bool>.CreateEmpty() ).Go();
         }
 
         [Fact]
@@ -674,7 +679,7 @@ public partial class SqlDatabaseBuilderTests
 
             var result = sut.GetOriginalValue( target, SqlObjectChangeDescriptor.Name );
 
-            result.Should().Be( SqlObjectOriginalValue<string>.Create( "T" ) );
+            result.TestEquals( SqlObjectOriginalValue<string>.Create( "T" ) ).Go();
         }
 
         [Fact]
@@ -687,7 +692,7 @@ public partial class SqlDatabaseBuilderTests
 
             var result = sut.GetOriginalValue( target, SqlObjectChangeDescriptor.IsRemoved );
 
-            result.Should().Be( SqlObjectOriginalValue<bool>.Create( true ) );
+            result.TestEquals( SqlObjectOriginalValue<bool>.Create( true ) ).Go();
         }
 
         [Fact]
@@ -700,7 +705,7 @@ public partial class SqlDatabaseBuilderTests
 
             var result = sut.GetOriginalValue( target, SqlObjectChangeDescriptor.IsNullable );
 
-            result.Should().Be( SqlObjectOriginalValue<bool>.Create( false ) );
+            result.TestEquals( SqlObjectOriginalValue<bool>.Create( false ) ).Go();
         }
 
         [Fact]
@@ -713,7 +718,7 @@ public partial class SqlDatabaseBuilderTests
 
             var result = sut.GetOriginalValue( target, SqlObjectChangeDescriptor.Name );
 
-            result.Should().Be( SqlObjectOriginalValue<string>.CreateEmpty() );
+            result.TestEquals( SqlObjectOriginalValue<string>.CreateEmpty() ).Go();
         }
 
         [Fact]
@@ -726,12 +731,11 @@ public partial class SqlDatabaseBuilderTests
             target.Remove();
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
-            using ( new AssertionScope() )
-            {
-                actions.Should().BeEmpty();
-                sut.ActiveObject.Should().BeNull();
-                sut.ActiveObjectExistenceState.Should().Be( default( SqlObjectExistenceState ) );
-            }
+            Assertion.All(
+                    actions.TestEmpty(),
+                    sut.ActiveObject.TestNull(),
+                    sut.ActiveObjectExistenceState.TestEquals( default ) )
+                .Go();
         }
 
         [Theory]
@@ -744,11 +748,10 @@ public partial class SqlDatabaseBuilderTests
 
             var result = (( ISqlDatabaseChangeTracker )sut).Attach( enabled );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeSameAs( sut );
-                sut.IsAttached.Should().Be( enabled );
-            }
+            Assertion.All(
+                    result.TestRefEquals( sut ),
+                    sut.IsAttached.TestEquals( enabled ) )
+                .Go();
         }
 
         [Fact]
@@ -758,11 +761,10 @@ public partial class SqlDatabaseBuilderTests
 
             var result = (( ISqlDatabaseChangeTracker )sut).Attach();
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeSameAs( sut );
-                sut.IsAttached.Should().BeTrue();
-            }
+            Assertion.All(
+                    result.TestRefEquals( sut ),
+                    sut.IsAttached.TestTrue() )
+                .Go();
         }
 
         [Fact]
@@ -776,15 +778,13 @@ public partial class SqlDatabaseBuilderTests
             var activeObject = sut.ActiveObject;
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeSameAs( sut );
-                sut.ActiveObject.Should().BeNull();
-                sut.ActiveObjectExistenceState.Should().Be( default( SqlObjectExistenceState ) );
-                activeObject.Should().BeNull();
-                actions.Should().HaveCount( 1 );
-                actions.ElementAtOrDefault( 0 ).Sql.Should().Be( "CREATE [Table] common.T;" );
-            }
+            Assertion.All(
+                    result.TestRefEquals( sut ),
+                    sut.ActiveObject.TestNull(),
+                    sut.ActiveObjectExistenceState.TestEquals( default ),
+                    activeObject.TestNull(),
+                    actions.Select( a => a.Sql ).TestSequence( [ "CREATE [Table] common.T;" ] ) )
+                .Go();
         }
 
         [Theory]
@@ -796,11 +796,10 @@ public partial class SqlDatabaseBuilderTests
 
             var result = sut.Detach( enabled );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeSameAs( sut );
-                result.IsAttached.Should().Be( ! enabled );
-            }
+            Assertion.All(
+                    result.TestRefEquals( sut ),
+                    result.IsAttached.TestEquals( ! enabled ) )
+                .Go();
         }
 
         [Theory]
@@ -813,11 +812,10 @@ public partial class SqlDatabaseBuilderTests
 
             var result = sut.SetActionTimeout( timeout );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeSameAs( sut );
-                result.ActionTimeout.Should().Be( timeout );
-            }
+            Assertion.All(
+                    result.TestRefEquals( sut ),
+                    result.ActionTimeout.TestEquals( timeout ) )
+                .Go();
         }
 
         public sealed class Source

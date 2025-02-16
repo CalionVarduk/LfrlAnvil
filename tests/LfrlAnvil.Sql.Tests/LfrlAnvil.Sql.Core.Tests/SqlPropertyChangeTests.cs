@@ -9,12 +9,11 @@ public class SqlPropertyChangeTests : TestsBase
     {
         var sut = default( SqlPropertyChange<string> );
 
-        using ( new AssertionScope() )
-        {
-            sut.IsCancelled.Should().BeTrue();
-            sut.NewValue.Should().Be( default );
-            sut.State.Should().BeNull();
-        }
+        Assertion.All(
+                sut.IsCancelled.TestTrue(),
+                sut.NewValue.TestEquals( default ),
+                sut.State.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -22,12 +21,11 @@ public class SqlPropertyChangeTests : TestsBase
     {
         var sut = SqlPropertyChange.Cancel<string>();
 
-        using ( new AssertionScope() )
-        {
-            sut.IsCancelled.Should().BeTrue();
-            sut.NewValue.Should().Be( default );
-            sut.State.Should().BeNull();
-        }
+        Assertion.All(
+                sut.IsCancelled.TestTrue(),
+                sut.NewValue.TestEquals( default ),
+                sut.State.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -37,12 +35,11 @@ public class SqlPropertyChangeTests : TestsBase
         var state = new object();
         var sut = SqlPropertyChange.Create( value, state );
 
-        using ( new AssertionScope() )
-        {
-            sut.IsCancelled.Should().BeFalse();
-            sut.NewValue.Should().BeSameAs( value );
-            sut.State.Should().BeSameAs( state );
-        }
+        Assertion.All(
+                sut.IsCancelled.TestFalse(),
+                sut.NewValue.TestRefEquals( value ),
+                sut.State.TestRefEquals( state ) )
+            .Go();
     }
 
     [Fact]
@@ -51,12 +48,11 @@ public class SqlPropertyChangeTests : TestsBase
         var value = "foo";
         SqlPropertyChange<string> sut = value;
 
-        using ( new AssertionScope() )
-        {
-            sut.IsCancelled.Should().BeFalse();
-            sut.NewValue.Should().BeSameAs( value );
-            sut.State.Should().BeNull();
-        }
+        Assertion.All(
+                sut.IsCancelled.TestFalse(),
+                sut.NewValue.TestRefEquals( value ),
+                sut.State.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -64,7 +60,7 @@ public class SqlPropertyChangeTests : TestsBase
     {
         var sut = SqlPropertyChange.Cancel<string>();
         var result = sut.ToString();
-        result.Should().Be( "Cancel<System.String>()" );
+        result.TestEquals( "Cancel<System.String>()" ).Go();
     }
 
     [Fact]
@@ -72,7 +68,7 @@ public class SqlPropertyChangeTests : TestsBase
     {
         var sut = SqlPropertyChange.Create( "foo" );
         var result = sut.ToString();
-        result.Should().Be( "Set<System.String>(foo)" );
+        result.TestEquals( "Set<System.String>(foo)" ).Go();
     }
 
     [Fact]
@@ -80,6 +76,6 @@ public class SqlPropertyChangeTests : TestsBase
     {
         var sut = SqlPropertyChange.Create( ( string? )null );
         var result = sut.ToString();
-        result.Should().Be( "SetNull<System.String>()" );
+        result.TestEquals( "SetNull<System.String>()" ).Go();
     }
 }

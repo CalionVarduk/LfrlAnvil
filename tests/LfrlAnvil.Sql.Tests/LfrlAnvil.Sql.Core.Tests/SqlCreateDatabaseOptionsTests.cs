@@ -1,5 +1,4 @@
 ﻿using LfrlAnvil.Sql.Events;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sql.Tests;
 
@@ -10,15 +9,14 @@ public class SqlCreateDatabaseOptionsTests : TestsBase
     {
         var sut = SqlCreateDatabaseOptions.Default;
 
-        using ( new AssertionScope() )
-        {
-            sut.Mode.Should().Be( SqlDatabaseCreateMode.NoChanges );
-            sut.VersionHistoryName.Should().BeNull();
-            sut.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
-            sut.VersionHistoryQueryMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
-            sut.CommandTimeout.Should().BeNull();
-            sut.GetStatementListeners().ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Mode.TestEquals( SqlDatabaseCreateMode.NoChanges ),
+                sut.VersionHistoryName.TestNull(),
+                sut.VersionHistoryPersistenceMode.TestEquals( SqlDatabaseVersionHistoryMode.AllRecords ),
+                sut.VersionHistoryQueryMode.TestEquals( SqlDatabaseVersionHistoryMode.AllRecords ),
+                sut.CommandTimeout.TestNull(),
+                sut.GetStatementListeners().ToArray().TestEmpty() )
+            .Go();
     }
 
     [Theory]
@@ -30,15 +28,14 @@ public class SqlCreateDatabaseOptionsTests : TestsBase
         var sut = SqlCreateDatabaseOptions.Default;
         var result = sut.SetMode( mode );
 
-        using ( new AssertionScope() )
-        {
-            result.Mode.Should().Be( mode );
-            result.VersionHistoryName.Should().BeNull();
-            result.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
-            result.VersionHistoryQueryMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
-            result.CommandTimeout.Should().BeNull();
-            result.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( sut.GetStatementListeners().ToArray() );
-        }
+        Assertion.All(
+                result.Mode.TestEquals( mode ),
+                result.VersionHistoryName.TestNull(),
+                result.VersionHistoryPersistenceMode.TestEquals( SqlDatabaseVersionHistoryMode.AllRecords ),
+                result.VersionHistoryQueryMode.TestEquals( SqlDatabaseVersionHistoryMode.AllRecords ),
+                result.CommandTimeout.TestNull(),
+                result.GetStatementListeners().TestSequence( sut.GetStatementListeners().ToArray() ) )
+            .Go();
     }
 
     [Fact]
@@ -48,15 +45,14 @@ public class SqlCreateDatabaseOptionsTests : TestsBase
         var sut = SqlCreateDatabaseOptions.Default;
         var result = sut.SetVersionHistoryName( name );
 
-        using ( new AssertionScope() )
-        {
-            result.Mode.Should().Be( SqlDatabaseCreateMode.NoChanges );
-            result.VersionHistoryName.Should().Be( name );
-            result.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
-            result.VersionHistoryQueryMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
-            result.CommandTimeout.Should().BeNull();
-            result.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( sut.GetStatementListeners().ToArray() );
-        }
+        Assertion.All(
+                result.Mode.TestEquals( SqlDatabaseCreateMode.NoChanges ),
+                result.VersionHistoryName.TestEquals( name ),
+                result.VersionHistoryPersistenceMode.TestEquals( SqlDatabaseVersionHistoryMode.AllRecords ),
+                result.VersionHistoryQueryMode.TestEquals( SqlDatabaseVersionHistoryMode.AllRecords ),
+                result.CommandTimeout.TestNull(),
+                result.GetStatementListeners().TestSequence( sut.GetStatementListeners().ToArray() ) )
+            .Go();
     }
 
     [Fact]
@@ -65,15 +61,14 @@ public class SqlCreateDatabaseOptionsTests : TestsBase
         var sut = SqlCreateDatabaseOptions.Default;
         var result = sut.SetVersionHistoryName( null );
 
-        using ( new AssertionScope() )
-        {
-            result.Mode.Should().Be( SqlDatabaseCreateMode.NoChanges );
-            result.VersionHistoryName.Should().BeNull();
-            result.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
-            result.VersionHistoryQueryMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
-            result.CommandTimeout.Should().BeNull();
-            result.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( sut.GetStatementListeners().ToArray() );
-        }
+        Assertion.All(
+                result.Mode.TestEquals( SqlDatabaseCreateMode.NoChanges ),
+                result.VersionHistoryName.TestNull(),
+                result.VersionHistoryPersistenceMode.TestEquals( SqlDatabaseVersionHistoryMode.AllRecords ),
+                result.VersionHistoryQueryMode.TestEquals( SqlDatabaseVersionHistoryMode.AllRecords ),
+                result.CommandTimeout.TestNull(),
+                result.GetStatementListeners().TestSequence( sut.GetStatementListeners().ToArray() ) )
+            .Go();
     }
 
     [Theory]
@@ -84,15 +79,14 @@ public class SqlCreateDatabaseOptionsTests : TestsBase
         var sut = SqlCreateDatabaseOptions.Default;
         var result = sut.SetVersionHistoryPersistenceMode( mode );
 
-        using ( new AssertionScope() )
-        {
-            result.Mode.Should().Be( SqlDatabaseCreateMode.NoChanges );
-            result.VersionHistoryName.Should().BeNull();
-            result.VersionHistoryPersistenceMode.Should().Be( mode );
-            result.VersionHistoryQueryMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
-            result.CommandTimeout.Should().BeNull();
-            result.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( sut.GetStatementListeners().ToArray() );
-        }
+        Assertion.All(
+                result.Mode.TestEquals( SqlDatabaseCreateMode.NoChanges ),
+                result.VersionHistoryName.TestNull(),
+                result.VersionHistoryPersistenceMode.TestEquals( mode ),
+                result.VersionHistoryQueryMode.TestEquals( SqlDatabaseVersionHistoryMode.AllRecords ),
+                result.CommandTimeout.TestNull(),
+                result.GetStatementListeners().TestSequence( sut.GetStatementListeners().ToArray() ) )
+            .Go();
     }
 
     [Theory]
@@ -103,15 +97,14 @@ public class SqlCreateDatabaseOptionsTests : TestsBase
         var sut = SqlCreateDatabaseOptions.Default;
         var result = sut.SetVersionHistoryQueryMode( mode );
 
-        using ( new AssertionScope() )
-        {
-            result.Mode.Should().Be( SqlDatabaseCreateMode.NoChanges );
-            result.VersionHistoryName.Should().BeNull();
-            result.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
-            result.VersionHistoryQueryMode.Should().Be( mode );
-            result.CommandTimeout.Should().BeNull();
-            result.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( sut.GetStatementListeners().ToArray() );
-        }
+        Assertion.All(
+                result.Mode.TestEquals( SqlDatabaseCreateMode.NoChanges ),
+                result.VersionHistoryName.TestNull(),
+                result.VersionHistoryPersistenceMode.TestEquals( SqlDatabaseVersionHistoryMode.AllRecords ),
+                result.VersionHistoryQueryMode.TestEquals( mode ),
+                result.CommandTimeout.TestNull(),
+                result.GetStatementListeners().TestSequence( sut.GetStatementListeners().ToArray() ) )
+            .Go();
     }
 
     [Theory]
@@ -123,15 +116,14 @@ public class SqlCreateDatabaseOptionsTests : TestsBase
         var sut = SqlCreateDatabaseOptions.Default;
         var result = sut.SetCommandTimeout( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Mode.Should().Be( SqlDatabaseCreateMode.NoChanges );
-            result.VersionHistoryName.Should().BeNull();
-            result.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
-            result.VersionHistoryQueryMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
-            result.CommandTimeout.Should().Be( value );
-            result.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( sut.GetStatementListeners().ToArray() );
-        }
+        Assertion.All(
+                result.Mode.TestEquals( SqlDatabaseCreateMode.NoChanges ),
+                result.VersionHistoryName.TestNull(),
+                result.VersionHistoryPersistenceMode.TestEquals( SqlDatabaseVersionHistoryMode.AllRecords ),
+                result.VersionHistoryQueryMode.TestEquals( SqlDatabaseVersionHistoryMode.AllRecords ),
+                result.CommandTimeout.TestEquals( value ),
+                result.GetStatementListeners().TestSequence( sut.GetStatementListeners().ToArray() ) )
+            .Go();
     }
 
     [Fact]
@@ -142,15 +134,14 @@ public class SqlCreateDatabaseOptionsTests : TestsBase
 
         var result = sut.AddStatementListener( listener );
 
-        using ( new AssertionScope() )
-        {
-            result.Mode.Should().Be( SqlDatabaseCreateMode.NoChanges );
-            result.VersionHistoryName.Should().BeNull();
-            result.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
-            result.VersionHistoryQueryMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
-            result.CommandTimeout.Should().BeNull();
-            result.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( listener );
-        }
+        Assertion.All(
+                result.Mode.TestEquals( SqlDatabaseCreateMode.NoChanges ),
+                result.VersionHistoryName.TestNull(),
+                result.VersionHistoryPersistenceMode.TestEquals( SqlDatabaseVersionHistoryMode.AllRecords ),
+                result.VersionHistoryQueryMode.TestEquals( SqlDatabaseVersionHistoryMode.AllRecords ),
+                result.CommandTimeout.TestNull(),
+                result.GetStatementListeners().ToArray().TestSequence( [ listener ] ) )
+            .Go();
     }
 
     [Fact]
@@ -162,15 +153,14 @@ public class SqlCreateDatabaseOptionsTests : TestsBase
 
         var result = sut.AddStatementListener( listener2 );
 
-        using ( new AssertionScope() )
-        {
-            result.Mode.Should().Be( SqlDatabaseCreateMode.NoChanges );
-            result.VersionHistoryName.Should().BeNull();
-            result.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
-            result.VersionHistoryQueryMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
-            result.CommandTimeout.Should().BeNull();
-            result.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( listener1, listener2 );
-            sut.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( listener1 );
-        }
+        Assertion.All(
+                result.Mode.TestEquals( SqlDatabaseCreateMode.NoChanges ),
+                result.VersionHistoryName.TestNull(),
+                result.VersionHistoryPersistenceMode.TestEquals( SqlDatabaseVersionHistoryMode.AllRecords ),
+                result.VersionHistoryQueryMode.TestEquals( SqlDatabaseVersionHistoryMode.AllRecords ),
+                result.CommandTimeout.TestNull(),
+                result.GetStatementListeners().ToArray().TestSequence( [ listener1, listener2 ] ),
+                sut.GetStatementListeners().ToArray().TestSequence( [ listener1 ] ) )
+            .Go();
     }
 }

@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests;
@@ -12,7 +11,7 @@ public class SqlIndexBuilderColumnsTests : TestsBase
     public void Empty_ShouldReturnCorrectResult()
     {
         var sut = SqlIndexBuilderColumns<SqlColumnBuilderMock>.Empty;
-        sut.Expressions.Should().BeEmpty();
+        sut.Expressions.TestEmpty().Go();
     }
 
     [Fact]
@@ -25,7 +24,7 @@ public class SqlIndexBuilderColumnsTests : TestsBase
         var expressions = new[] { c1.Asc(), c2.Desc(), (c1.Node + c2.Node).Asc() };
         var sut = new SqlIndexBuilderColumns<SqlColumnBuilderMock>( expressions );
 
-        sut.Expressions.Should().BeSequentiallyEqualTo( expressions );
+        sut.Expressions.TestSequence( expressions ).Go();
     }
 
     [Fact]
@@ -40,7 +39,7 @@ public class SqlIndexBuilderColumnsTests : TestsBase
 
         var result = sut.TryGet( 1 );
 
-        result.Should().BeSameAs( c2 );
+        result.TestRefEquals( c2 ).Go();
     }
 
     [Fact]
@@ -55,7 +54,7 @@ public class SqlIndexBuilderColumnsTests : TestsBase
 
         var result = sut.TryGet( 2 );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -70,7 +69,7 @@ public class SqlIndexBuilderColumnsTests : TestsBase
 
         var result = sut.IsExpression( 1 );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -85,7 +84,7 @@ public class SqlIndexBuilderColumnsTests : TestsBase
 
         var result = sut.IsExpression( 2 );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -99,9 +98,8 @@ public class SqlIndexBuilderColumnsTests : TestsBase
         var sut = new SqlIndexBuilderColumns<SqlColumnBuilderMock>( expressions );
 
         var result = new List<SqlColumnBuilderMock?>();
-        foreach ( var column in sut )
-            result.Add( column );
+        foreach ( var column in sut ) result.Add( column );
 
-        result.Should().BeSequentiallyEqualTo( c1, c2, null );
+        result.TestSequence( [ c1, c2, null ] ).Go();
     }
 }

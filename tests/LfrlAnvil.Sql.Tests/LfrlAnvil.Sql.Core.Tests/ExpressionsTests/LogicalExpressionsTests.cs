@@ -1,7 +1,6 @@
 ﻿using System.Linq;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Logical;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
 
@@ -15,14 +14,15 @@ public class LogicalExpressionsTests : TestsBase
         var sut = left == right;
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.EqualTo );
-            text.Should().Be( $"({left}) == ({right})" );
-            var equalToNode = sut as SqlEqualToConditionNode;
-            (equalToNode?.Left).Should().BeSameAs( left );
-            (equalToNode?.Right).Should().BeSameAs( right );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.EqualTo ),
+                text.TestEquals( $"({left}) == ({right})" ),
+                sut.TestType()
+                    .AssignableTo<SqlEqualToConditionNode>(
+                        equalToNode => Assertion.All(
+                            equalToNode.Left.TestRefEquals( left ),
+                            equalToNode.Right.TestRefEquals( right ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -33,14 +33,15 @@ public class LogicalExpressionsTests : TestsBase
         var sut = left == right;
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.EqualTo );
-            text.Should().Be( "(NULL) == (NULL)" );
-            var equalToNode = sut as SqlEqualToConditionNode;
-            (equalToNode?.Left).Should().BeSameAs( SqlNode.Null() );
-            (equalToNode?.Right).Should().BeSameAs( SqlNode.Null() );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.EqualTo ),
+                text.TestEquals( "(NULL) == (NULL)" ),
+                sut.TestType()
+                    .AssignableTo<SqlEqualToConditionNode>(
+                        equalToNode => Assertion.All(
+                            equalToNode.Left.TestRefEquals( SqlNode.Null() ),
+                            equalToNode.Right.TestRefEquals( SqlNode.Null() ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -51,14 +52,15 @@ public class LogicalExpressionsTests : TestsBase
         var sut = left != right;
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.NotEqualTo );
-            text.Should().Be( $"({left}) <> ({right})" );
-            var notEqualToNode = sut as SqlNotEqualToConditionNode;
-            (notEqualToNode?.Left).Should().BeSameAs( left );
-            (notEqualToNode?.Right).Should().BeSameAs( right );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.NotEqualTo ),
+                text.TestEquals( $"({left}) <> ({right})" ),
+                sut.TestType()
+                    .AssignableTo<SqlNotEqualToConditionNode>(
+                        notEqualToNode => Assertion.All(
+                            notEqualToNode.Left.TestRefEquals( left ),
+                            notEqualToNode.Right.TestRefEquals( right ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -69,14 +71,15 @@ public class LogicalExpressionsTests : TestsBase
         var sut = left != right;
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.NotEqualTo );
-            text.Should().Be( "(NULL) <> (NULL)" );
-            var notEqualToNode = sut as SqlNotEqualToConditionNode;
-            (notEqualToNode?.Left).Should().BeSameAs( SqlNode.Null() );
-            (notEqualToNode?.Right).Should().BeSameAs( SqlNode.Null() );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.NotEqualTo ),
+                text.TestEquals( "(NULL) <> (NULL)" ),
+                sut.TestType()
+                    .AssignableTo<SqlNotEqualToConditionNode>(
+                        notEqualToNode => Assertion.All(
+                            notEqualToNode.Left.TestRefEquals( SqlNode.Null() ),
+                            notEqualToNode.Right.TestRefEquals( SqlNode.Null() ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -87,14 +90,15 @@ public class LogicalExpressionsTests : TestsBase
         var sut = left > right;
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.GreaterThan );
-            text.Should().Be( $"({left}) > ({right})" );
-            var greaterThanNode = sut as SqlGreaterThanConditionNode;
-            (greaterThanNode?.Left).Should().BeSameAs( left );
-            (greaterThanNode?.Right).Should().BeSameAs( right );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.GreaterThan ),
+                text.TestEquals( $"({left}) > ({right})" ),
+                sut.TestType()
+                    .AssignableTo<SqlGreaterThanConditionNode>(
+                        greaterThanNode => Assertion.All(
+                            greaterThanNode.Left.TestRefEquals( left ),
+                            greaterThanNode.Right.TestRefEquals( right ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -105,14 +109,15 @@ public class LogicalExpressionsTests : TestsBase
         var sut = left > right;
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.GreaterThan );
-            text.Should().Be( "(NULL) > (NULL)" );
-            var greaterThanNode = sut as SqlGreaterThanConditionNode;
-            (greaterThanNode?.Left).Should().BeSameAs( SqlNode.Null() );
-            (greaterThanNode?.Right).Should().BeSameAs( SqlNode.Null() );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.GreaterThan ),
+                text.TestEquals( "(NULL) > (NULL)" ),
+                sut.TestType()
+                    .AssignableTo<SqlGreaterThanConditionNode>(
+                        greaterThanNode => Assertion.All(
+                            greaterThanNode.Left.TestRefEquals( SqlNode.Null() ),
+                            greaterThanNode.Right.TestRefEquals( SqlNode.Null() ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -123,14 +128,15 @@ public class LogicalExpressionsTests : TestsBase
         var sut = left < right;
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.LessThan );
-            text.Should().Be( $"({left}) < ({right})" );
-            var lessThanNode = sut as SqlLessThanConditionNode;
-            (lessThanNode?.Left).Should().BeSameAs( left );
-            (lessThanNode?.Right).Should().BeSameAs( right );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.LessThan ),
+                text.TestEquals( $"({left}) < ({right})" ),
+                sut.TestType()
+                    .AssignableTo<SqlLessThanConditionNode>(
+                        lessThanNode => Assertion.All(
+                            lessThanNode.Left.TestRefEquals( left ),
+                            lessThanNode.Right.TestRefEquals( right ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -141,14 +147,15 @@ public class LogicalExpressionsTests : TestsBase
         var sut = left < right;
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.LessThan );
-            text.Should().Be( "(NULL) < (NULL)" );
-            var lessThanNode = sut as SqlLessThanConditionNode;
-            (lessThanNode?.Left).Should().BeSameAs( SqlNode.Null() );
-            (lessThanNode?.Right).Should().BeSameAs( SqlNode.Null() );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.LessThan ),
+                text.TestEquals( "(NULL) < (NULL)" ),
+                sut.TestType()
+                    .AssignableTo<SqlLessThanConditionNode>(
+                        lessThanNode => Assertion.All(
+                            lessThanNode.Left.TestRefEquals( SqlNode.Null() ),
+                            lessThanNode.Right.TestRefEquals( SqlNode.Null() ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -159,14 +166,15 @@ public class LogicalExpressionsTests : TestsBase
         var sut = left >= right;
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.GreaterThanOrEqualTo );
-            text.Should().Be( $"({left}) >= ({right})" );
-            var greaterThanOrEqualToNode = sut as SqlGreaterThanOrEqualToConditionNode;
-            (greaterThanOrEqualToNode?.Left).Should().BeSameAs( left );
-            (greaterThanOrEqualToNode?.Right).Should().BeSameAs( right );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.GreaterThanOrEqualTo ),
+                text.TestEquals( $"({left}) >= ({right})" ),
+                sut.TestType()
+                    .AssignableTo<SqlGreaterThanOrEqualToConditionNode>(
+                        greaterThanOrEqualToNode => Assertion.All(
+                            greaterThanOrEqualToNode.Left.TestRefEquals( left ),
+                            greaterThanOrEqualToNode.Right.TestRefEquals( right ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -177,14 +185,15 @@ public class LogicalExpressionsTests : TestsBase
         var sut = left >= right;
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.GreaterThanOrEqualTo );
-            text.Should().Be( "(NULL) >= (NULL)" );
-            var greaterThanOrEqualToNode = sut as SqlGreaterThanOrEqualToConditionNode;
-            (greaterThanOrEqualToNode?.Left).Should().BeSameAs( SqlNode.Null() );
-            (greaterThanOrEqualToNode?.Right).Should().BeSameAs( SqlNode.Null() );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.GreaterThanOrEqualTo ),
+                text.TestEquals( "(NULL) >= (NULL)" ),
+                sut.TestType()
+                    .AssignableTo<SqlGreaterThanOrEqualToConditionNode>(
+                        greaterThanOrEqualToNode => Assertion.All(
+                            greaterThanOrEqualToNode.Left.TestRefEquals( SqlNode.Null() ),
+                            greaterThanOrEqualToNode.Right.TestRefEquals( SqlNode.Null() ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -195,14 +204,15 @@ public class LogicalExpressionsTests : TestsBase
         var sut = left <= right;
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.LessThanOrEqualTo );
-            text.Should().Be( $"({left}) <= ({right})" );
-            var lessThanOrEqualToNode = sut as SqlLessThanOrEqualToConditionNode;
-            (lessThanOrEqualToNode?.Left).Should().BeSameAs( left );
-            (lessThanOrEqualToNode?.Right).Should().BeSameAs( right );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.LessThanOrEqualTo ),
+                text.TestEquals( $"({left}) <= ({right})" ),
+                sut.TestType()
+                    .AssignableTo<SqlLessThanOrEqualToConditionNode>(
+                        lessThanOrEqualToNode => Assertion.All(
+                            lessThanOrEqualToNode.Left.TestRefEquals( left ),
+                            lessThanOrEqualToNode.Right.TestRefEquals( right ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -213,14 +223,15 @@ public class LogicalExpressionsTests : TestsBase
         var sut = left <= right;
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.LessThanOrEqualTo );
-            text.Should().Be( "(NULL) <= (NULL)" );
-            var lessThanOrEqualToNode = sut as SqlLessThanOrEqualToConditionNode;
-            (lessThanOrEqualToNode?.Left).Should().BeSameAs( SqlNode.Null() );
-            (lessThanOrEqualToNode?.Right).Should().BeSameAs( SqlNode.Null() );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.LessThanOrEqualTo ),
+                text.TestEquals( "(NULL) <= (NULL)" ),
+                sut.TestType()
+                    .AssignableTo<SqlLessThanOrEqualToConditionNode>(
+                        lessThanOrEqualToNode => Assertion.All(
+                            lessThanOrEqualToNode.Left.TestRefEquals( SqlNode.Null() ),
+                            lessThanOrEqualToNode.Right.TestRefEquals( SqlNode.Null() ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -232,15 +243,14 @@ public class LogicalExpressionsTests : TestsBase
         var sut = value.IsBetween( min, max );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Between );
-            sut.Value.Should().BeSameAs( value );
-            sut.Min.Should().BeSameAs( min );
-            sut.Max.Should().BeSameAs( max );
-            sut.IsNegated.Should().BeFalse();
-            text.Should().Be( $"({value}) BETWEEN ({min}) AND ({max})" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.Between ),
+                sut.Value.TestRefEquals( value ),
+                sut.Min.TestRefEquals( min ),
+                sut.Max.TestRefEquals( max ),
+                sut.IsNegated.TestFalse(),
+                text.TestEquals( $"({value}) BETWEEN ({min}) AND ({max})" ) )
+            .Go();
     }
 
     [Fact]
@@ -252,15 +262,14 @@ public class LogicalExpressionsTests : TestsBase
         var sut = value.IsNotBetween( min, max );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Between );
-            sut.Value.Should().BeSameAs( value );
-            sut.Min.Should().BeSameAs( min );
-            sut.Max.Should().BeSameAs( max );
-            sut.IsNegated.Should().BeTrue();
-            text.Should().Be( $"({value}) NOT BETWEEN ({min}) AND ({max})" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.Between ),
+                sut.Value.TestRefEquals( value ),
+                sut.Min.TestRefEquals( min ),
+                sut.Max.TestRefEquals( max ),
+                sut.IsNegated.TestTrue(),
+                text.TestEquals( $"({value}) NOT BETWEEN ({min}) AND ({max})" ) )
+            .Go();
     }
 
     [Fact]
@@ -271,15 +280,14 @@ public class LogicalExpressionsTests : TestsBase
         var sut = value.Like( pattern );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Like );
-            sut.Value.Should().BeSameAs( value );
-            sut.Pattern.Should().BeSameAs( pattern );
-            sut.Escape.Should().BeNull();
-            sut.IsNegated.Should().BeFalse();
-            text.Should().Be( $"({value}) LIKE ({pattern})" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.Like ),
+                sut.Value.TestRefEquals( value ),
+                sut.Pattern.TestRefEquals( pattern ),
+                sut.Escape.TestNull(),
+                sut.IsNegated.TestFalse(),
+                text.TestEquals( $"({value}) LIKE ({pattern})" ) )
+            .Go();
     }
 
     [Fact]
@@ -290,15 +298,14 @@ public class LogicalExpressionsTests : TestsBase
         var sut = value.NotLike( pattern );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Like );
-            sut.Value.Should().BeSameAs( value );
-            sut.Pattern.Should().BeSameAs( pattern );
-            sut.Escape.Should().BeNull();
-            sut.IsNegated.Should().BeTrue();
-            text.Should().Be( $"({value}) NOT LIKE ({pattern})" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.Like ),
+                sut.Value.TestRefEquals( value ),
+                sut.Pattern.TestRefEquals( pattern ),
+                sut.Escape.TestNull(),
+                sut.IsNegated.TestTrue(),
+                text.TestEquals( $"({value}) NOT LIKE ({pattern})" ) )
+            .Go();
     }
 
     [Fact]
@@ -310,15 +317,14 @@ public class LogicalExpressionsTests : TestsBase
         var sut = value.Like( pattern ).Escape( escape );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Like );
-            sut.Value.Should().BeSameAs( value );
-            sut.Pattern.Should().BeSameAs( pattern );
-            sut.Escape.Should().BeSameAs( escape );
-            sut.IsNegated.Should().BeFalse();
-            text.Should().Be( $"({value}) LIKE ({pattern}) ESCAPE ({escape})" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.Like ),
+                sut.Value.TestRefEquals( value ),
+                sut.Pattern.TestRefEquals( pattern ),
+                sut.Escape.TestRefEquals( escape ),
+                sut.IsNegated.TestFalse(),
+                text.TestEquals( $"({value}) LIKE ({pattern}) ESCAPE ({escape})" ) )
+            .Go();
     }
 
     [Fact]
@@ -328,27 +334,27 @@ public class LogicalExpressionsTests : TestsBase
         var sut = recordSet.Exists();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Exists );
-            var query = sut.Query as SqlDataSourceQueryExpressionNode;
-            (query?.Traits.ToArray()).Should().BeEmpty();
-            (query?.DataSource.Joins).Should().BeEmpty();
-            (query?.DataSource.From).Should().BeSameAs( recordSet );
-            (query?.DataSource.RecordSets).Should().BeSequentiallyEqualTo( recordSet );
-            sut.Query.Selection.Should().HaveCount( 1 );
-            (sut.Query.Selection.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SelectAll );
-            sut.IsNegated.Should().BeFalse();
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.Exists ),
+                sut.Query.TestType()
+                    .AssignableTo<SqlDataSourceQueryExpressionNode>(
+                        query => Assertion.All(
+                            query.Traits.ToArray().TestEmpty(),
+                            query.DataSource.Joins.TestEmpty(),
+                            query.DataSource.From.TestRefEquals( recordSet ),
+                            query.DataSource.RecordSets.TestSequence( [ recordSet ] ) ) ),
+                sut.Query.Selection.Count.TestEquals( 1 ),
+                sut.Query.Selection.TestAll( (n, _) => n.NodeType.TestEquals( SqlNodeType.SelectAll ) ),
+                sut.IsNegated.TestFalse(),
+                text.TestEquals(
                     """
                     EXISTS (
                       FROM [foo]
                       SELECT
                         *
                     )
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -359,17 +365,17 @@ public class LogicalExpressionsTests : TestsBase
         var sut = dataSource.Exists();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Exists );
-            var query = sut.Query as SqlDataSourceQueryExpressionNode;
-            (query?.Traits.ToArray()).Should().BeEmpty();
-            (query?.DataSource).Should().BeSameAs( dataSource );
-            sut.Query.Selection.ToArray().Should().HaveCount( 1 );
-            (sut.Query.Selection.ToArray().ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SelectAll );
-            sut.IsNegated.Should().BeFalse();
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.Exists ),
+                sut.Query.TestType()
+                    .AssignableTo<SqlDataSourceQueryExpressionNode>(
+                        query => Assertion.All(
+                            query.Traits.ToArray().TestEmpty(),
+                            query.DataSource.TestRefEquals( dataSource ) ) ),
+                sut.Query.Selection.Count.TestEquals( 1 ),
+                sut.Query.Selection.TestAll( (n, _) => n.NodeType.TestEquals( SqlNodeType.SelectAll ) ),
+                sut.IsNegated.TestFalse(),
+                text.TestEquals(
                     """
                     EXISTS (
                       FROM [foo]
@@ -377,8 +383,8 @@ public class LogicalExpressionsTests : TestsBase
                       SELECT
                         *
                     )
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -388,27 +394,27 @@ public class LogicalExpressionsTests : TestsBase
         var sut = recordSet.NotExists();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Exists );
-            var query = sut.Query as SqlDataSourceQueryExpressionNode;
-            (query?.Traits.ToArray()).Should().BeEmpty();
-            (query?.DataSource.Joins.ToArray()).Should().BeEmpty();
-            (query?.DataSource.From).Should().BeSameAs( recordSet );
-            (query?.DataSource.RecordSets).Should().BeSequentiallyEqualTo( recordSet );
-            sut.Query.Selection.ToArray().Should().HaveCount( 1 );
-            (sut.Query.Selection.ToArray().ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SelectAll );
-            sut.IsNegated.Should().BeTrue();
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.Exists ),
+                sut.Query.TestType()
+                    .AssignableTo<SqlDataSourceQueryExpressionNode>(
+                        query => Assertion.All(
+                            query.Traits.ToArray().TestEmpty(),
+                            query.DataSource.Joins.ToArray().TestEmpty(),
+                            query.DataSource.From.TestRefEquals( recordSet ),
+                            query.DataSource.RecordSets.TestSequence( [ recordSet ] ) ) ),
+                sut.Query.Selection.Count.TestEquals( 1 ),
+                sut.Query.Selection.TestAll( (n, _) => n.NodeType.TestEquals( SqlNodeType.SelectAll ) ),
+                sut.IsNegated.TestTrue(),
+                text.TestEquals(
                     """
                     NOT EXISTS (
                       FROM [foo]
                       SELECT
                         *
                     )
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -419,17 +425,17 @@ public class LogicalExpressionsTests : TestsBase
         var sut = dataSource.NotExists();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Exists );
-            var query = sut.Query as SqlDataSourceQueryExpressionNode;
-            (query?.Traits.ToArray()).Should().BeEmpty();
-            (query?.DataSource).Should().BeSameAs( dataSource );
-            sut.Query.Selection.ToArray().Should().HaveCount( 1 );
-            (sut.Query.Selection.ToArray().ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SelectAll );
-            sut.IsNegated.Should().BeTrue();
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.Exists ),
+                sut.Query.TestType()
+                    .AssignableTo<SqlDataSourceQueryExpressionNode>(
+                        query => Assertion.All(
+                            query.Traits.ToArray().TestEmpty(),
+                            query.DataSource.TestRefEquals( dataSource ) ) ),
+                sut.Query.Selection.Count.TestEquals( 1 ),
+                sut.Query.Selection.TestAll( (n, _) => n.NodeType.TestEquals( SqlNodeType.SelectAll ) ),
+                sut.IsNegated.TestTrue(),
+                text.TestEquals(
                     """
                     NOT EXISTS (
                       FROM [foo]
@@ -437,8 +443,8 @@ public class LogicalExpressionsTests : TestsBase
                       SELECT
                         *
                     )
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -449,15 +455,16 @@ public class LogicalExpressionsTests : TestsBase
         var sut = value.In( expressions );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.In );
-            var inNode = sut as SqlInConditionNode;
-            (inNode?.Value).Should().BeSameAs( value );
-            (inNode?.Expressions.ToArray()).Should().BeSequentiallyEqualTo( expressions );
-            (inNode?.IsNegated).Should().BeFalse();
-            text.Should().Be( $"({value}) IN (({expressions[0]}), ({expressions[1]}))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.In ),
+                sut.TestType()
+                    .AssignableTo<SqlInConditionNode>(
+                        inNode => Assertion.All(
+                            inNode.Value.TestRefEquals( value ),
+                            inNode.Expressions.ToArray().TestSequence( expressions ),
+                            inNode.IsNegated.TestFalse() ) ),
+                text.TestEquals( $"({value}) IN (({expressions[0]}), ({expressions[1]}))" ) )
+            .Go();
     }
 
     [Fact]
@@ -467,11 +474,10 @@ public class LogicalExpressionsTests : TestsBase
         var sut = value.In();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.False );
-            text.Should().Be( "FALSE" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.False ),
+                text.TestEquals( "FALSE" ) )
+            .Go();
     }
 
     [Fact]
@@ -482,15 +488,16 @@ public class LogicalExpressionsTests : TestsBase
         var sut = value.NotIn( expressions );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.In );
-            var inNode = sut as SqlInConditionNode;
-            (inNode?.Value).Should().BeSameAs( value );
-            (inNode?.Expressions.ToArray()).Should().BeSequentiallyEqualTo( expressions );
-            (inNode?.IsNegated).Should().BeTrue();
-            text.Should().Be( $"({value}) NOT IN (({expressions[0]}), ({expressions[1]}))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.In ),
+                sut.TestType()
+                    .AssignableTo<SqlInConditionNode>(
+                        inNode => Assertion.All(
+                            inNode.Value.TestRefEquals( value ),
+                            inNode.Expressions.ToArray().TestSequence( expressions ),
+                            inNode.IsNegated.TestTrue() ) ),
+                text.TestEquals( $"({value}) NOT IN (({expressions[0]}), ({expressions[1]}))" ) )
+            .Go();
     }
 
     [Fact]
@@ -500,11 +507,10 @@ public class LogicalExpressionsTests : TestsBase
         var sut = value.NotIn();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.True );
-            text.Should().Be( "TRUE" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.True ),
+                text.TestEquals( "TRUE" ) )
+            .Go();
     }
 
     [Fact]
@@ -516,22 +522,20 @@ public class LogicalExpressionsTests : TestsBase
         var sut = value.InQuery( query );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.InQuery );
-            sut.Value.Should().BeSameAs( value );
-            sut.Query.Should().BeSameAs( query );
-            sut.IsNegated.Should().BeFalse();
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.InQuery ),
+                sut.Value.TestRefEquals( value ),
+                sut.Query.TestRefEquals( query ),
+                sut.IsNegated.TestFalse(),
+                text.TestEquals(
                     $"""
                      ({value}) IN (
                        FROM [foo]
                        SELECT
                          ([foo].[id] : ?)
                      )
-                     """ );
-        }
+                     """ ) )
+            .Go();
     }
 
     [Fact]
@@ -543,22 +547,20 @@ public class LogicalExpressionsTests : TestsBase
         var sut = value.NotInQuery( query );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.InQuery );
-            sut.Value.Should().BeSameAs( value );
-            sut.Query.Should().BeSameAs( query );
-            sut.IsNegated.Should().BeTrue();
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.InQuery ),
+                sut.Value.TestRefEquals( value ),
+                sut.Query.TestRefEquals( query ),
+                sut.IsNegated.TestTrue(),
+                text.TestEquals(
                     $"""
                      ({value}) NOT IN (
                        FROM [foo]
                        SELECT
                          ([foo].[id] : ?)
                      )
-                     """ );
-        }
+                     """ ) )
+            .Go();
     }
 
     [Fact]
@@ -567,11 +569,10 @@ public class LogicalExpressionsTests : TestsBase
         var sut = SqlNode.True();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.True );
-            text.Should().Be( "TRUE" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.True ),
+                text.TestEquals( "TRUE" ) )
+            .Go();
     }
 
     [Fact]
@@ -580,11 +581,10 @@ public class LogicalExpressionsTests : TestsBase
         var sut = SqlNode.False();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.False );
-            text.Should().Be( "FALSE" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.False ),
+                text.TestEquals( "FALSE" ) )
+            .Go();
     }
 
     [Fact]
@@ -594,13 +594,12 @@ public class LogicalExpressionsTests : TestsBase
         var sut = SqlNode.RawCondition( "@a = @b", parameters );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.RawCondition );
-            sut.Sql.Should().Be( "@a = @b" );
-            sut.Parameters.ToArray().Should().BeSequentiallyEqualTo( parameters );
-            text.Should().Be( "@a = @b" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.RawCondition ),
+                sut.Sql.TestEquals( "@a = @b" ),
+                sut.Parameters.ToArray().TestSequence( parameters ),
+                text.TestEquals( "@a = @b" ) )
+            .Go();
     }
 
     [Fact]
@@ -610,12 +609,11 @@ public class LogicalExpressionsTests : TestsBase
         var sut = condition.ToValue();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.ConditionValue );
-            sut.Condition.Should().BeSameAs( condition );
-            text.Should().Be( $"CONDITION_VALUE({condition})" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.ConditionValue ),
+                sut.Condition.TestRefEquals( condition ),
+                text.TestEquals( $"CONDITION_VALUE({condition})" ) )
+            .Go();
     }
 
     [Fact]
@@ -625,14 +623,13 @@ public class LogicalExpressionsTests : TestsBase
         var sut = condition.As( "foo" );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.SelectField );
-            sut.Alias.Should().Be( "foo" );
-            sut.FieldName.Should().Be( "foo" );
-            sut.Expression.Should().BeEquivalentTo( condition.ToValue() );
-            text.Should().Be( $"(CONDITION_VALUE({condition})) AS [foo]" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.SelectField ),
+                sut.Alias.TestEquals( "foo" ),
+                sut.FieldName.TestEquals( "foo" ),
+                sut.Expression.TestType().AssignableTo<SqlConditionValueNode>( n => n.Condition.TestRefEquals( condition ) ),
+                text.TestEquals( $"(CONDITION_VALUE({condition})) AS [foo]" ) )
+            .Go();
     }
 
     [Fact]
@@ -643,13 +640,12 @@ public class LogicalExpressionsTests : TestsBase
         var sut = left.And( right );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.And );
-            sut.Left.Should().BeSameAs( left );
-            sut.Right.Should().BeSameAs( right );
-            text.Should().Be( $"({left}) AND ({right})" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.And ),
+                sut.Left.TestRefEquals( left ),
+                sut.Right.TestRefEquals( right ),
+                text.TestEquals( $"({left}) AND ({right})" ) )
+            .Go();
     }
 
     [Fact]
@@ -660,12 +656,11 @@ public class LogicalExpressionsTests : TestsBase
         var sut = left.Or( right );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Or );
-            sut.Left.Should().BeSameAs( left );
-            sut.Right.Should().BeSameAs( right );
-            text.Should().Be( $"({left}) OR ({right})" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.Or ),
+                sut.Left.TestRefEquals( left ),
+                sut.Right.TestRefEquals( right ),
+                text.TestEquals( $"({left}) OR ({right})" ) )
+            .Go();
     }
 }

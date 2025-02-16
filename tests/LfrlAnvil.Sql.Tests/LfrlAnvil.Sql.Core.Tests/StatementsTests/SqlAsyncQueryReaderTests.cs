@@ -3,7 +3,6 @@ using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Sql.Statements;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 using LfrlAnvil.TestExtensions.Sql.Mocks.System;
 
@@ -34,18 +33,12 @@ public class SqlAsyncQueryReaderTests : TestsBase
 
         var result = await sut.ReadAsync( reader, options, cancellationTokenSource.Token );
 
-        using ( new AssertionScope() )
-        {
-            sut.Dialect.Should().BeSameAs( dialect );
-            sut.Delegate.Should().BeSameAs( @delegate );
-            @delegate.Verify()
-                .CallAt( 0 )
-                .Exists()
-                .And.Arguments.Should()
-                .BeSequentiallyEqualTo( reader, options, cancellationTokenSource.Token );
-
-            result.Should().BeEquivalentTo( expected );
-        }
+        Assertion.All(
+                sut.Dialect.TestRefEquals( dialect ),
+                sut.Delegate.TestRefEquals( @delegate ),
+                @delegate.CallAt( 0 ).Arguments.TestSequence( [ reader, options, cancellationTokenSource.Token ] ),
+                result.TestEquals( expected ) )
+            .Go();
     }
 
     [Fact]
@@ -63,25 +56,18 @@ public class SqlAsyncQueryReaderTests : TestsBase
         var options = new SqlQueryReaderOptions();
         var cancellationTokenSource = new CancellationTokenSource();
         var dialect = new SqlDialect( "foo" );
-        var @delegate = Substitute
-            .For<Func<IDataReader, SqlQueryReaderOptions, CancellationToken, ValueTask<SqlQueryResult<object[]>>>>();
+        var @delegate = Substitute.For<Func<IDataReader, SqlQueryReaderOptions, CancellationToken, ValueTask<SqlQueryResult<object[]>>>>();
 
         @delegate.WithAnyArgs( _ => ValueTask.FromResult( expected ) );
         var sut = new SqlAsyncQueryReader<object[]>( dialect, @delegate );
 
         var result = await sut.ReadAsync( reader, options, cancellationTokenSource.Token );
 
-        using ( new AssertionScope() )
-        {
-            sut.Dialect.Should().BeSameAs( dialect );
-            sut.Delegate.Should().BeSameAs( @delegate );
-            @delegate.Verify()
-                .CallAt( 0 )
-                .Exists()
-                .And.Arguments.Should()
-                .BeSequentiallyEqualTo( reader, options, cancellationTokenSource.Token );
-
-            result.Should().BeEquivalentTo( expected );
-        }
+        Assertion.All(
+                sut.Dialect.TestRefEquals( dialect ),
+                sut.Delegate.TestRefEquals( @delegate ),
+                @delegate.CallAt( 0 ).Arguments.TestSequence( [ reader, options, cancellationTokenSource.Token ] ),
+                result.TestEquals( expected ) )
+            .Go();
     }
 }

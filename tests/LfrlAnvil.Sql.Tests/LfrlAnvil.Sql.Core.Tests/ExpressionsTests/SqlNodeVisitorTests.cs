@@ -8,7 +8,6 @@ using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
@@ -23,7 +22,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitRawExpression( SqlNode.RawExpression( "@a + @b", parameters ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( parameters[0], parameters[1] );
+        sut.Nodes.TestSequence( [ parameters[0], parameters[1] ] ).Go();
     }
 
     [Fact]
@@ -34,7 +33,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitRawDataField( SqlNode.RawDataField( recordSet, "bar" ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( recordSet );
+        sut.Nodes.TestSequence( [ recordSet ] ).Go();
     }
 
     [Fact]
@@ -42,7 +41,7 @@ public class SqlNodeVisitorTests : TestsBase
     {
         var sut = new Visitor();
         var action = Lambda.Of( () => sut.VisitNull( SqlNode.Null() ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -50,7 +49,7 @@ public class SqlNodeVisitorTests : TestsBase
     {
         var sut = new Visitor();
         var action = Lambda.Of( () => sut.VisitLiteral( ( SqlLiteralNode )SqlNode.Literal( 20 ) ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -58,7 +57,7 @@ public class SqlNodeVisitorTests : TestsBase
     {
         var sut = new Visitor();
         var action = Lambda.Of( () => sut.VisitParameter( SqlNode.Parameter( "a" ) ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -69,7 +68,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitColumn( recordSet["bar"] );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( recordSet );
+        sut.Nodes.TestSequence( [ recordSet ] ).Go();
     }
 
     [Fact]
@@ -80,7 +79,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitColumnBuilder( recordSet["bar"] );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( recordSet );
+        sut.Nodes.TestSequence( [ recordSet ] ).Go();
     }
 
     [Fact]
@@ -94,7 +93,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitQueryDataField( recordSet["bar"] );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( recordSet );
+        sut.Nodes.TestSequence( [ recordSet ] ).Go();
     }
 
     [Fact]
@@ -108,7 +107,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitViewDataField( recordSet["bar"] );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( recordSet );
+        sut.Nodes.TestSequence( [ recordSet ] ).Go();
     }
 
     [Fact]
@@ -119,7 +118,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitNegate( value.Negate() );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( value );
+        sut.Nodes.TestSequence( [ value ] ).Go();
     }
 
     [Fact]
@@ -130,7 +129,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitAdd( operands[0] + operands[1] );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( operands[0], operands[1] );
+        sut.Nodes.TestSequence( [ operands[0], operands[1] ] ).Go();
     }
 
     [Fact]
@@ -141,7 +140,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitConcat( operands[0].Concat( operands[1] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( operands[0], operands[1] );
+        sut.Nodes.TestSequence( [ operands[0], operands[1] ] ).Go();
     }
 
     [Fact]
@@ -152,7 +151,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitSubtract( operands[0] - operands[1] );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( operands[0], operands[1] );
+        sut.Nodes.TestSequence( [ operands[0], operands[1] ] ).Go();
     }
 
     [Fact]
@@ -163,7 +162,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitMultiply( operands[0] * operands[1] );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( operands[0], operands[1] );
+        sut.Nodes.TestSequence( [ operands[0], operands[1] ] ).Go();
     }
 
     [Fact]
@@ -174,7 +173,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitDivide( operands[0] / operands[1] );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( operands[0], operands[1] );
+        sut.Nodes.TestSequence( [ operands[0], operands[1] ] ).Go();
     }
 
     [Fact]
@@ -185,7 +184,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitModulo( operands[0] % operands[1] );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( operands[0], operands[1] );
+        sut.Nodes.TestSequence( [ operands[0], operands[1] ] ).Go();
     }
 
     [Fact]
@@ -196,7 +195,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitBitwiseNot( value.BitwiseNot() );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( value );
+        sut.Nodes.TestSequence( [ value ] ).Go();
     }
 
     [Fact]
@@ -207,7 +206,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitBitwiseAnd( operands[0] & operands[1] );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( operands[0], operands[1] );
+        sut.Nodes.TestSequence( [ operands[0], operands[1] ] ).Go();
     }
 
     [Fact]
@@ -218,7 +217,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitBitwiseOr( operands[0] | operands[1] );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( operands[0], operands[1] );
+        sut.Nodes.TestSequence( [ operands[0], operands[1] ] ).Go();
     }
 
     [Fact]
@@ -229,7 +228,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitBitwiseXor( operands[0] ^ operands[1] );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( operands[0], operands[1] );
+        sut.Nodes.TestSequence( [ operands[0], operands[1] ] ).Go();
     }
 
     [Fact]
@@ -240,7 +239,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitBitwiseLeftShift( operands[0].BitwiseLeftShift( operands[1] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( operands[0], operands[1] );
+        sut.Nodes.TestSequence( [ operands[0], operands[1] ] ).Go();
     }
 
     [Fact]
@@ -251,7 +250,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitBitwiseRightShift( operands[0].BitwiseRightShift( operands[1] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( operands[0], operands[1] );
+        sut.Nodes.TestSequence( [ operands[0], operands[1] ] ).Go();
     }
 
     [Fact]
@@ -263,7 +262,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitSwitchCase( condition.Then( expression ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( condition, expression );
+        sut.Nodes.TestSequence( [ condition, expression ] ).Go();
     }
 
     [Fact]
@@ -275,8 +274,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitSwitch( SqlNode.Switch( cases, @default ) );
 
-        sut.Nodes.Should()
-            .BeSequentiallyEqualTo( cases[0].Condition, cases[0].Expression, cases[1].Condition, cases[1].Expression, @default );
+        sut.Nodes.TestSequence( [ cases[0].Condition, cases[0].Expression, cases[1].Condition, cases[1].Expression, @default ] ).Go();
     }
 
     [Fact]
@@ -287,7 +285,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitNamedFunction( SqlNode.Functions.Named( SqlSchemaObjectName.Create( "func" ), arguments ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1] );
+        sut.Nodes.TestSequence( [ arguments[0], arguments[1] ] ).Go();
     }
 
     [Fact]
@@ -298,7 +296,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitCoalesceFunction( arguments[0].Coalesce( arguments[1] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1] );
+        sut.Nodes.TestSequence( [ arguments[0], arguments[1] ] ).Go();
     }
 
     [Fact]
@@ -306,7 +304,7 @@ public class SqlNodeVisitorTests : TestsBase
     {
         var sut = new Visitor();
         var action = Lambda.Of( () => sut.VisitCurrentDateFunction( SqlNode.Functions.CurrentDate() ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -314,7 +312,7 @@ public class SqlNodeVisitorTests : TestsBase
     {
         var sut = new Visitor();
         var action = Lambda.Of( () => sut.VisitCurrentTimeFunction( SqlNode.Functions.CurrentTime() ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -322,7 +320,7 @@ public class SqlNodeVisitorTests : TestsBase
     {
         var sut = new Visitor();
         var action = Lambda.Of( () => sut.VisitCurrentDateTimeFunction( SqlNode.Functions.CurrentDateTime() ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -330,7 +328,7 @@ public class SqlNodeVisitorTests : TestsBase
     {
         var sut = new Visitor();
         var action = Lambda.Of( () => sut.VisitCurrentUtcDateTimeFunction( SqlNode.Functions.CurrentUtcDateTime() ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -338,7 +336,7 @@ public class SqlNodeVisitorTests : TestsBase
     {
         var sut = new Visitor();
         var action = Lambda.Of( () => sut.VisitCurrentTimestampFunction( SqlNode.Functions.CurrentTimestamp() ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -349,7 +347,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitExtractDateFunction( arguments[0].ExtractDate() );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0] );
+        sut.Nodes.TestSequence( [ arguments[0] ] ).Go();
     }
 
     [Fact]
@@ -360,7 +358,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitExtractTimeOfDayFunction( arguments[0].ExtractTimeOfDay() );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0] );
+        sut.Nodes.TestSequence( [ arguments[0] ] ).Go();
     }
 
     [Fact]
@@ -371,7 +369,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitExtractDayFunction( arguments[0].ExtractDayOfYear() );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0] );
+        sut.Nodes.TestSequence( [ arguments[0] ] ).Go();
     }
 
     [Fact]
@@ -382,7 +380,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitExtractTemporalUnitFunction( arguments[0].ExtractTemporalUnit( SqlTemporalUnit.Year ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0] );
+        sut.Nodes.TestSequence( [ arguments[0] ] ).Go();
     }
 
     [Fact]
@@ -393,7 +391,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitTemporalAddFunction( arguments[0].TemporalAdd( arguments[1], SqlTemporalUnit.Year ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1] );
+        sut.Nodes.TestSequence( [ arguments[0], arguments[1] ] ).Go();
     }
 
     [Fact]
@@ -404,7 +402,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitTemporalDiffFunction( arguments[0].TemporalDiff( arguments[1], SqlTemporalUnit.Year ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1] );
+        sut.Nodes.TestSequence( [ arguments[0], arguments[1] ] ).Go();
     }
 
     [Fact]
@@ -412,7 +410,7 @@ public class SqlNodeVisitorTests : TestsBase
     {
         var sut = new Visitor();
         var action = Lambda.Of( () => sut.VisitNewGuidFunction( SqlNode.Functions.NewGuid() ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -423,7 +421,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitLengthFunction( argument.Length() );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( argument );
+        sut.Nodes.TestSequence( [ argument ] ).Go();
     }
 
     [Fact]
@@ -434,7 +432,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitByteLengthFunction( argument.ByteLength() );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( argument );
+        sut.Nodes.TestSequence( [ argument ] ).Go();
     }
 
     [Fact]
@@ -445,7 +443,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitToLowerFunction( argument.ToLower() );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( argument );
+        sut.Nodes.TestSequence( [ argument ] ).Go();
     }
 
     [Fact]
@@ -456,7 +454,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitToUpperFunction( argument.ToUpper() );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( argument );
+        sut.Nodes.TestSequence( [ argument ] ).Go();
     }
 
     [Fact]
@@ -467,7 +465,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitTrimStartFunction( arguments[0].TrimStart( arguments[1] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1] );
+        sut.Nodes.TestSequence( [ arguments[0], arguments[1] ] ).Go();
     }
 
     [Fact]
@@ -478,7 +476,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitTrimEndFunction( arguments[0].TrimEnd( arguments[1] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1] );
+        sut.Nodes.TestSequence( [ arguments[0], arguments[1] ] ).Go();
     }
 
     [Fact]
@@ -489,7 +487,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitTrimFunction( arguments[0].Trim( arguments[1] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1] );
+        sut.Nodes.TestSequence( [ arguments[0], arguments[1] ] ).Go();
     }
 
     [Fact]
@@ -500,7 +498,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitSubstringFunction( arguments[0].Substring( arguments[1], arguments[2] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1], arguments[2] );
+        sut.Nodes.TestSequence( [ arguments[0], arguments[1], arguments[2] ] ).Go();
     }
 
     [Fact]
@@ -511,7 +509,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitReplaceFunction( arguments[0].Replace( arguments[1], arguments[2] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1], arguments[2] );
+        sut.Nodes.TestSequence( [ arguments[0], arguments[1], arguments[2] ] ).Go();
     }
 
     [Fact]
@@ -522,7 +520,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitReverseFunction( argument.Reverse() );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( argument );
+        sut.Nodes.TestSequence( [ argument ] ).Go();
     }
 
     [Fact]
@@ -533,7 +531,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitIndexOfFunction( arguments[0].IndexOf( arguments[1] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1] );
+        sut.Nodes.TestSequence( [ arguments[0], arguments[1] ] ).Go();
     }
 
     [Fact]
@@ -544,7 +542,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitLastIndexOfFunction( arguments[0].LastIndexOf( arguments[1] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1] );
+        sut.Nodes.TestSequence( [ arguments[0], arguments[1] ] ).Go();
     }
 
     [Fact]
@@ -555,7 +553,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitSignFunction( argument.Sign() );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( argument );
+        sut.Nodes.TestSequence( [ argument ] ).Go();
     }
 
     [Fact]
@@ -566,7 +564,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitAbsFunction( argument.Abs() );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( argument );
+        sut.Nodes.TestSequence( [ argument ] ).Go();
     }
 
     [Fact]
@@ -577,7 +575,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitCeilingFunction( argument.Ceiling() );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( argument );
+        sut.Nodes.TestSequence( [ argument ] ).Go();
     }
 
     [Fact]
@@ -588,7 +586,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitFloorFunction( argument.Floor() );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( argument );
+        sut.Nodes.TestSequence( [ argument ] ).Go();
     }
 
     [Fact]
@@ -599,7 +597,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitTruncateFunction( arguments[0].Truncate( arguments[1] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1] );
+        sut.Nodes.TestSequence( [ arguments[0], arguments[1] ] ).Go();
     }
 
     [Fact]
@@ -610,7 +608,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitRoundFunction( arguments[0].Round( arguments[1] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1] );
+        sut.Nodes.TestSequence( [ arguments[0], arguments[1] ] ).Go();
     }
 
     [Fact]
@@ -621,7 +619,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitPowerFunction( arguments[0].Power( arguments[1] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1] );
+        sut.Nodes.TestSequence( [ arguments[0], arguments[1] ] ).Go();
     }
 
     [Fact]
@@ -632,7 +630,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitSquareRootFunction( argument.SquareRoot() );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( argument );
+        sut.Nodes.TestSequence( [ argument ] ).Go();
     }
 
     [Fact]
@@ -643,7 +641,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitMinFunction( arguments[0].Min( arguments[1] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1] );
+        sut.Nodes.TestSequence( [ arguments[0], arguments[1] ] ).Go();
     }
 
     [Fact]
@@ -654,7 +652,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitMaxFunction( arguments[0].Max( arguments[1] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1] );
+        sut.Nodes.TestSequence( [ arguments[0], arguments[1] ] ).Go();
     }
 
     [Fact]
@@ -665,7 +663,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitCustomFunction( arguments[0].Coalesce( arguments[1] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1] );
+        sut.Nodes.TestSequence( [ arguments[0], arguments[1] ] ).Go();
     }
 
     [Fact]
@@ -678,7 +676,7 @@ public class SqlNodeVisitorTests : TestsBase
         sut.VisitNamedAggregateFunction(
             SqlNode.AggregateFunctions.Named( SqlSchemaObjectName.Create( "func" ), arguments ).AddTrait( trait ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1], trait );
+        sut.Nodes.TestSequence( [ arguments[0], arguments[1], trait ] ).Go();
     }
 
     [Fact]
@@ -690,7 +688,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitMinAggregateFunction( argument.Min().AddTrait( trait ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( argument, trait );
+        sut.Nodes.TestSequence( [ argument, trait ] ).Go();
     }
 
     [Fact]
@@ -702,7 +700,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitMaxAggregateFunction( argument.Max().AddTrait( trait ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( argument, trait );
+        sut.Nodes.TestSequence( [ argument, trait ] ).Go();
     }
 
     [Fact]
@@ -714,7 +712,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitAverageAggregateFunction( argument.Average().AddTrait( trait ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( argument, trait );
+        sut.Nodes.TestSequence( [ argument, trait ] ).Go();
     }
 
     [Fact]
@@ -726,7 +724,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitSumAggregateFunction( argument.Sum().AddTrait( trait ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( argument, trait );
+        sut.Nodes.TestSequence( [ argument, trait ] ).Go();
     }
 
     [Fact]
@@ -738,7 +736,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitCountAggregateFunction( argument.Count().AddTrait( trait ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( argument, trait );
+        sut.Nodes.TestSequence( [ argument, trait ] ).Go();
     }
 
     [Fact]
@@ -750,7 +748,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitStringConcatAggregateFunction( arguments[0].StringConcat( arguments[1] ).AddTrait( trait ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1], trait );
+        sut.Nodes.TestSequence( [ arguments[0], arguments[1], trait ] ).Go();
     }
 
     [Fact]
@@ -761,7 +759,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitRowNumberWindowFunction( SqlNode.WindowFunctions.RowNumber().AddTrait( trait ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( trait );
+        sut.Nodes.TestSequence( [ trait ] ).Go();
     }
 
     [Fact]
@@ -772,7 +770,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitRankWindowFunction( SqlNode.WindowFunctions.Rank().AddTrait( trait ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( trait );
+        sut.Nodes.TestSequence( [ trait ] ).Go();
     }
 
     [Fact]
@@ -783,7 +781,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitDenseRankWindowFunction( SqlNode.WindowFunctions.DenseRank().AddTrait( trait ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( trait );
+        sut.Nodes.TestSequence( [ trait ] ).Go();
     }
 
     [Fact]
@@ -794,7 +792,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitCumulativeDistributionWindowFunction( SqlNode.WindowFunctions.CumulativeDistribution().AddTrait( trait ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( trait );
+        sut.Nodes.TestSequence( [ trait ] ).Go();
     }
 
     [Fact]
@@ -806,7 +804,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitNTileWindowFunction( argument.NTile().AddTrait( trait ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( argument, trait );
+        sut.Nodes.TestSequence( [ argument, trait ] ).Go();
     }
 
     [Fact]
@@ -818,7 +816,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitLagWindowFunction( arguments[0].Lag( arguments[1], arguments[2] ).AddTrait( trait ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1], arguments[2], trait );
+        sut.Nodes.TestSequence( [ arguments[0], arguments[1], arguments[2], trait ] ).Go();
     }
 
     [Fact]
@@ -830,7 +828,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitLeadWindowFunction( arguments[0].Lead( arguments[1], arguments[2] ).AddTrait( trait ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1], arguments[2], trait );
+        sut.Nodes.TestSequence( [ arguments[0], arguments[1], arguments[2], trait ] ).Go();
     }
 
     [Fact]
@@ -842,7 +840,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitFirstValueWindowFunction( argument.FirstValue().AddTrait( trait ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( argument, trait );
+        sut.Nodes.TestSequence( [ argument, trait ] ).Go();
     }
 
     [Fact]
@@ -854,7 +852,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitLastValueWindowFunction( argument.LastValue().AddTrait( trait ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( argument, trait );
+        sut.Nodes.TestSequence( [ argument, trait ] ).Go();
     }
 
     [Fact]
@@ -866,7 +864,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitNthValueWindowFunction( arguments[0].NthValue( arguments[1] ).AddTrait( trait ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1], trait );
+        sut.Nodes.TestSequence( [ arguments[0], arguments[1], trait ] ).Go();
     }
 
     [Fact]
@@ -878,7 +876,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitCustomAggregateFunction( arguments[0].StringConcat( arguments[1] ).AddTrait( trait ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1], trait );
+        sut.Nodes.TestSequence( [ arguments[0], arguments[1], trait ] ).Go();
     }
 
     [Fact]
@@ -889,7 +887,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitRawCondition( SqlNode.RawCondition( "@a > @b", parameters ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( parameters[0], parameters[1] );
+        sut.Nodes.TestSequence( [ parameters[0], parameters[1] ] ).Go();
     }
 
     [Fact]
@@ -897,7 +895,7 @@ public class SqlNodeVisitorTests : TestsBase
     {
         var sut = new Visitor();
         var action = Lambda.Of( () => sut.VisitTrue( SqlNode.True() ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -905,7 +903,7 @@ public class SqlNodeVisitorTests : TestsBase
     {
         var sut = new Visitor();
         var action = Lambda.Of( () => sut.VisitFalse( SqlNode.False() ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -916,7 +914,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitEqualTo( operands[0].IsEqualTo( operands[1] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( operands[0], operands[1] );
+        sut.Nodes.TestSequence( [ operands[0], operands[1] ] ).Go();
     }
 
     [Fact]
@@ -927,7 +925,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitNotEqualTo( operands[0].IsNotEqualTo( operands[1] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( operands[0], operands[1] );
+        sut.Nodes.TestSequence( [ operands[0], operands[1] ] ).Go();
     }
 
     [Fact]
@@ -938,7 +936,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitGreaterThan( operands[0].IsGreaterThan( operands[1] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( operands[0], operands[1] );
+        sut.Nodes.TestSequence( [ operands[0], operands[1] ] ).Go();
     }
 
     [Fact]
@@ -949,7 +947,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitLessThan( operands[0].IsLessThan( operands[1] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( operands[0], operands[1] );
+        sut.Nodes.TestSequence( [ operands[0], operands[1] ] ).Go();
     }
 
     [Fact]
@@ -960,7 +958,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitGreaterThanOrEqualTo( operands[0].IsGreaterThanOrEqualTo( operands[1] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( operands[0], operands[1] );
+        sut.Nodes.TestSequence( [ operands[0], operands[1] ] ).Go();
     }
 
     [Fact]
@@ -971,7 +969,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitLessThanOrEqualTo( operands[0].IsLessThanOrEqualTo( operands[1] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( operands[0], operands[1] );
+        sut.Nodes.TestSequence( [ operands[0], operands[1] ] ).Go();
     }
 
     [Fact]
@@ -982,7 +980,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitAnd( operands[0].And( operands[1] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( operands[0], operands[1] );
+        sut.Nodes.TestSequence( [ operands[0], operands[1] ] ).Go();
     }
 
     [Fact]
@@ -993,7 +991,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitOr( operands[0].Or( operands[1] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( operands[0], operands[1] );
+        sut.Nodes.TestSequence( [ operands[0], operands[1] ] ).Go();
     }
 
     [Fact]
@@ -1004,7 +1002,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitConditionValue( condition.ToValue() );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( condition );
+        sut.Nodes.TestSequence( [ condition ] ).Go();
     }
 
     [Fact]
@@ -1015,7 +1013,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitBetween( operands[0].IsBetween( operands[1], operands[2] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( operands[0], operands[1], operands[2] );
+        sut.Nodes.TestSequence( [ operands[0], operands[1], operands[2] ] ).Go();
     }
 
     [Fact]
@@ -1026,7 +1024,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitExists( query.Exists() );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( query.Parameters[0] );
+        sut.Nodes.TestSequence( [ query.Parameters[0] ] ).Go();
     }
 
     [Fact]
@@ -1037,7 +1035,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitLike( operands[0].Like( operands[1], operands[2] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( operands[0], operands[1], operands[2] );
+        sut.Nodes.TestSequence( [ operands[0], operands[1], operands[2] ] ).Go();
     }
 
     [Fact]
@@ -1048,7 +1046,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitIn( ( SqlInConditionNode )operands[0].In( operands[1], operands[2] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( operands[0], operands[1], operands[2] );
+        sut.Nodes.TestSequence( [ operands[0], operands[1], operands[2] ] ).Go();
     }
 
     [Fact]
@@ -1060,7 +1058,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitInQuery( value.InQuery( query ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( value, query.Parameters[0] );
+        sut.Nodes.TestSequence( [ value, query.Parameters[0] ] ).Go();
     }
 
     [Fact]
@@ -1068,7 +1066,7 @@ public class SqlNodeVisitorTests : TestsBase
     {
         var sut = new Visitor();
         var action = Lambda.Of( () => sut.VisitRawRecordSet( SqlNode.RawRecordSet( "foo" ) ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -1079,7 +1077,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitNamedFunctionRecordSet( function.AsSet( "bar" ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( function.Arguments[0] );
+        sut.Nodes.TestSequence( [ function.Arguments[0] ] ).Go();
     }
 
     [Fact]
@@ -1087,7 +1085,7 @@ public class SqlNodeVisitorTests : TestsBase
     {
         var sut = new Visitor();
         var action = Lambda.Of( () => sut.VisitTable( SqlTableMock.Create<int>( "foo", new[] { "a" } ).Node ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -1095,7 +1093,7 @@ public class SqlNodeVisitorTests : TestsBase
     {
         var sut = new Visitor();
         var action = Lambda.Of( () => sut.VisitTableBuilder( SqlTableBuilderMock.Create<int>( "foo", new[] { "a" } ).Node ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -1103,7 +1101,7 @@ public class SqlNodeVisitorTests : TestsBase
     {
         var sut = new Visitor();
         var action = Lambda.Of( () => sut.VisitView( SqlViewMock.Create( "foo" ).ToRecordSet() ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -1111,7 +1109,7 @@ public class SqlNodeVisitorTests : TestsBase
     {
         var sut = new Visitor();
         var action = Lambda.Of( () => sut.VisitViewBuilder( SqlViewBuilderMock.Create( "foo" ).ToRecordSet() ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -1122,7 +1120,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitQueryRecordSet( query.AsSet( "bar" ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( query.Parameters[0] );
+        sut.Nodes.TestSequence( [ query.Parameters[0] ] ).Go();
     }
 
     [Fact]
@@ -1132,7 +1130,7 @@ public class SqlNodeVisitorTests : TestsBase
         var action = Lambda.Of(
             () => sut.VisitCommonTableExpressionRecordSet( SqlNode.RawQuery( "SELECT * FROM foo" ).ToCte( "bar" ).RecordSet ) );
 
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -1146,7 +1144,7 @@ public class SqlNodeVisitorTests : TestsBase
                         new[] { SqlNode.Column<int>( "a", defaultValue: SqlNode.Parameter( "a" ) ) } )
                     .AsSet( "bar" ) ) );
 
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -1156,7 +1154,7 @@ public class SqlNodeVisitorTests : TestsBase
         var action = Lambda.Of(
             () => sut.VisitNewView( SqlNode.RawQuery( "SELECT * FROM foo" ).ToCreateView( SqlRecordSetInfo.Create( "foo" ) ).AsSet() ) );
 
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -1168,7 +1166,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitJoinOn( recordSet.InnerOn( condition ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( recordSet, condition );
+        sut.Nodes.TestSequence( [ recordSet, condition ] ).Go();
     }
 
     [Fact]
@@ -1181,7 +1179,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitDataSource( from.Join( join ).AddTrait( trait ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( from, join.InnerRecordSet, join.OnExpression, trait );
+        sut.Nodes.TestSequence( [ from, join.InnerRecordSet, join.OnExpression, trait ] ).Go();
     }
 
     [Fact]
@@ -1192,7 +1190,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitDataSource( SqlNode.DummyDataSource().AddTrait( trait ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( trait );
+        sut.Nodes.TestSequence( [ trait ] ).Go();
     }
 
     [Fact]
@@ -1203,7 +1201,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitSelectField( expression.As( "x" ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( expression );
+        sut.Nodes.TestSequence( [ expression ] ).Go();
     }
 
     [Fact]
@@ -1218,7 +1216,7 @@ public class SqlNodeVisitorTests : TestsBase
                     .CompoundWith( SqlNode.RawRecordSet( "bar" ).ToDataSource().Select( x => new[] { x.From["x"].AsSelf() } ).ToUnion() )
                     .Selection[0] ) );
 
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -1226,7 +1224,7 @@ public class SqlNodeVisitorTests : TestsBase
     {
         var sut = new Visitor();
         var action = Lambda.Of( () => sut.VisitSelectRecordSet( SqlNode.RawRecordSet( "foo" ).GetAll() ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -1234,7 +1232,7 @@ public class SqlNodeVisitorTests : TestsBase
     {
         var sut = new Visitor();
         var action = Lambda.Of( () => sut.VisitSelectAll( SqlNode.RawRecordSet( "foo" ).ToDataSource().GetAll() ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -1245,7 +1243,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitSelectExpression( selection.ToExpression() );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( selection );
+        sut.Nodes.TestSequence( [ selection ] ).Go();
     }
 
     [Fact]
@@ -1256,7 +1254,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitRawQuery( SqlNode.RawQuery( "SELECT * FROM foo WHERE @a > @b", parameters ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( parameters[0], parameters[1] );
+        sut.Nodes.TestSequence( [ parameters[0], parameters[1] ] ).Go();
     }
 
     [Fact]
@@ -1271,7 +1269,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitDataSourceQuery( dataSource.Select( selection ).AddTrait( trait ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( selection, from, join.InnerRecordSet, join.OnExpression, trait );
+        sut.Nodes.TestSequence( [ selection, from, join.InnerRecordSet, join.OnExpression, trait ] ).Go();
     }
 
     [Fact]
@@ -1290,8 +1288,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitCompoundQuery( query );
 
-        sut.Nodes.Should()
-            .BeSequentiallyEqualTo( query.Selection[0], firstRecordSet, firstRecordSet, secondRecordSet, secondRecordSet, trait );
+        sut.Nodes.TestSequence( [ query.Selection[0], firstRecordSet, firstRecordSet, secondRecordSet, secondRecordSet, trait ] ).Go();
     }
 
     [Fact]
@@ -1304,7 +1301,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitCompoundQueryComponent( recordSet.ToDataSource().Select( selection ).AddTrait( trait ).ToUnion() );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( selection, recordSet, trait );
+        sut.Nodes.TestSequence( [ selection, recordSet, trait ] ).Go();
     }
 
     [Fact]
@@ -1312,7 +1309,7 @@ public class SqlNodeVisitorTests : TestsBase
     {
         var sut = new Visitor();
         var action = Lambda.Of( () => sut.VisitDistinctTrait( SqlNode.DistinctTrait() ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -1323,7 +1320,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitFilterTrait( SqlNode.FilterTrait( filter, isConjunction: true ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( filter );
+        sut.Nodes.TestSequence( [ filter ] ).Go();
     }
 
     [Fact]
@@ -1334,7 +1331,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitAggregationTrait( SqlNode.AggregationTrait( expressions ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( expressions[0], expressions[1] );
+        sut.Nodes.TestSequence( [ expressions[0], expressions[1] ] ).Go();
     }
 
     [Fact]
@@ -1345,7 +1342,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitAggregationFilterTrait( SqlNode.AggregationFilterTrait( filter, isConjunction: true ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( filter );
+        sut.Nodes.TestSequence( [ filter ] ).Go();
     }
 
     [Fact]
@@ -1356,7 +1353,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitSortTrait( SqlNode.SortTrait( ordering ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( ordering[0].Expression, ordering[1].Expression );
+        sut.Nodes.TestSequence( [ ordering[0].Expression, ordering[1].Expression ] ).Go();
     }
 
     [Fact]
@@ -1367,7 +1364,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitLimitTrait( SqlNode.LimitTrait( value ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( value );
+        sut.Nodes.TestSequence( [ value ] ).Go();
     }
 
     [Fact]
@@ -1378,7 +1375,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitOffsetTrait( SqlNode.OffsetTrait( value ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( value );
+        sut.Nodes.TestSequence( [ value ] ).Go();
     }
 
     [Fact]
@@ -1393,7 +1390,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitCommonTableExpressionTrait( SqlNode.CommonTableExpressionTrait( queries[0].ToCte( "X" ), queries[1].ToCte( "Y" ) ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( queries[0].Parameters[0], queries[1].Parameters[0] );
+        sut.Nodes.TestSequence( [ queries[0].Parameters[0], queries[1].Parameters[0] ] ).Go();
     }
 
     [Fact]
@@ -1409,7 +1406,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitWindowDefinitionTrait( SqlNode.WindowDefinitionTrait( windows ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( parameters[0], parameters[1] );
+        sut.Nodes.TestSequence( [ parameters[0], parameters[1] ] ).Go();
     }
 
     [Fact]
@@ -1420,7 +1417,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitWindowTrait( SqlNode.WindowTrait( SqlNode.WindowDefinition( "foo", new[] { parameter.Asc() } ) ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( parameter );
+        sut.Nodes.TestSequence( [ parameter ] ).Go();
     }
 
     [Fact]
@@ -1431,7 +1428,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitOrderBy( expression.Asc() );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( expression );
+        sut.Nodes.TestSequence( [ expression ] ).Go();
     }
 
     [Fact]
@@ -1442,7 +1439,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitCommonTableExpression( query.ToCte( "X" ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( query.Parameters[0] );
+        sut.Nodes.TestSequence( [ query.Parameters[0] ] ).Go();
     }
 
     [Fact]
@@ -1455,7 +1452,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitWindowDefinition( window );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( parameters[0], parameters[1], frame );
+        sut.Nodes.TestSequence( [ parameters[0], parameters[1], frame ] ).Go();
     }
 
     [Fact]
@@ -1465,7 +1462,7 @@ public class SqlNodeVisitorTests : TestsBase
         var action = Lambda.Of(
             () => sut.VisitWindowFrame( SqlNode.RowsWindowFrame( SqlWindowFrameBoundary.CurrentRow, SqlWindowFrameBoundary.CurrentRow ) ) );
 
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -1476,7 +1473,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitTypeCast( expression.CastTo<int>() );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( expression );
+        sut.Nodes.TestSequence( [ expression ] ).Go();
     }
 
     [Fact]
@@ -1487,7 +1484,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitValues( SqlNode.Values( expressions ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( expressions[0, 0], expressions[0, 1], expressions[1, 0], expressions[1, 1] );
+        sut.Nodes.TestSequence( [ expressions[0, 0], expressions[0, 1], expressions[1, 0], expressions[1, 1] ] ).Go();
     }
 
     [Fact]
@@ -1498,7 +1495,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitRawStatement( SqlNode.RawStatement( "INSERT INTO foo (a, b) VALUES (@a, @b)", parameters ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( parameters[0], parameters[1] );
+        sut.Nodes.TestSequence( [ parameters[0], parameters[1] ] ).Go();
     }
 
     [Fact]
@@ -1511,7 +1508,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitInsertInto( SqlNode.Values( values ).ToInsertInto( recordSet, dataFields[0], dataFields[1] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( recordSet, recordSet, recordSet, values[0, 0], values[0, 1], values[1, 0], values[1, 1] );
+        sut.Nodes.TestSequence( [ recordSet, recordSet, recordSet, values[0, 0], values[0, 1], values[1, 0], values[1, 1] ] ).Go();
     }
 
     [Fact]
@@ -1523,7 +1520,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitUpdate( recordSet.ToDataSource().ToUpdate( recordSet["x"].Assign( values[0] ), recordSet["y"].Assign( values[1] ) ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( recordSet, values[0], recordSet, values[1], recordSet );
+        sut.Nodes.TestSequence( [ recordSet, values[0], recordSet, values[1], recordSet ] ).Go();
     }
 
     [Fact]
@@ -1543,8 +1540,8 @@ public class SqlNodeVisitorTests : TestsBase
                     (_, _) => new[] { dataFields[2].Assign( updateValues[0] ) },
                     new[] { dataFields[0] } ) );
 
-        sut.Nodes.Should()
-            .BeSequentiallyEqualTo(
+        sut.Nodes.TestSequence(
+            [
                 recordSet,
                 recordSet,
                 recordSet,
@@ -1554,7 +1551,9 @@ public class SqlNodeVisitorTests : TestsBase
                 source[0, 0],
                 source[0, 1],
                 source[1, 0],
-                source[1, 1] );
+                source[1, 1]
+            ] )
+            .Go();
     }
 
     [Fact]
@@ -1566,7 +1565,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitValueAssignment( recordSet["x"].Assign( value ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( recordSet, value );
+        sut.Nodes.TestSequence( [ recordSet, value ] ).Go();
     }
 
     [Fact]
@@ -1577,7 +1576,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitDeleteFrom( recordSet.ToDataSource().ToDeleteFrom() );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( recordSet );
+        sut.Nodes.TestSequence( [ recordSet ] ).Go();
     }
 
     [Fact]
@@ -1588,7 +1587,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitTruncate( recordSet.ToTruncate() );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( recordSet );
+        sut.Nodes.TestSequence( [ recordSet ] ).Go();
     }
 
     [Fact]
@@ -1601,7 +1600,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitColumnDefinition( column );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( parameter1, parameter2 );
+        sut.Nodes.TestSequence( [ parameter1, parameter2 ] ).Go();
     }
 
     [Fact]
@@ -1614,7 +1613,7 @@ public class SqlNodeVisitorTests : TestsBase
         sut.VisitPrimaryKeyDefinition(
             SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), new[] { columns[0].Asc(), columns[1].Desc() } ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( table, table );
+        sut.Nodes.TestSequence( [ table, table ] ).Go();
     }
 
     [Fact]
@@ -1628,7 +1627,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitForeignKeyDefinition( SqlNode.ForeignKey( SqlSchemaObjectName.Create( "FK" ), columns, otherTable, otherColumns ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( table, table, otherTable, otherTable, otherTable );
+        sut.Nodes.TestSequence( [ table, table, otherTable, otherTable, otherTable ] ).Go();
     }
 
     [Fact]
@@ -1639,7 +1638,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitCheckDefinition( SqlNode.Check( SqlSchemaObjectName.Create( "CHK" ), SqlNode.RawCondition( "a > @a", parameter ) ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( parameter );
+        sut.Nodes.TestSequence( [ parameter ] ).Go();
     }
 
     [Fact]
@@ -1666,15 +1665,8 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitCreateTable( table );
 
-        sut.Nodes.Should()
-            .BeSequentiallyEqualTo(
-                parameters[0],
-                parameters[1],
-                table.RecordSet,
-                table.RecordSet,
-                otherTable,
-                otherTable,
-                parameters[2] );
+        sut.Nodes.TestSequence( [ parameters[0], parameters[1], table.RecordSet, table.RecordSet, otherTable, otherTable, parameters[2] ] )
+            .Go();
     }
 
     [Fact]
@@ -1686,7 +1678,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitCreateView( view );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( parameter );
+        sut.Nodes.TestSequence( [ parameter ] ).Go();
     }
 
     [Fact]
@@ -1705,7 +1697,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitCreateIndex( index );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( table, table, table, parameter );
+        sut.Nodes.TestSequence( [ table, table, table, parameter ] ).Go();
     }
 
     [Fact]
@@ -1715,7 +1707,7 @@ public class SqlNodeVisitorTests : TestsBase
         var action = Lambda.Of(
             () => sut.VisitRenameTable( SqlNode.RenameTable( SqlRecordSetInfo.Create( "a" ), SqlSchemaObjectName.Create( "b" ) ) ) );
 
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -1723,7 +1715,7 @@ public class SqlNodeVisitorTests : TestsBase
     {
         var sut = new Visitor();
         var action = Lambda.Of( () => sut.VisitRenameColumn( SqlNode.RenameColumn( SqlRecordSetInfo.Create( "a" ), "b", "c" ) ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -1734,7 +1726,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitAddColumn( SqlNode.AddColumn( SqlRecordSetInfo.Create( "a" ), SqlNode.Column<int>( "b", defaultValue: defaultValue ) ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( defaultValue );
+        sut.Nodes.TestSequence( [ defaultValue ] ).Go();
     }
 
     [Fact]
@@ -1742,7 +1734,7 @@ public class SqlNodeVisitorTests : TestsBase
     {
         var sut = new Visitor();
         var action = Lambda.Of( () => sut.VisitDropColumn( SqlNode.DropColumn( SqlRecordSetInfo.Create( "a" ), "b" ) ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -1750,7 +1742,7 @@ public class SqlNodeVisitorTests : TestsBase
     {
         var sut = new Visitor();
         var action = Lambda.Of( () => sut.VisitDropTable( SqlNode.DropTable( SqlRecordSetInfo.Create( "a" ) ) ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -1758,7 +1750,7 @@ public class SqlNodeVisitorTests : TestsBase
     {
         var sut = new Visitor();
         var action = Lambda.Of( () => sut.VisitDropView( SqlNode.DropView( SqlRecordSetInfo.Create( "a" ) ) ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -1768,7 +1760,7 @@ public class SqlNodeVisitorTests : TestsBase
         var action = Lambda.Of(
             () => sut.VisitDropIndex( SqlNode.DropIndex( SqlRecordSetInfo.Create( "foo" ), SqlSchemaObjectName.Create( "a" ) ) ) );
 
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -1784,7 +1776,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitStatementBatch( SqlNode.Batch( statements[0], statements[1] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( parameters[0], parameters[1] );
+        sut.Nodes.TestSequence( [ parameters[0], parameters[1] ] ).Go();
     }
 
     [Fact]
@@ -1792,7 +1784,7 @@ public class SqlNodeVisitorTests : TestsBase
     {
         var sut = new Visitor();
         var action = Lambda.Of( () => sut.VisitBeginTransaction( SqlNode.BeginTransaction( IsolationLevel.Serializable ) ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -1800,7 +1792,7 @@ public class SqlNodeVisitorTests : TestsBase
     {
         var sut = new Visitor();
         var action = Lambda.Of( () => sut.VisitCommitTransaction( SqlNode.CommitTransaction() ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -1808,7 +1800,7 @@ public class SqlNodeVisitorTests : TestsBase
     {
         var sut = new Visitor();
         var action = Lambda.Of( () => sut.VisitRollbackTransaction( SqlNode.RollbackTransaction() ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -1816,7 +1808,7 @@ public class SqlNodeVisitorTests : TestsBase
     {
         var sut = new Visitor();
         var action = Lambda.Of( () => sut.VisitCustom( SqlNode.RollbackTransaction() ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     private sealed class Visitor : SqlNodeVisitor { }

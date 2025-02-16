@@ -3,7 +3,6 @@ using System.Data.Common;
 using System.Reflection;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Statements.Compilers;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sql.Tests.StatementsTests;
 
@@ -14,14 +13,13 @@ public class SqlQueryReaderCreationOptionsTests : TestsBase
     {
         var sut = SqlQueryReaderCreationOptions.Default;
 
-        using ( new AssertionScope() )
-        {
-            sut.ResultSetFieldsPersistenceMode.Should().Be( SqlQueryReaderResultSetFieldsPersistenceMode.Ignore );
-            sut.AlwaysTestForNull.Should().BeFalse();
-            sut.RowTypeConstructorPredicate.Should().BeNull();
-            sut.RowTypeMemberPredicate.Should().BeNull();
-            sut.MemberConfigurations.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.ResultSetFieldsPersistenceMode.TestEquals( SqlQueryReaderResultSetFieldsPersistenceMode.Ignore ),
+                sut.AlwaysTestForNull.TestFalse(),
+                sut.RowTypeConstructorPredicate.TestNull(),
+                sut.RowTypeMemberPredicate.TestNull(),
+                sut.MemberConfigurations.TestEmpty() )
+            .Go();
     }
 
     [Theory]
@@ -32,14 +30,13 @@ public class SqlQueryReaderCreationOptionsTests : TestsBase
     {
         var sut = SqlQueryReaderCreationOptions.Default.SetResultSetFieldsPersistenceMode( mode );
 
-        using ( new AssertionScope() )
-        {
-            sut.ResultSetFieldsPersistenceMode.Should().Be( mode );
-            sut.AlwaysTestForNull.Should().BeFalse();
-            sut.RowTypeConstructorPredicate.Should().BeNull();
-            sut.RowTypeMemberPredicate.Should().BeNull();
-            sut.MemberConfigurations.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.ResultSetFieldsPersistenceMode.TestEquals( mode ),
+                sut.AlwaysTestForNull.TestFalse(),
+                sut.RowTypeConstructorPredicate.TestNull(),
+                sut.RowTypeMemberPredicate.TestNull(),
+                sut.MemberConfigurations.TestEmpty() )
+            .Go();
     }
 
     [Theory]
@@ -49,14 +46,13 @@ public class SqlQueryReaderCreationOptionsTests : TestsBase
     {
         var sut = SqlQueryReaderCreationOptions.Default.EnableAlwaysTestingForNull( enabled );
 
-        using ( new AssertionScope() )
-        {
-            sut.ResultSetFieldsPersistenceMode.Should().Be( SqlQueryReaderResultSetFieldsPersistenceMode.Ignore );
-            sut.AlwaysTestForNull.Should().Be( enabled );
-            sut.RowTypeConstructorPredicate.Should().BeNull();
-            sut.RowTypeMemberPredicate.Should().BeNull();
-            sut.MemberConfigurations.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.ResultSetFieldsPersistenceMode.TestEquals( SqlQueryReaderResultSetFieldsPersistenceMode.Ignore ),
+                sut.AlwaysTestForNull.TestEquals( enabled ),
+                sut.RowTypeConstructorPredicate.TestNull(),
+                sut.RowTypeMemberPredicate.TestNull(),
+                sut.MemberConfigurations.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -65,14 +61,13 @@ public class SqlQueryReaderCreationOptionsTests : TestsBase
         var predicate = Lambda.Of( (ConstructorInfo ctor) => ctor.IsPublic );
         var sut = SqlQueryReaderCreationOptions.Default.SetRowTypeConstructorPredicate( predicate );
 
-        using ( new AssertionScope() )
-        {
-            sut.ResultSetFieldsPersistenceMode.Should().Be( SqlQueryReaderResultSetFieldsPersistenceMode.Ignore );
-            sut.AlwaysTestForNull.Should().BeFalse();
-            sut.RowTypeConstructorPredicate.Should().BeSameAs( predicate );
-            sut.RowTypeMemberPredicate.Should().BeNull();
-            sut.MemberConfigurations.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.ResultSetFieldsPersistenceMode.TestEquals( SqlQueryReaderResultSetFieldsPersistenceMode.Ignore ),
+                sut.AlwaysTestForNull.TestFalse(),
+                sut.RowTypeConstructorPredicate.TestRefEquals( predicate ),
+                sut.RowTypeMemberPredicate.TestNull(),
+                sut.MemberConfigurations.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -81,14 +76,13 @@ public class SqlQueryReaderCreationOptionsTests : TestsBase
         var predicate = Lambda.Of( (MemberInfo member) => member.MemberType == MemberTypes.Property );
         var sut = SqlQueryReaderCreationOptions.Default.SetRowTypeMemberPredicate( predicate );
 
-        using ( new AssertionScope() )
-        {
-            sut.ResultSetFieldsPersistenceMode.Should().Be( SqlQueryReaderResultSetFieldsPersistenceMode.Ignore );
-            sut.AlwaysTestForNull.Should().BeFalse();
-            sut.RowTypeConstructorPredicate.Should().BeNull();
-            sut.RowTypeMemberPredicate.Should().BeSameAs( predicate );
-            sut.MemberConfigurations.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.ResultSetFieldsPersistenceMode.TestEquals( SqlQueryReaderResultSetFieldsPersistenceMode.Ignore ),
+                sut.AlwaysTestForNull.TestFalse(),
+                sut.RowTypeConstructorPredicate.TestNull(),
+                sut.RowTypeMemberPredicate.TestRefEquals( predicate ),
+                sut.MemberConfigurations.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -97,15 +91,14 @@ public class SqlQueryReaderCreationOptionsTests : TestsBase
         var cfg = SqlQueryMemberConfiguration.Ignore( "foo" );
         var sut = SqlQueryReaderCreationOptions.Default.With( cfg );
 
-        using ( new AssertionScope() )
-        {
-            SqlQueryReaderCreationOptions.Default.MemberConfigurations.ToArray().Should().BeEmpty();
-            sut.ResultSetFieldsPersistenceMode.Should().Be( SqlQueryReaderResultSetFieldsPersistenceMode.Ignore );
-            sut.AlwaysTestForNull.Should().BeFalse();
-            sut.RowTypeConstructorPredicate.Should().BeNull();
-            sut.RowTypeMemberPredicate.Should().BeNull();
-            sut.MemberConfigurations.ToArray().Should().BeSequentiallyEqualTo( cfg );
-        }
+        Assertion.All(
+                SqlQueryReaderCreationOptions.Default.MemberConfigurations.ToArray().TestEmpty(),
+                sut.ResultSetFieldsPersistenceMode.TestEquals( SqlQueryReaderResultSetFieldsPersistenceMode.Ignore ),
+                sut.AlwaysTestForNull.TestFalse(),
+                sut.RowTypeConstructorPredicate.TestNull(),
+                sut.RowTypeMemberPredicate.TestNull(),
+                sut.MemberConfigurations.TestSequence( [ cfg ] ) )
+            .Go();
     }
 
     [Fact]
@@ -116,15 +109,14 @@ public class SqlQueryReaderCreationOptionsTests : TestsBase
         var prev = SqlQueryReaderCreationOptions.Default.With( cfg1 );
         var sut = prev.With( cfg2 );
 
-        using ( new AssertionScope() )
-        {
-            prev.MemberConfigurations.ToArray().Should().BeSequentiallyEqualTo( cfg1 );
-            sut.ResultSetFieldsPersistenceMode.Should().Be( SqlQueryReaderResultSetFieldsPersistenceMode.Ignore );
-            sut.AlwaysTestForNull.Should().BeFalse();
-            sut.RowTypeConstructorPredicate.Should().BeNull();
-            sut.RowTypeMemberPredicate.Should().BeNull();
-            sut.MemberConfigurations.ToArray().Should().BeSequentiallyEqualTo( cfg1, cfg2 );
-        }
+        Assertion.All(
+                prev.MemberConfigurations.TestSequence( [ cfg1 ] ),
+                sut.ResultSetFieldsPersistenceMode.TestEquals( SqlQueryReaderResultSetFieldsPersistenceMode.Ignore ),
+                sut.AlwaysTestForNull.TestFalse(),
+                sut.RowTypeConstructorPredicate.TestNull(),
+                sut.RowTypeMemberPredicate.TestNull(),
+                sut.MemberConfigurations.TestSequence( [ cfg1, cfg2 ] ) )
+            .Go();
     }
 
     [Fact]
@@ -132,7 +124,7 @@ public class SqlQueryReaderCreationOptionsTests : TestsBase
     {
         var sut = SqlQueryReaderCreationOptions.Default;
         var result = sut.CreateMemberConfigurationByNameLookup( typeof( IDataReader ) );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -145,13 +137,9 @@ public class SqlQueryReaderCreationOptionsTests : TestsBase
 
         var result = sut.CreateMemberConfigurationByNameLookup( typeof( IDataReader ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull();
-            result.Should().HaveCount( 3 );
-            (result?.Keys).Should().BeEquivalentTo( "foo", "bar", "qux" );
-            (result?.Values).Should().BeEquivalentTo( cfg1, cfg2, cfg3 );
-        }
+        result.TestNotNull(
+                r => Assertion.All( r.Keys.TestSetEqual( [ "foo", "bar", "qux" ] ), r.Values.TestSetEqual( [ cfg1, cfg2, cfg3 ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -164,13 +152,8 @@ public class SqlQueryReaderCreationOptionsTests : TestsBase
 
         var result = sut.CreateMemberConfigurationByNameLookup( typeof( IDataReader ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull();
-            result.Should().HaveCount( 2 );
-            (result?.Keys).Should().BeEquivalentTo( "foo", "bar" );
-            (result?.Values).Should().BeEquivalentTo( cfg1, cfg3 );
-        }
+        result.TestNotNull( r => Assertion.All( r.Keys.TestSetEqual( [ "foo", "bar" ] ), r.Values.TestSetEqual( [ cfg1, cfg3 ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -181,7 +164,7 @@ public class SqlQueryReaderCreationOptionsTests : TestsBase
 
         var result = sut.CreateMemberConfigurationByNameLookup( typeof( IDataReader ) );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -192,12 +175,7 @@ public class SqlQueryReaderCreationOptionsTests : TestsBase
 
         var result = sut.CreateMemberConfigurationByNameLookup( typeof( DbDataReader ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull();
-            result.Should().HaveCount( 1 );
-            (result?.Keys).Should().BeEquivalentTo( "foo" );
-            (result?.Values).Should().BeEquivalentTo( cfg );
-        }
+        result.TestNotNull( r => Assertion.All( r.Keys.TestSetEqual( [ "foo" ] ), r.Values.TestSetEqual( [ cfg ] ) ) )
+            .Go();
     }
 }

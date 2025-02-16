@@ -1,5 +1,4 @@
 ﻿using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests;
@@ -15,14 +14,13 @@ public class SqlObjectBuilderArrayTests : TestsBase
 
         var sut = SqlObjectBuilderArray<SqlObjectBuilder>.From<SqlObjectBuilder>( new SqlObjectBuilder[] { table, c1, c2 } );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 3 );
-            sut.Should().BeSequentiallyEqualTo( table, c1, c2 );
-            sut[0].Should().Be( table );
-            sut[1].Should().Be( c1 );
-            sut[2].Should().Be( c2 );
-        }
+Assertion.All(
+            sut.Count.TestEquals( 3 ),
+            sut.TestSequence([ table, c1, c2 ]),
+            sut[0].TestEquals( table ),
+            sut[1].TestEquals( c1 ),
+            sut[2].TestEquals( c2 )
+).Go();
     }
 
     [Fact]
@@ -35,10 +33,9 @@ public class SqlObjectBuilderArrayTests : TestsBase
 
         var result = sut.UnsafeReinterpretAs<SqlObjectBuilder>();
 
-        using ( new AssertionScope() )
-        {
-            result.Count.Should().Be( 3 );
-            result.Should().BeSequentiallyEqualTo( table, c1, c2 );
-        }
+Assertion.All(
+            result.Count.TestEquals( 3 ),
+            result.TestSequence([ table, c1, c2 ])
+).Go();
     }
 }

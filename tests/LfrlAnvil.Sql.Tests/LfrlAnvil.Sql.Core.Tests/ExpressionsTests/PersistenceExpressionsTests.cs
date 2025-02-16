@@ -2,7 +2,6 @@
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Persistence;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
@@ -18,20 +17,18 @@ public class PersistenceExpressionsTests : TestsBase
         var sut = dataSource.ToDeleteFrom();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.DeleteFrom );
-            sut.DataSource.Should().BeSameAs( dataSource );
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.DeleteFrom ),
+                sut.DataSource.TestRefEquals( dataSource ),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
+                text.TestEquals(
                     """
                     DELETE FROM [foo]
                     INNER JOIN [bar] ON ([foo].[a] : ?) == ([bar].[b] : ?)
                     AND WHERE ([bar].[c] : ?) > ("5" : System.Int32)
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -42,19 +39,17 @@ public class PersistenceExpressionsTests : TestsBase
         var sut = dataSource.ToDeleteFrom();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.DeleteFrom );
-            sut.DataSource.Should().BeSameAs( dataSource );
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.DeleteFrom ),
+                sut.DataSource.TestRefEquals( dataSource ),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
+                text.TestEquals(
                     """
                     DELETE FROM [foo]
                     AND WHERE ([foo].[a] : ?) > ("5" : System.Int32)
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -64,14 +59,13 @@ public class PersistenceExpressionsTests : TestsBase
         var sut = set.ToTruncate();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Truncate );
-            sut.Table.Should().BeSameAs( set );
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
-            text.Should().Be( "TRUNCATE [foo]" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.Truncate ),
+                sut.Table.TestRefEquals( set ),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
+                text.TestEquals( "TRUNCATE [foo]" ) )
+            .Go();
     }
 
     [Fact]
@@ -82,13 +76,12 @@ public class PersistenceExpressionsTests : TestsBase
         var sut = dataField.Assign( value );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.ValueAssignment );
-            sut.DataField.Should().BeSameAs( dataField );
-            sut.Value.Should().BeSameAs( value );
-            text.Should().Be( "([foo].[a] : ?) = (\"5\" : System.Int32)" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.ValueAssignment ),
+                sut.DataField.TestRefEquals( dataField ),
+                sut.Value.TestRefEquals( value ),
+                text.TestEquals( "([foo].[a] : ?) = (\"5\" : System.Int32)" ) )
+            .Go();
     }
 
     [Fact]
@@ -109,16 +102,14 @@ public class PersistenceExpressionsTests : TestsBase
         var sut = dataSource.ToUpdate( assignmentsSelector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            assignmentsSelector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.NodeType.Should().Be( SqlNodeType.Update );
-            sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Assignments.Should().BeSequentiallyEqualTo( assignments );
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
-            text.Should()
-                .Be(
+        Assertion.All(
+                assignmentsSelector.CallAt( 0 ).Arguments.TestSequence( [ dataSource ] ),
+                sut.NodeType.TestEquals( SqlNodeType.Update ),
+                sut.DataSource.TestRefEquals( dataSource ),
+                sut.Assignments.TestSequence( assignments ),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
+                text.TestEquals(
                     """
                     UPDATE FROM [foo]
                     INNER JOIN [bar] ON ([foo].[a] : ?) == ([bar].[b] : ?)
@@ -127,8 +118,8 @@ public class PersistenceExpressionsTests : TestsBase
                       ([foo].[b] : ?) = ("10" : System.Int32),
                       ([foo].[c] : ?) = ("foo" : System.String),
                       ([foo].[d] : ?) = (@dVal : System.Double)
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -140,22 +131,20 @@ public class PersistenceExpressionsTests : TestsBase
         var sut = dataSource.ToUpdate();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Update );
-            sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Assignments.Should().BeEmpty();
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.Update ),
+                sut.DataSource.TestRefEquals( dataSource ),
+                sut.Assignments.TestEmpty(),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
+                text.TestEquals(
                     """
                     UPDATE FROM [foo]
                     INNER JOIN [bar] ON ([foo].[a] : ?) == ([bar].[b] : ?)
                     AND WHERE ([bar].[c] : ?) > ("5" : System.Int32)
                     SET
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -172,15 +161,13 @@ public class PersistenceExpressionsTests : TestsBase
         var sut = oldUpdate.AndSet( assignmentsSelector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            assignmentsSelector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( oldUpdate );
-            sut.Should().NotBeSameAs( oldUpdate );
-            sut.NodeType.Should().Be( SqlNodeType.Update );
-            sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Assignments.Should().BeSequentiallyEqualTo( oldAssignments[0], newAssignments[0], newAssignments[1] );
-            text.Should()
-                .Be(
+        Assertion.All(
+                assignmentsSelector.CallAt( 0 ).Arguments.TestSequence( [ oldUpdate ] ),
+                sut.TestNotRefEquals( oldUpdate ),
+                sut.NodeType.TestEquals( SqlNodeType.Update ),
+                sut.DataSource.TestRefEquals( dataSource ),
+                sut.Assignments.TestSequence( [ oldAssignments[0], newAssignments[0], newAssignments[1] ] ),
+                text.TestEquals(
                     """
                     UPDATE FROM [foo]
                     AND WHERE ([foo].[a] : ?) > ("5" : System.Int32)
@@ -188,8 +175,8 @@ public class PersistenceExpressionsTests : TestsBase
                       ([foo].[b] : ?) = ("10" : System.Int32),
                       ([foo].[c] : ?) = ("foo" : System.String),
                       ([foo].[d] : ?) = (@dVal : System.Double)
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -202,18 +189,16 @@ public class PersistenceExpressionsTests : TestsBase
         var sut = original.AndSet();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.Should().BeSameAs( original );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.TestRefEquals( original ),
+                text.TestEquals(
                     """
                     UPDATE FROM [foo]
                     AND WHERE ([foo].[a] : ?) > ("5" : System.Int32)
                     SET
                       ([foo].[b] : ?) = ("10" : System.Int32)
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -228,22 +213,20 @@ public class PersistenceExpressionsTests : TestsBase
         var sut = query.ToInsertInto( set, dataFieldsSelector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            dataFieldsSelector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( set );
-            sut.NodeType.Should().Be( SqlNodeType.InsertInto );
-            sut.Source.Should().BeSameAs( query );
-            sut.RecordSet.Should().BeSameAs( set );
-            sut.DataFields.Should().BeSequentiallyEqualTo( dataFields );
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
-            text.Should()
-                .Be(
+        Assertion.All(
+                dataFieldsSelector.CallAt( 0 ).Arguments.TestSequence( [ set ] ),
+                sut.NodeType.TestEquals( SqlNodeType.InsertInto ),
+                sut.Source.TestRefEquals( query ),
+                sut.RecordSet.TestRefEquals( set ),
+                sut.DataFields.TestSequence( dataFields ),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
+                text.TestEquals(
                     """
                     INSERT INTO [foo] ([foo].[x] : ?, [foo].[y] : ?)
                     SELECT a, b FROM bar
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -258,23 +241,21 @@ public class PersistenceExpressionsTests : TestsBase
         var sut = values.ToInsertInto( set, dataFieldsSelector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            dataFieldsSelector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( set );
-            sut.NodeType.Should().Be( SqlNodeType.InsertInto );
-            sut.Source.Should().BeSameAs( values );
-            sut.RecordSet.Should().BeSameAs( set );
-            sut.DataFields.Should().BeSequentiallyEqualTo( dataFields );
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
-            text.Should()
-                .Be(
+        Assertion.All(
+                dataFieldsSelector.CallAt( 0 ).Arguments.TestSequence( [ set ] ),
+                sut.NodeType.TestEquals( SqlNodeType.InsertInto ),
+                sut.Source.TestRefEquals( values ),
+                sut.RecordSet.TestRefEquals( set ),
+                sut.DataFields.TestSequence( dataFields ),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
+                text.TestEquals(
                     """
                     INSERT INTO [foo] ([foo].[x] : ?, [foo].[y] : ?)
                     VALUES
                     (("5" : System.Int32), (@a : System.String))
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -285,21 +266,19 @@ public class PersistenceExpressionsTests : TestsBase
         var sut = query.ToInsertInto( set );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.InsertInto );
-            sut.Source.Should().BeSameAs( query );
-            sut.RecordSet.Should().BeSameAs( set );
-            sut.DataFields.Should().BeEmpty();
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.InsertInto ),
+                sut.Source.TestRefEquals( query ),
+                sut.RecordSet.TestRefEquals( set ),
+                sut.DataFields.TestEmpty(),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
+                text.TestEquals(
                     """
                     INSERT INTO [foo] AS [qux] ()
                     SELECT a, b FROM bar
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -324,22 +303,20 @@ public class PersistenceExpressionsTests : TestsBase
         var sut = query.ToUpsert( set, dataFieldsSelector, updateAssignmentsSelector, conflictTargetSelector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            dataFieldsSelector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( set );
-            updateAssignmentsSelector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( set, sut.UpdateSource );
-            conflictTargetSelector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( set );
-            sut.NodeType.Should().Be( SqlNodeType.Upsert );
-            sut.Source.Should().BeSameAs( query );
-            sut.RecordSet.Should().BeSameAs( set );
-            sut.UpdateSource.Base.Should().BeSameAs( sut.RecordSet );
-            sut.InsertDataFields.Should().BeSequentiallyEqualTo( insertDataFields );
-            sut.UpdateAssignments.Should().BeSequentiallyEqualTo( updateAssignments );
-            sut.ConflictTarget.Should().BeSequentiallyEqualTo( conflictTarget );
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
-            text.Should()
-                .Be(
+        Assertion.All(
+                dataFieldsSelector.CallAt( 0 ).Arguments.TestSequence( [ set ] ),
+                updateAssignmentsSelector.CallAt( 0 ).Arguments.TestSequence( [ set, sut.UpdateSource ] ),
+                conflictTargetSelector.CallAt( 0 ).Arguments.TestSequence( [ set ] ),
+                sut.NodeType.TestEquals( SqlNodeType.Upsert ),
+                sut.Source.TestRefEquals( query ),
+                sut.RecordSet.TestRefEquals( set ),
+                sut.UpdateSource.Base.TestRefEquals( sut.RecordSet ),
+                sut.InsertDataFields.TestSequence( insertDataFields ),
+                sut.UpdateAssignments.TestSequence( updateAssignments ),
+                sut.ConflictTarget.TestSequence( conflictTarget ),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
+                text.TestEquals(
                     """
                     UPSERT [foo] USING
                     SELECT a, b FROM bar
@@ -348,8 +325,8 @@ public class PersistenceExpressionsTests : TestsBase
                     ON CONFLICT SET
                       ([foo].[x] : ?) = ("10" : System.Int32),
                       ([foo].[y] : ?) = (@dVal : System.Double)
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -374,22 +351,20 @@ public class PersistenceExpressionsTests : TestsBase
         var sut = values.ToUpsert( set, dataFieldsSelector, updateAssignmentsSelector, conflictTargetSelector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            dataFieldsSelector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( set );
-            updateAssignmentsSelector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( set, sut.UpdateSource );
-            conflictTargetSelector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( set );
-            sut.NodeType.Should().Be( SqlNodeType.Upsert );
-            sut.Source.Should().BeSameAs( values );
-            sut.RecordSet.Should().BeSameAs( set );
-            sut.UpdateSource.Base.Should().BeSameAs( sut.RecordSet );
-            sut.InsertDataFields.Should().BeSequentiallyEqualTo( insertDataFields );
-            sut.UpdateAssignments.Should().BeSequentiallyEqualTo( updateAssignments );
-            sut.ConflictTarget.Should().BeSequentiallyEqualTo( conflictTarget );
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
-            text.Should()
-                .Be(
+        Assertion.All(
+                dataFieldsSelector.CallAt( 0 ).Arguments.TestSequence( [ set ] ),
+                updateAssignmentsSelector.CallAt( 0 ).Arguments.TestSequence( [ set, sut.UpdateSource ] ),
+                conflictTargetSelector.CallAt( 0 ).Arguments.TestSequence( [ set ] ),
+                sut.NodeType.TestEquals( SqlNodeType.Upsert ),
+                sut.Source.TestRefEquals( values ),
+                sut.RecordSet.TestRefEquals( set ),
+                sut.UpdateSource.Base.TestRefEquals( sut.RecordSet ),
+                sut.InsertDataFields.TestSequence( insertDataFields ),
+                sut.UpdateAssignments.TestSequence( updateAssignments ),
+                sut.ConflictTarget.TestSequence( conflictTarget ),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
+                text.TestEquals(
                     """
                     UPSERT [foo] USING
                     VALUES
@@ -399,7 +374,7 @@ public class PersistenceExpressionsTests : TestsBase
                     ON CONFLICT SET
                       ([foo].[x] : ?) = ("10" : System.Int32),
                       ([foo].[y] : ?) = (@dVal : System.Double)
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 }

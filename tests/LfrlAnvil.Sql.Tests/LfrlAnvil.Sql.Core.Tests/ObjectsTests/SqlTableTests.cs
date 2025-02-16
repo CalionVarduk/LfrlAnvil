@@ -4,7 +4,6 @@ using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.ObjectsTests;
@@ -24,29 +23,26 @@ public class SqlTableTests : TestsBase
         ISqlTable sut = schema.Objects.GetTable( "T" );
         var c1 = sut.Columns.Get( "C1" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Database.Should().BeSameAs( db );
-            sut.Schema.Should().BeSameAs( schema );
-            sut.Type.Should().Be( SqlObjectType.Table );
-            sut.Name.Should().Be( "T" );
-            sut.Info.Should().Be( tableBuilder.Info );
-            sut.Node.Table.Should().BeSameAs( sut );
-            sut.Node.Info.Should().Be( sut.Info );
-            sut.Node.Alias.Should().BeNull();
-            sut.Node.Identifier.Should().Be( sut.Info.Identifier );
-            sut.Node.IsOptional.Should().BeFalse();
-            sut.ToString().Should().Be( "[Table] foo.T" );
-
-            sut.Columns.Count.Should().Be( 1 );
-            sut.Columns.Table.Should().BeSameAs( sut );
-            sut.Columns.Should().BeSequentiallyEqualTo( c1 );
-
-            sut.Constraints.Count.Should().Be( 2 );
-            sut.Constraints.Table.Should().BeSameAs( sut );
-            sut.Constraints.PrimaryKey.Index.Table.Should().BeSameAs( sut );
-            sut.Constraints.Should().BeEquivalentTo( sut.Constraints.PrimaryKey, sut.Constraints.PrimaryKey.Index );
-        }
+        Assertion.All(
+                sut.Database.TestRefEquals( db ),
+                sut.Schema.TestRefEquals( schema ),
+                sut.Type.TestEquals( SqlObjectType.Table ),
+                sut.Name.TestEquals( "T" ),
+                sut.Info.TestEquals( tableBuilder.Info ),
+                sut.Node.Table.TestRefEquals( sut ),
+                sut.Node.Info.TestEquals( sut.Info ),
+                sut.Node.Alias.TestNull(),
+                sut.Node.Identifier.TestEquals( sut.Info.Identifier ),
+                sut.Node.IsOptional.TestFalse(),
+                sut.ToString().TestEquals( "[Table] foo.T" ),
+                sut.Columns.Count.TestEquals( 1 ),
+                sut.Columns.Table.TestRefEquals( sut ),
+                sut.Columns.TestSequence( [ c1 ] ),
+                sut.Constraints.Count.TestEquals( 2 ),
+                sut.Constraints.Table.TestRefEquals( sut ),
+                sut.Constraints.PrimaryKey.Index.Table.TestRefEquals( sut ),
+                sut.Constraints.TestSetEqual( [ sut.Constraints.PrimaryKey, sut.Constraints.PrimaryKey.Index ] ) )
+            .Go();
     }
 
     [Fact]
@@ -57,7 +53,7 @@ public class SqlTableTests : TestsBase
 
         var action = Lambda.Of( () => SqlDatabaseMock.Create( schemaBuilder.Database ) );
 
-        action.Should().ThrowExactly<SqlObjectBuilderException>();
+        action.Test( exc => exc.TestType().Exact<SqlObjectBuilderException>() ).Go();
     }
 
     [Theory]
@@ -76,7 +72,7 @@ public class SqlTableTests : TestsBase
 
         var result = sut.Contains( name );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -92,7 +88,7 @@ public class SqlTableTests : TestsBase
 
         var result = sut.Get( "C2" );
 
-        result.Should().BeSameAs( sut.Table.Constraints.PrimaryKey.Index.Columns[0].Column );
+        result.TestRefEquals( sut.Table.Constraints.PrimaryKey.Index.Columns[0].Column ).Go();
     }
 
     [Fact]
@@ -107,7 +103,7 @@ public class SqlTableTests : TestsBase
 
         var action = Lambda.Of( () => sut.Get( "C2" ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -123,7 +119,7 @@ public class SqlTableTests : TestsBase
 
         var result = sut.TryGet( "C2" );
 
-        result.Should().BeSameAs( sut.Table.Constraints.PrimaryKey.Index.Columns[0].Column );
+        result.TestRefEquals( sut.Table.Constraints.PrimaryKey.Index.Columns[0].Column ).Go();
     }
 
     [Fact]
@@ -138,7 +134,7 @@ public class SqlTableTests : TestsBase
 
         var result = sut.TryGet( "C2" );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -158,7 +154,7 @@ public class SqlTableTests : TestsBase
 
         var result = sut.Contains( name );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -175,11 +171,10 @@ public class SqlTableTests : TestsBase
 
         var result = sut.Get( "PK_T" );
 
-        using ( new AssertionScope() )
-        {
-            result.Type.Should().Be( SqlObjectType.PrimaryKey );
-            result.Name.Should().Be( "PK_T" );
-        }
+        Assertion.All(
+                result.Type.TestEquals( SqlObjectType.PrimaryKey ),
+                result.Name.TestEquals( "PK_T" ) )
+            .Go();
     }
 
     [Fact]
@@ -196,7 +191,7 @@ public class SqlTableTests : TestsBase
 
         var action = Lambda.Of( () => sut.Get( "foo" ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -213,12 +208,11 @@ public class SqlTableTests : TestsBase
 
         var result = sut.TryGet( "PK_T" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull();
-            (result?.Type).Should().Be( SqlObjectType.PrimaryKey );
-            (result?.Name).Should().Be( "PK_T" );
-        }
+        Assertion.All(
+                result.TestNotNull(),
+                (result?.Type).TestEquals( SqlObjectType.PrimaryKey ),
+                (result?.Name).TestEquals( "PK_T" ) )
+            .Go();
     }
 
     [Fact]
@@ -235,7 +229,7 @@ public class SqlTableTests : TestsBase
 
         var result = sut.TryGet( "foo" );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -255,11 +249,10 @@ public class SqlTableTests : TestsBase
 
         var result = sut.GetIndex( indexBuilder.Name );
 
-        using ( new AssertionScope() )
-        {
-            result.Type.Should().Be( SqlObjectType.Index );
-            result.Name.Should().Be( indexBuilder.Name );
-        }
+        Assertion.All(
+                result.Type.TestEquals( SqlObjectType.Index ),
+                result.Name.TestEquals( indexBuilder.Name ) )
+            .Go();
     }
 
     [Fact]
@@ -276,7 +269,7 @@ public class SqlTableTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetIndex( "foo" ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -293,7 +286,7 @@ public class SqlTableTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetIndex( "PK_T" ) );
 
-        action.Should().ThrowExactly<SqlObjectCastException>();
+        action.Test( exc => exc.TestType().Exact<SqlObjectCastException>() ).Go();
     }
 
     [Fact]
@@ -313,12 +306,11 @@ public class SqlTableTests : TestsBase
 
         var result = sut.TryGetIndex( indexBuilder.Name );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull();
-            (result?.Type).Should().Be( SqlObjectType.Index );
-            (result?.Name).Should().Be( indexBuilder.Name );
-        }
+        Assertion.All(
+                result.TestNotNull(),
+                (result?.Type).TestEquals( SqlObjectType.Index ),
+                (result?.Name).TestEquals( indexBuilder.Name ) )
+            .Go();
     }
 
     [Fact]
@@ -335,7 +327,7 @@ public class SqlTableTests : TestsBase
 
         var result = sut.TryGetIndex( "foo" );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -352,7 +344,7 @@ public class SqlTableTests : TestsBase
 
         var result = sut.TryGetIndex( "PK_T" );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -370,11 +362,10 @@ public class SqlTableTests : TestsBase
 
         var result = sut.GetForeignKey( fk.Name );
 
-        using ( new AssertionScope() )
-        {
-            result.Type.Should().Be( SqlObjectType.ForeignKey );
-            result.Name.Should().Be( fk.Name );
-        }
+        Assertion.All(
+                result.Type.TestEquals( SqlObjectType.ForeignKey ),
+                result.Name.TestEquals( fk.Name ) )
+            .Go();
     }
 
     [Fact]
@@ -391,7 +382,7 @@ public class SqlTableTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetForeignKey( "foo" ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -408,7 +399,7 @@ public class SqlTableTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetForeignKey( "PK_T" ) );
 
-        action.Should().ThrowExactly<SqlObjectCastException>();
+        action.Test( exc => exc.TestType().Exact<SqlObjectCastException>() ).Go();
     }
 
     [Fact]
@@ -426,12 +417,11 @@ public class SqlTableTests : TestsBase
 
         var result = sut.TryGetForeignKey( fk.Name );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull();
-            (result?.Type).Should().Be( SqlObjectType.ForeignKey );
-            (result?.Name).Should().Be( fk.Name );
-        }
+        Assertion.All(
+                result.TestNotNull(),
+                (result?.Type).TestEquals( SqlObjectType.ForeignKey ),
+                (result?.Name).TestEquals( fk.Name ) )
+            .Go();
     }
 
     [Fact]
@@ -448,7 +438,7 @@ public class SqlTableTests : TestsBase
 
         var result = sut.TryGetForeignKey( "foo" );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -465,7 +455,7 @@ public class SqlTableTests : TestsBase
 
         var result = sut.TryGetForeignKey( "PK_T" );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -482,11 +472,10 @@ public class SqlTableTests : TestsBase
 
         var result = sut.GetCheck( chk.Name );
 
-        using ( new AssertionScope() )
-        {
-            result.Type.Should().Be( SqlObjectType.Check );
-            result.Name.Should().Be( chk.Name );
-        }
+        Assertion.All(
+                result.Type.TestEquals( SqlObjectType.Check ),
+                result.Name.TestEquals( chk.Name ) )
+            .Go();
     }
 
     [Fact]
@@ -503,7 +492,7 @@ public class SqlTableTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetCheck( "foo" ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -520,7 +509,7 @@ public class SqlTableTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetCheck( "PK_T" ) );
 
-        action.Should().ThrowExactly<SqlObjectCastException>();
+        action.Test( exc => exc.TestType().Exact<SqlObjectCastException>() ).Go();
     }
 
     [Fact]
@@ -537,12 +526,11 @@ public class SqlTableTests : TestsBase
 
         var result = sut.TryGetCheck( chk.Name );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull();
-            (result?.Type).Should().Be( SqlObjectType.Check );
-            (result?.Name).Should().Be( chk.Name );
-        }
+        Assertion.All(
+                result.TestNotNull(),
+                (result?.Type).TestEquals( SqlObjectType.Check ),
+                (result?.Name).TestEquals( chk.Name ) )
+            .Go();
     }
 
     [Fact]
@@ -559,7 +547,7 @@ public class SqlTableTests : TestsBase
 
         var result = sut.TryGetCheck( "foo" );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -576,6 +564,6 @@ public class SqlTableTests : TestsBase
 
         var result = sut.TryGetCheck( "PK_T" );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 }

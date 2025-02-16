@@ -21,7 +21,7 @@ public class SqlObjectChangeDescriptorTests : TestsBase
     public void Create_ShouldThrowArgumentOutOfRangeException_WhenKeyIsReserved(int key)
     {
         var action = Lambda.Of( () => SqlObjectChangeDescriptor<string>.Create( "foo", key ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -31,12 +31,11 @@ public class SqlObjectChangeDescriptorTests : TestsBase
     {
         var result = SqlObjectChangeDescriptor<string>.Create( "foo", key );
 
-        using ( new AssertionScope() )
-        {
-            result.Type.Should().Be<string>();
-            result.Key.Should().Be( key );
-            result.Description.Should().Be( "foo" );
-        }
+        Assertion.All(
+                result.Type.TestEquals( typeof( string ) ),
+                result.Key.TestEquals( key ),
+                result.Description.TestEquals( "foo" ) )
+            .Go();
     }
 
     [Fact]
@@ -44,7 +43,7 @@ public class SqlObjectChangeDescriptorTests : TestsBase
     {
         var sut = SqlObjectChangeDescriptor.IsNullable;
         var result = sut.ToString();
-        result.Should().Be( "[2] : 'IsNullable' (System.Boolean)" );
+        result.TestEquals( "[2] : 'IsNullable' (System.Boolean)" ).Go();
     }
 
     [Fact]
@@ -52,7 +51,7 @@ public class SqlObjectChangeDescriptorTests : TestsBase
     {
         var sut = SqlObjectChangeDescriptor.IsNullable;
         var result = sut.GetHashCode();
-        result.Should().Be( sut.Key.GetHashCode() );
+        result.TestEquals( sut.Key.GetHashCode() ).Go();
     }
 
     [Fact]
@@ -63,7 +62,7 @@ public class SqlObjectChangeDescriptorTests : TestsBase
 
         var result = a == b;
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -74,7 +73,7 @@ public class SqlObjectChangeDescriptorTests : TestsBase
 
         var result = a == b;
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -85,7 +84,7 @@ public class SqlObjectChangeDescriptorTests : TestsBase
 
         var result = a == b;
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -96,7 +95,7 @@ public class SqlObjectChangeDescriptorTests : TestsBase
 
         var result = a == b;
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -107,7 +106,7 @@ public class SqlObjectChangeDescriptorTests : TestsBase
 
         var result = a != b;
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -118,7 +117,7 @@ public class SqlObjectChangeDescriptorTests : TestsBase
 
         var result = a != b;
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -129,7 +128,7 @@ public class SqlObjectChangeDescriptorTests : TestsBase
 
         var result = a != b;
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -140,6 +139,6 @@ public class SqlObjectChangeDescriptorTests : TestsBase
 
         var result = a != b;
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 }

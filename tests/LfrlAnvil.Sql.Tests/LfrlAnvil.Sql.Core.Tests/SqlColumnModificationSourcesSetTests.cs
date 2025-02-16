@@ -1,6 +1,6 @@
-﻿using LfrlAnvil.Sql.Internal;
+﻿using System.Diagnostics.Contracts;
+using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests;
@@ -12,11 +12,10 @@ public class SqlColumnModificationSourcesSetTests : TestsBase
     {
         var sut = SqlColumnModificationSourcesSet<SqlColumnBuilder>.Create();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            ToArray( sut ).Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                ToArray( sut ).TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -28,12 +27,11 @@ public class SqlColumnModificationSourcesSetTests : TestsBase
 
         var result = sut.Add( column );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 1 );
-            ToArray( sut ).Should().BeSequentiallyEqualTo( SqlColumnModificationSource<SqlColumnBuilder>.Self( column ) );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 1 ),
+                ToArray( sut ).TestSequence( [ SqlColumnModificationSource<SqlColumnBuilder>.Self( column ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -46,12 +44,11 @@ public class SqlColumnModificationSourcesSetTests : TestsBase
 
         var result = sut.Add( new SqlColumnModificationSource<SqlColumnBuilder>( column, other ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 1 );
-            ToArray( sut ).Should().BeSequentiallyEqualTo( new SqlColumnModificationSource<SqlColumnBuilder>( column, other ) );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 1 ),
+                ToArray( sut ).TestSequence( [ new SqlColumnModificationSource<SqlColumnBuilder>( column, other ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -64,12 +61,11 @@ public class SqlColumnModificationSourcesSetTests : TestsBase
 
         var result = sut.Add( column );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Count.Should().Be( 1 );
-            ToArray( sut ).Should().BeSequentiallyEqualTo( SqlColumnModificationSource<SqlColumnBuilder>.Self( column ) );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.Count.TestEquals( 1 ),
+                ToArray( sut ).TestSequence( [ SqlColumnModificationSource<SqlColumnBuilder>.Self( column ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -82,12 +78,11 @@ public class SqlColumnModificationSourcesSetTests : TestsBase
 
         var result = sut.Remove( column );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( SqlColumnModificationSource<SqlColumnBuilder>.Self( column ) );
-            sut.Count.Should().Be( 0 );
-            ToArray( sut ).Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestEquals( SqlColumnModificationSource<SqlColumnBuilder>.Self( column ) ),
+                sut.Count.TestEquals( 0 ),
+                ToArray( sut ).TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -99,12 +94,11 @@ public class SqlColumnModificationSourcesSetTests : TestsBase
 
         var result = sut.Remove( column );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeNull();
-            sut.Count.Should().Be( 0 );
-            ToArray( sut ).Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestNull(),
+                sut.Count.TestEquals( 0 ),
+                ToArray( sut ).TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -117,7 +111,7 @@ public class SqlColumnModificationSourcesSetTests : TestsBase
 
         var result = sut.TryGetSource( column );
 
-        result.Should().Be( SqlColumnModificationSource<SqlColumnBuilder>.Self( column ) );
+        result.TestEquals( SqlColumnModificationSource<SqlColumnBuilder>.Self( column ) ).Go();
     }
 
     [Fact]
@@ -129,7 +123,7 @@ public class SqlColumnModificationSourcesSetTests : TestsBase
 
         var result = sut.TryGetSource( column );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -142,13 +136,13 @@ public class SqlColumnModificationSourcesSetTests : TestsBase
 
         sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            ToArray( sut ).Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                ToArray( sut ).TestEmpty() )
+            .Go();
     }
 
+    [Pure]
     private static SqlColumnModificationSource<SqlColumnBuilder>[] ToArray(SqlColumnModificationSourcesSet<SqlColumnBuilder> set)
     {
         var i = 0;

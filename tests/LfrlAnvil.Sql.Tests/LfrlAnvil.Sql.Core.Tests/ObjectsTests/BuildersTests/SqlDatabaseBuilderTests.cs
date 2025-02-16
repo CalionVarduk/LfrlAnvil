@@ -1,7 +1,6 @@
 ﻿using System.Globalization;
 using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.ObjectsTests.BuildersTests;
@@ -13,41 +12,36 @@ public partial class SqlDatabaseBuilderTests : TestsBase
     {
         var sut = SqlDatabaseBuilderMock.Create();
 
-        using ( new AssertionScope() )
-        {
-            sut.Schemas.Count.Should().Be( 1 );
-            sut.Schemas.Database.Should().BeSameAs( sut );
-            sut.Schemas.Should().BeSequentiallyEqualTo( sut.Schemas.Default );
-
-            sut.Schemas.Default.Database.Should().BeSameAs( sut );
-            sut.Schemas.Default.Name.Should().Be( "common" );
-            sut.Schemas.Default.Objects.Should().BeEmpty();
-            sut.Schemas.Default.Objects.Schema.Should().BeSameAs( sut.Schemas.Default );
-
-            sut.Dialect.Should().BeSameAs( SqlDialectMock.Instance );
-            sut.ServerVersion.Should().Be( "0.0.0" );
-
-            sut.Changes.Database.Should().BeSameAs( sut );
-            sut.Changes.Mode.Should().Be( SqlDatabaseCreateMode.DryRun );
-            sut.Changes.IsAttached.Should().BeTrue();
-            sut.Changes.ActiveObject.Should().BeNull();
-            sut.Changes.ActiveObjectExistenceState.Should().Be( default( SqlObjectExistenceState ) );
-            sut.Changes.IsActive.Should().BeTrue();
-            sut.Changes.GetPendingActions().ToArray().Should().BeEmpty();
-
-            (( ISqlDatabaseBuilder )sut).DataTypes.Should().BeSameAs( sut.DataTypes );
-            (( ISqlDatabaseBuilder )sut).TypeDefinitions.Should().BeSameAs( sut.TypeDefinitions );
-            (( ISqlDatabaseBuilder )sut).NodeInterpreters.Should().BeSameAs( sut.NodeInterpreters );
-            (( ISqlDatabaseBuilder )sut).QueryReaders.Should().BeSameAs( sut.QueryReaders );
-            (( ISqlDatabaseBuilder )sut).ParameterBinders.Should().BeSameAs( sut.ParameterBinders );
-            (( ISqlDatabaseBuilder )sut).DefaultNames.Should().BeSameAs( sut.DefaultNames );
-            (( ISqlDatabaseBuilder )sut).Schemas.Should().BeSameAs( sut.Schemas );
-            (( ISqlDatabaseBuilder )sut).Changes.Should().BeSameAs( sut.Changes );
-            (( ISqlSchemaBuilderCollection )sut.Schemas).Default.Should().BeSameAs( sut.Schemas.Default );
-            (( ISqlSchemaBuilderCollection )sut.Schemas).Database.Should().BeSameAs( sut.Schemas.Database );
-            (( ISqlDatabaseChangeTracker )sut.Changes).Database.Should().BeSameAs( sut.Changes.Database );
-            (( ISqlDatabaseChangeTracker )sut.Changes).ActiveObject.Should().BeSameAs( sut.Changes.ActiveObject );
-        }
+        Assertion.All(
+                sut.Schemas.Count.TestEquals( 1 ),
+                sut.Schemas.Database.TestRefEquals( sut ),
+                sut.Schemas.TestSequence( [ sut.Schemas.Default ] ),
+                sut.Schemas.Default.Database.TestRefEquals( sut ),
+                sut.Schemas.Default.Name.TestEquals( "common" ),
+                sut.Schemas.Default.Objects.TestEmpty(),
+                sut.Schemas.Default.Objects.Schema.TestRefEquals( sut.Schemas.Default ),
+                sut.Dialect.TestRefEquals( SqlDialectMock.Instance ),
+                sut.ServerVersion.TestEquals( "0.0.0" ),
+                sut.Changes.Database.TestRefEquals( sut ),
+                sut.Changes.Mode.TestEquals( SqlDatabaseCreateMode.DryRun ),
+                sut.Changes.IsAttached.TestTrue(),
+                sut.Changes.ActiveObject.TestNull(),
+                sut.Changes.ActiveObjectExistenceState.TestEquals( default ),
+                sut.Changes.IsActive.TestTrue(),
+                sut.Changes.GetPendingActions().ToArray().TestEmpty(),
+                (( ISqlDatabaseBuilder )sut).DataTypes.TestRefEquals( sut.DataTypes ),
+                (( ISqlDatabaseBuilder )sut).TypeDefinitions.TestRefEquals( sut.TypeDefinitions ),
+                (( ISqlDatabaseBuilder )sut).NodeInterpreters.TestRefEquals( sut.NodeInterpreters ),
+                (( ISqlDatabaseBuilder )sut).QueryReaders.TestRefEquals( sut.QueryReaders ),
+                (( ISqlDatabaseBuilder )sut).ParameterBinders.TestRefEquals( sut.ParameterBinders ),
+                (( ISqlDatabaseBuilder )sut).DefaultNames.TestRefEquals( sut.DefaultNames ),
+                (( ISqlDatabaseBuilder )sut).Schemas.TestRefEquals( sut.Schemas ),
+                (( ISqlDatabaseBuilder )sut).Changes.TestRefEquals( sut.Changes ),
+                (( ISqlSchemaBuilderCollection )sut.Schemas).Default.TestRefEquals( sut.Schemas.Default ),
+                (( ISqlSchemaBuilderCollection )sut.Schemas).Database.TestRefEquals( sut.Schemas.Database ),
+                (( ISqlDatabaseChangeTracker )sut.Changes).Database.TestRefEquals( sut.Changes.Database ),
+                (( ISqlDatabaseChangeTracker )sut.Changes).ActiveObject.TestRefEquals( sut.Changes.ActiveObject ) )
+            .Go();
     }
 
     [Fact]
@@ -55,7 +49,7 @@ public partial class SqlDatabaseBuilderTests : TestsBase
     {
         ISqlDatabaseBuilder sut = SqlDatabaseBuilderMock.Create();
         var result = sut.AddConnectionChangeCallback( _ => { } );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Theory]
@@ -64,7 +58,7 @@ public partial class SqlDatabaseBuilderTests : TestsBase
     public void SqlHelpers_GetDbLiteral_ShouldReturnCorrectResult_ForBool(bool value, string expected)
     {
         var result = SqlHelpers.GetDbLiteral( value );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -74,7 +68,7 @@ public partial class SqlDatabaseBuilderTests : TestsBase
     public void SqlHelpers_GetDbLiteral_ShouldReturnCorrectResult_ForInt64(long value, string expected)
     {
         var result = SqlHelpers.GetDbLiteral( value );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -83,7 +77,7 @@ public partial class SqlDatabaseBuilderTests : TestsBase
     public void SqlHelpers_GetDbLiteral_ShouldReturnCorrectResult_ForUInt64(ulong value, string expected)
     {
         var result = SqlHelpers.GetDbLiteral( value );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -97,7 +91,7 @@ public partial class SqlDatabaseBuilderTests : TestsBase
     public void SqlHelpers_GetDbLiteral_ShouldReturnCorrectResult_ForDouble(double value, string expected)
     {
         var result = SqlHelpers.GetDbLiteral( value );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -110,7 +104,7 @@ public partial class SqlDatabaseBuilderTests : TestsBase
     public void SqlHelpers_GetDbLiteral_ShouldReturnCorrectResult_ForFloat(float value, string expected)
     {
         var result = SqlHelpers.GetDbLiteral( value );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -125,7 +119,7 @@ public partial class SqlDatabaseBuilderTests : TestsBase
     {
         var value = decimal.Parse( text, CultureInfo.InvariantCulture );
         var result = SqlHelpers.GetDbLiteral( value );
-        result.Should().Be( text );
+        result.TestEquals( text ).Go();
     }
 
     [Theory]
@@ -138,14 +132,14 @@ public partial class SqlDatabaseBuilderTests : TestsBase
     public void SqlHelpers_GetDbLiteral_ShouldReturnCorrectResult_ForString(string value, string expected)
     {
         var result = SqlHelpers.GetDbLiteral( value );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
     public void SqlHelpers_GetDbLiteral_ShouldReturnCorrectResult_ForEmptyBinary()
     {
         var result = SqlHelpers.GetDbLiteral( Array.Empty<byte>() );
-        result.Should().Be( "X''" );
+        result.TestEquals( "X''" ).Go();
     }
 
     [Fact]
@@ -153,7 +147,7 @@ public partial class SqlDatabaseBuilderTests : TestsBase
     {
         var value = new byte[] { 0, 10, 21, 31, 42, 58, 73, 89, 104, 129, 155, 181, 206, 233, 255 };
         var result = SqlHelpers.GetDbLiteral( value );
-        result.Should().Be( "X'000A151F2A3A495968819BB5CEE9FF'" );
+        result.TestEquals( "X'000A151F2A3A495968819BB5CEE9FF'" ).Go();
     }
 
     [Theory]
@@ -162,7 +156,7 @@ public partial class SqlDatabaseBuilderTests : TestsBase
     public void SqlHelpers_GetFullName_ShouldReturnCorrectResult_ForSchemaObject(string schemaName, string name, string expected)
     {
         var result = SqlHelpers.GetFullName( schemaName, name );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -175,7 +169,7 @@ public partial class SqlDatabaseBuilderTests : TestsBase
         string expected)
     {
         var result = SqlHelpers.GetFullName( schemaName, recordSetName, name );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -183,7 +177,7 @@ public partial class SqlDatabaseBuilderTests : TestsBase
     {
         var obj = SqlDatabaseBuilderMock.Create().Schemas.Default;
         var result = SqlHelpers.GetReferencingObjectsInOrderOfCreation( obj );
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -195,7 +189,7 @@ public partial class SqlDatabaseBuilderTests : TestsBase
 
         var result = SqlHelpers.GetReferencingObjectsInOrderOfCreation( obj, _ => false );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -211,7 +205,7 @@ public partial class SqlDatabaseBuilderTests : TestsBase
 
         var result = SqlHelpers.GetReferencingObjectsInOrderOfCreation( obj );
 
-        result.Should().BeSequentiallyEqualTo( schema, table, column );
+        result.TestSequence( [ schema, table, column ] ).Go();
     }
 
     [Fact]
@@ -227,6 +221,6 @@ public partial class SqlDatabaseBuilderTests : TestsBase
 
         var result = SqlHelpers.GetReferencingObjectsInOrderOfCreation( obj, o => o.Source.Object.Type != SqlObjectType.Schema );
 
-        result.Should().BeSequentiallyEqualTo( table, column );
+        result.TestSequence( [ table, column ] ).Go();
     }
 }

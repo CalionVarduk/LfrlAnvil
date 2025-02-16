@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Data;
 using LfrlAnvil.Sql.Statements;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks.System;
 
 namespace LfrlAnvil.Sql.Tests.StatementsTests;
@@ -16,11 +15,10 @@ public class SqlParameterBinderExecutorTests : TestsBase
         var binder = new SqlParameterBinder( new SqlDialect( "foo" ), @delegate );
         var sut = binder.Bind( source );
 
-        using ( new AssertionScope() )
-        {
-            sut.Source.Should().BeSameAs( source );
-            sut.Binder.Should().BeEquivalentTo( binder );
-        }
+        Assertion.All(
+                sut.Source.TestRefEquals( source ),
+                sut.Binder.TestEquals( binder ) )
+            .Go();
     }
 
     [Fact]
@@ -34,7 +32,7 @@ public class SqlParameterBinderExecutorTests : TestsBase
 
         sut.Execute( command );
 
-        @delegate.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( command, source );
+        @delegate.CallAt( 0 ).Arguments.TestSequence( [ command, source ] ).Go();
     }
 
     [Fact]
@@ -45,11 +43,10 @@ public class SqlParameterBinderExecutorTests : TestsBase
         var binder = new SqlParameterBinder<string>( new SqlDialect( "foo" ), @delegate );
         var sut = binder.Bind( source );
 
-        using ( new AssertionScope() )
-        {
-            sut.Source.Should().BeSameAs( source );
-            sut.Binder.Should().BeEquivalentTo( binder );
-        }
+        Assertion.All(
+                sut.Source.TestRefEquals( source ),
+                sut.Binder.TestEquals( binder ) )
+            .Go();
     }
 
     [Fact]
@@ -63,6 +60,6 @@ public class SqlParameterBinderExecutorTests : TestsBase
 
         sut.Execute( command );
 
-        @delegate.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( command, source );
+        @delegate.CallAt( 0 ).Arguments.TestSequence( [ command, source ] ).Go();
     }
 }

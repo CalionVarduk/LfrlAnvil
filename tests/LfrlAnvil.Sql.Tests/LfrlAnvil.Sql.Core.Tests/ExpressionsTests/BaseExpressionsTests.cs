@@ -8,7 +8,6 @@ using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
@@ -21,7 +20,7 @@ public partial class BaseExpressionsTests : TestsBase
     {
         var sut = new SqlNodeMock();
         var result = sut.ToString();
-        result.Should().Be( $"{{{sut.GetType().GetDebugString()}}}" );
+        result.TestEquals( $"{{{sut.GetType().GetDebugString()}}}" ).Go();
     }
 
     [Fact]
@@ -29,7 +28,7 @@ public partial class BaseExpressionsTests : TestsBase
     {
         var sut = new SqlFunctionNodeMock( new[] { SqlNode.Null(), SqlNode.Literal( 5 ) } );
         var result = sut.ToString();
-        result.Should().Be( $"{{{sut.GetType().GetDebugString()}}}((NULL), (\"5\" : System.Int32))" );
+        result.TestEquals( $"{{{sut.GetType().GetDebugString()}}}((NULL), (\"5\" : System.Int32))" ).Go();
     }
 
     [Fact]
@@ -40,12 +39,12 @@ public partial class BaseExpressionsTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should()
-            .Be(
+        result.TestEquals(
                 $$"""
                   AGG_{{{sut.GetType().GetDebugString()}}}((NULL), ("5" : System.Int32))
                     DISTINCT
-                  """ );
+                  """ )
+            .Go();
     }
 
     [Fact]
@@ -53,7 +52,7 @@ public partial class BaseExpressionsTests : TestsBase
     {
         var sut = new SqlWindowFrameMock( SqlWindowFrameBoundary.UnboundedPreceding, SqlWindowFrameBoundary.UnboundedFollowing );
         var result = sut.ToString();
-        result.Should().Be( $"{{{sut.GetType().GetDebugString()}}} BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING" );
+        result.TestEquals( $"{{{sut.GetType().GetDebugString()}}} BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING" ).Go();
     }
 
     [Theory]
@@ -65,14 +64,13 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = node.CastTo<long>();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.TypeCast );
-            sut.TargetType.Should().Be( typeof( long ) );
-            sut.TargetTypeDefinition.Should().BeNull();
-            sut.Value.Should().BeSameAs( node );
-            text.Should().Be( $"CAST(({node}) AS System.Int64)" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.TypeCast ),
+                sut.TargetType.TestEquals( typeof( long ) ),
+                sut.TargetTypeDefinition.TestNull(),
+                sut.Value.TestRefEquals( node ),
+                text.TestEquals( $"CAST(({node}) AS System.Int64)" ) )
+            .Go();
     }
 
     [Theory]
@@ -86,14 +84,13 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = node.CastTo( definition );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.TypeCast );
-            sut.TargetType.Should().Be( typeof( long ) );
-            sut.TargetTypeDefinition.Should().BeSameAs( definition );
-            sut.Value.Should().BeSameAs( node );
-            text.Should().Be( $"CAST(({node}) AS System.Int64)" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.TypeCast ),
+                sut.TargetType.TestEquals( typeof( long ) ),
+                sut.TargetTypeDefinition.TestRefEquals( definition ),
+                sut.Value.TestRefEquals( node ),
+                text.TestEquals( $"CAST(({node}) AS System.Int64)" ) )
+            .Go();
     }
 
     [Fact]
@@ -103,14 +100,13 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.RawExpression( "foo(@a, @b, 10) + 15", TypeNullability.Create<int>(), parameters );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.RawExpression );
-            sut.Sql.Should().Be( "foo(@a, @b, 10) + 15" );
-            sut.Type.Should().Be( TypeNullability.Create<int>() );
-            sut.Parameters.ToArray().Should().BeSequentiallyEqualTo( parameters );
-            text.Should().Be( "foo(@a, @b, 10) + 15" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.RawExpression ),
+                sut.Sql.TestEquals( "foo(@a, @b, 10) + 15" ),
+                sut.Type.TestEquals( TypeNullability.Create<int>() ),
+                sut.Parameters.ToArray().TestSequence( parameters ),
+                text.TestEquals( "foo(@a, @b, 10) + 15" ) )
+            .Go();
     }
 
     [Fact]
@@ -120,14 +116,13 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.RawExpression( "foo(@a, @b, 10) + 15", parameters );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.RawExpression );
-            sut.Sql.Should().Be( "foo(@a, @b, 10) + 15" );
-            sut.Type.Should().BeNull();
-            sut.Parameters.ToArray().Should().BeSequentiallyEqualTo( parameters );
-            text.Should().Be( "foo(@a, @b, 10) + 15" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.RawExpression ),
+                sut.Sql.TestEquals( "foo(@a, @b, 10) + 15" ),
+                sut.Type.TestNull(),
+                sut.Parameters.ToArray().TestSequence( parameters ),
+                text.TestEquals( "foo(@a, @b, 10) + 15" ) )
+            .Go();
     }
 
     [Fact]
@@ -137,20 +132,18 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = field.ToQuery();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.DataSource.Should().BeSameAs( SqlNode.DummyDataSource() );
-            sut.Traits.Should().BeEmpty();
-            sut.Selection.ToArray().Should().BeSequentiallyEqualTo( field );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.DataSourceQuery ),
+                sut.DataSource.TestRefEquals( SqlNode.DummyDataSource() ),
+                sut.Traits.TestEmpty(),
+                sut.Selection.ToArray().TestSequence( [ field ] ),
+                text.TestEquals(
                     $"""
                      FROM <DUMMY>
                      SELECT
                        ("1" : System.Int32) AS [foo]
-                     """ );
-        }
+                     """ ) )
+            .Go();
     }
 
     [Fact]
@@ -160,14 +153,13 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = expression.As( "bar" );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.SelectField );
-            sut.Alias.Should().Be( "bar" );
-            sut.Expression.Should().BeSameAs( expression );
-            sut.FieldName.Should().Be( "bar" );
-            text.Should().Be( $"({expression}) AS [bar]" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.SelectField ),
+                sut.Alias.TestEquals( "bar" ),
+                sut.Expression.TestRefEquals( expression ),
+                sut.FieldName.TestEquals( "bar" ),
+                text.TestEquals( $"({expression}) AS [bar]" ) )
+            .Go();
     }
 
     [Fact]
@@ -177,14 +169,13 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = dataField.As( "qux" );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.SelectField );
-            sut.Alias.Should().Be( "qux" );
-            sut.Expression.Should().BeSameAs( dataField );
-            sut.FieldName.Should().Be( "qux" );
-            text.Should().Be( $"({dataField}) AS [qux]" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.SelectField ),
+                sut.Alias.TestEquals( "qux" ),
+                sut.Expression.TestRefEquals( dataField ),
+                sut.FieldName.TestEquals( "qux" ),
+                text.TestEquals( $"({dataField}) AS [qux]" ) )
+            .Go();
     }
 
     [Fact]
@@ -194,14 +185,13 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = dataField.AsSelf();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.SelectField );
-            sut.Alias.Should().BeNull();
-            sut.Expression.Should().BeSameAs( dataField );
-            sut.FieldName.Should().Be( "bar" );
-            text.Should().Be( $"({dataField})" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.SelectField ),
+                sut.Alias.TestNull(),
+                sut.Expression.TestRefEquals( dataField ),
+                sut.FieldName.TestEquals( "bar" ),
+                text.TestEquals( $"({dataField})" ) )
+            .Go();
     }
 
     [Fact]
@@ -211,14 +201,13 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = ( SqlSelectFieldNode )dataField;
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.SelectField );
-            sut.Alias.Should().BeNull();
-            sut.Expression.Should().BeSameAs( dataField );
-            sut.FieldName.Should().Be( "bar" );
-            text.Should().Be( $"({dataField})" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.SelectField ),
+                sut.Alias.TestNull(),
+                sut.Expression.TestRefEquals( dataField ),
+                sut.FieldName.TestEquals( "bar" ),
+                text.TestEquals( $"({dataField})" ) )
+            .Go();
     }
 
     [Fact]
@@ -228,12 +217,11 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = recordSet.GetAll();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.SelectRecordSet );
-            sut.RecordSet.Should().BeSameAs( recordSet );
-            text.Should().Be( "[foo].*" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.SelectRecordSet ),
+                sut.RecordSet.TestRefEquals( recordSet ),
+                text.TestEquals( "[foo].*" ) )
+            .Go();
     }
 
     [Fact]
@@ -243,12 +231,11 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = dataSource.GetAll();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.SelectAll );
-            sut.DataSource.Should().BeSameAs( dataSource );
-            text.Should().Be( "*" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.SelectAll ),
+                sut.DataSource.TestRefEquals( dataSource ),
+                text.TestEquals( "*" ) )
+            .Go();
     }
 
     [Fact]
@@ -261,24 +248,22 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = dataSource.Select( selector );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.Traits.ToArray().Should().BeEmpty();
-            sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Selection.ToArray().Should().BeSequentiallyEqualTo( selection );
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 1 );
-            text.Should()
-                .Be(
+        Assertion.All(
+                selector.CallAt( 0 ).Arguments.TestSequence( [ dataSource ] ),
+                sut.NodeType.TestEquals( SqlNodeType.DataSourceQuery ),
+                sut.Traits.ToArray().TestEmpty(),
+                sut.DataSource.TestRefEquals( dataSource ),
+                sut.Selection.ToArray().TestSequence( selection ),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 1 ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     SELECT
                       ([foo].[bar] : ?) AS [x],
                       ([foo].[qux] : ?)
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -288,21 +273,19 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = dataSource.Select();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.Traits.ToArray().Should().BeEmpty();
-            sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Selection.ToArray().Should().BeEmpty();
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 1 );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.DataSourceQuery ),
+                sut.Traits.ToArray().TestEmpty(),
+                sut.DataSource.TestRefEquals( dataSource ),
+                sut.Selection.ToArray().TestEmpty(),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 1 ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     SELECT
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -313,22 +296,20 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = dataSource.Select( selection );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.Traits.ToArray().Should().BeEmpty();
-            sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Selection.ToArray().Should().BeSequentiallyEqualTo( selection );
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 1 );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.DataSourceQuery ),
+                sut.Traits.ToArray().TestEmpty(),
+                sut.DataSource.TestRefEquals( dataSource ),
+                sut.Selection.ToArray().TestSequence( [ selection ] ),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 1 ),
+                text.TestEquals(
                     """
                     FROM [foo]
                     SELECT
                       ([foo].[bar] : System.Int32)
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -344,16 +325,15 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.RawQuery( sql, parameters );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.RawQuery );
-            sut.Sql.Should().Be( sql );
-            sut.Parameters.ToArray().Should().BeSequentiallyEqualTo( parameters );
-            sut.Selection.ToArray().Should().BeEmpty();
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 1 );
-            text.Should().Be( sql );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.RawQuery ),
+                sut.Sql.TestEquals( sql ),
+                sut.Parameters.ToArray().TestSequence( parameters ),
+                sut.Selection.ToArray().TestEmpty(),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 1 ),
+                text.TestEquals( sql ) )
+            .Go();
     }
 
     [Fact]
@@ -377,15 +357,13 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = query1.CompoundWith( new[] { union }.ToList() );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.CompoundQuery );
-            sut.FirstQuery.Should().BeSameAs( query1 );
-            sut.FollowingQueries.ToArray().Should().BeSequentiallyEqualTo( union );
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 1 );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.CompoundQuery ),
+                sut.FirstQuery.TestRefEquals( query1 ),
+                sut.FollowingQueries.ToArray().TestSequence( [ union ] ),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 1 ),
+                text.TestEquals(
                     """
                     SELECT a, b
                     FROM foo
@@ -394,8 +372,8 @@ public partial class BaseExpressionsTests : TestsBase
                     SELECT a, c AS b
                     FROM qux
                     WHERE value < 10
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -410,7 +388,7 @@ public partial class BaseExpressionsTests : TestsBase
 
         var action = Lambda.Of( () => query.CompoundWith() );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -421,18 +399,16 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.SwitchCase( condition, expression );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.SwitchCase );
-            sut.Condition.Should().BeSameAs( condition );
-            sut.Expression.Should().BeSameAs( expression );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.SwitchCase ),
+                sut.Condition.TestRefEquals( condition ),
+                sut.Expression.TestRefEquals( expression ),
+                text.TestEquals(
                     $"""
                      WHEN {condition}
                        THEN ({expression})
-                     """ );
-        }
+                     """ ) )
+            .Go();
     }
 
     [Fact]
@@ -444,13 +420,11 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.Switch( new[] { firstCase, secondCase }, defaultNode );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Switch );
-            sut.Default.Should().BeSameAs( defaultNode );
-            sut.Cases.ToArray().Should().BeSequentiallyEqualTo( firstCase, secondCase );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.Switch ),
+                sut.Default.TestRefEquals( defaultNode ),
+                sut.Cases.ToArray().TestSequence( [ firstCase, secondCase ] ),
+                text.TestEquals(
                     $"""
                      CASE
                        WHEN {firstCase.Condition}
@@ -459,8 +433,8 @@ public partial class BaseExpressionsTests : TestsBase
                          THEN ({secondCase.Expression})
                        ELSE ({defaultNode})
                      END
-                     """ );
-        }
+                     """ ) )
+            .Go();
     }
 
     [Fact]
@@ -480,13 +454,11 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.Switch( new[] { firstCase, secondCase }, defaultNode );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Switch );
-            sut.Default.Should().BeSameAs( defaultNode );
-            sut.Cases.ToArray().Should().BeSequentiallyEqualTo( firstCase, secondCase );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.Switch ),
+                sut.Default.TestRefEquals( defaultNode ),
+                sut.Cases.ToArray().TestSequence( [ firstCase, secondCase ] ),
+                text.TestEquals(
                     """
                     CASE
                       WHEN bar > 10
@@ -503,8 +475,8 @@ public partial class BaseExpressionsTests : TestsBase
                         THEN ("5" : System.Int32)
                       ELSE (@foo : System.Int32)
                     END
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -512,7 +484,7 @@ public partial class BaseExpressionsTests : TestsBase
     {
         var defaultNode = SqlNode.Parameter<int>( "foo" );
         var action = Lambda.Of( () => SqlNode.Switch( Enumerable.Empty<SqlSwitchCaseNode>(), defaultNode ) );
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -523,14 +495,15 @@ public partial class BaseExpressionsTests : TestsBase
         var whenFalse = SqlNode.Literal( 15 );
         var sut = SqlNode.Iif( condition, whenTrue, whenFalse );
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Switch );
-            sut.Default.Should().BeSameAs( whenFalse );
-            sut.Cases.ToArray().Should().HaveCount( 1 );
-            (sut.Cases.ToArray().ElementAtOrDefault( 0 )?.Condition).Should().BeSameAs( condition );
-            (sut.Cases.ToArray().ElementAtOrDefault( 0 )?.Expression).Should().BeSameAs( whenTrue );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.Switch ),
+                sut.Default.TestRefEquals( whenFalse ),
+                sut.Cases.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        c => Assertion.All(
+                            c[0].Condition.TestRefEquals( condition ),
+                            c[0].Expression.TestRefEquals( whenTrue ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -540,18 +513,16 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = query.ToUnion();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.CompoundQueryComponent );
-            sut.Operator.Should().Be( SqlCompoundQueryOperator.Union );
-            sut.Query.Should().BeSameAs( query );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.CompoundQueryComponent ),
+                sut.Operator.TestEquals( SqlCompoundQueryOperator.Union ),
+                sut.Query.TestRefEquals( query ),
+                text.TestEquals(
                     """
                     UNION
                     SELECT * FROM foo
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -561,18 +532,16 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = query.ToUnionAll();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.CompoundQueryComponent );
-            sut.Operator.Should().Be( SqlCompoundQueryOperator.UnionAll );
-            sut.Query.Should().BeSameAs( query );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.CompoundQueryComponent ),
+                sut.Operator.TestEquals( SqlCompoundQueryOperator.UnionAll ),
+                sut.Query.TestRefEquals( query ),
+                text.TestEquals(
                     """
                     UNION ALL
                     SELECT * FROM foo
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -582,18 +551,16 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = query.ToIntersect();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.CompoundQueryComponent );
-            sut.Operator.Should().Be( SqlCompoundQueryOperator.Intersect );
-            sut.Query.Should().BeSameAs( query );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.CompoundQueryComponent ),
+                sut.Operator.TestEquals( SqlCompoundQueryOperator.Intersect ),
+                sut.Query.TestRefEquals( query ),
+                text.TestEquals(
                     """
                     INTERSECT
                     SELECT * FROM foo
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -603,18 +570,16 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = query.ToExcept();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.CompoundQueryComponent );
-            sut.Operator.Should().Be( SqlCompoundQueryOperator.Except );
-            sut.Query.Should().BeSameAs( query );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.CompoundQueryComponent ),
+                sut.Operator.TestEquals( SqlCompoundQueryOperator.Except ),
+                sut.Query.TestRefEquals( query ),
+                text.TestEquals(
                     """
                     EXCEPT
                     SELECT * FROM foo
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Theory]
@@ -627,12 +592,11 @@ public partial class BaseExpressionsTests : TestsBase
         var query = SqlNode.RawQuery( "SELECT * FROM foo" );
         var sut = query.ToCompound( @operator );
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.CompoundQueryComponent );
-            sut.Operator.Should().Be( @operator );
-            sut.Query.Should().BeSameAs( query );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.CompoundQueryComponent ),
+                sut.Operator.TestEquals( @operator ),
+                sut.Query.TestRefEquals( query ) )
+            .Go();
     }
 
     [Fact]
@@ -640,7 +604,7 @@ public partial class BaseExpressionsTests : TestsBase
     {
         var query = SqlNode.RawQuery( "SELECT * FROM foo" );
         var action = Lambda.Of( () => query.ToCompound( ( SqlCompoundQueryOperator )10 ) );
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -651,12 +615,11 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = selection.ToExpression();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.SelectExpression );
-            sut.Selection.Should().BeSameAs( selection );
-            text.Should().Be( "[bar]" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.SelectExpression ),
+                sut.Selection.TestRefEquals( selection ),
+                text.TestEquals( "[bar]" ) )
+            .Go();
     }
 
     [Fact]
@@ -667,19 +630,17 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.Values( expressions );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Values );
-            sut.RowCount.Should().Be( 1 );
-            sut.ColumnCount.Should().Be( 3 );
-            sut[0].ToArray().Should().BeSequentiallyEqualTo( expressions );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.Values ),
+                sut.RowCount.TestEquals( 1 ),
+                sut.ColumnCount.TestEquals( 3 ),
+                sut[0].ToArray().TestSequence( expressions ),
+                text.TestEquals(
                     """
                     VALUES
                     (("1" : System.Int32), ("2" : System.Int32), ("3" : System.Int32))
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -694,21 +655,19 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.Values( expressions );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Values );
-            sut.RowCount.Should().Be( 2 );
-            sut.ColumnCount.Should().Be( 3 );
-            sut[0].ToArray().Should().BeSequentiallyEqualTo( expressions[0, 0], expressions[0, 1], expressions[0, 2] );
-            sut[1].ToArray().Should().BeSequentiallyEqualTo( expressions[1, 0], expressions[1, 1], expressions[1, 2] );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.Values ),
+                sut.RowCount.TestEquals( 2 ),
+                sut.ColumnCount.TestEquals( 3 ),
+                sut[0].ToArray().TestSequence( [ expressions[0, 0], expressions[0, 1], expressions[0, 2] ] ),
+                sut[1].ToArray().TestSequence( [ expressions[1, 0], expressions[1, 1], expressions[1, 2] ] ),
+                text.TestEquals(
                     """
                     VALUES
                     (("1" : System.Int32), ("2" : System.Int32), ("3" : System.Int32)),
                     (("4" : System.Int32), ("5" : System.Int32), ("6" : System.Int32))
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -725,15 +684,14 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.RawStatement( sql, parameters );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.RawStatement );
-            sut.Sql.Should().Be( sql );
-            sut.Parameters.ToArray().Should().BeSequentiallyEqualTo( parameters );
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
-            text.Should().Be( sql );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.RawStatement ),
+                sut.Sql.TestEquals( sql ),
+                sut.Parameters.ToArray().TestSequence( parameters ),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
+                text.TestEquals( sql ) )
+            .Go();
     }
 
     [Fact]
@@ -742,16 +700,15 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.Column<string>( "foo" );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.ColumnDefinition );
-            sut.Name.Should().Be( "foo" );
-            sut.DefaultValue.Should().BeNull();
-            sut.Computation.Should().BeNull();
-            sut.Type.Should().BeEquivalentTo( TypeNullability.Create<string>( isNullable: false ) );
-            sut.TypeDefinition.Should().BeNull();
-            text.Should().Be( "[foo] : System.String" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.ColumnDefinition ),
+                sut.Name.TestEquals( "foo" ),
+                sut.DefaultValue.TestNull(),
+                sut.Computation.TestNull(),
+                sut.Type.TestEquals( TypeNullability.Create<string>( isNullable: false ) ),
+                sut.TypeDefinition.TestNull(),
+                text.TestEquals( "[foo] : System.String" ) )
+            .Go();
     }
 
     [Fact]
@@ -760,16 +717,15 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.Column<string>( "foo", isNullable: true );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.ColumnDefinition );
-            sut.Name.Should().Be( "foo" );
-            sut.DefaultValue.Should().BeNull();
-            sut.Computation.Should().BeNull();
-            sut.Type.Should().BeEquivalentTo( TypeNullability.Create<string>( isNullable: true ) );
-            sut.TypeDefinition.Should().BeNull();
-            text.Should().Be( "[foo] : Nullable<System.String>" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.ColumnDefinition ),
+                sut.Name.TestEquals( "foo" ),
+                sut.DefaultValue.TestNull(),
+                sut.Computation.TestNull(),
+                sut.Type.TestEquals( TypeNullability.Create<string>( isNullable: true ) ),
+                sut.TypeDefinition.TestNull(),
+                text.TestEquals( "[foo] : Nullable<System.String>" ) )
+            .Go();
     }
 
     [Fact]
@@ -779,16 +735,15 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.Column<string>( "foo", defaultValue: defaultValue );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.ColumnDefinition );
-            sut.Name.Should().Be( "foo" );
-            sut.DefaultValue.Should().BeSameAs( defaultValue );
-            sut.Computation.Should().BeNull();
-            sut.Type.Should().BeEquivalentTo( TypeNullability.Create<string>() );
-            sut.TypeDefinition.Should().BeNull();
-            text.Should().Be( "[foo] : System.String DEFAULT ((\"abc\" : System.String) || (\"def\" : System.String))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.ColumnDefinition ),
+                sut.Name.TestEquals( "foo" ),
+                sut.DefaultValue.TestRefEquals( defaultValue ),
+                sut.Computation.TestNull(),
+                sut.Type.TestEquals( TypeNullability.Create<string>() ),
+                sut.TypeDefinition.TestNull(),
+                text.TestEquals( "[foo] : System.String DEFAULT ((\"abc\" : System.String) || (\"def\" : System.String))" ) )
+            .Go();
     }
 
     [Fact]
@@ -798,16 +753,15 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.Column( "foo", typeDef );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.ColumnDefinition );
-            sut.Name.Should().Be( "foo" );
-            sut.DefaultValue.Should().BeNull();
-            sut.Computation.Should().BeNull();
-            sut.Type.Should().BeEquivalentTo( TypeNullability.Create<int>( isNullable: false ) );
-            sut.TypeDefinition.Should().BeSameAs( typeDef );
-            text.Should().Be( "[foo] : System.Int32" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.ColumnDefinition ),
+                sut.Name.TestEquals( "foo" ),
+                sut.DefaultValue.TestNull(),
+                sut.Computation.TestNull(),
+                sut.Type.TestEquals( TypeNullability.Create<int>( isNullable: false ) ),
+                sut.TypeDefinition.TestRefEquals( typeDef ),
+                text.TestEquals( "[foo] : System.Int32" ) )
+            .Go();
     }
 
     [Fact]
@@ -817,16 +771,15 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.Column( "foo", typeDef, isNullable: true );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.ColumnDefinition );
-            sut.Name.Should().Be( "foo" );
-            sut.DefaultValue.Should().BeNull();
-            sut.Computation.Should().BeNull();
-            sut.Type.Should().BeEquivalentTo( TypeNullability.Create<int>( isNullable: true ) );
-            sut.TypeDefinition.Should().BeSameAs( typeDef );
-            text.Should().Be( "[foo] : Nullable<System.Int32>" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.ColumnDefinition ),
+                sut.Name.TestEquals( "foo" ),
+                sut.DefaultValue.TestNull(),
+                sut.Computation.TestNull(),
+                sut.Type.TestEquals( TypeNullability.Create<int>( isNullable: true ) ),
+                sut.TypeDefinition.TestRefEquals( typeDef ),
+                text.TestEquals( "[foo] : Nullable<System.Int32>" ) )
+            .Go();
     }
 
     [Fact]
@@ -837,16 +790,15 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.Column( "foo", typeDef, defaultValue: defaultValue );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.ColumnDefinition );
-            sut.Name.Should().Be( "foo" );
-            sut.DefaultValue.Should().BeSameAs( defaultValue );
-            sut.Computation.Should().BeNull();
-            sut.Type.Should().BeEquivalentTo( TypeNullability.Create<int>() );
-            sut.TypeDefinition.Should().BeSameAs( typeDef );
-            text.Should().Be( "[foo] : System.Int32 DEFAULT ((\"abc\" : System.String) || (\"def\" : System.String))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.ColumnDefinition ),
+                sut.Name.TestEquals( "foo" ),
+                sut.DefaultValue.TestRefEquals( defaultValue ),
+                sut.Computation.TestNull(),
+                sut.Type.TestEquals( TypeNullability.Create<int>() ),
+                sut.TypeDefinition.TestRefEquals( typeDef ),
+                text.TestEquals( "[foo] : System.Int32 DEFAULT ((\"abc\" : System.String) || (\"def\" : System.String))" ) )
+            .Go();
     }
 
     [Theory]
@@ -858,16 +810,15 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.Column<string>( "foo", computation: computation );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.ColumnDefinition );
-            sut.Name.Should().Be( "foo" );
-            sut.DefaultValue.Should().BeNull();
-            sut.Computation.Should().Be( computation );
-            sut.Type.Should().BeEquivalentTo( TypeNullability.Create<string>() );
-            sut.TypeDefinition.Should().BeNull();
-            text.Should().Be( $"[foo] : System.String GENERATED (\"abc\" : System.String) {storage.ToString().ToUpperInvariant()}" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.ColumnDefinition ),
+                sut.Name.TestEquals( "foo" ),
+                sut.DefaultValue.TestNull(),
+                sut.Computation.TestEquals( computation ),
+                sut.Type.TestEquals( TypeNullability.Create<string>() ),
+                sut.TypeDefinition.TestNull(),
+                text.TestEquals( $"[foo] : System.String GENERATED (\"abc\" : System.String) {storage.ToString().ToUpperInvariant()}" ) )
+            .Go();
     }
 
     [Fact]
@@ -878,13 +829,12 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "bar", "PK_foo" ), columns );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.PrimaryKeyDefinition );
-            sut.Name.Should().Be( SqlSchemaObjectName.Create( "bar", "PK_foo" ) );
-            sut.Columns.ToArray().Should().BeSequentiallyEqualTo( columns );
-            text.Should().Be( "PRIMARY KEY [bar].[PK_foo] (([foo].[x] : ?) ASC, ([foo].[y] : ?) DESC)" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.PrimaryKeyDefinition ),
+                sut.Name.TestEquals( SqlSchemaObjectName.Create( "bar", "PK_foo" ) ),
+                sut.Columns.ToArray().TestSequence( columns ),
+                text.TestEquals( "PRIMARY KEY [bar].[PK_foo] (([foo].[x] : ?) ASC, ([foo].[y] : ?) DESC)" ) )
+            .Go();
     }
 
     [Fact]
@@ -893,13 +843,12 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK_foo" ), Array.Empty<SqlOrderByNode>() );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.PrimaryKeyDefinition );
-            sut.Name.Should().Be( SqlSchemaObjectName.Create( "PK_foo" ) );
-            sut.Columns.ToArray().Should().BeEmpty();
-            text.Should().Be( "PRIMARY KEY [PK_foo] ()" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.PrimaryKeyDefinition ),
+                sut.Name.TestEquals( SqlSchemaObjectName.Create( "PK_foo" ) ),
+                sut.Columns.ToArray().TestEmpty(),
+                text.TestEquals( "PRIMARY KEY [PK_foo] ()" ) )
+            .Go();
     }
 
     [Fact]
@@ -912,19 +861,17 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.ForeignKey( SqlSchemaObjectName.Create( "qux", "FK_foo_REF_bar" ), columns, referencedTable, referencedColumns );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.ForeignKeyDefinition );
-            sut.Name.Should().Be( SqlSchemaObjectName.Create( "qux", "FK_foo_REF_bar" ) );
-            sut.Columns.ToArray().Should().BeSequentiallyEqualTo( columns );
-            sut.ReferencedTable.Should().BeSameAs( referencedTable );
-            sut.ReferencedColumns.ToArray().Should().BeSequentiallyEqualTo( referencedColumns );
-            sut.OnDeleteBehavior.Should().BeSameAs( ReferenceBehavior.Restrict );
-            sut.OnUpdateBehavior.Should().BeSameAs( ReferenceBehavior.Restrict );
-            text.Should()
-                .Be(
-                    "FOREIGN KEY [qux].[FK_foo_REF_bar] (([foo].[x] : ?), ([foo].[y] : ?)) REFERENCES [bar] (([bar].[x] : ?), ([bar].[y] : ?)) ON DELETE RESTRICT ON UPDATE RESTRICT" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.ForeignKeyDefinition ),
+                sut.Name.TestEquals( SqlSchemaObjectName.Create( "qux", "FK_foo_REF_bar" ) ),
+                sut.Columns.ToArray().TestSequence( columns ),
+                sut.ReferencedTable.TestRefEquals( referencedTable ),
+                sut.ReferencedColumns.ToArray().TestSequence( referencedColumns ),
+                sut.OnDeleteBehavior.TestRefEquals( ReferenceBehavior.Restrict ),
+                sut.OnUpdateBehavior.TestRefEquals( ReferenceBehavior.Restrict ),
+                text.TestEquals(
+                    "FOREIGN KEY [qux].[FK_foo_REF_bar] (([foo].[x] : ?), ([foo].[y] : ?)) REFERENCES [bar] (([bar].[x] : ?), ([bar].[y] : ?)) ON DELETE RESTRICT ON UPDATE RESTRICT" ) )
+            .Go();
     }
 
     [Theory]
@@ -952,19 +899,17 @@ public partial class BaseExpressionsTests : TestsBase
 
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.ForeignKeyDefinition );
-            sut.Name.Should().Be( SqlSchemaObjectName.Create( "FK_foo_REF_bar" ) );
-            sut.Columns.ToArray().Should().BeEmpty();
-            sut.ReferencedTable.Should().BeSameAs( referencedTable );
-            sut.ReferencedColumns.ToArray().Should().BeEmpty();
-            sut.OnDeleteBehavior.Should().BeSameAs( onDeleteBehavior );
-            sut.OnUpdateBehavior.Should().BeSameAs( onUpdateBehavior );
-            text.Should()
-                .Be(
-                    $"FOREIGN KEY [FK_foo_REF_bar] () REFERENCES [bar] () ON DELETE {onDeleteBehavior.Name} ON UPDATE {onUpdateBehavior.Name}" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.ForeignKeyDefinition ),
+                sut.Name.TestEquals( SqlSchemaObjectName.Create( "FK_foo_REF_bar" ) ),
+                sut.Columns.ToArray().TestEmpty(),
+                sut.ReferencedTable.TestRefEquals( referencedTable ),
+                sut.ReferencedColumns.ToArray().TestEmpty(),
+                sut.OnDeleteBehavior.TestRefEquals( onDeleteBehavior ),
+                sut.OnUpdateBehavior.TestRefEquals( onUpdateBehavior ),
+                text.TestEquals(
+                    $"FOREIGN KEY [FK_foo_REF_bar] () REFERENCES [bar] () ON DELETE {onDeleteBehavior.Name} ON UPDATE {onUpdateBehavior.Name}" ) )
+            .Go();
     }
 
     [Fact]
@@ -975,13 +920,12 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.Check( SqlSchemaObjectName.Create( "bar", "CHK_foo" ), predicate );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.CheckDefinition );
-            sut.Name.Should().Be( SqlSchemaObjectName.Create( "bar", "CHK_foo" ) );
-            sut.Condition.Should().BeSameAs( predicate );
-            text.Should().Be( "CHECK [bar].[CHK_foo] (([foo].[x] : ?) > (\"10\" : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.CheckDefinition ),
+                sut.Name.TestEquals( SqlSchemaObjectName.Create( "bar", "CHK_foo" ) ),
+                sut.Condition.TestRefEquals( predicate ),
+                text.TestEquals( "CHECK [bar].[CHK_foo] (([foo].[x] : ?) > (\"10\" : System.Int32))" ) )
+            .Go();
     }
 
     [Fact]
@@ -1027,19 +971,17 @@ public partial class BaseExpressionsTests : TestsBase
 
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.CreateTable );
-            sut.Info.Should().Be( info );
-            sut.IfNotExists.Should().BeFalse();
-            sut.Columns.ToArray().Should().BeSequentiallyEqualTo( columns );
-            sut.PrimaryKey.Should().BeSameAs( primaryKey );
-            sut.ForeignKeys.ToArray().Should().BeSequentiallyEqualTo( foreignKeys );
-            sut.Checks.ToArray().Should().BeSequentiallyEqualTo( checks );
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.CreateTable ),
+                sut.Info.TestEquals( info ),
+                sut.IfNotExists.TestFalse(),
+                sut.Columns.ToArray().TestSequence( columns ),
+                sut.PrimaryKey.TestRefEquals( primaryKey ),
+                sut.ForeignKeys.ToArray().TestSequence( foreignKeys ),
+                sut.Checks.ToArray().TestSequence( checks ),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
+                text.TestEquals(
                     """
                     CREATE TABLE [foo].[bar] (
                       [x] : System.Int32,
@@ -1051,8 +993,8 @@ public partial class BaseExpressionsTests : TestsBase
                       FOREIGN KEY [FK_foobar_REF_qux] (([foo].[bar].[y] : Nullable<System.String>)) REFERENCES [qux] (([qux].[y] : ?)) ON DELETE RESTRICT ON UPDATE RESTRICT,
                       CHECK [CHK_foobar] (([foo].[bar].[z] : System.Double) > ("100" : System.Double))
                     )
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Theory]
@@ -1069,24 +1011,22 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.CreateTable( info, Array.Empty<SqlColumnDefinitionNode>(), ifNotExists );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.CreateTable );
-            sut.Info.Should().Be( info );
-            sut.IfNotExists.Should().Be( ifNotExists );
-            sut.Columns.ToArray().Should().BeEmpty();
-            sut.PrimaryKey.Should().BeNull();
-            sut.ForeignKeys.ToArray().Should().BeEmpty();
-            sut.Checks.ToArray().Should().BeEmpty();
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.CreateTable ),
+                sut.Info.TestEquals( info ),
+                sut.IfNotExists.TestEquals( ifNotExists ),
+                sut.Columns.ToArray().TestEmpty(),
+                sut.PrimaryKey.TestNull(),
+                sut.ForeignKeys.ToArray().TestEmpty(),
+                sut.Checks.ToArray().TestEmpty(),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
+                text.TestEquals(
                     $"""
                      {expectedText} (
                      )
-                     """ );
-        }
+                     """ ) )
+            .Go();
     }
 
     [Theory]
@@ -1101,21 +1041,19 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = source.ToCreateView( info, replaceIfExists );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.CreateView );
-            sut.Info.Should().Be( info );
-            sut.ReplaceIfExists.Should().Be( replaceIfExists );
-            sut.Source.Should().BeSameAs( source );
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.CreateView ),
+                sut.Info.TestEquals( info ),
+                sut.ReplaceIfExists.TestEquals( replaceIfExists ),
+                sut.Source.TestRefEquals( source ),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
+                text.TestEquals(
                     $"""
                      {expectedHeader}
                      SELECT * FROM qux
-                     """ );
-        }
+                     """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1130,20 +1068,18 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.CreateIndex( name, isUnique: false, table, columns, filter: filter );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.CreateIndex );
-            sut.Name.Should().Be( name );
-            sut.ReplaceIfExists.Should().BeFalse();
-            sut.IsUnique.Should().BeFalse();
-            sut.Table.Should().BeSameAs( table );
-            sut.Columns.ToArray().Should().BeSequentiallyEqualTo( columns );
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
-            text.Should()
-                .Be(
-                    "CREATE INDEX [foo].[bar] ON [qux] (([qux].[x] : ?) ASC, ([qux].[y] : ?) DESC) WHERE (([qux].[x] : ?) > ([qux].[y] : ?))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.CreateIndex ),
+                sut.Name.TestEquals( name ),
+                sut.ReplaceIfExists.TestFalse(),
+                sut.IsUnique.TestFalse(),
+                sut.Table.TestRefEquals( table ),
+                sut.Columns.ToArray().TestSequence( columns ),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
+                text.TestEquals(
+                    "CREATE INDEX [foo].[bar] ON [qux] (([qux].[x] : ?) ASC, ([qux].[y] : ?) DESC) WHERE (([qux].[x] : ?) > ([qux].[y] : ?))" ) )
+            .Go();
     }
 
     [Fact]
@@ -1162,20 +1098,18 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.CreateIndex( name, isUnique: false, table, columns, filter: filter );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.CreateIndex );
-            sut.Name.Should().Be( name );
-            sut.ReplaceIfExists.Should().BeFalse();
-            sut.IsUnique.Should().BeFalse();
-            sut.Table.Should().BeSameAs( table );
-            sut.Columns.ToArray().Should().BeSequentiallyEqualTo( columns );
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
-            text.Should()
-                .Be(
-                    "CREATE INDEX [foo].[bar] ON TEMP.[qux] ((TEMP.[qux].[x] : System.Int32) ASC, (TEMP.[qux].[y] : System.Int32) DESC) WHERE ((TEMP.[qux].[x] : System.Int32) > (TEMP.[qux].[y] : System.Int32))" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.CreateIndex ),
+                sut.Name.TestEquals( name ),
+                sut.ReplaceIfExists.TestFalse(),
+                sut.IsUnique.TestFalse(),
+                sut.Table.TestRefEquals( table ),
+                sut.Columns.ToArray().TestSequence( columns ),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
+                text.TestEquals(
+                    "CREATE INDEX [foo].[bar] ON TEMP.[qux] ((TEMP.[qux].[x] : System.Int32) ASC, (TEMP.[qux].[y] : System.Int32) DESC) WHERE ((TEMP.[qux].[x] : System.Int32) > (TEMP.[qux].[y] : System.Int32))" ) )
+            .Go();
     }
 
     [Theory]
@@ -1194,18 +1128,17 @@ public partial class BaseExpressionsTests : TestsBase
 
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.CreateIndex );
-            sut.Name.Should().Be( name );
-            sut.ReplaceIfExists.Should().Be( replaceIfExists );
-            sut.IsUnique.Should().Be( isUnique );
-            sut.Table.Should().BeSameAs( table );
-            sut.Columns.ToArray().Should().BeEmpty();
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
-            text.Should().Be( expectedText );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.CreateIndex ),
+                sut.Name.TestEquals( name ),
+                sut.ReplaceIfExists.TestEquals( replaceIfExists ),
+                sut.IsUnique.TestEquals( isUnique ),
+                sut.Table.TestRefEquals( table ),
+                sut.Columns.ToArray().TestEmpty(),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
+                text.TestEquals( expectedText ) )
+            .Go();
     }
 
     [Theory]
@@ -1218,15 +1151,14 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.RenameTable( table, newName );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.RenameTable );
-            sut.Table.Should().Be( table );
-            sut.NewName.Should().Be( newName );
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
-            text.Should().Be( expectedText );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.RenameTable ),
+                sut.Table.TestEquals( table ),
+                sut.NewName.TestEquals( newName ),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
+                text.TestEquals( expectedText ) )
+            .Go();
     }
 
     [Theory]
@@ -1238,16 +1170,15 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.RenameColumn( table, "qux", "lorem" );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.RenameColumn );
-            sut.Table.Should().Be( table );
-            sut.OldName.Should().Be( "qux" );
-            sut.NewName.Should().Be( "lorem" );
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
-            text.Should().Be( expectedText );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.RenameColumn ),
+                sut.Table.TestEquals( table ),
+                sut.OldName.TestEquals( "qux" ),
+                sut.NewName.TestEquals( "lorem" ),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
+                text.TestEquals( expectedText ) )
+            .Go();
     }
 
     [Theory]
@@ -1260,15 +1191,14 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.AddColumn( table, definition );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.AddColumn );
-            sut.Table.Should().Be( table );
-            sut.Definition.Should().BeSameAs( definition );
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
-            text.Should().Be( expectedText );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.AddColumn ),
+                sut.Table.TestEquals( table ),
+                sut.Definition.TestRefEquals( definition ),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
+                text.TestEquals( expectedText ) )
+            .Go();
     }
 
     [Theory]
@@ -1280,15 +1210,14 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.DropColumn( table, "qux" );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.DropColumn );
-            sut.Table.Should().Be( table );
-            sut.Name.Should().Be( "qux" );
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
-            text.Should().Be( expectedText );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.DropColumn ),
+                sut.Table.TestEquals( table ),
+                sut.Name.TestEquals( "qux" ),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
+                text.TestEquals( expectedText ) )
+            .Go();
     }
 
     [Theory]
@@ -1303,15 +1232,14 @@ public partial class BaseExpressionsTests : TestsBase
 
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.DropTable );
-            sut.Table.Should().Be( table );
-            sut.IfExists.Should().Be( ifExists );
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
-            text.Should().Be( expectedText );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.DropTable ),
+                sut.Table.TestEquals( table ),
+                sut.IfExists.TestEquals( ifExists ),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
+                text.TestEquals( expectedText ) )
+            .Go();
     }
 
     [Theory]
@@ -1325,15 +1253,14 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.CreateView( view, SqlNode.RawQuery( "SELECT * FROM qux" ) ).ToDropView( ifExists );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.DropView );
-            sut.View.Should().Be( view );
-            sut.IfExists.Should().Be( ifExists );
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
-            text.Should().Be( expectedText );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.DropView ),
+                sut.View.TestEquals( view ),
+                sut.IfExists.TestEquals( ifExists ),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
+                text.TestEquals( expectedText ) )
+            .Go();
     }
 
     [Theory]
@@ -1353,16 +1280,15 @@ public partial class BaseExpressionsTests : TestsBase
 
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.DropIndex );
-            sut.Table.Should().Be( recordSet.Info );
-            sut.Name.Should().Be( name );
-            sut.IfExists.Should().Be( ifExists );
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
-            text.Should().Be( expectedText );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.DropIndex ),
+                sut.Table.TestEquals( recordSet.Info ),
+                sut.Name.TestEquals( name ),
+                sut.IfExists.TestEquals( ifExists ),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
+                text.TestEquals( expectedText ) )
+            .Go();
     }
 
     [Fact]
@@ -1378,14 +1304,12 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.Batch( statements );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.StatementBatch );
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            sut.QueryCount.Should().Be( 2 );
-            sut.Statements.ToArray().Should().BeSequentiallyEqualTo( statements );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.StatementBatch ),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                sut.QueryCount.TestEquals( 2 ),
+                sut.Statements.ToArray().TestSequence( statements ),
+                text.TestEquals(
                     """
                     BATCH
                     (
@@ -1395,8 +1319,8 @@ public partial class BaseExpressionsTests : TestsBase
                     
                       INSERT INTO qux (x, y) VALUES (1, 'foo');
                     )
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Fact]
@@ -1405,21 +1329,19 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.Batch();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.StatementBatch );
-            sut.Statements.ToArray().Should().BeEmpty();
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            sut.QueryCount.Should().Be( 0 );
-            text.Should()
-                .Be(
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.StatementBatch ),
+                sut.Statements.ToArray().TestEmpty(),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                sut.QueryCount.TestEquals( 0 ),
+                text.TestEquals(
                     """
                     BATCH
                     (
                       
                     )
-                    """ );
-        }
+                    """ ) )
+            .Go();
     }
 
     [Theory]
@@ -1431,14 +1353,13 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.BeginTransaction( isolationLevel );
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.BeginTransaction );
-            sut.IsolationLevel.Should().Be( isolationLevel );
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
-            text.Should().Be( $"BEGIN {isolationLevel.ToString().ToUpperInvariant()} TRANSACTION" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.BeginTransaction ),
+                sut.IsolationLevel.TestEquals( isolationLevel ),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
+                text.TestEquals( $"BEGIN {isolationLevel.ToString().ToUpperInvariant()} TRANSACTION" ) )
+            .Go();
     }
 
     [Fact]
@@ -1447,13 +1368,12 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.CommitTransaction();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.CommitTransaction );
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
-            text.Should().Be( "COMMIT" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.CommitTransaction ),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
+                text.TestEquals( "COMMIT" ) )
+            .Go();
     }
 
     [Fact]
@@ -1462,12 +1382,11 @@ public partial class BaseExpressionsTests : TestsBase
         var sut = SqlNode.RollbackTransaction();
         var text = sut.ToString();
 
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.RollbackTransaction );
-            (( ISqlStatementNode )sut).Node.Should().BeSameAs( sut );
-            (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
-            text.Should().Be( "ROLLBACK" );
-        }
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.RollbackTransaction ),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
+                text.TestEquals( "ROLLBACK" ) )
+            .Go();
     }
 }

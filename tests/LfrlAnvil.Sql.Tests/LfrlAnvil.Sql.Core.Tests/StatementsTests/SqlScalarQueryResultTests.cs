@@ -10,11 +10,10 @@ public class SqlScalarQueryResultTests : TestsBase
     {
         var sut = default( SqlScalarQueryResult );
 
-        using ( new AssertionScope() )
-        {
-            sut.HasValue.Should().BeFalse();
-            sut.Value.Should().BeNull();
-        }
+        Assertion.All(
+                sut.HasValue.TestFalse(),
+                sut.Value.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -22,11 +21,10 @@ public class SqlScalarQueryResultTests : TestsBase
     {
         var sut = SqlScalarQueryResult.Empty;
 
-        using ( new AssertionScope() )
-        {
-            sut.HasValue.Should().BeFalse();
-            sut.Value.Should().BeNull();
-        }
+        Assertion.All(
+                sut.HasValue.TestFalse(),
+                sut.Value.TestNull() )
+            .Go();
     }
 
     [Theory]
@@ -36,11 +34,10 @@ public class SqlScalarQueryResultTests : TestsBase
     {
         var sut = new SqlScalarQueryResult( value );
 
-        using ( new AssertionScope() )
-        {
-            sut.HasValue.Should().BeTrue();
-            sut.Value.Should().BeSameAs( value );
-        }
+        Assertion.All(
+                sut.HasValue.TestTrue(),
+                sut.Value.TestRefEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -48,7 +45,7 @@ public class SqlScalarQueryResultTests : TestsBase
     {
         var sut = SqlScalarQueryResult.Empty;
         var result = sut.ToString();
-        result.Should().Be( "Empty()" );
+        result.TestEquals( "Empty()" ).Go();
     }
 
     [Fact]
@@ -56,7 +53,7 @@ public class SqlScalarQueryResultTests : TestsBase
     {
         var sut = new SqlScalarQueryResult( "foo" );
         var result = sut.ToString();
-        result.Should().Be( "Value(foo)" );
+        result.TestEquals( "Value(foo)" ).Go();
     }
 
     [Fact]
@@ -67,7 +64,7 @@ public class SqlScalarQueryResultTests : TestsBase
 
         var result = sut.GetHashCode();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -78,7 +75,7 @@ public class SqlScalarQueryResultTests : TestsBase
 
         var result = sut.GetValue();
 
-        result.Should().BeSameAs( expected );
+        result.TestRefEquals( expected ).Go();
     }
 
     [Fact]
@@ -86,7 +83,7 @@ public class SqlScalarQueryResultTests : TestsBase
     {
         var sut = SqlScalarQueryResult.Empty;
         var action = Lambda.Of( () => sut.GetValue() );
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -97,7 +94,7 @@ public class SqlScalarQueryResultTests : TestsBase
 
         var result = sut.GetValueOrDefault( "bar" );
 
-        result.Should().BeSameAs( expected );
+        result.TestRefEquals( expected ).Go();
     }
 
     [Fact]
@@ -108,7 +105,7 @@ public class SqlScalarQueryResultTests : TestsBase
 
         var result = sut.GetValueOrDefault( expected );
 
-        result.Should().BeSameAs( expected );
+        result.TestRefEquals( expected ).Go();
     }
 
     [Theory]
@@ -118,7 +115,7 @@ public class SqlScalarQueryResultTests : TestsBase
     public void EqualityOperator_TypeErased_ShouldReturnCorrectResult_ForNonEmpty(object? a, object? b, bool expected)
     {
         var result = new SqlScalarQueryResult( a ) == new SqlScalarQueryResult( b );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -132,7 +129,7 @@ public class SqlScalarQueryResultTests : TestsBase
 
         var result = a == b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -142,7 +139,7 @@ public class SqlScalarQueryResultTests : TestsBase
     public void InequalityOperator_TypeErased_ShouldReturnCorrectResult_ForNonEmpty(object? a, object? b, bool expected)
     {
         var result = new SqlScalarQueryResult( a ) != new SqlScalarQueryResult( b );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -156,7 +153,7 @@ public class SqlScalarQueryResultTests : TestsBase
 
         var result = a != b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -164,11 +161,10 @@ public class SqlScalarQueryResultTests : TestsBase
     {
         var sut = default( SqlScalarQueryResult<string> );
 
-        using ( new AssertionScope() )
-        {
-            sut.HasValue.Should().BeFalse();
-            sut.Value.Should().BeNull();
-        }
+        Assertion.All(
+                sut.HasValue.TestFalse(),
+                sut.Value.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -176,11 +172,10 @@ public class SqlScalarQueryResultTests : TestsBase
     {
         var sut = SqlScalarQueryResult<string>.Empty;
 
-        using ( new AssertionScope() )
-        {
-            sut.HasValue.Should().BeFalse();
-            sut.Value.Should().BeNull();
-        }
+        Assertion.All(
+                sut.HasValue.TestFalse(),
+                sut.Value.TestNull() )
+            .Go();
     }
 
     [Theory]
@@ -190,11 +185,10 @@ public class SqlScalarQueryResultTests : TestsBase
     {
         var sut = new SqlScalarQueryResult<string>( value );
 
-        using ( new AssertionScope() )
-        {
-            sut.HasValue.Should().BeTrue();
-            sut.Value.Should().BeSameAs( value );
-        }
+        Assertion.All(
+                sut.HasValue.TestTrue(),
+                sut.Value.TestRefEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -202,7 +196,7 @@ public class SqlScalarQueryResultTests : TestsBase
     {
         var sut = SqlScalarQueryResult<string>.Empty;
         var result = sut.ToString();
-        result.Should().Be( "Empty<System.String>()" );
+        result.TestEquals( "Empty<System.String>()" ).Go();
     }
 
     [Fact]
@@ -210,7 +204,7 @@ public class SqlScalarQueryResultTests : TestsBase
     {
         var sut = new SqlScalarQueryResult<string>( "foo" );
         var result = sut.ToString();
-        result.Should().Be( "Value<System.String>(foo)" );
+        result.TestEquals( "Value<System.String>(foo)" ).Go();
     }
 
     [Fact]
@@ -221,7 +215,7 @@ public class SqlScalarQueryResultTests : TestsBase
 
         var result = sut.GetHashCode();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -232,7 +226,7 @@ public class SqlScalarQueryResultTests : TestsBase
 
         var result = sut.GetValue();
 
-        result.Should().BeSameAs( expected );
+        result.TestRefEquals( expected ).Go();
     }
 
     [Fact]
@@ -240,7 +234,7 @@ public class SqlScalarQueryResultTests : TestsBase
     {
         var sut = SqlScalarQueryResult<string>.Empty;
         var action = Lambda.Of( () => sut.GetValue() );
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -251,7 +245,7 @@ public class SqlScalarQueryResultTests : TestsBase
 
         var result = sut.GetValueOrDefault( "bar" );
 
-        result.Should().BeSameAs( expected );
+        result.TestRefEquals( expected ).Go();
     }
 
     [Fact]
@@ -262,7 +256,7 @@ public class SqlScalarQueryResultTests : TestsBase
 
         var result = sut.GetValueOrDefault( expected );
 
-        result.Should().BeSameAs( expected );
+        result.TestRefEquals( expected ).Go();
     }
 
     [Theory]
@@ -271,7 +265,7 @@ public class SqlScalarQueryResultTests : TestsBase
     public void EqualityOperator_Generic_ShouldReturnCorrectResult_ForNonEmpty(string? a, string? b, bool expected)
     {
         var result = new SqlScalarQueryResult<string>( a ) == new SqlScalarQueryResult<string>( b );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -285,7 +279,7 @@ public class SqlScalarQueryResultTests : TestsBase
 
         var result = a == b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -294,7 +288,7 @@ public class SqlScalarQueryResultTests : TestsBase
     public void InequalityOperator_Generic_ShouldReturnCorrectResult_ForNonEmpty(string? a, string? b, bool expected)
     {
         var result = new SqlScalarQueryResult<string>( a ) != new SqlScalarQueryResult<string>( b );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -308,6 +302,6 @@ public class SqlScalarQueryResultTests : TestsBase
 
         var result = a != b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

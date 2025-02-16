@@ -10,16 +10,15 @@ public class SqlParameterConfigurationTests : TestsBase
     {
         var sut = SqlParameterConfiguration.IgnoreMember( "foo" );
 
-        using ( new AssertionScope() )
-        {
-            sut.MemberName.Should().Be( "foo" );
-            sut.TargetParameterName.Should().BeNull();
-            sut.CustomSelector.Should().BeNull();
-            sut.CustomSelectorSourceType.Should().BeNull();
-            sut.CustomSelectorValueType.Should().BeNull();
-            sut.IsIgnoredWhenNull.Should().BeTrue();
-            sut.IsIgnored.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.MemberName.TestEquals( "foo" ),
+                sut.TargetParameterName.TestNull(),
+                sut.CustomSelector.TestNull(),
+                sut.CustomSelectorSourceType.TestNull(),
+                sut.CustomSelectorValueType.TestNull(),
+                sut.IsIgnoredWhenNull.TestEquals( true ),
+                sut.IsIgnored.TestTrue() )
+            .Go();
     }
 
     [Theory]
@@ -31,17 +30,16 @@ public class SqlParameterConfigurationTests : TestsBase
     {
         var sut = SqlParameterConfiguration.IgnoreMemberWhenNull( "foo", value, parameterIndex );
 
-        using ( new AssertionScope() )
-        {
-            sut.MemberName.Should().Be( "foo" );
-            sut.TargetParameterName.Should().Be( "foo" );
-            sut.ParameterIndex.Should().Be( parameterIndex );
-            sut.CustomSelector.Should().BeNull();
-            sut.CustomSelectorSourceType.Should().BeNull();
-            sut.CustomSelectorValueType.Should().BeNull();
-            sut.IsIgnoredWhenNull.Should().Be( value );
-            sut.IsIgnored.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.MemberName.TestEquals( "foo" ),
+                sut.TargetParameterName.TestEquals( "foo" ),
+                sut.ParameterIndex.TestEquals( parameterIndex ),
+                sut.CustomSelector.TestNull(),
+                sut.CustomSelectorSourceType.TestNull(),
+                sut.CustomSelectorValueType.TestNull(),
+                sut.IsIgnoredWhenNull.TestEquals( value ),
+                sut.IsIgnored.TestFalse() )
+            .Go();
     }
 
     [Theory]
@@ -53,24 +51,23 @@ public class SqlParameterConfigurationTests : TestsBase
     {
         var sut = SqlParameterConfiguration.Positional( "foo", parameterIndex, ignoreNull );
 
-        using ( new AssertionScope() )
-        {
-            sut.MemberName.Should().Be( "foo" );
-            sut.TargetParameterName.Should().Be( "foo" );
-            sut.ParameterIndex.Should().Be( parameterIndex );
-            sut.CustomSelector.Should().BeNull();
-            sut.CustomSelectorSourceType.Should().BeNull();
-            sut.CustomSelectorValueType.Should().BeNull();
-            sut.IsIgnoredWhenNull.Should().Be( ignoreNull );
-            sut.IsIgnored.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.MemberName.TestEquals( "foo" ),
+                sut.TargetParameterName.TestEquals( "foo" ),
+                sut.ParameterIndex.TestEquals( parameterIndex ),
+                sut.CustomSelector.TestNull(),
+                sut.CustomSelectorSourceType.TestNull(),
+                sut.CustomSelectorValueType.TestNull(),
+                sut.IsIgnoredWhenNull.TestEquals( ignoreNull ),
+                sut.IsIgnored.TestFalse() )
+            .Go();
     }
 
     [Fact]
     public void Positional_ShouldThrowArgumentOutOfRangeException_WhenParameterIndexIsLessThanZero()
     {
         var action = Lambda.Of( () => SqlParameterConfiguration.Positional( "foo", -1 ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -86,17 +83,16 @@ public class SqlParameterConfigurationTests : TestsBase
     {
         var sut = SqlParameterConfiguration.From( "foo", "bar", ignoreNull, parameterIndex );
 
-        using ( new AssertionScope() )
-        {
-            sut.MemberName.Should().Be( "bar" );
-            sut.TargetParameterName.Should().Be( "foo" );
-            sut.ParameterIndex.Should().Be( parameterIndex );
-            sut.CustomSelector.Should().BeNull();
-            sut.CustomSelectorSourceType.Should().BeNull();
-            sut.CustomSelectorValueType.Should().BeNull();
-            sut.IsIgnoredWhenNull.Should().Be( ignoreNull );
-            sut.IsIgnored.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.MemberName.TestEquals( "bar" ),
+                sut.TargetParameterName.TestEquals( "foo" ),
+                sut.ParameterIndex.TestEquals( parameterIndex ),
+                sut.CustomSelector.TestNull(),
+                sut.CustomSelectorSourceType.TestNull(),
+                sut.CustomSelectorValueType.TestNull(),
+                sut.IsIgnoredWhenNull.TestEquals( ignoreNull ),
+                sut.IsIgnored.TestFalse() )
+            .Go();
     }
 
     [Theory]
@@ -111,16 +107,15 @@ public class SqlParameterConfigurationTests : TestsBase
         var selector = Lambda.ExpressionOf( (int source) => source.ToString() );
         var sut = SqlParameterConfiguration.From( "foo", selector, ignoreNull, parameterIndex );
 
-        using ( new AssertionScope() )
-        {
-            sut.MemberName.Should().BeNull();
-            sut.TargetParameterName.Should().Be( "foo" );
-            sut.ParameterIndex.Should().Be( parameterIndex );
-            sut.CustomSelector.Should().BeSameAs( selector );
-            sut.CustomSelectorSourceType.Should().Be( typeof( int ) );
-            sut.CustomSelectorValueType.Should().Be( typeof( string ) );
-            sut.IsIgnoredWhenNull.Should().Be( ignoreNull );
-            sut.IsIgnored.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.MemberName.TestNull(),
+                sut.TargetParameterName.TestEquals( "foo" ),
+                sut.ParameterIndex.TestEquals( parameterIndex ),
+                sut.CustomSelector.TestRefEquals( selector ),
+                sut.CustomSelectorSourceType.TestEquals( typeof( int ) ),
+                sut.CustomSelectorValueType.TestEquals( typeof( string ) ),
+                sut.IsIgnoredWhenNull.TestEquals( ignoreNull ),
+                sut.IsIgnored.TestFalse() )
+            .Go();
     }
 }

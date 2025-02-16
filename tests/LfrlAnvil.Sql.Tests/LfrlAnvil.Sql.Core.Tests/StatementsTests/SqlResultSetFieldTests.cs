@@ -1,5 +1,4 @@
 ﻿using LfrlAnvil.Sql.Statements;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sql.Tests.StatementsTests;
 
@@ -13,14 +12,13 @@ public class SqlResultSetFieldTests : TestsBase
         var isUsed = Fixture.Create<bool>();
         var sut = new SqlResultSetField( ordinal, name, isUsed, includeTypeNames: false );
 
-        using ( new AssertionScope() )
-        {
-            sut.Ordinal.Should().Be( ordinal );
-            sut.Name.Should().BeSameAs( name );
-            sut.IsUsed.Should().Be( isUsed );
-            sut.TypeName.Should().BeNull();
-            sut.TypeNames.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Ordinal.TestEquals( ordinal ),
+                sut.Name.TestRefEquals( name ),
+                sut.IsUsed.TestEquals( isUsed ),
+                sut.TypeName.TestNull(),
+                sut.TypeNames.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -31,14 +29,13 @@ public class SqlResultSetFieldTests : TestsBase
         var isUsed = Fixture.Create<bool>();
         var sut = new SqlResultSetField( ordinal, name, isUsed, includeTypeNames: true );
 
-        using ( new AssertionScope() )
-        {
-            sut.Ordinal.Should().Be( ordinal );
-            sut.Name.Should().BeSameAs( name );
-            sut.IsUsed.Should().Be( isUsed );
-            sut.TypeName.Should().BeEmpty();
-            sut.TypeNames.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Ordinal.TestEquals( ordinal ),
+                sut.Name.TestRefEquals( name ),
+                sut.IsUsed.TestEquals( isUsed ),
+                sut.TypeName.TestNotNull( t => t.TestEmpty() ),
+                sut.TypeNames.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -46,7 +43,7 @@ public class SqlResultSetFieldTests : TestsBase
     {
         var sut = new SqlResultSetField( ordinal: 3, name: "foo", isUsed: false, includeTypeNames: false );
         var result = sut.ToString();
-        result.Should().Be( "[3] 'foo' (unused)" );
+        result.TestEquals( "[3] 'foo' (unused)" ).Go();
     }
 
     [Fact]
@@ -54,7 +51,7 @@ public class SqlResultSetFieldTests : TestsBase
     {
         var sut = new SqlResultSetField( ordinal: 3, name: "foo", isUsed: true, includeTypeNames: false );
         var result = sut.ToString();
-        result.Should().Be( "[3] 'foo'" );
+        result.TestEquals( "[3] 'foo'" ).Go();
     }
 
     [Fact]
@@ -62,7 +59,7 @@ public class SqlResultSetFieldTests : TestsBase
     {
         var sut = new SqlResultSetField( ordinal: 3, name: "foo", isUsed: false, includeTypeNames: true );
         var result = sut.ToString();
-        result.Should().Be( "[3] 'foo' : ? (unused)" );
+        result.TestEquals( "[3] 'foo' : ? (unused)" ).Go();
     }
 
     [Fact]
@@ -74,7 +71,7 @@ public class SqlResultSetFieldTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( "[3] 'foo' : int | string (unused)" );
+        result.TestEquals( "[3] 'foo' : int | string (unused)" ).Go();
     }
 
     [Fact]
@@ -82,7 +79,7 @@ public class SqlResultSetFieldTests : TestsBase
     {
         var sut = new SqlResultSetField( ordinal: 3, name: "foo", isUsed: true, includeTypeNames: true );
         var result = sut.ToString();
-        result.Should().Be( "[3] 'foo' : ?" );
+        result.TestEquals( "[3] 'foo' : ?" ).Go();
     }
 
     [Fact]
@@ -94,7 +91,7 @@ public class SqlResultSetFieldTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( "[3] 'foo' : int | string" );
+        result.TestEquals( "[3] 'foo' : int | string" ).Go();
     }
 
     [Fact]
@@ -107,12 +104,11 @@ public class SqlResultSetFieldTests : TestsBase
 
         var result = sut.TryAddTypeName( "int" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.TypeName.Should().BeNull();
-            sut.TypeNames.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.TypeName.TestNull(),
+                sut.TypeNames.TestEmpty() )
+            .Go();
     }
 
     [Theory]
@@ -127,12 +123,11 @@ public class SqlResultSetFieldTests : TestsBase
 
         var result = sut.TryAddTypeName( typeName );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.TypeName.Should().BeEmpty();
-            sut.TypeNames.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.TypeName.TestNotNull( t => t.TestEmpty() ),
+                sut.TypeNames.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -145,12 +140,11 @@ public class SqlResultSetFieldTests : TestsBase
 
         var result = sut.TryAddTypeName( "int" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.TypeName.Should().Be( "int" );
-            sut.TypeNames.ToArray().Should().BeSequentiallyEqualTo( "int" );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.TypeName.TestEquals( "int" ),
+                sut.TypeNames.TestSequence( [ "int" ] ) )
+            .Go();
     }
 
     [Fact]
@@ -164,12 +158,11 @@ public class SqlResultSetFieldTests : TestsBase
 
         var result = sut.TryAddTypeName( "string" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.TypeName.Should().Be( "int | string" );
-            sut.TypeNames.ToArray().Should().BeSequentiallyEqualTo( "int", "string" );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.TypeName.TestEquals( "int | string" ),
+                sut.TypeNames.TestSequence( [ "int", "string" ] ) )
+            .Go();
     }
 
     [Fact]
@@ -183,11 +176,10 @@ public class SqlResultSetFieldTests : TestsBase
 
         var result = sut.TryAddTypeName( "int" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.TypeName.Should().Be( "int" );
-            sut.TypeNames.ToArray().Should().BeSequentiallyEqualTo( "int" );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.TypeName.TestEquals( "int" ),
+                sut.TypeNames.TestSequence( [ "int" ] ) )
+            .Go();
     }
 }

@@ -13,15 +13,14 @@ public class SqlColumnTypeDefinitionTests : TestsBase
         var defaultValue = Fixture.Create<string>();
         var sut = new SqlColumnTypeDefinitionMock<string>( SqlDataTypeMock.Text, defaultValue );
 
-        using ( new AssertionScope() )
-        {
-            sut.DataType.Should().BeSameAs( SqlDataTypeMock.Text );
-            sut.DefaultValue.Value.Should().BeSameAs( defaultValue );
-            sut.RuntimeType.Should().Be<string>();
-            (( ISqlColumnTypeDefinition )sut).DataType.Should().BeSameAs( sut.DataType );
-            (( ISqlColumnTypeDefinition )sut).DefaultValue.Should().BeSameAs( sut.DefaultValue );
-            (( ISqlColumnTypeDefinition )sut).OutputMapping.Should().BeSameAs( sut.OutputMapping );
-        }
+        Assertion.All(
+                sut.DataType.TestRefEquals( SqlDataTypeMock.Text ),
+                sut.DefaultValue.Value.TestRefEquals( defaultValue ),
+                sut.RuntimeType.TestEquals( typeof( string ) ),
+                (( ISqlColumnTypeDefinition )sut).DataType.TestRefEquals( sut.DataType ),
+                (( ISqlColumnTypeDefinition )sut).DefaultValue.TestRefEquals( sut.DefaultValue ),
+                (( ISqlColumnTypeDefinition )sut).OutputMapping.TestRefEquals( sut.OutputMapping ) )
+            .Go();
     }
 
     [Fact]
@@ -29,7 +28,7 @@ public class SqlColumnTypeDefinitionTests : TestsBase
     {
         var sut = new SqlColumnTypeDefinitionMock<string>( SqlDataTypeMock.Text, "foo" );
         var result = sut.ToString();
-        result.Should().Be( "System.String <=> STRING, DefaultValue: [\"foo\" : System.String]" );
+        result.TestEquals( "System.String <=> STRING, DefaultValue: [\"foo\" : System.String]" ).Go();
     }
 
     [Fact]
@@ -38,7 +37,7 @@ public class SqlColumnTypeDefinitionTests : TestsBase
         var value = "foo";
         var sut = new SqlColumnTypeDefinitionMock<string>( SqlDataTypeMock.Text, string.Empty );
         var result = sut.TryToDbLiteral( value );
-        result.Should().BeSameAs( value );
+        result.TestRefEquals( value ).Go();
     }
 
     [Fact]
@@ -46,7 +45,7 @@ public class SqlColumnTypeDefinitionTests : TestsBase
     {
         var sut = new SqlColumnTypeDefinitionMock<string>( SqlDataTypeMock.Text, string.Empty );
         var result = sut.TryToDbLiteral( new object() );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -57,11 +56,10 @@ public class SqlColumnTypeDefinitionTests : TestsBase
 
         (( ISqlColumnTypeDefinition )sut).SetParameterInfo( parameter, Fixture.Create<bool>() );
 
-        using ( new AssertionScope() )
-        {
-            parameter.DbType.Should().Be( sut.DataType.DbType );
-            parameter.IsNullable.Should().BeFalse();
-        }
+        Assertion.All(
+                parameter.DbType.TestEquals( sut.DataType.DbType ),
+                parameter.IsNullable.TestFalse() )
+            .Go();
     }
 
     [Theory]
@@ -74,11 +72,10 @@ public class SqlColumnTypeDefinitionTests : TestsBase
 
         (( ISqlColumnTypeDefinition )sut).SetParameterInfo( parameter, isNullable );
 
-        using ( new AssertionScope() )
-        {
-            parameter.DbType.Should().Be( sut.DataType.DbType );
-            parameter.IsNullable.Should().Be( isNullable );
-        }
+        Assertion.All(
+                parameter.DbType.TestEquals( sut.DataType.DbType ),
+                parameter.IsNullable.TestEquals( isNullable ) )
+            .Go();
     }
 
     [Fact]
@@ -86,7 +83,7 @@ public class SqlColumnTypeDefinitionTests : TestsBase
     {
         var sut = new SqlColumnTypeDefinitionMock<string>( SqlDataTypeMock.Text, string.Empty );
         var result = sut.TryToNullableParameterValue( "foo" );
-        result.Should().Be( "foo" );
+        result.TestEquals( "foo" ).Go();
     }
 
     [Fact]
@@ -94,7 +91,7 @@ public class SqlColumnTypeDefinitionTests : TestsBase
     {
         var sut = new SqlColumnTypeDefinitionMock<string>( SqlDataTypeMock.Text, string.Empty );
         var result = sut.TryToNullableParameterValue( new object() );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -102,7 +99,7 @@ public class SqlColumnTypeDefinitionTests : TestsBase
     {
         var sut = new SqlColumnTypeDefinitionMock<string>( SqlDataTypeMock.Text, string.Empty );
         var result = sut.TryToNullableParameterValue( null );
-        result.Should().BeSameAs( DBNull.Value );
+        result.TestRefEquals( DBNull.Value ).Go();
     }
 
     [Fact]
@@ -110,7 +107,7 @@ public class SqlColumnTypeDefinitionTests : TestsBase
     {
         var sut = new SqlColumnTypeDefinitionMock<string>( SqlDataTypeMock.Text, string.Empty );
         var result = sut.ToNullableParameterValue( "foo" );
-        result.Should().Be( "foo" );
+        result.TestEquals( "foo" ).Go();
     }
 
     [Fact]
@@ -118,7 +115,7 @@ public class SqlColumnTypeDefinitionTests : TestsBase
     {
         var sut = new SqlColumnTypeDefinitionMock<string>( SqlDataTypeMock.Text, string.Empty );
         var result = sut.ToNullableParameterValue( null );
-        result.Should().BeSameAs( DBNull.Value );
+        result.TestRefEquals( DBNull.Value ).Go();
     }
 
     [Fact]
@@ -126,7 +123,7 @@ public class SqlColumnTypeDefinitionTests : TestsBase
     {
         var sut = new SqlColumnTypeDefinitionMock<int>( SqlDataTypeMock.Integer, 0 );
         var result = sut.ToNullableParameterValue( 1 );
-        result.Should().Be( 1 );
+        result.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -134,7 +131,7 @@ public class SqlColumnTypeDefinitionTests : TestsBase
     {
         var sut = new SqlColumnTypeDefinitionMock<int>( SqlDataTypeMock.Integer, 0 );
         var result = sut.ToNullableParameterValue( null );
-        result.Should().BeSameAs( DBNull.Value );
+        result.TestRefEquals( DBNull.Value ).Go();
     }
 
     [Fact]
@@ -145,7 +142,7 @@ public class SqlColumnTypeDefinitionTests : TestsBase
 
         var result = sut.ToDbLiteral( TestEnum.B );
 
-        result.Should().Be( "1" );
+        result.TestEquals( "1" ).Go();
     }
 
     [Fact]
@@ -156,7 +153,7 @@ public class SqlColumnTypeDefinitionTests : TestsBase
 
         var result = sut.ToParameterValue( TestEnum.B );
 
-        result.Should().Be( 1 );
+        result.TestEquals( 1 ).Go();
     }
 
     public enum TestEnum

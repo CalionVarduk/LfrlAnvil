@@ -9,7 +9,6 @@ using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Statements;
 using LfrlAnvil.Sql.Statements.Compilers;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 using LfrlAnvil.TestExtensions.Sql.Mocks.System;
 
@@ -27,11 +26,10 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, Enumerable.Empty<SqlParameter>() );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.GetAll().Should().BeEmpty();
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.GetAll().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -43,16 +41,15 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new[] { GetParameter( "a", 1 ) } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 1 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "a" );
-            command.Parameters[0].Value.Should().Be( 1 );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 1 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "a" ),
+                command.Parameters[0].Value.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -64,16 +61,15 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new[] { GetParameter( "a", null ) } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 1 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Object );
-            command.Parameters[0].IsNullable.Should().BeTrue();
-            command.Parameters[0].ParameterName.Should().Be( "a" );
-            command.Parameters[0].Value.Should().BeSameAs( DBNull.Value );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 1 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.Object ),
+                command.Parameters[0].IsNullable.TestTrue(),
+                command.Parameters[0].ParameterName.TestEquals( "a" ),
+                command.Parameters[0].Value.TestRefEquals( DBNull.Value ) )
+            .Go();
     }
 
     [Fact]
@@ -85,11 +81,10 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new[] { GetParameter( "a", null ) } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().BeEmpty();
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -111,28 +106,27 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, parameters );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 3 );
-            command.Parameters[0].Should().BeSameAs( p1 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "a" );
-            command.Parameters[0].Value.Should().Be( 1 );
-            command.Parameters[1].Should().BeSameAs( p2 );
-            command.Parameters[1].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[1].DbType.Should().Be( DbType.String );
-            command.Parameters[1].IsNullable.Should().BeFalse();
-            command.Parameters[1].ParameterName.Should().Be( "b" );
-            command.Parameters[1].Value.Should().Be( "foo" );
-            command.Parameters[2].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[2].DbType.Should().Be( DbType.Double );
-            command.Parameters[2].IsNullable.Should().BeFalse();
-            command.Parameters[2].ParameterName.Should().Be( "c" );
-            command.Parameters[2].Value.Should().Be( 5.0 );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 3 ),
+                command.Parameters[0].TestRefEquals( p1 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "a" ),
+                command.Parameters[0].Value.TestEquals( 1 ),
+                command.Parameters[1].TestRefEquals( p2 ),
+                command.Parameters[1].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[1].DbType.TestEquals( DbType.String ),
+                command.Parameters[1].IsNullable.TestFalse(),
+                command.Parameters[1].ParameterName.TestEquals( "b" ),
+                command.Parameters[1].Value.TestEquals( "foo" ),
+                command.Parameters[2].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[2].DbType.TestEquals( DbType.Double ),
+                command.Parameters[2].IsNullable.TestFalse(),
+                command.Parameters[2].ParameterName.TestEquals( "c" ),
+                command.Parameters[2].Value.TestEquals( 5.0 ) )
+            .Go();
     }
 
     [Fact]
@@ -151,28 +145,27 @@ public class SqlParameterBinderFactoryTests : TestsBase
             command,
             new[] { SqlParameter.Positional( 1 ), SqlParameter.Positional( "foo" ), SqlParameter.Positional( 5.0 ) } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 3 );
-            command.Parameters[0].Should().BeSameAs( p1 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().BeNull();
-            command.Parameters[0].Value.Should().Be( 1 );
-            command.Parameters[1].Should().BeSameAs( p2 );
-            command.Parameters[1].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[1].DbType.Should().Be( DbType.String );
-            command.Parameters[1].IsNullable.Should().BeFalse();
-            command.Parameters[1].ParameterName.Should().BeNull();
-            command.Parameters[1].Value.Should().Be( "foo" );
-            command.Parameters[2].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[2].DbType.Should().Be( DbType.Double );
-            command.Parameters[2].IsNullable.Should().BeFalse();
-            command.Parameters[2].ParameterName.Should().BeNull();
-            command.Parameters[2].Value.Should().Be( 5.0 );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 3 ),
+                command.Parameters[0].TestRefEquals( p1 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestNull(),
+                command.Parameters[0].Value.TestEquals( 1 ),
+                command.Parameters[1].TestRefEquals( p2 ),
+                command.Parameters[1].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[1].DbType.TestEquals( DbType.String ),
+                command.Parameters[1].IsNullable.TestFalse(),
+                command.Parameters[1].ParameterName.TestNull(),
+                command.Parameters[1].Value.TestEquals( "foo" ),
+                command.Parameters[2].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[2].DbType.TestEquals( DbType.Double ),
+                command.Parameters[2].IsNullable.TestFalse(),
+                command.Parameters[2].ParameterName.TestNull(),
+                command.Parameters[2].Value.TestEquals( 5.0 ) )
+            .Go();
     }
 
     [Fact]
@@ -186,11 +179,10 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new[] { GetParameter( "a", null ) } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().BeEmpty();
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -207,17 +199,16 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new[] { GetParameter( "a", "foo" ) } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 1 );
-            command.Parameters[0].Should().BeSameAs( p1 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.String );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "a" );
-            command.Parameters[0].Value.Should().Be( "foo" );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 1 ),
+                command.Parameters[0].TestRefEquals( p1 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.String ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "a" ),
+                command.Parameters[0].Value.TestEquals( "foo" ) )
+            .Go();
     }
 
     [Fact]
@@ -230,11 +221,10 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, Enumerable.Empty<SqlParameter>() );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().BeEmpty();
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -246,16 +236,15 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new[] { GetParameter( "a", 1 ) } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 1 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "a" );
-            command.Parameters[0].Value.Should().Be( 1 );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 1 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "a" ),
+                command.Parameters[0].Value.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -268,16 +257,15 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new[] { GetParameter( "a", null ) } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 1 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Object );
-            command.Parameters[0].IsNullable.Should().BeTrue();
-            command.Parameters[0].ParameterName.Should().Be( "a" );
-            command.Parameters[0].Value.Should().BeSameAs( DBNull.Value );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 1 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.Object ),
+                command.Parameters[0].IsNullable.TestTrue(),
+                command.Parameters[0].ParameterName.TestEquals( "a" ),
+                command.Parameters[0].Value.TestRefEquals( DBNull.Value ) )
+            .Go();
     }
 
     [Fact]
@@ -289,11 +277,10 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new[] { GetParameter( "a", null ) } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().BeEmpty();
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -305,16 +292,15 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new[] { GetParameter( "a", "foo" ) } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 1 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.String );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "a" );
-            command.Parameters[0].Value.Should().Be( "foo" );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 1 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.String ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "a" ),
+                command.Parameters[0].Value.TestEquals( "foo" ) )
+            .Go();
     }
 
     [Fact]
@@ -326,16 +312,19 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new[] { GetParameter( "a", new byte[] { 0, 1, 2 } ) } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 1 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Binary );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "a" );
-            command.Parameters[0].Value.Should().BeEquivalentTo( new byte[] { 0, 1, 2 } );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Cast<DbParameterMock>()
+                    .TestSequence(
+                    [
+                        (p, _) => Assertion.All(
+                            p.Direction.TestEquals( ParameterDirection.Input ),
+                            p.DbType.TestEquals( DbType.Binary ),
+                            p.IsNullable.TestFalse(),
+                            p.ParameterName.TestEquals( "a" ),
+                            p.Value.TestType().AssignableTo<byte[]>( value => value.TestSetEqual( new byte[] { 0, 1, 2 } ) ) )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -347,11 +336,10 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new[] { GetParameter( "a", Array.Empty<int>() ) } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().BeEmpty();
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -363,21 +351,20 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new[] { GetParameter( "a", new[] { "foo", "bar" } ) } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 2 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.String );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "a1" );
-            command.Parameters[0].Value.Should().Be( "foo" );
-            command.Parameters[1].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[1].DbType.Should().Be( DbType.String );
-            command.Parameters[1].IsNullable.Should().BeFalse();
-            command.Parameters[1].ParameterName.Should().Be( "a2" );
-            command.Parameters[1].Value.Should().Be( "bar" );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 2 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.String ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "a1" ),
+                command.Parameters[0].Value.TestEquals( "foo" ),
+                command.Parameters[1].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[1].DbType.TestEquals( DbType.String ),
+                command.Parameters[1].IsNullable.TestFalse(),
+                command.Parameters[1].ParameterName.TestEquals( "a2" ),
+                command.Parameters[1].Value.TestEquals( "bar" ) )
+            .Go();
     }
 
     [Fact]
@@ -390,16 +377,15 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new[] { GetParameter( "a", new[] { null, "foo" } ) } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 1 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.String );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "a1" );
-            command.Parameters[0].Value.Should().Be( "foo" );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 1 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.String ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "a1" ),
+                command.Parameters[0].Value.TestEquals( "foo" ) )
+            .Go();
     }
 
     [Fact]
@@ -413,21 +399,20 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new[] { GetParameter( "a", new[] { null, "foo" } ) } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 2 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Object );
-            command.Parameters[0].IsNullable.Should().BeTrue();
-            command.Parameters[0].ParameterName.Should().Be( "a1" );
-            command.Parameters[0].Value.Should().BeSameAs( DBNull.Value );
-            command.Parameters[1].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[1].DbType.Should().Be( DbType.String );
-            command.Parameters[1].IsNullable.Should().BeFalse();
-            command.Parameters[1].ParameterName.Should().Be( "a2" );
-            command.Parameters[1].Value.Should().Be( "foo" );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 2 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.Object ),
+                command.Parameters[0].IsNullable.TestTrue(),
+                command.Parameters[0].ParameterName.TestEquals( "a1" ),
+                command.Parameters[0].Value.TestRefEquals( DBNull.Value ),
+                command.Parameters[1].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[1].DbType.TestEquals( DbType.String ),
+                command.Parameters[1].IsNullable.TestFalse(),
+                command.Parameters[1].ParameterName.TestEquals( "a2" ),
+                command.Parameters[1].Value.TestEquals( "foo" ) )
+            .Go();
     }
 
     [Fact]
@@ -441,11 +426,10 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new[] { GetParameter( "a", null ) } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().BeEmpty();
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -462,17 +446,16 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new[] { GetParameter( "a", "foo" ) } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 1 );
-            command.Parameters[0].Should().BeSameAs( p1 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.String );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "a" );
-            command.Parameters[0].Value.Should().Be( "foo" );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 1 ),
+                command.Parameters[0].TestRefEquals( p1 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.String ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "a" ),
+                command.Parameters[0].Value.TestEquals( "foo" ) )
+            .Go();
     }
 
     [Fact]
@@ -485,11 +468,10 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().BeEmpty();
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -509,31 +491,30 @@ public class SqlParameterBinderFactoryTests : TestsBase
                 D = true
             } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 4 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "A" );
-            command.Parameters[0].Value.Should().Be( 10 );
-            command.Parameters[1].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[1].DbType.Should().Be( DbType.String );
-            command.Parameters[1].IsNullable.Should().BeFalse();
-            command.Parameters[1].ParameterName.Should().Be( "B" );
-            command.Parameters[1].Value.Should().Be( "foo" );
-            command.Parameters[2].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[2].DbType.Should().Be( DbType.Double );
-            command.Parameters[2].IsNullable.Should().BeFalse();
-            command.Parameters[2].ParameterName.Should().Be( "C" );
-            command.Parameters[2].Value.Should().Be( 5.0 );
-            command.Parameters[3].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[3].DbType.Should().Be( DbType.Boolean );
-            command.Parameters[3].IsNullable.Should().BeFalse();
-            command.Parameters[3].ParameterName.Should().Be( "D" );
-            command.Parameters[3].Value.Should().Be( true );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 4 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "A" ),
+                command.Parameters[0].Value.TestEquals( 10 ),
+                command.Parameters[1].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[1].DbType.TestEquals( DbType.String ),
+                command.Parameters[1].IsNullable.TestFalse(),
+                command.Parameters[1].ParameterName.TestEquals( "B" ),
+                command.Parameters[1].Value.TestEquals( "foo" ),
+                command.Parameters[2].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[2].DbType.TestEquals( DbType.Double ),
+                command.Parameters[2].IsNullable.TestFalse(),
+                command.Parameters[2].ParameterName.TestEquals( "C" ),
+                command.Parameters[2].Value.TestEquals( 5.0 ),
+                command.Parameters[3].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[3].DbType.TestEquals( DbType.Boolean ),
+                command.Parameters[3].IsNullable.TestFalse(),
+                command.Parameters[3].ParameterName.TestEquals( "D" ),
+                command.Parameters[3].Value.TestEquals( true ) )
+            .Go();
     }
 
     [Fact]
@@ -559,31 +540,30 @@ public class SqlParameterBinderFactoryTests : TestsBase
                 D = true
             } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 4 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Double );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().BeNull();
-            command.Parameters[0].Value.Should().Be( 5.0 );
-            command.Parameters[1].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[1].DbType.Should().Be( DbType.Boolean );
-            command.Parameters[1].IsNullable.Should().BeFalse();
-            command.Parameters[1].ParameterName.Should().BeNull();
-            command.Parameters[1].Value.Should().Be( true );
-            command.Parameters[2].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[2].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[2].IsNullable.Should().BeFalse();
-            command.Parameters[2].ParameterName.Should().BeNull();
-            command.Parameters[2].Value.Should().Be( 10 );
-            command.Parameters[3].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[3].DbType.Should().Be( DbType.String );
-            command.Parameters[3].IsNullable.Should().BeFalse();
-            command.Parameters[3].ParameterName.Should().BeNull();
-            command.Parameters[3].Value.Should().Be( "foo" );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 4 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.Double ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestNull(),
+                command.Parameters[0].Value.TestEquals( 5.0 ),
+                command.Parameters[1].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[1].DbType.TestEquals( DbType.Boolean ),
+                command.Parameters[1].IsNullable.TestFalse(),
+                command.Parameters[1].ParameterName.TestNull(),
+                command.Parameters[1].Value.TestEquals( true ),
+                command.Parameters[2].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[2].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[2].IsNullable.TestFalse(),
+                command.Parameters[2].ParameterName.TestNull(),
+                command.Parameters[2].Value.TestEquals( 10 ),
+                command.Parameters[3].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[3].DbType.TestEquals( DbType.String ),
+                command.Parameters[3].IsNullable.TestFalse(),
+                command.Parameters[3].ParameterName.TestNull(),
+                command.Parameters[3].Value.TestEquals( "foo" ) )
+            .Go();
     }
 
     [Fact]
@@ -607,31 +587,30 @@ public class SqlParameterBinderFactoryTests : TestsBase
                 D = true
             } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 4 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Double );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().BeNull();
-            command.Parameters[0].Value.Should().Be( 5.0 );
-            command.Parameters[1].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[1].DbType.Should().Be( DbType.String );
-            command.Parameters[1].IsNullable.Should().BeFalse();
-            command.Parameters[1].ParameterName.Should().BeNull();
-            command.Parameters[1].Value.Should().Be( "foo" );
-            command.Parameters[2].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[2].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[2].IsNullable.Should().BeFalse();
-            command.Parameters[2].ParameterName.Should().Be( "A" );
-            command.Parameters[2].Value.Should().Be( 10 );
-            command.Parameters[3].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[3].DbType.Should().Be( DbType.Boolean );
-            command.Parameters[3].IsNullable.Should().BeFalse();
-            command.Parameters[3].ParameterName.Should().Be( "D" );
-            command.Parameters[3].Value.Should().Be( true );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 4 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.Double ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestNull(),
+                command.Parameters[0].Value.TestEquals( 5.0 ),
+                command.Parameters[1].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[1].DbType.TestEquals( DbType.String ),
+                command.Parameters[1].IsNullable.TestFalse(),
+                command.Parameters[1].ParameterName.TestNull(),
+                command.Parameters[1].Value.TestEquals( "foo" ),
+                command.Parameters[2].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[2].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[2].IsNullable.TestFalse(),
+                command.Parameters[2].ParameterName.TestEquals( "A" ),
+                command.Parameters[2].Value.TestEquals( 10 ),
+                command.Parameters[3].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[3].DbType.TestEquals( DbType.Boolean ),
+                command.Parameters[3].IsNullable.TestFalse(),
+                command.Parameters[3].ParameterName.TestEquals( "D" ),
+                command.Parameters[3].Value.TestEquals( true ) )
+            .Go();
     }
 
     [Fact]
@@ -656,31 +635,30 @@ public class SqlParameterBinderFactoryTests : TestsBase
                 D = true
             } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 4 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "A" );
-            command.Parameters[0].Value.Should().Be( 10 );
-            command.Parameters[1].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[1].DbType.Should().Be( DbType.String );
-            command.Parameters[1].IsNullable.Should().BeFalse();
-            command.Parameters[1].ParameterName.Should().Be( "B" );
-            command.Parameters[1].Value.Should().Be( "foo" );
-            command.Parameters[2].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[2].DbType.Should().Be( DbType.Double );
-            command.Parameters[2].IsNullable.Should().BeFalse();
-            command.Parameters[2].ParameterName.Should().Be( "C" );
-            command.Parameters[2].Value.Should().Be( 5.0 );
-            command.Parameters[3].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[3].DbType.Should().Be( DbType.Boolean );
-            command.Parameters[3].IsNullable.Should().BeFalse();
-            command.Parameters[3].ParameterName.Should().Be( "D" );
-            command.Parameters[3].Value.Should().Be( true );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 4 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "A" ),
+                command.Parameters[0].Value.TestEquals( 10 ),
+                command.Parameters[1].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[1].DbType.TestEquals( DbType.String ),
+                command.Parameters[1].IsNullable.TestFalse(),
+                command.Parameters[1].ParameterName.TestEquals( "B" ),
+                command.Parameters[1].Value.TestEquals( "foo" ),
+                command.Parameters[2].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[2].DbType.TestEquals( DbType.Double ),
+                command.Parameters[2].IsNullable.TestFalse(),
+                command.Parameters[2].ParameterName.TestEquals( "C" ),
+                command.Parameters[2].Value.TestEquals( 5.0 ),
+                command.Parameters[3].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[3].DbType.TestEquals( DbType.Boolean ),
+                command.Parameters[3].IsNullable.TestFalse(),
+                command.Parameters[3].ParameterName.TestEquals( "D" ),
+                command.Parameters[3].Value.TestEquals( true ) )
+            .Go();
     }
 
     [Fact]
@@ -697,21 +675,20 @@ public class SqlParameterBinderFactoryTests : TestsBase
                 B = "foo"
             } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 2 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "A" );
-            command.Parameters[0].Value.Should().Be( 10 );
-            command.Parameters[1].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[1].DbType.Should().Be( DbType.String );
-            command.Parameters[1].IsNullable.Should().BeFalse();
-            command.Parameters[1].ParameterName.Should().Be( "B" );
-            command.Parameters[1].Value.Should().Be( "foo" );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 2 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "A" ),
+                command.Parameters[0].Value.TestEquals( 10 ),
+                command.Parameters[1].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[1].DbType.TestEquals( DbType.String ),
+                command.Parameters[1].IsNullable.TestFalse(),
+                command.Parameters[1].ParameterName.TestEquals( "B" ),
+                command.Parameters[1].Value.TestEquals( "foo" ) )
+            .Go();
     }
 
     [Fact]
@@ -730,16 +707,15 @@ public class SqlParameterBinderFactoryTests : TestsBase
                 B = "foo"
             } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 1 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.String );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "B" );
-            command.Parameters[0].Value.Should().Be( "foo" );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 1 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.String ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "B" ),
+                command.Parameters[0].Value.TestEquals( "foo" ) )
+            .Go();
     }
 
     [Fact]
@@ -758,16 +734,15 @@ public class SqlParameterBinderFactoryTests : TestsBase
                 B = "foo"
             } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 1 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "A" );
-            command.Parameters[0].Value.Should().Be( 10 );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 1 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "A" ),
+                command.Parameters[0].Value.TestEquals( 10 ) )
+            .Go();
     }
 
     [Fact]
@@ -786,21 +761,20 @@ public class SqlParameterBinderFactoryTests : TestsBase
                 B = "foo"
             } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 2 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "A" );
-            command.Parameters[0].Value.Should().Be( 10 );
-            command.Parameters[1].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[1].DbType.Should().Be( DbType.String );
-            command.Parameters[1].IsNullable.Should().BeFalse();
-            command.Parameters[1].ParameterName.Should().Be( "E" );
-            command.Parameters[1].Value.Should().Be( "foo" );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 2 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "A" ),
+                command.Parameters[0].Value.TestEquals( 10 ),
+                command.Parameters[1].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[1].DbType.TestEquals( DbType.String ),
+                command.Parameters[1].IsNullable.TestFalse(),
+                command.Parameters[1].ParameterName.TestEquals( "E" ),
+                command.Parameters[1].Value.TestEquals( "foo" ) )
+            .Go();
     }
 
     [Fact]
@@ -823,21 +797,20 @@ public class SqlParameterBinderFactoryTests : TestsBase
                 D = true
             } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 2 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "A" );
-            command.Parameters[0].Value.Should().Be( 10 );
-            command.Parameters[1].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[1].DbType.Should().Be( DbType.String );
-            command.Parameters[1].IsNullable.Should().BeFalse();
-            command.Parameters[1].ParameterName.Should().Be( "E" );
-            command.Parameters[1].Value.Should().Be( "fooTrue" );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 2 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "A" ),
+                command.Parameters[0].Value.TestEquals( 10 ),
+                command.Parameters[1].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[1].DbType.TestEquals( DbType.String ),
+                command.Parameters[1].IsNullable.TestFalse(),
+                command.Parameters[1].ParameterName.TestEquals( "E" ),
+                command.Parameters[1].Value.TestEquals( "fooTrue" ) )
+            .Go();
     }
 
     [Fact]
@@ -858,21 +831,20 @@ public class SqlParameterBinderFactoryTests : TestsBase
                 D = true
             } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 2 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "A" );
-            command.Parameters[0].Value.Should().Be( 10 );
-            command.Parameters[1].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[1].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[1].IsNullable.Should().BeFalse();
-            command.Parameters[1].ParameterName.Should().Be( "E" );
-            command.Parameters[1].Value.Should().Be( 50 );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 2 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "A" ),
+                command.Parameters[0].Value.TestEquals( 10 ),
+                command.Parameters[1].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[1].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[1].IsNullable.TestFalse(),
+                command.Parameters[1].ParameterName.TestEquals( "E" ),
+                command.Parameters[1].Value.TestEquals( 50 ) )
+            .Go();
     }
 
     [Fact]
@@ -895,16 +867,15 @@ public class SqlParameterBinderFactoryTests : TestsBase
                 D = false
             } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 1 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.String );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "A" );
-            command.Parameters[0].Value.Should().Be( "fooFalse" );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 1 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.String ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "A" ),
+                command.Parameters[0].Value.TestEquals( "fooFalse" ) )
+            .Go();
     }
 
     [Fact]
@@ -930,31 +901,30 @@ public class SqlParameterBinderFactoryTests : TestsBase
                 D = true
             } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 4 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "A" );
-            command.Parameters[0].Value.Should().Be( 10 );
-            command.Parameters[1].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[1].DbType.Should().Be( DbType.String );
-            command.Parameters[1].IsNullable.Should().BeFalse();
-            command.Parameters[1].ParameterName.Should().Be( "B" );
-            command.Parameters[1].Value.Should().Be( "foo" );
-            command.Parameters[2].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[2].DbType.Should().Be( DbType.Double );
-            command.Parameters[2].IsNullable.Should().BeTrue();
-            command.Parameters[2].ParameterName.Should().Be( "C" );
-            command.Parameters[2].Value.Should().BeSameAs( DBNull.Value );
-            command.Parameters[3].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[3].DbType.Should().Be( DbType.Boolean );
-            command.Parameters[3].IsNullable.Should().BeFalse();
-            command.Parameters[3].ParameterName.Should().Be( "D" );
-            command.Parameters[3].Value.Should().Be( true );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 4 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "A" ),
+                command.Parameters[0].Value.TestEquals( 10 ),
+                command.Parameters[1].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[1].DbType.TestEquals( DbType.String ),
+                command.Parameters[1].IsNullable.TestFalse(),
+                command.Parameters[1].ParameterName.TestEquals( "B" ),
+                command.Parameters[1].Value.TestEquals( "foo" ),
+                command.Parameters[2].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[2].DbType.TestEquals( DbType.Double ),
+                command.Parameters[2].IsNullable.TestTrue(),
+                command.Parameters[2].ParameterName.TestEquals( "C" ),
+                command.Parameters[2].Value.TestRefEquals( DBNull.Value ),
+                command.Parameters[3].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[3].DbType.TestEquals( DbType.Boolean ),
+                command.Parameters[3].IsNullable.TestFalse(),
+                command.Parameters[3].ParameterName.TestEquals( "D" ),
+                command.Parameters[3].Value.TestEquals( true ) )
+            .Go();
     }
 
     [Fact]
@@ -974,16 +944,15 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new Source { A = 10 } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 1 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "A" );
-            command.Parameters[0].Value.Should().Be( 10 );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 1 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "A" ),
+                command.Parameters[0].Value.TestEquals( 10 ) )
+            .Go();
     }
 
     [Fact]
@@ -1000,16 +969,15 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new GenericSource<int>( 10 ) );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 1 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().BeNull();
-            command.Parameters[0].Value.Should().Be( 10 );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 1 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestNull(),
+                command.Parameters[0].Value.TestEquals( 10 ) )
+            .Go();
     }
 
     [Theory]
@@ -1032,16 +1000,15 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new GenericSource<int>( 10 ) );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 1 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().BeNull();
-            command.Parameters[0].Value.Should().Be( 10 );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 1 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestNull(),
+                command.Parameters[0].Value.TestEquals( 10 ) )
+            .Go();
     }
 
     [Fact]
@@ -1059,16 +1026,15 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new GenericSource<int>( 10 ) );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 1 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "A" );
-            command.Parameters[0].Value.Should().Be( 10 );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 1 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "A" ),
+                command.Parameters[0].Value.TestEquals( 10 ) )
+            .Go();
     }
 
     [Fact]
@@ -1080,16 +1046,15 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new GenericSource<string>( "foo" ) );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 1 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.String );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "A" );
-            command.Parameters[0].Value.Should().Be( "foo" );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 1 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.String ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "A" ),
+                command.Parameters[0].Value.TestEquals( "foo" ) )
+            .Go();
     }
 
     [Fact]
@@ -1101,16 +1066,15 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new GenericSource<int>( 10 ) );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 1 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "A" );
-            command.Parameters[0].Value.Should().Be( 10 );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 1 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "A" ),
+                command.Parameters[0].Value.TestEquals( 10 ) )
+            .Go();
     }
 
     [Fact]
@@ -1122,16 +1086,15 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new GenericSource<string?>( "foo" ) );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 1 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.String );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "A" );
-            command.Parameters[0].Value.Should().Be( "foo" );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 1 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.String ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "A" ),
+                command.Parameters[0].Value.TestEquals( "foo" ) )
+            .Go();
     }
 
     [Fact]
@@ -1143,11 +1106,10 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new GenericSource<string?>( null ) );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().BeEmpty();
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -1160,16 +1122,15 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new GenericSource<string?>( null ) );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 1 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.String );
-            command.Parameters[0].IsNullable.Should().BeTrue();
-            command.Parameters[0].ParameterName.Should().Be( "A" );
-            command.Parameters[0].Value.Should().BeSameAs( DBNull.Value );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 1 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.String ),
+                command.Parameters[0].IsNullable.TestTrue(),
+                command.Parameters[0].ParameterName.TestEquals( "A" ),
+                command.Parameters[0].Value.TestRefEquals( DBNull.Value ) )
+            .Go();
     }
 
     [Fact]
@@ -1181,16 +1142,15 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new GenericSource<int?>( 10 ) );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 1 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "A" );
-            command.Parameters[0].Value.Should().Be( 10 );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 1 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "A" ),
+                command.Parameters[0].Value.TestEquals( 10 ) )
+            .Go();
     }
 
     [Fact]
@@ -1202,11 +1162,10 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new GenericSource<int?>( null ) );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().BeEmpty();
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -1219,16 +1178,15 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new GenericSource<int?>( null ) );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 1 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[0].IsNullable.Should().BeTrue();
-            command.Parameters[0].ParameterName.Should().Be( "A" );
-            command.Parameters[0].Value.Should().BeSameAs( DBNull.Value );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 1 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[0].IsNullable.TestTrue(),
+                command.Parameters[0].ParameterName.TestEquals( "A" ),
+                command.Parameters[0].Value.TestRefEquals( DBNull.Value ) )
+            .Go();
     }
 
     [Fact]
@@ -1240,26 +1198,25 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new GenericSource<int[]>( new[] { 10, 20, 30 } ) );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 3 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "A1" );
-            command.Parameters[0].Value.Should().Be( 10 );
-            command.Parameters[1].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[1].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[1].IsNullable.Should().BeFalse();
-            command.Parameters[1].ParameterName.Should().Be( "A2" );
-            command.Parameters[1].Value.Should().Be( 20 );
-            command.Parameters[2].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[2].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[2].IsNullable.Should().BeFalse();
-            command.Parameters[2].ParameterName.Should().Be( "A3" );
-            command.Parameters[2].Value.Should().Be( 30 );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 3 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "A1" ),
+                command.Parameters[0].Value.TestEquals( 10 ),
+                command.Parameters[1].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[1].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[1].IsNullable.TestFalse(),
+                command.Parameters[1].ParameterName.TestEquals( "A2" ),
+                command.Parameters[1].Value.TestEquals( 20 ),
+                command.Parameters[2].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[2].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[2].IsNullable.TestFalse(),
+                command.Parameters[2].ParameterName.TestEquals( "A3" ),
+                command.Parameters[2].Value.TestEquals( 30 ) )
+            .Go();
     }
 
     [Fact]
@@ -1271,21 +1228,20 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new GenericSource<int?[]>( new int?[] { 10, null, 30 } ) );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 2 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "A1" );
-            command.Parameters[0].Value.Should().Be( 10 );
-            command.Parameters[1].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[1].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[1].IsNullable.Should().BeFalse();
-            command.Parameters[1].ParameterName.Should().Be( "A2" );
-            command.Parameters[1].Value.Should().Be( 30 );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 2 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "A1" ),
+                command.Parameters[0].Value.TestEquals( 10 ),
+                command.Parameters[1].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[1].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[1].IsNullable.TestFalse(),
+                command.Parameters[1].ParameterName.TestEquals( "A2" ),
+                command.Parameters[1].Value.TestEquals( 30 ) )
+            .Go();
     }
 
     [Fact]
@@ -1298,26 +1254,25 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new GenericSource<int?[]>( new int?[] { 10, null, 30 } ) );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 3 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "A1" );
-            command.Parameters[0].Value.Should().Be( 10 );
-            command.Parameters[1].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[1].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[1].IsNullable.Should().BeTrue();
-            command.Parameters[1].ParameterName.Should().Be( "A2" );
-            command.Parameters[1].Value.Should().BeSameAs( DBNull.Value );
-            command.Parameters[2].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[2].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[2].IsNullable.Should().BeFalse();
-            command.Parameters[2].ParameterName.Should().Be( "A3" );
-            command.Parameters[2].Value.Should().Be( 30 );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 3 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "A1" ),
+                command.Parameters[0].Value.TestEquals( 10 ),
+                command.Parameters[1].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[1].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[1].IsNullable.TestTrue(),
+                command.Parameters[1].ParameterName.TestEquals( "A2" ),
+                command.Parameters[1].Value.TestRefEquals( DBNull.Value ),
+                command.Parameters[2].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[2].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[2].IsNullable.TestFalse(),
+                command.Parameters[2].ParameterName.TestEquals( "A3" ),
+                command.Parameters[2].Value.TestEquals( 30 ) )
+            .Go();
     }
 
     [Fact]
@@ -1329,26 +1284,25 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new GenericSource<string[]>( new[] { "foo", "bar", "qux" } ) );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 3 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.String );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "A1" );
-            command.Parameters[0].Value.Should().Be( "foo" );
-            command.Parameters[1].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[1].DbType.Should().Be( DbType.String );
-            command.Parameters[1].IsNullable.Should().BeFalse();
-            command.Parameters[1].ParameterName.Should().Be( "A2" );
-            command.Parameters[1].Value.Should().Be( "bar" );
-            command.Parameters[2].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[2].DbType.Should().Be( DbType.String );
-            command.Parameters[2].IsNullable.Should().BeFalse();
-            command.Parameters[2].ParameterName.Should().Be( "A3" );
-            command.Parameters[2].Value.Should().Be( "qux" );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 3 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.String ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "A1" ),
+                command.Parameters[0].Value.TestEquals( "foo" ),
+                command.Parameters[1].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[1].DbType.TestEquals( DbType.String ),
+                command.Parameters[1].IsNullable.TestFalse(),
+                command.Parameters[1].ParameterName.TestEquals( "A2" ),
+                command.Parameters[1].Value.TestEquals( "bar" ),
+                command.Parameters[2].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[2].DbType.TestEquals( DbType.String ),
+                command.Parameters[2].IsNullable.TestFalse(),
+                command.Parameters[2].ParameterName.TestEquals( "A3" ),
+                command.Parameters[2].Value.TestEquals( "qux" ) )
+            .Go();
     }
 
     [Fact]
@@ -1360,21 +1314,20 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new GenericSource<string?[]>( new[] { "foo", null, "qux" } ) );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 2 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.String );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "A1" );
-            command.Parameters[0].Value.Should().Be( "foo" );
-            command.Parameters[1].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[1].DbType.Should().Be( DbType.String );
-            command.Parameters[1].IsNullable.Should().BeFalse();
-            command.Parameters[1].ParameterName.Should().Be( "A2" );
-            command.Parameters[1].Value.Should().Be( "qux" );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 2 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.String ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "A1" ),
+                command.Parameters[0].Value.TestEquals( "foo" ),
+                command.Parameters[1].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[1].DbType.TestEquals( DbType.String ),
+                command.Parameters[1].IsNullable.TestFalse(),
+                command.Parameters[1].ParameterName.TestEquals( "A2" ),
+                command.Parameters[1].Value.TestEquals( "qux" ) )
+            .Go();
     }
 
     [Fact]
@@ -1387,26 +1340,25 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new GenericSource<string?[]>( new[] { "foo", null, "qux" } ) );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 3 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.String );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "A1" );
-            command.Parameters[0].Value.Should().Be( "foo" );
-            command.Parameters[1].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[1].DbType.Should().Be( DbType.String );
-            command.Parameters[1].IsNullable.Should().BeTrue();
-            command.Parameters[1].ParameterName.Should().Be( "A2" );
-            command.Parameters[1].Value.Should().BeSameAs( DBNull.Value );
-            command.Parameters[2].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[2].DbType.Should().Be( DbType.String );
-            command.Parameters[2].IsNullable.Should().BeFalse();
-            command.Parameters[2].ParameterName.Should().Be( "A3" );
-            command.Parameters[2].Value.Should().Be( "qux" );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 3 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.String ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "A1" ),
+                command.Parameters[0].Value.TestEquals( "foo" ),
+                command.Parameters[1].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[1].DbType.TestEquals( DbType.String ),
+                command.Parameters[1].IsNullable.TestTrue(),
+                command.Parameters[1].ParameterName.TestEquals( "A2" ),
+                command.Parameters[1].Value.TestRefEquals( DBNull.Value ),
+                command.Parameters[2].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[2].DbType.TestEquals( DbType.String ),
+                command.Parameters[2].IsNullable.TestFalse(),
+                command.Parameters[2].ParameterName.TestEquals( "A3" ),
+                command.Parameters[2].Value.TestEquals( "qux" ) )
+            .Go();
     }
 
     [Fact]
@@ -1418,11 +1370,10 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new GenericSource<int[]>( Array.Empty<int>() ) );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().BeEmpty();
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -1434,11 +1385,10 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new GenericSource<int[]?>( null ) );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().BeEmpty();
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -1451,11 +1401,10 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new GenericSource<int[]?>( null ) );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().BeEmpty();
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -1467,16 +1416,15 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new GenericSource<string>( "foo" ) );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 1 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.String );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "A" );
-            command.Parameters[0].Value.Should().Be( "foo" );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 1 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.String ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "A" ),
+                command.Parameters[0].Value.TestEquals( "foo" ) )
+            .Go();
     }
 
     [Fact]
@@ -1488,16 +1436,19 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new GenericSource<byte[]>( new byte[] { 1, 2, 3 } ) );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 1 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Binary );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "A" );
-            command.Parameters[0].Value.Should().BeEquivalentTo( new byte[] { 1, 2, 3 } );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Cast<DbParameterMock>()
+                    .TestSequence(
+                    [
+                        (p, _) => Assertion.All(
+                            p.Direction.TestEquals( ParameterDirection.Input ),
+                            p.DbType.TestEquals( DbType.Binary ),
+                            p.IsNullable.TestFalse(),
+                            p.ParameterName.TestEquals( "A" ),
+                            p.Value.TestType().AssignableTo<byte[]>( value => value.TestSetEqual( new byte[] { 1, 2, 3 } ) ) )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1511,11 +1462,10 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new Source() );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().BeEmpty();
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -1532,17 +1482,16 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         parameterBinder.Bind( command, new Source { A = 10 } );
 
-        using ( new AssertionScope() )
-        {
-            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Should().HaveCount( 1 );
-            command.Parameters[0].Should().BeSameAs( p1 );
-            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
-            command.Parameters[0].DbType.Should().Be( DbType.Int32 );
-            command.Parameters[0].IsNullable.Should().BeFalse();
-            command.Parameters[0].ParameterName.Should().Be( "A" );
-            command.Parameters[0].Value.Should().Be( 10 );
-        }
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 1 ),
+                command.Parameters[0].TestRefEquals( p1 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.Int32 ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "A" ),
+                command.Parameters[0].Value.TestEquals( 10 ) )
+            .Go();
     }
 
     [Fact]
@@ -1550,7 +1499,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     {
         var sut = SqlParameterBinderFactoryMock.CreateInstance();
         var action = Lambda.Of( () => sut.CreateExpression<IEnumerable>() );
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -1558,7 +1507,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     {
         var sut = SqlParameterBinderFactoryMock.CreateInstance();
         var action = Lambda.Of( () => sut.CreateExpression( typeof( IEnumerable<> ) ) );
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -1566,7 +1515,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     {
         var sut = SqlParameterBinderFactoryMock.CreateInstance();
         var action = Lambda.Of( () => sut.CreateExpression( typeof( int? ) ) );
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -1574,7 +1523,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     {
         var sut = SqlParameterBinderFactoryMock.CreateInstance();
         var action = Lambda.Of( () => sut.CreateExpression<object>() );
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -1584,7 +1533,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
         var action = Lambda.Of(
             () => sut.CreateExpression<Source>( SqlParameterBinderCreationOptions.Default.SetSourceTypeMemberPredicate( _ => false ) ) );
 
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -1595,7 +1544,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
             () => sut.CreateExpression<Source>(
                 SqlParameterBinderCreationOptions.Default.With( SqlParameterConfiguration.From( "B", "C" ) ) ) );
 
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -1615,7 +1564,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
                     .With( SqlParameterConfiguration.IgnoreMember( "C" ) )
                     .With( SqlParameterConfiguration.IgnoreMember( "D" ) ) ) );
 
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -1633,7 +1582,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
                     .With( SqlParameterConfiguration.IgnoreMember( "C" ) )
                     .With( SqlParameterConfiguration.IgnoreMember( "D" ) ) ) );
 
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -1652,7 +1601,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
                     .With( SqlParameterConfiguration.IgnoreMember( "C" ) )
                     .With( SqlParameterConfiguration.IgnoreMember( "D" ) ) ) );
 
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -1671,7 +1620,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
                     .With( SqlParameterConfiguration.IgnoreMember( "C" ) )
                     .With( SqlParameterConfiguration.IgnoreMember( "D" ) ) ) );
 
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -1689,7 +1638,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
                     .With( SqlParameterConfiguration.IgnoreMember( "C" ) )
                     .With( SqlParameterConfiguration.IgnoreMember( "D" ) ) ) );
 
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -1703,7 +1652,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
                     .EnableCollectionReduction()
                     .With( SqlParameterConfiguration.Positional( "A", 0 ) ) ) );
 
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -1716,7 +1665,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
                 SqlParameterBinderCreationOptions.Default.With(
                     SqlParameterConfiguration.IgnoreMemberWhenNull( "A", parameterIndex: 0 ) ) ) );
 
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     [Fact]
@@ -1732,7 +1681,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
                     .With( SqlParameterConfiguration.Positional( "C", 2 ) )
                     .With( SqlParameterConfiguration.Positional( "D", 0 ) ) ) );
 
-        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
     public sealed class Source

@@ -9,11 +9,10 @@ public class SqlObjectOriginalValueTests : TestsBase
     {
         var sut = default( SqlObjectOriginalValue<string> );
 
-        using ( new AssertionScope() )
-        {
-            sut.Exists.Should().BeFalse();
-            sut.Value.Should().Be( default );
-        }
+        Assertion.All(
+                sut.Exists.TestFalse(),
+                sut.Value.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -21,11 +20,10 @@ public class SqlObjectOriginalValueTests : TestsBase
     {
         var sut = SqlObjectOriginalValue<string>.CreateEmpty();
 
-        using ( new AssertionScope() )
-        {
-            sut.Exists.Should().BeFalse();
-            sut.Value.Should().Be( default );
-        }
+        Assertion.All(
+                sut.Exists.TestFalse(),
+                sut.Value.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -34,11 +32,10 @@ public class SqlObjectOriginalValueTests : TestsBase
         var value = "foo";
         var sut = SqlObjectOriginalValue<string>.Create( value );
 
-        using ( new AssertionScope() )
-        {
-            sut.Exists.Should().BeTrue();
-            sut.Value.Should().BeSameAs( value );
-        }
+        Assertion.All(
+                sut.Exists.TestTrue(),
+                sut.Value.TestRefEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -46,7 +43,7 @@ public class SqlObjectOriginalValueTests : TestsBase
     {
         var sut = SqlObjectOriginalValue<string>.CreateEmpty();
         var result = sut.ToString();
-        result.Should().Be( "Empty<System.String>()" );
+        result.TestEquals( "Empty<System.String>()" ).Go();
     }
 
     [Fact]
@@ -54,7 +51,7 @@ public class SqlObjectOriginalValueTests : TestsBase
     {
         var sut = SqlObjectOriginalValue<string>.Create( "foo" );
         var result = sut.ToString();
-        result.Should().Be( "Value<System.String>(foo)" );
+        result.TestEquals( "Value<System.String>(foo)" ).Go();
     }
 
     [Fact]
@@ -65,7 +62,7 @@ public class SqlObjectOriginalValueTests : TestsBase
 
         var result = sut.GetValueOrDefault( param );
 
-        result.Should().BeSameAs( param );
+        result.TestRefEquals( param ).Go();
     }
 
     [Fact]
@@ -77,6 +74,6 @@ public class SqlObjectOriginalValueTests : TestsBase
 
         var result = sut.GetValueOrDefault( param );
 
-        result.Should().BeSameAs( value );
+        result.TestRefEquals( value ).Go();
     }
 }

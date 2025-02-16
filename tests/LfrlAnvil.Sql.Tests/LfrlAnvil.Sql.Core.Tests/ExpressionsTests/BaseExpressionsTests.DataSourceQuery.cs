@@ -3,7 +3,6 @@ using System.Linq;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Traits;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
@@ -24,22 +23,20 @@ public partial class BaseExpressionsTests
             var sut = query.Select( selector );
             var text = sut.ToString();
 
-            using ( new AssertionScope() )
-            {
-                selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-                sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-                sut.Traits.ToArray().Should().BeSequentiallyEqualTo( query.Traits );
-                sut.DataSource.Should().BeSameAs( dataSource );
-                sut.Selection.ToArray().Should().BeSequentiallyEqualTo( oldSelection, newSelection );
-                text.Should()
-                    .Be(
+            Assertion.All(
+                    selector.CallAt( 0 ).Arguments.TestSequence( [ dataSource ] ),
+                    sut.NodeType.TestEquals( SqlNodeType.DataSourceQuery ),
+                    sut.Traits.ToArray().TestSequence( query.Traits ),
+                    sut.DataSource.TestRefEquals( dataSource ),
+                    sut.Selection.ToArray().TestSequence( [ oldSelection, newSelection ] ),
+                    text.TestEquals(
                         """
                         FROM [foo]
                         SELECT
                           ([foo].[bar] : ?),
                           ([foo].[qux] : ?) AS [x]
-                        """ );
-            }
+                        """ ) )
+                .Go();
         }
 
         [Fact]
@@ -51,7 +48,7 @@ public partial class BaseExpressionsTests
 
             var sut = query.Select();
 
-            sut.Should().BeSameAs( query );
+            sut.TestRefEquals( query ).Go();
         }
 
         [Fact]
@@ -63,19 +60,17 @@ public partial class BaseExpressionsTests
             var result = sut.AddTrait( trait );
             var text = result.ToString();
 
-            using ( new AssertionScope() )
-            {
-                result.Should().NotBeSameAs( sut );
-                result.Traits.Should().BeSequentiallyEqualTo( trait );
-                text.Should()
-                    .Be(
+            Assertion.All(
+                    result.TestNotRefEquals( sut ),
+                    result.Traits.TestSequence( [ trait ] ),
+                    text.TestEquals(
                         """
                         FROM [foo]
                         LIMIT ("10" : System.Int32)
                         SELECT
                           *
-                        """ );
-            }
+                        """ ) )
+                .Go();
         }
 
         [Fact]
@@ -89,20 +84,18 @@ public partial class BaseExpressionsTests
             var result = sut.AddTrait( secondTrait );
             var text = result.ToString();
 
-            using ( new AssertionScope() )
-            {
-                result.Should().NotBeSameAs( sut );
-                result.Traits.Should().BeSequentiallyEqualTo( firstTrait, secondTrait );
-                text.Should()
-                    .Be(
+            Assertion.All(
+                    result.TestNotRefEquals( sut ),
+                    result.Traits.TestSequence( [ firstTrait, secondTrait ] ),
+                    text.TestEquals(
                         """
                         FROM [foo]
                         LIMIT ("10" : System.Int32)
                         OFFSET ("15" : System.Int32)
                         SELECT
                           *
-                        """ );
-            }
+                        """ ) )
+                .Go();
         }
 
         [Fact]
@@ -117,20 +110,18 @@ public partial class BaseExpressionsTests
             var result = sut.SetTraits( traits );
             var text = result.ToString();
 
-            using ( new AssertionScope() )
-            {
-                result.Should().NotBeSameAs( sut );
-                result.Traits.Should().BeSequentiallyEqualTo( traits );
-                text.Should()
-                    .Be(
+            Assertion.All(
+                    result.TestNotRefEquals( sut ),
+                    result.Traits.TestSequence( traits ),
+                    text.TestEquals(
                         """
                         FROM [foo]
                         LIMIT ("10" : System.Int32)
                         OFFSET ("15" : System.Int32)
                         SELECT
                           *
-                        """ );
-            }
+                        """ ) )
+                .Go();
         }
     }
 }

@@ -3,7 +3,6 @@ using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Sql.Statements;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 using LfrlAnvil.TestExtensions.Sql.Mocks.System;
 
@@ -19,11 +18,10 @@ public class SqlAsyncQueryReaderExecutorTests : TestsBase
         var reader = new SqlAsyncQueryReader( new SqlDialect( "foo" ), @delegate );
         var sut = reader.Bind( sql );
 
-        using ( new AssertionScope() )
-        {
-            sut.Sql.Should().BeSameAs( sql );
-            sut.Reader.Should().BeEquivalentTo( reader );
-        }
+        Assertion.All(
+                sut.Sql.TestRefEquals( sql ),
+                sut.Reader.TestEquals( reader ) )
+            .Go();
     }
 
     [Fact]
@@ -48,12 +46,11 @@ public class SqlAsyncQueryReaderExecutorTests : TestsBase
 
         var result = await sut.ExecuteAsync( command );
 
-        using ( new AssertionScope() )
-        {
-            @delegate.Verify().CallCount.Should().Be( 1 );
-            command.CommandText.Should().BeSameAs( sql );
-            result.Should().BeEquivalentTo( expected );
-        }
+        Assertion.All(
+                @delegate.CallCount().TestEquals( 1 ),
+                command.CommandText.TestRefEquals( sql ),
+                result.TestEquals( expected ) )
+            .Go();
     }
 
     [Fact]
@@ -66,11 +63,10 @@ public class SqlAsyncQueryReaderExecutorTests : TestsBase
         var reader = new SqlAsyncQueryReader<object[]>( new SqlDialect( "foo" ), @delegate );
         var sut = reader.Bind( sql );
 
-        using ( new AssertionScope() )
-        {
-            sut.Sql.Should().BeSameAs( sql );
-            sut.Reader.Should().BeEquivalentTo( reader );
-        }
+        Assertion.All(
+                sut.Sql.TestRefEquals( sql ),
+                sut.Reader.TestEquals( reader ) )
+            .Go();
     }
 
     [Fact]
@@ -95,11 +91,10 @@ public class SqlAsyncQueryReaderExecutorTests : TestsBase
 
         var result = await sut.ExecuteAsync( command );
 
-        using ( new AssertionScope() )
-        {
-            @delegate.Verify().CallCount.Should().Be( 1 );
-            command.CommandText.Should().BeSameAs( sql );
-            result.Should().BeEquivalentTo( expected );
-        }
+        Assertion.All(
+                @delegate.CallCount().TestEquals( 1 ),
+                command.CommandText.TestRefEquals( sql ),
+                result.TestEquals( expected ) )
+            .Go();
     }
 }

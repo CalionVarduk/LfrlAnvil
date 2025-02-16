@@ -1,10 +1,12 @@
 ﻿using System.Linq;
+using System.Text.RegularExpressions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
+using LfrlAnvil.Sql.Expressions.Logical;
+using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.ObjectsTests.BuildersTests;
@@ -20,7 +22,7 @@ public class SqlIndexBuilderTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( "[Index] foo.bar" );
+        result.TestEquals( "[Index] foo.bar" ).Go();
     }
 
     [Fact]
@@ -36,26 +38,23 @@ public class SqlIndexBuilderTests : TestsBase
         var sut = table.Constraints.CreateIndex( ixc2 );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            table.Constraints.TryGet( sut.Name ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.Name.Should().MatchRegex( "IX_T_C2A" );
-            sut.Columns.Expressions.Should().BeSequentiallyEqualTo( ixc2 );
-            sut.ReferencedColumns.Should().BeSequentiallyEqualTo( c2 );
-
-            c2.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), c2 ) );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      CREATE [Index] foo.IX_T_C2A;
-                    """ );
-        }
+        Assertion.All(
+                table.Constraints.TryGet( sut.Name ).TestRefEquals( sut ),
+                schema.Objects.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.Name.TestMatch( new Regex( "IX_T_C2A" ) ),
+                sut.Columns.Expressions.TestSequence( [ ixc2 ] ),
+                sut.ReferencedColumns.TestSequence( [ c2 ] ),
+                c2.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), c2 ) ] ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          CREATE [Index] foo.IX_T_C2A;
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -71,7 +70,7 @@ public class SqlIndexBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Fact]
@@ -86,11 +85,10 @@ public class SqlIndexBuilderTests : TestsBase
         var result = sut.SetName( sut.Name );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -107,11 +105,10 @@ public class SqlIndexBuilderTests : TestsBase
         var result = sut.SetName( oldName );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -127,24 +124,22 @@ public class SqlIndexBuilderTests : TestsBase
         var result = sut.SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            table.Constraints.TryGet( "bar" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( oldName ).Should().BeNull();
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( oldName ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Index] foo.bar ([1] : 'Name' (System.String) FROM IX_T_C2A);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                table.Constraints.TryGet( "bar" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( oldName ).TestNull(),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( oldName ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Index] foo.bar ([1] : 'Name' (System.String) FROM IX_T_C2A);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Theory]
@@ -161,9 +156,11 @@ public class SqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( name ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -177,9 +174,11 @@ public class SqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "bar" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -192,9 +191,11 @@ public class SqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "T" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -209,11 +210,10 @@ public class SqlIndexBuilderTests : TestsBase
         var result = sut.SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -229,11 +229,10 @@ public class SqlIndexBuilderTests : TestsBase
         var result = sut.SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -248,24 +247,22 @@ public class SqlIndexBuilderTests : TestsBase
         var result = sut.SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "IX_T_C2A" );
-            table.Constraints.TryGet( "IX_T_C2A" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( "bar" ).Should().BeNull();
-            schema.Objects.TryGet( "IX_T_C2A" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "bar" ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Index] foo.IX_T_C2A ([1] : 'Name' (System.String) FROM bar);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "IX_T_C2A" ),
+                table.Constraints.TryGet( "IX_T_C2A" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( "bar" ).TestNull(),
+                schema.Objects.TryGet( "IX_T_C2A" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "bar" ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Index] foo.IX_T_C2A ([1] : 'Name' (System.String) FROM bar);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -280,24 +277,22 @@ public class SqlIndexBuilderTests : TestsBase
         var result = sut.SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "UIX_T_C2A" );
-            table.Constraints.TryGet( "UIX_T_C2A" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( "bar" ).Should().BeNull();
-            schema.Objects.TryGet( "UIX_T_C2A" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "bar" ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Index] foo.UIX_T_C2A ([1] : 'Name' (System.String) FROM bar);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "UIX_T_C2A" ),
+                table.Constraints.TryGet( "UIX_T_C2A" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( "bar" ).TestNull(),
+                schema.Objects.TryGet( "UIX_T_C2A" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "bar" ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Index] foo.UIX_T_C2A ([1] : 'Name' (System.String) FROM bar);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -311,9 +306,11 @@ public class SqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetDefaultName() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -327,9 +324,11 @@ public class SqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetDefaultName() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Theory]
@@ -346,11 +345,10 @@ public class SqlIndexBuilderTests : TestsBase
         var result = sut.MarkAsUnique( value );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -366,11 +364,10 @@ public class SqlIndexBuilderTests : TestsBase
         var result = sut.MarkAsUnique( false );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -385,20 +382,18 @@ public class SqlIndexBuilderTests : TestsBase
         var result = sut.MarkAsUnique();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.IsUnique.Should().BeTrue();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Index] foo.IX_T_C2A ([6] : 'IsUnique' (System.Boolean) FROM False);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.IsUnique.TestTrue(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Index] foo.IX_T_C2A ([6] : 'IsUnique' (System.Boolean) FROM False);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -413,20 +408,18 @@ public class SqlIndexBuilderTests : TestsBase
         var result = sut.MarkAsUnique( false );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.IsUnique.Should().BeFalse();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Index] foo.IX_T_C2A ([6] : 'IsUnique' (System.Boolean) FROM True);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.IsUnique.TestFalse(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Index] foo.IX_T_C2A ([6] : 'IsUnique' (System.Boolean) FROM True);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -438,9 +431,11 @@ public class SqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.MarkAsUnique( false ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -452,9 +447,11 @@ public class SqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.MarkAsUnique() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -467,9 +464,11 @@ public class SqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.MarkAsUnique() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -483,9 +482,11 @@ public class SqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.MarkAsUnique( false ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -499,9 +500,11 @@ public class SqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.MarkAsUnique() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Theory]
@@ -518,11 +521,10 @@ public class SqlIndexBuilderTests : TestsBase
         var result = sut.MarkAsVirtual( value );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -538,11 +540,10 @@ public class SqlIndexBuilderTests : TestsBase
         var result = sut.MarkAsVirtual( false );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -557,20 +558,18 @@ public class SqlIndexBuilderTests : TestsBase
         var result = sut.MarkAsVirtual();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.IsVirtual.Should().BeTrue();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Index] foo.IX_T_C2A ([7] : 'IsVirtual' (System.Boolean) FROM False);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.IsVirtual.TestTrue(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Index] foo.IX_T_C2A ([7] : 'IsVirtual' (System.Boolean) FROM False);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -585,20 +584,18 @@ public class SqlIndexBuilderTests : TestsBase
         var result = sut.MarkAsVirtual( false );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.IsVirtual.Should().BeFalse();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Index] foo.IX_T_C2A ([7] : 'IsVirtual' (System.Boolean) FROM True);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.IsVirtual.TestFalse(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Index] foo.IX_T_C2A ([7] : 'IsVirtual' (System.Boolean) FROM True);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -610,9 +607,11 @@ public class SqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.MarkAsVirtual( false ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -624,9 +623,11 @@ public class SqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.MarkAsVirtual() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -638,9 +639,11 @@ public class SqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.MarkAsVirtual() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -654,9 +657,11 @@ public class SqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.MarkAsVirtual() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 2 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 2 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -670,9 +675,11 @@ public class SqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.MarkAsVirtual() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -687,11 +694,10 @@ public class SqlIndexBuilderTests : TestsBase
         var result = sut.SetFilter( SqlNode.True() );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -707,11 +713,10 @@ public class SqlIndexBuilderTests : TestsBase
         var result = sut.SetFilter( null );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -727,27 +732,31 @@ public class SqlIndexBuilderTests : TestsBase
         var result = sut.SetFilter( t => t["C2"] != null );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.Filter.Should().BeEquivalentTo( table.ToRecordSet().GetField( "C2" ) != null );
-            result.ReferencedFilterColumns.Should().BeSequentiallyEqualTo( column );
-
-            column.ReferencingObjects.Should().HaveCount( 2 );
-            column.ReferencingObjects.Should()
-                .BeEquivalentTo(
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.Filter.TestType()
+                    .AssignableTo<SqlNotEqualToConditionNode>(
+                        n => Assertion.All(
+                            n.Left.TestType()
+                                .AssignableTo<SqlColumnBuilderNode>(
+                                    cn => Assertion.All( cn.Name.TestEquals( "C2" ), cn.RecordSet.TestRefEquals( table.Node ) ) ),
+                            n.Right.TestType().AssignableTo<SqlNullNode>() ) ),
+                result.ReferencedFilterColumns.TestSequence( [ column ] ),
+                column.ReferencingObjects.Count.TestEquals( 2 ),
+                column.ReferencingObjects.TestSetEqual(
+                [
                     SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), column ),
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut, property: "Filter" ), column ) );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Index] foo.IX_T_C2A ([8] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM <null>);
-                    """ );
-        }
+                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut, property: "Filter" ), column )
+                ] ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Index] foo.IX_T_C2A ([8] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM <null>);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -763,24 +772,21 @@ public class SqlIndexBuilderTests : TestsBase
         var result = sut.SetFilter( null );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.Filter.Should().BeNull();
-            result.ReferencedFilterColumns.Should().BeEmpty();
-
-            column.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), column ) );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Index] foo.IX_T_C2A ([8] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM ([foo].[T].[C2] : System.Object) <> (NULL));
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.Filter.TestNull(),
+                result.ReferencedFilterColumns.TestEmpty(),
+                column.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), column ) ] ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Index] foo.IX_T_C2A ([8] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM ([foo].[T].[C2] : System.Object) <> (NULL));
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -792,9 +798,11 @@ public class SqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetFilter( _ => SqlNode.WindowFunctions.RowNumber() == SqlNode.Literal( 0 ) ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -806,9 +814,11 @@ public class SqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetFilter( SqlNode.True() ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 2 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 2 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -822,9 +832,11 @@ public class SqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetFilter( SqlNode.True() ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -837,9 +849,11 @@ public class SqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetFilter( SqlNode.True() ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -853,9 +867,11 @@ public class SqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetFilter( null ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -871,26 +887,24 @@ public class SqlIndexBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            table.Constraints.TryGet( sut.Name ).Should().BeNull();
-            schema.Objects.TryGet( sut.Name ).Should().BeNull();
-            sut.IsRemoved.Should().BeTrue();
-            sut.Columns.Expressions.Should().BeEmpty();
-            sut.ReferencedColumns.Should().BeEmpty();
-            sut.ReferencedFilterColumns.Should().BeEmpty();
-            sut.Filter.Should().BeNull();
-            c2.ReferencingObjects.Should().BeEmpty();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      REMOVE [Index] foo.IX_T_C2A;
-                    """ );
-        }
+        Assertion.All(
+                table.Constraints.TryGet( sut.Name ).TestNull(),
+                schema.Objects.TryGet( sut.Name ).TestNull(),
+                sut.IsRemoved.TestTrue(),
+                sut.Columns.Expressions.TestEmpty(),
+                sut.ReferencedColumns.TestEmpty(),
+                sut.ReferencedFilterColumns.TestEmpty(),
+                sut.Filter.TestNull(),
+                c2.ReferencingObjects.TestEmpty(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          REMOVE [Index] foo.IX_T_C2A;
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -906,30 +920,28 @@ public class SqlIndexBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            table.Constraints.TryGetPrimaryKey().Should().BeNull();
-            table.Constraints.TryGet( sut.Name ).Should().BeNull();
-            table.Constraints.TryGet( pk.Name ).Should().BeNull();
-            schema.Objects.TryGet( sut.Name ).Should().BeNull();
-            schema.Objects.TryGet( pk.Name ).Should().BeNull();
-            sut.IsRemoved.Should().BeTrue();
-            sut.PrimaryKey.Should().BeNull();
-            sut.Columns.Expressions.Should().BeEmpty();
-            sut.ReferencedColumns.Should().BeEmpty();
-            pk.IsRemoved.Should().BeTrue();
-            column.ReferencingObjects.Should().BeEmpty();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      REMOVE [Index] foo.UIX_T_CA
-                      REMOVE [PrimaryKey] foo.PK_T;
-                    """ );
-        }
+        Assertion.All(
+                table.Constraints.TryGetPrimaryKey().TestNull(),
+                table.Constraints.TryGet( sut.Name ).TestNull(),
+                table.Constraints.TryGet( pk.Name ).TestNull(),
+                schema.Objects.TryGet( sut.Name ).TestNull(),
+                schema.Objects.TryGet( pk.Name ).TestNull(),
+                sut.IsRemoved.TestTrue(),
+                sut.PrimaryKey.TestNull(),
+                sut.Columns.Expressions.TestEmpty(),
+                sut.ReferencedColumns.TestEmpty(),
+                pk.IsRemoved.TestTrue(),
+                column.ReferencingObjects.TestEmpty(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          REMOVE [Index] foo.UIX_T_CA
+                          REMOVE [PrimaryKey] foo.PK_T;
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -947,7 +959,7 @@ public class SqlIndexBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Fact]
@@ -961,9 +973,11 @@ public class SqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -977,9 +991,11 @@ public class SqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -996,25 +1012,23 @@ public class SqlIndexBuilderTests : TestsBase
         SqlDatabaseBuilderMock.QuickRemove( sut );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            table.Constraints.TryGet( sut.Name ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.IsRemoved.Should().BeTrue();
-            sut.Columns.Expressions.Should().BeEmpty();
-            sut.ReferencedColumns.Should().BeEmpty();
-            sut.ReferencedFilterColumns.Should().BeEmpty();
-            sut.Filter.Should().BeNull();
-            sut.ReferencingObjects.Should().BeEmpty();
-
-            column.ReferencingObjects.Should().HaveCount( 2 );
-            column.ReferencingObjects.Should()
-                .BeEquivalentTo(
+        Assertion.All(
+                table.Constraints.TryGet( sut.Name ).TestRefEquals( sut ),
+                schema.Objects.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.IsRemoved.TestTrue(),
+                sut.Columns.Expressions.TestEmpty(),
+                sut.ReferencedColumns.TestEmpty(),
+                sut.ReferencedFilterColumns.TestEmpty(),
+                sut.Filter.TestNull(),
+                sut.ReferencingObjects.TestEmpty(),
+                column.ReferencingObjects.Count.TestEquals( 2 ),
+                column.ReferencingObjects.TestSetEqual(
+                [
                     SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), column ),
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut, property: "Filter" ), column ) );
-
-            actions.Should().BeEmpty();
-        }
+                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut, property: "Filter" ), column )
+                ] ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1030,22 +1044,19 @@ public class SqlIndexBuilderTests : TestsBase
         SqlDatabaseBuilderMock.QuickRemove( sut );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            table.Constraints.TryGet( sut.Name ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.IsRemoved.Should().BeTrue();
-            sut.Columns.Expressions.Should().BeEmpty();
-            sut.ReferencedColumns.Should().BeEmpty();
-            sut.PrimaryKey.Should().BeNull();
-            sut.ReferencingObjects.Should().BeEmpty();
-            pk.IsRemoved.Should().BeFalse();
-
-            column.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), column ) );
-
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                table.Constraints.TryGet( sut.Name ).TestRefEquals( sut ),
+                schema.Objects.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.IsRemoved.TestTrue(),
+                sut.Columns.Expressions.TestEmpty(),
+                sut.ReferencedColumns.TestEmpty(),
+                sut.PrimaryKey.TestNull(),
+                sut.ReferencingObjects.TestEmpty(),
+                pk.IsRemoved.TestFalse(),
+                column.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), column ) ] ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1063,7 +1074,7 @@ public class SqlIndexBuilderTests : TestsBase
         SqlDatabaseBuilderMock.QuickRemove( sut );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Theory]
@@ -1081,15 +1092,14 @@ public class SqlIndexBuilderTests : TestsBase
 
         var result = sut.ToCreateNode( replaceIfExists );
 
-        using ( new AssertionScope() )
-        {
-            result.Table.Should().BeSameAs( table.Node );
-            result.Columns.Should().BeSequentiallyEqualTo( sut.Columns.Expressions );
-            result.Name.Should().Be( SqlSchemaObjectName.Create( "foo", "IX_T_C2A" ) );
-            result.Filter.Should().BeSameAs( filter );
-            result.IsUnique.Should().Be( isUnique );
-            result.ReplaceIfExists.Should().Be( replaceIfExists );
-        }
+        Assertion.All(
+                result.Table.TestRefEquals( table.Node ),
+                result.Columns.TestSequence( sut.Columns.Expressions ),
+                result.Name.TestEquals( SqlSchemaObjectName.Create( "foo", "IX_T_C2A" ) ),
+                result.Filter.TestRefEquals( filter ),
+                result.IsUnique.TestEquals( isUnique ),
+                result.ReplaceIfExists.TestEquals( replaceIfExists ) )
+            .Go();
     }
 
     [Fact]
@@ -1105,24 +1115,22 @@ public class SqlIndexBuilderTests : TestsBase
         var result = (( ISqlIndexBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            table.Constraints.TryGet( "bar" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( oldName ).Should().BeNull();
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( oldName ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Index] foo.bar ([1] : 'Name' (System.String) FROM IX_T_C2A);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                table.Constraints.TryGet( "bar" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( oldName ).TestNull(),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( oldName ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Index] foo.bar ([1] : 'Name' (System.String) FROM IX_T_C2A);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1138,24 +1146,22 @@ public class SqlIndexBuilderTests : TestsBase
         var result = (( ISqlConstraintBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            table.Constraints.TryGet( "bar" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( oldName ).Should().BeNull();
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( oldName ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Index] foo.bar ([1] : 'Name' (System.String) FROM IX_T_C2A);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                table.Constraints.TryGet( "bar" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( oldName ).TestNull(),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( oldName ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Index] foo.bar ([1] : 'Name' (System.String) FROM IX_T_C2A);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1171,24 +1177,22 @@ public class SqlIndexBuilderTests : TestsBase
         var result = (( ISqlObjectBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            table.Constraints.TryGet( "bar" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( oldName ).Should().BeNull();
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( oldName ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Index] foo.bar ([1] : 'Name' (System.String) FROM IX_T_C2A);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                table.Constraints.TryGet( "bar" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( oldName ).TestNull(),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( oldName ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Index] foo.bar ([1] : 'Name' (System.String) FROM IX_T_C2A);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1203,24 +1207,22 @@ public class SqlIndexBuilderTests : TestsBase
         var result = (( ISqlIndexBuilder )sut).SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "IX_T_C2A" );
-            table.Constraints.TryGet( "IX_T_C2A" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( "bar" ).Should().BeNull();
-            schema.Objects.TryGet( "IX_T_C2A" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "bar" ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Index] foo.IX_T_C2A ([1] : 'Name' (System.String) FROM bar);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "IX_T_C2A" ),
+                table.Constraints.TryGet( "IX_T_C2A" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( "bar" ).TestNull(),
+                schema.Objects.TryGet( "IX_T_C2A" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "bar" ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Index] foo.IX_T_C2A ([1] : 'Name' (System.String) FROM bar);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1235,24 +1237,22 @@ public class SqlIndexBuilderTests : TestsBase
         var result = (( ISqlConstraintBuilder )sut).SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "IX_T_C2A" );
-            table.Constraints.TryGet( "IX_T_C2A" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( "bar" ).Should().BeNull();
-            schema.Objects.TryGet( "IX_T_C2A" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "bar" ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Index] foo.IX_T_C2A ([1] : 'Name' (System.String) FROM bar);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "IX_T_C2A" ),
+                table.Constraints.TryGet( "IX_T_C2A" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( "bar" ).TestNull(),
+                schema.Objects.TryGet( "IX_T_C2A" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "bar" ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Index] foo.IX_T_C2A ([1] : 'Name' (System.String) FROM bar);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1267,20 +1267,18 @@ public class SqlIndexBuilderTests : TestsBase
         var result = (( ISqlIndexBuilder )sut).MarkAsUnique();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.IsUnique.Should().BeTrue();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Index] foo.IX_T_C2A ([6] : 'IsUnique' (System.Boolean) FROM False);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.IsUnique.TestTrue(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Index] foo.IX_T_C2A ([6] : 'IsUnique' (System.Boolean) FROM False);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1295,20 +1293,18 @@ public class SqlIndexBuilderTests : TestsBase
         var result = (( ISqlIndexBuilder )sut).MarkAsVirtual();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.IsVirtual.Should().BeTrue();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Index] foo.IX_T_C2A ([7] : 'IsVirtual' (System.Boolean) FROM False);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.IsVirtual.TestTrue(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Index] foo.IX_T_C2A ([7] : 'IsVirtual' (System.Boolean) FROM False);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1324,26 +1320,30 @@ public class SqlIndexBuilderTests : TestsBase
         var result = (( ISqlIndexBuilder )sut).SetFilter( t => t["C2"] != null );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.Filter.Should().BeEquivalentTo( table.ToRecordSet().GetField( "C2" ) != null );
-            result.ReferencedFilterColumns.Should().BeSequentiallyEqualTo( column );
-
-            column.ReferencingObjects.Should().HaveCount( 2 );
-            column.ReferencingObjects.Should()
-                .BeEquivalentTo(
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.Filter.TestType()
+                    .AssignableTo<SqlNotEqualToConditionNode>(
+                        n => Assertion.All(
+                            n.Left.TestType()
+                                .AssignableTo<SqlColumnBuilderNode>(
+                                    cn => Assertion.All( cn.Name.TestEquals( "C2" ), cn.RecordSet.TestRefEquals( table.Node ) ) ),
+                            n.Right.TestType().AssignableTo<SqlNullNode>() ) ),
+                result.ReferencedFilterColumns.TestSequence( [ column ] ),
+                column.ReferencingObjects.Count.TestEquals( 2 ),
+                column.ReferencingObjects.TestSetEqual(
+                [
                     SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), column ),
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut, property: "Filter" ), column ) );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.T
-                      ALTER [Index] foo.IX_T_C2A ([8] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM <null>);
-                    """ );
-        }
+                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut, property: "Filter" ), column )
+                ] ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Index] foo.IX_T_C2A ([8] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM <null>);
+                        """
+                    ] ) )
+            .Go();
     }
 }

@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Data;
 using LfrlAnvil.Sql.Statements;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 using LfrlAnvil.TestExtensions.Sql.Mocks.System;
 
@@ -31,13 +30,12 @@ public class SqlQueryReaderTests : TestsBase
 
         var result = sut.Read( reader, options );
 
-        using ( new AssertionScope() )
-        {
-            sut.Dialect.Should().BeSameAs( dialect );
-            sut.Delegate.Should().BeSameAs( @delegate );
-            @delegate.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( reader, options );
-            result.Should().BeEquivalentTo( expected );
-        }
+        Assertion.All(
+                sut.Dialect.TestRefEquals( dialect ),
+                sut.Delegate.TestRefEquals( @delegate ),
+                @delegate.CallAt( 0 ).Arguments.TestSequence( [ reader, options ] ),
+                result.TestEquals( expected ) )
+            .Go();
     }
 
     [Fact]
@@ -60,12 +58,11 @@ public class SqlQueryReaderTests : TestsBase
 
         var result = sut.Read( reader, options );
 
-        using ( new AssertionScope() )
-        {
-            sut.Dialect.Should().BeSameAs( dialect );
-            sut.Delegate.Should().BeSameAs( @delegate );
-            @delegate.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( reader, options );
-            result.Should().BeEquivalentTo( expected );
-        }
+        Assertion.All(
+                sut.Dialect.TestRefEquals( dialect ),
+                sut.Delegate.TestRefEquals( @delegate ),
+                @delegate.CallAt( 0 ).Arguments.TestSequence( [ reader, options ] ),
+                result.TestEquals( expected ) )
+            .Go();
     }
 }

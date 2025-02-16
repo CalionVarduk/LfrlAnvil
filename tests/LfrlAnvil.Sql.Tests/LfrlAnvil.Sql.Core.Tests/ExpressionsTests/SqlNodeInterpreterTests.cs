@@ -2,7 +2,6 @@
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
@@ -14,12 +13,11 @@ public class SqlNodeInterpreterTests : TestsBase
     {
         var sut = new SqlNodeDebugInterpreter();
 
-        using ( new AssertionScope() )
-        {
-            sut.BeginNameDelimiter.Should().Be( '[' );
-            sut.EndNameDelimiter.Should().Be( ']' );
-            sut.RecordSetNodeBehavior.Should().BeNull();
-        }
+        Assertion.All(
+                sut.BeginNameDelimiter.TestEquals( '[' ),
+                sut.EndNameDelimiter.TestEquals( ']' ),
+                sut.RecordSetNodeBehavior.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -28,11 +26,10 @@ public class SqlNodeInterpreterTests : TestsBase
         var sut = new SqlNodeDebugInterpreter();
         var result = sut.Interpret( SqlNode.Null() );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut.Context );
-            result.Sql.ToString().Should().Be( "NULL" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut.Context ),
+                result.Sql.ToString().TestEquals( "NULL" ) )
+            .Go();
     }
 
     [Fact]
@@ -83,31 +80,30 @@ public class SqlNodeInterpreterTests : TestsBase
 
         var result = SqlNodeInterpreter.ExtractDataSourceTraits( traits );
 
-        using ( new AssertionScope() )
-        {
-            result.CommonTableExpressions.Should().HaveCount( 2 );
-            result.CommonTableExpressions.ElementAtOrDefault( 0 ).Should().BeSequentiallyEqualTo( cte1 );
-            result.CommonTableExpressions.ElementAtOrDefault( 1 ).Should().BeSequentiallyEqualTo( cte2 );
-            result.ContainsRecursiveCommonTableExpression.Should().BeTrue();
-            result.Distinct.Should().NotBeNull();
-            (result.Filter?.ToString()).Should().Be( "((A > 10) AND (C > 11)) OR (E > 12)" );
-            result.Aggregations.Should().HaveCount( 2 );
-            result.Aggregations.ElementAtOrDefault( 0 ).Should().BeSequentiallyEqualTo( aggregation1 );
-            result.Aggregations.ElementAtOrDefault( 1 ).Should().BeSequentiallyEqualTo( aggregation2 );
-            (result.AggregationFilter?.ToString()).Should().Be( "((B > 15) AND (D > 16)) OR (D < 27)" );
-            result.Windows.Should().HaveCount( 2 );
-            result.Windows.ElementAtOrDefault( 0 ).Should().BeSequentiallyEqualTo( windows1 );
-            result.Windows.ElementAtOrDefault( 1 ).Should().BeSequentiallyEqualTo( windows2 );
-            result.Ordering.Should().HaveCount( 2 );
-            result.Ordering.ElementAtOrDefault( 0 ).Should().BeSequentiallyEqualTo( ordering1 );
-            result.Ordering.ElementAtOrDefault( 1 ).Should().BeSequentiallyEqualTo( ordering2 );
-            result.Limit.Should().BeSameAs( limit );
-            result.Offset.Should().BeSameAs( offset );
-            result.Custom.Should().HaveCount( 3 );
-            result.Custom.ElementAtOrDefault( 0 ).Should().BeSameAs( custom1 );
-            result.Custom.ElementAtOrDefault( 1 ).Should().BeSameAs( custom2 );
-            result.Custom.ElementAtOrDefault( 2 ).Should().BeSameAs( over );
-        }
+        Assertion.All(
+                result.CommonTableExpressions.Count.TestEquals( 2 ),
+                result.CommonTableExpressions.ElementAtOrDefault( 0 ).TestSequence( [ cte1 ] ),
+                result.CommonTableExpressions.ElementAtOrDefault( 1 ).TestSequence( [ cte2 ] ),
+                result.ContainsRecursiveCommonTableExpression.TestTrue(),
+                result.Distinct.TestNotNull(),
+                (result.Filter?.ToString()).TestEquals( "((A > 10) AND (C > 11)) OR (E > 12)" ),
+                result.Aggregations.Count.TestEquals( 2 ),
+                result.Aggregations.ElementAtOrDefault( 0 ).TestSequence( [ aggregation1 ] ),
+                result.Aggregations.ElementAtOrDefault( 1 ).TestSequence( [ aggregation2 ] ),
+                (result.AggregationFilter?.ToString()).TestEquals( "((B > 15) AND (D > 16)) OR (D < 27)" ),
+                result.Windows.Count.TestEquals( 2 ),
+                result.Windows.ElementAtOrDefault( 0 ).TestSequence( [ windows1 ] ),
+                result.Windows.ElementAtOrDefault( 1 ).TestSequence( [ windows2 ] ),
+                result.Ordering.Count.TestEquals( 2 ),
+                result.Ordering.ElementAtOrDefault( 0 ).TestSequence( [ ordering1 ] ),
+                result.Ordering.ElementAtOrDefault( 1 ).TestSequence( [ ordering2 ] ),
+                result.Limit.TestRefEquals( limit ),
+                result.Offset.TestRefEquals( offset ),
+                result.Custom.Count.TestEquals( 3 ),
+                result.Custom.ElementAtOrDefault( 0 ).TestRefEquals( custom1 ),
+                result.Custom.ElementAtOrDefault( 1 ).TestRefEquals( custom2 ),
+                result.Custom.ElementAtOrDefault( 2 ).TestRefEquals( over ) )
+            .Go();
     }
 
     [Fact]
@@ -149,26 +145,25 @@ public class SqlNodeInterpreterTests : TestsBase
 
         var result = SqlNodeInterpreter.ExtractQueryTraits( traits );
 
-        using ( new AssertionScope() )
-        {
-            result.CommonTableExpressions.Should().HaveCount( 2 );
-            result.CommonTableExpressions.ElementAtOrDefault( 0 ).ToArray().Should().BeSequentiallyEqualTo( cte1 );
-            result.CommonTableExpressions.ElementAtOrDefault( 1 ).ToArray().Should().BeSequentiallyEqualTo( cte2 );
-            result.ContainsRecursiveCommonTableExpression.Should().BeFalse();
-            result.Ordering.Should().HaveCount( 2 );
-            result.Ordering.ElementAtOrDefault( 0 ).ToArray().Should().BeSequentiallyEqualTo( ordering1 );
-            result.Ordering.ElementAtOrDefault( 1 ).ToArray().Should().BeSequentiallyEqualTo( ordering2 );
-            result.Limit.Should().BeSameAs( limit );
-            result.Offset.Should().BeSameAs( offset );
-            result.Custom.Should().HaveCount( 7 );
-            result.Custom.ElementAtOrDefault( 0 ).Should().BeSameAs( distinct );
-            result.Custom.ElementAtOrDefault( 1 ).Should().BeSameAs( filter );
-            result.Custom.ElementAtOrDefault( 2 ).Should().BeSameAs( aggregation );
-            result.Custom.ElementAtOrDefault( 3 ).Should().BeSameAs( aggregationFilter );
-            result.Custom.ElementAtOrDefault( 4 ).Should().BeSameAs( windows );
-            result.Custom.ElementAtOrDefault( 5 ).Should().BeSameAs( over );
-            result.Custom.ElementAtOrDefault( 6 ).Should().BeSameAs( custom );
-        }
+        Assertion.All(
+                result.CommonTableExpressions.Count.TestEquals( 2 ),
+                result.CommonTableExpressions.ElementAtOrDefault( 0 ).ToArray().TestSequence( [ cte1 ] ),
+                result.CommonTableExpressions.ElementAtOrDefault( 1 ).ToArray().TestSequence( [ cte2 ] ),
+                result.ContainsRecursiveCommonTableExpression.TestFalse(),
+                result.Ordering.Count.TestEquals( 2 ),
+                result.Ordering.ElementAtOrDefault( 0 ).ToArray().TestSequence( [ ordering1 ] ),
+                result.Ordering.ElementAtOrDefault( 1 ).ToArray().TestSequence( [ ordering2 ] ),
+                result.Limit.TestRefEquals( limit ),
+                result.Offset.TestRefEquals( offset ),
+                result.Custom.Count.TestEquals( 7 ),
+                result.Custom.ElementAtOrDefault( 0 ).TestRefEquals( distinct ),
+                result.Custom.ElementAtOrDefault( 1 ).TestRefEquals( filter ),
+                result.Custom.ElementAtOrDefault( 2 ).TestRefEquals( aggregation ),
+                result.Custom.ElementAtOrDefault( 3 ).TestRefEquals( aggregationFilter ),
+                result.Custom.ElementAtOrDefault( 4 ).TestRefEquals( windows ),
+                result.Custom.ElementAtOrDefault( 5 ).TestRefEquals( over ),
+                result.Custom.ElementAtOrDefault( 6 ).TestRefEquals( custom ) )
+            .Go();
     }
 
     [Fact]
@@ -206,23 +201,22 @@ public class SqlNodeInterpreterTests : TestsBase
 
         var result = SqlNodeInterpreter.ExtractAggregateFunctionTraits( traits );
 
-        using ( new AssertionScope() )
-        {
-            result.Distinct.Should().NotBeNull();
-            (result.Filter?.ToString()).Should().Be( "((A > 10) AND (C > 11)) OR (E > 12)" );
-            (result.Window?.ToString()).Should().Be( "[W] AS (ORDER BY (C) ASC)" );
-            result.Ordering.Should().HaveCount( 2 );
-            result.Ordering.ElementAtOrDefault( 0 ).ToArray().Should().BeSequentiallyEqualTo( ordering1 );
-            result.Ordering.ElementAtOrDefault( 1 ).ToArray().Should().BeSequentiallyEqualTo( ordering2 );
-            result.Custom.Should().HaveCount( 7 );
-            result.Custom.ElementAtOrDefault( 0 ).Should().BeSameAs( aggregation );
-            result.Custom.ElementAtOrDefault( 1 ).Should().BeSameAs( aggregationFilter );
-            result.Custom.ElementAtOrDefault( 2 ).Should().BeSameAs( windows );
-            result.Custom.ElementAtOrDefault( 3 ).Should().BeSameAs( limit );
-            result.Custom.ElementAtOrDefault( 4 ).Should().BeSameAs( cte );
-            result.Custom.ElementAtOrDefault( 5 ).Should().BeSameAs( custom );
-            result.Custom.ElementAtOrDefault( 6 ).Should().BeSameAs( offset );
-        }
+        Assertion.All(
+                result.Distinct.TestNotNull(),
+                (result.Filter?.ToString()).TestEquals( "((A > 10) AND (C > 11)) OR (E > 12)" ),
+                (result.Window?.ToString()).TestEquals( "[W] AS (ORDER BY (C) ASC)" ),
+                result.Ordering.Count.TestEquals( 2 ),
+                result.Ordering.ElementAtOrDefault( 0 ).ToArray().TestSequence( [ ordering1 ] ),
+                result.Ordering.ElementAtOrDefault( 1 ).ToArray().TestSequence( [ ordering2 ] ),
+                result.Custom.Count.TestEquals( 7 ),
+                result.Custom.ElementAtOrDefault( 0 ).TestRefEquals( aggregation ),
+                result.Custom.ElementAtOrDefault( 1 ).TestRefEquals( aggregationFilter ),
+                result.Custom.ElementAtOrDefault( 2 ).TestRefEquals( windows ),
+                result.Custom.ElementAtOrDefault( 3 ).TestRefEquals( limit ),
+                result.Custom.ElementAtOrDefault( 4 ).TestRefEquals( cte ),
+                result.Custom.ElementAtOrDefault( 5 ).TestRefEquals( custom ),
+                result.Custom.ElementAtOrDefault( 6 ).TestRefEquals( offset ) )
+            .Go();
     }
 
     [Fact]
@@ -234,7 +228,7 @@ public class SqlNodeInterpreterTests : TestsBase
 
         var result = SqlNodeInterpreter.FilterTraits( traits, t => t.NodeType == SqlNodeType.LimitTrait );
 
-        result.Should().BeSequentiallyEqualTo( limit );
+        result.TestSequence( [ limit ] ).Go();
     }
 
     [Fact]
@@ -247,13 +241,12 @@ public class SqlNodeInterpreterTests : TestsBase
         using ( sut.TempIgnoreRecordSet( set ) )
             rule = sut.RecordSetNodeBehavior;
 
-        using ( new AssertionScope() )
-        {
-            sut.RecordSetNodeBehavior.Should().BeNull();
-            rule.Should().NotBeNull();
-            (rule?.Node).Should().BeSameAs( set );
-            (rule?.ReplacementNode).Should().BeNull();
-        }
+        Assertion.All(
+                sut.RecordSetNodeBehavior.TestNull(),
+                rule.TestNotNull(),
+                (rule?.Node).TestRefEquals( set ),
+                (rule?.ReplacementNode).TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -267,13 +260,12 @@ public class SqlNodeInterpreterTests : TestsBase
         using ( sut.TempReplaceRecordSet( set, replacement ) )
             rule = sut.RecordSetNodeBehavior;
 
-        using ( new AssertionScope() )
-        {
-            sut.RecordSetNodeBehavior.Should().BeNull();
-            rule.Should().NotBeNull();
-            (rule?.Node).Should().BeSameAs( set );
-            (rule?.ReplacementNode).Should().BeSameAs( replacement );
-        }
+        Assertion.All(
+                sut.RecordSetNodeBehavior.TestNull(),
+                rule.TestNotNull(),
+                (rule?.Node).TestRefEquals( set ),
+                (rule?.ReplacementNode).TestRefEquals( replacement ) )
+            .Go();
     }
 
     [Fact]
@@ -285,13 +277,12 @@ public class SqlNodeInterpreterTests : TestsBase
         using ( sut.TempIgnoreAllRecordSets() )
             rule = sut.RecordSetNodeBehavior;
 
-        using ( new AssertionScope() )
-        {
-            sut.RecordSetNodeBehavior.Should().BeNull();
-            rule.Should().NotBeNull();
-            (rule?.Node).Should().BeNull();
-            (rule?.ReplacementNode).Should().BeNull();
-        }
+        Assertion.All(
+                sut.RecordSetNodeBehavior.TestNull(),
+                rule.TestNotNull(),
+                (rule?.Node).TestNull(),
+                (rule?.ReplacementNode).TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -305,11 +296,10 @@ public class SqlNodeInterpreterTests : TestsBase
         using ( sut.TempIncludeAllRecordSets() )
             rule = sut.RecordSetNodeBehavior;
 
-        using ( new AssertionScope() )
-        {
-            sut.RecordSetNodeBehavior.Should().BeEquivalentTo( previous );
-            rule.Should().BeNull();
-            (rule?.ReplacementNode).Should().BeNull();
-        }
+        Assertion.All(
+                sut.RecordSetNodeBehavior.TestEquals( previous ),
+                rule.TestNull(),
+                (rule?.ReplacementNode).TestNull() )
+            .Go();
     }
 }

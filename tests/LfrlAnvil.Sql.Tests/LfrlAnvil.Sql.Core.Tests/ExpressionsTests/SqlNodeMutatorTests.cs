@@ -10,7 +10,6 @@ using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.TestExtensions.Attributes;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
 
@@ -25,7 +24,7 @@ public class SqlNodeMutatorTests : TestsBase
 
         var result = sut.Visit( node );
 
-        result.Should().BeSameAs( node );
+        result.TestRefEquals( node ).Go();
     }
 
     [Theory]
@@ -37,7 +36,7 @@ public class SqlNodeMutatorTests : TestsBase
 
         var result = sut.Visit( node );
 
-        result.ToString().Should().Be( expected );
+        result.ToString().TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -46,7 +45,7 @@ public class SqlNodeMutatorTests : TestsBase
     {
         var sut = new ReplaceContext( Nodes( node, child ?? node ), Nodes( node, child ?? node ), asLeaf );
         var result = sut.Visit( node );
-        result.Should().BeSameAs( node );
+        result.TestRefEquals( node ).Go();
     }
 
     [Theory]
@@ -59,7 +58,7 @@ public class SqlNodeMutatorTests : TestsBase
     {
         var sut = new ReplaceContext( Nodes( field, field.RecordSet ), Nodes( field, recordSetReplacement ?? field.RecordSet ), asLeaf );
         var result = sut.Visit( field );
-        result.ToString().Should().Be( expected );
+        result.ToString().TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -76,7 +75,7 @@ public class SqlNodeMutatorTests : TestsBase
             asLeaf );
 
         var result = sut.Visit( @operator );
-        result.ToString().Should().Be( expected );
+        result.ToString().TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -93,7 +92,7 @@ public class SqlNodeMutatorTests : TestsBase
             asLeaf );
 
         var result = sut.Visit( function );
-        result.ToString().Should().Be( expected );
+        result.ToString().TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -110,7 +109,7 @@ public class SqlNodeMutatorTests : TestsBase
             asLeaf );
 
         var result = sut.Visit( function );
-        result.ToString().Should().Be( expected );
+        result.ToString().TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -127,7 +126,7 @@ public class SqlNodeMutatorTests : TestsBase
             asLeaf );
 
         var result = sut.Visit( dataSource );
-        result.ToString().Should().Be( expected );
+        result.ToString().TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -144,7 +143,7 @@ public class SqlNodeMutatorTests : TestsBase
             asLeaf );
 
         var result = sut.Visit( query );
-        result.ToString().Should().Be( expected );
+        result.ToString().TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -161,7 +160,7 @@ public class SqlNodeMutatorTests : TestsBase
             asLeaf );
 
         var result = sut.Visit( modification );
-        result.ToString().Should().Be( expected );
+        result.ToString().TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -178,7 +177,7 @@ public class SqlNodeMutatorTests : TestsBase
             asLeaf );
 
         var result = sut.Visit( modification );
-        result.ToString().Should().Be( expected );
+        result.ToString().TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -195,7 +194,7 @@ public class SqlNodeMutatorTests : TestsBase
             asLeaf );
 
         var result = sut.Visit( function );
-        result.ToString().Should().Be( expected );
+        result.ToString().TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -208,13 +207,15 @@ public class SqlNodeMutatorTests : TestsBase
 
         var action = Lambda.Of( () => sut.Visit( parent ) );
 
-        action.Should()
-            .ThrowExactly<SqlNodeMutatorException>()
-            .AndMatch(
-                e => ReferenceEquals( e.Parent, parent )
-                    && ReferenceEquals( e.Node, node )
-                    && ReferenceEquals( e.Result, replacement )
-                    && e.ExpectedType == typeof( SqlExpressionNode ) );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlNodeMutatorException>(
+                        e => Assertion.All(
+                            e.Parent.TestRefEquals( parent ),
+                            e.Node.TestRefEquals( node ),
+                            e.Result.TestRefEquals( replacement ),
+                            e.ExpectedType.TestEquals( typeof( SqlExpressionNode ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -248,19 +249,20 @@ public class SqlNodeMutatorTests : TestsBase
 
         _ = sut.Visit( abcdefghij );
 
-        using ( new AssertionScope() )
-        {
-            sut.AncestorsByParameterName.GetValueOrDefault( "a" ).Should().BeSequentiallyEqualTo( ab, abc, abcdef, abcdefghij );
-            sut.AncestorsByParameterName.GetValueOrDefault( "b" ).Should().BeSequentiallyEqualTo( ab, abc, abcdef, abcdefghij );
-            sut.AncestorsByParameterName.GetValueOrDefault( "c" ).Should().BeSequentiallyEqualTo( abc, abcdef, abcdefghij );
-            sut.AncestorsByParameterName.GetValueOrDefault( "d" ).Should().BeSequentiallyEqualTo( de, def, abcdef, abcdefghij );
-            sut.AncestorsByParameterName.GetValueOrDefault( "e" ).Should().BeSequentiallyEqualTo( de, def, abcdef, abcdefghij );
-            sut.AncestorsByParameterName.GetValueOrDefault( "f" ).Should().BeSequentiallyEqualTo( def, abcdef, abcdefghij );
-            sut.AncestorsByParameterName.GetValueOrDefault( "g" ).Should().BeSequentiallyEqualTo( ghij, abcdefghij );
-            sut.AncestorsByParameterName.GetValueOrDefault( "h" ).Should().BeSequentiallyEqualTo( hij, ghij, abcdefghij );
-            sut.AncestorsByParameterName.GetValueOrDefault( "i" ).Should().BeSequentiallyEqualTo( ij, hij, ghij, abcdefghij );
-            sut.AncestorsByParameterName.GetValueOrDefault( "j" ).Should().BeSequentiallyEqualTo( ij, hij, ghij, abcdefghij );
-        }
+        sut.AncestorsByParameterName.Keys.TestSetEqual( [ "a", "b", "c", "d", "e", "f", "g", "h", "i", "j" ] )
+            .Then(
+                _ => Assertion.All(
+                    sut.AncestorsByParameterName["a"].TestSequence( [ ab, abc, abcdef, abcdefghij ] ),
+                    sut.AncestorsByParameterName["b"].TestSequence( [ ab, abc, abcdef, abcdefghij ] ),
+                    sut.AncestorsByParameterName["c"].TestSequence( [ abc, abcdef, abcdefghij ] ),
+                    sut.AncestorsByParameterName["d"].TestSequence( [ de, def, abcdef, abcdefghij ] ),
+                    sut.AncestorsByParameterName["e"].TestSequence( [ de, def, abcdef, abcdefghij ] ),
+                    sut.AncestorsByParameterName["f"].TestSequence( [ def, abcdef, abcdefghij ] ),
+                    sut.AncestorsByParameterName["g"].TestSequence( [ ghij, abcdefghij ] ),
+                    sut.AncestorsByParameterName["h"].TestSequence( [ hij, ghij, abcdefghij ] ),
+                    sut.AncestorsByParameterName["i"].TestSequence( [ ij, hij, ghij, abcdefghij ] ),
+                    sut.AncestorsByParameterName["j"].TestSequence( [ ij, hij, ghij, abcdefghij ] ) ) )
+            .Go();
     }
 
     [Theory]
@@ -283,7 +285,7 @@ public class SqlNodeMutatorTests : TestsBase
 
         var result = sut.FindIndex( node );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Pure]

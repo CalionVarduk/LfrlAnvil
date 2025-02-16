@@ -4,7 +4,6 @@ using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.ObjectsTests.BuildersTests;
@@ -19,7 +18,7 @@ public partial class SqlTableBuilderTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( "[Table] foo.bar" );
+        result.TestEquals( "[Table] foo.bar" ).Go();
     }
 
     [Fact]
@@ -31,14 +30,11 @@ public partial class SqlTableBuilderTests : TestsBase
         var sut = schema.Objects.CreateTable( "T" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.Name.Should().Be( "T" );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().Be( "CREATE [Table] foo.T;" );
-        }
+        Assertion.All(
+                schema.Objects.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.Name.TestEquals( "T" ),
+                actions.Select( a => a.Sql ).TestSequence( [ "CREATE [Table] foo.T;" ] ) )
+            .Go();
     }
 
     [Fact]
@@ -51,7 +47,7 @@ public partial class SqlTableBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Fact]
@@ -64,11 +60,10 @@ public partial class SqlTableBuilderTests : TestsBase
         var result = sut.SetName( sut.Name );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -83,11 +78,10 @@ public partial class SqlTableBuilderTests : TestsBase
         var result = sut.SetName( oldName );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -103,24 +97,22 @@ public partial class SqlTableBuilderTests : TestsBase
         var result = sut.SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            sut.Info.Should().Be( SqlRecordSetInfo.Create( "foo", "bar" ) );
-            recordSet.Info.Should().Be( sut.Info );
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( oldName ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.bar
-                      ALTER [Table] foo.bar ([1] : 'Name' (System.String) FROM T);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                sut.Info.TestEquals( SqlRecordSetInfo.Create( "foo", "bar" ) ),
+                recordSet.Info.TestEquals( sut.Info ),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( oldName ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.bar
+                          ALTER [Table] foo.bar ([1] : 'Name' (System.String) FROM T);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Theory]
@@ -135,9 +127,11 @@ public partial class SqlTableBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( name ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -149,9 +143,11 @@ public partial class SqlTableBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "bar" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -163,9 +159,11 @@ public partial class SqlTableBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "PK_T" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -187,48 +185,43 @@ public partial class SqlTableBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            schema.Objects.TryGet( sut.Name ).Should().BeNull();
-            schema.Objects.TryGet( pk.Name ).Should().BeNull();
-            schema.Objects.TryGet( pk.Index.Name ).Should().BeNull();
-            schema.Objects.TryGet( ix.Name ).Should().BeNull();
-            schema.Objects.TryGet( selfFk.Name ).Should().BeNull();
-            schema.Objects.TryGet( externalFk.Name ).Should().BeNull();
-            schema.Objects.TryGet( chk.Name ).Should().BeNull();
-
-            sut.IsRemoved.Should().BeTrue();
-            sut.ReferencingObjects.Should().BeEmpty();
-            sut.Columns.Should().BeEmpty();
-            sut.Constraints.Should().BeEmpty();
-            sut.Constraints.TryGetPrimaryKey().Should().BeNull();
-            c1.IsRemoved.Should().BeTrue();
-            c1.ReferencingObjects.Should().BeEmpty();
-            c2.IsRemoved.Should().BeTrue();
-            c2.ReferencingObjects.Should().BeEmpty();
-            pk.IsRemoved.Should().BeTrue();
-            pk.ReferencingObjects.Should().BeEmpty();
-            pk.Index.IsRemoved.Should().BeTrue();
-            pk.Index.ReferencingObjects.Should().BeEmpty();
-            pk.Index.Columns.Expressions.Should().BeEmpty();
-            pk.Index.PrimaryKey.Should().BeNull();
-            ix.IsRemoved.Should().BeTrue();
-            ix.ReferencingObjects.Should().BeEmpty();
-            ix.Columns.Expressions.Should().BeEmpty();
-            selfFk.IsRemoved.Should().BeTrue();
-            selfFk.ReferencingObjects.Should().BeEmpty();
-            externalFk.IsRemoved.Should().BeTrue();
-            externalFk.ReferencingObjects.Should().BeEmpty();
-            chk.IsRemoved.Should().BeTrue();
-            chk.ReferencingObjects.Should().BeEmpty();
-            chk.ReferencedColumns.Should().BeEmpty();
-
-            otherPk.Index.ReferencingObjects.Should().BeEmpty();
-            otherTable.ReferencingObjects.Should().BeEmpty();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().Be( "REMOVE [Table] foo.T;" );
-        }
+        Assertion.All(
+                schema.Objects.TryGet( sut.Name ).TestNull(),
+                schema.Objects.TryGet( pk.Name ).TestNull(),
+                schema.Objects.TryGet( pk.Index.Name ).TestNull(),
+                schema.Objects.TryGet( ix.Name ).TestNull(),
+                schema.Objects.TryGet( selfFk.Name ).TestNull(),
+                schema.Objects.TryGet( externalFk.Name ).TestNull(),
+                schema.Objects.TryGet( chk.Name ).TestNull(),
+                sut.IsRemoved.TestTrue(),
+                sut.ReferencingObjects.TestEmpty(),
+                sut.Columns.TestEmpty(),
+                sut.Constraints.TestEmpty(),
+                sut.Constraints.TryGetPrimaryKey().TestNull(),
+                c1.IsRemoved.TestTrue(),
+                c1.ReferencingObjects.TestEmpty(),
+                c2.IsRemoved.TestTrue(),
+                c2.ReferencingObjects.TestEmpty(),
+                pk.IsRemoved.TestTrue(),
+                pk.ReferencingObjects.TestEmpty(),
+                pk.Index.IsRemoved.TestTrue(),
+                pk.Index.ReferencingObjects.TestEmpty(),
+                pk.Index.Columns.Expressions.TestEmpty(),
+                pk.Index.PrimaryKey.TestNull(),
+                ix.IsRemoved.TestTrue(),
+                ix.ReferencingObjects.TestEmpty(),
+                ix.Columns.Expressions.TestEmpty(),
+                selfFk.IsRemoved.TestTrue(),
+                selfFk.ReferencingObjects.TestEmpty(),
+                externalFk.IsRemoved.TestTrue(),
+                externalFk.ReferencingObjects.TestEmpty(),
+                chk.IsRemoved.TestTrue(),
+                chk.ReferencingObjects.TestEmpty(),
+                chk.ReferencedColumns.TestEmpty(),
+                otherPk.Index.ReferencingObjects.TestEmpty(),
+                otherTable.ReferencingObjects.TestEmpty(),
+                actions.Select( a => a.Sql ).TestSequence( [ "REMOVE [Table] foo.T;" ] ) )
+            .Go();
     }
 
     [Fact]
@@ -244,7 +237,7 @@ public partial class SqlTableBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Fact]
@@ -260,9 +253,11 @@ public partial class SqlTableBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -275,9 +270,11 @@ public partial class SqlTableBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -300,44 +297,36 @@ public partial class SqlTableBuilderTests : TestsBase
         SqlDatabaseBuilderMock.QuickRemove( sut );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( pk.Name ).Should().BeSameAs( pk );
-            schema.Objects.TryGet( pk.Index.Name ).Should().BeSameAs( pk.Index );
-            schema.Objects.TryGet( ix.Name ).Should().BeSameAs( ix );
-            schema.Objects.TryGet( selfFk.Name ).Should().BeSameAs( selfFk );
-            schema.Objects.TryGet( externalFk.Name ).Should().BeSameAs( externalFk );
-            schema.Objects.TryGet( chk.Name ).Should().BeSameAs( chk );
-
-            sut.IsRemoved.Should().BeTrue();
-            sut.ReferencingObjects.Should().BeEmpty();
-            sut.Columns.Should().BeEmpty();
-            sut.Constraints.Should().BeEmpty();
-            sut.Constraints.TryGetPrimaryKey().Should().BeNull();
-            c1.IsRemoved.Should().BeTrue();
-            c1.ReferencingObjects.Should().BeEmpty();
-            c2.IsRemoved.Should().BeTrue();
-            c2.ReferencingObjects.Should().BeEmpty();
-            pk.IsRemoved.Should().BeFalse();
-            pk.Index.IsRemoved.Should().BeFalse();
-            ix.IsRemoved.Should().BeFalse();
-            selfFk.IsRemoved.Should().BeFalse();
-            externalFk.IsRemoved.Should().BeFalse();
-            chk.IsRemoved.Should().BeFalse();
-
-            otherPk.Index.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( externalFk ), otherPk.Index ) );
-
-            otherTable.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( externalFk ), otherPk.Index ) );
-
-            view.ReferencedObjects.Should().BeSequentiallyEqualTo( sut );
-
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                schema.Objects.TryGet( sut.Name ).TestRefEquals( sut ),
+                schema.Objects.TryGet( pk.Name ).TestRefEquals( pk ),
+                schema.Objects.TryGet( pk.Index.Name ).TestRefEquals( pk.Index ),
+                schema.Objects.TryGet( ix.Name ).TestRefEquals( ix ),
+                schema.Objects.TryGet( selfFk.Name ).TestRefEquals( selfFk ),
+                schema.Objects.TryGet( externalFk.Name ).TestRefEquals( externalFk ),
+                schema.Objects.TryGet( chk.Name ).TestRefEquals( chk ),
+                sut.IsRemoved.TestTrue(),
+                sut.ReferencingObjects.TestEmpty(),
+                sut.Columns.TestEmpty(),
+                sut.Constraints.TestEmpty(),
+                sut.Constraints.TryGetPrimaryKey().TestNull(),
+                c1.IsRemoved.TestTrue(),
+                c1.ReferencingObjects.TestEmpty(),
+                c2.IsRemoved.TestTrue(),
+                c2.ReferencingObjects.TestEmpty(),
+                pk.IsRemoved.TestFalse(),
+                pk.Index.IsRemoved.TestFalse(),
+                ix.IsRemoved.TestFalse(),
+                selfFk.IsRemoved.TestFalse(),
+                externalFk.IsRemoved.TestFalse(),
+                chk.IsRemoved.TestFalse(),
+                otherPk.Index.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( externalFk ), otherPk.Index ) ] ),
+                otherTable.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( externalFk ), otherPk.Index ) ] ),
+                view.ReferencedObjects.TestSequence( [ sut ] ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -353,7 +342,7 @@ public partial class SqlTableBuilderTests : TestsBase
         SqlDatabaseBuilderMock.QuickRemove( sut );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Theory]
@@ -372,22 +361,21 @@ public partial class SqlTableBuilderTests : TestsBase
 
         var result = sut.ToCreateNode( ifNotExists: ifNotExists );
 
-        using ( new AssertionScope() )
-        {
-            result.Info.Should().Be( sut.Info );
-            result.RecordSet.Info.Should().Be( result.Info );
-            result.RecordSet.CreationNode.Should().BeSameAs( result );
-            result.RecordSet.GetKnownFields().Should().HaveCount( 2 );
-            result.Columns.ToArray().Should().HaveCount( 2 );
-            (result.Columns.ToArray().ElementAtOrDefault( 0 )?.Name).Should().Be( c1.Name );
-            (result.Columns.ToArray().ElementAtOrDefault( 1 )?.Name).Should().Be( c2.Name );
-            result.ForeignKeys.ToArray().Should().HaveCount( 1 );
-            (result.ForeignKeys.ToArray().ElementAtOrDefault( 0 )?.Name).Should().Be( SqlSchemaObjectName.Create( "foo", fk.Name ) );
-            result.Checks.ToArray().Should().HaveCount( 1 );
-            (result.Checks.ToArray().ElementAtOrDefault( 0 )?.Name).Should().Be( SqlSchemaObjectName.Create( "foo", chk.Name ) );
-            (result.PrimaryKey?.Name).Should().Be( SqlSchemaObjectName.Create( "foo", pk.Name ) );
-            result.IfNotExists.Should().Be( ifNotExists );
-        }
+        Assertion.All(
+                result.Info.TestEquals( sut.Info ),
+                result.RecordSet.Info.TestEquals( result.Info ),
+                result.RecordSet.CreationNode.TestRefEquals( result ),
+                result.RecordSet.GetKnownFields().Count.TestEquals( 2 ),
+                result.Columns.Count.TestEquals( 2 ),
+                (result.Columns.ElementAtOrDefault( 0 )?.Name).TestEquals( c1.Name ),
+                (result.Columns.ElementAtOrDefault( 1 )?.Name).TestEquals( c2.Name ),
+                result.ForeignKeys.Count.TestEquals( 1 ),
+                (result.ForeignKeys.ElementAtOrDefault( 0 )?.Name).TestEquals( SqlSchemaObjectName.Create( "foo", fk.Name ) ),
+                result.Checks.Count.TestEquals( 1 ),
+                (result.Checks.ElementAtOrDefault( 0 )?.Name).TestEquals( SqlSchemaObjectName.Create( "foo", chk.Name ) ),
+                (result.PrimaryKey?.Name).TestEquals( SqlSchemaObjectName.Create( "foo", pk.Name ) ),
+                result.IfNotExists.TestEquals( ifNotExists ) )
+            .Go();
     }
 
     [Fact]
@@ -398,18 +386,17 @@ public partial class SqlTableBuilderTests : TestsBase
 
         var result = sut.ToCreateNode();
 
-        using ( new AssertionScope() )
-        {
-            result.Info.Should().Be( sut.Info );
-            result.RecordSet.Info.Should().Be( result.Info );
-            result.RecordSet.CreationNode.Should().BeSameAs( result );
-            result.RecordSet.GetKnownFields().Should().BeEmpty();
-            result.Columns.ToArray().Should().BeEmpty();
-            result.ForeignKeys.ToArray().Should().BeEmpty();
-            result.Checks.ToArray().Should().BeEmpty();
-            result.PrimaryKey.Should().BeNull();
-            result.IfNotExists.Should().BeFalse();
-        }
+        Assertion.All(
+                result.Info.TestEquals( sut.Info ),
+                result.RecordSet.Info.TestEquals( result.Info ),
+                result.RecordSet.CreationNode.TestRefEquals( result ),
+                result.RecordSet.GetKnownFields().TestEmpty(),
+                result.Columns.TestEmpty(),
+                result.ForeignKeys.TestEmpty(),
+                result.Checks.TestEmpty(),
+                result.PrimaryKey.TestNull(),
+                result.IfNotExists.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -420,11 +407,10 @@ public partial class SqlTableBuilderTests : TestsBase
 
         var result = sut.ToCreateNode( customInfo: SqlRecordSetInfo.Create( "bar", "qux" ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Info.Should().Be( SqlRecordSetInfo.Create( "bar", "qux" ) );
-            result.RecordSet.Info.Should().Be( result.Info );
-        }
+        Assertion.All(
+                result.Info.TestEquals( SqlRecordSetInfo.Create( "bar", "qux" ) ),
+                result.RecordSet.Info.TestEquals( result.Info ) )
+            .Go();
     }
 
     [Fact]
@@ -441,20 +427,19 @@ public partial class SqlTableBuilderTests : TestsBase
 
         var result = sut.ToCreateNode( includeForeignKeys: false );
 
-        using ( new AssertionScope() )
-        {
-            result.Info.Should().Be( sut.Info );
-            result.RecordSet.Info.Should().Be( result.Info );
-            result.RecordSet.CreationNode.Should().BeSameAs( result );
-            result.RecordSet.GetKnownFields().Should().HaveCount( 2 );
-            result.Columns.Should().HaveCount( 2 );
-            (result.Columns.ElementAtOrDefault( 0 )?.Name).Should().Be( c1.Name );
-            (result.Columns.ElementAtOrDefault( 1 )?.Name).Should().Be( c2.Name );
-            result.ForeignKeys.Should().BeEmpty();
-            result.Checks.Should().HaveCount( 1 );
-            (result.Checks.ElementAtOrDefault( 0 )?.Name).Should().Be( SqlSchemaObjectName.Create( "foo", chk.Name ) );
-            (result.PrimaryKey?.Name).Should().Be( SqlSchemaObjectName.Create( "foo", pk.Name ) );
-        }
+        Assertion.All(
+                result.Info.TestEquals( sut.Info ),
+                result.RecordSet.Info.TestEquals( result.Info ),
+                result.RecordSet.CreationNode.TestRefEquals( result ),
+                result.RecordSet.GetKnownFields().Count.TestEquals( 2 ),
+                result.Columns.Count.TestEquals( 2 ),
+                (result.Columns.ElementAtOrDefault( 0 )?.Name).TestEquals( c1.Name ),
+                (result.Columns.ElementAtOrDefault( 1 )?.Name).TestEquals( c2.Name ),
+                result.ForeignKeys.TestEmpty(),
+                result.Checks.Count.TestEquals( 1 ),
+                (result.Checks.ElementAtOrDefault( 0 )?.Name).TestEquals( SqlSchemaObjectName.Create( "foo", chk.Name ) ),
+                (result.PrimaryKey?.Name).TestEquals( SqlSchemaObjectName.Create( "foo", pk.Name ) ) )
+            .Go();
     }
 
     [Fact]
@@ -467,13 +452,12 @@ public partial class SqlTableBuilderTests : TestsBase
 
         var result = sut.ToCreateNode( sortComputedColumns: true );
 
-        using ( new AssertionScope() )
-        {
-            result.Info.Should().Be( sut.Info );
-            result.Columns.ToArray().Should().HaveCount( 2 );
-            (result.Columns.ToArray().ElementAtOrDefault( 0 )?.Name).Should().Be( c1.Name );
-            (result.Columns.ToArray().ElementAtOrDefault( 1 )?.Name).Should().Be( c2.Name );
-        }
+        Assertion.All(
+                result.Info.TestEquals( sut.Info ),
+                result.Columns.Count.TestEquals( 2 ),
+                (result.Columns.ElementAtOrDefault( 0 )?.Name).TestEquals( c1.Name ),
+                (result.Columns.ElementAtOrDefault( 1 )?.Name).TestEquals( c2.Name ) )
+            .Go();
     }
 
     [Fact]
@@ -488,14 +472,13 @@ public partial class SqlTableBuilderTests : TestsBase
 
         var result = sut.ToCreateNode( sortComputedColumns: true );
 
-        using ( new AssertionScope() )
-        {
-            result.Info.Should().Be( sut.Info );
-            result.Columns.ToArray().Should().HaveCount( 3 );
-            (result.Columns.ToArray().ElementAtOrDefault( 0 )?.Name).Should().Be( c1.Name );
-            (result.Columns.ToArray().ElementAtOrDefault( 1 )?.Name).Should().Be( c3.Name );
-            (result.Columns.ToArray().ElementAtOrDefault( 2 )?.Name).Should().Be( c2.Name );
-        }
+        Assertion.All(
+                result.Info.TestEquals( sut.Info ),
+                result.Columns.Count.TestEquals( 3 ),
+                (result.Columns.ElementAtOrDefault( 0 )?.Name).TestEquals( c1.Name ),
+                (result.Columns.ElementAtOrDefault( 1 )?.Name).TestEquals( c3.Name ),
+                (result.Columns.ElementAtOrDefault( 2 )?.Name).TestEquals( c2.Name ) )
+            .Go();
     }
 
     [Fact]
@@ -513,15 +496,14 @@ public partial class SqlTableBuilderTests : TestsBase
 
         var result = sut.ToCreateNode( sortComputedColumns: true );
 
-        using ( new AssertionScope() )
-        {
-            result.Info.Should().Be( sut.Info );
-            result.Columns.ToArray().Should().HaveCount( 4 );
-            (result.Columns.ToArray().ElementAtOrDefault( 0 )?.Name).Should().Be( c1.Name );
-            (result.Columns.ToArray().ElementAtOrDefault( 1 )?.Name).Should().Be( c4.Name );
-            (result.Columns.ToArray().ElementAtOrDefault( 2 )?.Name).Should().Be( c2.Name );
-            (result.Columns.ToArray().ElementAtOrDefault( 3 )?.Name).Should().Be( c3.Name );
-        }
+        Assertion.All(
+                result.Info.TestEquals( sut.Info ),
+                result.Columns.Count.TestEquals( 4 ),
+                (result.Columns.ElementAtOrDefault( 0 )?.Name).TestEquals( c1.Name ),
+                (result.Columns.ElementAtOrDefault( 1 )?.Name).TestEquals( c4.Name ),
+                (result.Columns.ElementAtOrDefault( 2 )?.Name).TestEquals( c2.Name ),
+                (result.Columns.ElementAtOrDefault( 3 )?.Name).TestEquals( c3.Name ) )
+            .Go();
     }
 
     [Fact]
@@ -536,24 +518,22 @@ public partial class SqlTableBuilderTests : TestsBase
         var result = (( ISqlTableBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            sut.Info.Should().Be( SqlRecordSetInfo.Create( "foo", "bar" ) );
-            recordSet.Info.Should().Be( sut.Info );
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "T" ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.bar
-                      ALTER [Table] foo.bar ([1] : 'Name' (System.String) FROM T);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                sut.Info.TestEquals( SqlRecordSetInfo.Create( "foo", "bar" ) ),
+                recordSet.Info.TestEquals( sut.Info ),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "T" ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.bar
+                          ALTER [Table] foo.bar ([1] : 'Name' (System.String) FROM T);
+                        """
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -568,23 +548,21 @@ public partial class SqlTableBuilderTests : TestsBase
         var result = (( ISqlObjectBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            sut.Info.Should().Be( SqlRecordSetInfo.Create( "foo", "bar" ) );
-            recordSet.Info.Should().Be( sut.Info );
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "T" ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .Be(
-                    """
-                    ALTER [Table] foo.bar
-                      ALTER [Table] foo.bar ([1] : 'Name' (System.String) FROM T);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                sut.Info.TestEquals( SqlRecordSetInfo.Create( "foo", "bar" ) ),
+                recordSet.Info.TestEquals( sut.Info ),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "T" ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.bar
+                          ALTER [Table] foo.bar ([1] : 'Name' (System.String) FROM T);
+                        """
+                    ] ) )
+            .Go();
     }
 }

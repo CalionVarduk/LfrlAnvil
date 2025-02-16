@@ -2,7 +2,6 @@
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Statements.Compilers;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sql.Tests.StatementsTests;
 
@@ -13,15 +12,14 @@ public class SqlQueryMemberConfigurationTests : TestsBase
     {
         var sut = SqlQueryMemberConfiguration.Ignore( "foo" );
 
-        using ( new AssertionScope() )
-        {
-            sut.MemberName.Should().Be( "foo" );
-            sut.SourceFieldName.Should().BeNull();
-            sut.CustomMapping.Should().BeNull();
-            sut.CustomMappingDataReaderType.Should().BeNull();
-            sut.CustomMappingMemberType.Should().BeNull();
-            sut.IsIgnored.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.MemberName.TestEquals( "foo" ),
+                sut.SourceFieldName.TestNull(),
+                sut.CustomMapping.TestNull(),
+                sut.CustomMappingDataReaderType.TestNull(),
+                sut.CustomMappingMemberType.TestNull(),
+                sut.IsIgnored.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -29,15 +27,14 @@ public class SqlQueryMemberConfigurationTests : TestsBase
     {
         var sut = SqlQueryMemberConfiguration.From( "foo", "bar" );
 
-        using ( new AssertionScope() )
-        {
-            sut.MemberName.Should().Be( "foo" );
-            sut.SourceFieldName.Should().Be( "bar" );
-            sut.CustomMapping.Should().BeNull();
-            sut.CustomMappingDataReaderType.Should().BeNull();
-            sut.CustomMappingMemberType.Should().BeNull();
-            sut.IsIgnored.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.MemberName.TestEquals( "foo" ),
+                sut.SourceFieldName.TestEquals( "bar" ),
+                sut.CustomMapping.TestNull(),
+                sut.CustomMappingDataReaderType.TestNull(),
+                sut.CustomMappingMemberType.TestNull(),
+                sut.IsIgnored.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -46,15 +43,14 @@ public class SqlQueryMemberConfigurationTests : TestsBase
         var mapping = Lambda.ExpressionOf( (ISqlDataRecordFacade<IDataRecord> facade) => facade.Get<int>( "lorem" ) );
         var sut = SqlQueryMemberConfiguration.From( "foo", mapping );
 
-        using ( new AssertionScope() )
-        {
-            sut.MemberName.Should().Be( "foo" );
-            sut.SourceFieldName.Should().BeNull();
-            sut.CustomMapping.Should().BeSameAs( mapping );
-            sut.CustomMappingDataReaderType.Should().Be( typeof( IDataRecord ) );
-            sut.CustomMappingMemberType.Should().Be( typeof( int ) );
-            sut.IsIgnored.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.MemberName.TestEquals( "foo" ),
+                sut.SourceFieldName.TestNull(),
+                sut.CustomMapping.TestRefEquals( mapping ),
+                sut.CustomMappingDataReaderType.TestEquals( typeof( IDataRecord ) ),
+                sut.CustomMappingMemberType.TestEquals( typeof( int ) ),
+                sut.IsIgnored.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -69,16 +65,15 @@ public class SqlQueryMemberConfigurationTests : TestsBase
 
         var sut = SqlQueryMemberConfiguration.From( "foo", mapping );
 
-        using ( new AssertionScope() )
-        {
-            sut.MemberName.Should().Be( "foo" );
-            sut.SourceFieldName.Should().BeNull();
-            sut.CustomMapping.Should().NotBeSameAs( mapping );
-            sut.CustomMapping.Should().BeEquivalentTo( expectedMapping );
-            sut.CustomMappingDataReaderType.Should().Be( typeof( IDataReader ) );
-            sut.CustomMappingMemberType.Should().Be( typeof( int ) );
-            sut.IsIgnored.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.MemberName.TestEquals( "foo" ),
+                sut.SourceFieldName.TestNull(),
+                sut.CustomMapping.TestNotRefEquals( mapping ),
+                (sut.CustomMapping?.ToString()).TestEquals( expectedMapping.ToString() ),
+                sut.CustomMappingDataReaderType.TestEquals( typeof( IDataReader ) ),
+                sut.CustomMappingMemberType.TestEquals( typeof( int ) ),
+                sut.IsIgnored.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -90,6 +85,6 @@ public class SqlQueryMemberConfigurationTests : TestsBase
 
         var action = Lambda.Of( () => SqlQueryMemberConfiguration.From( "foo", mapping ) );
 
-        action.Should().ThrowExactly<SqlCompilerConfigurationException>().AndMatch( e => e.Errors.Count == 2 );
+        action.Test( exc => exc.TestType().Exact<SqlCompilerConfigurationException>( e => e.Errors.Count.TestEquals( 2 ) ) ).Go();
     }
 }

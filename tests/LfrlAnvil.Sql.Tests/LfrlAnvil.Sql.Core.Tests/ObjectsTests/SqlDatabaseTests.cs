@@ -7,7 +7,6 @@ using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Versioning;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 using LfrlAnvil.TestExtensions.Sql.Mocks.System;
 
@@ -21,24 +20,23 @@ public class SqlDatabaseTests : TestsBase
         var dbBuilder = SqlDatabaseBuilderMock.Create();
         ISqlDatabase sut = SqlDatabaseMock.Create( dbBuilder );
 
-        using ( new AssertionScope() )
-        {
-            sut.Dialect.Should().BeSameAs( dbBuilder.Dialect );
-            sut.Version.Should().Be( new Version( "0.0.0" ) );
-            sut.ServerVersion.Should().BeSameAs( dbBuilder.ServerVersion );
-            sut.DataTypes.Should().BeSameAs( dbBuilder.DataTypes );
-            sut.TypeDefinitions.Should().BeSameAs( dbBuilder.TypeDefinitions );
-            sut.NodeInterpreters.Should().BeSameAs( dbBuilder.NodeInterpreters );
-            sut.QueryReaders.Should().BeSameAs( dbBuilder.QueryReaders );
-            sut.ParameterBinders.Should().BeSameAs( dbBuilder.ParameterBinders );
-            sut.Schemas.Database.Should().BeSameAs( sut );
-            sut.Schemas.Count.Should().Be( 1 );
-            sut.Schemas.Default.Name.Should().Be( "common" );
-            sut.Schemas.Should().BeSequentiallyEqualTo( sut.Schemas.Default );
-            (( ISqlDatabaseConnector<DbConnectionMock> )sut.Connector).Database.Should().BeSameAs( sut );
-            (( ISqlDatabaseConnector<DbConnection> )sut.Connector).Database.Should().BeSameAs( sut );
-            sut.Connector.Database.Should().BeSameAs( sut );
-        }
+        Assertion.All(
+                sut.Dialect.TestRefEquals( dbBuilder.Dialect ),
+                sut.Version.TestEquals( new Version( "0.0.0" ) ),
+                sut.ServerVersion.TestRefEquals( dbBuilder.ServerVersion ),
+                sut.DataTypes.TestRefEquals( dbBuilder.DataTypes ),
+                sut.TypeDefinitions.TestRefEquals( dbBuilder.TypeDefinitions ),
+                sut.NodeInterpreters.TestRefEquals( dbBuilder.NodeInterpreters ),
+                sut.QueryReaders.TestRefEquals( dbBuilder.QueryReaders ),
+                sut.ParameterBinders.TestRefEquals( dbBuilder.ParameterBinders ),
+                sut.Schemas.Database.TestRefEquals( sut ),
+                sut.Schemas.Count.TestEquals( 1 ),
+                sut.Schemas.Default.Name.TestEquals( "common" ),
+                sut.Schemas.TestSequence( [ sut.Schemas.Default ] ),
+                (( ISqlDatabaseConnector<DbConnectionMock> )sut.Connector).Database.TestRefEquals( sut ),
+                (( ISqlDatabaseConnector<DbConnection> )sut.Connector).Database.TestRefEquals( sut ),
+                sut.Connector.Database.TestRefEquals( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -49,7 +47,7 @@ public class SqlDatabaseTests : TestsBase
 
         var action = Lambda.Of( () => sut.Dispose() );
 
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -60,7 +58,7 @@ public class SqlDatabaseTests : TestsBase
 
         var result = sut.Connector.Connect();
 
-        result.State.Should().Be( ConnectionState.Open );
+        result.State.TestEquals( ConnectionState.Open ).Go();
     }
 
     [Fact]
@@ -71,11 +69,10 @@ public class SqlDatabaseTests : TestsBase
 
         var result = sut.Connector.Connect( "test=true" );
 
-        using ( new AssertionScope() )
-        {
-            result.State.Should().Be( ConnectionState.Open );
-            result.ConnectionString.Should().Be( "test=true" );
-        }
+        Assertion.All(
+                result.State.TestEquals( ConnectionState.Open ),
+                result.ConnectionString.TestEquals( "test=true" ) )
+            .Go();
     }
 
     [Fact]
@@ -86,7 +83,7 @@ public class SqlDatabaseTests : TestsBase
 
         var result = await sut.Connector.ConnectAsync();
 
-        result.State.Should().Be( ConnectionState.Open );
+        result.State.TestEquals( ConnectionState.Open ).Go();
     }
 
     [Fact]
@@ -97,11 +94,10 @@ public class SqlDatabaseTests : TestsBase
 
         var result = await sut.Connector.ConnectAsync( "test=true" );
 
-        using ( new AssertionScope() )
-        {
-            result.State.Should().Be( ConnectionState.Open );
-            result.ConnectionString.Should().Be( "test=true" );
-        }
+        Assertion.All(
+                result.State.TestEquals( ConnectionState.Open ),
+                result.ConnectionString.TestEquals( "test=true" ) )
+            .Go();
     }
 
     [Fact]
@@ -113,7 +109,7 @@ public class SqlDatabaseTests : TestsBase
 
         var result = sut.GetRegisteredVersions();
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -131,7 +127,7 @@ public class SqlDatabaseTests : TestsBase
 
         var result = sut.GetRegisteredVersions();
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Theory]
@@ -147,7 +143,7 @@ public class SqlDatabaseTests : TestsBase
 
         var result = sut.Contains( name );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -160,7 +156,7 @@ public class SqlDatabaseTests : TestsBase
 
         var result = sut.Get( "foo" );
 
-        result.Should().BeSameAs( sut.Default );
+        result.TestRefEquals( sut.Default ).Go();
     }
 
     [Fact]
@@ -173,7 +169,7 @@ public class SqlDatabaseTests : TestsBase
 
         var action = Lambda.Of( () => sut.Get( "bar" ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -186,7 +182,7 @@ public class SqlDatabaseTests : TestsBase
 
         var result = sut.TryGet( "foo" );
 
-        result.Should().BeSameAs( sut.Default );
+        result.TestRefEquals( sut.Default ).Go();
     }
 
     [Fact]
@@ -199,7 +195,7 @@ public class SqlDatabaseTests : TestsBase
 
         var result = sut.TryGet( "bar" );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -211,14 +207,12 @@ public class SqlDatabaseTests : TestsBase
         var schema = sut.Get( "foo" );
 
         var result = new List<SqlSchemaMock>();
-        foreach ( var s in sut )
-            result.Add( s );
+        foreach ( var s in sut ) result.Add( s );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().HaveCount( 2 );
-            result.Should().BeEquivalentTo( sut.Default, schema );
-        }
+        Assertion.All(
+                result.Count.TestEquals( 2 ),
+                result.TestSetEqual( [ sut.Default, schema ] ) )
+            .Go();
     }
 
     [Fact]
@@ -232,12 +226,11 @@ public class SqlDatabaseTests : TestsBase
 
         var obj = sut.Schemas.Default.Objects.GetTable( "T" ).Constraints.Get( "UNK" );
 
-        using ( new AssertionScope() )
-        {
-            obj.Name.Should().Be( "UNK" );
-            obj.Type.Should().Be( SqlObjectType.Unknown );
-            sut.Schemas.Default.Objects.TryGet( "UNK" ).Should().BeSameAs( obj );
-        }
+        Assertion.All(
+                obj.Name.TestEquals( "UNK" ),
+                obj.Type.TestEquals( SqlObjectType.Unknown ),
+                sut.Schemas.Default.Objects.TryGet( "UNK" ).TestRefEquals( obj ) )
+            .Go();
     }
 
     [Fact]
@@ -251,12 +244,11 @@ public class SqlDatabaseTests : TestsBase
 
         var obj = sut.Schemas.Default.Objects.GetTable( "T" ).Constraints.Get( "UNK" );
 
-        using ( new AssertionScope() )
-        {
-            obj.Name.Should().Be( "UNK" );
-            obj.Type.Should().Be( SqlObjectType.Unknown );
-            sut.Schemas.Default.Objects.TryGet( "UNK" ).Should().BeSameAs( obj );
-        }
+        Assertion.All(
+                obj.Name.TestEquals( "UNK" ),
+                obj.Type.TestEquals( SqlObjectType.Unknown ),
+                sut.Schemas.Default.Objects.TryGet( "UNK" ).TestRefEquals( obj ) )
+            .Go();
     }
 
     [Fact]
@@ -269,7 +261,7 @@ public class SqlDatabaseTests : TestsBase
 
         var action = Lambda.Of( () => SqlDatabaseMock.Create( dbBuilder ) );
 
-        action.Should().ThrowExactly<NotSupportedException>();
+        action.Test( exc => exc.TestType().Exact<NotSupportedException>() ).Go();
     }
 
     [Fact]
@@ -282,6 +274,6 @@ public class SqlDatabaseTests : TestsBase
 
         var action = Lambda.Of( () => SqlDatabaseMock.Create( dbBuilder ) );
 
-        action.Should().ThrowExactly<NotSupportedException>();
+        action.Test( exc => exc.TestType().Exact<NotSupportedException>() ).Go();
     }
 }

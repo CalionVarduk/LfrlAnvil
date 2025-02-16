@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Data;
 using LfrlAnvil.Sql.Statements;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks.System;
 
 namespace LfrlAnvil.Sql.Tests.StatementsTests;
@@ -19,13 +18,12 @@ public class SqlParameterBinderTests : TestsBase
 
         sut.Bind( command, source: null );
 
-        using ( new AssertionScope() )
-        {
-            sut.Dialect.Should().BeSameAs( dialect );
-            sut.Delegate.Should().BeSameAs( @delegate );
-            @delegate.Verify().CallCount.Should().Be( 0 );
-            command.Parameters.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Dialect.TestRefEquals( dialect ),
+                sut.Delegate.TestRefEquals( @delegate ),
+                @delegate.CallCount().TestEquals( 0 ),
+                command.Parameters.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -39,12 +37,11 @@ public class SqlParameterBinderTests : TestsBase
 
         sut.Bind( command, source );
 
-        using ( new AssertionScope() )
-        {
-            sut.Dialect.Should().BeSameAs( dialect );
-            sut.Delegate.Should().BeSameAs( @delegate );
-            @delegate.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( command, source );
-        }
+        Assertion.All(
+                sut.Dialect.TestRefEquals( dialect ),
+                sut.Delegate.TestRefEquals( @delegate ),
+                @delegate.CallAt( 0 ).Arguments.TestSequence( [ command, source ] ) )
+            .Go();
     }
 
     [Fact]
@@ -58,13 +55,12 @@ public class SqlParameterBinderTests : TestsBase
 
         sut.Bind( command, source: null );
 
-        using ( new AssertionScope() )
-        {
-            sut.Dialect.Should().BeSameAs( dialect );
-            sut.Delegate.Should().BeSameAs( @delegate );
-            @delegate.Verify().CallCount.Should().Be( 0 );
-            command.Parameters.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Dialect.TestRefEquals( dialect ),
+                sut.Delegate.TestRefEquals( @delegate ),
+                @delegate.CallCount().TestEquals( 0 ),
+                command.Parameters.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -78,11 +74,10 @@ public class SqlParameterBinderTests : TestsBase
 
         sut.Bind( command, source );
 
-        using ( new AssertionScope() )
-        {
-            sut.Dialect.Should().BeSameAs( dialect );
-            sut.Delegate.Should().BeSameAs( @delegate );
-            @delegate.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( command, source );
-        }
+        Assertion.All(
+                sut.Dialect.TestRefEquals( dialect ),
+                sut.Delegate.TestRefEquals( @delegate ),
+                @delegate.CallAt( 0 ).Arguments.TestSequence( [ command, source ] ) )
+            .Go();
     }
 }

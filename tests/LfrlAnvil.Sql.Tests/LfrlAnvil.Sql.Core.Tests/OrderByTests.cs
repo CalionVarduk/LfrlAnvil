@@ -7,11 +7,10 @@ public class OrderByTests : TestsBase
     {
         var sut = OrderBy.Asc;
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( "ASC" );
-            sut.Value.Should().Be( OrderBy.Values.Asc );
-        }
+        Assertion.All(
+                sut.Name.TestEquals( "ASC" ),
+                sut.Value.TestEquals( OrderBy.Values.Asc ) )
+            .Go();
     }
 
     [Fact]
@@ -19,10 +18,9 @@ public class OrderByTests : TestsBase
     {
         var sut = OrderBy.Desc;
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( "DESC" );
-            sut.Value.Should().Be( OrderBy.Values.Desc );
-        }
+        Assertion.All(
+                sut.Name.TestEquals( "DESC" ),
+                sut.Value.TestEquals( OrderBy.Values.Desc ) )
+            .Go();
     }
 }

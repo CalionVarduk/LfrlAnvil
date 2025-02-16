@@ -1,7 +1,6 @@
 ﻿using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.ObjectsTests;
@@ -34,23 +33,20 @@ public class SqlIndexTests : TestsBase
 
         ISqlIndex sut = schema.Objects.GetIndex( "IX_TEST" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Database.Should().BeSameAs( db );
-            sut.Table.Should().BeSameAs( table );
-            sut.Type.Should().Be( SqlObjectType.Index );
-            sut.Name.Should().Be( "IX_TEST" );
-            sut.IsUnique.Should().Be( isUnique );
-            sut.IsVirtual.Should().Be( isVirtual );
-            sut.IsPartial.Should().BeFalse();
-            (( SqlIndex )sut).Columns.Should()
-                .BeSequentiallyEqualTo( new SqlIndexed<SqlColumn>( c1, OrderBy.Asc ), new SqlIndexed<SqlColumn>( c2, OrderBy.Desc ) );
-
-            sut.Columns.Should()
-                .BeSequentiallyEqualTo( new SqlIndexed<ISqlColumn>( c1, OrderBy.Asc ), new SqlIndexed<ISqlColumn>( c2, OrderBy.Desc ) );
-
-            sut.ToString().Should().Be( "[Index] foo.IX_TEST" );
-        }
+        Assertion.All(
+                sut.Database.TestRefEquals( db ),
+                sut.Table.TestRefEquals( table ),
+                sut.Type.TestEquals( SqlObjectType.Index ),
+                sut.Name.TestEquals( "IX_TEST" ),
+                sut.IsUnique.TestEquals( isUnique ),
+                sut.IsVirtual.TestEquals( isVirtual ),
+                sut.IsPartial.TestFalse(),
+                (( SqlIndex )sut).Columns.TestSequence(
+                    [ new SqlIndexed<SqlColumn>( c1, OrderBy.Asc ), new SqlIndexed<SqlColumn>( c2, OrderBy.Desc ) ] ),
+                sut.Columns.TestSequence(
+                    [ new SqlIndexed<ISqlColumn>( c1, OrderBy.Asc ), new SqlIndexed<ISqlColumn>( c2, OrderBy.Desc ) ] ),
+                sut.ToString().TestEquals( "[Index] foo.IX_TEST" ) )
+            .Go();
     }
 
     [Fact]
@@ -69,17 +65,16 @@ public class SqlIndexTests : TestsBase
 
         ISqlIndex sut = schema.Objects.GetIndex( "IX_TEST" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Database.Should().BeSameAs( db );
-            sut.Table.Should().BeSameAs( table );
-            sut.Type.Should().Be( SqlObjectType.Index );
-            sut.Name.Should().Be( "IX_TEST" );
-            sut.IsUnique.Should().BeFalse();
-            sut.IsVirtual.Should().BeFalse();
-            sut.IsPartial.Should().BeTrue();
-            sut.Columns.Should().BeSequentiallyEqualTo( new SqlIndexed<ISqlColumn>( c1, OrderBy.Asc ) );
-            sut.ToString().Should().Be( "[Index] foo.IX_TEST" );
-        }
+        Assertion.All(
+                sut.Database.TestRefEquals( db ),
+                sut.Table.TestRefEquals( table ),
+                sut.Type.TestEquals( SqlObjectType.Index ),
+                sut.Name.TestEquals( "IX_TEST" ),
+                sut.IsUnique.TestFalse(),
+                sut.IsVirtual.TestFalse(),
+                sut.IsPartial.TestTrue(),
+                sut.Columns.TestSequence( [ new SqlIndexed<ISqlColumn>( c1, OrderBy.Asc ) ] ),
+                sut.ToString().TestEquals( "[Index] foo.IX_TEST" ) )
+            .Go();
     }
 }

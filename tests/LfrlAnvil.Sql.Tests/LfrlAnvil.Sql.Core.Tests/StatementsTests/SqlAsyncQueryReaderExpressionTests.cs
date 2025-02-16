@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Statements;
 using LfrlAnvil.Sql.Statements.Compilers;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks.System;
 
 namespace LfrlAnvil.Sql.Tests.StatementsTests;
@@ -30,16 +29,18 @@ public class SqlAsyncQueryReaderExpressionTests : TestsBase
         var queryReader = sut.Compile();
         var result = await queryReader.ReadAsync( reader, new SqlQueryReaderOptions() );
 
-        using ( new AssertionScope() )
-        {
-            sut.Dialect.Should().BeSameAs( dialect );
-            sut.Expression.Should().BeSameAs( expression );
-            queryReader.Dialect.Should().BeSameAs( dialect );
-            result.IsEmpty.Should().BeFalse();
-            result.ResultSetFields.ToArray().Should().BeEmpty();
-            result.Rows.Should().HaveCount( 2 );
-            (result.Rows?.ElementAtOrDefault( 0 )).Should().BeSequentiallyEqualTo( "foo", 3 );
-            (result.Rows?.ElementAtOrDefault( 1 )).Should().BeSequentiallyEqualTo( "lorem", 5 );
-        }
+        Assertion.All(
+                sut.Dialect.TestRefEquals( dialect ),
+                sut.Expression.TestRefEquals( expression ),
+                queryReader.Dialect.TestRefEquals( dialect ),
+                result.IsEmpty.TestFalse(),
+                result.ResultSetFields.ToArray().TestEmpty(),
+                result.Rows.TestNotNull(
+                    rows => rows.TestSequence(
+                    [
+                        (r, _) => r.TestSequence( [ "foo", 3 ] ),
+                        (r, _) => r.TestSequence( [ "lorem", 5 ] )
+                    ] ) ) )
+            .Go();
     }
 }

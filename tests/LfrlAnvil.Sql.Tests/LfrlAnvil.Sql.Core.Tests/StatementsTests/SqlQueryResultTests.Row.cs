@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Sql.Statements;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sql.Tests.StatementsTests;
 
@@ -51,7 +50,7 @@ public partial class SqlQueryResultTests
 
             var result = sut.GetValue( ordinal );
 
-            result.Should().Be( expected );
+            result.TestEquals( expected ).Go();
         }
 
         [Theory]
@@ -97,7 +96,7 @@ public partial class SqlQueryResultTests
 
             var result = sut.GetValue( field );
 
-            result.Should().Be( expected );
+            result.TestEquals( expected ).Go();
         }
 
         [Theory]
@@ -139,7 +138,7 @@ public partial class SqlQueryResultTests
 
             var result = sut.AsSpan();
 
-            result.ToArray().Should().BeSequentiallyEqualTo( v1, v2, v3, v4 );
+            result.ToArray().TestSequence( [ v1, v2, v3, v4 ] ).Go();
         }
 
         [Theory]
@@ -176,7 +175,7 @@ public partial class SqlQueryResultTests
 
             var result = sut.ToArray();
 
-            result.Should().BeSequentiallyEqualTo( v1, v2, v3, v4 );
+            result.TestSequence( [ v1, v2, v3, v4 ] ).Go();
         }
 
         [Theory]
@@ -213,15 +212,14 @@ public partial class SqlQueryResultTests
 
             var result = sut.ToDictionary();
 
-            using ( new AssertionScope() )
-            {
-                result.Should().HaveCount( 4 );
-                result.Keys.Should().BeEquivalentTo( "a", "b", "c", "d" );
-                result.GetValueOrDefault( "a" ).Should().Be( v1 );
-                result.GetValueOrDefault( "b" ).Should().Be( v2 );
-                result.GetValueOrDefault( "c" ).Should().Be( v3 );
-                result.GetValueOrDefault( "d" ).Should().Be( v4 );
-            }
+            Assertion.All(
+                    result.Count.TestEquals( 4 ),
+                    result.Keys.TestSetEqual( [ "a", "b", "c", "d" ] ),
+                    result.GetValueOrDefault( "a" ).TestEquals( v1 ),
+                    result.GetValueOrDefault( "b" ).TestEquals( v2 ),
+                    result.GetValueOrDefault( "c" ).TestEquals( v3 ),
+                    result.GetValueOrDefault( "d" ).TestEquals( v4 ) )
+                .Go();
         }
     }
 }
