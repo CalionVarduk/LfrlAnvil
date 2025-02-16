@@ -7,9 +7,8 @@ using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.MySql.Tests.ObjectsTests.BuildersTests;
 
@@ -23,7 +22,7 @@ public class MySqlViewBuilderTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( "[View] foo.bar" );
+        result.TestEquals( "[View] foo.bar" ).Go();
     }
 
     [Fact]
@@ -35,21 +34,20 @@ public class MySqlViewBuilderTests : TestsBase
         var sut = schema.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM bar" ) );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.Name.Should().Be( "V" );
-            sut.ReferencedObjects.Should().BeEmpty();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    CREATE VIEW `foo`.`V` AS
-                                        SELECT * FROM bar;
-                    """ );
-        }
+        Assertion.All(
+                schema.Objects.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.Name.TestEquals( "V" ),
+                sut.ReferencedObjects.TestEmpty(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            CREATE VIEW `foo`.`V` AS
+                                SELECT * FROM bar;
+                            """ )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -62,7 +60,7 @@ public class MySqlViewBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Fact]
@@ -75,11 +73,10 @@ public class MySqlViewBuilderTests : TestsBase
         var result = sut.SetName( sut.Name );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -94,11 +91,10 @@ public class MySqlViewBuilderTests : TestsBase
         var result = sut.SetName( oldName );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -114,25 +110,24 @@ public class MySqlViewBuilderTests : TestsBase
         var result = sut.SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            sut.Info.Should().Be( SqlRecordSetInfo.Create( "foo", "bar" ) );
-            recordSet.Info.Should().Be( sut.Info );
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( oldName ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP VIEW `foo`.`V`;",
-                    """
-                    CREATE VIEW `foo`.`bar` AS
-                                        SELECT * FROM bar;
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                sut.Info.TestEquals( SqlRecordSetInfo.Create( "foo", "bar" ) ),
+                recordSet.Info.TestEquals( sut.Info ),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( oldName ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            "DROP VIEW `foo`.`V`;",
+                            """
+                            CREATE VIEW `foo`.`bar` AS
+                                SELECT * FROM bar;
+                            """ )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -150,48 +145,41 @@ public class MySqlViewBuilderTests : TestsBase
         var result = sut.SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            sut.Info.Should().Be( SqlRecordSetInfo.Create( "foo", "bar" ) );
-            recordSet.Info.Should().Be( sut.Info );
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( oldName ).Should().BeNull();
-
-            actions.Should().HaveCount( 3 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP VIEW `foo`.`V`;",
-                    """
-                    CREATE VIEW `foo`.`bar` AS
-                                        SELECT * FROM bar;
-                    """ );
-
-            actions.ElementAtOrDefault( 1 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP VIEW `foo`.`W1`;",
-                    """
-                    CREATE VIEW `foo`.`W1` AS
-                                        SELECT
-                                          *
-                                        FROM `foo`.`bar`;
-                    """ );
-
-            actions.ElementAtOrDefault( 2 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP VIEW `foo`.`W3`;",
-                    """
-                    CREATE VIEW `foo`.`W3` AS
-                                        SELECT
-                                          *
-                                        FROM `foo`.`bar`
-                                        INNER JOIN `foo`.`W1` ON TRUE;
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                sut.Info.TestEquals( SqlRecordSetInfo.Create( "foo", "bar" ) ),
+                recordSet.Info.TestEquals( sut.Info ),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( oldName ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            "DROP VIEW `foo`.`V`;",
+                            """
+                            CREATE VIEW `foo`.`bar` AS
+                                SELECT * FROM bar;
+                            """ ),
+                        (sql, _) => sql.SatisfySql(
+                            "DROP VIEW `foo`.`W1`;",
+                            """
+                            CREATE VIEW `foo`.`W1` AS
+                                SELECT
+                                  *
+                                FROM `foo`.`bar`;
+                            """ ),
+                        (sql, _) => sql.SatisfySql(
+                            "DROP VIEW `foo`.`W3`;",
+                            """
+                            CREATE VIEW `foo`.`W3` AS
+                                SELECT
+                                  *
+                                FROM `foo`.`bar`
+                                INNER JOIN `foo`.`W1` ON TRUE;
+                            """ )
+                    ] ) )
+            .Go();
     }
 
     [Theory]
@@ -207,9 +195,11 @@ public class MySqlViewBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( name ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( MySqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -221,9 +211,11 @@ public class MySqlViewBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "bar" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( MySqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -236,9 +228,11 @@ public class MySqlViewBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "T" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( MySqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -254,20 +248,16 @@ public class MySqlViewBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            schema.Objects.TryGet( sut.Name ).Should().BeNull();
-            schema.Objects.Count.Should().Be( 3 );
-            sut.IsRemoved.Should().BeTrue();
-            sut.ReferencedObjects.Should().BeEmpty();
-
-            table.ReferencingObjects.Should().BeEmpty();
-            column.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( pk.Index ), column ) );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "DROP VIEW `foo`.`V`;" );
-        }
+        Assertion.All(
+                schema.Objects.TryGet( sut.Name ).TestNull(),
+                schema.Objects.Count.TestEquals( 3 ),
+                sut.IsRemoved.TestTrue(),
+                sut.ReferencedObjects.TestEmpty(),
+                table.ReferencingObjects.TestEmpty(),
+                column.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( pk.Index ), column ) ] ),
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP VIEW `foo`.`V`;" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -283,20 +273,16 @@ public class MySqlViewBuilderTests : TestsBase
         sut.SetName( "X" ).Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            schema.Objects.TryGet( sut.Name ).Should().BeNull();
-            schema.Objects.Count.Should().Be( 3 );
-            sut.IsRemoved.Should().BeTrue();
-            sut.ReferencedObjects.Should().BeEmpty();
-
-            table.ReferencingObjects.Should().BeEmpty();
-            column.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( pk.Index ), column ) );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "DROP VIEW `foo`.`V`;" );
-        }
+        Assertion.All(
+                schema.Objects.TryGet( sut.Name ).TestNull(),
+                schema.Objects.Count.TestEquals( 3 ),
+                sut.IsRemoved.TestTrue(),
+                sut.ReferencedObjects.TestEmpty(),
+                table.ReferencingObjects.TestEmpty(),
+                column.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( pk.Index ), column ) ] ),
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP VIEW `foo`.`V`;" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -312,7 +298,7 @@ public class MySqlViewBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Fact]
@@ -324,9 +310,11 @@ public class MySqlViewBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( MySqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -337,8 +325,10 @@ public class MySqlViewBuilderTests : TestsBase
 
         var result = sut.ForMySql( action );
 
-        result.Should().BeSameAs( sut );
-        action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( sut );
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                action.CallAt( 0 ).Arguments.TestSequence( [ sut ] ) )
+            .Go();
     }
 
     [Fact]
@@ -349,7 +339,9 @@ public class MySqlViewBuilderTests : TestsBase
 
         var result = sut.ForMySql( action );
 
-        result.Should().BeSameAs( sut );
-        action.Verify().CallCount.Should().Be( 0 );
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                action.CallCount().TestEquals( 0 ) )
+            .Go();
     }
 }

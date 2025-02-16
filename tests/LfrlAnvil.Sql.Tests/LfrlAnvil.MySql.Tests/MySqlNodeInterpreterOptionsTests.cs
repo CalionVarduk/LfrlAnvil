@@ -9,16 +9,15 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
     {
         var sut = MySqlNodeInterpreterOptions.Default;
 
-        using ( new AssertionScope() )
-        {
-            sut.TypeDefinitions.Should().BeNull();
-            sut.CommonSchemaName.Should().BeNull();
-            sut.IndexPrefixLength.Should().Be( 500 );
-            sut.IsFullJoinParsingEnabled.Should().BeFalse();
-            sut.IsIndexFilterParsingEnabled.Should().BeFalse();
-            sut.AreTemporaryViewsForbidden.Should().BeFalse();
-            sut.UpsertSourceAlias.Should().BeNull();
-        }
+        Assertion.All(
+                sut.TypeDefinitions.TestNull(),
+                sut.CommonSchemaName.TestNull(),
+                sut.IndexPrefixLength.TestEquals( 500 ),
+                sut.IsFullJoinParsingEnabled.TestFalse(),
+                sut.IsIndexFilterParsingEnabled.TestFalse(),
+                sut.AreTemporaryViewsForbidden.TestFalse(),
+                sut.UpsertSourceAlias.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -28,16 +27,15 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
         var sut = MySqlNodeInterpreterOptions.Default;
         var result = sut.SetTypeDefinitions( typeDefinitions );
 
-        using ( new AssertionScope() )
-        {
-            result.TypeDefinitions.Should().BeSameAs( typeDefinitions );
-            result.CommonSchemaName.Should().BeNull();
-            result.IndexPrefixLength.Should().Be( 500 );
-            result.IsFullJoinParsingEnabled.Should().BeFalse();
-            result.IsIndexFilterParsingEnabled.Should().BeFalse();
-            result.AreTemporaryViewsForbidden.Should().BeFalse();
-            result.UpsertSourceAlias.Should().BeNull();
-        }
+        Assertion.All(
+                result.TypeDefinitions.TestRefEquals( typeDefinitions ),
+                result.CommonSchemaName.TestNull(),
+                result.IndexPrefixLength.TestEquals( 500 ),
+                result.IsFullJoinParsingEnabled.TestFalse(),
+                result.IsIndexFilterParsingEnabled.TestFalse(),
+                result.AreTemporaryViewsForbidden.TestFalse(),
+                result.UpsertSourceAlias.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -46,16 +44,15 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
         var sut = MySqlNodeInterpreterOptions.Default;
         var result = sut.SetTypeDefinitions( null );
 
-        using ( new AssertionScope() )
-        {
-            result.TypeDefinitions.Should().BeNull();
-            result.CommonSchemaName.Should().BeNull();
-            result.IndexPrefixLength.Should().Be( 500 );
-            result.IsFullJoinParsingEnabled.Should().BeFalse();
-            result.IsIndexFilterParsingEnabled.Should().BeFalse();
-            result.AreTemporaryViewsForbidden.Should().BeFalse();
-            result.UpsertSourceAlias.Should().BeNull();
-        }
+        Assertion.All(
+                result.TypeDefinitions.TestNull(),
+                result.CommonSchemaName.TestNull(),
+                result.IndexPrefixLength.TestEquals( 500 ),
+                result.IsFullJoinParsingEnabled.TestFalse(),
+                result.IsIndexFilterParsingEnabled.TestFalse(),
+                result.AreTemporaryViewsForbidden.TestFalse(),
+                result.UpsertSourceAlias.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -64,16 +61,15 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
         var sut = MySqlNodeInterpreterOptions.Default;
         var result = sut.SetCommonSchemaName( "foo" );
 
-        using ( new AssertionScope() )
-        {
-            result.TypeDefinitions.Should().BeNull();
-            result.CommonSchemaName.Should().Be( "foo" );
-            result.IndexPrefixLength.Should().Be( 500 );
-            result.IsFullJoinParsingEnabled.Should().BeFalse();
-            result.IsIndexFilterParsingEnabled.Should().BeFalse();
-            result.AreTemporaryViewsForbidden.Should().BeFalse();
-            result.UpsertSourceAlias.Should().BeNull();
-        }
+        Assertion.All(
+                result.TypeDefinitions.TestNull(),
+                result.CommonSchemaName.TestEquals( "foo" ),
+                result.IndexPrefixLength.TestEquals( 500 ),
+                result.IsFullJoinParsingEnabled.TestFalse(),
+                result.IsIndexFilterParsingEnabled.TestFalse(),
+                result.AreTemporaryViewsForbidden.TestFalse(),
+                result.UpsertSourceAlias.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -82,16 +78,15 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
         var sut = MySqlNodeInterpreterOptions.Default;
         var result = sut.SetCommonSchemaName( null );
 
-        using ( new AssertionScope() )
-        {
-            result.TypeDefinitions.Should().BeNull();
-            result.CommonSchemaName.Should().BeNull();
-            result.IndexPrefixLength.Should().Be( 500 );
-            result.IsFullJoinParsingEnabled.Should().BeFalse();
-            result.IsIndexFilterParsingEnabled.Should().BeFalse();
-            result.AreTemporaryViewsForbidden.Should().BeFalse();
-            result.UpsertSourceAlias.Should().BeNull();
-        }
+        Assertion.All(
+                result.TypeDefinitions.TestNull(),
+                result.CommonSchemaName.TestNull(),
+                result.IndexPrefixLength.TestEquals( 500 ),
+                result.IsFullJoinParsingEnabled.TestFalse(),
+                result.IsIndexFilterParsingEnabled.TestFalse(),
+                result.AreTemporaryViewsForbidden.TestFalse(),
+                result.UpsertSourceAlias.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -100,16 +95,15 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
         var sut = MySqlNodeInterpreterOptions.Default;
         var result = sut.EnableIndexPrefixes( 400 );
 
-        using ( new AssertionScope() )
-        {
-            result.TypeDefinitions.Should().BeNull();
-            result.CommonSchemaName.Should().BeNull();
-            result.IndexPrefixLength.Should().Be( 400 );
-            result.IsFullJoinParsingEnabled.Should().BeFalse();
-            result.IsIndexFilterParsingEnabled.Should().BeFalse();
-            result.AreTemporaryViewsForbidden.Should().BeFalse();
-            result.UpsertSourceAlias.Should().BeNull();
-        }
+        Assertion.All(
+                result.TypeDefinitions.TestNull(),
+                result.CommonSchemaName.TestNull(),
+                result.IndexPrefixLength.TestEquals( 400 ),
+                result.IsFullJoinParsingEnabled.TestFalse(),
+                result.IsIndexFilterParsingEnabled.TestFalse(),
+                result.AreTemporaryViewsForbidden.TestFalse(),
+                result.UpsertSourceAlias.TestNull() )
+            .Go();
     }
 
     [Theory]
@@ -119,7 +113,7 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
     {
         var sut = MySqlNodeInterpreterOptions.Default;
         var action = Lambda.Of( () => sut.EnableIndexPrefixes( length ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -128,16 +122,15 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
         var sut = MySqlNodeInterpreterOptions.Default;
         var result = sut.DisableIndexPrefixes();
 
-        using ( new AssertionScope() )
-        {
-            result.TypeDefinitions.Should().BeNull();
-            result.CommonSchemaName.Should().BeNull();
-            result.IndexPrefixLength.Should().BeNull();
-            result.IsFullJoinParsingEnabled.Should().BeFalse();
-            result.IsIndexFilterParsingEnabled.Should().BeFalse();
-            result.AreTemporaryViewsForbidden.Should().BeFalse();
-            result.UpsertSourceAlias.Should().BeNull();
-        }
+        Assertion.All(
+                result.TypeDefinitions.TestNull(),
+                result.CommonSchemaName.TestNull(),
+                result.IndexPrefixLength.TestNull(),
+                result.IsFullJoinParsingEnabled.TestFalse(),
+                result.IsIndexFilterParsingEnabled.TestFalse(),
+                result.AreTemporaryViewsForbidden.TestFalse(),
+                result.UpsertSourceAlias.TestNull() )
+            .Go();
     }
 
     [Theory]
@@ -148,16 +141,15 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
         var sut = MySqlNodeInterpreterOptions.Default;
         var result = sut.EnableFullJoinParsing( enabled );
 
-        using ( new AssertionScope() )
-        {
-            result.TypeDefinitions.Should().BeNull();
-            result.CommonSchemaName.Should().BeNull();
-            result.IndexPrefixLength.Should().Be( 500 );
-            result.IsFullJoinParsingEnabled.Should().Be( enabled );
-            result.IsIndexFilterParsingEnabled.Should().BeFalse();
-            result.AreTemporaryViewsForbidden.Should().BeFalse();
-            result.UpsertSourceAlias.Should().BeNull();
-        }
+        Assertion.All(
+                result.TypeDefinitions.TestNull(),
+                result.CommonSchemaName.TestNull(),
+                result.IndexPrefixLength.TestEquals( 500 ),
+                result.IsFullJoinParsingEnabled.TestEquals( enabled ),
+                result.IsIndexFilterParsingEnabled.TestFalse(),
+                result.AreTemporaryViewsForbidden.TestFalse(),
+                result.UpsertSourceAlias.TestNull() )
+            .Go();
     }
 
     [Theory]
@@ -168,16 +160,15 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
         var sut = MySqlNodeInterpreterOptions.Default;
         var result = sut.EnableIndexFilterParsing( enabled );
 
-        using ( new AssertionScope() )
-        {
-            result.TypeDefinitions.Should().BeNull();
-            result.CommonSchemaName.Should().BeNull();
-            result.IndexPrefixLength.Should().Be( 500 );
-            result.IsFullJoinParsingEnabled.Should().BeFalse();
-            result.IsIndexFilterParsingEnabled.Should().Be( enabled );
-            result.AreTemporaryViewsForbidden.Should().BeFalse();
-            result.UpsertSourceAlias.Should().BeNull();
-        }
+        Assertion.All(
+                result.TypeDefinitions.TestNull(),
+                result.CommonSchemaName.TestNull(),
+                result.IndexPrefixLength.TestEquals( 500 ),
+                result.IsFullJoinParsingEnabled.TestFalse(),
+                result.IsIndexFilterParsingEnabled.TestEquals( enabled ),
+                result.AreTemporaryViewsForbidden.TestFalse(),
+                result.UpsertSourceAlias.TestNull() )
+            .Go();
     }
 
     [Theory]
@@ -188,16 +179,15 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
         var sut = MySqlNodeInterpreterOptions.Default;
         var result = sut.ForbidTemporaryViews( enabled );
 
-        using ( new AssertionScope() )
-        {
-            result.TypeDefinitions.Should().BeNull();
-            result.CommonSchemaName.Should().BeNull();
-            result.IndexPrefixLength.Should().Be( 500 );
-            result.IsFullJoinParsingEnabled.Should().BeFalse();
-            result.IsIndexFilterParsingEnabled.Should().BeFalse();
-            result.AreTemporaryViewsForbidden.Should().Be( enabled );
-            result.UpsertSourceAlias.Should().BeNull();
-        }
+        Assertion.All(
+                result.TypeDefinitions.TestNull(),
+                result.CommonSchemaName.TestNull(),
+                result.IndexPrefixLength.TestEquals( 500 ),
+                result.IsFullJoinParsingEnabled.TestFalse(),
+                result.IsIndexFilterParsingEnabled.TestFalse(),
+                result.AreTemporaryViewsForbidden.TestEquals( enabled ),
+                result.UpsertSourceAlias.TestNull() )
+            .Go();
     }
 
     [Theory]
@@ -209,15 +199,14 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
         var sut = MySqlNodeInterpreterOptions.Default;
         var result = sut.SetUpdateSourceAlias( alias );
 
-        using ( new AssertionScope() )
-        {
-            result.TypeDefinitions.Should().BeNull();
-            result.CommonSchemaName.Should().BeNull();
-            result.IndexPrefixLength.Should().Be( 500 );
-            result.IsFullJoinParsingEnabled.Should().BeFalse();
-            result.IsIndexFilterParsingEnabled.Should().BeFalse();
-            result.AreTemporaryViewsForbidden.Should().BeFalse();
-            result.UpsertSourceAlias.Should().BeSameAs( alias );
-        }
+        Assertion.All(
+                result.TypeDefinitions.TestNull(),
+                result.CommonSchemaName.TestNull(),
+                result.IndexPrefixLength.TestEquals( 500 ),
+                result.IsFullJoinParsingEnabled.TestFalse(),
+                result.IsIndexFilterParsingEnabled.TestFalse(),
+                result.AreTemporaryViewsForbidden.TestFalse(),
+                result.UpsertSourceAlias.TestRefEquals( alias ) )
+            .Go();
     }
 }

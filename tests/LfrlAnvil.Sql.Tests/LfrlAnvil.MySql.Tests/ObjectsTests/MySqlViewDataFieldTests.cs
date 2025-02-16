@@ -18,14 +18,13 @@ public class MySqlViewDataFieldTests : TestsBase
 
         var sut = view.DataFields.Get( "a" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Database.Should().BeSameAs( db );
-            sut.View.Should().BeSameAs( view );
-            sut.Type.Should().Be( SqlObjectType.ViewDataField );
-            sut.Name.Should().Be( "a" );
-            sut.Node.Should().BeSameAs( view.Node["a"] );
-            sut.ToString().Should().Be( "[ViewDataField] foo.V.a" );
-        }
+        Assertion.All(
+                sut.Database.TestRefEquals( db ),
+                sut.View.TestRefEquals( view ),
+                sut.Type.TestEquals( SqlObjectType.ViewDataField ),
+                sut.Name.TestEquals( "a" ),
+                sut.Node.TestRefEquals( view.Node["a"] ),
+                sut.ToString().TestEquals( "[ViewDataField] foo.V.a" ) )
+            .Go();
     }
 }

@@ -6,6 +6,6 @@ public class MySqlDialectTests : TestsBase
     public void Instance_ShouldHaveCorrectName()
     {
         var sut = MySqlDialect.Instance;
-        sut.Name.Should().Be( "MySql" );
+        sut.Name.TestEquals( "MySql" ).Go();
     }
 }

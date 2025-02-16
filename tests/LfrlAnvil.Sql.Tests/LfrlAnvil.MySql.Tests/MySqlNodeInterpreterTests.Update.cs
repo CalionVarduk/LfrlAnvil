@@ -5,8 +5,7 @@ using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
-using LfrlAnvil.TestExtensions.FluentAssertions;
-using LfrlAnvil.TestExtensions.Sql.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Assertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.MySql.Tests;
@@ -24,12 +23,12 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["foo"]["a"].Assign( SqlNode.Literal( "bar" ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     UPDATE foo SET
                       `a` = 'bar'
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -43,13 +42,13 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["foo"]["a"].Assign( SqlNode.Literal( "bar" ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     UPDATE foo SET
                       `a` = 'bar'
                     WHERE foo.`a` < 10
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -64,13 +63,13 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["bar"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     UPDATE `common`.`foo` AS `bar` SET
                       `a` = 10
                     WHERE `bar`.`a` < 10
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -88,8 +87,7 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["common.foo"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     WITH `cba` AS (
                       SELECT * FROM abc
@@ -101,7 +99,8 @@ public partial class MySqlNodeInterpreterTests
                     )
                     ORDER BY `common`.`foo`.`a` ASC
                     LIMIT 5
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -126,7 +125,6 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH `cba` AS (
@@ -148,7 +146,8 @@ public partial class MySqlNodeInterpreterTests
                     UPDATE `common`.`foo`
                     INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
                       `common`.`foo`.`a` = 10;
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -170,8 +169,7 @@ public partial class MySqlNodeInterpreterTests
                     } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     UPDATE foo SET
                       `b` = (
@@ -180,7 +178,8 @@ public partial class MySqlNodeInterpreterTests
                         FROM bar
                         WHERE bar.`x` = foo.`a`
                       )
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -198,13 +197,13 @@ public partial class MySqlNodeInterpreterTests
                     } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     UPDATE foo SET
                       `a` = (foo.`a` + 1),
                       `b` = (foo.`c` * foo.`d`)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -218,13 +217,13 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     UPDATE `common`.`foo` AS `f`
                     INNER JOIN bar ON `f`.`a` = bar.`a` SET
                       `f`.`a` = 10
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -242,8 +241,7 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     WITH `cba` AS (
                       SELECT * FROM abc
@@ -252,7 +250,8 @@ public partial class MySqlNodeInterpreterTests
                     INNER JOIN bar AS `b` ON `f`.`a` = `b`.`a` SET
                       `f`.`a` = 10
                     WHERE `f`.`a` < 10
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -273,7 +272,6 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH `cba` AS (
@@ -293,7 +291,8 @@ public partial class MySqlNodeInterpreterTests
                     UPDATE `common`.`foo`
                     INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
                       `common`.`foo`.`a` = 10;
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -319,7 +318,6 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH `cba` AS (
@@ -342,7 +340,8 @@ public partial class MySqlNodeInterpreterTests
                     UPDATE `common`.`foo`
                     INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
                       `common`.`foo`.`a` = 10;
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -367,8 +366,7 @@ public partial class MySqlNodeInterpreterTests
                     } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     UPDATE `common`.`foo` AS `f`
                     INNER JOIN bar ON `f`.`a` = bar.`a` SET
@@ -378,7 +376,8 @@ public partial class MySqlNodeInterpreterTests
                         FROM qux
                         WHERE qux.`x` = `f`.`a`
                       )
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -399,14 +398,14 @@ public partial class MySqlNodeInterpreterTests
                     } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     UPDATE `common`.`foo` AS `f`
                     INNER JOIN bar ON `f`.`a` = bar.`a` SET
                       `f`.`a` = ((`f`.`a` + bar.`a`) + 1),
                       `f`.`b` = (`f`.`c` * `f`.`d`)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -424,7 +423,6 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH `_{GUID}` AS (
@@ -437,7 +435,8 @@ public partial class MySqlNodeInterpreterTests
                     UPDATE `common`.`foo`
                     INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
                       `common`.`foo`.`a` = 10;
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -455,7 +454,6 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH `_{GUID}` AS (
@@ -469,7 +467,8 @@ public partial class MySqlNodeInterpreterTests
                     UPDATE `common`.`foo`
                     INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.`foo`.`b` = `_{GUID}`.`ID_b_1`) SET
                       `common`.`foo`.`a` = 10;
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -487,7 +486,6 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH `_{GUID}` AS (
@@ -500,7 +498,8 @@ public partial class MySqlNodeInterpreterTests
                     UPDATE `common`.`foo`
                     INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
                       `common`.`foo`.`a` = 10;
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -518,7 +517,6 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH `_{GUID}` AS (
@@ -532,7 +530,8 @@ public partial class MySqlNodeInterpreterTests
                     UPDATE `common`.`foo`
                     INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.`foo`.`b` = `_{GUID}`.`ID_b_1`) SET
                       `common`.`foo`.`a` = 10;
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -553,7 +552,6 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH `_{GUID}` AS (
@@ -568,7 +566,8 @@ public partial class MySqlNodeInterpreterTests
                     UPDATE `common`.`foo`
                     INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.`foo`.`b` = `_{GUID}`.`ID_b_1`) SET
                       `common`.`foo`.`a` = 10;
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Theory]
@@ -597,7 +596,6 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     $$"""
                       WITH `_{GUID}` AS (
@@ -610,7 +608,8 @@ public partial class MySqlNodeInterpreterTests
                       UPDATE {{expectedName}}
                       INNER JOIN `_{GUID}` ON {{expectedName}}.`a` = `_{GUID}`.`ID_a_0` SET
                         {{expectedName}}.`a` = 10;
-                      """ );
+                      """ )
+                .Go();
         }
 
         [Theory]
@@ -639,7 +638,6 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     $$"""
                       WITH `_{GUID}` AS (
@@ -653,7 +651,8 @@ public partial class MySqlNodeInterpreterTests
                       UPDATE {{expectedName}}
                       INNER JOIN `_{GUID}` ON ({{expectedName}}.`a` = `_{GUID}`.`ID_a_0`) AND ({{expectedName}}.`b` = `_{GUID}`.`ID_b_1`) SET
                         {{expectedName}}.`a` = 10;
-                      """ );
+                      """ )
+                .Go();
         }
 
         [Theory]
@@ -676,7 +675,6 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     $$"""
                       WITH `_{GUID}` AS (
@@ -690,7 +688,8 @@ public partial class MySqlNodeInterpreterTests
                       UPDATE {{expectedName}}
                       INNER JOIN `_{GUID}` ON ({{expectedName}}.`a` = `_{GUID}`.`ID_a_0`) AND ({{expectedName}}.`b` = `_{GUID}`.`ID_b_1`) SET
                         {{expectedName}}.`a` = 10;
-                      """ );
+                      """ )
+                .Go();
         }
 
         [Fact]
@@ -719,7 +718,6 @@ public partial class MySqlNodeInterpreterTests
                     } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH `_{GUID}` AS (
@@ -738,7 +736,8 @@ public partial class MySqlNodeInterpreterTests
                         WHERE `x`.`a` > `common`.`foo`.`a`
                       ),
                       `common`.`foo`.`b` = (`common`.`foo`.`c` * `common`.`foo`.`d`);
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -767,7 +766,6 @@ public partial class MySqlNodeInterpreterTests
                     } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH `_{GUID}` AS (
@@ -787,7 +785,8 @@ public partial class MySqlNodeInterpreterTests
                         WHERE `x`.`a` > `common`.`foo`.`a`
                       ),
                       `common`.`foo`.`b` = (`common`.`foo`.`c` * `common`.`foo`.`d`);
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -808,7 +807,6 @@ public partial class MySqlNodeInterpreterTests
                     } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH `_{GUID}` AS (
@@ -823,7 +821,8 @@ public partial class MySqlNodeInterpreterTests
                     INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
                       `common`.`foo`.`b` = `_{GUID}`.`VAL_b_0`,
                       `common`.`foo`.`c` = (`common`.`foo`.`c` + 1);
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -844,7 +843,6 @@ public partial class MySqlNodeInterpreterTests
                     } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH `_{GUID}` AS (
@@ -860,7 +858,8 @@ public partial class MySqlNodeInterpreterTests
                     INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.`foo`.`b` = `_{GUID}`.`ID_b_1`) SET
                       `common`.`foo`.`c` = `_{GUID}`.`VAL_c_0`,
                       `common`.`foo`.`d` = (`common`.`foo`.`d` + 1);
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -883,7 +882,6 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["b"].Assign( s["f"]["b"] + s["common.v"]["b"] ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH `ipsum` AS (
@@ -900,7 +898,8 @@ public partial class MySqlNodeInterpreterTests
                     UPDATE `common`.`foo`
                     INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
                       `common`.`foo`.`b` = `_{GUID}`.`VAL_b_0`;
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -926,7 +925,6 @@ public partial class MySqlNodeInterpreterTests
                     } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     UPDATE `common`.`foo` AS `f`
@@ -939,7 +937,8 @@ public partial class MySqlNodeInterpreterTests
                       `f`.`b` = (`lorem`.`x` + 1),
                       `f`.`d` = (`f`.`d` + 1),
                       `f`.`c` = (`f`.`c` * `lorem`.`y`);
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -966,7 +965,6 @@ public partial class MySqlNodeInterpreterTests
                     } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH `_{GUID}` AS (
@@ -988,7 +986,8 @@ public partial class MySqlNodeInterpreterTests
                       `common`.`foo`.`b` = `_{GUID}`.`VAL_b_0`,
                       `common`.`foo`.`d` = (`common`.`foo`.`d` + 1),
                       `common`.`foo`.`c` = `_{GUID}`.`VAL_c_2`;
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -998,9 +997,11 @@ public partial class MySqlNodeInterpreterTests
             var node = SqlNode.RawRecordSet( "foo" ).ToDataSource().GroupBy( s => new[] { s["foo"]["x"] } ).ToUpdate();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should()
-                .ThrowExactly<SqlNodeVisitorException>()
-                .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlNodeVisitorException>(
+                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -1011,9 +1012,11 @@ public partial class MySqlNodeInterpreterTests
             var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).GroupBy( s => new[] { s["bar"]["x"] } ).ToUpdate();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should()
-                .ThrowExactly<SqlNodeVisitorException>()
-                .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlNodeVisitorException>(
+                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -1024,9 +1027,11 @@ public partial class MySqlNodeInterpreterTests
             var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).GroupBy( s => new[] { s["bar"]["x"] } ).ToUpdate();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should()
-                .ThrowExactly<SqlNodeVisitorException>()
-                .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlNodeVisitorException>(
+                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -1038,9 +1043,11 @@ public partial class MySqlNodeInterpreterTests
             var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).GroupBy( s => new[] { s["bar"]["x"] } ).ToUpdate();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should()
-                .ThrowExactly<SqlNodeVisitorException>()
-                .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlNodeVisitorException>(
+                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -1059,9 +1066,11 @@ public partial class MySqlNodeInterpreterTests
             var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).GroupBy( s => new[] { s["bar"]["x"] } ).ToUpdate();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should()
-                .ThrowExactly<SqlNodeVisitorException>()
-                .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlNodeVisitorException>(
+                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -1080,9 +1089,11 @@ public partial class MySqlNodeInterpreterTests
             var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).GroupBy( s => new[] { s["bar"]["x"] } ).ToUpdate();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should()
-                .ThrowExactly<SqlNodeVisitorException>()
-                .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlNodeVisitorException>(
+                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+                .Go();
         }
     }
 }

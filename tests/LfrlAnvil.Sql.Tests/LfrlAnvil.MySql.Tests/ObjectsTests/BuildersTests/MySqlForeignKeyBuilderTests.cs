@@ -6,9 +6,8 @@ using LfrlAnvil.MySql.Tests.Helpers;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.MySql.Tests.ObjectsTests.BuildersTests;
 
@@ -25,7 +24,7 @@ public class MySqlForeignKeyBuilderTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( "[ForeignKey] foo.bar" );
+        result.TestEquals( "[ForeignKey] foo.bar" ).Go();
     }
 
     [Fact]
@@ -40,32 +39,28 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var sut = table.Constraints.CreateForeignKey( ix2, ix1 );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            table.Constraints.TryGet( sut.Name ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.Name.Should().Be( "FK_T_C2_REF_T" );
-            sut.OriginIndex.Should().BeSameAs( ix2 );
-            sut.ReferencedIndex.Should().BeSameAs( ix1 );
-
-            ix1.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
-
-            ix2.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) );
-
-            table.ReferencingObjects.Should().BeEmpty();
-            schema.ReferencingObjects.Should().BeEmpty();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    ALTER TABLE `foo`.`T`
-                                          ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;
-                    """ );
-        }
+        Assertion.All(
+                table.Constraints.TryGet( sut.Name ).TestRefEquals( sut ),
+                schema.Objects.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.Name.TestEquals( "FK_T_C2_REF_T" ),
+                sut.OriginIndex.TestRefEquals( ix2 ),
+                sut.ReferencedIndex.TestRefEquals( ix1 ),
+                ix1.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) ] ),
+                ix2.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) ] ),
+                table.ReferencingObjects.TestEmpty(),
+                schema.ReferencingObjects.TestEmpty(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            ALTER TABLE `foo`.`T`
+                                ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+                            """ )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -81,34 +76,29 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var sut = t2.Constraints.CreateForeignKey( ix2, ix1 );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            t2.Constraints.TryGet( sut.Name ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.Name.Should().Be( "FK_T2_C2_REF_T" );
-            sut.OriginIndex.Should().BeSameAs( ix2 );
-            sut.ReferencedIndex.Should().BeSameAs( ix1 );
-
-            ix1.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
-
-            ix2.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) );
-
-            table.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
-
-            schema.ReferencingObjects.Should().BeEmpty();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    ALTER TABLE `foo`.`T2`
-                                          ADD CONSTRAINT `FK_T2_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;
-                    """ );
-        }
+        Assertion.All(
+                t2.Constraints.TryGet( sut.Name ).TestRefEquals( sut ),
+                schema.Objects.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.Name.TestEquals( "FK_T2_C2_REF_T" ),
+                sut.OriginIndex.TestRefEquals( ix2 ),
+                sut.ReferencedIndex.TestRefEquals( ix1 ),
+                ix1.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) ] ),
+                ix2.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) ] ),
+                table.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) ] ),
+                schema.ReferencingObjects.TestEmpty(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            ALTER TABLE `foo`.`T2`
+                                ADD CONSTRAINT `FK_T2_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+                            """ )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -125,35 +115,30 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var sut = t2.Constraints.CreateForeignKey( ix2, ix1 );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            t2.Constraints.TryGet( sut.Name ).Should().BeSameAs( sut );
-            s2.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.Name.Should().Be( "FK_T2_C2_REF_foo_T" );
-            sut.OriginIndex.Should().BeSameAs( ix2 );
-            sut.ReferencedIndex.Should().BeSameAs( ix1 );
-
-            ix1.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
-
-            ix2.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) );
-
-            table.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
-
-            schema.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    ALTER TABLE `bar`.`T2`
-                                          ADD CONSTRAINT `FK_T2_C2_REF_foo_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;
-                    """ );
-        }
+        Assertion.All(
+                t2.Constraints.TryGet( sut.Name ).TestRefEquals( sut ),
+                s2.Objects.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.Name.TestEquals( "FK_T2_C2_REF_foo_T" ),
+                sut.OriginIndex.TestRefEquals( ix2 ),
+                sut.ReferencedIndex.TestRefEquals( ix1 ),
+                ix1.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) ] ),
+                ix2.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) ] ),
+                table.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) ] ),
+                schema.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) ] ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            ALTER TABLE `bar`.`T2`
+                                ADD CONSTRAINT `FK_T2_C2_REF_foo_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+                            """ )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -169,7 +154,7 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Fact]
@@ -185,11 +170,10 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var result = sut.SetName( sut.Name );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -207,11 +191,10 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var result = sut.SetName( oldName );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -228,28 +211,27 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var result = sut.SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            table.Constraints.TryGet( "bar" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( oldName ).Should().BeNull();
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( oldName ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    ALTER TABLE `foo`.`T`
-                                          DROP FOREIGN KEY `FK_T_C2_REF_T`;
-                    """,
-                    """
-                    ALTER TABLE `foo`.`T`
-                                          ADD CONSTRAINT `bar` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                table.Constraints.TryGet( "bar" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( oldName ).TestNull(),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( oldName ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            ALTER TABLE `foo`.`T`
+                                DROP FOREIGN KEY `FK_T_C2_REF_T`;
+                            """,
+                            """
+                            ALTER TABLE `foo`.`T`
+                                ADD CONSTRAINT `bar` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+                            """ )
+                    ] ) )
+            .Go();
     }
 
     [Theory]
@@ -268,9 +250,11 @@ public class MySqlForeignKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( name ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( MySqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -285,9 +269,11 @@ public class MySqlForeignKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "bar" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( MySqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -301,9 +287,11 @@ public class MySqlForeignKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "T" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( MySqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -319,11 +307,10 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var result = sut.SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -340,11 +327,10 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var result = sut.SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -360,28 +346,27 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var result = sut.SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "FK_T_C2_REF_T" );
-            table.Constraints.TryGet( "FK_T_C2_REF_T" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( "bar" ).Should().BeNull();
-            schema.Objects.TryGet( "FK_T_C2_REF_T" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "bar" ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    ALTER TABLE `foo`.`T`
-                                          DROP FOREIGN KEY `bar`;
-                    """,
-                    """
-                    ALTER TABLE `foo`.`T`
-                                          ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "FK_T_C2_REF_T" ),
+                table.Constraints.TryGet( "FK_T_C2_REF_T" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( "bar" ).TestNull(),
+                schema.Objects.TryGet( "FK_T_C2_REF_T" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "bar" ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            ALTER TABLE `foo`.`T`
+                                DROP FOREIGN KEY `bar`;
+                            """,
+                            """
+                            ALTER TABLE `foo`.`T`
+                                ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+                            """ )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -396,9 +381,11 @@ public class MySqlForeignKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetDefaultName() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( MySqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -413,9 +400,11 @@ public class MySqlForeignKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetDefaultName() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( MySqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Theory]
@@ -435,24 +424,23 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var result = sut.SetOnDeleteBehavior( behavior );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.OnDeleteBehavior.Should().Be( behavior );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    ALTER TABLE `foo`.`T`
-                                          DROP FOREIGN KEY `FK_T_C2_REF_T`;
-                    """,
-                    $"""
-                     ALTER TABLE `foo`.`T`
-                                           ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE {behavior.Name} ON UPDATE RESTRICT;
-                     """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.OnDeleteBehavior.TestEquals( behavior ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            ALTER TABLE `foo`.`T`
+                                DROP FOREIGN KEY `FK_T_C2_REF_T`;
+                            """,
+                            $"""
+                             ALTER TABLE `foo`.`T`
+                                 ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE {behavior.Name} ON UPDATE RESTRICT;
+                             """ )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -468,11 +456,10 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var result = sut.SetOnDeleteBehavior( ReferenceBehavior.Restrict );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -489,11 +476,10 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var result = sut.SetOnDeleteBehavior( ReferenceBehavior.Restrict );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -507,9 +493,11 @@ public class MySqlForeignKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetOnDeleteBehavior( ReferenceBehavior.SetNull ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( MySqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -524,9 +512,11 @@ public class MySqlForeignKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetOnDeleteBehavior( ReferenceBehavior.Cascade ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( MySqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Theory]
@@ -546,24 +536,23 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var result = sut.SetOnUpdateBehavior( behavior );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.OnUpdateBehavior.Should().Be( behavior );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    ALTER TABLE `foo`.`T`
-                                          DROP FOREIGN KEY `FK_T_C2_REF_T`;
-                    """,
-                    $"""
-                     ALTER TABLE `foo`.`T`
-                                           ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE {behavior.Name};
-                     """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.OnUpdateBehavior.TestEquals( behavior ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            ALTER TABLE `foo`.`T`
+                                DROP FOREIGN KEY `FK_T_C2_REF_T`;
+                            """,
+                            $"""
+                             ALTER TABLE `foo`.`T`
+                                 ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE {behavior.Name};
+                             """ )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -579,11 +568,10 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var result = sut.SetOnUpdateBehavior( ReferenceBehavior.Restrict );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -600,11 +588,10 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var result = sut.SetOnUpdateBehavior( ReferenceBehavior.Restrict );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -618,9 +605,11 @@ public class MySqlForeignKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetOnUpdateBehavior( ReferenceBehavior.SetNull ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( MySqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -635,9 +624,11 @@ public class MySqlForeignKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetOnUpdateBehavior( ReferenceBehavior.Cascade ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( MySqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -653,23 +644,22 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            table.Constraints.TryGet( sut.Name ).Should().BeNull();
-            schema.Objects.TryGet( sut.Name ).Should().BeNull();
-            sut.IsRemoved.Should().BeTrue();
-            ix1.ReferencingObjects.Should().BeEmpty();
-            ix2.ReferencingObjects.Should().BeEmpty();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    ALTER TABLE `foo`.`T`
-                                          DROP FOREIGN KEY `FK_T_C2_REF_T`;
-                    """ );
-        }
+        Assertion.All(
+                table.Constraints.TryGet( sut.Name ).TestNull(),
+                schema.Objects.TryGet( sut.Name ).TestNull(),
+                sut.IsRemoved.TestTrue(),
+                ix1.ReferencingObjects.TestEmpty(),
+                ix2.ReferencingObjects.TestEmpty(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            ALTER TABLE `foo`.`T`
+                                DROP FOREIGN KEY `FK_T_C2_REF_T`;
+                            """ )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -686,24 +676,23 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            t2.Constraints.TryGet( sut.Name ).Should().BeNull();
-            schema.Objects.TryGet( sut.Name ).Should().BeNull();
-            sut.IsRemoved.Should().BeTrue();
-            ix1.ReferencingObjects.Should().BeEmpty();
-            ix2.ReferencingObjects.Should().BeEmpty();
-            table.ReferencingObjects.Should().BeEmpty();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    ALTER TABLE `foo`.`T2`
-                                          DROP FOREIGN KEY `FK_T2_C2_REF_T`;
-                    """ );
-        }
+        Assertion.All(
+                t2.Constraints.TryGet( sut.Name ).TestNull(),
+                schema.Objects.TryGet( sut.Name ).TestNull(),
+                sut.IsRemoved.TestTrue(),
+                ix1.ReferencingObjects.TestEmpty(),
+                ix2.ReferencingObjects.TestEmpty(),
+                table.ReferencingObjects.TestEmpty(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            ALTER TABLE `foo`.`T2`
+                                DROP FOREIGN KEY `FK_T2_C2_REF_T`;
+                            """ )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -721,25 +710,24 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            t2.Constraints.TryGet( sut.Name ).Should().BeNull();
-            s2.Objects.TryGet( sut.Name ).Should().BeNull();
-            sut.IsRemoved.Should().BeTrue();
-            ix1.ReferencingObjects.Should().BeEmpty();
-            ix2.ReferencingObjects.Should().BeEmpty();
-            table.ReferencingObjects.Should().BeEmpty();
-            schema.ReferencingObjects.Should().BeEmpty();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    ALTER TABLE `bar`.`T2`
-                                          DROP FOREIGN KEY `FK_T2_C2_REF_foo_T`;
-                    """ );
-        }
+        Assertion.All(
+                t2.Constraints.TryGet( sut.Name ).TestNull(),
+                s2.Objects.TryGet( sut.Name ).TestNull(),
+                sut.IsRemoved.TestTrue(),
+                ix1.ReferencingObjects.TestEmpty(),
+                ix2.ReferencingObjects.TestEmpty(),
+                table.ReferencingObjects.TestEmpty(),
+                schema.ReferencingObjects.TestEmpty(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            ALTER TABLE `bar`.`T2`
+                                DROP FOREIGN KEY `FK_T2_C2_REF_foo_T`;
+                            """ )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -758,7 +746,7 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Fact]
@@ -772,8 +760,10 @@ public class MySqlForeignKeyBuilderTests : TestsBase
 
         var result = sut.ForMySql( action );
 
-        result.Should().BeSameAs( sut );
-        action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( sut );
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                action.CallAt( 0 ).Arguments.TestSequence( [ sut ] ) )
+            .Go();
     }
 
     [Fact]
@@ -784,7 +774,9 @@ public class MySqlForeignKeyBuilderTests : TestsBase
 
         var result = sut.ForMySql( action );
 
-        result.Should().BeSameAs( sut );
-        action.Verify().CallCount.Should().Be( 0 );
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                action.CallCount().TestEquals( 0 ) )
+            .Go();
     }
 }

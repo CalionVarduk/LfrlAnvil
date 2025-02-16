@@ -22,7 +22,7 @@ public class MySqlColumnTypeDefinitionTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -30,6 +30,6 @@ public class MySqlColumnTypeDefinitionTests : TestsBase
     {
         var provider = new MySqlColumnTypeDefinitionProvider( new MySqlColumnTypeDefinitionProviderBuilder() );
         var action = Lambda.Of( () => provider.GetByType<MySqlParameter>() );
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 }

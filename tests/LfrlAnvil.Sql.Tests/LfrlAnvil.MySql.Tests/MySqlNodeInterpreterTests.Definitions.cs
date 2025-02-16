@@ -19,7 +19,7 @@ public partial class MySqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.Column<int>( "a", isNullable: true ) );
-            sut.Context.Sql.ToString().Should().Be( "`a` INT" );
+            sut.Context.Sql.ToString().TestEquals( "`a` INT" ).Go();
         }
 
         [Fact]
@@ -27,7 +27,7 @@ public partial class MySqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.Column<string>( "a", isNullable: false ) );
-            sut.Context.Sql.ToString().Should().Be( "`a` LONGTEXT NOT NULL" );
+            sut.Context.Sql.ToString().TestEquals( "`a` LONGTEXT NOT NULL" ).Go();
         }
 
         [Fact]
@@ -35,7 +35,7 @@ public partial class MySqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.Column<int>( "a", isNullable: false, defaultValue: SqlNode.Literal( 10 ) ) );
-            sut.Context.Sql.ToString().Should().Be( "`a` INT NOT NULL DEFAULT 10" );
+            sut.Context.Sql.ToString().TestEquals( "`a` INT NOT NULL DEFAULT 10" ).Go();
         }
 
         [Fact]
@@ -43,7 +43,7 @@ public partial class MySqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.Column<int>( "a", isNullable: true, defaultValue: SqlNode.Null() ) );
-            sut.Context.Sql.ToString().Should().Be( "`a` INT DEFAULT NULL" );
+            sut.Context.Sql.ToString().TestEquals( "`a` INT DEFAULT NULL" ).Go();
         }
 
         [Fact]
@@ -51,7 +51,7 @@ public partial class MySqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.Column<int>( "a", isNullable: false, defaultValue: SqlNode.Literal( 10 ) + SqlNode.Literal( 20 ) ) );
-            sut.Context.Sql.ToString().Should().Be( "`a` INT NOT NULL DEFAULT (10 + 20)" );
+            sut.Context.Sql.ToString().TestEquals( "`a` INT NOT NULL DEFAULT (10 + 20)" ).Go();
         }
 
         [Theory]
@@ -67,7 +67,7 @@ public partial class MySqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.Column( "a", TypeNullability.Create( type, isNullable: false ), defaultValue: SqlNode.Literal( "foo" ) ) );
-            sut.Context.Sql.ToString().Should().Be( $"`a` {expectedType} NOT NULL DEFAULT ('foo')" );
+            sut.Context.Sql.ToString().TestEquals( $"`a` {expectedType} NOT NULL DEFAULT ('foo')" ).Go();
         }
 
         [Fact]
@@ -76,7 +76,7 @@ public partial class MySqlNodeInterpreterTests
             var sut = CreateInterpreter();
             var typeDef = sut.TypeDefinitions.GetByDataType( MySqlDataType.Int );
             sut.Visit( SqlNode.Column( "a", typeDef, isNullable: true ) );
-            sut.Context.Sql.ToString().Should().Be( "`a` INT" );
+            sut.Context.Sql.ToString().TestEquals( "`a` INT" ).Go();
         }
 
         [Fact]
@@ -85,7 +85,7 @@ public partial class MySqlNodeInterpreterTests
             var sut = CreateInterpreter();
             var typeDef = sut.TypeDefinitions.GetByDataType( MySqlDataType.VarChar );
             sut.Visit( SqlNode.Column( "a", typeDef, isNullable: false ) );
-            sut.Context.Sql.ToString().Should().Be( "`a` VARCHAR(65535) NOT NULL" );
+            sut.Context.Sql.ToString().TestEquals( "`a` VARCHAR(65535) NOT NULL" ).Go();
         }
 
         [Theory]
@@ -97,7 +97,7 @@ public partial class MySqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.Column<string>( "a", computation: new SqlColumnComputation( SqlNode.Literal( "abc" ), storage ) ) );
-            sut.Context.Sql.ToString().Should().Be( $"`a` LONGTEXT GENERATED ALWAYS AS ('abc') {expectedStorage} NOT NULL" );
+            sut.Context.Sql.ToString().TestEquals( $"`a` LONGTEXT GENERATED ALWAYS AS ('abc') {expectedStorage} NOT NULL" ).Go();
         }
 
         [Theory]
@@ -114,7 +114,7 @@ public partial class MySqlNodeInterpreterTests
                     isNullable: true,
                     computation: new SqlColumnComputation( SqlNode.Literal( "abc" ), storage ) ) );
 
-            sut.Context.Sql.ToString().Should().Be( $"`a` LONGTEXT GENERATED ALWAYS AS ('abc') {expectedStorage}" );
+            sut.Context.Sql.ToString().TestEquals( $"`a` LONGTEXT GENERATED ALWAYS AS ('abc') {expectedStorage}" ).Go();
         }
 
         [Fact]
@@ -132,7 +132,7 @@ public partial class MySqlNodeInterpreterTests
 
             sut.Visit( node );
 
-            sut.Context.Sql.ToString().Should().Be( "CONSTRAINT `PK_foobar` PRIMARY KEY (`foo`.`bar`.`a` ASC, `foo`.`bar`.`b` DESC)" );
+            sut.Context.Sql.ToString().TestEquals( "CONSTRAINT `PK_foobar` PRIMARY KEY (`foo`.`bar`.`a` ASC, `foo`.`bar`.`b` DESC)" ).Go();
         }
 
         [Fact]
@@ -144,7 +144,7 @@ public partial class MySqlNodeInterpreterTests
 
             sut.Visit( node );
 
-            sut.Context.Sql.ToString().Should().Be( "CONSTRAINT `PK_foobar` PRIMARY KEY (`foo`.`bar`.`a` ASC)" );
+            sut.Context.Sql.ToString().TestEquals( "CONSTRAINT `PK_foobar` PRIMARY KEY (`foo`.`bar`.`a` ASC)" ).Go();
         }
 
         [Theory]
@@ -177,9 +177,9 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( node );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
-                    $"CONSTRAINT `FK_foobar_REF_qux` FOREIGN KEY (`a`, `b`) REFERENCES `common`.`qux` (`a`, `b`) ON DELETE {onDeleteBehavior.Name} ON UPDATE {onUpdateBehavior.Name}" );
+                .TestEquals(
+                    $"CONSTRAINT `FK_foobar_REF_qux` FOREIGN KEY (`a`, `b`) REFERENCES `common`.`qux` (`a`, `b`) ON DELETE {onDeleteBehavior.Name} ON UPDATE {onUpdateBehavior.Name}" )
+                .Go();
         }
 
         [Fact]
@@ -190,7 +190,7 @@ public partial class MySqlNodeInterpreterTests
             var node = SqlNode.Check( SqlSchemaObjectName.Create( "foo", "CHK_foobar" ), table["a"] > SqlNode.Literal( 10 ) );
             sut.Visit( node );
 
-            sut.Context.Sql.ToString().Should().Be( "CONSTRAINT `CHK_foobar` CHECK (`foo`.`bar`.`a` > 10)" );
+            sut.Context.Sql.ToString().TestEquals( "CONSTRAINT `CHK_foobar` CHECK (`foo`.`bar`.`a` > 10)" ).Go();
         }
 
         [Theory]
@@ -228,8 +228,7 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( node );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     $"""
                      CREATE{(isTemporary ? " TEMPORARY" : string.Empty)} TABLE{(ifNotExists ? " IF NOT EXISTS" : string.Empty)} {expectedName} (
                        `x` INT NOT NULL,
@@ -239,7 +238,8 @@ public partial class MySqlNodeInterpreterTests
                        CONSTRAINT `FK_foobar_REF_qux` FOREIGN KEY (`y`) REFERENCES qux (`y`) ON DELETE RESTRICT ON UPDATE RESTRICT,
                        CONSTRAINT `CHK_foobar` CHECK (`z` > 100.0)
                      )
-                     """ );
+                     """ )
+                .Go();
         }
 
         [Theory]
@@ -253,12 +253,12 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( node );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     $"""
                      CREATE VIEW {expectedName} AS
                      SELECT * FROM qux
-                     """ );
+                     """ )
+                .Go();
         }
 
         [Theory]
@@ -272,12 +272,12 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( node );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     $"""
                      CREATE OR REPLACE VIEW {expectedName} AS
                      SELECT * FROM qux
-                     """ );
+                     """ )
+                .Go();
         }
 
         [Fact]
@@ -289,7 +289,7 @@ public partial class MySqlNodeInterpreterTests
 
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should().ThrowExactly<SqlNodeVisitorException>();
+            action.Test( exc => exc.TestType().Exact<SqlNodeVisitorException>() ).Go();
         }
 
         [Theory]
@@ -308,7 +308,7 @@ public partial class MySqlNodeInterpreterTests
 
             sut.Visit( node );
 
-            sut.Context.Sql.ToString().Should().Be( $"CREATE {expectedType} `bar` ON `foo`.`qux` (`a` ASC, `b` DESC)" );
+            sut.Context.Sql.ToString().TestEquals( $"CREATE {expectedType} `bar` ON `foo`.`qux` (`a` ASC, `b` DESC)" ).Go();
         }
 
         [Fact]
@@ -329,7 +329,7 @@ public partial class MySqlNodeInterpreterTests
 
             sut.Visit( node );
 
-            sut.Context.Sql.ToString().Should().Be( "CREATE INDEX `bar` ON `qux` (`a` ASC, `b` DESC)" );
+            sut.Context.Sql.ToString().TestEquals( "CREATE INDEX `bar` ON `qux` (`a` ASC, `b` DESC)" ).Go();
         }
 
         [Theory]
@@ -349,12 +349,12 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( node );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     $"""
                      CALL `common`.`_DROP_INDEX_IF_EXISTS`('foo', 'qux', 'bar');
                      CREATE {expectedType} `bar` ON `foo`.`qux` (`a` ASC, `b` DESC)
-                     """ );
+                     """ )
+                .Go();
         }
 
         [Fact]
@@ -372,7 +372,7 @@ public partial class MySqlNodeInterpreterTests
 
             sut.Visit( node );
 
-            sut.Context.Sql.ToString().Should().Be( "CREATE INDEX `bar` ON qux (`a` ASC, `b` DESC)" );
+            sut.Context.Sql.ToString().TestEquals( "CREATE INDEX `bar` ON qux (`a` ASC, `b` DESC)" ).Go();
         }
 
         [Fact]
@@ -390,7 +390,7 @@ public partial class MySqlNodeInterpreterTests
 
             sut.Visit( node );
 
-            sut.Context.Sql.ToString().Should().Be( "CREATE INDEX `bar` ON qux (`a` ASC, `b` DESC) WHERE (`a` IS NOT NULL)" );
+            sut.Context.Sql.ToString().TestEquals( "CREATE INDEX `bar` ON qux (`a` ASC, `b` DESC) WHERE (`a` IS NOT NULL)" ).Go();
         }
 
         [Fact]
@@ -407,7 +407,7 @@ public partial class MySqlNodeInterpreterTests
 
             sut.Visit( node );
 
-            sut.Context.Sql.ToString().Should().Be( "CREATE INDEX `bar` ON `foo`.`qux` (`a`(500) ASC)" );
+            sut.Context.Sql.ToString().TestEquals( "CREATE INDEX `bar` ON `foo`.`qux` (`a`(500) ASC)" ).Go();
         }
 
         [Fact]
@@ -424,7 +424,7 @@ public partial class MySqlNodeInterpreterTests
 
             sut.Visit( node );
 
-            sut.Context.Sql.ToString().Should().Be( "CREATE INDEX `bar` ON `foo`.`qux` (`a` ASC)" );
+            sut.Context.Sql.ToString().TestEquals( "CREATE INDEX `bar` ON `foo`.`qux` (`a` ASC)" ).Go();
         }
 
         [Fact]
@@ -441,7 +441,7 @@ public partial class MySqlNodeInterpreterTests
 
             sut.Visit( node );
 
-            sut.Context.Sql.ToString().Should().Be( "CREATE INDEX `bar` ON qux ((`a` + `b`) ASC)" );
+            sut.Context.Sql.ToString().TestEquals( "CREATE INDEX `bar` ON qux ((`a` + `b`) ASC)" ).Go();
         }
 
         [Theory]
@@ -452,7 +452,7 @@ public partial class MySqlNodeInterpreterTests
             var sut = CreateInterpreter();
             var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
             sut.Visit( SqlNode.RenameTable( info, SqlSchemaObjectName.Create( "qux", "lorem" ) ) );
-            sut.Context.Sql.ToString().Should().Be( expected );
+            sut.Context.Sql.ToString().TestEquals( expected ).Go();
         }
 
         [Theory]
@@ -463,7 +463,7 @@ public partial class MySqlNodeInterpreterTests
             var sut = CreateInterpreter();
             var info = isTableTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
             sut.Visit( SqlNode.RenameColumn( info, "qux", "lorem" ) );
-            sut.Context.Sql.ToString().Should().Be( expected );
+            sut.Context.Sql.ToString().TestEquals( expected ).Go();
         }
 
         [Theory]
@@ -474,7 +474,7 @@ public partial class MySqlNodeInterpreterTests
             var sut = CreateInterpreter();
             var info = isTableTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
             sut.Visit( SqlNode.AddColumn( info, SqlNode.Column<int>( "qux", defaultValue: SqlNode.Literal( 10 ) ) ) );
-            sut.Context.Sql.ToString().Should().Be( expected );
+            sut.Context.Sql.ToString().TestEquals( expected ).Go();
         }
 
         [Theory]
@@ -485,7 +485,7 @@ public partial class MySqlNodeInterpreterTests
             var sut = CreateInterpreter();
             var info = isTableTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
             sut.Visit( SqlNode.DropColumn( info, "qux" ) );
-            sut.Context.Sql.ToString().Should().Be( expected );
+            sut.Context.Sql.ToString().TestEquals( expected ).Go();
         }
 
         [Theory]
@@ -498,7 +498,7 @@ public partial class MySqlNodeInterpreterTests
             var sut = CreateInterpreter();
             var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
             sut.Visit( SqlNode.DropTable( info, ifExists ) );
-            sut.Context.Sql.ToString().Should().Be( expected );
+            sut.Context.Sql.ToString().TestEquals( expected ).Go();
         }
 
         [Theory]
@@ -511,7 +511,7 @@ public partial class MySqlNodeInterpreterTests
             var sut = CreateInterpreter();
             var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
             sut.Visit( SqlNode.DropView( info, ifExists ) );
-            sut.Context.Sql.ToString().Should().Be( expected );
+            sut.Context.Sql.ToString().TestEquals( expected ).Go();
         }
 
         [Fact]
@@ -523,7 +523,7 @@ public partial class MySqlNodeInterpreterTests
 
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should().ThrowExactly<SqlNodeVisitorException>();
+            action.Test( exc => exc.TestType().Exact<SqlNodeVisitorException>() ).Go();
         }
 
         [Theory]
@@ -539,7 +539,7 @@ public partial class MySqlNodeInterpreterTests
 
             sut.Visit( SqlNode.DropIndex( recordSet, name, ifExists ) );
 
-            sut.Context.Sql.ToString().Should().Be( expected );
+            sut.Context.Sql.ToString().TestEquals( expected ).Go();
         }
     }
 }

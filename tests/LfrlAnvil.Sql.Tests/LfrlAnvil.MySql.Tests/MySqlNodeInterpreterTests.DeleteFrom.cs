@@ -4,8 +4,7 @@ using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
-using LfrlAnvil.TestExtensions.FluentAssertions;
-using LfrlAnvil.TestExtensions.Sql.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Assertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.MySql.Tests;
@@ -20,7 +19,7 @@ public partial class MySqlNodeInterpreterTests
             var sut = CreateInterpreter();
             var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
             sut.Visit( dataSource.ToDeleteFrom() );
-            sut.Context.Sql.ToString().Should().Be( "DELETE FROM foo" );
+            sut.Context.Sql.ToString().TestEquals( "DELETE FROM foo" ).Go();
         }
 
         [Fact]
@@ -34,12 +33,12 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     DELETE FROM foo
                     WHERE foo.`a` < 10
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -53,13 +52,13 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     DELETE `bar`
                     FROM foo AS `bar`
                     WHERE `bar`.`a` < 10
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -76,8 +75,7 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     WITH `cba` AS (
                       SELECT * FROM abc
@@ -88,7 +86,8 @@ public partial class MySqlNodeInterpreterTests
                     )
                     ORDER BY foo.`a` ASC
                     LIMIT 5
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -98,8 +97,7 @@ public partial class MySqlNodeInterpreterTests
             var table = SqlTableMock.Create<int>( "foo", new[] { "a", "b" }, new[] { "a" } );
             var foo = table.ToRecordSet( "f" );
 
-            var dataSource = foo
-                .ToDataSource()
+            var dataSource = foo.ToDataSource()
                 .Distinct()
                 .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
                 .AndWhere( s => s["f"]["a"].InQuery( SqlNode.RawQuery( "SELECT cba.c FROM cba" ) ) )
@@ -113,7 +111,6 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH `cba` AS (
@@ -135,7 +132,8 @@ public partial class MySqlNodeInterpreterTests
                     DELETE `common`.`foo`
                     FROM `common`.`foo`
                     INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0`;
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -149,13 +147,13 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     DELETE foo
                     FROM foo
                     INNER JOIN bar ON foo.`a` = bar.`a`
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -173,8 +171,7 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     WITH `cba` AS (
                       SELECT * FROM abc
@@ -183,7 +180,8 @@ public partial class MySqlNodeInterpreterTests
                     FROM foo AS `f`
                     INNER JOIN bar AS `b` ON `f`.`a` = `b`.`a`
                     WHERE `f`.`a` < 10
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -204,7 +202,6 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH `cba` AS (
@@ -224,7 +221,8 @@ public partial class MySqlNodeInterpreterTests
                     DELETE `common`.`foo`
                     FROM `common`.`foo`
                     INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0`;
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -250,7 +248,6 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH `cba` AS (
@@ -273,7 +270,8 @@ public partial class MySqlNodeInterpreterTests
                     DELETE `common`.`foo`
                     FROM `common`.`foo`
                     INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0`;
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -291,7 +289,6 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH `_{GUID}` AS (
@@ -304,7 +301,8 @@ public partial class MySqlNodeInterpreterTests
                     DELETE `common`.`foo`
                     FROM `common`.`foo`
                     INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0`;
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -322,7 +320,6 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH `_{GUID}` AS (
@@ -336,7 +333,8 @@ public partial class MySqlNodeInterpreterTests
                     DELETE `common`.`foo`
                     FROM `common`.`foo`
                     INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.`foo`.`b` = `_{GUID}`.`ID_b_1`);
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -354,7 +352,6 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH `_{GUID}` AS (
@@ -367,7 +364,8 @@ public partial class MySqlNodeInterpreterTests
                     DELETE `common`.`foo`
                     FROM `common`.`foo`
                     INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0`;
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -385,7 +383,6 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH `_{GUID}` AS (
@@ -399,7 +396,8 @@ public partial class MySqlNodeInterpreterTests
                     DELETE `common`.`foo`
                     FROM `common`.`foo`
                     INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.`foo`.`b` = `_{GUID}`.`ID_b_1`);
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -420,7 +418,6 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH `_{GUID}` AS (
@@ -435,7 +432,8 @@ public partial class MySqlNodeInterpreterTests
                     DELETE `common`.`foo`
                     FROM `common`.`foo`
                     INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.`foo`.`b` = `_{GUID}`.`ID_b_1`);
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Theory]
@@ -464,7 +462,6 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     $$"""
                       WITH `_{GUID}` AS (
@@ -477,7 +474,8 @@ public partial class MySqlNodeInterpreterTests
                       DELETE {{expectedName}}
                       FROM {{expectedName}}
                       INNER JOIN `_{GUID}` ON {{expectedName}}.`a` = `_{GUID}`.`ID_a_0`;
-                      """ );
+                      """ )
+                .Go();
         }
 
         [Theory]
@@ -506,7 +504,6 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     $$"""
                       WITH `_{GUID}` AS (
@@ -520,7 +517,8 @@ public partial class MySqlNodeInterpreterTests
                       DELETE {{expectedName}}
                       FROM {{expectedName}}
                       INNER JOIN `_{GUID}` ON ({{expectedName}}.`a` = `_{GUID}`.`ID_a_0`) AND ({{expectedName}}.`b` = `_{GUID}`.`ID_b_1`);
-                      """ );
+                      """ )
+                .Go();
         }
 
         [Theory]
@@ -543,7 +541,6 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     $$"""
                       WITH `_{GUID}` AS (
@@ -557,7 +554,8 @@ public partial class MySqlNodeInterpreterTests
                       DELETE {{expectedName}}
                       FROM {{expectedName}}
                       INNER JOIN `_{GUID}` ON ({{expectedName}}.`a` = `_{GUID}`.`ID_a_0`) AND ({{expectedName}}.`b` = `_{GUID}`.`ID_b_1`);
-                      """ );
+                      """ )
+                .Go();
         }
 
         [Fact]
@@ -568,9 +566,11 @@ public partial class MySqlNodeInterpreterTests
             var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should()
-                .ThrowExactly<SqlNodeVisitorException>()
-                .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlNodeVisitorException>(
+                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -581,9 +581,11 @@ public partial class MySqlNodeInterpreterTests
             var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should()
-                .ThrowExactly<SqlNodeVisitorException>()
-                .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlNodeVisitorException>(
+                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -594,9 +596,11 @@ public partial class MySqlNodeInterpreterTests
             var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should()
-                .ThrowExactly<SqlNodeVisitorException>()
-                .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlNodeVisitorException>(
+                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -608,9 +612,11 @@ public partial class MySqlNodeInterpreterTests
             var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should()
-                .ThrowExactly<SqlNodeVisitorException>()
-                .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlNodeVisitorException>(
+                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -629,9 +635,11 @@ public partial class MySqlNodeInterpreterTests
             var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should()
-                .ThrowExactly<SqlNodeVisitorException>()
-                .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlNodeVisitorException>(
+                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -650,9 +658,11 @@ public partial class MySqlNodeInterpreterTests
             var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should()
-                .ThrowExactly<SqlNodeVisitorException>()
-                .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlNodeVisitorException>(
+                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+                .Go();
         }
     }
 }

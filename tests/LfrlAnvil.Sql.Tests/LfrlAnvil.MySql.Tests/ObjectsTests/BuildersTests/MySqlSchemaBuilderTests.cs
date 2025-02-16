@@ -7,9 +7,8 @@ using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.MySql.Tests.ObjectsTests.BuildersTests;
 
@@ -23,7 +22,7 @@ public partial class MySqlSchemaBuilderTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( "[Schema] foo" );
+        result.TestEquals( "[Schema] foo" ).Go();
     }
 
     [Fact]
@@ -36,12 +35,11 @@ public partial class MySqlSchemaBuilderTests : TestsBase
         var sut = db.Schemas.Create( db.CommonSchemaName );
         var actions = db.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            db.Schemas.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.Name.Should().Be( db.CommonSchemaName );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                db.Schemas.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.Name.TestEquals( db.CommonSchemaName ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -53,14 +51,11 @@ public partial class MySqlSchemaBuilderTests : TestsBase
         var sut = db.Schemas.Create( "foo" );
         var actions = db.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            db.Schemas.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.Name.Should().Be( "foo" );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "CREATE SCHEMA `foo`;" );
-        }
+        Assertion.All(
+                db.Schemas.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.Name.TestEquals( "foo" ),
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "CREATE SCHEMA `foo`;" ) ] ) )
+            .Go();
     }
 
     [Theory]
@@ -81,14 +76,11 @@ public partial class MySqlSchemaBuilderTests : TestsBase
         var sut = db.Schemas.Create( "foo" );
         var actions = db.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            db.Schemas.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.Name.Should().Be( "foo" );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( expected );
-        }
+        Assertion.All(
+                db.Schemas.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.Name.TestEquals( "foo" ),
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( expected ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -101,11 +93,10 @@ public partial class MySqlSchemaBuilderTests : TestsBase
         var result = sut.SetName( sut.Name );
         var actions = db.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -118,17 +109,18 @@ public partial class MySqlSchemaBuilderTests : TestsBase
         var result = sut.SetName( "bar" );
         var actions = db.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            db.Schemas.TryGet( "bar" ).Should().BeSameAs( sut );
-            db.Schemas.TryGet( "foo" ).Should().BeNull();
-
-            actions.Should().HaveCount( 2 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "CREATE SCHEMA `bar`;" );
-            actions.ElementAtOrDefault( 1 ).Sql.Should().SatisfySql( "DROP SCHEMA `foo`;" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                db.Schemas.TryGet( "bar" ).TestRefEquals( sut ),
+                db.Schemas.TryGet( "foo" ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql( "CREATE SCHEMA `bar`;" ),
+                        (sql, _) => sql.SatisfySql( "DROP SCHEMA `foo`;" )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -141,16 +133,13 @@ public partial class MySqlSchemaBuilderTests : TestsBase
         var result = sut.SetName( "bar" );
         var actions = db.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            db.Schemas.TryGet( "bar" ).Should().BeSameAs( sut );
-            db.Schemas.TryGet( db.CommonSchemaName ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "CREATE SCHEMA `bar`;" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                db.Schemas.TryGet( "bar" ).TestRefEquals( sut ),
+                db.Schemas.TryGet( db.CommonSchemaName ).TestNull(),
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "CREATE SCHEMA `bar`;" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -164,16 +153,13 @@ public partial class MySqlSchemaBuilderTests : TestsBase
         var result = sut.SetName( db.CommonSchemaName );
         var actions = db.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( db.CommonSchemaName );
-            db.Schemas.TryGet( db.CommonSchemaName ).Should().BeSameAs( sut );
-            db.Schemas.TryGet( "bar" ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "DROP SCHEMA `bar`;" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( db.CommonSchemaName ),
+                db.Schemas.TryGet( db.CommonSchemaName ).TestRefEquals( sut ),
+                db.Schemas.TryGet( "bar" ).TestNull(),
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP SCHEMA `bar`;" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -209,48 +195,40 @@ public partial class MySqlSchemaBuilderTests : TestsBase
         var result = sut.SetName( "bar" );
         var actions = db.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            db.Schemas.TryGet( "bar" ).Should().BeSameAs( sut );
-            db.Schemas.TryGet( "foo" ).Should().BeNull();
-
-            t1.Info.Should().Be( SqlRecordSetInfo.Create( "bar", "T1" ) );
-            recordSet1.Info.Should().Be( t1.Info );
-            t2.Info.Should().Be( SqlRecordSetInfo.Create( "bar", "T2" ) );
-            recordSet2.Info.Should().Be( t2.Info );
-            v1.Info.Should().Be( SqlRecordSetInfo.Create( "bar", "V1" ) );
-            recordSet3.Info.Should().Be( v1.Info );
-            v2.Info.Should().Be( SqlRecordSetInfo.Create( "bar", "V2" ) );
-            recordSet4.Info.Should().Be( v2.Info );
-
-            actions.Should().HaveCount( 6 );
-
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "CREATE SCHEMA `bar`;" );
-            actions.ElementAtOrDefault( 1 ).Sql.Should().SatisfySql( "ALTER TABLE `foo`.`T1` RENAME TO `bar`.`T1`;" );
-            actions.ElementAtOrDefault( 2 ).Sql.Should().SatisfySql( "ALTER TABLE `foo`.`T2` RENAME TO `bar`.`T2`;" );
-
-            actions.ElementAtOrDefault( 3 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP VIEW `foo`.`V1`;",
-                    """
-                    CREATE VIEW `bar`.`V1` AS
-                                        SELECT * FROM bar;
-                    """ );
-
-            actions.ElementAtOrDefault( 4 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP VIEW `foo`.`V2`;",
-                    """
-                    CREATE VIEW `bar`.`V2` AS
-                                        SELECT * FROM qux;
-                    """ );
-
-            actions.ElementAtOrDefault( 5 ).Sql.Should().SatisfySql( "DROP SCHEMA `foo`;" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                db.Schemas.TryGet( "bar" ).TestRefEquals( sut ),
+                db.Schemas.TryGet( "foo" ).TestNull(),
+                t1.Info.TestEquals( SqlRecordSetInfo.Create( "bar", "T1" ) ),
+                recordSet1.Info.TestEquals( t1.Info ),
+                t2.Info.TestEquals( SqlRecordSetInfo.Create( "bar", "T2" ) ),
+                recordSet2.Info.TestEquals( t2.Info ),
+                v1.Info.TestEquals( SqlRecordSetInfo.Create( "bar", "V1" ) ),
+                recordSet3.Info.TestEquals( v1.Info ),
+                v2.Info.TestEquals( SqlRecordSetInfo.Create( "bar", "V2" ) ),
+                recordSet4.Info.TestEquals( v2.Info ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql( "CREATE SCHEMA `bar`;" ),
+                        (sql, _) => sql.SatisfySql( "ALTER TABLE `foo`.`T1` RENAME TO `bar`.`T1`;" ),
+                        (sql, _) => sql.SatisfySql( "ALTER TABLE `foo`.`T2` RENAME TO `bar`.`T2`;" ),
+                        (sql, _) => sql.SatisfySql(
+                            "DROP VIEW `foo`.`V1`;",
+                            """
+                            CREATE VIEW `bar`.`V1` AS
+                                SELECT * FROM bar;
+                            """ ),
+                        (sql, _) => sql.SatisfySql(
+                            "DROP VIEW `foo`.`V2`;",
+                            """
+                            CREATE VIEW `bar`.`V2` AS
+                                SELECT * FROM qux;
+                            """ ),
+                        (sql, _) => sql.SatisfySql( "DROP SCHEMA `foo`;" )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -275,46 +253,38 @@ public partial class MySqlSchemaBuilderTests : TestsBase
         var result = sut.SetName( "bar" );
         var actions = db.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            db.Schemas.TryGet( "bar" ).Should().BeSameAs( sut );
-            db.Schemas.TryGet( "foo" ).Should().BeNull();
-
-            table.Info.Should().Be( SqlRecordSetInfo.Create( "bar", "T" ) );
-            recordSet1.Info.Should().Be( table.Info );
-            view.Info.Should().Be( SqlRecordSetInfo.Create( "bar", "V" ) );
-            recordSet2.Info.Should().Be( view.Info );
-
-            actions.Should().HaveCount( 5 );
-
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "CREATE SCHEMA `bar`;" );
-            actions.ElementAtOrDefault( 1 ).Sql.Should().SatisfySql( "ALTER TABLE `foo`.`T` RENAME TO `bar`.`T`;" );
-
-            actions.ElementAtOrDefault( 2 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP VIEW `foo`.`V`;",
-                    """
-                    CREATE VIEW `bar`.`V` AS
-                                        SELECT * FROM qux;
-                    """ );
-
-            actions.ElementAtOrDefault( 3 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP VIEW `common`.`V`;",
-                    """
-                    CREATE VIEW `common`.`V` AS
-                                        SELECT
-                                          *
-                                        FROM `bar`.`V`
-                                        INNER JOIN `bar`.`T` ON TRUE;
-                    """ );
-
-            actions.ElementAtOrDefault( 4 ).Sql.Should().SatisfySql( "DROP SCHEMA `foo`;" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                db.Schemas.TryGet( "bar" ).TestRefEquals( sut ),
+                db.Schemas.TryGet( "foo" ).TestNull(),
+                table.Info.TestEquals( SqlRecordSetInfo.Create( "bar", "T" ) ),
+                recordSet1.Info.TestEquals( table.Info ),
+                view.Info.TestEquals( SqlRecordSetInfo.Create( "bar", "V" ) ),
+                recordSet2.Info.TestEquals( view.Info ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql( "CREATE SCHEMA `bar`;" ),
+                        (sql, _) => sql.SatisfySql( "ALTER TABLE `foo`.`T` RENAME TO `bar`.`T`;" ),
+                        (sql, _) => sql.SatisfySql(
+                            "DROP VIEW `foo`.`V`;",
+                            """
+                            CREATE VIEW `bar`.`V` AS
+                                SELECT * FROM qux;
+                            """ ),
+                        (sql, _) => sql.SatisfySql(
+                            "DROP VIEW `common`.`V`;",
+                            """
+                            CREATE VIEW `common`.`V` AS
+                                SELECT
+                                  *
+                                FROM `bar`.`V`
+                                INNER JOIN `bar`.`T` ON TRUE;
+                            """ ),
+                        (sql, _) => sql.SatisfySql( "DROP SCHEMA `foo`;" )
+                    ] ) )
+            .Go();
     }
 
     [Theory]
@@ -330,9 +300,11 @@ public partial class MySqlSchemaBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( name ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( MySqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -344,9 +316,11 @@ public partial class MySqlSchemaBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "bar" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( MySqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -358,9 +332,11 @@ public partial class MySqlSchemaBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( other.Name ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( MySqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -373,14 +349,11 @@ public partial class MySqlSchemaBuilderTests : TestsBase
         sut.Remove();
         var actions = db.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            db.Schemas.TryGet( sut.Name ).Should().BeNull();
-            sut.IsRemoved.Should().BeTrue();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "DROP SCHEMA `foo`;" );
-        }
+        Assertion.All(
+                db.Schemas.TryGet( sut.Name ).TestNull(),
+                sut.IsRemoved.TestTrue(),
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP SCHEMA `foo`;" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -426,46 +399,43 @@ public partial class MySqlSchemaBuilderTests : TestsBase
         sut.Remove();
         var actions = db.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            db.Schemas.TryGet( sut.Name ).Should().BeNull();
-            sut.IsRemoved.Should().BeTrue();
-            t1.IsRemoved.Should().BeTrue();
-            t2.IsRemoved.Should().BeTrue();
-            t3.IsRemoved.Should().BeTrue();
-            t4.IsRemoved.Should().BeTrue();
-            c1.IsRemoved.Should().BeTrue();
-            c2.IsRemoved.Should().BeTrue();
-            c3.IsRemoved.Should().BeTrue();
-            c4.IsRemoved.Should().BeTrue();
-            c5.IsRemoved.Should().BeTrue();
-            c6.IsRemoved.Should().BeTrue();
-            c7.IsRemoved.Should().BeTrue();
-            pk1.IsRemoved.Should().BeTrue();
-            pk2.IsRemoved.Should().BeTrue();
-            pk3.IsRemoved.Should().BeTrue();
-            pk4.IsRemoved.Should().BeTrue();
-            pk1.Index.IsRemoved.Should().BeTrue();
-            pk2.Index.IsRemoved.Should().BeTrue();
-            pk3.Index.IsRemoved.Should().BeTrue();
-            pk4.Index.IsRemoved.Should().BeTrue();
-            ix1.IsRemoved.Should().BeTrue();
-            ix2.IsRemoved.Should().BeTrue();
-            ix3.IsRemoved.Should().BeTrue();
-            fk1.IsRemoved.Should().BeTrue();
-            fk2.IsRemoved.Should().BeTrue();
-            fk3.IsRemoved.Should().BeTrue();
-            fk4.IsRemoved.Should().BeTrue();
-            fk5.IsRemoved.Should().BeTrue();
-            v1.IsRemoved.Should().BeTrue();
-            v2.IsRemoved.Should().BeTrue();
-            chk1.IsRemoved.Should().BeTrue();
-            chk2.IsRemoved.Should().BeTrue();
-            sut.Objects.Should().BeEmpty();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "DROP SCHEMA `foo`;" );
-        }
+        Assertion.All(
+                db.Schemas.TryGet( sut.Name ).TestNull(),
+                sut.IsRemoved.TestTrue(),
+                t1.IsRemoved.TestTrue(),
+                t2.IsRemoved.TestTrue(),
+                t3.IsRemoved.TestTrue(),
+                t4.IsRemoved.TestTrue(),
+                c1.IsRemoved.TestTrue(),
+                c2.IsRemoved.TestTrue(),
+                c3.IsRemoved.TestTrue(),
+                c4.IsRemoved.TestTrue(),
+                c5.IsRemoved.TestTrue(),
+                c6.IsRemoved.TestTrue(),
+                c7.IsRemoved.TestTrue(),
+                pk1.IsRemoved.TestTrue(),
+                pk2.IsRemoved.TestTrue(),
+                pk3.IsRemoved.TestTrue(),
+                pk4.IsRemoved.TestTrue(),
+                pk1.Index.IsRemoved.TestTrue(),
+                pk2.Index.IsRemoved.TestTrue(),
+                pk3.Index.IsRemoved.TestTrue(),
+                pk4.Index.IsRemoved.TestTrue(),
+                ix1.IsRemoved.TestTrue(),
+                ix2.IsRemoved.TestTrue(),
+                ix3.IsRemoved.TestTrue(),
+                fk1.IsRemoved.TestTrue(),
+                fk2.IsRemoved.TestTrue(),
+                fk3.IsRemoved.TestTrue(),
+                fk4.IsRemoved.TestTrue(),
+                fk5.IsRemoved.TestTrue(),
+                v1.IsRemoved.TestTrue(),
+                v2.IsRemoved.TestTrue(),
+                chk1.IsRemoved.TestTrue(),
+                chk2.IsRemoved.TestTrue(),
+                sut.Objects.TestEmpty(),
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP SCHEMA `foo`;" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -481,7 +451,7 @@ public partial class MySqlSchemaBuilderTests : TestsBase
         sut.Remove();
         var actions = db.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Fact]
@@ -492,9 +462,11 @@ public partial class MySqlSchemaBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( MySqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -506,9 +478,11 @@ public partial class MySqlSchemaBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( MySqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -525,9 +499,11 @@ public partial class MySqlSchemaBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( MySqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -542,9 +518,11 @@ public partial class MySqlSchemaBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( MySqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -555,8 +533,10 @@ public partial class MySqlSchemaBuilderTests : TestsBase
 
         var result = sut.ForMySql( action );
 
-        result.Should().BeSameAs( sut );
-        action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( sut );
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                action.CallAt( 0 ).Arguments.TestSequence( [ sut ] ) )
+            .Go();
     }
 
     [Fact]
@@ -567,7 +547,9 @@ public partial class MySqlSchemaBuilderTests : TestsBase
 
         var result = sut.ForMySql( action );
 
-        result.Should().BeSameAs( sut );
-        action.Verify().CallCount.Should().Be( 0 );
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                action.CallCount().TestEquals( 0 ) )
+            .Go();
     }
 }

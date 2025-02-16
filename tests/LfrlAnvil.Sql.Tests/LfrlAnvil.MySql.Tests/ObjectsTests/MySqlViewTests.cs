@@ -5,7 +5,6 @@ using LfrlAnvil.MySql.Objects;
 using LfrlAnvil.MySql.Tests.Helpers;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Expressions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.MySql.Tests.ObjectsTests;
 
@@ -29,24 +28,22 @@ public class MySqlViewTests : TestsBase
         var x = sut.DataFields.Get( "x" );
         var c = sut.DataFields.Get( "c" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Database.Should().BeSameAs( db );
-            sut.Schema.Should().BeSameAs( schema );
-            sut.Type.Should().Be( SqlObjectType.View );
-            sut.Name.Should().Be( "V" );
-            sut.Info.Should().Be( viewBuilder.Info );
-            sut.Node.View.Should().BeSameAs( sut );
-            sut.Node.Info.Should().Be( sut.Info );
-            sut.Node.Alias.Should().BeNull();
-            sut.Node.Identifier.Should().Be( sut.Info.Identifier );
-            sut.Node.IsOptional.Should().BeFalse();
-            sut.ToString().Should().Be( "[View] foo.V" );
-
-            sut.DataFields.Count.Should().Be( 3 );
-            sut.DataFields.View.Should().BeSameAs( sut );
-            sut.DataFields.Should().BeSequentiallyEqualTo( a, x, c );
-        }
+        Assertion.All(
+                sut.Database.TestRefEquals( db ),
+                sut.Schema.TestRefEquals( schema ),
+                sut.Type.TestEquals( SqlObjectType.View ),
+                sut.Name.TestEquals( "V" ),
+                sut.Info.TestEquals( viewBuilder.Info ),
+                sut.Node.View.TestRefEquals( sut ),
+                sut.Node.Info.TestEquals( sut.Info ),
+                sut.Node.Alias.TestNull(),
+                sut.Node.Identifier.TestEquals( sut.Info.Identifier ),
+                sut.Node.IsOptional.TestFalse(),
+                sut.ToString().TestEquals( "[View] foo.V" ),
+                sut.DataFields.Count.TestEquals( 3 ),
+                sut.DataFields.View.TestRefEquals( sut ),
+                sut.DataFields.TestSequence( [ a, x, c ] ) )
+            .Go();
     }
 
     [Theory]
@@ -65,7 +62,7 @@ public class MySqlViewTests : TestsBase
 
         var result = sut.Contains( name );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -81,7 +78,7 @@ public class MySqlViewTests : TestsBase
 
         var result = sut.Get( "F2" );
 
-        result.Should().BeSameAs( sut.First( f => f.Name == "F2" ) );
+        result.TestRefEquals( sut.First( f => f.Name == "F2" ) ).Go();
     }
 
     [Fact]
@@ -97,7 +94,7 @@ public class MySqlViewTests : TestsBase
 
         var action = Lambda.Of( () => sut.Get( "F2" ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -113,7 +110,7 @@ public class MySqlViewTests : TestsBase
 
         var result = sut.TryGet( "F2" );
 
-        result.Should().BeSameAs( sut.First( f => f.Name == "F2" ) );
+        result.TestRefEquals( sut.First( f => f.Name == "F2" ) ).Go();
     }
 
     [Fact]
@@ -129,7 +126,7 @@ public class MySqlViewTests : TestsBase
 
         var result = sut.TryGet( "F2" );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -144,13 +141,11 @@ public class MySqlViewTests : TestsBase
         var sut = db.Schemas.Default.Objects.GetView( "V" ).DataFields;
 
         var result = new List<MySqlViewDataField>();
-        foreach ( var e in sut )
-            result.Add( e );
+        foreach ( var e in sut ) result.Add( e );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().HaveCount( 2 );
-            result.Should().BeEquivalentTo( sut.Get( "F1" ), sut.Get( "C2" ) );
-        }
+        Assertion.All(
+                result.Count.TestEquals( 2 ),
+                result.TestSetEqual( [ sut.Get( "F1" ), sut.Get( "C2" ) ] ) )
+            .Go();
     }
 }

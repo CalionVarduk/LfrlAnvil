@@ -26,8 +26,7 @@ public partial class MySqlNodeInterpreterTests
                         r => new[] { r["a"], r["c"] } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     INSERT INTO qux (`a`, `b`)
                     VALUES
@@ -37,7 +36,8 @@ public partial class MySqlNodeInterpreterTests
                     ON DUPLICATE KEY UPDATE
                       `b` = (qux.`b` + `new`.`b`),
                       `c` = (`new`.`b` + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -58,8 +58,7 @@ public partial class MySqlNodeInterpreterTests
                         (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     INSERT INTO `common`.`qux` (`a`, `b`)
                     VALUES
@@ -69,7 +68,8 @@ public partial class MySqlNodeInterpreterTests
                     ON DUPLICATE KEY UPDATE
                       `b` = (`common`.`qux`.`b` + `new`.`b`),
                       `c` = (`new`.`b` + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -106,8 +106,7 @@ public partial class MySqlNodeInterpreterTests
                     r => new[] { r["a"], r["c"] } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     INSERT INTO qux (`a`, `b`)
                     WITH `cba` AS (
@@ -131,7 +130,8 @@ public partial class MySqlNodeInterpreterTests
                     ON DUPLICATE KEY UPDATE
                       `b` = (qux.`b` + `new`.`b`),
                       `c` = (`new`.`b` + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -168,8 +168,7 @@ public partial class MySqlNodeInterpreterTests
                     (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     INSERT INTO `common`.`qux` (`a`, `b`)
                     WITH `cba` AS (
@@ -193,7 +192,8 @@ public partial class MySqlNodeInterpreterTests
                     ON DUPLICATE KEY UPDATE
                       `b` = (`common`.`qux`.`b` + `new`.`b`),
                       `c` = (`new`.`b` + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -217,8 +217,7 @@ public partial class MySqlNodeInterpreterTests
                     r => new[] { r["a"], r["c"] } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     INSERT INTO qux (`a`, `b`)
                     WITH `x` AS (
@@ -236,7 +235,8 @@ public partial class MySqlNodeInterpreterTests
                     ON DUPLICATE KEY UPDATE
                       `b` = (qux.`b` + `new`.`b`),
                       `c` = (`new`.`b` + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -260,8 +260,7 @@ public partial class MySqlNodeInterpreterTests
                     (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     INSERT INTO `common`.`qux` (`a`, `b`)
                     WITH `x` AS (
@@ -279,7 +278,8 @@ public partial class MySqlNodeInterpreterTests
                     ON DUPLICATE KEY UPDATE
                       `b` = (`common`.`qux`.`b` + `new`.`b`),
                       `c` = (`new`.`b` + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -295,8 +295,7 @@ public partial class MySqlNodeInterpreterTests
                         r => new[] { r["a"], r["c"] } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     INSERT INTO qux (`a`, `b`)
                     SELECT * FROM (
@@ -305,7 +304,8 @@ public partial class MySqlNodeInterpreterTests
                     ON DUPLICATE KEY UPDATE
                       `b` = (qux.`b` + `new`.`b`),
                       `c` = (`new`.`b` + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -321,8 +321,7 @@ public partial class MySqlNodeInterpreterTests
                         (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     INSERT INTO `common`.`qux` (`a`, `b`)
                     SELECT * FROM (
@@ -331,7 +330,8 @@ public partial class MySqlNodeInterpreterTests
                     ON DUPLICATE KEY UPDATE
                       `b` = (`common`.`qux`.`b` + `new`.`b`),
                       `c` = (`new`.`b` + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -351,8 +351,7 @@ public partial class MySqlNodeInterpreterTests
                         (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     INSERT INTO qux (`a`, `b`)
                     VALUES
@@ -362,7 +361,8 @@ public partial class MySqlNodeInterpreterTests
                     ON DUPLICATE KEY UPDATE
                       `b` = (qux.`b` + `upsert-source`.`b`),
                       `c` = (`upsert-source`.`b` + 1)
-                    """ );
+                    """ )
+                .Go();
         }
     }
 }

@@ -21,7 +21,7 @@ public class MySqlColumnTypeDefinitionDoubleTests : TestsBase
     {
         var sut = _provider.GetByType<double>();
         var result = sut.TryToDbLiteral( value );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -29,7 +29,7 @@ public class MySqlColumnTypeDefinitionDoubleTests : TestsBase
     {
         var sut = _provider.GetByType<double>();
         var result = sut.TryToDbLiteral( string.Empty );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -37,7 +37,7 @@ public class MySqlColumnTypeDefinitionDoubleTests : TestsBase
     {
         var sut = _provider.GetByType<double>();
         var result = sut.TryToParameterValue( 123.625 );
-        result.Should().Be( 123.625 );
+        result.TestEquals( 123.625 ).Go();
     }
 
     [Fact]
@@ -45,7 +45,7 @@ public class MySqlColumnTypeDefinitionDoubleTests : TestsBase
     {
         var sut = _provider.GetByType<double>();
         var result = sut.TryToParameterValue( string.Empty );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -58,12 +58,11 @@ public class MySqlColumnTypeDefinitionDoubleTests : TestsBase
 
         sut.SetParameterInfo( parameter, isNullable );
 
-        using ( new AssertionScope() )
-        {
-            parameter.DbType.Should().Be( sut.DataType.DbType );
-            parameter.MySqlDbType.Should().Be( MySqlDbType.Double );
-            parameter.IsNullable.Should().Be( isNullable );
-        }
+        Assertion.All(
+                parameter.DbType.TestEquals( sut.DataType.DbType ),
+                parameter.MySqlDbType.TestEquals( MySqlDbType.Double ),
+                parameter.IsNullable.TestEquals( isNullable ) )
+            .Go();
     }
 
     [Theory]
@@ -76,6 +75,6 @@ public class MySqlColumnTypeDefinitionDoubleTests : TestsBase
 
         sut.SetParameterInfo( parameter, isNullable );
 
-        parameter.DbType.Should().Be( sut.DataType.DbType );
+        parameter.DbType.TestEquals( sut.DataType.DbType ).Go();
     }
 }

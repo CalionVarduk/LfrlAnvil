@@ -7,9 +7,8 @@ using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.MySql.Tests.ObjectsTests.BuildersTests;
 
@@ -23,7 +22,7 @@ public partial class MySqlTableBuilderTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( "[Table] foo.bar" );
+        result.TestEquals( "[Table] foo.bar" ).Go();
     }
 
     [Fact]
@@ -43,34 +42,33 @@ public partial class MySqlTableBuilderTests : TestsBase
 
         var actions = schema.Database.GetLastPendingActions( 1 );
 
-        using ( new AssertionScope() )
-        {
-            schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.Name.Should().Be( "T" );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    CREATE TABLE `foo`.`T` (
-                                          `C1` INT NOT NULL,
-                                          `C2` INT NOT NULL,
-                                          `C3` BIGINT NOT NULL,
-                                          `C4` BIGINT NOT NULL,
-                                          `C5` LONGBLOB GENERATED ALWAYS AS (`C1` + 1) VIRTUAL NOT NULL,
-                                          `C6` LONGBLOB GENERATED ALWAYS AS (`C2` * `C5`) STORED,
-                                          CONSTRAINT `PK_T` PRIMARY KEY (`C2` ASC),
-                                          CONSTRAINT `CHK_T_{GUID}` CHECK (`C1` > 0)
-                                        );
-                    """,
-                    "CREATE INDEX `IX_T_C1A` ON `foo`.`T` (`C1` ASC);",
-                    "CREATE INDEX `IX_T_C3A_C4D` ON `foo`.`T` (`C3` ASC, `C4` DESC);",
-                    """
-                    ALTER TABLE `foo`.`T`
-                                          ADD CONSTRAINT `FK_T_C1_REF_T` FOREIGN KEY (`C1`) REFERENCES `foo`.`T` (`C2`) ON DELETE RESTRICT ON UPDATE RESTRICT;
-                    """ );
-        }
+        Assertion.All(
+                schema.Objects.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.Name.TestEquals( "T" ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            CREATE TABLE `foo`.`T` (
+                              `C1` INT NOT NULL,
+                              `C2` INT NOT NULL,
+                              `C3` BIGINT NOT NULL,
+                              `C4` BIGINT NOT NULL,
+                              `C5` LONGBLOB GENERATED ALWAYS AS (`C1` + 1) VIRTUAL NOT NULL,
+                              `C6` LONGBLOB GENERATED ALWAYS AS (`C2` * `C5`) STORED,
+                              CONSTRAINT `PK_T` PRIMARY KEY (`C2` ASC),
+                              CONSTRAINT `CHK_T_{GUID}` CHECK (`C1` > 0)
+                            );
+                            """,
+                            "CREATE INDEX `IX_T_C1A` ON `foo`.`T` (`C1` ASC);",
+                            "CREATE INDEX `IX_T_C3A_C4D` ON `foo`.`T` (`C3` ASC, `C4` DESC);",
+                            """
+                            ALTER TABLE `foo`.`T`
+                                ADD CONSTRAINT `FK_T_C1_REF_T` FOREIGN KEY (`C1`) REFERENCES `foo`.`T` (`C2`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+                            """ )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -83,7 +81,7 @@ public partial class MySqlTableBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Fact]
@@ -95,9 +93,11 @@ public partial class MySqlTableBuilderTests : TestsBase
 
         var action = Lambda.Of( () => schema.Database.Changes.CompletePendingChanges() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( MySqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -111,11 +111,10 @@ public partial class MySqlTableBuilderTests : TestsBase
         var result = sut.SetName( sut.Name );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -131,11 +130,10 @@ public partial class MySqlTableBuilderTests : TestsBase
         var result = sut.SetName( oldName );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -152,18 +150,16 @@ public partial class MySqlTableBuilderTests : TestsBase
         var result = sut.SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            sut.Info.Should().Be( SqlRecordSetInfo.Create( "foo", "bar" ) );
-            recordSet.Info.Should().Be( sut.Info );
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( oldName ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE `foo`.`T` RENAME TO `foo`.`bar`;" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                sut.Info.TestEquals( SqlRecordSetInfo.Create( "foo", "bar" ) ),
+                recordSet.Info.TestEquals( sut.Info ),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( oldName ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER TABLE `foo`.`T` RENAME TO `foo`.`bar`;" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -186,18 +182,16 @@ public partial class MySqlTableBuilderTests : TestsBase
         var result = sut.SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "T" ).Should().BeNull();
-            fk1.IsRemoved.Should().BeFalse();
-            fk2.IsRemoved.Should().BeFalse();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE `foo`.`T` RENAME TO `foo`.`bar`;" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "T" ).TestNull(),
+                fk1.IsRemoved.TestFalse(),
+                fk2.IsRemoved.TestFalse(),
+                actions.Select( a => a.Sql )
+                    .TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER TABLE `foo`.`T` RENAME TO `foo`.`bar`;" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -225,19 +219,17 @@ public partial class MySqlTableBuilderTests : TestsBase
         var result = sut.SetName( "U" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "U" );
-            schema.Objects.TryGet( "U" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "T" ).Should().BeNull();
-            fk1.IsRemoved.Should().BeFalse();
-            fk2.IsRemoved.Should().BeFalse();
-            fk3.IsRemoved.Should().BeFalse();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE `foo`.`T1` RENAME TO `foo`.`U`;" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "U" ),
+                schema.Objects.TryGet( "U" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "T" ).TestNull(),
+                fk1.IsRemoved.TestFalse(),
+                fk2.IsRemoved.TestFalse(),
+                fk3.IsRemoved.TestFalse(),
+                actions.Select( a => a.Sql )
+                    .TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER TABLE `foo`.`T1` RENAME TO `foo`.`U`;" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -258,24 +250,23 @@ public partial class MySqlTableBuilderTests : TestsBase
         var result = sut.SetName( "U" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "U" );
-            schema.Objects.TryGet( "U" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "T1" ).Should().BeNull();
-            fk1.IsRemoved.Should().BeFalse();
-
-            actions.Should().HaveCount( 2 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE `foo`.`T1` RENAME TO `foo`.`U`;" );
-            actions.ElementAtOrDefault( 1 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    ALTER TABLE `foo`.`U`
-                                          ADD COLUMN `C3` INT NOT NULL DEFAULT 0;
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "U" ),
+                schema.Objects.TryGet( "U" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "T1" ).TestNull(),
+                fk1.IsRemoved.TestFalse(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql( "ALTER TABLE `foo`.`T1` RENAME TO `foo`.`U`;" ),
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            ALTER TABLE `foo`.`U`
+                                ADD COLUMN `C3` INT NOT NULL DEFAULT 0;
+                            """ )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -293,43 +284,37 @@ public partial class MySqlTableBuilderTests : TestsBase
         var result = sut.SetName( "U" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "U" );
-            schema.Objects.TryGet( "U" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "T" ).Should().BeNull();
-            v1.IsRemoved.Should().BeFalse();
-            v2.IsRemoved.Should().BeFalse();
-            v3.IsRemoved.Should().BeFalse();
-
-            actions.Should().HaveCount( 3 );
-
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE `foo`.`T` RENAME TO `foo`.`U`;" );
-
-            actions.ElementAtOrDefault( 1 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP VIEW `foo`.`V1`;",
-                    """
-                    CREATE VIEW `foo`.`V1` AS
-                                        SELECT
-                                          `foo`.`U`.`C`
-                                        FROM `foo`.`U`;
-                    """ );
-
-            actions.ElementAtOrDefault( 2 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP VIEW `foo`.`V2`;",
-                    """
-                    CREATE VIEW `foo`.`V2` AS
-                                        SELECT
-                                          *
-                                        FROM `foo`.`V1`
-                                        INNER JOIN `foo`.`U` ON TRUE;
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "U" ),
+                schema.Objects.TryGet( "U" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "T" ).TestNull(),
+                v1.IsRemoved.TestFalse(),
+                v2.IsRemoved.TestFalse(),
+                v3.IsRemoved.TestFalse(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql( "ALTER TABLE `foo`.`T` RENAME TO `foo`.`U`;" ),
+                        (sql, _) => sql.SatisfySql(
+                            "DROP VIEW `foo`.`V1`;",
+                            """
+                            CREATE VIEW `foo`.`V1` AS
+                                SELECT
+                                  `foo`.`U`.`C`
+                                FROM `foo`.`U`;
+                            """ ),
+                        (sql, _) => sql.SatisfySql(
+                            "DROP VIEW `foo`.`V2`;",
+                            """
+                            CREATE VIEW `foo`.`V2` AS
+                                SELECT
+                                  *
+                                FROM `foo`.`V1`
+                                INNER JOIN `foo`.`U` ON TRUE;
+                            """ )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -348,51 +333,42 @@ public partial class MySqlTableBuilderTests : TestsBase
         var result = sut.SetName( "U" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "U" );
-            schema.Objects.TryGet( "U" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "T" ).Should().BeNull();
-            v1.IsRemoved.Should().BeFalse();
-            v2.IsRemoved.Should().BeFalse();
-            v3.IsRemoved.Should().BeFalse();
-
-            actions.Should().HaveCount( 4 );
-
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE `foo`.`T` RENAME TO `foo`.`U`;" );
-
-            actions.ElementAtOrDefault( 1 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP VIEW `foo`.`V1`;",
-                    """
-                    CREATE VIEW `foo`.`V1` AS
-                                        SELECT
-                                          `foo`.`U`.`C`
-                                        FROM `foo`.`U`;
-                    """ );
-
-            actions.ElementAtOrDefault( 2 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP VIEW `foo`.`V2`;",
-                    """
-                    CREATE VIEW `foo`.`V2` AS
-                                        SELECT
-                                          *
-                                        FROM `foo`.`V1`
-                                        INNER JOIN `foo`.`U` ON TRUE;
-                    """ );
-
-            actions.ElementAtOrDefault( 3 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    ALTER TABLE `foo`.`U`
-                                          ADD COLUMN `D` INT NOT NULL DEFAULT 0;
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "U" ),
+                schema.Objects.TryGet( "U" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "T" ).TestNull(),
+                v1.IsRemoved.TestFalse(),
+                v2.IsRemoved.TestFalse(),
+                v3.IsRemoved.TestFalse(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql( "ALTER TABLE `foo`.`T` RENAME TO `foo`.`U`;" ),
+                        (sql, _) => sql.SatisfySql(
+                            "DROP VIEW `foo`.`V1`;",
+                            """
+                            CREATE VIEW `foo`.`V1` AS
+                                SELECT
+                                  `foo`.`U`.`C`
+                                FROM `foo`.`U`;
+                            """ ),
+                        (sql, _) => sql.SatisfySql(
+                            "DROP VIEW `foo`.`V2`;",
+                            """
+                            CREATE VIEW `foo`.`V2` AS
+                                SELECT
+                                  *
+                                FROM `foo`.`V1`
+                                INNER JOIN `foo`.`U` ON TRUE;
+                            """ ),
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            ALTER TABLE `foo`.`U`
+                                ADD COLUMN `D` INT NOT NULL DEFAULT 0;
+                            """ )
+                    ] ) )
+            .Go();
     }
 
     [Theory]
@@ -408,9 +384,11 @@ public partial class MySqlTableBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( name ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( MySqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -422,9 +400,11 @@ public partial class MySqlTableBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "bar" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( MySqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -436,9 +416,11 @@ public partial class MySqlTableBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "PK_T" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( MySqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -460,48 +442,43 @@ public partial class MySqlTableBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            schema.Objects.TryGet( sut.Name ).Should().BeNull();
-            schema.Objects.TryGet( pk.Name ).Should().BeNull();
-            schema.Objects.TryGet( pk.Index.Name ).Should().BeNull();
-            schema.Objects.TryGet( ix.Name ).Should().BeNull();
-            schema.Objects.TryGet( selfFk.Name ).Should().BeNull();
-            schema.Objects.TryGet( externalFk.Name ).Should().BeNull();
-            schema.Objects.TryGet( chk.Name ).Should().BeNull();
-
-            sut.IsRemoved.Should().BeTrue();
-            sut.ReferencingObjects.Should().BeEmpty();
-            sut.Columns.Should().BeEmpty();
-            sut.Constraints.Should().BeEmpty();
-            sut.Constraints.TryGetPrimaryKey().Should().BeNull();
-            c1.IsRemoved.Should().BeTrue();
-            c1.ReferencingObjects.Should().BeEmpty();
-            c2.IsRemoved.Should().BeTrue();
-            c2.ReferencingObjects.Should().BeEmpty();
-            pk.IsRemoved.Should().BeTrue();
-            pk.ReferencingObjects.Should().BeEmpty();
-            pk.Index.IsRemoved.Should().BeTrue();
-            pk.Index.ReferencingObjects.Should().BeEmpty();
-            pk.Index.Columns.Expressions.Should().BeEmpty();
-            pk.Index.PrimaryKey.Should().BeNull();
-            ix.IsRemoved.Should().BeTrue();
-            ix.ReferencingObjects.Should().BeEmpty();
-            ix.Columns.Expressions.Should().BeEmpty();
-            selfFk.IsRemoved.Should().BeTrue();
-            selfFk.ReferencingObjects.Should().BeEmpty();
-            externalFk.IsRemoved.Should().BeTrue();
-            externalFk.ReferencingObjects.Should().BeEmpty();
-            chk.IsRemoved.Should().BeTrue();
-            chk.ReferencingObjects.Should().BeEmpty();
-            chk.ReferencedColumns.Should().BeEmpty();
-
-            otherPk.Index.ReferencingObjects.Should().BeEmpty();
-            otherTable.ReferencingObjects.Should().BeEmpty();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "DROP TABLE `foo`.`T`;" );
-        }
+        Assertion.All(
+                schema.Objects.TryGet( sut.Name ).TestNull(),
+                schema.Objects.TryGet( pk.Name ).TestNull(),
+                schema.Objects.TryGet( pk.Index.Name ).TestNull(),
+                schema.Objects.TryGet( ix.Name ).TestNull(),
+                schema.Objects.TryGet( selfFk.Name ).TestNull(),
+                schema.Objects.TryGet( externalFk.Name ).TestNull(),
+                schema.Objects.TryGet( chk.Name ).TestNull(),
+                sut.IsRemoved.TestTrue(),
+                sut.ReferencingObjects.TestEmpty(),
+                sut.Columns.TestEmpty(),
+                sut.Constraints.TestEmpty(),
+                sut.Constraints.TryGetPrimaryKey().TestNull(),
+                c1.IsRemoved.TestTrue(),
+                c1.ReferencingObjects.TestEmpty(),
+                c2.IsRemoved.TestTrue(),
+                c2.ReferencingObjects.TestEmpty(),
+                pk.IsRemoved.TestTrue(),
+                pk.ReferencingObjects.TestEmpty(),
+                pk.Index.IsRemoved.TestTrue(),
+                pk.Index.ReferencingObjects.TestEmpty(),
+                pk.Index.Columns.Expressions.TestEmpty(),
+                pk.Index.PrimaryKey.TestNull(),
+                ix.IsRemoved.TestTrue(),
+                ix.ReferencingObjects.TestEmpty(),
+                ix.Columns.Expressions.TestEmpty(),
+                selfFk.IsRemoved.TestTrue(),
+                selfFk.ReferencingObjects.TestEmpty(),
+                externalFk.IsRemoved.TestTrue(),
+                externalFk.ReferencingObjects.TestEmpty(),
+                chk.IsRemoved.TestTrue(),
+                chk.ReferencingObjects.TestEmpty(),
+                chk.ReferencedColumns.TestEmpty(),
+                otherPk.Index.ReferencingObjects.TestEmpty(),
+                otherTable.ReferencingObjects.TestEmpty(),
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP TABLE `foo`.`T`;" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -516,29 +493,25 @@ public partial class MySqlTableBuilderTests : TestsBase
         sut.SetName( "bar" ).Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            schema.Objects.TryGet( sut.Name ).Should().BeNull();
-            schema.Objects.TryGet( pk.Name ).Should().BeNull();
-            schema.Objects.TryGet( pk.Index.Name ).Should().BeNull();
-
-            sut.IsRemoved.Should().BeTrue();
-            sut.ReferencingObjects.Should().BeEmpty();
-            sut.Columns.Should().BeEmpty();
-            sut.Constraints.Should().BeEmpty();
-            sut.Constraints.TryGetPrimaryKey().Should().BeNull();
-            c1.IsRemoved.Should().BeTrue();
-            c1.ReferencingObjects.Should().BeEmpty();
-            pk.IsRemoved.Should().BeTrue();
-            pk.ReferencingObjects.Should().BeEmpty();
-            pk.Index.IsRemoved.Should().BeTrue();
-            pk.Index.ReferencingObjects.Should().BeEmpty();
-            pk.Index.Columns.Expressions.Should().BeEmpty();
-            pk.Index.PrimaryKey.Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "DROP TABLE `foo`.`T`;" );
-        }
+        Assertion.All(
+                schema.Objects.TryGet( sut.Name ).TestNull(),
+                schema.Objects.TryGet( pk.Name ).TestNull(),
+                schema.Objects.TryGet( pk.Index.Name ).TestNull(),
+                sut.IsRemoved.TestTrue(),
+                sut.ReferencingObjects.TestEmpty(),
+                sut.Columns.TestEmpty(),
+                sut.Constraints.TestEmpty(),
+                sut.Constraints.TryGetPrimaryKey().TestNull(),
+                c1.IsRemoved.TestTrue(),
+                c1.ReferencingObjects.TestEmpty(),
+                pk.IsRemoved.TestTrue(),
+                pk.ReferencingObjects.TestEmpty(),
+                pk.Index.IsRemoved.TestTrue(),
+                pk.Index.ReferencingObjects.TestEmpty(),
+                pk.Index.Columns.Expressions.TestEmpty(),
+                pk.Index.PrimaryKey.TestNull(),
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP TABLE `foo`.`T`;" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -555,7 +528,7 @@ public partial class MySqlTableBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Fact]
@@ -571,9 +544,11 @@ public partial class MySqlTableBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( MySqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -586,9 +561,11 @@ public partial class MySqlTableBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( MySqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -606,18 +583,17 @@ public partial class MySqlTableBuilderTests : TestsBase
         a.SetName( "B" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
+        actions.Select( ac => ac.Sql )
+            .TestSequence(
+            [
+                (sql, _) => sql.SatisfySql(
                     """
                     ALTER TABLE `foo`.`T`
-                                          CHANGE COLUMN `A` `B` LONGBLOB NOT NULL,
-                                          CHANGE COLUMN `B` `A` LONGBLOB NOT NULL;
-                    """ );
-        }
+                        CHANGE COLUMN `A` `B` LONGBLOB NOT NULL,
+                        CHANGE COLUMN `B` `A` LONGBLOB NOT NULL;
+                    """ )
+            ] )
+            .Go();
     }
 
     [Fact]
@@ -639,20 +615,19 @@ public partial class MySqlTableBuilderTests : TestsBase
         a.SetName( "D" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
+        actions.Select( ac => ac.Sql )
+            .TestSequence(
+            [
+                (sql, _) => sql.SatisfySql(
                     """
                     ALTER TABLE `foo`.`T`
-                                          CHANGE COLUMN `A` `D` LONGBLOB NOT NULL,
-                                          CHANGE COLUMN `B` `A` LONGBLOB NOT NULL,
-                                          CHANGE COLUMN `C` `B` LONGBLOB NOT NULL,
-                                          CHANGE COLUMN `D` `C` LONGBLOB NOT NULL;
-                    """ );
-        }
+                        CHANGE COLUMN `A` `D` LONGBLOB NOT NULL,
+                        CHANGE COLUMN `B` `A` LONGBLOB NOT NULL,
+                        CHANGE COLUMN `C` `B` LONGBLOB NOT NULL,
+                        CHANGE COLUMN `D` `C` LONGBLOB NOT NULL;
+                    """ )
+            ] )
+            .Go();
     }
 
     [Fact]
@@ -673,19 +648,18 @@ public partial class MySqlTableBuilderTests : TestsBase
         a.SetName( "B" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
+        actions.Select( ac => ac.Sql )
+            .TestSequence(
+            [
+                (sql, _) => sql.SatisfySql(
                     """
                     ALTER TABLE `foo`.`T`
-                                          CHANGE COLUMN `A` `B` LONGBLOB NOT NULL,
-                                          CHANGE COLUMN `B` `C` LONGBLOB NOT NULL,
-                                          CHANGE COLUMN `C` `D` LONGBLOB NOT NULL;
-                    """ );
-        }
+                        CHANGE COLUMN `A` `B` LONGBLOB NOT NULL,
+                        CHANGE COLUMN `B` `C` LONGBLOB NOT NULL,
+                        CHANGE COLUMN `C` `D` LONGBLOB NOT NULL;
+                    """ )
+            ] )
+            .Go();
     }
 
     [Fact]
@@ -706,23 +680,22 @@ public partial class MySqlTableBuilderTests : TestsBase
         a.SetName( "D" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
+        actions.Select( ac => ac.Sql )
+            .TestSequence(
+            [
+                (sql, _) => sql.SatisfySql(
                     """
                     ALTER TABLE `foo`.`T`
-                                          DROP PRIMARY KEY,
-                                          DROP CHECK `B`,
-                                          DROP CHECK `D`,
-                                          RENAME INDEX `C` TO `B`,
-                                          ADD CONSTRAINT `D` PRIMARY KEY (`P`(500) ASC),
-                                          ADD CONSTRAINT `A` CHECK (TRUE),
-                                          ADD CONSTRAINT `C` CHECK (TRUE);
-                    """ );
-        }
+                        DROP PRIMARY KEY,
+                        DROP CHECK `B`,
+                        DROP CHECK `D`,
+                        RENAME INDEX `C` TO `B`,
+                        ADD CONSTRAINT `D` PRIMARY KEY (`P`(500) ASC),
+                        ADD CONSTRAINT `A` CHECK (TRUE),
+                        ADD CONSTRAINT `C` CHECK (TRUE);
+                    """ )
+            ] )
+            .Go();
     }
 
     [Fact]
@@ -742,21 +715,20 @@ public partial class MySqlTableBuilderTests : TestsBase
         a.SetName( "B" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
+        actions.Select( ac => ac.Sql )
+            .TestSequence(
+            [
+                (sql, _) => sql.SatisfySql(
                     """
                     ALTER TABLE `foo`.`T`
-                                          DROP PRIMARY KEY,
-                                          DROP CHECK `B`,
-                                          RENAME INDEX `C` TO `D`,
-                                          ADD CONSTRAINT `B` PRIMARY KEY (`P`(500) ASC),
-                                          ADD CONSTRAINT `C` CHECK (TRUE);
-                    """ );
-        }
+                        DROP PRIMARY KEY,
+                        DROP CHECK `B`,
+                        RENAME INDEX `C` TO `D`,
+                        ADD CONSTRAINT `B` PRIMARY KEY (`P`(500) ASC),
+                        ADD CONSTRAINT `C` CHECK (TRUE);
+                    """ )
+            ] )
+            .Go();
     }
 
     [Fact]
@@ -795,43 +767,42 @@ public partial class MySqlTableBuilderTests : TestsBase
         sut.Constraints.CreateForeignKey( ix2, sut.Constraints.CreateUniqueIndex( sut.Columns.Create( "C11" ).Asc() ) );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            actions.Should().HaveCount( 2 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE `foo`.`T` RENAME TO `foo`.`U`;" );
-            actions.ElementAtOrDefault( 1 )
-                .Sql.Should()
-                .SatisfySql(
+        actions.Select( a => a.Sql )
+            .TestSequence(
+            [
+                (sql, _) => sql.SatisfySql( "ALTER TABLE `foo`.`T` RENAME TO `foo`.`U`;" ),
+                (sql, _) => sql.SatisfySql(
                     """
                     ALTER TABLE `foo`.`U`
-                                          DROP FOREIGN KEY `FK_T_C7_REF_T`,
-                                          DROP FOREIGN KEY `FK`;
+                        DROP FOREIGN KEY `FK_T_C7_REF_T`,
+                        DROP FOREIGN KEY `FK`;
                     """,
                     "DROP INDEX `IX_T_C2A` ON `foo`.`U`;",
                     """
                     ALTER TABLE `foo`.`U`
-                                          DROP PRIMARY KEY,
-                                          DROP CHECK `CHK_1`,
-                                          DROP CHECK `CHK_2`,
-                                          RENAME INDEX `IX_T_C7A` TO `IX_2`,
-                                          DROP COLUMN `C4`,
-                                          CHANGE COLUMN `C3` `X` BIGINT,
-                                          CHANGE COLUMN `C5` `C5` INT GENERATED ALWAYS AS (1) STORED NOT NULL,
-                                          CHANGE COLUMN `C6` `Y` INT NOT NULL,
-                                          ADD COLUMN `C10` LONGBLOB NOT NULL DEFAULT (X''),
-                                          ADD COLUMN `C11` LONGBLOB NOT NULL DEFAULT (X''),
-                                          ADD CONSTRAINT `PK_U` PRIMARY KEY (`C10`(500) ASC),
-                                          ADD CONSTRAINT `CHK_1` CHECK (TRUE),
-                                          ADD CONSTRAINT `CHK_3` CHECK (TRUE);
+                        DROP PRIMARY KEY,
+                        DROP CHECK `CHK_1`,
+                        DROP CHECK `CHK_2`,
+                        RENAME INDEX `IX_T_C7A` TO `IX_2`,
+                        DROP COLUMN `C4`,
+                        CHANGE COLUMN `C3` `X` BIGINT,
+                        CHANGE COLUMN `C5` `C5` INT GENERATED ALWAYS AS (1) STORED NOT NULL,
+                        CHANGE COLUMN `C6` `Y` INT NOT NULL,
+                        ADD COLUMN `C10` LONGBLOB NOT NULL DEFAULT (X''),
+                        ADD COLUMN `C11` LONGBLOB NOT NULL DEFAULT (X''),
+                        ADD CONSTRAINT `PK_U` PRIMARY KEY (`C10`(500) ASC),
+                        ADD CONSTRAINT `CHK_1` CHECK (TRUE),
+                        ADD CONSTRAINT `CHK_3` CHECK (TRUE);
                     """,
                     "CREATE INDEX `IX_U_C2A_XD` ON `foo`.`U` (`C2` ASC, `X` DESC);",
                     "CREATE UNIQUE INDEX `UIX_U_C11A` ON `foo`.`U` (`C11`(500) ASC);",
                     """
                     ALTER TABLE `foo`.`U`
-                                          ADD CONSTRAINT `FK_2` FOREIGN KEY (`C7`) REFERENCES `foo`.`U` (`C9`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-                                          ADD CONSTRAINT `FK_U_C7_REF_U` FOREIGN KEY (`C7`) REFERENCES `foo`.`U` (`C11`) ON DELETE RESTRICT ON UPDATE RESTRICT;
-                    """ );
-        }
+                        ADD CONSTRAINT `FK_2` FOREIGN KEY (`C7`) REFERENCES `foo`.`U` (`C9`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+                        ADD CONSTRAINT `FK_U_C7_REF_U` FOREIGN KEY (`C7`) REFERENCES `foo`.`U` (`C11`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+                    """ )
+            ] )
+            .Go();
     }
 
     [Fact]
@@ -842,8 +813,10 @@ public partial class MySqlTableBuilderTests : TestsBase
 
         var result = sut.ForMySql( action );
 
-        result.Should().BeSameAs( sut );
-        action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( sut );
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                action.CallAt( 0 ).Arguments.TestSequence( [ sut ] ) )
+            .Go();
     }
 
     [Fact]
@@ -854,7 +827,9 @@ public partial class MySqlTableBuilderTests : TestsBase
 
         var result = sut.ForMySql( action );
 
-        result.Should().BeSameAs( sut );
-        action.Verify().CallCount.Should().Be( 0 );
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                action.CallCount().TestEquals( 0 ) )
+            .Go();
     }
 }
