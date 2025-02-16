@@ -4,7 +4,6 @@ using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
-using LfrlAnvil.TestExtensions.Sql.Assertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.PostgreSql.Tests;
@@ -77,7 +76,7 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .SatisfySql(
+                .TestSatisfySql(
                     """
                     WITH "cba" AS (
                       SELECT * FROM abc
@@ -122,7 +121,7 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .SatisfySql(
+                .TestSatisfySql(
                     """
                     WITH "cba" AS (
                       SELECT * FROM abc
@@ -180,7 +179,7 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .SatisfySql(
+                .TestSatisfySql(
                     """
                     WITH "_{GUID}" AS (
                       SELECT
@@ -226,7 +225,7 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .SatisfySql(
+                .TestSatisfySql(
                     """
                     WITH "_{GUID}" AS (
                       SELECT
@@ -252,7 +251,7 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .SatisfySql(
+                .TestSatisfySql(
                     """
                     WITH "_{GUID}" AS (
                       SELECT
@@ -278,7 +277,7 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .SatisfySql(
+                .TestSatisfySql(
                     """
                     WITH "_{GUID}" AS (
                       SELECT
@@ -338,7 +337,7 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .SatisfySql(
+                .TestSatisfySql(
                     """
                     WITH "cba" AS (
                       SELECT * FROM abc
@@ -384,7 +383,7 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .SatisfySql(
+                .TestSatisfySql(
                     """
                     WITH "cba" AS (
                       SELECT * FROM abc
@@ -426,7 +425,7 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .SatisfySql(
+                .TestSatisfySql(
                     """
                     WITH "_{GUID}" AS (
                       SELECT
@@ -457,7 +456,7 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .SatisfySql(
+                .TestSatisfySql(
                     """
                     WITH "_{GUID}" AS (
                       SELECT
@@ -489,7 +488,7 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .SatisfySql(
+                .TestSatisfySql(
                     """
                     WITH "_{GUID}" AS (
                       SELECT
@@ -520,7 +519,7 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .SatisfySql(
+                .TestSatisfySql(
                     """
                     WITH "_{GUID}" AS (
                       SELECT
@@ -555,7 +554,7 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .SatisfySql(
+                .TestSatisfySql(
                     """
                     WITH "_{GUID}" AS (
                       SELECT
@@ -599,7 +598,7 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .SatisfySql(
+                .TestSatisfySql(
                     $$"""
                       WITH "_{GUID}" AS (
                         SELECT
@@ -641,7 +640,7 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .SatisfySql(
+                .TestSatisfySql(
                     $$"""
                       WITH "_{GUID}" AS (
                         SELECT
@@ -678,7 +677,7 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .SatisfySql(
+                .TestSatisfySql(
                     $$"""
                       WITH "_{GUID}" AS (
                         SELECT

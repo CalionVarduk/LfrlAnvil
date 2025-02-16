@@ -7,8 +7,6 @@ using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.Sqlite.Tests.Helpers;
-using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.Sqlite.Tests.ObjectsTests.BuildersTests;
 
@@ -49,7 +47,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "foo_T" (
                               "C5" ANY NOT NULL GENERATED ALWAYS AS ("C1" + 1) VIRTUAL,
@@ -158,7 +156,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                 schema.Objects.TryGet( oldName ).TestNull(),
                 schema.Database.Changes.ModifiedTables.TestEmpty(),
                 actions.Select( a => a.Sql )
-                    .TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_bar\";" ) ] ) )
+                    .TestSequence( [ (sql, _) => sql.TestSatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_bar\";" ) ] ) )
             .Go();
     }
 
@@ -194,8 +192,8 @@ public partial class SqliteTableBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_bar\";" ),
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_bar\";" ),
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX \"foo_IX_T_C2A\";",
                             """
                             CREATE TABLE "__foo_bar__{GUID}__" (
@@ -259,8 +257,8 @@ public partial class SqliteTableBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo_T1\" RENAME TO \"foo_U\";" ),
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql( "ALTER TABLE \"foo_T1\" RENAME TO \"foo_U\";" ),
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX \"foo_IX_T3_C4A\";",
                             """
                             CREATE TABLE "__foo_T3__{GUID}__" (
@@ -281,7 +279,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                             "DROP TABLE \"foo_T3\";",
                             "ALTER TABLE \"__foo_T3__{GUID}__\" RENAME TO \"foo_T3\";",
                             "CREATE INDEX \"foo_IX_T3_C4A\" ON \"foo_T3\" (\"C4\" ASC);" ),
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T2__{GUID}__" (
                               "C2" ANY NOT NULL,
@@ -330,8 +328,8 @@ public partial class SqliteTableBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo_T1\" RENAME TO \"foo_U\";" ),
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql( "ALTER TABLE \"foo_T1\" RENAME TO \"foo_U\";" ),
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T2__{GUID}__" (
                               "C2" ANY NOT NULL,
@@ -381,8 +379,8 @@ public partial class SqliteTableBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo_T1\" RENAME TO \"foo_U\";" ),
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql( "ALTER TABLE \"foo_T1\" RENAME TO \"foo_U\";" ),
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T2__{GUID}__" (
                               "C2" ANY NOT NULL,
@@ -398,7 +396,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                             """,
                             "DROP TABLE \"foo_T2\";",
                             "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" ),
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_U__{GUID}__" (
                               "C1" ANY NOT NULL,
@@ -447,8 +445,8 @@ public partial class SqliteTableBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_U\";" ),
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_U\";" ),
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP VIEW \"foo_V1\";",
                             """
                             CREATE VIEW "foo_V1" AS
@@ -456,7 +454,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                               "foo_U"."C"
                             FROM "foo_U";
                             """ ),
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP VIEW \"foo_V2\";",
                             """
                             CREATE VIEW "foo_V2" AS
@@ -498,8 +496,8 @@ public partial class SqliteTableBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_U\";" ),
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_U\";" ),
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP VIEW \"foo_V1\";",
                             """
                             CREATE VIEW "foo_V1" AS
@@ -507,7 +505,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                               "foo_U"."C"
                             FROM "foo_U";
                             """ ),
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP VIEW \"foo_V2\";",
                             """
                             CREATE VIEW "foo_V2" AS
@@ -516,7 +514,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                             FROM "foo_V1"
                             INNER JOIN "foo_U" ON TRUE;
                             """ ),
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_U__{GUID}__" (
                               "C" ANY NOT NULL,
@@ -644,7 +642,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                 chk.ReferencedColumns.TestEmpty(),
                 otherPk.Index.ReferencingObjects.TestEmpty(),
                 otherTable.ReferencingObjects.TestEmpty(),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP TABLE \"foo_T\";" ) ] ) )
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.TestSatisfySql( "DROP TABLE \"foo_T\";" ) ] ) )
             .Go();
     }
 
@@ -678,7 +676,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                 pk.Index.ReferencingObjects.TestEmpty(),
                 pk.Index.Columns.Expressions.TestEmpty(),
                 pk.Index.PrimaryKey.TestNull(),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP TABLE \"foo_T\";" ) ] ) )
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.TestSatisfySql( "DROP TABLE \"foo_T\";" ) ] ) )
             .Go();
     }
 
@@ -754,7 +752,7 @@ public partial class SqliteTableBuilderTests : TestsBase
         actions.Select( ac => ac.Sql )
             .TestSequence(
             [
-                (sql, _) => sql.SatisfySql(
+                (sql, _) => sql.TestSatisfySql(
                     "ALTER TABLE \"foo_T\" RENAME COLUMN \"A\" TO \"__A__{GUID}__\";",
                     "ALTER TABLE \"foo_T\" RENAME COLUMN \"B\" TO \"A\";",
                     "ALTER TABLE \"foo_T\" RENAME COLUMN \"__A__{GUID}__\" TO \"B\";" )
@@ -784,7 +782,7 @@ public partial class SqliteTableBuilderTests : TestsBase
         actions.Select( ac => ac.Sql )
             .TestSequence(
             [
-                (sql, _) => sql.SatisfySql(
+                (sql, _) => sql.TestSatisfySql(
                     "ALTER TABLE \"foo_T\" RENAME COLUMN \"A\" TO \"__A__{GUID}__\";",
                     "ALTER TABLE \"foo_T\" RENAME COLUMN \"B\" TO \"A\";",
                     "ALTER TABLE \"foo_T\" RENAME COLUMN \"C\" TO \"B\";",
@@ -815,7 +813,7 @@ public partial class SqliteTableBuilderTests : TestsBase
         actions.Select( ac => ac.Sql )
             .TestSequence(
             [
-                (sql, _) => sql.SatisfySql(
+                (sql, _) => sql.TestSatisfySql(
                     "ALTER TABLE \"foo_T\" RENAME COLUMN \"C\" TO \"D\";",
                     "ALTER TABLE \"foo_T\" RENAME COLUMN \"B\" TO \"C\";",
                     "ALTER TABLE \"foo_T\" RENAME COLUMN \"A\" TO \"B\";" )
@@ -844,7 +842,7 @@ public partial class SqliteTableBuilderTests : TestsBase
         actions.Select( ac => ac.Sql )
             .TestSequence(
             [
-                (sql, _) => sql.SatisfySql(
+                (sql, _) => sql.TestSatisfySql(
                     "DROP INDEX \"foo_C\";",
                     """
                     CREATE TABLE "__foo_T__{GUID}__" (
@@ -889,7 +887,7 @@ public partial class SqliteTableBuilderTests : TestsBase
         actions.Select( ac => ac.Sql )
             .TestSequence(
             [
-                (sql, _) => sql.SatisfySql(
+                (sql, _) => sql.TestSatisfySql(
                     "DROP INDEX \"foo_C\";",
                     """
                     CREATE TABLE "__foo_T__{GUID}__" (
@@ -952,8 +950,8 @@ public partial class SqliteTableBuilderTests : TestsBase
         actions.Select( a => a.Sql )
             .TestSequence(
             [
-                (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_U\";" ),
-                (sql, _) => sql.SatisfySql(
+                (sql, _) => sql.TestSatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_U\";" ),
+                (sql, _) => sql.TestSatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
                     "DROP INDEX \"foo_IX_T_C7A\";",
                     "DROP INDEX \"foo_UIX_T_C8A\";",
@@ -1024,8 +1022,8 @@ public partial class SqliteTableBuilderTests : TestsBase
         actions.Select( a => a.Sql )
             .TestSequence(
             [
-                (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_U\";" ),
-                (sql, _) => sql.SatisfySql(
+                (sql, _) => sql.TestSatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_U\";" ),
+                (sql, _) => sql.TestSatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
                     "ALTER TABLE \"foo_U\" DROP COLUMN \"C4\";",
                     "ALTER TABLE \"foo_U\" RENAME COLUMN \"C3\" TO \"X\";",

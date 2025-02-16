@@ -1,5 +1,4 @@
-﻿using LfrlAnvil.TestExtensions.FluentAssertions;
-using LfrlAnvil.TestExtensions.NSubstitute;
+﻿using LfrlAnvil.TestExtensions.NSubstitute;
 
 namespace LfrlAnvil.Validation.Tests.ValidatorsTests;
 

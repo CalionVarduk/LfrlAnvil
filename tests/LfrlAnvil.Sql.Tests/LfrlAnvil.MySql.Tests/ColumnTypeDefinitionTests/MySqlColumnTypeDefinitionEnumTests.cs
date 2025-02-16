@@ -36,7 +36,7 @@ public class MySqlColumnTypeDefinitionEnumTests : TestsBase
     {
         var sut = _provider.GetByType<Values>();
         var result = sut.TryToParameterValue( value );
-        result.TestEquals( (sbyte)expected ).Go();
+        result.TestEquals( ( sbyte )expected ).Go();
     }
 
     [Fact]

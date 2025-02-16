@@ -322,7 +322,7 @@ public class EventExchangesTests : TestsBase
 
         var result = sut.Listen( listener );
 
-        Assertion.All( result.TestRefEquals( subscriber ), publisher.TestReceivedCalls( x => x.Listen( listener ) ) ).Go();
+        Assertion.All( result.TestRefEquals( subscriber ), publisher.TestReceivedCall( x => x.Listen( listener ) ) ).Go();
     }
 
     [Fact]
@@ -348,7 +348,7 @@ public class EventExchangesTests : TestsBase
 
         var result = sut.TryListen( listener, out var outResult );
 
-        Assertion.All( result.TestTrue(), outResult.TestRefEquals( subscriber ), publisher.TestReceivedCalls( x => x.Listen( listener ) ) )
+        Assertion.All( result.TestTrue(), outResult.TestRefEquals( subscriber ), publisher.TestReceivedCall( x => x.Listen( listener ) ) )
             .Go();
     }
 
@@ -375,7 +375,7 @@ public class EventExchangesTests : TestsBase
 
         var result = sut.Listen( typeof( int ), listener );
 
-        Assertion.All( result.TestRefEquals( subscriber ), publisher.TestReceivedCalls( x => x.Listen( listener ) ) ).Go();
+        Assertion.All( result.TestRefEquals( subscriber ), publisher.TestReceivedCall( x => x.Listen( listener ) ) ).Go();
     }
 
     [Fact]
@@ -401,7 +401,7 @@ public class EventExchangesTests : TestsBase
 
         var result = sut.TryListen( typeof( int ), listener, out var outResult );
 
-        Assertion.All( result.TestTrue(), outResult.TestRefEquals( subscriber ), publisher.TestReceivedCalls( x => x.Listen( listener ) ) )
+        Assertion.All( result.TestTrue(), outResult.TestRefEquals( subscriber ), publisher.TestReceivedCall( x => x.Listen( listener ) ) )
             .Go();
     }
 
@@ -426,7 +426,7 @@ public class EventExchangesTests : TestsBase
 
         sut.Publish( @event );
 
-        publisher.TestReceivedCalls( x => x.Publish( @event ) ).Go();
+        publisher.TestReceivedCall( x => x.Publish( @event ) ).Go();
     }
 
     [Fact]
@@ -450,7 +450,7 @@ public class EventExchangesTests : TestsBase
 
         var result = sut.TryPublish( @event );
 
-        Assertion.All( result.TestTrue(), publisher.TestReceivedCalls( x => x.Publish( @event ) ) ).Go();
+        Assertion.All( result.TestTrue(), publisher.TestReceivedCall( x => x.Publish( @event ) ) ).Go();
     }
 
     [Fact]
@@ -474,7 +474,7 @@ public class EventExchangesTests : TestsBase
 
         sut.Publish( typeof( int ), @event );
 
-        publisher.TestReceivedCalls( x => x.Publish( @event ) ).Go();
+        publisher.TestReceivedCall( x => x.Publish( @event ) ).Go();
     }
 
     [Fact]
@@ -498,7 +498,7 @@ public class EventExchangesTests : TestsBase
 
         var result = sut.TryPublish( typeof( int ), @event );
 
-        Assertion.All( result.TestTrue(), publisher.TestReceivedCalls( x => x.Publish( @event ) ) ).Go();
+        Assertion.All( result.TestTrue(), publisher.TestReceivedCall( x => x.Publish( @event ) ) ).Go();
     }
 
     [Fact]

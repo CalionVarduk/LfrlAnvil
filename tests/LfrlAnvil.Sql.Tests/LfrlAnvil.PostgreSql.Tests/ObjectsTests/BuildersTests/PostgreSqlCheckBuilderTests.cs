@@ -7,8 +7,6 @@ using LfrlAnvil.PostgreSql.Tests.Helpers;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.PostgreSql.Tests.ObjectsTests.BuildersTests;
 
@@ -53,7 +51,7 @@ public class PostgreSqlCheckBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 ADD CONSTRAINT "CHK_T_{GUID}" CHECK ("C" > 0);
@@ -138,7 +136,7 @@ public class PostgreSqlCheckBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 RENAME CONSTRAINT "CHK_T_{GUID}" TO "bar";
@@ -228,7 +226,7 @@ public class PostgreSqlCheckBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 RENAME CONSTRAINT "bar" TO "CHK_T_{GUID}";
@@ -278,7 +276,7 @@ public class PostgreSqlCheckBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 DROP CONSTRAINT "CHK_T_{GUID}";

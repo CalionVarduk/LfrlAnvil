@@ -7,8 +7,6 @@ using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.PostgreSql.Tests.ObjectsTests.BuildersTests;
 
@@ -37,7 +35,7 @@ public partial class PostgreSqlSchemaBuilderTests : TestsBase
         Assertion.All(
                 db.Schemas.TryGet( sut.Name ).TestRefEquals( sut ),
                 sut.Name.TestEquals( "foo" ),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "CREATE SCHEMA \"foo\";" ) ] ) )
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.TestSatisfySql( "CREATE SCHEMA \"foo\";" ) ] ) )
             .Go();
     }
 
@@ -72,7 +70,8 @@ public partial class PostgreSqlSchemaBuilderTests : TestsBase
                 sut.Name.TestEquals( "bar" ),
                 db.Schemas.TryGet( "bar" ).TestRefEquals( sut ),
                 db.Schemas.TryGet( "foo" ).TestNull(),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER SCHEMA \"foo\" RENAME TO \"bar\";" ) ] ) )
+                actions.Select( a => a.Sql )
+                    .TestSequence( [ (sql, _) => sql.TestSatisfySql( "ALTER SCHEMA \"foo\" RENAME TO \"bar\";" ) ] ) )
             .Go();
     }
 
@@ -122,7 +121,8 @@ public partial class PostgreSqlSchemaBuilderTests : TestsBase
                 recordSet3.Info.TestEquals( v1.Info ),
                 v2.Info.TestEquals( SqlRecordSetInfo.Create( "bar", "V2" ) ),
                 recordSet4.Info.TestEquals( v2.Info ),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER SCHEMA \"foo\" RENAME TO \"bar\";" ) ] ) )
+                actions.Select( a => a.Sql )
+                    .TestSequence( [ (sql, _) => sql.TestSatisfySql( "ALTER SCHEMA \"foo\" RENAME TO \"bar\";" ) ] ) )
             .Go();
     }
 
@@ -157,7 +157,8 @@ public partial class PostgreSqlSchemaBuilderTests : TestsBase
                 recordSet1.Info.TestEquals( table.Info ),
                 view.Info.TestEquals( SqlRecordSetInfo.Create( "bar", "V" ) ),
                 recordSet2.Info.TestEquals( view.Info ),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER SCHEMA \"foo\" RENAME TO \"bar\";" ) ] ) )
+                actions.Select( a => a.Sql )
+                    .TestSequence( [ (sql, _) => sql.TestSatisfySql( "ALTER SCHEMA \"foo\" RENAME TO \"bar\";" ) ] ) )
             .Go();
     }
 
@@ -226,7 +227,7 @@ public partial class PostgreSqlSchemaBuilderTests : TestsBase
         Assertion.All(
                 db.Schemas.TryGet( sut.Name ).TestNull(),
                 sut.IsRemoved.TestTrue(),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP SCHEMA \"foo\" CASCADE;" ) ] ) )
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.TestSatisfySql( "DROP SCHEMA \"foo\" CASCADE;" ) ] ) )
             .Go();
     }
 
@@ -308,7 +309,7 @@ public partial class PostgreSqlSchemaBuilderTests : TestsBase
                 chk1.IsRemoved.TestTrue(),
                 chk2.IsRemoved.TestTrue(),
                 sut.Objects.TestEmpty(),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP SCHEMA \"foo\" CASCADE;" ) ] ) )
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.TestSatisfySql( "DROP SCHEMA \"foo\" CASCADE;" ) ] ) )
             .Go();
     }
 

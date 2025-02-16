@@ -9,8 +9,6 @@ using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.PostgreSql.Tests.ObjectsTests.BuildersTests;
 
@@ -46,7 +44,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                                   ADD COLUMN "C2" BYTEA NOT NULL DEFAULT ('\x'::BYTEA);
@@ -73,7 +71,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 ADD COLUMN "C2" BYTEA;
@@ -100,7 +98,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 ADD COLUMN "C2" BYTEA NOT NULL GENERATED ALWAYS AS (1) STORED;
@@ -126,7 +124,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 ADD COLUMN "C2" BYTEA NOT NULL DEFAULT ('\x010203'::BYTEA);
@@ -157,7 +155,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 ALTER COLUMN "C2" SET DATA TYPE VARCHAR,
@@ -188,7 +186,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 ALTER COLUMN "C2" SET NOT NULL;
@@ -218,7 +216,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 ALTER COLUMN "C2" SET DATA TYPE BYTEA;
@@ -257,7 +255,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 DROP COLUMN "C2";
@@ -343,7 +341,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                 table.Columns.TryGet( "C2" ).TestNull(),
                 node.Name.TestEquals( "bar" ),
                 actions.Select( a => a.Sql )
-                    .TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo\".\"T\" RENAME COLUMN \"C2\" TO \"bar\";" ) ] ) )
+                    .TestSequence( [ (sql, _) => sql.TestSatisfySql( "ALTER TABLE \"foo\".\"T\" RENAME COLUMN \"C2\" TO \"bar\";" ) ] ) )
             .Go();
     }
 
@@ -496,7 +494,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 ALTER COLUMN "C2" DROP DEFAULT,
@@ -676,7 +674,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 ALTER COLUMN "C2" DROP NOT NULL;
@@ -703,7 +701,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 ALTER COLUMN "C2" SET NOT NULL;
@@ -730,7 +728,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 ALTER COLUMN "C2" SET NOT NULL;
@@ -757,7 +755,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 ALTER COLUMN "C2" SET NOT NULL,
@@ -883,7 +881,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 ALTER COLUMN "C2" DROP DEFAULT,
@@ -911,7 +909,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 ALTER COLUMN "C2" DROP DEFAULT;
@@ -938,7 +936,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 ALTER COLUMN "C2" SET DEFAULT (123);
@@ -966,7 +964,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 ALTER COLUMN "C2" SET DEFAULT ((10 + 50) + GREATEST(100, 80));
@@ -994,7 +992,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 ALTER COLUMN "C2" SET DEFAULT (123);
@@ -1022,7 +1020,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 ALTER COLUMN "C2" SET DEFAULT (123);
@@ -1160,7 +1158,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 ALTER COLUMN "C3" DROP EXPRESSION;
@@ -1193,7 +1191,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 ALTER COLUMN "C3" DROP EXPRESSION;
@@ -1225,7 +1223,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 DROP COLUMN "C3";
@@ -1264,7 +1262,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 DROP COLUMN "C3";
@@ -1304,7 +1302,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             $"""
                              ALTER TABLE "foo"."T"
                                 DROP COLUMN "C3";
@@ -1349,7 +1347,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 DROP COLUMN "C3";
@@ -1393,7 +1391,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 DROP COLUMN "C3";
@@ -1430,7 +1428,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 DROP COLUMN "C3";
@@ -1465,7 +1463,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 ADD COLUMN "C3" BYTEA NOT NULL GENERATED ALWAYS AS ("C2" + 1) STORED;
@@ -1635,7 +1633,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
         actions.Select( a => a.Sql )
             .TestSequence(
             [
-                (sql, _) => sql.SatisfySql(
+                (sql, _) => sql.TestSatisfySql(
                     """
                     ALTER TABLE "foo"."T"
                         ALTER COLUMN "C2" DROP EXPRESSION;
@@ -1674,7 +1672,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 DROP COLUMN "C2";

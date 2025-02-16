@@ -72,7 +72,7 @@ public abstract class GenericHistoryEventPublisherTests<TEvent> : TestsBase
 
         sut.Publish( @event );
 
-        listener.TestReceivedCalls( x => x.React( @event ) ).Go();
+        listener.TestReceivedCall( x => x.React( @event ) ).Go();
     }
 
     [Fact]
@@ -86,8 +86,8 @@ public abstract class GenericHistoryEventPublisherTests<TEvent> : TestsBase
         sut.Listen( listener );
 
         Assertion.All(
-                listener.TestReceivedCalls( x => x.React( events[0] ) ),
-                listener.TestReceivedCalls( x => x.React( events[1] ) ) )
+                listener.TestReceivedCall( x => x.React( events[0] ) ),
+                listener.TestReceivedCall( x => x.React( events[1] ) ) )
             .Go();
     }
 
@@ -104,7 +104,7 @@ public abstract class GenericHistoryEventPublisherTests<TEvent> : TestsBase
 
         Assertion.All(
                 subscriber.IsDisposed.TestTrue(),
-                listener.TestReceivedCalls( x => x.React( events[0] ) ),
+                listener.TestReceivedCall( x => x.React( events[0] ) ),
                 listener.TestDidNotReceiveCall( x => x.React( events[1] ) ) )
             .Go();
     }

@@ -44,7 +44,7 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
 
         sut.Listen( listener );
 
-        listener.TestReceivedCalls( x => x.OnDispose( DisposalSource.EventSource ) ).Go();
+        listener.TestReceivedCall( x => x.OnDispose( DisposalSource.EventSource ) ).Go();
     }
 
     [Fact]
@@ -78,7 +78,7 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
 
         subscriber.Dispose();
 
-        listener.TestReceivedCalls( x => x.OnDispose( DisposalSource.Subscriber ) ).Go();
+        listener.TestReceivedCall( x => x.OnDispose( DisposalSource.Subscriber ) ).Go();
     }
 
     [Fact]
@@ -107,7 +107,7 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
 
         sut.Publish( @event );
 
-        Assertion.All( listener1.TestReceivedCalls( x => x.React( @event ) ), listener2.TestReceivedCalls( x => x.React( @event ) ) ).Go();
+        Assertion.All( listener1.TestReceivedCall( x => x.React( @event ) ), listener2.TestReceivedCall( x => x.React( @event ) ) ).Go();
     }
 
     [Fact]
@@ -147,8 +147,8 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
         sut.Publish( firstEvent );
 
         Assertion.All(
-                listener2.TestReceivedCalls( x => x.React( firstEvent ) ),
-                listener2.TestReceivedCalls( x => x.React( secondEvent ) ) )
+                listener2.TestReceivedCall( x => x.React( firstEvent ) ),
+                listener2.TestReceivedCall( x => x.React( secondEvent ) ) )
             .Go();
     }
 
@@ -193,8 +193,8 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
         sut.Dispose();
 
         Assertion.All(
-                listener1.TestReceivedCalls( x => x.OnDispose( DisposalSource.EventSource ) ),
-                listener2.TestReceivedCalls( x => x.OnDispose( DisposalSource.EventSource ) ) )
+                listener1.TestReceivedCall( x => x.OnDispose( DisposalSource.EventSource ) ),
+                listener2.TestReceivedCall( x => x.OnDispose( DisposalSource.EventSource ) ) )
             .Go();
     }
 
@@ -212,7 +212,7 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
 
         Assertion.All(
                 listener2.TestDidNotReceiveCall( x => x.OnDispose( DisposalSource.EventSource ) ),
-                listener2.TestReceivedCalls( x => x.OnDispose( DisposalSource.Subscriber ) ) )
+                listener2.TestReceivedCall( x => x.OnDispose( DisposalSource.Subscriber ) ) )
             .Go();
     }
 
@@ -266,7 +266,7 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
 
         sut.Publish( @event );
 
-        listener.TestReceivedCalls( x => x.React( @event ) ).Go();
+        listener.TestReceivedCall( x => x.React( @event ) ).Go();
     }
 
     [Fact]

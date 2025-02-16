@@ -82,7 +82,7 @@ public class SqlTableScopeExpressionValidatorTests : TestsBase
 
         Assertion.All(
                 _sut.GetErrors().TestEmpty(),
-                _sut.GetReferencedColumns().TestSetEqual( [column] ) )
+                _sut.GetReferencedColumns().TestSetEqual( [ column ] ) )
             .Go();
     }
 

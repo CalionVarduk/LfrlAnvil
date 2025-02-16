@@ -7,8 +7,6 @@ using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.Sqlite.Tests.Helpers;
-using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.Sqlite.Tests.ObjectsTests.BuildersTests;
 
@@ -53,7 +51,7 @@ public class SqliteCheckBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
                               "C" ANY NOT NULL,
@@ -149,7 +147,7 @@ public class SqliteCheckBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
                               "C" ANY NOT NULL,
@@ -250,7 +248,7 @@ public class SqliteCheckBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
                               "C1" ANY NOT NULL,
@@ -311,7 +309,7 @@ public class SqliteCheckBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
                               "C" ANY NOT NULL,

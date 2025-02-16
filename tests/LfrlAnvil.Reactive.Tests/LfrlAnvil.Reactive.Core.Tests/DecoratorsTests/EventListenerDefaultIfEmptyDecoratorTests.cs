@@ -69,7 +69,7 @@ public class EventListenerDefaultIfEmptyDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        next.TestReceivedCalls( x => x.React( value ) ).Go();
+        next.TestReceivedCall( x => x.React( value ) ).Go();
     }
 
     [Theory]
@@ -85,7 +85,7 @@ public class EventListenerDefaultIfEmptyDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        next.TestReceivedCalls( x => x.OnDispose( source ) ).Go();
+        next.TestReceivedCall( x => x.OnDispose( source ) ).Go();
     }
 
     [Fact]

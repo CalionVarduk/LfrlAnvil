@@ -9,8 +9,6 @@ using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.Sqlite.Tests.Helpers;
-using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.Sqlite.Tests.ObjectsTests.BuildersTests;
 
@@ -46,7 +44,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
                               "C1" ANY NOT NULL,
@@ -85,7 +83,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
                               "C1" ANY NOT NULL,
@@ -124,7 +122,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
                               "C1" ANY NOT NULL,
@@ -161,7 +159,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
                               "C1" ANY NOT NULL,
@@ -204,7 +202,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
                               "C1" ANY NOT NULL,
@@ -248,7 +246,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
                               "C1" ANY NOT NULL,
@@ -290,7 +288,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
                               "C1" ANY NOT NULL,
@@ -384,7 +382,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 table.Columns.TryGet( "C2" ).TestNull(),
                 node.Name.TestEquals( "bar" ),
                 actions.Select( a => a.Sql )
-                    .TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo_T\" RENAME COLUMN \"C2\" TO \"bar\";" ) ] ) )
+                    .TestSequence( [ (sql, _) => sql.TestSatisfySql( "ALTER TABLE \"foo_T\" RENAME COLUMN \"C2\" TO \"bar\";" ) ] ) )
             .Go();
     }
 
@@ -537,7 +535,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
                               "C1" ANY NOT NULL,
@@ -728,7 +726,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
                               "C1" ANY NOT NULL,
@@ -767,7 +765,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
                               "C1" ANY NOT NULL,
@@ -806,7 +804,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
                               "C1" ANY NOT NULL,
@@ -845,7 +843,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
                               "C1" ANY NOT NULL,
@@ -982,7 +980,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
                               "C1" ANY NOT NULL,
@@ -1021,7 +1019,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
                               "C1" ANY NOT NULL,
@@ -1060,7 +1058,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
                               "C1" ANY NOT NULL,
@@ -1100,7 +1098,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
                               "C1" ANY NOT NULL,
@@ -1140,7 +1138,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX \"foo_IX_T_C2A\";",
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
@@ -1182,7 +1180,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
                               "C1" ANY NOT NULL,
@@ -1332,7 +1330,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
                               "C1" ANY NOT NULL,
@@ -1376,7 +1374,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
                               "C1" ANY NOT NULL,
@@ -1422,7 +1420,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
                               "C1" ANY NOT NULL,
@@ -1467,7 +1465,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
                               "C1" ANY NOT NULL,
@@ -1518,7 +1516,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             $$"""
                               CREATE TABLE "__foo_T__{GUID}__" (
                                 "C1" ANY NOT NULL,
@@ -1571,7 +1569,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX \"foo_IX_T_C3A\";",
                             $$"""
                               CREATE TABLE "__foo_T__{GUID}__" (
@@ -1619,7 +1617,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
                               "C1" ANY NOT NULL,
@@ -1784,7 +1782,8 @@ public class SqliteColumnBuilderTests : TestsBase
                 sut.IsRemoved.TestTrue(),
                 other.ReferencingObjects.TestSequence(
                     [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( pk.Index ), other ) ] ),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo_T\" DROP COLUMN \"C2\";" ) ] ) )
+                actions.Select( a => a.Sql )
+                    .TestSequence( [ (sql, _) => sql.TestSatisfySql( "ALTER TABLE \"foo_T\" DROP COLUMN \"C2\";" ) ] ) )
             .Go();
     }
 

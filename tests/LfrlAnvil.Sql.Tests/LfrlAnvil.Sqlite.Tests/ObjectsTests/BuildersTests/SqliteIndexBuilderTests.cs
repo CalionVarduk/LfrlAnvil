@@ -9,8 +9,6 @@ using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.Sqlite.Tests.Helpers;
-using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.Sqlite.Tests.ObjectsTests.BuildersTests;
 
@@ -47,7 +45,7 @@ public class SqliteIndexBuilderTests : TestsBase
                 sut.Name.TestMatch( new Regex( "IX_T_C2A" ) ),
                 sut.Columns.Expressions.TestSequence( [ ixc2 ] ),
                 actions.Select( a => a.Sql )
-                    .TestSequence( [ (sql, _) => sql.SatisfySql( "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" ) ] ) )
+                    .TestSequence( [ (sql, _) => sql.TestSatisfySql( "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" ) ] ) )
             .Go();
     }
 
@@ -74,7 +72,7 @@ public class SqliteIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql( "CREATE INDEX \"foo_IX_T_C2A_E1D\" ON \"foo_T\" (\"C2\" ASC, (\"C3\" + 1) DESC);" )
+                        (sql, _) => sql.TestSatisfySql( "CREATE INDEX \"foo_IX_T_C2A_E1D\" ON \"foo_T\" (\"C2\" ASC, (\"C3\" + 1) DESC);" )
                     ] ) )
             .Go();
     }
@@ -117,7 +115,7 @@ public class SqliteIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
                               "C1" ANY NOT NULL,
@@ -222,7 +220,7 @@ public class SqliteIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX \"foo_IX_T_C2A\";",
                             "CREATE INDEX \"foo_bar\" ON \"foo_T\" (\"C2\" ASC);" )
                     ] ) )
@@ -253,7 +251,7 @@ public class SqliteIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX \"foo_IX_T_C2A\";",
                             "CREATE INDEX \"foo_bar\" ON \"foo_T\" (\"C2\" ASC);" )
                     ] ) )
@@ -398,7 +396,7 @@ public class SqliteIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX \"foo_bar\";",
                             "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" )
                     ] ) )
@@ -427,7 +425,7 @@ public class SqliteIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX \"foo_bar\";",
                             "CREATE UNIQUE INDEX \"foo_UIX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" )
                     ] ) )
@@ -527,7 +525,7 @@ public class SqliteIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX \"foo_IX_T_C2A\";",
                             "CREATE UNIQUE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" )
                     ] ) )
@@ -552,7 +550,7 @@ public class SqliteIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX \"foo_IX_T_C2A\";",
                             "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" )
                     ] ) )
@@ -578,7 +576,7 @@ public class SqliteIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX \"foo_IX_T_C2A\";",
                             "CREATE UNIQUE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" )
                     ] ) )
@@ -686,7 +684,7 @@ public class SqliteIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX \"foo_IX_T_C2A\";",
                             "CREATE UNIQUE INDEX \"foo_bar\" ON \"foo_T\" (\"C2\" ASC);" )
                     ] ) )
@@ -747,7 +745,7 @@ public class SqliteIndexBuilderTests : TestsBase
         Assertion.All(
                 result.TestRefEquals( sut ),
                 sut.IsVirtual.TestTrue(),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP INDEX \"foo_IX_T_C2A\";" ) ] ) )
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.TestSatisfySql( "DROP INDEX \"foo_IX_T_C2A\";" ) ] ) )
             .Go();
     }
 
@@ -767,7 +765,7 @@ public class SqliteIndexBuilderTests : TestsBase
                 result.TestRefEquals( sut ),
                 sut.IsVirtual.TestFalse(),
                 actions.Select( a => a.Sql )
-                    .TestSequence( [ (sql, _) => sql.SatisfySql( "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" ) ] ) )
+                    .TestSequence( [ (sql, _) => sql.TestSatisfySql( "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" ) ] ) )
             .Go();
     }
 
@@ -787,7 +785,7 @@ public class SqliteIndexBuilderTests : TestsBase
         Assertion.All(
                 result.TestRefEquals( sut ),
                 sut.IsVirtual.TestTrue(),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP INDEX \"foo_IX_T_C2A\";" ) ] ) )
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.TestSatisfySql( "DROP INDEX \"foo_IX_T_C2A\";" ) ] ) )
             .Go();
     }
 
@@ -808,7 +806,7 @@ public class SqliteIndexBuilderTests : TestsBase
                 result.TestRefEquals( sut ),
                 sut.IsVirtual.TestFalse(),
                 actions.Select( a => a.Sql )
-                    .TestSequence( [ (sql, _) => sql.SatisfySql( "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" ) ] ) )
+                    .TestSequence( [ (sql, _) => sql.TestSatisfySql( "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" ) ] ) )
             .Go();
     }
 
@@ -965,7 +963,7 @@ public class SqliteIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX \"foo_IX_T_C2A\";",
                             "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC) WHERE (\"C2\" IS NOT NULL);" )
                     ] ) )
@@ -994,7 +992,7 @@ public class SqliteIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX \"foo_IX_T_C2A\";",
                             "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" )
                     ] ) )
@@ -1093,7 +1091,7 @@ public class SqliteIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX \"foo_IX_T_C2A\";",
                             "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC) WHERE TRUE;" )
                     ] ) )
@@ -1131,7 +1129,7 @@ public class SqliteIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX \"foo_IX_T_C2A\";",
                             "CREATE UNIQUE INDEX \"foo_bar\" ON \"foo_T\" (\"C2\" ASC) WHERE (\"C2\" IS NOT NULL);" )
                     ] ) )
@@ -1155,7 +1153,7 @@ public class SqliteIndexBuilderTests : TestsBase
         actions.Select( a => a.Sql )
             .TestSequence(
             [
-                (sql, _) => sql.SatisfySql(
+                (sql, _) => sql.TestSatisfySql(
                     "DROP INDEX \"foo_IX_T_C3A\";",
                     "DROP INDEX \"foo_IX_T_C2A\";",
                     """
@@ -1198,7 +1196,7 @@ public class SqliteIndexBuilderTests : TestsBase
         actions.Select( a => a.Sql )
             .TestSequence(
             [
-                (sql, _) => sql.SatisfySql(
+                (sql, _) => sql.TestSatisfySql(
                     "DROP INDEX \"foo_UIX_T_C2A\";",
                     """
                     CREATE TABLE "__foo_T__{GUID}__" (
@@ -1242,7 +1240,7 @@ public class SqliteIndexBuilderTests : TestsBase
                 sut.ReferencedFilterColumns.TestEmpty(),
                 sut.Filter.TestNull(),
                 c2.ReferencingObjects.TestEmpty(),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP INDEX \"foo_IX_T_C2A\";" ) ] ) )
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.TestSatisfySql( "DROP INDEX \"foo_IX_T_C2A\";" ) ] ) )
             .Go();
     }
 

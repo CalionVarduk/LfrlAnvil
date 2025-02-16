@@ -7,8 +7,6 @@ using LfrlAnvil.MySql.Tests.Helpers;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.MySql.Tests.ObjectsTests.BuildersTests;
 
@@ -53,7 +51,7 @@ public class MySqlCheckBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 ADD CONSTRAINT `CHK_T_{GUID}` CHECK (`C` > 0);
@@ -138,7 +136,7 @@ public class MySqlCheckBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 DROP CHECK `CHK_T_{GUID}`,
@@ -229,7 +227,7 @@ public class MySqlCheckBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 DROP CHECK `bar`,
@@ -280,7 +278,7 @@ public class MySqlCheckBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 DROP CHECK `CHK_T_{GUID}`;

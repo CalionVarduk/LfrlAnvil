@@ -5,7 +5,6 @@ using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
-using LfrlAnvil.TestExtensions.Sql.Assertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sqlite.Tests;
@@ -697,7 +696,7 @@ public partial class SqliteNodeInterpreterTests
                     } ) );
 
             sut.Context.Sql.ToString()
-                .SatisfySql(
+                .TestSatisfySql(
                     """
                     WITH "_{GUID}" AS (
                       SELECT
@@ -775,7 +774,7 @@ public partial class SqliteNodeInterpreterTests
                     } ) );
 
             sut.Context.Sql.ToString()
-                .SatisfySql(
+                .TestSatisfySql(
                     """
                     WITH "_{GUID}" AS (
                       SELECT
@@ -1192,7 +1191,7 @@ public partial class SqliteNodeInterpreterTests
                     } ) );
 
             sut.Context.Sql.ToString()
-                .SatisfySql(
+                .TestSatisfySql(
                     """
                     WITH "_{GUID}" AS (
                       SELECT
@@ -1229,7 +1228,7 @@ public partial class SqliteNodeInterpreterTests
                     } ) );
 
             sut.Context.Sql.ToString()
-                .SatisfySql(
+                .TestSatisfySql(
                     """
                     WITH "_{GUID}" AS (
                       SELECT
@@ -1275,7 +1274,7 @@ public partial class SqliteNodeInterpreterTests
                     } ) );
 
             sut.Context.Sql.ToString()
-                .SatisfySql(
+                .TestSatisfySql(
                     """
                     WITH "_{GUID}" AS (
                       SELECT
@@ -1313,7 +1312,7 @@ public partial class SqliteNodeInterpreterTests
                     } ) );
 
             sut.Context.Sql.ToString()
-                .SatisfySql(
+                .TestSatisfySql(
                     """
                     WITH "_{GUID}" AS (
                       SELECT
@@ -1363,7 +1362,7 @@ public partial class SqliteNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["b"].Assign( s["f"]["b"] + s["common.v"]["b"] ) } ) );
 
             sut.Context.Sql.ToString()
-                .SatisfySql(
+                .TestSatisfySql(
                     """
                     WITH "ipsum" AS (
                       SELECT * FROM lorem
@@ -1404,7 +1403,7 @@ public partial class SqliteNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["b"].Assign( s["f"]["b"] + s["common.v"]["b"] ) } ) );
 
             sut.Context.Sql.ToString()
-                .SatisfySql(
+                .TestSatisfySql(
                     """
                     WITH "ipsum" AS (
                       SELECT * FROM lorem
@@ -1457,7 +1456,7 @@ public partial class SqliteNodeInterpreterTests
                     } ) );
 
             sut.Context.Sql.ToString()
-                .SatisfySql(
+                .TestSatisfySql(
                     """
                     UPDATE "common_foo" AS "f" SET
                       "b" = ("lorem"."x" + 1),
@@ -1497,7 +1496,7 @@ public partial class SqliteNodeInterpreterTests
                     } ) );
 
             sut.Context.Sql.ToString()
-                .SatisfySql(
+                .TestSatisfySql(
                     """
                     WITH "_{GUID}" AS (
                       SELECT

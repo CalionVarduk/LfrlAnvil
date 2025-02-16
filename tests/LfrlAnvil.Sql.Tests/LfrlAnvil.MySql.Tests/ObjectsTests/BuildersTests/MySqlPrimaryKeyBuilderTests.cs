@@ -5,8 +5,6 @@ using LfrlAnvil.MySql.Objects.Builders;
 using LfrlAnvil.MySql.Tests.Helpers;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.MySql.Tests.ObjectsTests.BuildersTests;
 
@@ -44,7 +42,7 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 DROP PRIMARY KEY,
@@ -112,7 +110,7 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 DROP PRIMARY KEY,
@@ -232,7 +230,7 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 DROP PRIMARY KEY,

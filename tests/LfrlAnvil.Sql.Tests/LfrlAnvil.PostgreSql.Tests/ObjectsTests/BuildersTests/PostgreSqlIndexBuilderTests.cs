@@ -10,8 +10,6 @@ using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.PostgreSql.Tests.ObjectsTests.BuildersTests;
 
@@ -49,7 +47,7 @@ public class PostgreSqlIndexBuilderTests : TestsBase
                 sut.Columns.Expressions.TestSequence( [ ixc2 ] ),
                 sut.ReferencedColumns.TestSequence( [ c2 ] ),
                 actions.Select( a => a.Sql )
-                    .TestSequence( [ (sql, _) => sql.SatisfySql( "CREATE INDEX \"IX_T_C2A\" ON \"foo\".\"T\" (\"C2\" ASC);" ) ] ) )
+                    .TestSequence( [ (sql, _) => sql.TestSatisfySql( "CREATE INDEX \"IX_T_C2A\" ON \"foo\".\"T\" (\"C2\" ASC);" ) ] ) )
             .Go();
     }
 
@@ -76,7 +74,7 @@ public class PostgreSqlIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql( "CREATE INDEX \"IX_T_C2A_E1D\" ON \"foo\".\"T\" (\"C2\" ASC, (\"C3\" + 1) DESC);" )
+                        (sql, _) => sql.TestSatisfySql( "CREATE INDEX \"IX_T_C2A_E1D\" ON \"foo\".\"T\" (\"C2\" ASC, (\"C3\" + 1) DESC);" )
                     ] ) )
             .Go();
     }
@@ -120,7 +118,7 @@ public class PostgreSqlIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 DROP CONSTRAINT "PK_T";
@@ -215,7 +213,7 @@ public class PostgreSqlIndexBuilderTests : TestsBase
                 schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
                 schema.Objects.TryGet( oldName ).TestNull(),
                 actions.Select( a => a.Sql )
-                    .TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER INDEX \"foo\".\"IX_T_C2A\" RENAME TO \"bar\";" ) ] ) )
+                    .TestSequence( [ (sql, _) => sql.TestSatisfySql( "ALTER INDEX \"foo\".\"IX_T_C2A\" RENAME TO \"bar\";" ) ] ) )
             .Go();
     }
 
@@ -241,7 +239,7 @@ public class PostgreSqlIndexBuilderTests : TestsBase
                 schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
                 schema.Objects.TryGet( oldName ).TestNull(),
                 actions.Select( a => a.Sql )
-                    .TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER INDEX \"foo\".\"IX_T_C2A\" RENAME TO \"bar\";" ) ] ) )
+                    .TestSequence( [ (sql, _) => sql.TestSatisfySql( "ALTER INDEX \"foo\".\"IX_T_C2A\" RENAME TO \"bar\";" ) ] ) )
             .Go();
     }
 
@@ -381,7 +379,7 @@ public class PostgreSqlIndexBuilderTests : TestsBase
                 schema.Objects.TryGet( "IX_T_C2A" ).TestRefEquals( sut ),
                 schema.Objects.TryGet( "bar" ).TestNull(),
                 actions.Select( a => a.Sql )
-                    .TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER INDEX \"foo\".\"bar\" RENAME TO \"IX_T_C2A\";" ) ] ) )
+                    .TestSequence( [ (sql, _) => sql.TestSatisfySql( "ALTER INDEX \"foo\".\"bar\" RENAME TO \"IX_T_C2A\";" ) ] ) )
             .Go();
     }
 
@@ -405,7 +403,7 @@ public class PostgreSqlIndexBuilderTests : TestsBase
                 schema.Objects.TryGet( "UIX_T_C2A" ).TestRefEquals( sut ),
                 schema.Objects.TryGet( "bar" ).TestNull(),
                 actions.Select( a => a.Sql )
-                    .TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER INDEX \"foo\".\"bar\" RENAME TO \"UIX_T_C2A\";" ) ] ) )
+                    .TestSequence( [ (sql, _) => sql.TestSatisfySql( "ALTER INDEX \"foo\".\"bar\" RENAME TO \"UIX_T_C2A\";" ) ] ) )
             .Go();
     }
 
@@ -502,7 +500,7 @@ public class PostgreSqlIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX \"foo\".\"IX_T_C2A\";",
                             "CREATE UNIQUE INDEX \"IX_T_C2A\" ON \"foo\".\"T\" (\"C2\" ASC);" )
                     ] ) )
@@ -527,7 +525,7 @@ public class PostgreSqlIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX \"foo\".\"IX_T_C2A\";",
                             "CREATE INDEX \"IX_T_C2A\" ON \"foo\".\"T\" (\"C2\" ASC);" )
                     ] ) )
@@ -635,7 +633,7 @@ public class PostgreSqlIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX \"foo\".\"IX_T_C2A\";",
                             "CREATE UNIQUE INDEX \"bar\" ON \"foo\".\"T\" (\"C2\" ASC);" )
                     ] ) )
@@ -696,7 +694,7 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         Assertion.All(
                 result.TestRefEquals( sut ),
                 sut.IsVirtual.TestTrue(),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP INDEX \"foo\".\"IX_T_C2A\";" ) ] ) )
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.TestSatisfySql( "DROP INDEX \"foo\".\"IX_T_C2A\";" ) ] ) )
             .Go();
     }
 
@@ -716,7 +714,7 @@ public class PostgreSqlIndexBuilderTests : TestsBase
                 result.TestRefEquals( sut ),
                 sut.IsVirtual.TestFalse(),
                 actions.Select( a => a.Sql )
-                    .TestSequence( [ (sql, _) => sql.SatisfySql( "CREATE INDEX \"IX_T_C2A\" ON \"foo\".\"T\" (\"C2\" ASC);" ) ] ) )
+                    .TestSequence( [ (sql, _) => sql.TestSatisfySql( "CREATE INDEX \"IX_T_C2A\" ON \"foo\".\"T\" (\"C2\" ASC);" ) ] ) )
             .Go();
     }
 
@@ -873,7 +871,7 @@ public class PostgreSqlIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX \"foo\".\"IX_T_C2A\";",
                             "CREATE INDEX \"IX_T_C2A\" ON \"foo\".\"T\" (\"C2\" ASC) WHERE (\"C2\" IS NOT NULL);" )
                     ] ) )
@@ -902,7 +900,7 @@ public class PostgreSqlIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX \"foo\".\"IX_T_C2A\";",
                             "CREATE INDEX \"IX_T_C2A\" ON \"foo\".\"T\" (\"C2\" ASC);" )
                     ] ) )
@@ -1016,7 +1014,7 @@ public class PostgreSqlIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX \"foo\".\"IX_T_C2A\";",
                             "CREATE UNIQUE INDEX \"bar\" ON \"foo\".\"T\" (\"C2\" ASC) WHERE (\"C2\" IS NOT NULL);" )
                     ] ) )
@@ -1039,7 +1037,7 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         actions.Select( a => a.Sql )
             .TestSequence(
             [
-                (sql, _) => sql.SatisfySql(
+                (sql, _) => sql.TestSatisfySql(
                     "DROP INDEX \"foo\".\"UIX_T_C2A\";",
                     """
                     ALTER TABLE "foo"."T"
@@ -1075,7 +1073,7 @@ public class PostgreSqlIndexBuilderTests : TestsBase
                 sut.ReferencedFilterColumns.TestEmpty(),
                 sut.Filter.TestNull(),
                 c2.ReferencingObjects.TestEmpty(),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP INDEX \"foo\".\"IX_T_C2A\";" ) ] ) )
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.TestSatisfySql( "DROP INDEX \"foo\".\"IX_T_C2A\";" ) ] ) )
             .Go();
     }
 

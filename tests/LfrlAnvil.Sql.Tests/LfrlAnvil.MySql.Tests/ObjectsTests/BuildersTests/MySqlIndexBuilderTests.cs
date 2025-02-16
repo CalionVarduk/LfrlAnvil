@@ -10,8 +10,6 @@ using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.MySql.Tests.ObjectsTests.BuildersTests;
 
@@ -49,7 +47,7 @@ public class MySqlIndexBuilderTests : TestsBase
                 sut.Columns.Expressions.TestSequence( [ ixc2 ] ),
                 sut.ReferencedColumns.TestSequence( [ c2 ] ),
                 actions.Select( a => a.Sql )
-                    .TestSequence( [ (sql, _) => sql.SatisfySql( "CREATE INDEX `IX_T_C2A` ON `foo`.`T` (`C2` ASC);" ) ] ) )
+                    .TestSequence( [ (sql, _) => sql.TestSatisfySql( "CREATE INDEX `IX_T_C2A` ON `foo`.`T` (`C2` ASC);" ) ] ) )
             .Go();
     }
 
@@ -75,7 +73,7 @@ public class MySqlIndexBuilderTests : TestsBase
                 sut.Columns.Expressions.TestSequence( [ ixc1, ixc2 ] ),
                 actions.Select( a => a.Sql )
                     .TestSequence(
-                        [ (sql, _) => sql.SatisfySql( "CREATE INDEX `IX_T_C2A_E1D` ON `foo`.`T` (`C2` ASC, (`C3` + 1) DESC);" ) ] ) )
+                        [ (sql, _) => sql.TestSatisfySql( "CREATE INDEX `IX_T_C2A_E1D` ON `foo`.`T` (`C2` ASC, (`C3` + 1) DESC);" ) ] ) )
             .Go();
     }
 
@@ -118,7 +116,7 @@ public class MySqlIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 DROP PRIMARY KEY,
@@ -212,7 +210,7 @@ public class MySqlIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 RENAME INDEX `IX_T_C2A` TO `bar`;
@@ -245,7 +243,7 @@ public class MySqlIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 RENAME INDEX `IX_T_C2A` TO `bar`;
@@ -392,7 +390,7 @@ public class MySqlIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 RENAME INDEX `bar` TO `IX_T_C2A`;
@@ -423,7 +421,7 @@ public class MySqlIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 RENAME INDEX `bar` TO `UIX_T_C2A`;
@@ -525,7 +523,7 @@ public class MySqlIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX `IX_T_C2A` ON `foo`.`T`;",
                             "CREATE UNIQUE INDEX `IX_T_C2A` ON `foo`.`T` (`C2` ASC);" )
                     ] ) )
@@ -550,7 +548,7 @@ public class MySqlIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX `IX_T_C2A` ON `foo`.`T`;",
                             "CREATE INDEX `IX_T_C2A` ON `foo`.`T` (`C2` ASC);" )
                     ] ) )
@@ -576,7 +574,7 @@ public class MySqlIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 DROP FOREIGN KEY `FK_T_C2_REF_T`;
@@ -692,7 +690,7 @@ public class MySqlIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX `IX_T_C2A` ON `foo`.`T`;",
                             "CREATE UNIQUE INDEX `bar` ON `foo`.`T` (`C2` ASC);" )
                     ] ) )
@@ -753,7 +751,7 @@ public class MySqlIndexBuilderTests : TestsBase
         Assertion.All(
                 result.TestRefEquals( sut ),
                 sut.IsVirtual.TestTrue(),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP INDEX `IX_T_C2A` ON `foo`.`T`;" ) ] ) )
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.TestSatisfySql( "DROP INDEX `IX_T_C2A` ON `foo`.`T`;" ) ] ) )
             .Go();
     }
 
@@ -773,7 +771,7 @@ public class MySqlIndexBuilderTests : TestsBase
                 result.TestRefEquals( sut ),
                 sut.IsVirtual.TestFalse(),
                 actions.Select( a => a.Sql )
-                    .TestSequence( [ (sql, _) => sql.SatisfySql( "CREATE INDEX `IX_T_C2A` ON `foo`.`T` (`C2` ASC);" ) ] ) )
+                    .TestSequence( [ (sql, _) => sql.TestSatisfySql( "CREATE INDEX `IX_T_C2A` ON `foo`.`T` (`C2` ASC);" ) ] ) )
             .Go();
     }
 
@@ -796,7 +794,7 @@ public class MySqlIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 DROP FOREIGN KEY `FK_T_C2_REF_T`;
@@ -829,7 +827,7 @@ public class MySqlIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 DROP FOREIGN KEY `FK_T_C2_REF_T`;
@@ -1043,7 +1041,7 @@ public class MySqlIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX `IX_T_C2A` ON `foo`.`T`;",
                             "CREATE INDEX `IX_T_C2A` ON `foo`.`T` (`C2` ASC) WHERE (`C2` IS NOT NULL);" )
                     ] ) )
@@ -1074,7 +1072,7 @@ public class MySqlIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX `IX_T_C2A` ON `foo`.`T`;",
                             "CREATE INDEX `IX_T_C2A` ON `foo`.`T` (`C2` ASC);" )
                     ] ) )
@@ -1183,7 +1181,7 @@ public class MySqlIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 DROP FOREIGN KEY `FK_T_C2_REF_T`;
@@ -1232,7 +1230,7 @@ public class MySqlIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX `IX_T_C2A` ON `foo`.`T`;",
                             "CREATE UNIQUE INDEX `bar` ON `foo`.`T` (`C2` ASC) WHERE (`C2` IS NOT NULL);" )
                     ] ) )
@@ -1259,7 +1257,7 @@ public class MySqlIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 DROP FOREIGN KEY `FK_T_C3_REF_T`;
@@ -1295,7 +1293,7 @@ public class MySqlIndexBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX `UIX_T_C2A` ON `foo`.`T`;",
                             """
                             ALTER TABLE `foo`.`T`
@@ -1330,7 +1328,7 @@ public class MySqlIndexBuilderTests : TestsBase
                 sut.ReferencedFilterColumns.TestEmpty(),
                 sut.Filter.TestNull(),
                 c2.ReferencingObjects.TestEmpty(),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP INDEX `IX_T_C2A` ON `foo`.`T`;" ) ] ) )
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.TestSatisfySql( "DROP INDEX `IX_T_C2A` ON `foo`.`T`;" ) ] ) )
             .Go();
     }
 

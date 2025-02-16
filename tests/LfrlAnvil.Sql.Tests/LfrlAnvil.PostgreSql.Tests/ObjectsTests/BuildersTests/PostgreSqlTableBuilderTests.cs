@@ -7,8 +7,6 @@ using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.PostgreSql.Tests.ObjectsTests.BuildersTests;
 
@@ -48,7 +46,7 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "foo"."T" (
                               "C5" BYTEA NOT NULL GENERATED ALWAYS AS ("C1" + 1) STORED,
@@ -155,7 +153,7 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
                 schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
                 schema.Objects.TryGet( oldName ).TestNull(),
                 actions.Select( a => a.Sql )
-                    .TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo\".\"T\" RENAME TO \"bar\";" ) ] ) )
+                    .TestSequence( [ (sql, _) => sql.TestSatisfySql( "ALTER TABLE \"foo\".\"T\" RENAME TO \"bar\";" ) ] ) )
             .Go();
     }
 
@@ -187,7 +185,7 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
                 fk1.IsRemoved.TestFalse(),
                 fk2.IsRemoved.TestFalse(),
                 actions.Select( a => a.Sql )
-                    .TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo\".\"T\" RENAME TO \"bar\";" ) ] ) )
+                    .TestSequence( [ (sql, _) => sql.TestSatisfySql( "ALTER TABLE \"foo\".\"T\" RENAME TO \"bar\";" ) ] ) )
             .Go();
     }
 
@@ -225,7 +223,7 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
                 fk2.IsRemoved.TestFalse(),
                 fk3.IsRemoved.TestFalse(),
                 actions.Select( a => a.Sql )
-                    .TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo\".\"T1\" RENAME TO \"U\";" ) ] ) )
+                    .TestSequence( [ (sql, _) => sql.TestSatisfySql( "ALTER TABLE \"foo\".\"T1\" RENAME TO \"U\";" ) ] ) )
             .Go();
     }
 
@@ -256,8 +254,8 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo\".\"T1\" RENAME TO \"U\";" ),
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql( "ALTER TABLE \"foo\".\"T1\" RENAME TO \"U\";" ),
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."U"
                                 ADD COLUMN "C3" INT4 NOT NULL DEFAULT (0);
@@ -290,7 +288,7 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
                 v2.IsRemoved.TestFalse(),
                 v3.IsRemoved.TestFalse(),
                 actions.Select( a => a.Sql )
-                    .TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo\".\"T\" RENAME TO \"U\";" ) ] ) )
+                    .TestSequence( [ (sql, _) => sql.TestSatisfySql( "ALTER TABLE \"foo\".\"T\" RENAME TO \"U\";" ) ] ) )
             .Go();
     }
 
@@ -321,8 +319,8 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo\".\"T\" RENAME TO \"U\";" ),
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql( "ALTER TABLE \"foo\".\"T\" RENAME TO \"U\";" ),
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."U"
                                 ADD COLUMN "D" INT4 NOT NULL DEFAULT (0);
@@ -437,7 +435,7 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
                 chk.ReferencedColumns.TestEmpty(),
                 otherPk.Index.ReferencingObjects.TestEmpty(),
                 otherTable.ReferencingObjects.TestEmpty(),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP TABLE \"foo\".\"T\";" ) ] ) )
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.TestSatisfySql( "DROP TABLE \"foo\".\"T\";" ) ] ) )
             .Go();
     }
 
@@ -470,7 +468,7 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
                 pk.Index.ReferencingObjects.TestEmpty(),
                 pk.Index.Columns.Expressions.TestEmpty(),
                 pk.Index.PrimaryKey.TestNull(),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP TABLE \"foo\".\"T\";" ) ] ) )
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.TestSatisfySql( "DROP TABLE \"foo\".\"T\";" ) ] ) )
             .Go();
     }
 
@@ -546,7 +544,7 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
         actions.Select( ac => ac.Sql )
             .TestSequence(
             [
-                (sql, _) => sql.SatisfySql(
+                (sql, _) => sql.TestSatisfySql(
                     "ALTER TABLE \"foo\".\"T\" RENAME COLUMN \"A\" TO \"__A__{GUID}__\";",
                     "ALTER TABLE \"foo\".\"T\" RENAME COLUMN \"B\" TO \"A\";",
                     "ALTER TABLE \"foo\".\"T\" RENAME COLUMN \"__A__{GUID}__\" TO \"B\";" )
@@ -576,7 +574,7 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
         actions.Select( ac => ac.Sql )
             .TestSequence(
             [
-                (sql, _) => sql.SatisfySql(
+                (sql, _) => sql.TestSatisfySql(
                     "ALTER TABLE \"foo\".\"T\" RENAME COLUMN \"A\" TO \"__A__{GUID}__\";",
                     "ALTER TABLE \"foo\".\"T\" RENAME COLUMN \"B\" TO \"A\";",
                     "ALTER TABLE \"foo\".\"T\" RENAME COLUMN \"C\" TO \"B\";",
@@ -607,7 +605,7 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
         actions.Select( ac => ac.Sql )
             .TestSequence(
             [
-                (sql, _) => sql.SatisfySql(
+                (sql, _) => sql.TestSatisfySql(
                     "ALTER TABLE \"foo\".\"T\" RENAME COLUMN \"C\" TO \"D\";",
                     "ALTER TABLE \"foo\".\"T\" RENAME COLUMN \"B\" TO \"C\";",
                     "ALTER TABLE \"foo\".\"T\" RENAME COLUMN \"A\" TO \"B\";" )
@@ -636,7 +634,7 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
         actions.Select( ac => ac.Sql )
             .TestSequence(
             [
-                (sql, _) => sql.SatisfySql(
+                (sql, _) => sql.TestSatisfySql(
                     """
                     ALTER TABLE "foo"."T"
                         RENAME CONSTRAINT "A" TO "__A__{GUID}__";
@@ -678,7 +676,7 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
         actions.Select( ac => ac.Sql )
             .TestSequence(
             [
-                (sql, _) => sql.SatisfySql(
+                (sql, _) => sql.TestSatisfySql(
                     "ALTER INDEX \"foo\".\"C\" RENAME TO \"D\";",
                     """
                     ALTER TABLE "foo"."T"
@@ -731,8 +729,8 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
         actions.Select( a => a.Sql )
             .TestSequence(
             [
-                (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo\".\"T\" RENAME TO \"U\";" ),
-                (sql, _) => sql.SatisfySql(
+                (sql, _) => sql.TestSatisfySql( "ALTER TABLE \"foo\".\"T\" RENAME TO \"U\";" ),
+                (sql, _) => sql.TestSatisfySql(
                     """
                     ALTER TABLE "foo"."U"
                         DROP CONSTRAINT "FK_T_C7_REF_T",

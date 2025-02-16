@@ -94,7 +94,7 @@ public abstract class GenericDecoratedEventSourceTests<TRootEvent, TNextEvent, T
         Assertion.All(
                 subscriber.IsDisposed.TestTrue(),
                 sut.Subscribers.TestEmpty(),
-                rootListener.TestReceivedCalls( x => x.OnDispose( DisposalSource.Subscriber ) ) )
+                rootListener.TestReceivedCall( x => x.OnDispose( DisposalSource.Subscriber ) ) )
             .Go();
     }
 

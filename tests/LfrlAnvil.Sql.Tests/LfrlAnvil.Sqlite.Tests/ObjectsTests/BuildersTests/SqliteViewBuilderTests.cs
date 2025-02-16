@@ -7,8 +7,6 @@ using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.Sqlite.Tests.Helpers;
-using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.Sqlite.Tests.ObjectsTests.BuildersTests;
 
@@ -41,7 +39,7 @@ public class SqliteViewBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE VIEW "foo_V" AS
                                 SELECT * FROM bar;
@@ -120,7 +118,7 @@ public class SqliteViewBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP VIEW \"foo_V\";",
                             """
                             CREATE VIEW "foo_bar" AS
@@ -155,13 +153,13 @@ public class SqliteViewBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP VIEW \"foo_V\";",
                             """
                             CREATE VIEW "foo_bar" AS
                                 SELECT * FROM bar;
                             """ ),
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP VIEW \"foo_W1\";",
                             """
                             CREATE VIEW "foo_W1" AS
@@ -169,7 +167,7 @@ public class SqliteViewBuilderTests : TestsBase
                                   *
                                 FROM "foo_bar";
                             """ ),
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP VIEW \"foo_W3\";",
                             """
                             CREATE VIEW "foo_W3" AS
@@ -256,7 +254,7 @@ public class SqliteViewBuilderTests : TestsBase
                 table.ReferencingObjects.TestEmpty(),
                 column.ReferencingObjects.TestSequence(
                     [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( pk.Index ), column ) ] ),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP VIEW \"foo_V\";" ) ] ) )
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.TestSatisfySql( "DROP VIEW \"foo_V\";" ) ] ) )
             .Go();
     }
 
@@ -281,7 +279,7 @@ public class SqliteViewBuilderTests : TestsBase
                 table.ReferencingObjects.TestEmpty(),
                 column.ReferencingObjects.TestSequence(
                     [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( pk.Index ), column ) ] ),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP VIEW \"foo_V\";" ) ] ) )
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.TestSatisfySql( "DROP VIEW \"foo_V\";" ) ] ) )
             .Go();
     }
 

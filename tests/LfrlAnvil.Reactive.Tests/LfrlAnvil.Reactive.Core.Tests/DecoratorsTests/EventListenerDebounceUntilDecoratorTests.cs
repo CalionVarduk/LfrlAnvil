@@ -35,7 +35,7 @@ public class EventListenerDebounceUntilDecoratorTests : TestsBase
         _ = sut.Decorate( next, subscriber );
 
         Assertion.All(
-                subscriber.TestReceivedCalls( x => x.Dispose() ),
+                subscriber.TestReceivedCall( x => x.Dispose() ),
                 target.HasSubscribers.TestFalse() )
             .Go();
     }
@@ -72,7 +72,7 @@ public class EventListenerDebounceUntilDecoratorTests : TestsBase
         target.Publish( Fixture.Create<string>() );
 
         Assertion.All(
-                next.TestReceivedCalls( x => x.React( sourceEvent ) ),
+                next.TestReceivedCall( x => x.React( sourceEvent ) ),
                 subscriber.TestDidNotReceiveCall( x => x.Dispose() ),
                 target.HasSubscribers.TestFalse() )
             .Go();
@@ -94,7 +94,7 @@ public class EventListenerDebounceUntilDecoratorTests : TestsBase
         listener.React( sourceEvent );
 
         Assertion.All(
-                next.TestReceivedCalls( x => x.React( sourceEvent ) ),
+                next.TestReceivedCall( x => x.React( sourceEvent ) ),
                 subscriber.TestDidNotReceiveCall( x => x.Dispose() ),
                 target.HasSubscribers.TestFalse() )
             .Go();
@@ -154,7 +154,7 @@ public class EventListenerDebounceUntilDecoratorTests : TestsBase
 
         Assertion.All(
                 next.TestDidNotReceiveCall( x => x.React( sourceEvent ) ),
-                subscriber.TestReceivedCalls( x => x.Dispose() ),
+                subscriber.TestReceivedCall( x => x.Dispose() ),
                 target.HasSubscribers.TestFalse() )
             .Go();
     }
@@ -174,7 +174,7 @@ public class EventListenerDebounceUntilDecoratorTests : TestsBase
 
         Assertion.All(
                 next.TestDidNotReceiveCall( x => x.React( sourceEvent ) ),
-                subscriber.TestReceivedCalls( x => x.Dispose() ),
+                subscriber.TestReceivedCall( x => x.Dispose() ),
                 target.HasSubscribers.TestFalse() )
             .Go();
     }
@@ -192,7 +192,7 @@ public class EventListenerDebounceUntilDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        next.TestReceivedCalls( x => x.OnDispose( source ) ).Go();
+        next.TestReceivedCall( x => x.OnDispose( source ) ).Go();
     }
 
     [Theory]

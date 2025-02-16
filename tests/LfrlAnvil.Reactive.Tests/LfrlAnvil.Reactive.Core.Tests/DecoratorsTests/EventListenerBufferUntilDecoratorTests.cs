@@ -36,7 +36,7 @@ public class EventListenerBufferUntilDecoratorTests : TestsBase
         _ = sut.Decorate( next, subscriber );
 
         Assertion.All(
-                subscriber.TestReceivedCalls( x => x.Dispose() ),
+                subscriber.TestReceivedCall( x => x.Dispose() ),
                 target.HasSubscribers.TestFalse() )
             .Go();
     }
@@ -114,7 +114,7 @@ public class EventListenerBufferUntilDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        next.TestReceivedCalls( x => x.OnDispose( source ) ).Go();
+        next.TestReceivedCall( x => x.OnDispose( source ) ).Go();
     }
 
     [Theory]
@@ -144,7 +144,7 @@ public class EventListenerBufferUntilDecoratorTests : TestsBase
 
         target.Dispose();
 
-        subscriber.TestReceivedCalls( x => x.Dispose() ).Go();
+        subscriber.TestReceivedCall( x => x.Dispose() ).Go();
     }
 
     [Theory]

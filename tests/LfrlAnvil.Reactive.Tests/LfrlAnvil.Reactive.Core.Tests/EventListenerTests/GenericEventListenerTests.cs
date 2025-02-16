@@ -40,7 +40,7 @@ public abstract class GenericEventListenerTests<TEvent> : TestsBase
 
         sut.React( @event );
 
-        listener.TestReceivedCalls( x => x.React( @event ) ).Go();
+        listener.TestReceivedCall( x => x.React( @event ) ).Go();
     }
 
     [Fact]

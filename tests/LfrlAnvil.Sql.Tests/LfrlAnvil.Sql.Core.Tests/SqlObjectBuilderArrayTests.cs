@@ -14,13 +14,13 @@ public class SqlObjectBuilderArrayTests : TestsBase
 
         var sut = SqlObjectBuilderArray<SqlObjectBuilder>.From<SqlObjectBuilder>( new SqlObjectBuilder[] { table, c1, c2 } );
 
-Assertion.All(
-            sut.Count.TestEquals( 3 ),
-            sut.TestSequence([ table, c1, c2 ]),
-            sut[0].TestEquals( table ),
-            sut[1].TestEquals( c1 ),
-            sut[2].TestEquals( c2 )
-).Go();
+        Assertion.All(
+                sut.Count.TestEquals( 3 ),
+                sut.TestSequence( [ table, c1, c2 ] ),
+                sut[0].TestEquals( table ),
+                sut[1].TestEquals( c1 ),
+                sut[2].TestEquals( c2 ) )
+            .Go();
     }
 
     [Fact]
@@ -33,9 +33,9 @@ Assertion.All(
 
         var result = sut.UnsafeReinterpretAs<SqlObjectBuilder>();
 
-Assertion.All(
-            result.Count.TestEquals( 3 ),
-            result.TestSequence([ table, c1, c2 ])
-).Go();
+        Assertion.All(
+                result.Count.TestEquals( 3 ),
+                result.TestSequence( [ table, c1, c2 ] ) )
+            .Go();
     }
 }

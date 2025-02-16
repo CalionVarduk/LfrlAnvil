@@ -6,8 +6,6 @@ using LfrlAnvil.MySql.Tests.Helpers;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.MySql.Tests.ObjectsTests.BuildersTests;
 
@@ -54,7 +52,7 @@ public class MySqlForeignKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;
@@ -92,7 +90,7 @@ public class MySqlForeignKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T2`
                                 ADD CONSTRAINT `FK_T2_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;
@@ -132,7 +130,7 @@ public class MySqlForeignKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `bar`.`T2`
                                 ADD CONSTRAINT `FK_T2_C2_REF_foo_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;
@@ -221,7 +219,7 @@ public class MySqlForeignKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 DROP FOREIGN KEY `FK_T_C2_REF_T`;
@@ -356,7 +354,7 @@ public class MySqlForeignKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 DROP FOREIGN KEY `bar`;
@@ -430,7 +428,7 @@ public class MySqlForeignKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 DROP FOREIGN KEY `FK_T_C2_REF_T`;
@@ -542,7 +540,7 @@ public class MySqlForeignKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 DROP FOREIGN KEY `FK_T_C2_REF_T`;
@@ -653,7 +651,7 @@ public class MySqlForeignKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 DROP FOREIGN KEY `FK_T_C2_REF_T`;
@@ -686,7 +684,7 @@ public class MySqlForeignKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T2`
                                 DROP FOREIGN KEY `FK_T2_C2_REF_T`;
@@ -721,7 +719,7 @@ public class MySqlForeignKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `bar`.`T2`
                                 DROP FOREIGN KEY `FK_T2_C2_REF_foo_T`;

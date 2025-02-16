@@ -9,8 +9,6 @@ using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.MySql.Tests.ObjectsTests.BuildersTests;
 
@@ -46,7 +44,7 @@ public class MySqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 ADD COLUMN `C2` LONGBLOB NOT NULL DEFAULT (X'');
@@ -73,7 +71,7 @@ public class MySqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 ADD COLUMN `C2` LONGBLOB;
@@ -100,7 +98,7 @@ public class MySqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 ADD COLUMN `C2` LONGBLOB GENERATED ALWAYS AS (1) VIRTUAL NOT NULL;
@@ -126,7 +124,7 @@ public class MySqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 ADD COLUMN `C2` LONGBLOB NOT NULL DEFAULT (X'010203');
@@ -157,7 +155,7 @@ public class MySqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 CHANGE COLUMN `C2` `C2` LONGTEXT NOT NULL,
@@ -188,7 +186,7 @@ public class MySqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL;
@@ -218,7 +216,7 @@ public class MySqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL;
@@ -253,7 +251,7 @@ public class MySqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             $"""
                              ALTER TABLE `foo`.`T`
                                 DROP COLUMN `C2`,
@@ -338,7 +336,7 @@ public class MySqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 CHANGE COLUMN `C2` `bar` LONGBLOB NOT NULL;
@@ -496,7 +494,7 @@ public class MySqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 CHANGE COLUMN `C2` `C2` INT NOT NULL;
@@ -675,7 +673,7 @@ public class MySqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 CHANGE COLUMN `C2` `C2` LONGBLOB;
@@ -702,7 +700,7 @@ public class MySqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL;
@@ -729,7 +727,7 @@ public class MySqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL DEFAULT (X'010203');
@@ -756,7 +754,7 @@ public class MySqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 CHANGE COLUMN `C2` `C2` INT NOT NULL;
@@ -881,7 +879,7 @@ public class MySqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL DEFAULT (42);
@@ -908,7 +906,7 @@ public class MySqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL;
@@ -935,7 +933,7 @@ public class MySqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL DEFAULT (123);
@@ -963,7 +961,7 @@ public class MySqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 CHANGE COLUMN `C2` `C2` BIGINT NOT NULL DEFAULT ((10 + 50) + GREATEST(100, 80));
@@ -991,7 +989,7 @@ public class MySqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL DEFAULT (123);
@@ -1019,7 +1017,7 @@ public class MySqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL DEFAULT (123);
@@ -1157,7 +1155,7 @@ public class MySqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 CHANGE COLUMN `C3` `C3` LONGBLOB NOT NULL;
@@ -1187,7 +1185,7 @@ public class MySqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 DROP COLUMN `C3`,
@@ -1220,7 +1218,7 @@ public class MySqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 CHANGE COLUMN `C3` `C3` LONGBLOB GENERATED ALWAYS AS (`C2` + 1) STORED NOT NULL;
@@ -1252,7 +1250,7 @@ public class MySqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 DROP COLUMN `C3`,
@@ -1291,7 +1289,7 @@ public class MySqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             $"""
                              ALTER TABLE `foo`.`T`
                                 CHANGE COLUMN `C3` `C3` LONGBLOB GENERATED ALWAYS AS (`C2` + 1) {expectedStorage} NOT NULL;
@@ -1329,7 +1327,7 @@ public class MySqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             $"""
                              ALTER TABLE `foo`.`T`
                                 DROP COLUMN `C3`,
@@ -1367,7 +1365,7 @@ public class MySqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             $"""
                              ALTER TABLE `foo`.`T`
                                 DROP COLUMN `C3`,
@@ -1401,7 +1399,7 @@ public class MySqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 CHANGE COLUMN `C3` `C3` LONGBLOB GENERATED ALWAYS AS (`C2` + 1) STORED NOT NULL;
@@ -1556,7 +1554,7 @@ public class MySqlColumnBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`T`
                                 DROP COLUMN `C2`;

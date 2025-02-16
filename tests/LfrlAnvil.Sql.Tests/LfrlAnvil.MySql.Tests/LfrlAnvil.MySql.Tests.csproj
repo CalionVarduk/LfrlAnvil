@@ -6,4 +6,9 @@
         <ProjectReference Include="..\..\LfrlAnvil.TestExtensions.Sql\LfrlAnvil.TestExtensions.Sql.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+        <Using Include="LfrlAnvil.TestExtensions.Sql" />
+        <Using Include="LfrlAnvil.TestExtensions.Sql.Assertions" />
+    </ItemGroup>
+
 </Project>

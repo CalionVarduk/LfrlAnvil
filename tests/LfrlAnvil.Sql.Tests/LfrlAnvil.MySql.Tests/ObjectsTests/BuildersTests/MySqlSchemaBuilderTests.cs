@@ -7,8 +7,6 @@ using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.MySql.Tests.ObjectsTests.BuildersTests;
 
@@ -54,7 +52,7 @@ public partial class MySqlSchemaBuilderTests : TestsBase
         Assertion.All(
                 db.Schemas.TryGet( sut.Name ).TestRefEquals( sut ),
                 sut.Name.TestEquals( "foo" ),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "CREATE SCHEMA `foo`;" ) ] ) )
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.TestSatisfySql( "CREATE SCHEMA `foo`;" ) ] ) )
             .Go();
     }
 
@@ -79,7 +77,7 @@ public partial class MySqlSchemaBuilderTests : TestsBase
         Assertion.All(
                 db.Schemas.TryGet( sut.Name ).TestRefEquals( sut ),
                 sut.Name.TestEquals( "foo" ),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( expected ) ] ) )
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.TestSatisfySql( expected ) ] ) )
             .Go();
     }
 
@@ -117,8 +115,8 @@ public partial class MySqlSchemaBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql( "CREATE SCHEMA `bar`;" ),
-                        (sql, _) => sql.SatisfySql( "DROP SCHEMA `foo`;" )
+                        (sql, _) => sql.TestSatisfySql( "CREATE SCHEMA `bar`;" ),
+                        (sql, _) => sql.TestSatisfySql( "DROP SCHEMA `foo`;" )
                     ] ) )
             .Go();
     }
@@ -138,7 +136,7 @@ public partial class MySqlSchemaBuilderTests : TestsBase
                 sut.Name.TestEquals( "bar" ),
                 db.Schemas.TryGet( "bar" ).TestRefEquals( sut ),
                 db.Schemas.TryGet( db.CommonSchemaName ).TestNull(),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "CREATE SCHEMA `bar`;" ) ] ) )
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.TestSatisfySql( "CREATE SCHEMA `bar`;" ) ] ) )
             .Go();
     }
 
@@ -158,7 +156,7 @@ public partial class MySqlSchemaBuilderTests : TestsBase
                 sut.Name.TestEquals( db.CommonSchemaName ),
                 db.Schemas.TryGet( db.CommonSchemaName ).TestRefEquals( sut ),
                 db.Schemas.TryGet( "bar" ).TestNull(),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP SCHEMA `bar`;" ) ] ) )
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.TestSatisfySql( "DROP SCHEMA `bar`;" ) ] ) )
             .Go();
     }
 
@@ -211,22 +209,22 @@ public partial class MySqlSchemaBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql( "CREATE SCHEMA `bar`;" ),
-                        (sql, _) => sql.SatisfySql( "ALTER TABLE `foo`.`T1` RENAME TO `bar`.`T1`;" ),
-                        (sql, _) => sql.SatisfySql( "ALTER TABLE `foo`.`T2` RENAME TO `bar`.`T2`;" ),
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql( "CREATE SCHEMA `bar`;" ),
+                        (sql, _) => sql.TestSatisfySql( "ALTER TABLE `foo`.`T1` RENAME TO `bar`.`T1`;" ),
+                        (sql, _) => sql.TestSatisfySql( "ALTER TABLE `foo`.`T2` RENAME TO `bar`.`T2`;" ),
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP VIEW `foo`.`V1`;",
                             """
                             CREATE VIEW `bar`.`V1` AS
                                 SELECT * FROM bar;
                             """ ),
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP VIEW `foo`.`V2`;",
                             """
                             CREATE VIEW `bar`.`V2` AS
                                 SELECT * FROM qux;
                             """ ),
-                        (sql, _) => sql.SatisfySql( "DROP SCHEMA `foo`;" )
+                        (sql, _) => sql.TestSatisfySql( "DROP SCHEMA `foo`;" )
                     ] ) )
             .Go();
     }
@@ -265,15 +263,15 @@ public partial class MySqlSchemaBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql( "CREATE SCHEMA `bar`;" ),
-                        (sql, _) => sql.SatisfySql( "ALTER TABLE `foo`.`T` RENAME TO `bar`.`T`;" ),
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql( "CREATE SCHEMA `bar`;" ),
+                        (sql, _) => sql.TestSatisfySql( "ALTER TABLE `foo`.`T` RENAME TO `bar`.`T`;" ),
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP VIEW `foo`.`V`;",
                             """
                             CREATE VIEW `bar`.`V` AS
                                 SELECT * FROM qux;
                             """ ),
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP VIEW `common`.`V`;",
                             """
                             CREATE VIEW `common`.`V` AS
@@ -282,7 +280,7 @@ public partial class MySqlSchemaBuilderTests : TestsBase
                                 FROM `bar`.`V`
                                 INNER JOIN `bar`.`T` ON TRUE;
                             """ ),
-                        (sql, _) => sql.SatisfySql( "DROP SCHEMA `foo`;" )
+                        (sql, _) => sql.TestSatisfySql( "DROP SCHEMA `foo`;" )
                     ] ) )
             .Go();
     }
@@ -352,7 +350,7 @@ public partial class MySqlSchemaBuilderTests : TestsBase
         Assertion.All(
                 db.Schemas.TryGet( sut.Name ).TestNull(),
                 sut.IsRemoved.TestTrue(),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP SCHEMA `foo`;" ) ] ) )
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.TestSatisfySql( "DROP SCHEMA `foo`;" ) ] ) )
             .Go();
     }
 
@@ -434,7 +432,7 @@ public partial class MySqlSchemaBuilderTests : TestsBase
                 chk1.IsRemoved.TestTrue(),
                 chk2.IsRemoved.TestTrue(),
                 sut.Objects.TestEmpty(),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP SCHEMA `foo`;" ) ] ) )
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.TestSatisfySql( "DROP SCHEMA `foo`;" ) ] ) )
             .Go();
     }
 

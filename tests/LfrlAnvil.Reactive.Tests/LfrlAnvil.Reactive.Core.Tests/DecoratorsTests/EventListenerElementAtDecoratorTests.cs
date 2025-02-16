@@ -31,7 +31,7 @@ public class EventListenerElementAtDecoratorTests : TestsBase
 
         _ = sut.Decorate( next, subscriber );
 
-        subscriber.TestReceivedCalls( x => x.Dispose() ).Go();
+        subscriber.TestReceivedCall( x => x.Dispose() ).Go();
     }
 
     [Fact]
@@ -82,7 +82,7 @@ public class EventListenerElementAtDecoratorTests : TestsBase
         foreach ( var e in sourceEvents )
             listener.React( e );
 
-        subscriber.TestReceivedCalls( x => x.Dispose() ).Go();
+        subscriber.TestReceivedCall( x => x.Dispose() ).Go();
     }
 
     [Theory]
@@ -97,7 +97,7 @@ public class EventListenerElementAtDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        next.TestReceivedCalls( x => x.OnDispose( source ) ).Go();
+        next.TestReceivedCall( x => x.OnDispose( source ) ).Go();
     }
 
     [Theory]

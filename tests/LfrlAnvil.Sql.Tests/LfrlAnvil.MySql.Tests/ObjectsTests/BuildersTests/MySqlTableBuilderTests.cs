@@ -7,8 +7,6 @@ using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.MySql.Tests.ObjectsTests.BuildersTests;
 
@@ -48,7 +46,7 @@ public partial class MySqlTableBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE `foo`.`T` (
                               `C1` INT NOT NULL,
@@ -158,7 +156,7 @@ public partial class MySqlTableBuilderTests : TestsBase
                 schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
                 schema.Objects.TryGet( oldName ).TestNull(),
                 actions.Select( a => a.Sql )
-                    .TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER TABLE `foo`.`T` RENAME TO `foo`.`bar`;" ) ] ) )
+                    .TestSequence( [ (sql, _) => sql.TestSatisfySql( "ALTER TABLE `foo`.`T` RENAME TO `foo`.`bar`;" ) ] ) )
             .Go();
     }
 
@@ -190,7 +188,7 @@ public partial class MySqlTableBuilderTests : TestsBase
                 fk1.IsRemoved.TestFalse(),
                 fk2.IsRemoved.TestFalse(),
                 actions.Select( a => a.Sql )
-                    .TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER TABLE `foo`.`T` RENAME TO `foo`.`bar`;" ) ] ) )
+                    .TestSequence( [ (sql, _) => sql.TestSatisfySql( "ALTER TABLE `foo`.`T` RENAME TO `foo`.`bar`;" ) ] ) )
             .Go();
     }
 
@@ -228,7 +226,7 @@ public partial class MySqlTableBuilderTests : TestsBase
                 fk2.IsRemoved.TestFalse(),
                 fk3.IsRemoved.TestFalse(),
                 actions.Select( a => a.Sql )
-                    .TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER TABLE `foo`.`T1` RENAME TO `foo`.`U`;" ) ] ) )
+                    .TestSequence( [ (sql, _) => sql.TestSatisfySql( "ALTER TABLE `foo`.`T1` RENAME TO `foo`.`U`;" ) ] ) )
             .Go();
     }
 
@@ -259,8 +257,8 @@ public partial class MySqlTableBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql( "ALTER TABLE `foo`.`T1` RENAME TO `foo`.`U`;" ),
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql( "ALTER TABLE `foo`.`T1` RENAME TO `foo`.`U`;" ),
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`U`
                                 ADD COLUMN `C3` INT NOT NULL DEFAULT 0;
@@ -295,8 +293,8 @@ public partial class MySqlTableBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql( "ALTER TABLE `foo`.`T` RENAME TO `foo`.`U`;" ),
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql( "ALTER TABLE `foo`.`T` RENAME TO `foo`.`U`;" ),
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP VIEW `foo`.`V1`;",
                             """
                             CREATE VIEW `foo`.`V1` AS
@@ -304,7 +302,7 @@ public partial class MySqlTableBuilderTests : TestsBase
                                   `foo`.`U`.`C`
                                 FROM `foo`.`U`;
                             """ ),
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP VIEW `foo`.`V2`;",
                             """
                             CREATE VIEW `foo`.`V2` AS
@@ -344,8 +342,8 @@ public partial class MySqlTableBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql( "ALTER TABLE `foo`.`T` RENAME TO `foo`.`U`;" ),
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql( "ALTER TABLE `foo`.`T` RENAME TO `foo`.`U`;" ),
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP VIEW `foo`.`V1`;",
                             """
                             CREATE VIEW `foo`.`V1` AS
@@ -353,7 +351,7 @@ public partial class MySqlTableBuilderTests : TestsBase
                                   `foo`.`U`.`C`
                                 FROM `foo`.`U`;
                             """ ),
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP VIEW `foo`.`V2`;",
                             """
                             CREATE VIEW `foo`.`V2` AS
@@ -362,7 +360,7 @@ public partial class MySqlTableBuilderTests : TestsBase
                                 FROM `foo`.`V1`
                                 INNER JOIN `foo`.`U` ON TRUE;
                             """ ),
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE `foo`.`U`
                                 ADD COLUMN `D` INT NOT NULL DEFAULT 0;
@@ -477,7 +475,7 @@ public partial class MySqlTableBuilderTests : TestsBase
                 chk.ReferencedColumns.TestEmpty(),
                 otherPk.Index.ReferencingObjects.TestEmpty(),
                 otherTable.ReferencingObjects.TestEmpty(),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP TABLE `foo`.`T`;" ) ] ) )
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.TestSatisfySql( "DROP TABLE `foo`.`T`;" ) ] ) )
             .Go();
     }
 
@@ -510,7 +508,7 @@ public partial class MySqlTableBuilderTests : TestsBase
                 pk.Index.ReferencingObjects.TestEmpty(),
                 pk.Index.Columns.Expressions.TestEmpty(),
                 pk.Index.PrimaryKey.TestNull(),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP TABLE `foo`.`T`;" ) ] ) )
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.TestSatisfySql( "DROP TABLE `foo`.`T`;" ) ] ) )
             .Go();
     }
 
@@ -586,7 +584,7 @@ public partial class MySqlTableBuilderTests : TestsBase
         actions.Select( ac => ac.Sql )
             .TestSequence(
             [
-                (sql, _) => sql.SatisfySql(
+                (sql, _) => sql.TestSatisfySql(
                     """
                     ALTER TABLE `foo`.`T`
                         CHANGE COLUMN `A` `B` LONGBLOB NOT NULL,
@@ -618,7 +616,7 @@ public partial class MySqlTableBuilderTests : TestsBase
         actions.Select( ac => ac.Sql )
             .TestSequence(
             [
-                (sql, _) => sql.SatisfySql(
+                (sql, _) => sql.TestSatisfySql(
                     """
                     ALTER TABLE `foo`.`T`
                         CHANGE COLUMN `A` `D` LONGBLOB NOT NULL,
@@ -651,7 +649,7 @@ public partial class MySqlTableBuilderTests : TestsBase
         actions.Select( ac => ac.Sql )
             .TestSequence(
             [
-                (sql, _) => sql.SatisfySql(
+                (sql, _) => sql.TestSatisfySql(
                     """
                     ALTER TABLE `foo`.`T`
                         CHANGE COLUMN `A` `B` LONGBLOB NOT NULL,
@@ -683,7 +681,7 @@ public partial class MySqlTableBuilderTests : TestsBase
         actions.Select( ac => ac.Sql )
             .TestSequence(
             [
-                (sql, _) => sql.SatisfySql(
+                (sql, _) => sql.TestSatisfySql(
                     """
                     ALTER TABLE `foo`.`T`
                         DROP PRIMARY KEY,
@@ -718,7 +716,7 @@ public partial class MySqlTableBuilderTests : TestsBase
         actions.Select( ac => ac.Sql )
             .TestSequence(
             [
-                (sql, _) => sql.SatisfySql(
+                (sql, _) => sql.TestSatisfySql(
                     """
                     ALTER TABLE `foo`.`T`
                         DROP PRIMARY KEY,
@@ -770,8 +768,8 @@ public partial class MySqlTableBuilderTests : TestsBase
         actions.Select( a => a.Sql )
             .TestSequence(
             [
-                (sql, _) => sql.SatisfySql( "ALTER TABLE `foo`.`T` RENAME TO `foo`.`U`;" ),
-                (sql, _) => sql.SatisfySql(
+                (sql, _) => sql.TestSatisfySql( "ALTER TABLE `foo`.`T` RENAME TO `foo`.`U`;" ),
+                (sql, _) => sql.TestSatisfySql(
                     """
                     ALTER TABLE `foo`.`U`
                         DROP FOREIGN KEY `FK_T_C7_REF_T`,

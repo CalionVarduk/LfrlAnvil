@@ -35,7 +35,7 @@ public class EventListenerZipDecoratorTests : TestsBase
         _ = sut.Decorate( next, subscriber );
 
         Assertion.All(
-                subscriber.TestReceivedCalls( x => x.Dispose() ),
+                subscriber.TestReceivedCall( x => x.Dispose() ),
                 target.HasSubscribers.TestFalse() )
             .Go();
     }
@@ -181,7 +181,7 @@ public class EventListenerZipDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        next.TestReceivedCalls( x => x.OnDispose( source ) ).Go();
+        next.TestReceivedCall( x => x.OnDispose( source ) ).Go();
     }
 
     [Theory]

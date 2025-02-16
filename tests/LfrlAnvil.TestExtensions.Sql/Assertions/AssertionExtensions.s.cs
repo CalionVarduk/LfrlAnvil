@@ -1,14 +1,15 @@
-﻿using System.Linq;
+﻿using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Text.RegularExpressions;
-using FluentAssertions.Primitives;
 
-namespace LfrlAnvil.TestExtensions.Sql.FluentAssertions;
+namespace LfrlAnvil.TestExtensions.Sql.Assertions;
 
-public static class StringAssertionsExtensions
+public static class AssertionExtensions
 {
     private static readonly Regex NewLineRegex = new Regex( "\\r{0,1}\\n(\\[[ ]\\])*", RegexOptions.Compiled );
 
-    public static AndConstraint<StringAssertions> SatisfySql(this StringAssertions assertions, params string[] expected)
+    [Pure]
+    public static Assertion TestSatisfySql(this string? subject, params string[] expected)
     {
         var regexes = new Regex[expected.Length];
         for ( var i = 0; i < expected.Length; ++i )
@@ -28,15 +29,8 @@ public static class StringAssertionsExtensions
             regexes[i] = new Regex( '^' + pattern + '$', RegexOptions.Singleline );
         }
 
-        var text = assertions.Subject;
-        var statements = text?.Split( ';' ).Select( s => s.Trim() + ';' ).Where( s => s.Length > 1 ).ToArray() ?? Array.Empty<string>();
-
-        statements.Should().HaveSameCount( regexes );
-
-        statements.Zip( regexes )
-            .Should()
-            .OnlyContain( x => x.Second.IsMatch( x.First ) );
-
-        return new AndConstraint<StringAssertions>( assertions );
+        var statements = subject?.Split( ';' ).Select( s => s.Trim() + ';' ).Where( s => s.Length > 1 ).ToArray() ?? Array.Empty<string>();
+        return statements.TestSequence(
+            regexes.Select( r => ( Func<string, int, Assertion> )((statement, _) => statement.TestMatch( r )) ) );
     }
 }

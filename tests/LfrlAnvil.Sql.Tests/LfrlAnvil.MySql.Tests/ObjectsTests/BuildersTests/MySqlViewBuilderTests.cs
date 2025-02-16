@@ -7,8 +7,6 @@ using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.MySql.Tests.ObjectsTests.BuildersTests;
 
@@ -41,7 +39,7 @@ public class MySqlViewBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE VIEW `foo`.`V` AS
                                 SELECT * FROM bar;
@@ -120,7 +118,7 @@ public class MySqlViewBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP VIEW `foo`.`V`;",
                             """
                             CREATE VIEW `foo`.`bar` AS
@@ -155,13 +153,13 @@ public class MySqlViewBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP VIEW `foo`.`V`;",
                             """
                             CREATE VIEW `foo`.`bar` AS
                                 SELECT * FROM bar;
                             """ ),
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP VIEW `foo`.`W1`;",
                             """
                             CREATE VIEW `foo`.`W1` AS
@@ -169,7 +167,7 @@ public class MySqlViewBuilderTests : TestsBase
                                   *
                                 FROM `foo`.`bar`;
                             """ ),
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP VIEW `foo`.`W3`;",
                             """
                             CREATE VIEW `foo`.`W3` AS
@@ -256,7 +254,7 @@ public class MySqlViewBuilderTests : TestsBase
                 table.ReferencingObjects.TestEmpty(),
                 column.ReferencingObjects.TestSequence(
                     [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( pk.Index ), column ) ] ),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP VIEW `foo`.`V`;" ) ] ) )
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.TestSatisfySql( "DROP VIEW `foo`.`V`;" ) ] ) )
             .Go();
     }
 
@@ -281,7 +279,7 @@ public class MySqlViewBuilderTests : TestsBase
                 table.ReferencingObjects.TestEmpty(),
                 column.ReferencingObjects.TestSequence(
                     [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( pk.Index ), column ) ] ),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP VIEW `foo`.`V`;" ) ] ) )
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.TestSatisfySql( "DROP VIEW `foo`.`V`;" ) ] ) )
             .Go();
     }
 

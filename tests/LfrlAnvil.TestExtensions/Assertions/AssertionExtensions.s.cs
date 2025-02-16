@@ -1012,9 +1012,8 @@ public static class AssertionExtensions
         return subject.ToArray().TestSupersetOf( values, context );
     }
 
-    // TODO: remove 's' at the end
     [Pure]
-    public static SubjectAssertion<T> TestReceivedCalls<T>(
+    public static SubjectAssertion<T> TestReceivedCall<T>(
         this T subject,
         Action<T> assertion,
         [CallerArgumentExpression( "subject" )]

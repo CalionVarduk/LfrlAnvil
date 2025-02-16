@@ -6,8 +6,6 @@ using LfrlAnvil.PostgreSql.Tests.Helpers;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.PostgreSql.Tests.ObjectsTests.BuildersTests;
 
@@ -54,7 +52,7 @@ public class PostgreSqlForeignKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 ADD CONSTRAINT "FK_T_C2_REF_T" FOREIGN KEY ("C2") REFERENCES "foo"."T" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT;
@@ -92,7 +90,7 @@ public class PostgreSqlForeignKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T2"
                                 ADD CONSTRAINT "FK_T2_C2_REF_T" FOREIGN KEY ("C2") REFERENCES "foo"."T" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT;
@@ -132,7 +130,7 @@ public class PostgreSqlForeignKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "bar"."T2"
                                 ADD CONSTRAINT "FK_T2_C2_REF_foo_T" FOREIGN KEY ("C2") REFERENCES "foo"."T" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT;
@@ -221,7 +219,7 @@ public class PostgreSqlForeignKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 RENAME CONSTRAINT "FK_T_C2_REF_T" TO "bar";
@@ -352,7 +350,7 @@ public class PostgreSqlForeignKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 RENAME CONSTRAINT "bar" TO "FK_T_C2_REF_T";
@@ -422,7 +420,7 @@ public class PostgreSqlForeignKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 DROP CONSTRAINT "FK_T_C2_REF_T";
@@ -534,7 +532,7 @@ public class PostgreSqlForeignKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 DROP CONSTRAINT "FK_T_C2_REF_T";
@@ -645,7 +643,7 @@ public class PostgreSqlForeignKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 DROP CONSTRAINT "FK_T_C2_REF_T";
@@ -678,7 +676,7 @@ public class PostgreSqlForeignKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T2"
                                 DROP CONSTRAINT "FK_T2_C2_REF_T";
@@ -713,7 +711,7 @@ public class PostgreSqlForeignKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "bar"."T2"
                                 DROP CONSTRAINT "FK_T2_C2_REF_foo_T";
@@ -757,7 +755,7 @@ public class PostgreSqlForeignKeyBuilderTests : TestsBase
         actions.Select( a => a.Sql )
             .TestSequence(
             [
-                (sql, _) => sql.SatisfySql(
+                (sql, _) => sql.TestSatisfySql(
                     """
                     ALTER TABLE "foo"."T"
                         DROP CONSTRAINT "FK_T_C2_REF_T";

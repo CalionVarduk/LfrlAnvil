@@ -51,7 +51,7 @@ public class EventListenerUseSynchronizationContextDecoratorTests : TestsBase
 
         Assertion.All(
                 context.TestReceivedCalls( x => x.Post( Arg.Any<SendOrPostCallback>(), Arg.Is<object?>( o => o == null ) ), count: 1 ),
-                next.TestReceivedCalls( x => x.React( sourceEvent ) ) )
+                next.TestReceivedCall( x => x.React( sourceEvent ) ) )
             .Go();
     }
 
@@ -79,7 +79,7 @@ public class EventListenerUseSynchronizationContextDecoratorTests : TestsBase
 
         Assertion.All(
                 context.TestReceivedCalls( x => x.Post( Arg.Any<SendOrPostCallback>(), Arg.Is<object?>( o => o == null ) ), count: 1 ),
-                next.TestReceivedCalls( x => x.OnDispose( source ) ) )
+                next.TestReceivedCall( x => x.OnDispose( source ) ) )
             .Go();
     }
 
@@ -106,7 +106,7 @@ public class EventListenerUseSynchronizationContextDecoratorTests : TestsBase
 
         Assertion.All(
                 context.TestReceivedCalls( x => x.Post( Arg.Any<SendOrPostCallback>(), Arg.Is<object?>( o => o == null ) ), count: 1 ),
-                next.TestReceivedCalls( x => x.React( sourceEvent ) ) )
+                next.TestReceivedCall( x => x.React( sourceEvent ) ) )
             .Go();
     }
 }

@@ -23,12 +23,6 @@
 
 ### Scribbles:
 
-Tests:
-
-- remove FluentAssertions
-- add assertions to TestExtensions, they need to throw XunitException
-- include assertion scopes
-
 Sql:
 
 - source generators for queries/statements?

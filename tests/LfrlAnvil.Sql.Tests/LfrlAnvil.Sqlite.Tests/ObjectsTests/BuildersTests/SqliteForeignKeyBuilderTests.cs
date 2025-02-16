@@ -6,8 +6,6 @@ using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.Sqlite.Tests.Helpers;
-using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.Sqlite.Tests.ObjectsTests.BuildersTests;
 
@@ -54,7 +52,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX \"foo_IX_T_C2A\";",
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
@@ -107,7 +105,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T2__{GUID}__" (
                               "C2" ANY NOT NULL,
@@ -158,7 +156,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__bar_T2__{GUID}__" (
                               "C2" ANY NOT NULL,
@@ -258,7 +256,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX \"foo_IX_T_C2A\";",
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
@@ -404,7 +402,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX \"foo_IX_T_C2A\";",
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
@@ -489,7 +487,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX \"foo_IX_T_C2A\";",
                             $$"""
                               CREATE TABLE "__foo_T__{GUID}__" (
@@ -612,7 +610,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX \"foo_IX_T_C2A\";",
                             $$"""
                               CREATE TABLE "__foo_T__{GUID}__" (
@@ -734,7 +732,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             "DROP INDEX \"foo_IX_T_C2A\";",
                             """
                             CREATE TABLE "__foo_T__{GUID}__" (
@@ -781,7 +779,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__foo_T2__{GUID}__" (
                               "C2" ANY NOT NULL,
@@ -826,7 +824,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE TABLE "__bar_T2__{GUID}__" (
                               "C2" ANY NOT NULL,

@@ -7,8 +7,6 @@ using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.PostgreSql.Tests.ObjectsTests.BuildersTests;
 
@@ -41,7 +39,7 @@ public class PostgreSqlViewBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             CREATE VIEW "foo"."V" AS
                                                 SELECT * FROM bar;
@@ -118,7 +116,7 @@ public class PostgreSqlViewBuilderTests : TestsBase
                 schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
                 schema.Objects.TryGet( oldName ).TestNull(),
                 actions.Select( a => a.Sql )
-                    .TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER VIEW \"foo\".\"V\" RENAME TO \"bar\";" ) ] ) )
+                    .TestSequence( [ (sql, _) => sql.TestSatisfySql( "ALTER VIEW \"foo\".\"V\" RENAME TO \"bar\";" ) ] ) )
             .Go();
     }
 
@@ -196,7 +194,7 @@ public class PostgreSqlViewBuilderTests : TestsBase
                 table.ReferencingObjects.TestEmpty(),
                 column.ReferencingObjects.TestSequence(
                     [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( pk.Index ), column ) ] ),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP VIEW \"foo\".\"V\";" ) ] ) )
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.TestSatisfySql( "DROP VIEW \"foo\".\"V\";" ) ] ) )
             .Go();
     }
 
@@ -221,7 +219,7 @@ public class PostgreSqlViewBuilderTests : TestsBase
                 table.ReferencingObjects.TestEmpty(),
                 column.ReferencingObjects.TestSequence(
                     [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( pk.Index ), column ) ] ),
-                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP VIEW \"foo\".\"V\";" ) ] ) )
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.TestSatisfySql( "DROP VIEW \"foo\".\"V\";" ) ] ) )
             .Go();
     }
 

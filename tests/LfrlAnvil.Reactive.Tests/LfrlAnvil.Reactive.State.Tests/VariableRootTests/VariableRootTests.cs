@@ -241,7 +241,7 @@ public partial class VariableRootTests : TestsBase
                 variable2.State.TestEquals( expectedState ),
                 variable3.State.TestEquals( expectedState ),
                 root1.State.TestEquals( expectedState ),
-                changeListener.TestReceivedCalls( x => x.React( Arg.Any<VariableRootChangeEvent<string>>() ) ) )
+                changeListener.TestReceivedCall( x => x.React( Arg.Any<VariableRootChangeEvent<string>>() ) ) )
             .Go();
     }
 

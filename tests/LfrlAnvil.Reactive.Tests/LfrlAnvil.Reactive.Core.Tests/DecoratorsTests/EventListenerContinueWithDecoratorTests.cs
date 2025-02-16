@@ -90,7 +90,7 @@ public class EventListenerContinueWithDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        next.TestReceivedCalls( x => x.OnDispose( DisposalSource.Subscriber ) ).Go();
+        next.TestReceivedCall( x => x.OnDispose( DisposalSource.Subscriber ) ).Go();
     }
 
     [Theory]
@@ -115,7 +115,7 @@ public class EventListenerContinueWithDecoratorTests : TestsBase
         listener.OnDispose( source );
         continuation.Dispose();
 
-        next.TestReceivedCalls( x => x.OnDispose( DisposalSource.EventSource ) ).Go();
+        next.TestReceivedCall( x => x.OnDispose( DisposalSource.EventSource ) ).Go();
     }
 
     [Theory]
@@ -134,7 +134,7 @@ public class EventListenerContinueWithDecoratorTests : TestsBase
 
         Assertion.All(
                 next.TestDidNotReceiveCall( x => x.React( Arg.Any<string>() ) ),
-                next.TestReceivedCalls( x => x.OnDispose( source ) ) )
+                next.TestReceivedCall( x => x.OnDispose( source ) ) )
             .Go();
     }
 

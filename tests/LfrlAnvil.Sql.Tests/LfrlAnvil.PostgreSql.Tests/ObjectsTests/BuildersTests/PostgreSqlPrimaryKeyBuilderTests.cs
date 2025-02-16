@@ -5,8 +5,6 @@ using LfrlAnvil.PostgreSql.Objects.Builders;
 using LfrlAnvil.PostgreSql.Tests.Helpers;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.PostgreSql.Tests.ObjectsTests.BuildersTests;
 
@@ -44,7 +42,7 @@ public class PostgreSqlPrimaryKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 DROP CONSTRAINT "PK_T";
@@ -115,7 +113,7 @@ public class PostgreSqlPrimaryKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 RENAME CONSTRAINT "PK_T" TO "bar";
@@ -234,7 +232,7 @@ public class PostgreSqlPrimaryKeyBuilderTests : TestsBase
                 actions.Select( a => a.Sql )
                     .TestSequence(
                     [
-                        (sql, _) => sql.SatisfySql(
+                        (sql, _) => sql.TestSatisfySql(
                             """
                             ALTER TABLE "foo"."T"
                                 RENAME CONSTRAINT "bar" TO "PK_T";

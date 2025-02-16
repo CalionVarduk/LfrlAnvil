@@ -6,7 +6,6 @@ using LfrlAnvil.MySql.Tests.Helpers;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.Sql;
 using MySqlConnector;
 
 namespace LfrlAnvil.MySql.Tests.ObjectsTests.BuildersTests;
