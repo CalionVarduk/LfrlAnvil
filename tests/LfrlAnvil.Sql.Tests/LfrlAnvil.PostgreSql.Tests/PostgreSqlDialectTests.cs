@@ -6,6 +6,6 @@ public class PostgreSqlDialectTests : TestsBase
     public void Instance_ShouldHaveCorrectName()
     {
         var sut = PostgreSqlDialect.Instance;
-        sut.Name.Should().Be( "PostgreSql" );
+        sut.Name.TestEquals( "PostgreSql" ).Go();
     }
 }

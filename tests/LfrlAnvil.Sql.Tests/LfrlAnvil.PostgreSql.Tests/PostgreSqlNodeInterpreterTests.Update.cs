@@ -5,8 +5,7 @@ using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
-using LfrlAnvil.TestExtensions.FluentAssertions;
-using LfrlAnvil.TestExtensions.Sql.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Assertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.PostgreSql.Tests;
@@ -24,12 +23,12 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["foo"]["a"].Assign( SqlNode.Literal( "bar" ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     UPDATE foo SET
                       "a" = 'bar'
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -43,13 +42,13 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["foo"]["a"].Assign( SqlNode.Literal( "bar" ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     UPDATE foo SET
                       "a" = 'bar'
                     WHERE foo."a" < 10
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -64,13 +63,13 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["bar"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     UPDATE "common"."foo" AS "bar" SET
                       "a" = 10
                     WHERE "bar"."a" < 10
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -89,7 +88,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "cba" AS (
@@ -110,7 +108,8 @@ public partial class PostgreSqlNodeInterpreterTests
                       "a" = 10
                     FROM "_{GUID}"
                     WHERE "common"."foo"."a" = "_{GUID}"."ID_a_0";
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -135,7 +134,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "cba" AS (
@@ -159,7 +157,8 @@ public partial class PostgreSqlNodeInterpreterTests
                       "a" = 10
                     FROM "_{GUID}"
                     WHERE "common"."foo"."a" = "_{GUID}"."ID_a_0";
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -181,8 +180,7 @@ public partial class PostgreSqlNodeInterpreterTests
                     } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     UPDATE foo SET
                       "b" = (
@@ -191,7 +189,8 @@ public partial class PostgreSqlNodeInterpreterTests
                         FROM bar
                         WHERE bar."x" = foo."a"
                       )
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -209,13 +208,13 @@ public partial class PostgreSqlNodeInterpreterTests
                     } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     UPDATE foo SET
                       "a" = (foo."a" + 1),
                       "b" = (foo."c" * foo."d")
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -229,14 +228,14 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     UPDATE "common"."foo" AS "f" SET
                       "a" = 10
                     FROM bar
                     WHERE "f"."a" = bar."a"
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -251,7 +250,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "_{GUID}" AS (
@@ -265,7 +263,8 @@ public partial class PostgreSqlNodeInterpreterTests
                       "a" = 10
                     FROM "_{GUID}"
                     WHERE "common"."foo"."a" = "_{GUID}"."ID_a_0";
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -279,13 +278,13 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     UPDATE "common"."foo" AS "f" SET
                       "a" = 10
                     FROM bar
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -299,7 +298,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "_{GUID}" AS (
@@ -312,7 +310,8 @@ public partial class PostgreSqlNodeInterpreterTests
                       "a" = 10
                     FROM "_{GUID}"
                     WHERE "common"."foo"."a" = "_{GUID}"."ID_a_0";
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -326,7 +325,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "_{GUID}" AS (
@@ -339,7 +337,8 @@ public partial class PostgreSqlNodeInterpreterTests
                       "a" = 10
                     FROM "_{GUID}"
                     WHERE "common"."foo"."a" = "_{GUID}"."ID_a_0";
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -353,7 +352,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "_{GUID}" AS (
@@ -366,7 +364,8 @@ public partial class PostgreSqlNodeInterpreterTests
                       "a" = 10
                     FROM "_{GUID}"
                     WHERE "common"."foo"."a" = "_{GUID}"."ID_a_0";
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -384,8 +383,7 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     WITH "cba" AS (
                       SELECT * FROM abc
@@ -394,7 +392,8 @@ public partial class PostgreSqlNodeInterpreterTests
                       "a" = 10
                     FROM bar AS "b"
                     WHERE ("f"."a" = "b"."a") AND ("f"."a" < 10)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -416,7 +415,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "cba" AS (
@@ -438,7 +436,8 @@ public partial class PostgreSqlNodeInterpreterTests
                       "a" = 10
                     FROM "_{GUID}"
                     WHERE "common"."foo"."a" = "_{GUID}"."ID_a_0";
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -464,7 +463,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "cba" AS (
@@ -489,7 +487,8 @@ public partial class PostgreSqlNodeInterpreterTests
                       "a" = 10
                     FROM "_{GUID}"
                     WHERE "common"."foo"."a" = "_{GUID}"."ID_a_0";
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -514,8 +513,7 @@ public partial class PostgreSqlNodeInterpreterTests
                     } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     UPDATE "common"."foo" AS "f" SET
                       "b" = (
@@ -526,7 +524,8 @@ public partial class PostgreSqlNodeInterpreterTests
                       )
                     FROM bar
                     WHERE "f"."a" = bar."a"
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -547,15 +546,15 @@ public partial class PostgreSqlNodeInterpreterTests
                     } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     UPDATE "common"."foo" AS "f" SET
                       "a" = (("f"."a" + bar."a") + 1),
                       "b" = ("f"."c" * "f"."d")
                     FROM bar
                     WHERE "f"."a" = bar."a"
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -573,7 +572,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "_{GUID}" AS (
@@ -587,7 +585,8 @@ public partial class PostgreSqlNodeInterpreterTests
                       "a" = 10
                     FROM "_{GUID}"
                     WHERE "common"."foo"."a" = "_{GUID}"."ID_a_0";
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -605,7 +604,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "_{GUID}" AS (
@@ -620,7 +618,8 @@ public partial class PostgreSqlNodeInterpreterTests
                       "a" = 10
                     FROM "_{GUID}"
                     WHERE ("common"."foo"."a" = "_{GUID}"."ID_a_0") AND ("common"."foo"."b" = "_{GUID}"."ID_b_1");
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -638,7 +637,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "_{GUID}" AS (
@@ -652,7 +650,8 @@ public partial class PostgreSqlNodeInterpreterTests
                       "a" = 10
                     FROM "_{GUID}"
                     WHERE "common"."foo"."a" = "_{GUID}"."ID_a_0";
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -670,7 +669,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "_{GUID}" AS (
@@ -685,7 +683,8 @@ public partial class PostgreSqlNodeInterpreterTests
                       "a" = 10
                     FROM "_{GUID}"
                     WHERE ("common"."foo"."a" = "_{GUID}"."ID_a_0") AND ("common"."foo"."b" = "_{GUID}"."ID_b_1");
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -706,7 +705,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "_{GUID}" AS (
@@ -722,7 +720,8 @@ public partial class PostgreSqlNodeInterpreterTests
                       "a" = 10
                     FROM "_{GUID}"
                     WHERE ("common"."foo"."a" = "_{GUID}"."ID_a_0") AND ("common"."foo"."b" = "_{GUID}"."ID_b_1");
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Theory]
@@ -751,7 +750,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     $$"""
                       WITH "_{GUID}" AS (
@@ -765,7 +763,8 @@ public partial class PostgreSqlNodeInterpreterTests
                         "a" = 10
                       FROM "_{GUID}"
                       WHERE {{expectedName}}."a" = "_{GUID}"."ID_a_0";
-                      """ );
+                      """ )
+                .Go();
         }
 
         [Theory]
@@ -794,7 +793,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     $$"""
                       WITH "_{GUID}" AS (
@@ -809,7 +807,8 @@ public partial class PostgreSqlNodeInterpreterTests
                         "a" = 10
                       FROM "_{GUID}"
                       WHERE ({{expectedName}}."a" = "_{GUID}"."ID_a_0") AND ({{expectedName}}."b" = "_{GUID}"."ID_b_1");
-                      """ );
+                      """ )
+                .Go();
         }
 
         [Theory]
@@ -832,7 +831,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     $$"""
                       WITH "_{GUID}" AS (
@@ -847,7 +845,8 @@ public partial class PostgreSqlNodeInterpreterTests
                         "a" = 10
                       FROM "_{GUID}"
                       WHERE ({{expectedName}}."a" = "_{GUID}"."ID_a_0") AND ({{expectedName}}."b" = "_{GUID}"."ID_b_1");
-                      """ );
+                      """ )
+                .Go();
         }
 
         [Fact]
@@ -876,7 +875,6 @@ public partial class PostgreSqlNodeInterpreterTests
                     } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "_{GUID}" AS (
@@ -896,7 +894,8 @@ public partial class PostgreSqlNodeInterpreterTests
                       "b" = ("common"."foo"."c" * "common"."foo"."d")
                     FROM "_{GUID}"
                     WHERE "common"."foo"."a" = "_{GUID}"."ID_a_0";
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -925,7 +924,6 @@ public partial class PostgreSqlNodeInterpreterTests
                     } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "_{GUID}" AS (
@@ -946,7 +944,8 @@ public partial class PostgreSqlNodeInterpreterTests
                       "b" = ("common"."foo"."c" * "common"."foo"."d")
                     FROM "_{GUID}"
                     WHERE ("common"."foo"."a" = "_{GUID}"."ID_a_0") AND ("common"."foo"."b" = "_{GUID}"."ID_b_1");
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -967,7 +966,6 @@ public partial class PostgreSqlNodeInterpreterTests
                     } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "_{GUID}" AS (
@@ -983,7 +981,8 @@ public partial class PostgreSqlNodeInterpreterTests
                       "c" = ("common"."foo"."c" + 1)
                     FROM "_{GUID}"
                     WHERE "common"."foo"."a" = "_{GUID}"."ID_a_0";
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -1004,7 +1003,6 @@ public partial class PostgreSqlNodeInterpreterTests
                     } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "_{GUID}" AS (
@@ -1021,7 +1019,8 @@ public partial class PostgreSqlNodeInterpreterTests
                       "d" = ("common"."foo"."d" + 1)
                     FROM "_{GUID}"
                     WHERE ("common"."foo"."a" = "_{GUID}"."ID_a_0") AND ("common"."foo"."b" = "_{GUID}"."ID_b_1");
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -1044,7 +1043,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["b"].Assign( s["f"]["b"] + s["common.v"]["b"] ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "ipsum" AS (
@@ -1062,7 +1060,8 @@ public partial class PostgreSqlNodeInterpreterTests
                       "b" = "_{GUID}"."VAL_b_0"
                     FROM "_{GUID}"
                     WHERE "common"."foo"."a" = "_{GUID}"."ID_a_0";
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -1088,7 +1087,6 @@ public partial class PostgreSqlNodeInterpreterTests
                     } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     UPDATE "common"."foo" AS "f" SET
@@ -1102,7 +1100,8 @@ public partial class PostgreSqlNodeInterpreterTests
                       FROM U
                     ) AS "lorem"
                     WHERE "lorem"."x" = "f"."b";
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -1129,7 +1128,6 @@ public partial class PostgreSqlNodeInterpreterTests
                     } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "_{GUID}" AS (
@@ -1152,7 +1150,8 @@ public partial class PostgreSqlNodeInterpreterTests
                       "c" = "_{GUID}"."VAL_c_2"
                     FROM "_{GUID}"
                     WHERE "common"."foo"."a" = "_{GUID}"."ID_a_0";
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -1162,9 +1161,11 @@ public partial class PostgreSqlNodeInterpreterTests
             var node = SqlNode.RawRecordSet( "foo" ).ToDataSource().GroupBy( s => new[] { s["foo"]["x"] } ).ToUpdate();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should()
-                .ThrowExactly<SqlNodeVisitorException>()
-                .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlNodeVisitorException>(
+                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -1175,9 +1176,11 @@ public partial class PostgreSqlNodeInterpreterTests
             var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).GroupBy( s => new[] { s["bar"]["x"] } ).ToUpdate();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should()
-                .ThrowExactly<SqlNodeVisitorException>()
-                .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlNodeVisitorException>(
+                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -1188,9 +1191,11 @@ public partial class PostgreSqlNodeInterpreterTests
             var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).GroupBy( s => new[] { s["bar"]["x"] } ).ToUpdate();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should()
-                .ThrowExactly<SqlNodeVisitorException>()
-                .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlNodeVisitorException>(
+                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -1202,9 +1207,11 @@ public partial class PostgreSqlNodeInterpreterTests
             var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).GroupBy( s => new[] { s["bar"]["x"] } ).ToUpdate();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should()
-                .ThrowExactly<SqlNodeVisitorException>()
-                .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlNodeVisitorException>(
+                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -1223,9 +1230,11 @@ public partial class PostgreSqlNodeInterpreterTests
             var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).GroupBy( s => new[] { s["bar"]["x"] } ).ToUpdate();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should()
-                .ThrowExactly<SqlNodeVisitorException>()
-                .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlNodeVisitorException>(
+                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -1244,9 +1253,11 @@ public partial class PostgreSqlNodeInterpreterTests
             var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).GroupBy( s => new[] { s["bar"]["x"] } ).ToUpdate();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should()
-                .ThrowExactly<SqlNodeVisitorException>()
-                .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlNodeVisitorException>(
+                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+                .Go();
         }
     }
 }

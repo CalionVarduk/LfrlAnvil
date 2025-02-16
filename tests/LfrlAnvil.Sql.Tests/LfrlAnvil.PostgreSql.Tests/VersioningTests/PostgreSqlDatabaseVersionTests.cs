@@ -5,7 +5,6 @@ using LfrlAnvil.PostgreSql.Versioning;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Versioning;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.PostgreSql.Tests.VersioningTests;
 
@@ -22,12 +21,11 @@ public class PostgreSqlDatabaseVersionTests : TestsBase
 
         sut.Apply( builder );
 
-        using ( new AssertionScope() )
-        {
-            sut.Value.Should().BeSameAs( version );
-            sut.Description.Should().Be( description );
-            apply.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( builder );
-        }
+        Assertion.All(
+                sut.Value.TestRefEquals( version ),
+                sut.Description.TestEquals( description ),
+                apply.CallAt( 0 ).Arguments.TestSequence( [ builder ] ) )
+            .Go();
     }
 
     [Fact]
@@ -40,12 +38,11 @@ public class PostgreSqlDatabaseVersionTests : TestsBase
 
         sut.Apply( builder );
 
-        using ( new AssertionScope() )
-        {
-            sut.Value.Should().BeSameAs( version );
-            sut.Description.Should().BeEmpty();
-            apply.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( builder );
-        }
+        Assertion.All(
+                sut.Value.TestRefEquals( version ),
+                sut.Description.TestEmpty(),
+                apply.CallAt( 0 ).Arguments.TestSequence( [ builder ] ) )
+            .Go();
     }
 
     [Fact]
@@ -58,6 +55,6 @@ public class PostgreSqlDatabaseVersionTests : TestsBase
 
         var action = Lambda.Of( () => (( ISqlDatabaseVersion )sut).Apply( builder ) );
 
-        action.Should().ThrowExactly<SqlObjectCastException>();
+        action.Test( exc => exc.TestType().Exact<SqlObjectCastException>() ).Go();
     }
 }

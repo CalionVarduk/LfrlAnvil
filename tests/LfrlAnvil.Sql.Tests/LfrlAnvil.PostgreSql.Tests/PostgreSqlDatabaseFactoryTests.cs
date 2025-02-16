@@ -2,7 +2,6 @@
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.PostgreSql.Tests;
 
@@ -14,12 +13,11 @@ public class PostgreSqlDatabaseFactoryTests : TestsBase
         var sut = new SqlDatabaseFactoryProvider();
         var result = sut.RegisterPostgreSql();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.SupportedDialects.Should().BeSequentiallyEqualTo( PostgreSqlDialect.Instance );
-            result.GetFor( PostgreSqlDialect.Instance ).Should().BeOfType<PostgreSqlDatabaseFactory>();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.SupportedDialects.TestSequence( [ PostgreSqlDialect.Instance ] ),
+                result.GetFor( PostgreSqlDialect.Instance ).TestType().AssignableTo<PostgreSqlDatabaseFactory>() )
+            .Go();
     }
 
     [Fact]
@@ -28,6 +26,6 @@ public class PostgreSqlDatabaseFactoryTests : TestsBase
         var defaultNamesProvider = Substitute.For<SqlDefaultObjectNameProviderCreator<SqlDefaultObjectNameProvider>>();
         var options = PostgreSqlDatabaseFactoryOptions.Default.SetDefaultNamesCreator( defaultNamesProvider );
         var sut = new PostgreSqlDatabaseFactory( options );
-        sut.Options.Should().BeEquivalentTo( options );
+        sut.Options.TestEquals( options ).Go();
     }
 }

@@ -15,12 +15,11 @@ public class PostgreSqlColumnTypeDefinitionProviderTests : TestsBase
     {
         var result = _sut.GetByDataType( PostgreSqlDataType.Boolean );
 
-        using ( new AssertionScope() )
-        {
-            result.DataType.Should().BeSameAs( PostgreSqlDataType.Boolean );
-            result.DefaultValue.GetValue().Should().Be( false );
-            result.RuntimeType.Should().Be( typeof( bool ) );
-        }
+        Assertion.All(
+                result.DataType.TestRefEquals( PostgreSqlDataType.Boolean ),
+                result.DefaultValue.GetValue().TestEquals( false ),
+                result.RuntimeType.TestEquals( typeof( bool ) ) )
+            .Go();
     }
 
     [Fact]
@@ -28,12 +27,11 @@ public class PostgreSqlColumnTypeDefinitionProviderTests : TestsBase
     {
         var result = _sut.GetByDataType( PostgreSqlDataType.Int2 );
 
-        using ( new AssertionScope() )
-        {
-            result.DataType.Should().BeSameAs( PostgreSqlDataType.Int2 );
-            result.DefaultValue.GetValue().Should().Be( ( short )0 );
-            result.RuntimeType.Should().Be( typeof( short ) );
-        }
+        Assertion.All(
+                result.DataType.TestRefEquals( PostgreSqlDataType.Int2 ),
+                result.DefaultValue.GetValue().TestEquals( ( short )0 ),
+                result.RuntimeType.TestEquals( typeof( short ) ) )
+            .Go();
     }
 
     [Fact]
@@ -41,12 +39,11 @@ public class PostgreSqlColumnTypeDefinitionProviderTests : TestsBase
     {
         var result = _sut.GetByDataType( PostgreSqlDataType.Int4 );
 
-        using ( new AssertionScope() )
-        {
-            result.DataType.Should().BeSameAs( PostgreSqlDataType.Int4 );
-            result.DefaultValue.GetValue().Should().Be( 0 );
-            result.RuntimeType.Should().Be( typeof( int ) );
-        }
+        Assertion.All(
+                result.DataType.TestRefEquals( PostgreSqlDataType.Int4 ),
+                result.DefaultValue.GetValue().TestEquals( 0 ),
+                result.RuntimeType.TestEquals( typeof( int ) ) )
+            .Go();
     }
 
     [Fact]
@@ -54,12 +51,11 @@ public class PostgreSqlColumnTypeDefinitionProviderTests : TestsBase
     {
         var result = _sut.GetByDataType( PostgreSqlDataType.Int8 );
 
-        using ( new AssertionScope() )
-        {
-            result.DataType.Should().BeSameAs( PostgreSqlDataType.Int8 );
-            result.DefaultValue.GetValue().Should().Be( ( long )0 );
-            result.RuntimeType.Should().Be( typeof( long ) );
-        }
+        Assertion.All(
+                result.DataType.TestRefEquals( PostgreSqlDataType.Int8 ),
+                result.DefaultValue.GetValue().TestEquals( ( long )0 ),
+                result.RuntimeType.TestEquals( typeof( long ) ) )
+            .Go();
     }
 
     [Fact]
@@ -67,12 +63,11 @@ public class PostgreSqlColumnTypeDefinitionProviderTests : TestsBase
     {
         var result = _sut.GetByDataType( PostgreSqlDataType.Float4 );
 
-        using ( new AssertionScope() )
-        {
-            result.DataType.Should().BeSameAs( PostgreSqlDataType.Float4 );
-            result.DefaultValue.GetValue().Should().Be( 0.0F );
-            result.RuntimeType.Should().Be( typeof( float ) );
-        }
+        Assertion.All(
+                result.DataType.TestRefEquals( PostgreSqlDataType.Float4 ),
+                result.DefaultValue.GetValue().TestEquals( 0.0F ),
+                result.RuntimeType.TestEquals( typeof( float ) ) )
+            .Go();
     }
 
     [Fact]
@@ -80,12 +75,11 @@ public class PostgreSqlColumnTypeDefinitionProviderTests : TestsBase
     {
         var result = _sut.GetByDataType( PostgreSqlDataType.Float8 );
 
-        using ( new AssertionScope() )
-        {
-            result.DataType.Should().BeSameAs( PostgreSqlDataType.Float8 );
-            result.DefaultValue.GetValue().Should().Be( 0.0 );
-            result.RuntimeType.Should().Be( typeof( double ) );
-        }
+        Assertion.All(
+                result.DataType.TestRefEquals( PostgreSqlDataType.Float8 ),
+                result.DefaultValue.GetValue().TestEquals( 0.0 ),
+                result.RuntimeType.TestEquals( typeof( double ) ) )
+            .Go();
     }
 
     [Fact]
@@ -93,12 +87,11 @@ public class PostgreSqlColumnTypeDefinitionProviderTests : TestsBase
     {
         var result = _sut.GetByDataType( PostgreSqlDataType.Decimal );
 
-        using ( new AssertionScope() )
-        {
-            result.DataType.Should().BeSameAs( PostgreSqlDataType.Decimal );
-            result.DefaultValue.GetValue().Should().Be( 0m );
-            result.RuntimeType.Should().Be( typeof( decimal ) );
-        }
+        Assertion.All(
+                result.DataType.TestRefEquals( PostgreSqlDataType.Decimal ),
+                result.DefaultValue.GetValue().TestEquals( 0m ),
+                result.RuntimeType.TestEquals( typeof( decimal ) ) )
+            .Go();
     }
 
     [Fact]
@@ -106,12 +99,11 @@ public class PostgreSqlColumnTypeDefinitionProviderTests : TestsBase
     {
         var result = _sut.GetByDataType( PostgreSqlDataType.VarChar );
 
-        using ( new AssertionScope() )
-        {
-            result.DataType.Should().BeSameAs( PostgreSqlDataType.VarChar );
-            result.DefaultValue.GetValue().Should().Be( string.Empty );
-            result.RuntimeType.Should().Be( typeof( string ) );
-        }
+        Assertion.All(
+                result.DataType.TestRefEquals( PostgreSqlDataType.VarChar ),
+                result.DefaultValue.GetValue().TestEquals( string.Empty ),
+                result.RuntimeType.TestEquals( typeof( string ) ) )
+            .Go();
     }
 
     [Fact]
@@ -119,12 +111,11 @@ public class PostgreSqlColumnTypeDefinitionProviderTests : TestsBase
     {
         var result = _sut.GetByDataType( PostgreSqlDataType.Bytea );
 
-        using ( new AssertionScope() )
-        {
-            result.DataType.Should().BeSameAs( PostgreSqlDataType.Bytea );
-            result.DefaultValue.GetValue().Should().BeSameAs( Array.Empty<byte>() );
-            result.RuntimeType.Should().Be( typeof( byte[] ) );
-        }
+        Assertion.All(
+                result.DataType.TestRefEquals( PostgreSqlDataType.Bytea ),
+                result.DefaultValue.GetValue().TestRefEquals( Array.Empty<byte>() ),
+                result.RuntimeType.TestEquals( typeof( byte[] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -132,12 +123,11 @@ public class PostgreSqlColumnTypeDefinitionProviderTests : TestsBase
     {
         var result = _sut.GetByDataType( PostgreSqlDataType.Uuid );
 
-        using ( new AssertionScope() )
-        {
-            result.DataType.Should().BeSameAs( PostgreSqlDataType.Uuid );
-            result.DefaultValue.GetValue().Should().Be( Guid.Empty );
-            result.RuntimeType.Should().Be( typeof( Guid ) );
-        }
+        Assertion.All(
+                result.DataType.TestRefEquals( PostgreSqlDataType.Uuid ),
+                result.DefaultValue.GetValue().TestEquals( Guid.Empty ),
+                result.RuntimeType.TestEquals( typeof( Guid ) ) )
+            .Go();
     }
 
     [Fact]
@@ -145,12 +135,11 @@ public class PostgreSqlColumnTypeDefinitionProviderTests : TestsBase
     {
         var result = _sut.GetByDataType( PostgreSqlDataType.Date );
 
-        using ( new AssertionScope() )
-        {
-            result.DataType.Should().BeSameAs( PostgreSqlDataType.Date );
-            result.DefaultValue.GetValue().Should().Be( DateOnly.FromDateTime( DateTime.UnixEpoch ) );
-            result.RuntimeType.Should().Be( typeof( DateOnly ) );
-        }
+        Assertion.All(
+                result.DataType.TestRefEquals( PostgreSqlDataType.Date ),
+                result.DefaultValue.GetValue().TestEquals( DateOnly.FromDateTime( DateTime.UnixEpoch ) ),
+                result.RuntimeType.TestEquals( typeof( DateOnly ) ) )
+            .Go();
     }
 
     [Fact]
@@ -158,12 +147,11 @@ public class PostgreSqlColumnTypeDefinitionProviderTests : TestsBase
     {
         var result = _sut.GetByDataType( PostgreSqlDataType.Time );
 
-        using ( new AssertionScope() )
-        {
-            result.DataType.Should().BeSameAs( PostgreSqlDataType.Time );
-            result.DefaultValue.GetValue().Should().Be( TimeOnly.MinValue );
-            result.RuntimeType.Should().Be( typeof( TimeOnly ) );
-        }
+        Assertion.All(
+                result.DataType.TestRefEquals( PostgreSqlDataType.Time ),
+                result.DefaultValue.GetValue().TestEquals( TimeOnly.MinValue ),
+                result.RuntimeType.TestEquals( typeof( TimeOnly ) ) )
+            .Go();
     }
 
     [Fact]
@@ -171,12 +159,11 @@ public class PostgreSqlColumnTypeDefinitionProviderTests : TestsBase
     {
         var result = _sut.GetByDataType( PostgreSqlDataType.Timestamp );
 
-        using ( new AssertionScope() )
-        {
-            result.DataType.Should().BeSameAs( PostgreSqlDataType.Timestamp );
-            result.DefaultValue.GetValue().Should().Be( DateTime.UnixEpoch );
-            result.RuntimeType.Should().Be( typeof( DateTime ) );
-        }
+        Assertion.All(
+                result.DataType.TestRefEquals( PostgreSqlDataType.Timestamp ),
+                result.DefaultValue.GetValue().TestEquals( DateTime.UnixEpoch ),
+                result.RuntimeType.TestEquals( typeof( DateTime ) ) )
+            .Go();
     }
 
     [Fact]
@@ -184,12 +171,11 @@ public class PostgreSqlColumnTypeDefinitionProviderTests : TestsBase
     {
         var result = _sut.GetByDataType( PostgreSqlDataType.TimestampTz );
 
-        using ( new AssertionScope() )
-        {
-            result.DataType.Should().BeSameAs( PostgreSqlDataType.TimestampTz );
-            result.DefaultValue.GetValue().Should().Be( DateTime.UnixEpoch );
-            result.RuntimeType.Should().Be( typeof( DateTime ) );
-        }
+        Assertion.All(
+                result.DataType.TestRefEquals( PostgreSqlDataType.TimestampTz ),
+                result.DefaultValue.GetValue().TestEquals( DateTime.UnixEpoch ),
+                result.RuntimeType.TestEquals( typeof( DateTime ) ) )
+            .Go();
     }
 
     [Fact]
@@ -197,12 +183,11 @@ public class PostgreSqlColumnTypeDefinitionProviderTests : TestsBase
     {
         var result = _sut.GetByDataType( PostgreSqlDataType.Custom( "NULL", NpgsqlDbType.Unknown, DbType.Object ) );
 
-        using ( new AssertionScope() )
-        {
-            result.DataType.Should().BeSameAs( PostgreSqlDataType.Bytea );
-            result.DefaultValue.GetValue().Should().BeEquivalentTo( Array.Empty<byte>() );
-            result.RuntimeType.Should().Be( typeof( object ) );
-        }
+        Assertion.All(
+                result.DataType.TestRefEquals( PostgreSqlDataType.Bytea ),
+                result.DefaultValue.GetValue().TestRefEquals( Array.Empty<byte>() ),
+                result.RuntimeType.TestEquals( typeof( object ) ) )
+            .Go();
     }
 
     [Fact]
@@ -212,13 +197,12 @@ public class PostgreSqlColumnTypeDefinitionProviderTests : TestsBase
         var result = _sut.GetByDataType( type );
         var secondResult = _sut.GetByDataType( type );
 
-        using ( new AssertionScope() )
-        {
-            result.DataType.Should().BeSameAs( type );
-            result.DefaultValue.GetValue().Should().Be( 0m );
-            result.RuntimeType.Should().Be( typeof( decimal ) );
-            secondResult.Should().BeSameAs( result );
-        }
+        Assertion.All(
+                result.DataType.TestRefEquals( type ),
+                result.DefaultValue.GetValue().TestEquals( 0m ),
+                result.RuntimeType.TestEquals( typeof( decimal ) ),
+                secondResult.TestRefEquals( result ) )
+            .Go();
     }
 
     [Theory]
@@ -231,13 +215,12 @@ public class PostgreSqlColumnTypeDefinitionProviderTests : TestsBase
         var result = _sut.GetByDataType( type );
         var secondResult = _sut.GetByDataType( type );
 
-        using ( new AssertionScope() )
-        {
-            result.DataType.Should().BeSameAs( type );
-            result.DefaultValue.GetValue().Should().Be( string.Empty );
-            result.RuntimeType.Should().Be( typeof( string ) );
-            secondResult.Should().BeSameAs( result );
-        }
+        Assertion.All(
+                result.DataType.TestRefEquals( type ),
+                result.DefaultValue.GetValue().TestEquals( string.Empty ),
+                result.RuntimeType.TestEquals( typeof( string ) ),
+                secondResult.TestRefEquals( result ) )
+            .Go();
     }
 
     [Fact]
@@ -245,35 +228,35 @@ public class PostgreSqlColumnTypeDefinitionProviderTests : TestsBase
     {
         var result = _sut.GetTypeDefinitions();
 
-        using ( new AssertionScope() )
-        {
-            result.Count.Should().Be( 22 );
-            result.Select( t => (t.DataType, t.RuntimeType) )
-                .Should()
-                .BeEquivalentTo(
-                    (PostgreSqlDataType.Boolean, typeof( bool )),
-                    (PostgreSqlDataType.Int2, typeof( short )),
-                    (PostgreSqlDataType.Int4, typeof( int )),
-                    (PostgreSqlDataType.Int8, typeof( long )),
-                    (PostgreSqlDataType.Float4, typeof( float )),
-                    (PostgreSqlDataType.Float8, typeof( double )),
-                    (PostgreSqlDataType.Decimal, typeof( decimal )),
-                    (PostgreSqlDataType.VarChar, typeof( string )),
-                    (PostgreSqlDataType.Bytea, typeof( byte[] )),
-                    (PostgreSqlDataType.Uuid, typeof( Guid )),
-                    (PostgreSqlDataType.Date, typeof( DateOnly )),
-                    (PostgreSqlDataType.Time, typeof( TimeOnly )),
-                    (PostgreSqlDataType.Timestamp, typeof( DateTime )),
-                    (PostgreSqlDataType.CreateVarChar( 1 ), typeof( char )),
-                    (PostgreSqlDataType.CreateVarChar( 33 ), typeof( DateTimeOffset )),
-                    (PostgreSqlDataType.Int2, typeof( sbyte )),
-                    (PostgreSqlDataType.Int8, typeof( TimeSpan )),
-                    (PostgreSqlDataType.Int2, typeof( byte )),
-                    (PostgreSqlDataType.Int4, typeof( ushort )),
-                    (PostgreSqlDataType.Int8, typeof( uint )),
-                    (PostgreSqlDataType.Int8, typeof( ulong )),
-                    (PostgreSqlDataType.Bytea, typeof( object )) );
-        }
+        Assertion.All(
+                result.Count.TestEquals( 22 ),
+                result.Select( t => (t.DataType, t.RuntimeType) )
+                    .TestSetEqual(
+                    [
+                        (PostgreSqlDataType.Boolean, typeof( bool )),
+                        (PostgreSqlDataType.Int2, typeof( short )),
+                        (PostgreSqlDataType.Int4, typeof( int )),
+                        (PostgreSqlDataType.Int8, typeof( long )),
+                        (PostgreSqlDataType.Float4, typeof( float )),
+                        (PostgreSqlDataType.Float8, typeof( double )),
+                        (PostgreSqlDataType.Decimal, typeof( decimal )),
+                        (PostgreSqlDataType.VarChar, typeof( string )),
+                        (PostgreSqlDataType.Bytea, typeof( byte[] )),
+                        (PostgreSqlDataType.Uuid, typeof( Guid )),
+                        (PostgreSqlDataType.Date, typeof( DateOnly )),
+                        (PostgreSqlDataType.Time, typeof( TimeOnly )),
+                        (PostgreSqlDataType.Timestamp, typeof( DateTime )),
+                        (PostgreSqlDataType.CreateVarChar( 1 ), typeof( char )),
+                        (PostgreSqlDataType.CreateVarChar( 33 ), typeof( DateTimeOffset )),
+                        (PostgreSqlDataType.Int2, typeof( sbyte )),
+                        (PostgreSqlDataType.Int8, typeof( TimeSpan )),
+                        (PostgreSqlDataType.Int2, typeof( byte )),
+                        (PostgreSqlDataType.Int4, typeof( ushort )),
+                        (PostgreSqlDataType.Int8, typeof( uint )),
+                        (PostgreSqlDataType.Int8, typeof( ulong )),
+                        (PostgreSqlDataType.Bytea, typeof( object ))
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -281,27 +264,27 @@ public class PostgreSqlColumnTypeDefinitionProviderTests : TestsBase
     {
         var result = _sut.GetDataTypeDefinitions();
 
-        using ( new AssertionScope() )
-        {
-            result.Count.Should().Be( 14 );
-            result.Select( t => t.DataType )
-                .Should()
-                .BeEquivalentTo(
-                    PostgreSqlDataType.Boolean,
-                    PostgreSqlDataType.Int2,
-                    PostgreSqlDataType.Int4,
-                    PostgreSqlDataType.Int8,
-                    PostgreSqlDataType.Float4,
-                    PostgreSqlDataType.Float8,
-                    PostgreSqlDataType.Decimal,
-                    PostgreSqlDataType.VarChar,
-                    PostgreSqlDataType.Bytea,
-                    PostgreSqlDataType.Uuid,
-                    PostgreSqlDataType.Date,
-                    PostgreSqlDataType.Time,
-                    PostgreSqlDataType.Timestamp,
-                    PostgreSqlDataType.TimestampTz );
-        }
+        Assertion.All(
+                result.Count.TestEquals( 14 ),
+                result.Select( t => t.DataType )
+                    .TestSetEqual(
+                    [
+                        PostgreSqlDataType.Boolean,
+                        PostgreSqlDataType.Int2,
+                        PostgreSqlDataType.Int4,
+                        PostgreSqlDataType.Int8,
+                        PostgreSqlDataType.Float4,
+                        PostgreSqlDataType.Float8,
+                        PostgreSqlDataType.Decimal,
+                        PostgreSqlDataType.VarChar,
+                        PostgreSqlDataType.Bytea,
+                        PostgreSqlDataType.Uuid,
+                        PostgreSqlDataType.Date,
+                        PostgreSqlDataType.Time,
+                        PostgreSqlDataType.Timestamp,
+                        PostgreSqlDataType.TimestampTz
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -309,12 +292,11 @@ public class PostgreSqlColumnTypeDefinitionProviderTests : TestsBase
     {
         var result = _sut.GetByType<EnumWithDefault>();
 
-        using ( new AssertionScope() )
-        {
-            result.DataType.Should().BeSameAs( PostgreSqlDataType.Int8 );
-            result.DefaultValue.Value.Should().Be( EnumWithDefault.B );
-            result.RuntimeType.Should().Be( typeof( EnumWithDefault ) );
-        }
+        Assertion.All(
+                result.DataType.TestRefEquals( PostgreSqlDataType.Int8 ),
+                result.DefaultValue.Value.TestEquals( EnumWithDefault.B ),
+                result.RuntimeType.TestEquals( typeof( EnumWithDefault ) ) )
+            .Go();
     }
 
     [Fact]
@@ -322,12 +304,11 @@ public class PostgreSqlColumnTypeDefinitionProviderTests : TestsBase
     {
         var result = _sut.GetByType<EnumWithoutDefault>();
 
-        using ( new AssertionScope() )
-        {
-            result.DataType.Should().BeSameAs( PostgreSqlDataType.Int4 );
-            result.DefaultValue.Value.Should().Be( EnumWithoutDefault.A );
-            result.RuntimeType.Should().Be( typeof( EnumWithoutDefault ) );
-        }
+        Assertion.All(
+                result.DataType.TestRefEquals( PostgreSqlDataType.Int4 ),
+                result.DefaultValue.Value.TestEquals( EnumWithoutDefault.A ),
+                result.RuntimeType.TestEquals( typeof( EnumWithoutDefault ) ) )
+            .Go();
     }
 
     [Fact]
@@ -335,12 +316,11 @@ public class PostgreSqlColumnTypeDefinitionProviderTests : TestsBase
     {
         var result = _sut.GetByType<EmptyEnum>();
 
-        using ( new AssertionScope() )
-        {
-            result.DataType.Should().BeSameAs( PostgreSqlDataType.Int4 );
-            result.DefaultValue.Value.Should().Be( default( EmptyEnum ) );
-            result.RuntimeType.Should().Be( typeof( EmptyEnum ) );
-        }
+        Assertion.All(
+                result.DataType.TestRefEquals( PostgreSqlDataType.Int4 ),
+                result.DefaultValue.Value.TestEquals( default ),
+                result.RuntimeType.TestEquals( typeof( EmptyEnum ) ) )
+            .Go();
     }
 
     public enum EmptyEnum { }

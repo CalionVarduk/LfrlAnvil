@@ -21,13 +21,12 @@ public class PostgreSqlCheckTests : TestsBase
 
         var sut = table.Constraints.GetCheck( "CHK_T_0" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Database.Should().BeSameAs( db );
-            sut.Table.Should().BeSameAs( table );
-            sut.Type.Should().Be( SqlObjectType.Check );
-            sut.Name.Should().Be( "CHK_T_0" );
-            sut.ToString().Should().Be( "[Check] foo.CHK_T_0" );
-        }
+        Assertion.All(
+                sut.Database.TestRefEquals( db ),
+                sut.Table.TestRefEquals( table ),
+                sut.Type.TestEquals( SqlObjectType.Check ),
+                sut.Name.TestEquals( "CHK_T_0" ),
+                sut.ToString().TestEquals( "[Check] foo.CHK_T_0" ) )
+            .Go();
     }
 }

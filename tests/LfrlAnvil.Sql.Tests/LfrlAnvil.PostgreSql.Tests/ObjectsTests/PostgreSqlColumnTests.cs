@@ -26,19 +26,18 @@ public class PostgreSqlColumnTests : TestsBase
 
         var sut = table.Columns.Get( "C" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Database.Should().BeSameAs( db );
-            sut.Table.Should().BeSameAs( table );
-            sut.Type.Should().Be( SqlObjectType.Column );
-            sut.Name.Should().Be( "C" );
-            sut.IsNullable.Should().Be( isNullable );
-            sut.HasDefaultValue.Should().BeFalse();
-            sut.TypeDefinition.Should().BeSameAs( db.TypeDefinitions.GetByType( type ) );
-            sut.ComputationStorage.Should().BeNull();
-            sut.Node.Should().BeSameAs( table.Node["C"] );
-            sut.ToString().Should().Be( "[Column] public.T.C" );
-        }
+        Assertion.All(
+                sut.Database.TestRefEquals( db ),
+                sut.Table.TestRefEquals( table ),
+                sut.Type.TestEquals( SqlObjectType.Column ),
+                sut.Name.TestEquals( "C" ),
+                sut.IsNullable.TestEquals( isNullable ),
+                sut.HasDefaultValue.TestFalse(),
+                sut.TypeDefinition.TestRefEquals( db.TypeDefinitions.GetByType( type ) ),
+                sut.ComputationStorage.TestNull(),
+                sut.Node.TestRefEquals( table.Node["C"] ),
+                sut.ToString().TestEquals( "[Column] public.T.C" ) )
+            .Go();
     }
 
     [Fact]
@@ -54,19 +53,18 @@ public class PostgreSqlColumnTests : TestsBase
 
         var sut = table.Columns.Get( "C" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Database.Should().BeSameAs( db );
-            sut.Table.Should().BeSameAs( table );
-            sut.Type.Should().Be( SqlObjectType.Column );
-            sut.Name.Should().Be( "C" );
-            sut.IsNullable.Should().BeFalse();
-            sut.HasDefaultValue.Should().BeTrue();
-            sut.TypeDefinition.Should().BeSameAs( db.TypeDefinitions.GetByType<object>() );
-            sut.ComputationStorage.Should().BeNull();
-            sut.Node.Should().BeSameAs( table.Node["C"] );
-            sut.ToString().Should().Be( "[Column] public.T.C" );
-        }
+        Assertion.All(
+                sut.Database.TestRefEquals( db ),
+                sut.Table.TestRefEquals( table ),
+                sut.Type.TestEquals( SqlObjectType.Column ),
+                sut.Name.TestEquals( "C" ),
+                sut.IsNullable.TestFalse(),
+                sut.HasDefaultValue.TestTrue(),
+                sut.TypeDefinition.TestRefEquals( db.TypeDefinitions.GetByType<object>() ),
+                sut.ComputationStorage.TestNull(),
+                sut.Node.TestRefEquals( table.Node["C"] ),
+                sut.ToString().TestEquals( "[Column] public.T.C" ) )
+            .Go();
     }
 
     [Theory]
@@ -84,19 +82,18 @@ public class PostgreSqlColumnTests : TestsBase
 
         var sut = table.Columns.Get( "C" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Database.Should().BeSameAs( db );
-            sut.Table.Should().BeSameAs( table );
-            sut.Type.Should().Be( SqlObjectType.Column );
-            sut.Name.Should().Be( "C" );
-            sut.IsNullable.Should().BeFalse();
-            sut.HasDefaultValue.Should().BeFalse();
-            sut.TypeDefinition.Should().BeSameAs( db.TypeDefinitions.GetByType<object>() );
-            sut.ComputationStorage.Should().Be( SqlColumnComputationStorage.Stored );
-            sut.Node.Should().BeSameAs( table.Node["C"] );
-            sut.ToString().Should().Be( "[Column] public.T.C" );
-        }
+        Assertion.All(
+                sut.Database.TestRefEquals( db ),
+                sut.Table.TestRefEquals( table ),
+                sut.Type.TestEquals( SqlObjectType.Column ),
+                sut.Name.TestEquals( "C" ),
+                sut.IsNullable.TestFalse(),
+                sut.HasDefaultValue.TestFalse(),
+                sut.TypeDefinition.TestRefEquals( db.TypeDefinitions.GetByType<object>() ),
+                sut.ComputationStorage.TestEquals( SqlColumnComputationStorage.Stored ),
+                sut.Node.TestRefEquals( table.Node["C"] ),
+                sut.ToString().TestEquals( "[Column] public.T.C" ) )
+            .Go();
     }
 
     [Theory]
@@ -117,18 +114,17 @@ public class PostgreSqlColumnTests : TestsBase
 
         var sut = table.Columns.Get( "C" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Database.Should().BeSameAs( db );
-            sut.Table.Should().BeSameAs( table );
-            sut.Type.Should().Be( SqlObjectType.Column );
-            sut.Name.Should().Be( "C" );
-            sut.IsNullable.Should().BeFalse();
-            sut.HasDefaultValue.Should().BeFalse();
-            sut.TypeDefinition.Should().BeSameAs( db.TypeDefinitions.GetByType<object>() );
-            sut.ComputationStorage.Should().Be( storage );
-            sut.Node.Should().BeSameAs( table.Node["C"] );
-            sut.ToString().Should().Be( "[Column] public.T.C" );
-        }
+        Assertion.All(
+                sut.Database.TestRefEquals( db ),
+                sut.Table.TestRefEquals( table ),
+                sut.Type.TestEquals( SqlObjectType.Column ),
+                sut.Name.TestEquals( "C" ),
+                sut.IsNullable.TestFalse(),
+                sut.HasDefaultValue.TestFalse(),
+                sut.TypeDefinition.TestRefEquals( db.TypeDefinitions.GetByType<object>() ),
+                sut.ComputationStorage.TestEquals( storage ),
+                sut.Node.TestRefEquals( table.Node["C"] ),
+                sut.ToString().TestEquals( "[Column] public.T.C" ) )
+            .Go();
     }
 }

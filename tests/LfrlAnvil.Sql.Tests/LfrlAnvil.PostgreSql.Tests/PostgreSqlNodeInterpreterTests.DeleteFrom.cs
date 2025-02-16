@@ -4,8 +4,7 @@ using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
-using LfrlAnvil.TestExtensions.FluentAssertions;
-using LfrlAnvil.TestExtensions.Sql.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Assertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.PostgreSql.Tests;
@@ -20,7 +19,7 @@ public partial class PostgreSqlNodeInterpreterTests
             var sut = CreateInterpreter();
             var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
             sut.Visit( dataSource.ToDeleteFrom() );
-            sut.Context.Sql.ToString().Should().Be( "DELETE FROM foo" );
+            sut.Context.Sql.ToString().TestEquals( "DELETE FROM foo" ).Go();
         }
 
         [Fact]
@@ -34,12 +33,12 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     DELETE FROM foo
                     WHERE foo."a" < 10
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -54,12 +53,12 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     DELETE FROM "common"."foo" AS "bar"
                     WHERE "bar"."a" < 10
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -78,7 +77,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "cba" AS (
@@ -98,7 +96,8 @@ public partial class PostgreSqlNodeInterpreterTests
                     DELETE FROM "common"."foo"
                     USING "_{GUID}"
                     WHERE "common"."foo"."a" = "_{GUID}"."ID_a_0";
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -123,7 +122,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "cba" AS (
@@ -146,7 +144,8 @@ public partial class PostgreSqlNodeInterpreterTests
                     DELETE FROM "common"."foo"
                     USING "_{GUID}"
                     WHERE "common"."foo"."a" = "_{GUID}"."ID_a_0";
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -160,13 +159,13 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     DELETE FROM foo
                     USING bar
                     WHERE foo."a" = bar."a"
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -181,7 +180,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "_{GUID}" AS (
@@ -194,7 +192,8 @@ public partial class PostgreSqlNodeInterpreterTests
                     DELETE FROM "common"."foo"
                     USING "_{GUID}"
                     WHERE "common"."foo"."a" = "_{GUID}"."ID_a_0";
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -208,12 +207,12 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     DELETE FROM "common"."foo" AS "f"
                     USING bar
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -227,7 +226,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "_{GUID}" AS (
@@ -239,7 +237,8 @@ public partial class PostgreSqlNodeInterpreterTests
                     DELETE FROM "common"."foo"
                     USING "_{GUID}"
                     WHERE "common"."foo"."a" = "_{GUID}"."ID_a_0";
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -253,7 +252,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "_{GUID}" AS (
@@ -265,7 +263,8 @@ public partial class PostgreSqlNodeInterpreterTests
                     DELETE FROM "common"."foo"
                     USING "_{GUID}"
                     WHERE "common"."foo"."a" = "_{GUID}"."ID_a_0";
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -279,7 +278,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "_{GUID}" AS (
@@ -291,7 +289,8 @@ public partial class PostgreSqlNodeInterpreterTests
                     DELETE FROM "common"."foo"
                     USING "_{GUID}"
                     WHERE "common"."foo"."a" = "_{GUID}"."ID_a_0";
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -309,8 +308,7 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     WITH "cba" AS (
                       SELECT * FROM abc
@@ -318,7 +316,8 @@ public partial class PostgreSqlNodeInterpreterTests
                     DELETE FROM foo AS "f"
                     USING bar AS "b"
                     WHERE ("f"."a" = "b"."a") AND ("f"."a" < 10)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -339,7 +338,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "cba" AS (
@@ -359,7 +357,8 @@ public partial class PostgreSqlNodeInterpreterTests
                     DELETE FROM "common"."foo"
                     USING "_{GUID}"
                     WHERE "common"."foo"."a" = "_{GUID}"."ID_a_0";
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -385,7 +384,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "cba" AS (
@@ -409,7 +407,8 @@ public partial class PostgreSqlNodeInterpreterTests
                     DELETE FROM "common"."foo"
                     USING "_{GUID}"
                     WHERE "common"."foo"."a" = "_{GUID}"."ID_a_0";
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -427,7 +426,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "_{GUID}" AS (
@@ -440,7 +438,8 @@ public partial class PostgreSqlNodeInterpreterTests
                     DELETE FROM "common"."foo"
                     USING "_{GUID}"
                     WHERE "common"."foo"."a" = "_{GUID}"."ID_a_0";
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -458,7 +457,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "_{GUID}" AS (
@@ -472,7 +470,8 @@ public partial class PostgreSqlNodeInterpreterTests
                     DELETE FROM "common"."foo"
                     USING "_{GUID}"
                     WHERE ("common"."foo"."a" = "_{GUID}"."ID_a_0") AND ("common"."foo"."b" = "_{GUID}"."ID_b_1");
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -490,7 +489,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "_{GUID}" AS (
@@ -503,7 +501,8 @@ public partial class PostgreSqlNodeInterpreterTests
                     DELETE FROM "common"."foo"
                     USING "_{GUID}"
                     WHERE "common"."foo"."a" = "_{GUID}"."ID_a_0";
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -521,7 +520,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "_{GUID}" AS (
@@ -535,7 +533,8 @@ public partial class PostgreSqlNodeInterpreterTests
                     DELETE FROM "common"."foo"
                     USING "_{GUID}"
                     WHERE ("common"."foo"."a" = "_{GUID}"."ID_a_0") AND ("common"."foo"."b" = "_{GUID}"."ID_b_1");
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -556,7 +555,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     """
                     WITH "_{GUID}" AS (
@@ -571,7 +569,8 @@ public partial class PostgreSqlNodeInterpreterTests
                     DELETE FROM "common"."foo"
                     USING "_{GUID}"
                     WHERE ("common"."foo"."a" = "_{GUID}"."ID_a_0") AND ("common"."foo"."b" = "_{GUID}"."ID_b_1");
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Theory]
@@ -600,7 +599,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     $$"""
                       WITH "_{GUID}" AS (
@@ -613,7 +611,8 @@ public partial class PostgreSqlNodeInterpreterTests
                       DELETE FROM {{expectedName}}
                       USING "_{GUID}"
                       WHERE {{expectedName}}."a" = "_{GUID}"."ID_a_0";
-                      """ );
+                      """ )
+                .Go();
         }
 
         [Theory]
@@ -642,7 +641,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     $$"""
                       WITH "_{GUID}" AS (
@@ -656,7 +654,8 @@ public partial class PostgreSqlNodeInterpreterTests
                       DELETE FROM {{expectedName}}
                       USING "_{GUID}"
                       WHERE ({{expectedName}}."a" = "_{GUID}"."ID_a_0") AND ({{expectedName}}."b" = "_{GUID}"."ID_b_1");
-                      """ );
+                      """ )
+                .Go();
         }
 
         [Theory]
@@ -679,7 +678,6 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
                 .SatisfySql(
                     $$"""
                       WITH "_{GUID}" AS (
@@ -693,7 +691,8 @@ public partial class PostgreSqlNodeInterpreterTests
                       DELETE FROM {{expectedName}}
                       USING "_{GUID}"
                       WHERE ({{expectedName}}."a" = "_{GUID}"."ID_a_0") AND ({{expectedName}}."b" = "_{GUID}"."ID_b_1");
-                      """ );
+                      """ )
+                .Go();
         }
 
         [Fact]
@@ -704,9 +703,11 @@ public partial class PostgreSqlNodeInterpreterTests
             var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should()
-                .ThrowExactly<SqlNodeVisitorException>()
-                .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlNodeVisitorException>(
+                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -717,9 +718,11 @@ public partial class PostgreSqlNodeInterpreterTests
             var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should()
-                .ThrowExactly<SqlNodeVisitorException>()
-                .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlNodeVisitorException>(
+                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -730,9 +733,11 @@ public partial class PostgreSqlNodeInterpreterTests
             var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should()
-                .ThrowExactly<SqlNodeVisitorException>()
-                .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlNodeVisitorException>(
+                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -744,9 +749,11 @@ public partial class PostgreSqlNodeInterpreterTests
             var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should()
-                .ThrowExactly<SqlNodeVisitorException>()
-                .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlNodeVisitorException>(
+                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -765,9 +772,11 @@ public partial class PostgreSqlNodeInterpreterTests
             var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should()
-                .ThrowExactly<SqlNodeVisitorException>()
-                .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlNodeVisitorException>(
+                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -786,9 +795,11 @@ public partial class PostgreSqlNodeInterpreterTests
             var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should()
-                .ThrowExactly<SqlNodeVisitorException>()
-                .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlNodeVisitorException>(
+                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+                .Go();
         }
     }
 }

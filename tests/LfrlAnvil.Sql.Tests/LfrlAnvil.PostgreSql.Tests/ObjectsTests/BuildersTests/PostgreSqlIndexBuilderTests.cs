@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Text.RegularExpressions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.PostgreSql.Extensions;
 using LfrlAnvil.PostgreSql.Objects.Builders;
@@ -6,10 +7,11 @@ using LfrlAnvil.PostgreSql.Tests.Helpers;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
+using LfrlAnvil.Sql.Expressions.Logical;
+using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.PostgreSql.Tests.ObjectsTests.BuildersTests;
 
@@ -24,7 +26,7 @@ public class PostgreSqlIndexBuilderTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( "[Index] foo.bar" );
+        result.TestEquals( "[Index] foo.bar" ).Go();
     }
 
     [Fact]
@@ -40,17 +42,15 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         var sut = table.Constraints.CreateIndex( ixc2 );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            table.Constraints.TryGet( sut.Name ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.Name.Should().MatchRegex( "IX_T_C2A" );
-            sut.Columns.Expressions.Should().BeSequentiallyEqualTo( ixc2 );
-            sut.ReferencedColumns.Should().BeSequentiallyEqualTo( c2 );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "CREATE INDEX \"IX_T_C2A\" ON \"foo\".\"T\" (\"C2\" ASC);" );
-        }
+        Assertion.All(
+                table.Constraints.TryGet( sut.Name ).TestRefEquals( sut ),
+                schema.Objects.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.Name.TestMatch( new Regex( "IX_T_C2A" ) ),
+                sut.Columns.Expressions.TestSequence( [ ixc2 ] ),
+                sut.ReferencedColumns.TestSequence( [ c2 ] ),
+                actions.Select( a => a.Sql )
+                    .TestSequence( [ (sql, _) => sql.SatisfySql( "CREATE INDEX \"IX_T_C2A\" ON \"foo\".\"T\" (\"C2\" ASC);" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -68,18 +68,17 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         var sut = table.Constraints.CreateIndex( ixc1, ixc2 );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            table.Constraints.TryGet( sut.Name ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.Name.Should().MatchRegex( "IX_T_C2A_E1D" );
-            sut.Columns.Expressions.Should().BeSequentiallyEqualTo( ixc1, ixc2 );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql( "CREATE INDEX \"IX_T_C2A_E1D\" ON \"foo\".\"T\" (\"C2\" ASC, (\"C3\" + 1) DESC);" );
-        }
+        Assertion.All(
+                table.Constraints.TryGet( sut.Name ).TestRefEquals( sut ),
+                schema.Objects.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.Name.TestMatch( new Regex( "IX_T_C2A_E1D" ) ),
+                sut.Columns.Expressions.TestSequence( [ ixc1, ixc2 ] ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql( "CREATE INDEX \"IX_T_C2A_E1D\" ON \"foo\".\"T\" (\"C2\" ASC, (\"C3\" + 1) DESC);" )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -95,7 +94,7 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Fact]
@@ -112,27 +111,26 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( sut );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            table.Constraints.TryGet( sut.Name ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.Name.Should().MatchRegex( "UIX_T_C2A" );
-            sut.Columns.Expressions.Should().BeSequentiallyEqualTo( ixc2 );
-            sut.ReferencedColumns.Should().BeSequentiallyEqualTo( c2 );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    ALTER TABLE "foo"."T"
-                                          DROP CONSTRAINT "PK_T";
-                    """,
-                    """
-                    ALTER TABLE "foo"."T"
-                                          ADD CONSTRAINT "PK_T" PRIMARY KEY ("C2");
-                    """ );
-        }
+        Assertion.All(
+                table.Constraints.TryGet( sut.Name ).TestRefEquals( sut ),
+                schema.Objects.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.Name.TestMatch( new Regex( "UIX_T_C2A" ) ),
+                sut.Columns.Expressions.TestSequence( [ ixc2 ] ),
+                sut.ReferencedColumns.TestSequence( [ c2 ] ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            ALTER TABLE "foo"."T"
+                                DROP CONSTRAINT "PK_T";
+                            """,
+                            """
+                            ALTER TABLE "foo"."T"
+                                ADD CONSTRAINT "PK_T" PRIMARY KEY ("C2");
+                            """ )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -147,11 +145,10 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         var result = sut.SetName( sut.Name );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -168,11 +165,10 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         var result = sut.SetName( oldName );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -187,16 +183,15 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         var result = sut.SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            table.Constraints.TryGet( "bar" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( oldName ).Should().BeNull();
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( oldName ).Should().BeNull();
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                table.Constraints.TryGet( "bar" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( oldName ).TestNull(),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( oldName ).TestNull(),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -212,20 +207,16 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         var result = sut.SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            table.Constraints.TryGet( "bar" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( oldName ).Should().BeNull();
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( oldName ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql( "ALTER INDEX \"foo\".\"IX_T_C2A\" RENAME TO \"bar\";" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                table.Constraints.TryGet( "bar" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( oldName ).TestNull(),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( oldName ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER INDEX \"foo\".\"IX_T_C2A\" RENAME TO \"bar\";" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -242,20 +233,16 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         var result = sut.SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            table.Constraints.TryGet( "bar" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( oldName ).Should().BeNull();
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( oldName ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql( "ALTER INDEX \"foo\".\"IX_T_C2A\" RENAME TO \"bar\";" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                table.Constraints.TryGet( "bar" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( oldName ).TestNull(),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( oldName ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER INDEX \"foo\".\"IX_T_C2A\" RENAME TO \"bar\";" ) ] ) )
+            .Go();
     }
 
     [Theory]
@@ -273,9 +260,11 @@ public class PostgreSqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( name ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -289,9 +278,11 @@ public class PostgreSqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "bar" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -304,9 +295,11 @@ public class PostgreSqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "T" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -321,11 +314,10 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         var result = sut.SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -341,11 +333,10 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         var result = sut.SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -359,16 +350,15 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         var result = sut.SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "UIX_T_C1A" );
-            table.Constraints.TryGet( "UIX_T_C1A" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( "bar" ).Should().BeNull();
-            schema.Objects.TryGet( "UIX_T_C1A" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "bar" ).Should().BeNull();
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "UIX_T_C1A" ),
+                table.Constraints.TryGet( "UIX_T_C1A" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( "bar" ).TestNull(),
+                schema.Objects.TryGet( "UIX_T_C1A" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "bar" ).TestNull(),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -383,20 +373,16 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         var result = sut.SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "IX_T_C2A" );
-            table.Constraints.TryGet( "IX_T_C2A" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( "bar" ).Should().BeNull();
-            schema.Objects.TryGet( "IX_T_C2A" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "bar" ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql( "ALTER INDEX \"foo\".\"bar\" RENAME TO \"IX_T_C2A\";" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "IX_T_C2A" ),
+                table.Constraints.TryGet( "IX_T_C2A" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( "bar" ).TestNull(),
+                schema.Objects.TryGet( "IX_T_C2A" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "bar" ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER INDEX \"foo\".\"bar\" RENAME TO \"IX_T_C2A\";" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -411,20 +397,16 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         var result = sut.SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "UIX_T_C2A" );
-            table.Constraints.TryGet( "UIX_T_C2A" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( "bar" ).Should().BeNull();
-            schema.Objects.TryGet( "UIX_T_C2A" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "bar" ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql( "ALTER INDEX \"foo\".\"bar\" RENAME TO \"UIX_T_C2A\";" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "UIX_T_C2A" ),
+                table.Constraints.TryGet( "UIX_T_C2A" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( "bar" ).TestNull(),
+                schema.Objects.TryGet( "UIX_T_C2A" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "bar" ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER INDEX \"foo\".\"bar\" RENAME TO \"UIX_T_C2A\";" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -438,9 +420,11 @@ public class PostgreSqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetDefaultName() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -454,9 +438,11 @@ public class PostgreSqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetDefaultName() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Theory]
@@ -473,11 +459,10 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         var result = sut.MarkAsUnique( value );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -493,11 +478,10 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         var result = sut.MarkAsUnique( false );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -512,18 +496,17 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         var result = sut.MarkAsUnique();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.IsUnique.Should().BeTrue();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP INDEX \"foo\".\"IX_T_C2A\";",
-                    "CREATE UNIQUE INDEX \"IX_T_C2A\" ON \"foo\".\"T\" (\"C2\" ASC);" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.IsUnique.TestTrue(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            "DROP INDEX \"foo\".\"IX_T_C2A\";",
+                            "CREATE UNIQUE INDEX \"IX_T_C2A\" ON \"foo\".\"T\" (\"C2\" ASC);" )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -538,18 +521,17 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         var result = sut.MarkAsUnique( false );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.IsUnique.Should().BeFalse();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP INDEX \"foo\".\"IX_T_C2A\";",
-                    "CREATE INDEX \"IX_T_C2A\" ON \"foo\".\"T\" (\"C2\" ASC);" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.IsUnique.TestFalse(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            "DROP INDEX \"foo\".\"IX_T_C2A\";",
+                            "CREATE INDEX \"IX_T_C2A\" ON \"foo\".\"T\" (\"C2\" ASC);" )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -561,7 +543,7 @@ public class PostgreSqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.MarkAsUnique( false ) );
 
-        action.Should().ThrowExactly<SqlObjectBuilderException>();
+        action.Test( exc => exc.TestType().Exact<SqlObjectBuilderException>() ).Go();
     }
 
     [Fact]
@@ -573,9 +555,11 @@ public class PostgreSqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.MarkAsUnique() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -588,9 +572,11 @@ public class PostgreSqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.MarkAsUnique() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -604,7 +590,7 @@ public class PostgreSqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.MarkAsUnique( false ) );
 
-        action.Should().ThrowExactly<SqlObjectBuilderException>();
+        action.Test( exc => exc.TestType().Exact<SqlObjectBuilderException>() ).Go();
     }
 
     [Fact]
@@ -618,9 +604,11 @@ public class PostgreSqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.MarkAsUnique() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -636,23 +624,22 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         var result = sut.MarkAsUnique().SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.IsUnique.Should().BeTrue();
-            sut.Name.Should().Be( "bar" );
-            table.Constraints.TryGet( "bar" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( oldName ).Should().BeNull();
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( oldName ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP INDEX \"foo\".\"IX_T_C2A\";",
-                    "CREATE UNIQUE INDEX \"bar\" ON \"foo\".\"T\" (\"C2\" ASC);" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.IsUnique.TestTrue(),
+                sut.Name.TestEquals( "bar" ),
+                table.Constraints.TryGet( "bar" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( oldName ).TestNull(),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( oldName ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            "DROP INDEX \"foo\".\"IX_T_C2A\";",
+                            "CREATE UNIQUE INDEX \"bar\" ON \"foo\".\"T\" (\"C2\" ASC);" )
+                    ] ) )
+            .Go();
     }
 
     [Theory]
@@ -669,11 +656,10 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         var result = sut.MarkAsVirtual( value );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -689,11 +675,10 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         var result = sut.MarkAsVirtual( false );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -708,14 +693,11 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         var result = sut.MarkAsVirtual();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.IsVirtual.Should().BeTrue();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "DROP INDEX \"foo\".\"IX_T_C2A\";" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.IsVirtual.TestTrue(),
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP INDEX \"foo\".\"IX_T_C2A\";" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -730,14 +712,12 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         var result = sut.MarkAsVirtual( false );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.IsVirtual.Should().BeFalse();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "CREATE INDEX \"IX_T_C2A\" ON \"foo\".\"T\" (\"C2\" ASC);" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.IsVirtual.TestFalse(),
+                actions.Select( a => a.Sql )
+                    .TestSequence( [ (sql, _) => sql.SatisfySql( "CREATE INDEX \"IX_T_C2A\" ON \"foo\".\"T\" (\"C2\" ASC);" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -749,9 +729,11 @@ public class PostgreSqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.MarkAsVirtual( false ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -763,9 +745,11 @@ public class PostgreSqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.MarkAsVirtual() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -777,9 +761,11 @@ public class PostgreSqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.MarkAsVirtual() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -793,9 +779,11 @@ public class PostgreSqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.MarkAsVirtual() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 2 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 2 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -809,9 +797,11 @@ public class PostgreSqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.MarkAsVirtual() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -826,11 +816,10 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         var result = sut.SetFilter( SqlNode.True() );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().HaveCount( 0 );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.Length.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -846,11 +835,10 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         var result = sut.SetFilter( null );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().HaveCount( 0 );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.Length.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -866,25 +854,30 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         var result = sut.SetFilter( t => t["C2"] != null );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.Filter.Should().BeEquivalentTo( table.ToRecordSet().GetField( "C2" ) != null );
-            result.ReferencedFilterColumns.Should().BeSequentiallyEqualTo( column );
-
-            column.ReferencingObjects.Should().HaveCount( 2 );
-            column.ReferencingObjects.Should()
-                .BeEquivalentTo(
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.Filter.TestType()
+                    .AssignableTo<SqlNotEqualToConditionNode>(
+                        n => Assertion.All(
+                            n.Left.TestType()
+                                .AssignableTo<SqlColumnBuilderNode>(
+                                    cn => Assertion.All( cn.Name.TestEquals( "C2" ), cn.RecordSet.TestRefEquals( table.Node ) ) ),
+                            n.Right.TestType().AssignableTo<SqlNullNode>() ) ),
+                result.ReferencedFilterColumns.TestSequence( [ column ] ),
+                column.ReferencingObjects.Count.TestEquals( 2 ),
+                column.ReferencingObjects.TestSetEqual(
+                [
                     SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), column ),
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut, property: "Filter" ), column ) );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP INDEX \"foo\".\"IX_T_C2A\";",
-                    "CREATE INDEX \"IX_T_C2A\" ON \"foo\".\"T\" (\"C2\" ASC) WHERE (\"C2\" IS NOT NULL);" );
-        }
+                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut, property: "Filter" ), column )
+                ] ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            "DROP INDEX \"foo\".\"IX_T_C2A\";",
+                            "CREATE INDEX \"IX_T_C2A\" ON \"foo\".\"T\" (\"C2\" ASC) WHERE (\"C2\" IS NOT NULL);" )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -900,22 +893,20 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         var result = sut.SetFilter( null );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.Filter.Should().BeNull();
-            result.ReferencedFilterColumns.Should().BeEmpty();
-
-            column.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), column ) );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP INDEX \"foo\".\"IX_T_C2A\";",
-                    "CREATE INDEX \"IX_T_C2A\" ON \"foo\".\"T\" (\"C2\" ASC);" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.Filter.TestNull(),
+                result.ReferencedFilterColumns.TestEmpty(),
+                column.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), column ) ] ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            "DROP INDEX \"foo\".\"IX_T_C2A\";",
+                            "CREATE INDEX \"IX_T_C2A\" ON \"foo\".\"T\" (\"C2\" ASC);" )
+                    ] ) )
+            .Go();
     }
 
     [Theory]
@@ -929,7 +920,7 @@ public class PostgreSqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetFilter( _ => SqlNode.WindowFunctions.RowNumber() == SqlNode.Literal( 0 ) ) );
 
-        action.Should().ThrowExactly<SqlObjectBuilderException>();
+        action.Test( exc => exc.TestType().Exact<SqlObjectBuilderException>() ).Go();
     }
 
     [Fact]
@@ -941,7 +932,7 @@ public class PostgreSqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetFilter( SqlNode.True() ) );
 
-        action.Should().ThrowExactly<SqlObjectBuilderException>();
+        action.Test( exc => exc.TestType().Exact<SqlObjectBuilderException>() ).Go();
     }
 
     [Fact]
@@ -955,7 +946,7 @@ public class PostgreSqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetFilter( SqlNode.True() ) );
 
-        action.Should().ThrowExactly<SqlObjectBuilderException>();
+        action.Test( exc => exc.TestType().Exact<SqlObjectBuilderException>() ).Go();
     }
 
     [Fact]
@@ -968,9 +959,11 @@ public class PostgreSqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetFilter( SqlNode.True() ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -984,9 +977,11 @@ public class PostgreSqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetFilter( null ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1003,24 +998,29 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         var result = sut.MarkAsUnique().SetFilter( t => t["C2"] != null ).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.IsUnique.Should().BeTrue();
-            sut.Filter.Should().BeEquivalentTo( table.ToRecordSet().GetField( "C2" ) != null );
-            sut.Name.Should().Be( "bar" );
-            table.Constraints.TryGet( "bar" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( oldName ).Should().BeNull();
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( oldName ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP INDEX \"foo\".\"IX_T_C2A\";",
-                    "CREATE UNIQUE INDEX \"bar\" ON \"foo\".\"T\" (\"C2\" ASC) WHERE (\"C2\" IS NOT NULL);" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.IsUnique.TestTrue(),
+                result.Filter.TestType()
+                    .AssignableTo<SqlNotEqualToConditionNode>(
+                        n => Assertion.All(
+                            n.Left.TestType()
+                                .AssignableTo<SqlColumnBuilderNode>(
+                                    cn => Assertion.All( cn.Name.TestEquals( "C2" ), cn.RecordSet.TestRefEquals( table.Node ) ) ),
+                            n.Right.TestType().AssignableTo<SqlNullNode>() ) ),
+                sut.Name.TestEquals( "bar" ),
+                table.Constraints.TryGet( "bar" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( oldName ).TestNull(),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( oldName ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            "DROP INDEX \"foo\".\"IX_T_C2A\";",
+                            "CREATE UNIQUE INDEX \"bar\" ON \"foo\".\"T\" (\"C2\" ASC) WHERE (\"C2\" IS NOT NULL);" )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1036,22 +1036,21 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( sut );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
+        actions.Select( a => a.Sql )
+            .TestSequence(
+            [
+                (sql, _) => sql.SatisfySql(
                     "DROP INDEX \"foo\".\"UIX_T_C2A\";",
                     """
                     ALTER TABLE "foo"."T"
-                                          DROP CONSTRAINT "PK_T";
+                        DROP CONSTRAINT "PK_T";
                     """,
                     """
                     ALTER TABLE "foo"."T"
-                                          ADD CONSTRAINT "PK_T" PRIMARY KEY ("C2");
-                    """ );
-        }
+                        ADD CONSTRAINT "PK_T" PRIMARY KEY ("C2");
+                    """ )
+            ] )
+            .Go();
     }
 
     [Fact]
@@ -1067,20 +1066,17 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            table.Constraints.TryGet( sut.Name ).Should().BeNull();
-            schema.Objects.TryGet( sut.Name ).Should().BeNull();
-            sut.IsRemoved.Should().BeTrue();
-            sut.Columns.Expressions.Should().BeEmpty();
-            sut.ReferencedColumns.Should().BeEmpty();
-            sut.ReferencedFilterColumns.Should().BeEmpty();
-            sut.Filter.Should().BeNull();
-            c2.ReferencingObjects.Should().BeEmpty();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "DROP INDEX \"foo\".\"IX_T_C2A\";" );
-        }
+        Assertion.All(
+                table.Constraints.TryGet( sut.Name ).TestNull(),
+                schema.Objects.TryGet( sut.Name ).TestNull(),
+                sut.IsRemoved.TestTrue(),
+                sut.Columns.Expressions.TestEmpty(),
+                sut.ReferencedColumns.TestEmpty(),
+                sut.ReferencedFilterColumns.TestEmpty(),
+                sut.Filter.TestNull(),
+                c2.ReferencingObjects.TestEmpty(),
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP INDEX \"foo\".\"IX_T_C2A\";" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1094,20 +1090,19 @@ public class PostgreSqlIndexBuilderTests : TestsBase
 
         sut.Remove();
 
-        using ( new AssertionScope() )
-        {
-            table.Constraints.TryGetPrimaryKey().Should().BeNull();
-            table.Constraints.TryGet( sut.Name ).Should().BeNull();
-            table.Constraints.TryGet( pk.Name ).Should().BeNull();
-            schema.Objects.TryGet( sut.Name ).Should().BeNull();
-            schema.Objects.TryGet( pk.Name ).Should().BeNull();
-            sut.IsRemoved.Should().BeTrue();
-            sut.PrimaryKey.Should().BeNull();
-            sut.Columns.Expressions.Should().BeEmpty();
-            sut.ReferencedColumns.Should().BeEmpty();
-            pk.IsRemoved.Should().BeTrue();
-            column.ReferencingObjects.Should().BeEmpty();
-        }
+        Assertion.All(
+                table.Constraints.TryGetPrimaryKey().TestNull(),
+                table.Constraints.TryGet( sut.Name ).TestNull(),
+                table.Constraints.TryGet( pk.Name ).TestNull(),
+                schema.Objects.TryGet( sut.Name ).TestNull(),
+                schema.Objects.TryGet( pk.Name ).TestNull(),
+                sut.IsRemoved.TestTrue(),
+                sut.PrimaryKey.TestNull(),
+                sut.Columns.Expressions.TestEmpty(),
+                sut.ReferencedColumns.TestEmpty(),
+                pk.IsRemoved.TestTrue(),
+                column.ReferencingObjects.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1125,7 +1120,7 @@ public class PostgreSqlIndexBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Fact]
@@ -1139,7 +1134,7 @@ public class PostgreSqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should().ThrowExactly<SqlObjectBuilderException>();
+        action.Test( exc => exc.TestType().Exact<SqlObjectBuilderException>() ).Go();
     }
 
     [Fact]
@@ -1153,9 +1148,11 @@ public class PostgreSqlIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1167,8 +1164,10 @@ public class PostgreSqlIndexBuilderTests : TestsBase
 
         var result = sut.ForPostgreSql( action );
 
-        result.Should().BeSameAs( sut );
-        action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( sut );
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                action.CallAt( 0 ).Arguments.TestSequence( [ sut ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1179,7 +1178,9 @@ public class PostgreSqlIndexBuilderTests : TestsBase
 
         var result = sut.ForPostgreSql( action );
 
-        result.Should().BeSameAs( sut );
-        action.Verify().CallCount.Should().Be( 0 );
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                action.CallCount().TestEquals( 0 ) )
+            .Go();
     }
 }

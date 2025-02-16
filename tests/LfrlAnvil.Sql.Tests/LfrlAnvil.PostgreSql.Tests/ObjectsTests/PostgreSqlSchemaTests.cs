@@ -22,16 +22,14 @@ public class PostgreSqlSchemaTests : TestsBase
         var sut = db.Schemas.Get( "foo" );
         var table = sut.Objects.GetTable( "T" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Database.Should().BeSameAs( db );
-            sut.Name.Should().Be( "foo" );
-            sut.Type.Should().Be( SqlObjectType.Schema );
-
-            sut.Objects.Schema.Should().BeSameAs( sut );
-            sut.Objects.Count.Should().Be( 3 );
-            sut.Objects.Should().BeEquivalentTo( table, table.Constraints.PrimaryKey, table.Constraints.PrimaryKey.Index );
-        }
+        Assertion.All(
+                sut.Database.TestRefEquals( db ),
+                sut.Name.TestEquals( "foo" ),
+                sut.Type.TestEquals( SqlObjectType.Schema ),
+                sut.Objects.Schema.TestRefEquals( sut ),
+                sut.Objects.Count.TestEquals( 3 ),
+                sut.Objects.TestSetEqual( [ table, table.Constraints.PrimaryKey, table.Constraints.PrimaryKey.Index ] ) )
+            .Go();
     }
 
     [Theory]
@@ -54,7 +52,7 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var result = sut.Contains( name );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -69,11 +67,10 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var result = sut.Get( "T" );
 
-        using ( new AssertionScope() )
-        {
-            result.Type.Should().Be( SqlObjectType.Table );
-            result.Name.Should().Be( "T" );
-        }
+        Assertion.All(
+                result.Type.TestEquals( SqlObjectType.Table ),
+                result.Name.TestEquals( "T" ) )
+            .Go();
     }
 
     [Fact]
@@ -88,7 +85,7 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var action = Lambda.Of( () => sut.Get( "U" ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -103,12 +100,11 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var result = sut.TryGet( "T" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull();
-            (result?.Type).Should().Be( SqlObjectType.Table );
-            (result?.Name).Should().Be( "T" );
-        }
+        Assertion.All(
+                result.TestNotNull(),
+                (result?.Type).TestEquals( SqlObjectType.Table ),
+                (result?.Name).TestEquals( "T" ) )
+            .Go();
     }
 
     [Fact]
@@ -123,7 +119,7 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var result = sut.TryGet( "U" );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -138,11 +134,10 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var result = sut.GetTable( "T" );
 
-        using ( new AssertionScope() )
-        {
-            result.Type.Should().Be( SqlObjectType.Table );
-            result.Name.Should().Be( "T" );
-        }
+        Assertion.All(
+                result.Type.TestEquals( SqlObjectType.Table ),
+                result.Name.TestEquals( "T" ) )
+            .Go();
     }
 
     [Fact]
@@ -157,7 +152,7 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetTable( "U" ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -172,7 +167,7 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetTable( "PK_T" ) );
 
-        action.Should().ThrowExactly<SqlObjectCastException>();
+        action.Test( exc => exc.TestType().Exact<SqlObjectCastException>() ).Go();
     }
 
     [Fact]
@@ -187,12 +182,11 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var result = sut.TryGetTable( "T" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull();
-            (result?.Type).Should().Be( SqlObjectType.Table );
-            (result?.Name).Should().Be( "T" );
-        }
+        Assertion.All(
+                result.TestNotNull(),
+                (result?.Type).TestEquals( SqlObjectType.Table ),
+                (result?.Name).TestEquals( "T" ) )
+            .Go();
     }
 
     [Fact]
@@ -207,7 +201,7 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var result = sut.TryGetTable( "U" );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -222,7 +216,7 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var result = sut.TryGetTable( "PK_T" );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -237,11 +231,10 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var result = sut.GetPrimaryKey( "PK_T" );
 
-        using ( new AssertionScope() )
-        {
-            result.Type.Should().Be( SqlObjectType.PrimaryKey );
-            result.Name.Should().Be( "PK_T" );
-        }
+        Assertion.All(
+                result.Type.TestEquals( SqlObjectType.PrimaryKey ),
+                result.Name.TestEquals( "PK_T" ) )
+            .Go();
     }
 
     [Fact]
@@ -256,7 +249,7 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetPrimaryKey( "U" ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -271,7 +264,7 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetPrimaryKey( "T" ) );
 
-        action.Should().ThrowExactly<SqlObjectCastException>();
+        action.Test( exc => exc.TestType().Exact<SqlObjectCastException>() ).Go();
     }
 
     [Fact]
@@ -286,12 +279,11 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var result = sut.TryGetPrimaryKey( "PK_T" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull();
-            (result?.Type).Should().Be( SqlObjectType.PrimaryKey );
-            (result?.Name).Should().Be( "PK_T" );
-        }
+        Assertion.All(
+                result.TestNotNull(),
+                (result?.Type).TestEquals( SqlObjectType.PrimaryKey ),
+                (result?.Name).TestEquals( "PK_T" ) )
+            .Go();
     }
 
     [Fact]
@@ -306,7 +298,7 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var result = sut.TryGetPrimaryKey( "U" );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -321,7 +313,7 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var result = sut.TryGetPrimaryKey( "T" );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -336,11 +328,10 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var result = sut.GetIndex( "UIX_T_C1A" );
 
-        using ( new AssertionScope() )
-        {
-            result.Type.Should().Be( SqlObjectType.Index );
-            result.Name.Should().Be( "UIX_T_C1A" );
-        }
+        Assertion.All(
+                result.Type.TestEquals( SqlObjectType.Index ),
+                result.Name.TestEquals( "UIX_T_C1A" ) )
+            .Go();
     }
 
     [Fact]
@@ -355,7 +346,7 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetIndex( "U" ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -370,7 +361,7 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetIndex( "T" ) );
 
-        action.Should().ThrowExactly<SqlObjectCastException>();
+        action.Test( exc => exc.TestType().Exact<SqlObjectCastException>() ).Go();
     }
 
     [Fact]
@@ -385,12 +376,11 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var result = sut.TryGetIndex( "UIX_T_C1A" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull();
-            (result?.Type).Should().Be( SqlObjectType.Index );
-            (result?.Name).Should().Be( "UIX_T_C1A" );
-        }
+        Assertion.All(
+                result.TestNotNull(),
+                (result?.Type).TestEquals( SqlObjectType.Index ),
+                (result?.Name).TestEquals( "UIX_T_C1A" ) )
+            .Go();
     }
 
     [Fact]
@@ -405,7 +395,7 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var result = sut.TryGetIndex( "U" );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -420,7 +410,7 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var result = sut.TryGetIndex( "T" );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -437,11 +427,10 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var result = sut.GetForeignKey( "FK_T_C2_REF_T" );
 
-        using ( new AssertionScope() )
-        {
-            result.Type.Should().Be( SqlObjectType.ForeignKey );
-            result.Name.Should().Be( "FK_T_C2_REF_T" );
-        }
+        Assertion.All(
+                result.Type.TestEquals( SqlObjectType.ForeignKey ),
+                result.Name.TestEquals( "FK_T_C2_REF_T" ) )
+            .Go();
     }
 
     [Fact]
@@ -458,7 +447,7 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetForeignKey( "U" ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -475,7 +464,7 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetForeignKey( "T" ) );
 
-        action.Should().ThrowExactly<SqlObjectCastException>();
+        action.Test( exc => exc.TestType().Exact<SqlObjectCastException>() ).Go();
     }
 
     [Fact]
@@ -492,12 +481,11 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var result = sut.TryGetForeignKey( "FK_T_C2_REF_T" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull();
-            (result?.Type).Should().Be( SqlObjectType.ForeignKey );
-            (result?.Name).Should().Be( "FK_T_C2_REF_T" );
-        }
+        Assertion.All(
+                result.TestNotNull(),
+                (result?.Type).TestEquals( SqlObjectType.ForeignKey ),
+                (result?.Name).TestEquals( "FK_T_C2_REF_T" ) )
+            .Go();
     }
 
     [Fact]
@@ -514,7 +502,7 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var result = sut.TryGetForeignKey( "U" );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -531,7 +519,7 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var result = sut.TryGetForeignKey( "T" );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -545,11 +533,10 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var result = sut.GetView( "V" );
 
-        using ( new AssertionScope() )
-        {
-            result.Type.Should().Be( SqlObjectType.View );
-            result.Name.Should().Be( "V" );
-        }
+        Assertion.All(
+                result.Type.TestEquals( SqlObjectType.View ),
+                result.Name.TestEquals( "V" ) )
+            .Go();
     }
 
     [Fact]
@@ -564,7 +551,7 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetView( "V" ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -579,7 +566,7 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetView( "T" ) );
 
-        action.Should().ThrowExactly<SqlObjectCastException>();
+        action.Test( exc => exc.TestType().Exact<SqlObjectCastException>() ).Go();
     }
 
     [Fact]
@@ -593,12 +580,11 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var result = sut.TryGetView( "V" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull();
-            (result?.Type).Should().Be( SqlObjectType.View );
-            (result?.Name).Should().Be( "V" );
-        }
+        Assertion.All(
+                result.TestNotNull(),
+                (result?.Type).TestEquals( SqlObjectType.View ),
+                (result?.Name).TestEquals( "V" ) )
+            .Go();
     }
 
     [Fact]
@@ -615,7 +601,7 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var result = sut.TryGetView( "U" );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -630,7 +616,7 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var result = sut.TryGetView( "T" );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -646,11 +632,10 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var result = sut.GetCheck( "CHK_T_0" );
 
-        using ( new AssertionScope() )
-        {
-            result.Type.Should().Be( SqlObjectType.Check );
-            result.Name.Should().Be( "CHK_T_0" );
-        }
+        Assertion.All(
+                result.Type.TestEquals( SqlObjectType.Check ),
+                result.Name.TestEquals( "CHK_T_0" ) )
+            .Go();
     }
 
     [Fact]
@@ -666,7 +651,7 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetCheck( "U" ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -682,7 +667,7 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetCheck( "T" ) );
 
-        action.Should().ThrowExactly<SqlObjectCastException>();
+        action.Test( exc => exc.TestType().Exact<SqlObjectCastException>() ).Go();
     }
 
     [Fact]
@@ -698,12 +683,11 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var result = sut.TryGetCheck( "CHK_T_0" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull();
-            (result?.Type).Should().Be( SqlObjectType.Check );
-            (result?.Name).Should().Be( "CHK_T_0" );
-        }
+        Assertion.All(
+                result.TestNotNull(),
+                (result?.Type).TestEquals( SqlObjectType.Check ),
+                (result?.Name).TestEquals( "CHK_T_0" ) )
+            .Go();
     }
 
     [Fact]
@@ -719,7 +703,7 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var result = sut.TryGetCheck( "U" );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -735,6 +719,6 @@ public class PostgreSqlSchemaTests : TestsBase
 
         var result = sut.TryGetCheck( "T" );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 }

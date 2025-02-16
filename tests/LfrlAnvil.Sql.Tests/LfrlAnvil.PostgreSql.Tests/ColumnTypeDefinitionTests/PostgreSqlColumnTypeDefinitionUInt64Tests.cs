@@ -18,7 +18,7 @@ public class PostgreSqlColumnTypeDefinitionUInt64Tests : TestsBase
     {
         var sut = _provider.GetByType<ulong>();
         var result = sut.TryToDbLiteral( value );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -26,7 +26,7 @@ public class PostgreSqlColumnTypeDefinitionUInt64Tests : TestsBase
     {
         var sut = _provider.GetByType<ulong>();
         var result = sut.TryToDbLiteral( string.Empty );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -34,7 +34,7 @@ public class PostgreSqlColumnTypeDefinitionUInt64Tests : TestsBase
     {
         var sut = _provider.GetByType<ulong>();
         var action = Lambda.Of( () => sut.TryToDbLiteral( ( ulong )long.MaxValue + 1 ) );
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Fact]
@@ -42,7 +42,7 @@ public class PostgreSqlColumnTypeDefinitionUInt64Tests : TestsBase
     {
         var sut = _provider.GetByType<ulong>();
         var result = sut.TryToParameterValue( ( ulong )1234567 );
-        result.Should().Be( 1234567L );
+        result.TestEquals( 1234567L ).Go();
     }
 
     [Fact]
@@ -50,7 +50,7 @@ public class PostgreSqlColumnTypeDefinitionUInt64Tests : TestsBase
     {
         var sut = _provider.GetByType<ulong>();
         var result = sut.TryToParameterValue( string.Empty );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -58,7 +58,7 @@ public class PostgreSqlColumnTypeDefinitionUInt64Tests : TestsBase
     {
         var sut = _provider.GetByType<ulong>();
         var action = Lambda.Of( () => sut.TryToParameterValue( ( ulong )long.MaxValue + 1 ) );
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Theory]
@@ -71,12 +71,11 @@ public class PostgreSqlColumnTypeDefinitionUInt64Tests : TestsBase
 
         sut.SetParameterInfo( parameter, isNullable );
 
-        using ( new AssertionScope() )
-        {
-            parameter.DbType.Should().Be( sut.DataType.DbType );
-            parameter.NpgsqlDbType.Should().Be( NpgsqlDbType.Bigint );
-            parameter.IsNullable.Should().Be( isNullable );
-        }
+        Assertion.All(
+                parameter.DbType.TestEquals( sut.DataType.DbType ),
+                parameter.NpgsqlDbType.TestEquals( NpgsqlDbType.Bigint ),
+                parameter.IsNullable.TestEquals( isNullable ) )
+            .Go();
     }
 
     [Theory]
@@ -89,6 +88,6 @@ public class PostgreSqlColumnTypeDefinitionUInt64Tests : TestsBase
 
         sut.SetParameterInfo( parameter, isNullable );
 
-        parameter.DbType.Should().Be( sut.DataType.DbType );
+        parameter.DbType.TestEquals( sut.DataType.DbType ).Go();
     }
 }

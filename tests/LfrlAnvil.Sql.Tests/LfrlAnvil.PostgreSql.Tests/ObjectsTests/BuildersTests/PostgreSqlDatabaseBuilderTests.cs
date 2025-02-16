@@ -6,7 +6,6 @@ using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using Npgsql;
 
 namespace LfrlAnvil.PostgreSql.Tests.ObjectsTests.BuildersTests;
@@ -18,28 +17,24 @@ public partial class PostgreSqlDatabaseBuilderTests : TestsBase
     {
         var sut = PostgreSqlDatabaseBuilderMock.Create();
 
-        using ( new AssertionScope() )
-        {
-            sut.Schemas.Count.Should().Be( 1 );
-            sut.Schemas.Database.Should().BeSameAs( sut );
-            sut.Schemas.Should().BeSequentiallyEqualTo( sut.Schemas.Default );
-
-            sut.Schemas.Default.Database.Should().BeSameAs( sut );
-            sut.Schemas.Default.Name.Should().Be( "public" );
-            sut.Schemas.Default.Objects.Should().BeEmpty();
-            sut.Schemas.Default.Objects.Schema.Should().BeSameAs( sut.Schemas.Default );
-
-            sut.Dialect.Should().BeSameAs( PostgreSqlDialect.Instance );
-            sut.ServerVersion.Should().Be( "0.0.0" );
-
-            sut.Changes.Database.Should().BeSameAs( sut );
-            sut.Changes.Mode.Should().Be( SqlDatabaseCreateMode.DryRun );
-            sut.Changes.IsAttached.Should().BeTrue();
-            sut.Changes.ActiveObject.Should().BeNull();
-            sut.Changes.ActiveObjectExistenceState.Should().Be( default( SqlObjectExistenceState ) );
-            sut.Changes.IsActive.Should().BeTrue();
-            sut.Changes.GetPendingActions().ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Schemas.Count.TestEquals( 1 ),
+                sut.Schemas.Database.TestRefEquals( sut ),
+                sut.Schemas.TestSequence( [ sut.Schemas.Default ] ),
+                sut.Schemas.Default.Database.TestRefEquals( sut ),
+                sut.Schemas.Default.Name.TestEquals( "public" ),
+                sut.Schemas.Default.Objects.TestEmpty(),
+                sut.Schemas.Default.Objects.Schema.TestRefEquals( sut.Schemas.Default ),
+                sut.Dialect.TestRefEquals( PostgreSqlDialect.Instance ),
+                sut.ServerVersion.TestEquals( "0.0.0" ),
+                sut.Changes.Database.TestRefEquals( sut ),
+                sut.Changes.Mode.TestEquals( SqlDatabaseCreateMode.DryRun ),
+                sut.Changes.IsAttached.TestTrue(),
+                sut.Changes.ActiveObject.TestNull(),
+                sut.Changes.ActiveObjectExistenceState.TestEquals( default ),
+                sut.Changes.IsActive.TestTrue(),
+                sut.Changes.GetPendingActions().ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -47,28 +42,24 @@ public partial class PostgreSqlDatabaseBuilderTests : TestsBase
     {
         var sut = PostgreSqlDatabaseBuilderMock.Create( defaultSchemaName: "common" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Schemas.Count.Should().Be( 2 );
-            sut.Schemas.Database.Should().BeSameAs( sut );
-            sut.Schemas.Should().BeSequentiallyEqualTo( sut.Schemas.Default, sut.Schemas.TryGet( "public" )! );
-
-            sut.Schemas.Default.Database.Should().BeSameAs( sut );
-            sut.Schemas.Default.Name.Should().Be( "common" );
-            sut.Schemas.Default.Objects.Should().BeEmpty();
-            sut.Schemas.Default.Objects.Schema.Should().BeSameAs( sut.Schemas.Default );
-
-            sut.Dialect.Should().BeSameAs( PostgreSqlDialect.Instance );
-            sut.ServerVersion.Should().Be( "0.0.0" );
-
-            sut.Changes.Database.Should().BeSameAs( sut );
-            sut.Changes.Mode.Should().Be( SqlDatabaseCreateMode.DryRun );
-            sut.Changes.IsAttached.Should().BeTrue();
-            sut.Changes.ActiveObject.Should().BeNull();
-            sut.Changes.ActiveObjectExistenceState.Should().Be( default( SqlObjectExistenceState ) );
-            sut.Changes.IsActive.Should().BeTrue();
-            sut.Changes.GetPendingActions().ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Schemas.Count.TestEquals( 2 ),
+                sut.Schemas.Database.TestRefEquals( sut ),
+                sut.Schemas.TestSequence( [ sut.Schemas.Default, sut.Schemas.TryGet( "public" )! ] ),
+                sut.Schemas.Default.Database.TestRefEquals( sut ),
+                sut.Schemas.Default.Name.TestEquals( "common" ),
+                sut.Schemas.Default.Objects.TestEmpty(),
+                sut.Schemas.Default.Objects.Schema.TestRefEquals( sut.Schemas.Default ),
+                sut.Dialect.TestRefEquals( PostgreSqlDialect.Instance ),
+                sut.ServerVersion.TestEquals( "0.0.0" ),
+                sut.Changes.Database.TestRefEquals( sut ),
+                sut.Changes.Mode.TestEquals( SqlDatabaseCreateMode.DryRun ),
+                sut.Changes.IsAttached.TestTrue(),
+                sut.Changes.ActiveObject.TestNull(),
+                sut.Changes.ActiveObjectExistenceState.TestEquals( default ),
+                sut.Changes.IsActive.TestTrue(),
+                sut.Changes.GetPendingActions().ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -76,7 +67,7 @@ public partial class PostgreSqlDatabaseBuilderTests : TestsBase
     {
         var sut = PostgreSqlDatabaseBuilderMock.Create();
         var result = sut.AddConnectionChangeCallback( _ => { } );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Theory]
@@ -91,39 +82,38 @@ public partial class PostgreSqlDatabaseBuilderTests : TestsBase
         var interpreter = new PostgreSqlNodeInterpreter( PostgreSqlNodeInterpreterOptions.Default, SqlNodeInterpreterContext.Create() );
         PostgreSqlHelpers.AppendCreateDatabase( interpreter, "foo", encodingName, localeName, concurrentConnectionsLimit );
         var result = interpreter.Context.Sql.ToString();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
     public void Helpers_ExtractConnectionStringEntries_ShouldReturnCorrectResult()
     {
-        var connectionString = new NpgsqlConnectionStringBuilder(
-            "Host=localhost;Port=5431;Database=tests;UserID=admin;Password=password;Pooling=False" );
+        var connectionString
+            = new NpgsqlConnectionStringBuilder( "Host=localhost;Port=5431;Database=tests;UserID=admin;Password=password;Pooling=False" );
 
         var result = PostgreSqlHelpers.ExtractConnectionStringEntries( connectionString );
 
-        result.Should()
-            .BeSequentiallyEqualTo(
-                new SqlConnectionStringEntry( "Host", "localhost", false ),
-                new SqlConnectionStringEntry( "Port", "5431", false ),
-                new SqlConnectionStringEntry( "Database", "tests", false ),
-                new SqlConnectionStringEntry( "Username", "admin", true ),
-                new SqlConnectionStringEntry( "Password", "password", true ),
-                new SqlConnectionStringEntry( "Pooling", "False", true ) );
+        result.TestSequence(
+            [
+                new SqlConnectionStringEntry( "Host", "localhost", false ), new SqlConnectionStringEntry( "Port", "5431", false ),
+                new SqlConnectionStringEntry( "Database", "tests", false ), new SqlConnectionStringEntry( "Username", "admin", true ),
+                new SqlConnectionStringEntry( "Password", "password", true ), new SqlConnectionStringEntry( "Pooling", "False", true )
+            ] )
+            .Go();
     }
 
     [Fact]
     public void Helpers_ExtendConnectionString_ShouldReturnCorrectResult()
     {
-        var connectionString = new NpgsqlConnectionStringBuilder(
-            "Host=localhost;Port=5431;Database=tests;UserID=admin;Password=password;Pooling=False" );
+        var connectionString
+            = new NpgsqlConnectionStringBuilder( "Host=localhost;Port=5431;Database=tests;UserID=admin;Password=password;Pooling=False" );
 
         var entries = PostgreSqlHelpers.ExtractConnectionStringEntries( connectionString );
         var result = PostgreSqlHelpers.ExtendConnectionString(
             entries,
             "Port=5432;Database=tests2;UserID=tester;Password=pwd;Pooling=true" );
 
-        result.Should().Be( "Port=5431;Database=tests;Username=tester;Password=pwd;Pooling=True;Host=localhost" );
+        result.TestEquals( "Port=5431;Database=tests;Username=tester;Password=pwd;Pooling=True;Host=localhost" ).Go();
     }
 
     [Fact]
@@ -134,8 +124,10 @@ public partial class PostgreSqlDatabaseBuilderTests : TestsBase
 
         var result = sut.ForPostgreSql( action );
 
-        result.Should().BeSameAs( sut );
-        action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( sut );
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                action.CallAt( 0 ).Arguments.TestSequence( [ sut ] ) )
+            .Go();
     }
 
     [Fact]
@@ -146,7 +138,9 @@ public partial class PostgreSqlDatabaseBuilderTests : TestsBase
 
         var result = sut.ForPostgreSql( action );
 
-        result.Should().BeSameAs( sut );
-        action.Verify().CallCount.Should().Be( 0 );
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                action.CallCount().TestEquals( 0 ) )
+            .Go();
     }
 }

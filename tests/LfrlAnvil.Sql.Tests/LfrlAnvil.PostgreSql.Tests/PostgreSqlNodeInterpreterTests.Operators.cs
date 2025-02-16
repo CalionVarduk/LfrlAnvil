@@ -12,7 +12,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.Literal( -25 ).Negate() );
-            sut.Context.Sql.ToString().Should().Be( "-(-25)" );
+            sut.Context.Sql.ToString().TestEquals( "-(-25)" ).Go();
         }
 
         [Fact]
@@ -20,7 +20,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.VisitChild( SqlNode.Literal( 25 ).Negate() );
-            sut.Context.Sql.ToString().Should().Be( "(-(25))" );
+            sut.Context.Sql.ToString().TestEquals( "(-(25))" ).Go();
         }
 
         [Fact]
@@ -28,7 +28,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawExpression( "foo.a" ) + SqlNode.RawExpression( "foo.b" ) );
-            sut.Context.Sql.ToString().Should().Be( "(foo.a) + (foo.b)" );
+            sut.Context.Sql.ToString().TestEquals( "(foo.a) + (foo.b)" ).Go();
         }
 
         [Fact]
@@ -36,7 +36,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.Literal( 25 ) + SqlNode.Literal( 35 ) );
-            sut.Context.Sql.ToString().Should().Be( "25 + 35" );
+            sut.Context.Sql.ToString().TestEquals( "25 + 35" ).Go();
         }
 
         [Fact]
@@ -44,7 +44,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.VisitChild( SqlNode.Literal( 25 ) + SqlNode.Literal( 35 ) );
-            sut.Context.Sql.ToString().Should().Be( "(25 + 35)" );
+            sut.Context.Sql.ToString().TestEquals( "(25 + 35)" ).Go();
         }
 
         [Fact]
@@ -52,7 +52,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawExpression( "foo.a" ).Concat( SqlNode.RawExpression( "foo.b" ) ) );
-            sut.Context.Sql.ToString().Should().Be( "(foo.a) || (foo.b)" );
+            sut.Context.Sql.ToString().TestEquals( "(foo.a) || (foo.b)" ).Go();
         }
 
         [Fact]
@@ -60,7 +60,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.Literal( "foo" ).Concat( SqlNode.Literal( "bar" ) ) );
-            sut.Context.Sql.ToString().Should().Be( "'foo' || 'bar'" );
+            sut.Context.Sql.ToString().TestEquals( "'foo' || 'bar'" ).Go();
         }
 
         [Fact]
@@ -68,7 +68,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.VisitChild( SqlNode.Literal( "foo" ).Concat( SqlNode.Literal( "bar" ) ) );
-            sut.Context.Sql.ToString().Should().Be( "('foo' || 'bar')" );
+            sut.Context.Sql.ToString().TestEquals( "('foo' || 'bar')" ).Go();
         }
 
         [Fact]
@@ -76,7 +76,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawExpression( "foo.a" ) - SqlNode.RawExpression( "foo.b" ) );
-            sut.Context.Sql.ToString().Should().Be( "(foo.a) - (foo.b)" );
+            sut.Context.Sql.ToString().TestEquals( "(foo.a) - (foo.b)" ).Go();
         }
 
         [Fact]
@@ -84,7 +84,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.Literal( 25 ) - SqlNode.Literal( 35 ) );
-            sut.Context.Sql.ToString().Should().Be( "25 - 35" );
+            sut.Context.Sql.ToString().TestEquals( "25 - 35" ).Go();
         }
 
         [Fact]
@@ -92,7 +92,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.VisitChild( SqlNode.Literal( 25 ) - SqlNode.Literal( 35 ) );
-            sut.Context.Sql.ToString().Should().Be( "(25 - 35)" );
+            sut.Context.Sql.ToString().TestEquals( "(25 - 35)" ).Go();
         }
 
         [Fact]
@@ -100,7 +100,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawExpression( "foo.a" ) * SqlNode.RawExpression( "foo.b" ) );
-            sut.Context.Sql.ToString().Should().Be( "(foo.a) * (foo.b)" );
+            sut.Context.Sql.ToString().TestEquals( "(foo.a) * (foo.b)" ).Go();
         }
 
         [Fact]
@@ -108,7 +108,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.Literal( 25 ) * SqlNode.Literal( 35 ) );
-            sut.Context.Sql.ToString().Should().Be( "25 * 35" );
+            sut.Context.Sql.ToString().TestEquals( "25 * 35" ).Go();
         }
 
         [Fact]
@@ -116,7 +116,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.VisitChild( SqlNode.Literal( 25 ) * SqlNode.Literal( 35 ) );
-            sut.Context.Sql.ToString().Should().Be( "(25 * 35)" );
+            sut.Context.Sql.ToString().TestEquals( "(25 * 35)" ).Go();
         }
 
         [Fact]
@@ -124,7 +124,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawExpression( "foo.a" ) / SqlNode.RawExpression( "foo.b" ) );
-            sut.Context.Sql.ToString().Should().Be( "(foo.a) / (foo.b)" );
+            sut.Context.Sql.ToString().TestEquals( "(foo.a) / (foo.b)" ).Go();
         }
 
         [Fact]
@@ -132,7 +132,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.Literal( 25 ) / SqlNode.Literal( 35 ) );
-            sut.Context.Sql.ToString().Should().Be( "25 / 35" );
+            sut.Context.Sql.ToString().TestEquals( "25 / 35" ).Go();
         }
 
         [Fact]
@@ -140,7 +140,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.VisitChild( SqlNode.Literal( 25 ) / SqlNode.Literal( 35 ) );
-            sut.Context.Sql.ToString().Should().Be( "(25 / 35)" );
+            sut.Context.Sql.ToString().TestEquals( "(25 / 35)" ).Go();
         }
 
         [Fact]
@@ -148,7 +148,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawExpression( "foo.a" ) % SqlNode.RawExpression( "foo.b" ) );
-            sut.Context.Sql.ToString().Should().Be( "(foo.a) % (foo.b)" );
+            sut.Context.Sql.ToString().TestEquals( "(foo.a) % (foo.b)" ).Go();
         }
 
         [Fact]
@@ -156,7 +156,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.Literal( 25 ) % SqlNode.Literal( 35 ) );
-            sut.Context.Sql.ToString().Should().Be( "25 % 35" );
+            sut.Context.Sql.ToString().TestEquals( "25 % 35" ).Go();
         }
 
         [Fact]
@@ -164,7 +164,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.VisitChild( SqlNode.Literal( 25 ) % SqlNode.Literal( 35 ) );
-            sut.Context.Sql.ToString().Should().Be( "(25 % 35)" );
+            sut.Context.Sql.ToString().TestEquals( "(25 % 35)" ).Go();
         }
 
         [Fact]
@@ -172,7 +172,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.Literal( -25 ).BitwiseNot() );
-            sut.Context.Sql.ToString().Should().Be( "~(-25)" );
+            sut.Context.Sql.ToString().TestEquals( "~(-25)" ).Go();
         }
 
         [Fact]
@@ -180,7 +180,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.VisitChild( SqlNode.Literal( 25 ).BitwiseNot() );
-            sut.Context.Sql.ToString().Should().Be( "(~(25))" );
+            sut.Context.Sql.ToString().TestEquals( "(~(25))" ).Go();
         }
 
         [Fact]
@@ -188,7 +188,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawExpression( "foo.a" ) & SqlNode.RawExpression( "foo.b" ) );
-            sut.Context.Sql.ToString().Should().Be( "(foo.a) & (foo.b)" );
+            sut.Context.Sql.ToString().TestEquals( "(foo.a) & (foo.b)" ).Go();
         }
 
         [Fact]
@@ -196,7 +196,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.Literal( 25 ) & SqlNode.Literal( 35 ) );
-            sut.Context.Sql.ToString().Should().Be( "25 & 35" );
+            sut.Context.Sql.ToString().TestEquals( "25 & 35" ).Go();
         }
 
         [Fact]
@@ -204,7 +204,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.VisitChild( SqlNode.Literal( 25 ) & SqlNode.Literal( 35 ) );
-            sut.Context.Sql.ToString().Should().Be( "(25 & 35)" );
+            sut.Context.Sql.ToString().TestEquals( "(25 & 35)" ).Go();
         }
 
         [Fact]
@@ -212,7 +212,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawExpression( "foo.a" ) | SqlNode.RawExpression( "foo.b" ) );
-            sut.Context.Sql.ToString().Should().Be( "(foo.a) | (foo.b)" );
+            sut.Context.Sql.ToString().TestEquals( "(foo.a) | (foo.b)" ).Go();
         }
 
         [Fact]
@@ -220,7 +220,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.Literal( 25 ) | SqlNode.Literal( 35 ) );
-            sut.Context.Sql.ToString().Should().Be( "25 | 35" );
+            sut.Context.Sql.ToString().TestEquals( "25 | 35" ).Go();
         }
 
         [Fact]
@@ -228,7 +228,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.VisitChild( SqlNode.Literal( 25 ) | SqlNode.Literal( 35 ) );
-            sut.Context.Sql.ToString().Should().Be( "(25 | 35)" );
+            sut.Context.Sql.ToString().TestEquals( "(25 | 35)" ).Go();
         }
 
         [Fact]
@@ -236,7 +236,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawExpression( "foo.a" ) ^ SqlNode.RawExpression( "foo.b" ) );
-            sut.Context.Sql.ToString().Should().Be( "(foo.a) # (foo.b)" );
+            sut.Context.Sql.ToString().TestEquals( "(foo.a) # (foo.b)" ).Go();
         }
 
         [Fact]
@@ -244,7 +244,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.Literal( 25 ) ^ SqlNode.Literal( 35 ) );
-            sut.Context.Sql.ToString().Should().Be( "25 # 35" );
+            sut.Context.Sql.ToString().TestEquals( "25 # 35" ).Go();
         }
 
         [Fact]
@@ -252,7 +252,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.VisitChild( SqlNode.Literal( 25 ) ^ SqlNode.Literal( 35 ) );
-            sut.Context.Sql.ToString().Should().Be( "(25 # 35)" );
+            sut.Context.Sql.ToString().TestEquals( "(25 # 35)" ).Go();
         }
 
         [Fact]
@@ -260,7 +260,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawExpression( "foo.a" ).BitwiseLeftShift( SqlNode.RawExpression( "foo.b" ) ) );
-            sut.Context.Sql.ToString().Should().Be( "(foo.a) << (foo.b)" );
+            sut.Context.Sql.ToString().TestEquals( "(foo.a) << (foo.b)" ).Go();
         }
 
         [Fact]
@@ -268,7 +268,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.Literal( 25 ).BitwiseLeftShift( SqlNode.Literal( 35 ) ) );
-            sut.Context.Sql.ToString().Should().Be( "25 << 35" );
+            sut.Context.Sql.ToString().TestEquals( "25 << 35" ).Go();
         }
 
         [Fact]
@@ -276,7 +276,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.VisitChild( SqlNode.Literal( 25 ).BitwiseLeftShift( SqlNode.Literal( 35 ) ) );
-            sut.Context.Sql.ToString().Should().Be( "(25 << 35)" );
+            sut.Context.Sql.ToString().TestEquals( "(25 << 35)" ).Go();
         }
 
         [Fact]
@@ -284,7 +284,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawExpression( "foo.a" ).BitwiseRightShift( SqlNode.RawExpression( "foo.b" ) ) );
-            sut.Context.Sql.ToString().Should().Be( "(foo.a) >> (foo.b)" );
+            sut.Context.Sql.ToString().TestEquals( "(foo.a) >> (foo.b)" ).Go();
         }
 
         [Fact]
@@ -292,7 +292,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.Literal( 25 ).BitwiseRightShift( SqlNode.Literal( 35 ) ) );
-            sut.Context.Sql.ToString().Should().Be( "25 >> 35" );
+            sut.Context.Sql.ToString().TestEquals( "25 >> 35" ).Go();
         }
 
         [Fact]
@@ -300,7 +300,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.VisitChild( SqlNode.Literal( 25 ).BitwiseRightShift( SqlNode.Literal( 35 ) ) );
-            sut.Context.Sql.ToString().Should().Be( "(25 >> 35)" );
+            sut.Context.Sql.ToString().TestEquals( "(25 >> 35)" ).Go();
         }
 
         [Fact]
@@ -308,7 +308,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawExpression( "foo.a" ) == SqlNode.Literal( 10 ) );
-            sut.Context.Sql.ToString().Should().Be( "(foo.a) = 10" );
+            sut.Context.Sql.ToString().TestEquals( "(foo.a) = 10" ).Go();
         }
 
         [Fact]
@@ -316,7 +316,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawExpression( "foo.a" ) == SqlNode.Null() );
-            sut.Context.Sql.ToString().Should().Be( "(foo.a) IS NULL" );
+            sut.Context.Sql.ToString().TestEquals( "(foo.a) IS NULL" ).Go();
         }
 
         [Fact]
@@ -324,7 +324,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.VisitChild( SqlNode.RawExpression( "foo.a" ) == SqlNode.Literal( 10 ) );
-            sut.Context.Sql.ToString().Should().Be( "((foo.a) = 10)" );
+            sut.Context.Sql.ToString().TestEquals( "((foo.a) = 10)" ).Go();
         }
 
         [Fact]
@@ -332,7 +332,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawExpression( "foo.a" ) != SqlNode.Literal( 10 ) );
-            sut.Context.Sql.ToString().Should().Be( "(foo.a) <> 10" );
+            sut.Context.Sql.ToString().TestEquals( "(foo.a) <> 10" ).Go();
         }
 
         [Fact]
@@ -340,7 +340,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawExpression( "foo.a" ) != SqlNode.Null() );
-            sut.Context.Sql.ToString().Should().Be( "(foo.a) IS NOT NULL" );
+            sut.Context.Sql.ToString().TestEquals( "(foo.a) IS NOT NULL" ).Go();
         }
 
         [Fact]
@@ -348,7 +348,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.VisitChild( SqlNode.RawExpression( "foo.a" ) != SqlNode.Literal( 10 ) );
-            sut.Context.Sql.ToString().Should().Be( "((foo.a) <> 10)" );
+            sut.Context.Sql.ToString().TestEquals( "((foo.a) <> 10)" ).Go();
         }
 
         [Fact]
@@ -356,7 +356,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawExpression( "foo.a" ) > SqlNode.Literal( 10 ) );
-            sut.Context.Sql.ToString().Should().Be( "(foo.a) > 10" );
+            sut.Context.Sql.ToString().TestEquals( "(foo.a) > 10" ).Go();
         }
 
         [Fact]
@@ -364,7 +364,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.VisitChild( SqlNode.RawExpression( "foo.a" ) > SqlNode.Literal( 10 ) );
-            sut.Context.Sql.ToString().Should().Be( "((foo.a) > 10)" );
+            sut.Context.Sql.ToString().TestEquals( "((foo.a) > 10)" ).Go();
         }
 
         [Fact]
@@ -372,7 +372,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawExpression( "foo.a" ) < SqlNode.Literal( 10 ) );
-            sut.Context.Sql.ToString().Should().Be( "(foo.a) < 10" );
+            sut.Context.Sql.ToString().TestEquals( "(foo.a) < 10" ).Go();
         }
 
         [Fact]
@@ -380,7 +380,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.VisitChild( SqlNode.RawExpression( "foo.a" ) < SqlNode.Literal( 10 ) );
-            sut.Context.Sql.ToString().Should().Be( "((foo.a) < 10)" );
+            sut.Context.Sql.ToString().TestEquals( "((foo.a) < 10)" ).Go();
         }
 
         [Fact]
@@ -388,7 +388,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawExpression( "foo.a" ) >= SqlNode.Literal( 10 ) );
-            sut.Context.Sql.ToString().Should().Be( "(foo.a) >= 10" );
+            sut.Context.Sql.ToString().TestEquals( "(foo.a) >= 10" ).Go();
         }
 
         [Fact]
@@ -396,7 +396,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.VisitChild( SqlNode.RawExpression( "foo.a" ) >= SqlNode.Literal( 10 ) );
-            sut.Context.Sql.ToString().Should().Be( "((foo.a) >= 10)" );
+            sut.Context.Sql.ToString().TestEquals( "((foo.a) >= 10)" ).Go();
         }
 
         [Fact]
@@ -404,7 +404,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawExpression( "foo.a" ) <= SqlNode.Literal( 10 ) );
-            sut.Context.Sql.ToString().Should().Be( "(foo.a) <= 10" );
+            sut.Context.Sql.ToString().TestEquals( "(foo.a) <= 10" ).Go();
         }
 
         [Fact]
@@ -412,7 +412,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.VisitChild( SqlNode.RawExpression( "foo.a" ) <= SqlNode.Literal( 10 ) );
-            sut.Context.Sql.ToString().Should().Be( "((foo.a) <= 10)" );
+            sut.Context.Sql.ToString().TestEquals( "((foo.a) <= 10)" ).Go();
         }
 
         [Fact]
@@ -420,7 +420,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawCondition( "foo.a > 10" ).And( SqlNode.RawCondition( "foo.b < 20" ) ) );
-            sut.Context.Sql.ToString().Should().Be( "(foo.a > 10) AND (foo.b < 20)" );
+            sut.Context.Sql.ToString().TestEquals( "(foo.a > 10) AND (foo.b < 20)" ).Go();
         }
 
         [Fact]
@@ -428,7 +428,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.VisitChild( SqlNode.RawCondition( "foo.a > 10" ).And( SqlNode.RawCondition( "foo.b < 20" ) ) );
-            sut.Context.Sql.ToString().Should().Be( "((foo.a > 10) AND (foo.b < 20))" );
+            sut.Context.Sql.ToString().TestEquals( "((foo.a > 10) AND (foo.b < 20))" ).Go();
         }
 
         [Fact]
@@ -436,7 +436,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawCondition( "foo.a > 10" ).Or( SqlNode.RawCondition( "foo.b < 20" ) ) );
-            sut.Context.Sql.ToString().Should().Be( "(foo.a > 10) OR (foo.b < 20)" );
+            sut.Context.Sql.ToString().TestEquals( "(foo.a > 10) OR (foo.b < 20)" ).Go();
         }
 
         [Fact]
@@ -444,7 +444,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.VisitChild( SqlNode.RawCondition( "foo.a > 10" ).Or( SqlNode.RawCondition( "foo.b < 20" ) ) );
-            sut.Context.Sql.ToString().Should().Be( "((foo.a > 10) OR (foo.b < 20))" );
+            sut.Context.Sql.ToString().TestEquals( "((foo.a > 10) OR (foo.b < 20))" ).Go();
         }
 
         [Fact]
@@ -452,7 +452,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawExpression( "foo.a" ).IsBetween( SqlNode.Literal( 10 ), SqlNode.Literal( 20 ) ) );
-            sut.Context.Sql.ToString().Should().Be( "(foo.a) BETWEEN 10 AND 20" );
+            sut.Context.Sql.ToString().TestEquals( "(foo.a) BETWEEN 10 AND 20" ).Go();
         }
 
         [Fact]
@@ -460,7 +460,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawExpression( "foo.a" ).IsNotBetween( SqlNode.Literal( 10 ), SqlNode.Literal( 20 ) ) );
-            sut.Context.Sql.ToString().Should().Be( "(foo.a) NOT BETWEEN 10 AND 20" );
+            sut.Context.Sql.ToString().TestEquals( "(foo.a) NOT BETWEEN 10 AND 20" ).Go();
         }
 
         [Fact]
@@ -468,7 +468,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.VisitChild( SqlNode.RawExpression( "foo.a" ).IsBetween( SqlNode.Literal( 10 ), SqlNode.Literal( 20 ) ) );
-            sut.Context.Sql.ToString().Should().Be( "((foo.a) BETWEEN 10 AND 20)" );
+            sut.Context.Sql.ToString().TestEquals( "((foo.a) BETWEEN 10 AND 20)" ).Go();
         }
 
         [Fact]
@@ -477,13 +477,13 @@ public partial class PostgreSqlNodeInterpreterTests
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawQuery( "SELECT * FROM foo" ).Exists() );
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     EXISTS (
                       SELECT * FROM foo
                     )
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -492,13 +492,13 @@ public partial class PostgreSqlNodeInterpreterTests
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawQuery( "SELECT * FROM foo" ).NotExists() );
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     NOT EXISTS (
                       SELECT * FROM foo
                     )
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -507,13 +507,13 @@ public partial class PostgreSqlNodeInterpreterTests
             var sut = CreateInterpreter();
             sut.VisitChild( SqlNode.RawQuery( "SELECT * FROM foo" ).Exists() );
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     (EXISTS (
                         SELECT * FROM foo
                       ))
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -521,7 +521,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawExpression( "foo.a" ).Like( SqlNode.Literal( "\\%bar%" ), SqlNode.Literal( "\\" ) ) );
-            sut.Context.Sql.ToString().Should().Be( @"(foo.a) LIKE '\%bar%' ESCAPE '\'" );
+            sut.Context.Sql.ToString().TestEquals( @"(foo.a) LIKE '\%bar%' ESCAPE '\'" ).Go();
         }
 
         [Fact]
@@ -529,7 +529,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawExpression( "foo.a" ).NotLike( SqlNode.Literal( "%bar%" ) ) );
-            sut.Context.Sql.ToString().Should().Be( "(foo.a) NOT LIKE '%bar%'" );
+            sut.Context.Sql.ToString().TestEquals( "(foo.a) NOT LIKE '%bar%'" ).Go();
         }
 
         [Fact]
@@ -537,7 +537,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.VisitChild( SqlNode.RawExpression( "foo.a" ).Like( SqlNode.Literal( "%bar%" ) ) );
-            sut.Context.Sql.ToString().Should().Be( "((foo.a) LIKE '%bar%')" );
+            sut.Context.Sql.ToString().TestEquals( "((foo.a) LIKE '%bar%')" ).Go();
         }
 
         [Fact]
@@ -545,7 +545,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawExpression( "foo.a" ).In( SqlNode.Literal( "foo" ), SqlNode.Literal( "bar" ) ) );
-            sut.Context.Sql.ToString().Should().Be( "(foo.a) IN ('foo', 'bar')" );
+            sut.Context.Sql.ToString().TestEquals( "(foo.a) IN ('foo', 'bar')" ).Go();
         }
 
         [Fact]
@@ -553,7 +553,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawExpression( "foo.a" ).NotIn( SqlNode.Literal( "foo" ), SqlNode.Literal( "bar" ) ) );
-            sut.Context.Sql.ToString().Should().Be( "(foo.a) NOT IN ('foo', 'bar')" );
+            sut.Context.Sql.ToString().TestEquals( "(foo.a) NOT IN ('foo', 'bar')" ).Go();
         }
 
         [Fact]
@@ -561,7 +561,7 @@ public partial class PostgreSqlNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.VisitChild( SqlNode.RawExpression( "foo.a" ).In( SqlNode.Literal( "foo" ), SqlNode.Literal( "bar" ) ) );
-            sut.Context.Sql.ToString().Should().Be( "((foo.a) IN ('foo', 'bar'))" );
+            sut.Context.Sql.ToString().TestEquals( "((foo.a) IN ('foo', 'bar'))" ).Go();
         }
 
         [Fact]
@@ -570,13 +570,13 @@ public partial class PostgreSqlNodeInterpreterTests
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawExpression( "foo.a" ).InQuery( SqlNode.RawQuery( "SELECT qux FROM bar" ) ) );
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     (foo.a) IN (
                       SELECT qux FROM bar
                     )
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -585,13 +585,13 @@ public partial class PostgreSqlNodeInterpreterTests
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.RawExpression( "foo.a" ).NotInQuery( SqlNode.RawQuery( "SELECT qux FROM bar" ) ) );
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     (foo.a) NOT IN (
                       SELECT qux FROM bar
                     )
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -600,13 +600,13 @@ public partial class PostgreSqlNodeInterpreterTests
             var sut = CreateInterpreter();
             sut.VisitChild( SqlNode.RawExpression( "foo.a" ).InQuery( SqlNode.RawQuery( "SELECT qux FROM bar" ) ) );
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     ((foo.a) IN (
                         SELECT qux FROM bar
                       ))
-                    """ );
+                    """ )
+                .Go();
         }
     }
 }

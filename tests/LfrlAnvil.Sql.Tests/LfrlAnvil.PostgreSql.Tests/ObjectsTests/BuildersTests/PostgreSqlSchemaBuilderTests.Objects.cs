@@ -8,7 +8,6 @@ using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.PostgreSql.Tests.ObjectsTests.BuildersTests;
 
@@ -24,29 +23,27 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.CreateTable( "T" );
 
-            using ( new AssertionScope() )
-            {
-                result.Schema.Should().BeSameAs( sut.Schema );
-                result.Database.Should().BeSameAs( schema.Database );
-                result.Type.Should().Be( SqlObjectType.Table );
-                result.Name.Should().Be( "T" );
-                result.Info.Should().Be( SqlRecordSetInfo.Create( "foo", "T" ) );
-                result.Columns.Should().BeEmpty();
-                result.Columns.Table.Should().BeSameAs( result );
-                result.Columns.DefaultTypeDefinition.Should().BeSameAs( schema.Database.TypeDefinitions.GetByType<object>() );
-                result.Constraints.Should().BeEmpty();
-                result.Constraints.Table.Should().BeSameAs( result );
-                result.Constraints.TryGetPrimaryKey().Should().BeNull();
-                result.ReferencingObjects.Should().BeEmpty();
-                result.Node.Table.Should().BeSameAs( result );
-                result.Node.Info.Should().Be( result.Info );
-                result.Node.Alias.Should().BeNull();
-                result.Node.Identifier.Should().Be( result.Info.Identifier );
-                result.Node.IsOptional.Should().BeFalse();
-
-                sut.Count.Should().Be( 1 );
-                sut.Should().BeEquivalentTo( result );
-            }
+            Assertion.All(
+                    result.Schema.TestRefEquals( sut.Schema ),
+                    result.Database.TestRefEquals( schema.Database ),
+                    result.Type.TestEquals( SqlObjectType.Table ),
+                    result.Name.TestEquals( "T" ),
+                    result.Info.TestEquals( SqlRecordSetInfo.Create( "foo", "T" ) ),
+                    result.Columns.TestEmpty(),
+                    result.Columns.Table.TestRefEquals( result ),
+                    result.Columns.DefaultTypeDefinition.TestRefEquals( schema.Database.TypeDefinitions.GetByType<object>() ),
+                    result.Constraints.TestEmpty(),
+                    result.Constraints.Table.TestRefEquals( result ),
+                    result.Constraints.TryGetPrimaryKey().TestNull(),
+                    result.ReferencingObjects.TestEmpty(),
+                    result.Node.Table.TestRefEquals( result ),
+                    result.Node.Info.TestEquals( result.Info ),
+                    result.Node.Alias.TestNull(),
+                    result.Node.Identifier.TestEquals( result.Info.Identifier ),
+                    result.Node.IsOptional.TestFalse(),
+                    sut.Count.TestEquals( 1 ),
+                    sut.TestSetEqual( [ result ] ) )
+                .Go();
         }
 
         [Fact]
@@ -58,9 +55,11 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var action = Lambda.Of( () => sut.CreateTable( "T" ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -73,9 +72,11 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var action = Lambda.Of( () => sut.CreateTable( "PK_T" ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Theory]
@@ -91,9 +92,11 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var action = Lambda.Of( () => sut.CreateTable( name ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -104,29 +107,27 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.GetOrCreateTable( "T" );
 
-            using ( new AssertionScope() )
-            {
-                result.Schema.Should().BeSameAs( sut.Schema );
-                result.Database.Should().BeSameAs( schema.Database );
-                result.Type.Should().Be( SqlObjectType.Table );
-                result.Name.Should().Be( "T" );
-                result.Info.Should().Be( SqlRecordSetInfo.Create( "foo", "T" ) );
-                result.Columns.Should().BeEmpty();
-                result.Columns.Table.Should().BeSameAs( result );
-                result.Columns.DefaultTypeDefinition.Should().BeSameAs( schema.Database.TypeDefinitions.GetByType<object>() );
-                result.Constraints.Should().BeEmpty();
-                result.Constraints.Table.Should().BeSameAs( result );
-                result.Constraints.TryGetPrimaryKey().Should().BeNull();
-                result.ReferencingObjects.Should().BeEmpty();
-                result.Node.Table.Should().BeSameAs( result );
-                result.Node.Info.Should().Be( result.Info );
-                result.Node.Alias.Should().BeNull();
-                result.Node.Identifier.Should().Be( result.Info.Identifier );
-                result.Node.IsOptional.Should().BeFalse();
-
-                sut.Count.Should().Be( 1 );
-                sut.Should().BeEquivalentTo( result );
-            }
+            Assertion.All(
+                    result.Schema.TestRefEquals( sut.Schema ),
+                    result.Database.TestRefEquals( schema.Database ),
+                    result.Type.TestEquals( SqlObjectType.Table ),
+                    result.Name.TestEquals( "T" ),
+                    result.Info.TestEquals( SqlRecordSetInfo.Create( "foo", "T" ) ),
+                    result.Columns.TestEmpty(),
+                    result.Columns.Table.TestRefEquals( result ),
+                    result.Columns.DefaultTypeDefinition.TestRefEquals( schema.Database.TypeDefinitions.GetByType<object>() ),
+                    result.Constraints.TestEmpty(),
+                    result.Constraints.Table.TestRefEquals( result ),
+                    result.Constraints.TryGetPrimaryKey().TestNull(),
+                    result.ReferencingObjects.TestEmpty(),
+                    result.Node.Table.TestRefEquals( result ),
+                    result.Node.Info.TestEquals( result.Info ),
+                    result.Node.Alias.TestNull(),
+                    result.Node.Identifier.TestEquals( result.Info.Identifier ),
+                    result.Node.IsOptional.TestFalse(),
+                    sut.Count.TestEquals( 1 ),
+                    sut.TestSetEqual( [ result ] ) )
+                .Go();
         }
 
         [Fact]
@@ -138,11 +139,10 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.GetOrCreateTable( "T" );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeSameAs( expected );
-                sut.Count.Should().Be( 1 );
-            }
+            Assertion.All(
+                    result.TestRefEquals( expected ),
+                    sut.Count.TestEquals( 1 ) )
+                .Go();
         }
 
         [Fact]
@@ -154,9 +154,11 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var action = Lambda.Of( () => sut.GetOrCreateTable( "T" ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -170,12 +172,14 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var action = Lambda.Of( () => sut.GetOrCreateTable( "bar" ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectCastException>()
-                .AndMatch(
-                    e => e.Dialect == PostgreSqlDialect.Instance
-                        && e.Expected == typeof( SqlTableBuilder )
-                        && e.Actual == typeof( PostgreSqlPrimaryKeyBuilder ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectCastException>(
+                            e => Assertion.All(
+                                e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                                e.Expected.TestEquals( typeof( SqlTableBuilder ) ),
+                                e.Actual.TestEquals( typeof( PostgreSqlPrimaryKeyBuilder ) ) ) ) )
+                .Go();
         }
 
         [Theory]
@@ -190,9 +194,11 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var action = Lambda.Of( () => sut.GetOrCreateTable( name ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -204,25 +210,23 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.CreateView( "V", source );
 
-            using ( new AssertionScope() )
-            {
-                result.Schema.Should().BeSameAs( sut.Schema );
-                result.Database.Should().BeSameAs( schema.Database );
-                result.Type.Should().Be( SqlObjectType.View );
-                result.Name.Should().Be( "V" );
-                result.Info.Should().Be( SqlRecordSetInfo.Create( "foo", "V" ) );
-                result.Source.Should().BeSameAs( source );
-                result.ReferencedObjects.Should().BeEmpty();
-                result.ReferencingObjects.Should().BeEmpty();
-                result.Node.View.Should().BeSameAs( result );
-                result.Node.Info.Should().Be( result.Info );
-                result.Node.Alias.Should().BeNull();
-                result.Node.Identifier.Should().Be( result.Info.Identifier );
-                result.Node.IsOptional.Should().BeFalse();
-
-                sut.Count.Should().Be( 1 );
-                sut.Should().BeEquivalentTo( result );
-            }
+            Assertion.All(
+                    result.Schema.TestRefEquals( sut.Schema ),
+                    result.Database.TestRefEquals( schema.Database ),
+                    result.Type.TestEquals( SqlObjectType.View ),
+                    result.Name.TestEquals( "V" ),
+                    result.Info.TestEquals( SqlRecordSetInfo.Create( "foo", "V" ) ),
+                    result.Source.TestRefEquals( source ),
+                    result.ReferencedObjects.TestEmpty(),
+                    result.ReferencingObjects.TestEmpty(),
+                    result.Node.View.TestRefEquals( result ),
+                    result.Node.Info.TestEquals( result.Info ),
+                    result.Node.Alias.TestNull(),
+                    result.Node.Identifier.TestEquals( result.Info.Identifier ),
+                    result.Node.IsOptional.TestFalse(),
+                    sut.Count.TestEquals( 1 ),
+                    sut.TestSetEqual( [ result ] ) )
+                .Go();
         }
 
         [Fact]
@@ -238,37 +242,33 @@ public partial class PostgreSqlSchemaBuilderTests
             var source = table.Node.ToDataSource().Select( s => new[] { s.From["C"].AsSelf() } );
             var result = sut.CreateView( "V", source );
 
-            using ( new AssertionScope() )
-            {
-                result.Schema.Should().BeSameAs( sut.Schema );
-                result.Database.Should().BeSameAs( schema.Database );
-                result.Type.Should().Be( SqlObjectType.View );
-                result.Name.Should().Be( "V" );
-                result.Info.Should().Be( SqlRecordSetInfo.Create( "foo", "V" ) );
-                result.Source.Should().BeSameAs( source );
-                result.ReferencedObjects.Should().HaveCount( 2 );
-                result.ReferencedObjects.Should().BeEquivalentTo( table, column );
-                result.ReferencingObjects.Should().BeEmpty();
-                result.Node.View.Should().BeSameAs( result );
-                result.Node.Info.Should().Be( result.Info );
-                result.Node.Alias.Should().BeNull();
-                result.Node.Identifier.Should().Be( result.Info.Identifier );
-                result.Node.IsOptional.Should().BeFalse();
-
-                sut.Count.Should().Be( 4 );
-                sut.Should().BeEquivalentTo( table, pk.Index, pk, result );
-
-                table.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), table ) );
-
-                column.ReferencingObjects.Should().HaveCount( 2 );
-                column.ReferencingObjects.Should()
-                    .BeEquivalentTo(
+            Assertion.All(
+                    result.Schema.TestRefEquals( sut.Schema ),
+                    result.Database.TestRefEquals( schema.Database ),
+                    result.Type.TestEquals( SqlObjectType.View ),
+                    result.Name.TestEquals( "V" ),
+                    result.Info.TestEquals( SqlRecordSetInfo.Create( "foo", "V" ) ),
+                    result.Source.TestRefEquals( source ),
+                    result.ReferencedObjects.Count.TestEquals( 2 ),
+                    result.ReferencedObjects.TestSetEqual( [ table, column ] ),
+                    result.ReferencingObjects.TestEmpty(),
+                    result.Node.View.TestRefEquals( result ),
+                    result.Node.Info.TestEquals( result.Info ),
+                    result.Node.Alias.TestNull(),
+                    result.Node.Identifier.TestEquals( result.Info.Identifier ),
+                    result.Node.IsOptional.TestFalse(),
+                    sut.Count.TestEquals( 4 ),
+                    sut.TestSetEqual( [ table, pk.Index, pk, result ] ),
+                    table.ReferencingObjects.TestSequence(
+                        [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), table ) ] ),
+                    column.ReferencingObjects.Count.TestEquals( 2 ),
+                    column.ReferencingObjects.TestSetEqual(
+                    [
                         SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( pk.Index ), column ),
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), column ) );
-
-                schema.ReferencingObjects.Should().BeEmpty();
-            }
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), column )
+                    ] ),
+                    schema.ReferencingObjects.TestEmpty() )
+                .Go();
         }
 
         [Fact]
@@ -281,31 +281,27 @@ public partial class PostgreSqlSchemaBuilderTests
             var source = other.Node.ToDataSource().Select( s => new[] { s.GetAll() } );
             var result = sut.CreateView( "V", source );
 
-            using ( new AssertionScope() )
-            {
-                result.Schema.Should().BeSameAs( sut.Schema );
-                result.Database.Should().BeSameAs( schema.Database );
-                result.Type.Should().Be( SqlObjectType.View );
-                result.Name.Should().Be( "V" );
-                result.Info.Should().Be( SqlRecordSetInfo.Create( "foo", "V" ) );
-                result.Source.Should().BeSameAs( source );
-                result.ReferencedObjects.Should().HaveCount( 1 );
-                result.ReferencedObjects.Should().BeEquivalentTo( other );
-                result.ReferencingObjects.Should().BeEmpty();
-                result.Node.View.Should().BeSameAs( result );
-                result.Node.Info.Should().Be( result.Info );
-                result.Node.Alias.Should().BeNull();
-                result.Node.Identifier.Should().Be( result.Info.Identifier );
-                result.Node.IsOptional.Should().BeFalse();
-
-                sut.Count.Should().Be( 2 );
-                sut.Should().BeEquivalentTo( other, result );
-
-                other.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), other ) );
-
-                schema.ReferencingObjects.Should().BeEmpty();
-            }
+            Assertion.All(
+                    result.Schema.TestRefEquals( sut.Schema ),
+                    result.Database.TestRefEquals( schema.Database ),
+                    result.Type.TestEquals( SqlObjectType.View ),
+                    result.Name.TestEquals( "V" ),
+                    result.Info.TestEquals( SqlRecordSetInfo.Create( "foo", "V" ) ),
+                    result.Source.TestRefEquals( source ),
+                    result.ReferencedObjects.Count.TestEquals( 1 ),
+                    result.ReferencedObjects.TestSetEqual( [ other ] ),
+                    result.ReferencingObjects.TestEmpty(),
+                    result.Node.View.TestRefEquals( result ),
+                    result.Node.Info.TestEquals( result.Info ),
+                    result.Node.Alias.TestNull(),
+                    result.Node.Identifier.TestEquals( result.Info.Identifier ),
+                    result.Node.IsOptional.TestFalse(),
+                    sut.Count.TestEquals( 2 ),
+                    sut.TestSetEqual( [ other, result ] ),
+                    other.ReferencingObjects.TestSequence(
+                        [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), other ) ] ),
+                    schema.ReferencingObjects.TestEmpty() )
+                .Go();
         }
 
         [Fact]
@@ -321,41 +317,38 @@ public partial class PostgreSqlSchemaBuilderTests
             var source = table.Node.ToDataSource().Select( s => new[] { s.From["C"].AsSelf() } );
             var result = sut.CreateView( "V", source );
 
-            using ( new AssertionScope() )
-            {
-                result.Schema.Should().BeSameAs( sut.Schema );
-                result.Database.Should().BeSameAs( schema.Database );
-                result.Type.Should().Be( SqlObjectType.View );
-                result.Name.Should().Be( "V" );
-                result.Info.Should().Be( SqlRecordSetInfo.Create( "foo", "V" ) );
-                result.Source.Should().BeSameAs( source );
-                result.ReferencedObjects.Should().HaveCount( 3 );
-                result.ReferencedObjects.Should().BeEquivalentTo( schema.Database.Schemas.Default, table, column );
-                result.ReferencingObjects.Should().BeEmpty();
-                result.Node.View.Should().BeSameAs( result );
-                result.Node.Info.Should().Be( result.Info );
-                result.Node.Alias.Should().BeNull();
-                result.Node.Identifier.Should().Be( result.Info.Identifier );
-                result.Node.IsOptional.Should().BeFalse();
-
-                sut.Count.Should().Be( 1 );
-                sut.Should().BeEquivalentTo( result );
-
-                table.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), table ) );
-
-                column.ReferencingObjects.Should().HaveCount( 2 );
-                column.ReferencingObjects.Should()
-                    .BeEquivalentTo(
+            Assertion.All(
+                    result.Schema.TestRefEquals( sut.Schema ),
+                    result.Database.TestRefEquals( schema.Database ),
+                    result.Type.TestEquals( SqlObjectType.View ),
+                    result.Name.TestEquals( "V" ),
+                    result.Info.TestEquals( SqlRecordSetInfo.Create( "foo", "V" ) ),
+                    result.Source.TestRefEquals( source ),
+                    result.ReferencedObjects.Count.TestEquals( 3 ),
+                    result.ReferencedObjects.TestSetEqual( [ schema.Database.Schemas.Default, table, column ] ),
+                    result.ReferencingObjects.TestEmpty(),
+                    result.Node.View.TestRefEquals( result ),
+                    result.Node.Info.TestEquals( result.Info ),
+                    result.Node.Alias.TestNull(),
+                    result.Node.Identifier.TestEquals( result.Info.Identifier ),
+                    result.Node.IsOptional.TestFalse(),
+                    sut.Count.TestEquals( 1 ),
+                    sut.TestSetEqual( [ result ] ),
+                    table.ReferencingObjects.TestSequence(
+                        [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), table ) ] ),
+                    column.ReferencingObjects.Count.TestEquals( 2 ),
+                    column.ReferencingObjects.TestSetEqual(
+                    [
                         SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( pk.Index ), column ),
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), column ) );
-
-                schema.Database.Schemas.Default.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), column )
+                    ] ),
+                    schema.Database.Schemas.Default.ReferencingObjects.TestSequence(
+                    [
                         SqlObjectBuilderReference.Create(
                             SqlObjectBuilderReferenceSource.Create( result ),
-                            schema.Database.Schemas.Default ) );
-            }
+                            schema.Database.Schemas.Default )
+                    ] ) )
+                .Go();
         }
 
         [Fact]
@@ -368,35 +361,32 @@ public partial class PostgreSqlSchemaBuilderTests
             var source = other.Node.ToDataSource().Select( s => new[] { s.GetAll() } );
             var result = sut.CreateView( "V", source );
 
-            using ( new AssertionScope() )
-            {
-                result.Schema.Should().BeSameAs( sut.Schema );
-                result.Database.Should().BeSameAs( schema.Database );
-                result.Type.Should().Be( SqlObjectType.View );
-                result.Name.Should().Be( "V" );
-                result.Info.Should().Be( SqlRecordSetInfo.Create( "foo", "V" ) );
-                result.Source.Should().BeSameAs( source );
-                result.ReferencedObjects.Should().HaveCount( 2 );
-                result.ReferencedObjects.Should().BeEquivalentTo( schema.Database.Schemas.Default, other );
-                result.ReferencingObjects.Should().BeEmpty();
-                result.Node.View.Should().BeSameAs( result );
-                result.Node.Info.Should().Be( result.Info );
-                result.Node.Alias.Should().BeNull();
-                result.Node.Identifier.Should().Be( result.Info.Identifier );
-                result.Node.IsOptional.Should().BeFalse();
-
-                sut.Count.Should().Be( 1 );
-                sut.Should().BeEquivalentTo( result );
-
-                other.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), other ) );
-
-                schema.Database.Schemas.Default.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
+            Assertion.All(
+                    result.Schema.TestRefEquals( sut.Schema ),
+                    result.Database.TestRefEquals( schema.Database ),
+                    result.Type.TestEquals( SqlObjectType.View ),
+                    result.Name.TestEquals( "V" ),
+                    result.Info.TestEquals( SqlRecordSetInfo.Create( "foo", "V" ) ),
+                    result.Source.TestRefEquals( source ),
+                    result.ReferencedObjects.Count.TestEquals( 2 ),
+                    result.ReferencedObjects.TestSetEqual( [ schema.Database.Schemas.Default, other ] ),
+                    result.ReferencingObjects.TestEmpty(),
+                    result.Node.View.TestRefEquals( result ),
+                    result.Node.Info.TestEquals( result.Info ),
+                    result.Node.Alias.TestNull(),
+                    result.Node.Identifier.TestEquals( result.Info.Identifier ),
+                    result.Node.IsOptional.TestFalse(),
+                    sut.Count.TestEquals( 1 ),
+                    sut.TestSetEqual( [ result ] ),
+                    other.ReferencingObjects.TestSequence(
+                        [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), other ) ] ),
+                    schema.Database.Schemas.Default.ReferencingObjects.TestSequence(
+                    [
                         SqlObjectBuilderReference.Create(
                             SqlObjectBuilderReferenceSource.Create( result ),
-                            schema.Database.Schemas.Default ) );
-            }
+                            schema.Database.Schemas.Default )
+                    ] ) )
+                .Go();
         }
 
         [Fact]
@@ -408,9 +398,11 @@ public partial class PostgreSqlSchemaBuilderTests
             var source = SqlNode.RawQuery( "SELECT * FROM foo WHERE a > @a", SqlNode.Parameter<int>( "a" ) );
             var action = Lambda.Of( () => sut.CreateView( "V", source ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -422,9 +414,11 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var action = Lambda.Of( () => sut.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM bar" ) ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -436,9 +430,11 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var action = Lambda.Of( () => sut.CreateView( "T", SqlNode.RawQuery( "SELECT * FROM bar" ) ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Theory]
@@ -454,9 +450,11 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var action = Lambda.Of( () => sut.CreateView( name, SqlNode.RawQuery( "SELECT * FROM foo" ) ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Theory]
@@ -478,7 +476,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.Contains( name );
 
-            result.Should().Be( expected );
+            result.TestEquals( expected ).Go();
         }
 
         [Fact]
@@ -491,7 +489,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.Get( name );
 
-            result.Should().BeSameAs( expected );
+            result.TestRefEquals( expected ).Go();
         }
 
         [Fact]
@@ -503,7 +501,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var action = Lambda.Of( () => sut.Get( name ) );
 
-            action.Should().ThrowExactly<KeyNotFoundException>();
+            action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
         }
 
         [Fact]
@@ -516,7 +514,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.TryGet( name );
 
-            result.Should().BeSameAs( expected );
+            result.TestRefEquals( expected ).Go();
         }
 
         [Fact]
@@ -528,7 +526,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.TryGet( name );
 
-            result.Should().BeNull();
+            result.TestNull().Go();
         }
 
         [Fact]
@@ -541,7 +539,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.GetTable( name );
 
-            result.Should().BeSameAs( expected );
+            result.TestRefEquals( expected ).Go();
         }
 
         [Fact]
@@ -553,7 +551,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var action = Lambda.Of( () => sut.GetTable( name ) );
 
-            action.Should().ThrowExactly<KeyNotFoundException>();
+            action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
         }
 
         [Fact]
@@ -568,12 +566,14 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var action = Lambda.Of( () => sut.GetTable( name ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectCastException>()
-                .AndMatch(
-                    e => e.Dialect == PostgreSqlDialect.Instance
-                        && e.Expected == typeof( SqlTableBuilder )
-                        && e.Actual == typeof( PostgreSqlPrimaryKeyBuilder ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectCastException>(
+                            e => Assertion.All(
+                                e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                                e.Expected.TestEquals( typeof( SqlTableBuilder ) ),
+                                e.Actual.TestEquals( typeof( PostgreSqlPrimaryKeyBuilder ) ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -586,7 +586,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.TryGetTable( name );
 
-            result.Should().BeSameAs( expected );
+            result.TestRefEquals( expected ).Go();
         }
 
         [Fact]
@@ -598,7 +598,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.TryGetTable( name );
 
-            result.Should().BeNull();
+            result.TestNull().Go();
         }
 
         [Fact]
@@ -613,7 +613,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.TryGetTable( name );
 
-            result.Should().BeNull();
+            result.TestNull().Go();
         }
 
         [Fact]
@@ -628,7 +628,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.GetIndex( name );
 
-            result.Should().BeSameAs( expected );
+            result.TestRefEquals( expected ).Go();
         }
 
         [Fact]
@@ -640,7 +640,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var action = Lambda.Of( () => sut.GetIndex( name ) );
 
-            action.Should().ThrowExactly<KeyNotFoundException>();
+            action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
         }
 
         [Fact]
@@ -653,12 +653,14 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var action = Lambda.Of( () => sut.GetIndex( name ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectCastException>()
-                .AndMatch(
-                    e => e.Dialect == PostgreSqlDialect.Instance
-                        && e.Expected == typeof( SqlIndexBuilder )
-                        && e.Actual == typeof( PostgreSqlTableBuilder ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectCastException>(
+                            e => Assertion.All(
+                                e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                                e.Expected.TestEquals( typeof( SqlIndexBuilder ) ),
+                                e.Actual.TestEquals( typeof( PostgreSqlTableBuilder ) ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -673,7 +675,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.TryGetIndex( name );
 
-            result.Should().BeSameAs( expected );
+            result.TestRefEquals( expected ).Go();
         }
 
         [Fact]
@@ -685,7 +687,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.TryGetIndex( name );
 
-            result.Should().BeNull();
+            result.TestNull().Go();
         }
 
         [Fact]
@@ -698,7 +700,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.TryGetIndex( name );
 
-            result.Should().BeNull();
+            result.TestNull().Go();
         }
 
         [Fact]
@@ -713,7 +715,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.GetPrimaryKey( name );
 
-            result.Should().BeSameAs( expected );
+            result.TestRefEquals( expected ).Go();
         }
 
         [Fact]
@@ -725,7 +727,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var action = Lambda.Of( () => sut.GetPrimaryKey( name ) );
 
-            action.Should().ThrowExactly<KeyNotFoundException>();
+            action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
         }
 
         [Fact]
@@ -738,12 +740,14 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var action = Lambda.Of( () => sut.GetPrimaryKey( name ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectCastException>()
-                .AndMatch(
-                    e => e.Dialect == PostgreSqlDialect.Instance
-                        && e.Expected == typeof( SqlPrimaryKeyBuilder )
-                        && e.Actual == typeof( PostgreSqlTableBuilder ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectCastException>(
+                            e => Assertion.All(
+                                e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                                e.Expected.TestEquals( typeof( SqlPrimaryKeyBuilder ) ),
+                                e.Actual.TestEquals( typeof( PostgreSqlTableBuilder ) ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -758,7 +762,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.TryGetPrimaryKey( name );
 
-            result.Should().BeSameAs( expected );
+            result.TestRefEquals( expected ).Go();
         }
 
         [Fact]
@@ -770,7 +774,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.TryGetPrimaryKey( name );
 
-            result.Should().BeNull();
+            result.TestNull().Go();
         }
 
         [Fact]
@@ -783,7 +787,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.TryGetPrimaryKey( name );
 
-            result.Should().BeNull();
+            result.TestNull().Go();
         }
 
         [Fact]
@@ -801,7 +805,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.GetForeignKey( name );
 
-            result.Should().BeSameAs( expected );
+            result.TestRefEquals( expected ).Go();
         }
 
         [Fact]
@@ -813,7 +817,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var action = Lambda.Of( () => sut.GetForeignKey( name ) );
 
-            action.Should().ThrowExactly<KeyNotFoundException>();
+            action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
         }
 
         [Fact]
@@ -826,12 +830,14 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var action = Lambda.Of( () => sut.GetForeignKey( name ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectCastException>()
-                .AndMatch(
-                    e => e.Dialect == PostgreSqlDialect.Instance
-                        && e.Expected == typeof( SqlForeignKeyBuilder )
-                        && e.Actual == typeof( PostgreSqlTableBuilder ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectCastException>(
+                            e => Assertion.All(
+                                e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                                e.Expected.TestEquals( typeof( SqlForeignKeyBuilder ) ),
+                                e.Actual.TestEquals( typeof( PostgreSqlTableBuilder ) ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -849,7 +855,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.TryGetForeignKey( name );
 
-            result.Should().BeSameAs( expected );
+            result.TestRefEquals( expected ).Go();
         }
 
         [Fact]
@@ -861,7 +867,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.TryGetForeignKey( name );
 
-            result.Should().BeNull();
+            result.TestNull().Go();
         }
 
         [Fact]
@@ -874,7 +880,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.TryGetForeignKey( name );
 
-            result.Should().BeNull();
+            result.TestNull().Go();
         }
 
         [Fact]
@@ -887,7 +893,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.GetView( name );
 
-            result.Should().BeSameAs( expected );
+            result.TestRefEquals( expected ).Go();
         }
 
         [Fact]
@@ -899,7 +905,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var action = Lambda.Of( () => sut.GetView( name ) );
 
-            action.Should().ThrowExactly<KeyNotFoundException>();
+            action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
         }
 
         [Fact]
@@ -912,12 +918,14 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var action = Lambda.Of( () => sut.GetView( name ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectCastException>()
-                .AndMatch(
-                    e => e.Dialect == PostgreSqlDialect.Instance
-                        && e.Expected == typeof( SqlViewBuilder )
-                        && e.Actual == typeof( PostgreSqlTableBuilder ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectCastException>(
+                            e => Assertion.All(
+                                e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                                e.Expected.TestEquals( typeof( SqlViewBuilder ) ),
+                                e.Actual.TestEquals( typeof( PostgreSqlTableBuilder ) ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -930,7 +938,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.TryGetView( name );
 
-            result.Should().BeSameAs( expected );
+            result.TestRefEquals( expected ).Go();
         }
 
         [Fact]
@@ -942,7 +950,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.TryGetView( name );
 
-            result.Should().BeNull();
+            result.TestNull().Go();
         }
 
         [Fact]
@@ -955,7 +963,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.TryGetView( name );
 
-            result.Should().BeNull();
+            result.TestNull().Go();
         }
 
         [Fact]
@@ -970,7 +978,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.GetCheck( name );
 
-            result.Should().BeSameAs( expected );
+            result.TestRefEquals( expected ).Go();
         }
 
         [Fact]
@@ -982,7 +990,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var action = Lambda.Of( () => sut.GetCheck( name ) );
 
-            action.Should().ThrowExactly<KeyNotFoundException>();
+            action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
         }
 
         [Fact]
@@ -995,12 +1003,14 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var action = Lambda.Of( () => sut.GetCheck( name ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectCastException>()
-                .AndMatch(
-                    e => e.Dialect == PostgreSqlDialect.Instance
-                        && e.Expected == typeof( SqlCheckBuilder )
-                        && e.Actual == typeof( PostgreSqlTableBuilder ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectCastException>(
+                            e => Assertion.All(
+                                e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                                e.Expected.TestEquals( typeof( SqlCheckBuilder ) ),
+                                e.Actual.TestEquals( typeof( PostgreSqlTableBuilder ) ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -1015,7 +1025,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.TryGetCheck( name );
 
-            result.Should().BeSameAs( expected );
+            result.TestRefEquals( expected ).Go();
         }
 
         [Fact]
@@ -1027,7 +1037,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.TryGetCheck( name );
 
-            result.Should().BeNull();
+            result.TestNull().Go();
         }
 
         [Fact]
@@ -1040,7 +1050,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.TryGetCheck( name );
 
-            result.Should().BeNull();
+            result.TestNull().Go();
         }
 
         [Fact]
@@ -1061,47 +1071,44 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.Remove( table.Name );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeTrue();
-                sut.TryGet( table.Name ).Should().BeNull();
-                sut.TryGet( pk.Name ).Should().BeNull();
-                sut.TryGet( pk.Index.Name ).Should().BeNull();
-                sut.TryGet( ix.Name ).Should().BeNull();
-                sut.TryGet( selfFk.Name ).Should().BeNull();
-                sut.TryGet( externalFk.Name ).Should().BeNull();
-                sut.TryGet( chk.Name ).Should().BeNull();
-                sut.Count.Should().Be( 3 );
-
-                table.IsRemoved.Should().BeTrue();
-                table.ReferencingObjects.Should().BeEmpty();
-                table.Columns.Should().BeEmpty();
-                table.Constraints.Should().BeEmpty();
-                table.Constraints.TryGetPrimaryKey().Should().BeNull();
-                c1.IsRemoved.Should().BeTrue();
-                c1.ReferencingObjects.Should().BeEmpty();
-                c2.IsRemoved.Should().BeTrue();
-                c2.ReferencingObjects.Should().BeEmpty();
-                pk.IsRemoved.Should().BeTrue();
-                pk.ReferencingObjects.Should().BeEmpty();
-                pk.Index.IsRemoved.Should().BeTrue();
-                pk.Index.ReferencingObjects.Should().BeEmpty();
-                pk.Index.Columns.Expressions.Should().BeEmpty();
-                pk.Index.PrimaryKey.Should().BeNull();
-                ix.IsRemoved.Should().BeTrue();
-                ix.ReferencingObjects.Should().BeEmpty();
-                ix.Columns.Expressions.Should().BeEmpty();
-                selfFk.IsRemoved.Should().BeTrue();
-                selfFk.ReferencingObjects.Should().BeEmpty();
-                externalFk.IsRemoved.Should().BeTrue();
-                externalFk.ReferencingObjects.Should().BeEmpty();
-                chk.IsRemoved.Should().BeTrue();
-                chk.ReferencingObjects.Should().BeEmpty();
-                chk.ReferencedColumns.Should().BeEmpty();
-
-                otherPk.Index.ReferencingObjects.Should().BeEmpty();
-                otherTable.ReferencingObjects.Should().BeEmpty();
-            }
+            Assertion.All(
+                    result.TestTrue(),
+                    sut.TryGet( table.Name ).TestNull(),
+                    sut.TryGet( pk.Name ).TestNull(),
+                    sut.TryGet( pk.Index.Name ).TestNull(),
+                    sut.TryGet( ix.Name ).TestNull(),
+                    sut.TryGet( selfFk.Name ).TestNull(),
+                    sut.TryGet( externalFk.Name ).TestNull(),
+                    sut.TryGet( chk.Name ).TestNull(),
+                    sut.Count.TestEquals( 3 ),
+                    table.IsRemoved.TestTrue(),
+                    table.ReferencingObjects.TestEmpty(),
+                    table.Columns.TestEmpty(),
+                    table.Constraints.TestEmpty(),
+                    table.Constraints.TryGetPrimaryKey().TestNull(),
+                    c1.IsRemoved.TestTrue(),
+                    c1.ReferencingObjects.TestEmpty(),
+                    c2.IsRemoved.TestTrue(),
+                    c2.ReferencingObjects.TestEmpty(),
+                    pk.IsRemoved.TestTrue(),
+                    pk.ReferencingObjects.TestEmpty(),
+                    pk.Index.IsRemoved.TestTrue(),
+                    pk.Index.ReferencingObjects.TestEmpty(),
+                    pk.Index.Columns.Expressions.TestEmpty(),
+                    pk.Index.PrimaryKey.TestNull(),
+                    ix.IsRemoved.TestTrue(),
+                    ix.ReferencingObjects.TestEmpty(),
+                    ix.Columns.Expressions.TestEmpty(),
+                    selfFk.IsRemoved.TestTrue(),
+                    selfFk.ReferencingObjects.TestEmpty(),
+                    externalFk.IsRemoved.TestTrue(),
+                    externalFk.ReferencingObjects.TestEmpty(),
+                    chk.IsRemoved.TestTrue(),
+                    chk.ReferencingObjects.TestEmpty(),
+                    chk.ReferencedColumns.TestEmpty(),
+                    otherPk.Index.ReferencingObjects.TestEmpty(),
+                    otherTable.ReferencingObjects.TestEmpty() )
+                .Go();
         }
 
         [Fact]
@@ -1118,13 +1125,12 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.Remove( table.Name );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeFalse();
-                table.IsRemoved.Should().BeFalse();
-                sut.Count.Should().Be( 7 );
-                sut.TryGet( table.Name ).Should().BeSameAs( table );
-            }
+            Assertion.All(
+                    result.TestFalse(),
+                    table.IsRemoved.TestFalse(),
+                    sut.Count.TestEquals( 7 ),
+                    sut.TryGet( table.Name ).TestRefEquals( table ) )
+                .Go();
         }
 
         [Fact]
@@ -1138,13 +1144,12 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.Remove( table.Name );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeFalse();
-                table.IsRemoved.Should().BeFalse();
-                sut.Count.Should().Be( 4 );
-                sut.TryGet( table.Name ).Should().BeSameAs( table );
-            }
+            Assertion.All(
+                    result.TestFalse(),
+                    table.IsRemoved.TestFalse(),
+                    sut.Count.TestEquals( 4 ),
+                    sut.TryGet( table.Name ).TestRefEquals( table ) )
+                .Go();
         }
 
         [Fact]
@@ -1156,13 +1161,12 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.Remove( view.Name );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeTrue();
-                sut.Count.Should().Be( 0 );
-                sut.TryGet( view.Name ).Should().BeNull();
-                view.IsRemoved.Should().BeTrue();
-            }
+            Assertion.All(
+                    result.TestTrue(),
+                    sut.Count.TestEquals( 0 ),
+                    sut.TryGet( view.Name ).TestNull(),
+                    view.IsRemoved.TestTrue() )
+                .Go();
         }
 
         [Fact]
@@ -1175,13 +1179,12 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.Remove( view.Name );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeFalse();
-                view.IsRemoved.Should().BeFalse();
-                sut.Count.Should().Be( 2 );
-                sut.TryGet( view.Name ).Should().BeSameAs( view );
-            }
+            Assertion.All(
+                    result.TestFalse(),
+                    view.IsRemoved.TestFalse(),
+                    sut.Count.TestEquals( 2 ),
+                    sut.TryGet( view.Name ).TestRefEquals( view ) )
+                .Go();
         }
 
         [Fact]
@@ -1196,15 +1199,14 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.Remove( index.Name );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeTrue();
-                sut.TryGet( index.Name ).Should().BeNull();
-                index.IsRemoved.Should().BeTrue();
-                table.Constraints.TryGet( index.Name ).Should().BeNull();
-                c1.ReferencingObjects.Should().BeEmpty();
-                c2.ReferencingObjects.Should().BeEmpty();
-            }
+            Assertion.All(
+                    result.TestTrue(),
+                    sut.TryGet( index.Name ).TestNull(),
+                    index.IsRemoved.TestTrue(),
+                    table.Constraints.TryGet( index.Name ).TestNull(),
+                    c1.ReferencingObjects.TestEmpty(),
+                    c2.ReferencingObjects.TestEmpty() )
+                .Go();
         }
 
         [Fact]
@@ -1219,12 +1221,11 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.Remove( index.Name );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeFalse();
-                index.IsRemoved.Should().BeFalse();
-                sut.Count.Should().Be( 5 );
-            }
+            Assertion.All(
+                    result.TestFalse(),
+                    index.IsRemoved.TestFalse(),
+                    sut.Count.TestEquals( 5 ) )
+                .Go();
         }
 
         [Fact]
@@ -1239,12 +1240,11 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.Remove( pk.Index.Name );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeFalse();
-                pk.Index.IsRemoved.Should().BeFalse();
-                sut.Count.Should().Be( 5 );
-            }
+            Assertion.All(
+                    result.TestFalse(),
+                    pk.Index.IsRemoved.TestFalse(),
+                    sut.Count.TestEquals( 5 ) )
+                .Go();
         }
 
         [Fact]
@@ -1258,18 +1258,17 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.Remove( pk.Name );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeTrue();
-                sut.TryGet( pk.Name ).Should().BeNull();
-                sut.TryGet( pk.Index.Name ).Should().BeNull();
-                pk.IsRemoved.Should().BeTrue();
-                pk.Index.IsRemoved.Should().BeTrue();
-                table.Constraints.TryGet( pk.Name ).Should().BeNull();
-                table.Constraints.TryGet( pk.Index.Name ).Should().BeNull();
-                table.Constraints.TryGetPrimaryKey().Should().BeNull();
-                column.ReferencingObjects.Should().BeEmpty();
-            }
+            Assertion.All(
+                    result.TestTrue(),
+                    sut.TryGet( pk.Name ).TestNull(),
+                    sut.TryGet( pk.Index.Name ).TestNull(),
+                    pk.IsRemoved.TestTrue(),
+                    pk.Index.IsRemoved.TestTrue(),
+                    table.Constraints.TryGet( pk.Name ).TestNull(),
+                    table.Constraints.TryGet( pk.Index.Name ).TestNull(),
+                    table.Constraints.TryGetPrimaryKey().TestNull(),
+                    column.ReferencingObjects.TestEmpty() )
+                .Go();
         }
 
         [Fact]
@@ -1284,12 +1283,11 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.Remove( pk.Name );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeFalse();
-                index.IsRemoved.Should().BeFalse();
-                sut.Count.Should().Be( 5 );
-            }
+            Assertion.All(
+                    result.TestFalse(),
+                    index.IsRemoved.TestFalse(),
+                    sut.Count.TestEquals( 5 ) )
+                .Go();
         }
 
         [Fact]
@@ -1304,12 +1302,11 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.Remove( pk.Name );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeFalse();
-                pk.Index.IsRemoved.Should().BeFalse();
-                sut.Count.Should().Be( 5 );
-            }
+            Assertion.All(
+                    result.TestFalse(),
+                    pk.Index.IsRemoved.TestFalse(),
+                    sut.Count.TestEquals( 5 ) )
+                .Go();
         }
 
         [Fact]
@@ -1324,16 +1321,15 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.Remove( fk.Name );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeTrue();
-                sut.Count.Should().Be( 3 );
-                sut.TryGet( fk.Name ).Should().BeNull();
-                fk.IsRemoved.Should().BeTrue();
-                table.Constraints.TryGet( fk.Name ).Should().BeNull();
-                ix1.ReferencingObjects.Should().BeEmpty();
-                ix2.ReferencingObjects.Should().BeEmpty();
-            }
+            Assertion.All(
+                    result.TestTrue(),
+                    sut.Count.TestEquals( 3 ),
+                    sut.TryGet( fk.Name ).TestNull(),
+                    fk.IsRemoved.TestTrue(),
+                    table.Constraints.TryGet( fk.Name ).TestNull(),
+                    ix1.ReferencingObjects.TestEmpty(),
+                    ix2.ReferencingObjects.TestEmpty() )
+                .Go();
         }
 
         [Fact]
@@ -1347,15 +1343,14 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.Remove( check.Name );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeTrue();
-                sut.Count.Should().Be( 1 );
-                sut.TryGet( check.Name ).Should().BeNull();
-                check.IsRemoved.Should().BeTrue();
-                table.Constraints.TryGet( check.Name ).Should().BeNull();
-                c.ReferencingObjects.Should().BeEmpty();
-            }
+            Assertion.All(
+                    result.TestTrue(),
+                    sut.Count.TestEquals( 1 ),
+                    sut.TryGet( check.Name ).TestNull(),
+                    check.IsRemoved.TestTrue(),
+                    table.Constraints.TryGet( check.Name ).TestNull(),
+                    c.ReferencingObjects.TestEmpty() )
+                .Go();
         }
 
         [Fact]
@@ -1366,7 +1361,7 @@ public partial class PostgreSqlSchemaBuilderTests
 
             var result = sut.Remove( "PK" );
 
-            result.Should().BeFalse();
+            result.TestFalse().Go();
         }
     }
 }

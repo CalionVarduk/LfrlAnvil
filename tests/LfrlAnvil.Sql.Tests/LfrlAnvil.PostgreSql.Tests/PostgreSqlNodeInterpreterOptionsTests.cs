@@ -7,11 +7,10 @@ public class PostgreSqlNodeInterpreterOptionsTests : TestsBase
     {
         var sut = PostgreSqlNodeInterpreterOptions.Default;
 
-        using ( new AssertionScope() )
-        {
-            sut.TypeDefinitions.Should().BeNull();
-            sut.IsVirtualGeneratedColumnStorageParsingEnabled.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.TypeDefinitions.TestNull(),
+                sut.IsVirtualGeneratedColumnStorageParsingEnabled.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -21,11 +20,10 @@ public class PostgreSqlNodeInterpreterOptionsTests : TestsBase
         var sut = PostgreSqlNodeInterpreterOptions.Default;
         var result = sut.SetTypeDefinitions( typeDefinitions );
 
-        using ( new AssertionScope() )
-        {
-            result.TypeDefinitions.Should().BeSameAs( typeDefinitions );
-            result.IsVirtualGeneratedColumnStorageParsingEnabled.Should().Be( sut.IsVirtualGeneratedColumnStorageParsingEnabled );
-        }
+        Assertion.All(
+                result.TypeDefinitions.TestRefEquals( typeDefinitions ),
+                result.IsVirtualGeneratedColumnStorageParsingEnabled.TestEquals( sut.IsVirtualGeneratedColumnStorageParsingEnabled ) )
+            .Go();
     }
 
     [Fact]
@@ -34,11 +32,10 @@ public class PostgreSqlNodeInterpreterOptionsTests : TestsBase
         var sut = PostgreSqlNodeInterpreterOptions.Default;
         var result = sut.SetTypeDefinitions( null );
 
-        using ( new AssertionScope() )
-        {
-            result.TypeDefinitions.Should().BeNull();
-            result.IsVirtualGeneratedColumnStorageParsingEnabled.Should().Be( sut.IsVirtualGeneratedColumnStorageParsingEnabled );
-        }
+        Assertion.All(
+                result.TypeDefinitions.TestNull(),
+                result.IsVirtualGeneratedColumnStorageParsingEnabled.TestEquals( sut.IsVirtualGeneratedColumnStorageParsingEnabled ) )
+            .Go();
     }
 
     [Theory]
@@ -49,10 +46,9 @@ public class PostgreSqlNodeInterpreterOptionsTests : TestsBase
         var sut = PostgreSqlNodeInterpreterOptions.Default;
         var result = sut.EnableVirtualGeneratedColumnStorageParsing( enabled );
 
-        using ( new AssertionScope() )
-        {
-            result.TypeDefinitions.Should().BeSameAs( sut.TypeDefinitions );
-            result.IsVirtualGeneratedColumnStorageParsingEnabled.Should().Be( enabled );
-        }
+        Assertion.All(
+                result.TypeDefinitions.TestRefEquals( sut.TypeDefinitions ),
+                result.IsVirtualGeneratedColumnStorageParsingEnabled.TestEquals( enabled ) )
+            .Go();
     }
 }

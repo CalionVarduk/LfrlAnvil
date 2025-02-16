@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.PostgreSql.Extensions;
 using LfrlAnvil.PostgreSql.Objects.Builders;
@@ -7,7 +8,6 @@ using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.PostgreSql.Tests.ObjectsTests.BuildersTests;
 
@@ -30,31 +30,27 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.CreateIndex( new[] { ixc1, ixc2 }, isUnique );
 
-            using ( new AssertionScope() )
-            {
-                result.Table.Should().BeSameAs( table );
-                result.Database.Should().BeSameAs( table.Database );
-                result.Type.Should().Be( SqlObjectType.Index );
-                result.Name.Should().Be( expectedName );
-                result.Columns.Expressions.Should().BeSequentiallyEqualTo( ixc1, ixc2 );
-                result.ReferencedColumns.Should().BeSequentiallyEqualTo( c1, c2 );
-                result.ReferencedFilterColumns.Should().BeEmpty();
-                result.PrimaryKey.Should().BeNull();
-                result.IsUnique.Should().Be( isUnique );
-                result.IsVirtual.Should().BeFalse();
-                result.Filter.Should().BeNull();
-                result.ReferencingObjects.Should().BeEmpty();
-
-                sut.Count.Should().Be( 1 );
-                sut.Should().BeSequentiallyEqualTo( result );
-                schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
-
-                c1.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c1 ) );
-
-                c2.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c2 ) );
-            }
+            Assertion.All(
+                    result.Table.TestRefEquals( table ),
+                    result.Database.TestRefEquals( table.Database ),
+                    result.Type.TestEquals( SqlObjectType.Index ),
+                    result.Name.TestEquals( expectedName ),
+                    result.Columns.Expressions.TestSequence( [ ixc1, ixc2 ] ),
+                    result.ReferencedColumns.TestSequence( [ c1, c2 ] ),
+                    result.ReferencedFilterColumns.TestEmpty(),
+                    result.PrimaryKey.TestNull(),
+                    result.IsUnique.TestEquals( isUnique ),
+                    result.IsVirtual.TestFalse(),
+                    result.Filter.TestNull(),
+                    result.ReferencingObjects.TestEmpty(),
+                    sut.Count.TestEquals( 1 ),
+                    sut.TestSequence( [ result ] ),
+                    schema.Objects.TryGet( result.Name ).TestRefEquals( result ),
+                    c1.ReferencingObjects.TestSequence(
+                        [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c1 ) ] ),
+                    c2.ReferencingObjects.TestSequence(
+                        [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c2 ) ] ) )
+                .Go();
         }
 
         [Theory]
@@ -72,31 +68,27 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.CreateIndex( "IX_T", new[] { ixc1, ixc2 }, isUnique );
 
-            using ( new AssertionScope() )
-            {
-                result.Table.Should().BeSameAs( table );
-                result.Database.Should().BeSameAs( table.Database );
-                result.Type.Should().Be( SqlObjectType.Index );
-                result.Name.Should().Be( "IX_T" );
-                result.Columns.Expressions.Should().BeSequentiallyEqualTo( ixc1, ixc2 );
-                result.ReferencedColumns.Should().BeSequentiallyEqualTo( c1, c2 );
-                result.ReferencedFilterColumns.Should().BeEmpty();
-                result.PrimaryKey.Should().BeNull();
-                result.IsUnique.Should().Be( isUnique );
-                result.IsVirtual.Should().BeFalse();
-                result.Filter.Should().BeNull();
-                result.ReferencingObjects.Should().BeEmpty();
-
-                sut.Count.Should().Be( 1 );
-                sut.Should().BeSequentiallyEqualTo( result );
-                schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
-
-                c1.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c1 ) );
-
-                c2.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c2 ) );
-            }
+            Assertion.All(
+                    result.Table.TestRefEquals( table ),
+                    result.Database.TestRefEquals( table.Database ),
+                    result.Type.TestEquals( SqlObjectType.Index ),
+                    result.Name.TestEquals( "IX_T" ),
+                    result.Columns.Expressions.TestSequence( [ ixc1, ixc2 ] ),
+                    result.ReferencedColumns.TestSequence( [ c1, c2 ] ),
+                    result.ReferencedFilterColumns.TestEmpty(),
+                    result.PrimaryKey.TestNull(),
+                    result.IsUnique.TestEquals( isUnique ),
+                    result.IsVirtual.TestFalse(),
+                    result.Filter.TestNull(),
+                    result.ReferencingObjects.TestEmpty(),
+                    sut.Count.TestEquals( 1 ),
+                    sut.TestSequence( [ result ] ),
+                    schema.Objects.TryGet( result.Name ).TestRefEquals( result ),
+                    c1.ReferencingObjects.TestSequence(
+                        [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c1 ) ] ),
+                    c2.ReferencingObjects.TestSequence(
+                        [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c2 ) ] ) )
+                .Go();
         }
 
         [Fact]
@@ -113,31 +105,27 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.CreateIndex( ixc1, ixc2, ixc3 );
 
-            using ( new AssertionScope() )
-            {
-                result.Table.Should().BeSameAs( table );
-                result.Database.Should().BeSameAs( table.Database );
-                result.Type.Should().Be( SqlObjectType.Index );
-                result.Name.Should().Be( "IX_T_C1A_E1D_E2A" );
-                result.Columns.Expressions.Should().BeSequentiallyEqualTo( ixc1, ixc2, ixc3 );
-                result.ReferencedColumns.Should().BeSequentiallyEqualTo( c1, c2 );
-                result.ReferencedFilterColumns.Should().BeEmpty();
-                result.PrimaryKey.Should().BeNull();
-                result.IsUnique.Should().BeFalse();
-                result.IsVirtual.Should().BeFalse();
-                result.Filter.Should().BeNull();
-                result.ReferencingObjects.Should().BeEmpty();
-
-                sut.Count.Should().Be( 1 );
-                sut.Should().BeSequentiallyEqualTo( result );
-                schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
-
-                c1.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c1 ) );
-
-                c2.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c2 ) );
-            }
+            Assertion.All(
+                    result.Table.TestRefEquals( table ),
+                    result.Database.TestRefEquals( table.Database ),
+                    result.Type.TestEquals( SqlObjectType.Index ),
+                    result.Name.TestEquals( "IX_T_C1A_E1D_E2A" ),
+                    result.Columns.Expressions.TestSequence( [ ixc1, ixc2, ixc3 ] ),
+                    result.ReferencedColumns.TestSequence( [ c1, c2 ] ),
+                    result.ReferencedFilterColumns.TestEmpty(),
+                    result.PrimaryKey.TestNull(),
+                    result.IsUnique.TestFalse(),
+                    result.IsVirtual.TestFalse(),
+                    result.Filter.TestNull(),
+                    result.ReferencingObjects.TestEmpty(),
+                    sut.Count.TestEquals( 1 ),
+                    sut.TestSequence( [ result ] ),
+                    schema.Objects.TryGet( result.Name ).TestRefEquals( result ),
+                    c1.ReferencingObjects.TestSequence(
+                        [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c1 ) ] ),
+                    c2.ReferencingObjects.TestSequence(
+                        [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c2 ) ] ) )
+                .Go();
         }
 
         [Fact]
@@ -151,9 +139,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.CreateIndex( column ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -166,9 +156,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.CreateIndex( "T", column ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -180,9 +172,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.CreateIndex() );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -198,9 +192,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.CreateIndex( c1.Asc() ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -215,9 +211,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.CreateIndex( ixColumn ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -230,9 +228,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.CreateIndex( column.Asc(), column.Desc() ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -246,9 +246,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.CreateUniqueIndex( c1.Asc(), (c2.Node + SqlNode.Literal( 1 )).Desc() ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Theory]
@@ -266,9 +268,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.CreateIndex( name, c ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -282,35 +286,31 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.SetPrimaryKey( ixColumn );
 
-            using ( new AssertionScope() )
-            {
-                result.Table.Should().BeSameAs( table );
-                result.Database.Should().BeSameAs( table.Database );
-                result.Type.Should().Be( SqlObjectType.PrimaryKey );
-                result.Name.Should().Be( "PK_T" );
-                result.Index.Table.Should().BeSameAs( table );
-                result.Index.Database.Should().BeSameAs( schema.Database );
-                result.Index.Type.Should().Be( SqlObjectType.Index );
-                result.Index.Name.Should().Be( "UIX_T_CA" );
-                result.Index.Columns.Expressions.Should().BeSequentiallyEqualTo( ixColumn );
-                result.Index.ReferencedColumns.Should().BeSequentiallyEqualTo( column );
-                result.Index.ReferencedFilterColumns.Should().BeEmpty();
-                result.Index.PrimaryKey.Should().BeSameAs( result );
-                result.Index.IsUnique.Should().BeTrue();
-                result.Index.IsVirtual.Should().BeTrue();
-                result.Index.Filter.Should().BeNull();
-                result.ReferencingObjects.Should().BeEmpty();
-
-                sut.Count.Should().Be( 2 );
-                sut.Should().BeEquivalentTo( result, result.Index );
-                sut.TryGetPrimaryKey().Should().BeSameAs( result );
-                schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
-                schema.Objects.TryGet( result.Index.Name ).Should().BeSameAs( result.Index );
-
-                column.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result.Index ), column ) );
-            }
+            Assertion.All(
+                    result.Table.TestRefEquals( table ),
+                    result.Database.TestRefEquals( table.Database ),
+                    result.Type.TestEquals( SqlObjectType.PrimaryKey ),
+                    result.Name.TestEquals( "PK_T" ),
+                    result.Index.Table.TestRefEquals( table ),
+                    result.Index.Database.TestRefEquals( schema.Database ),
+                    result.Index.Type.TestEquals( SqlObjectType.Index ),
+                    result.Index.Name.TestEquals( "UIX_T_CA" ),
+                    result.Index.Columns.Expressions.TestSequence( [ ixColumn ] ),
+                    result.Index.ReferencedColumns.TestSequence( [ column ] ),
+                    result.Index.ReferencedFilterColumns.TestEmpty(),
+                    result.Index.PrimaryKey.TestRefEquals( result ),
+                    result.Index.IsUnique.TestTrue(),
+                    result.Index.IsVirtual.TestTrue(),
+                    result.Index.Filter.TestNull(),
+                    result.ReferencingObjects.TestEmpty(),
+                    sut.Count.TestEquals( 2 ),
+                    sut.TestSetEqual( [ result, result.Index ] ),
+                    sut.TryGetPrimaryKey().TestRefEquals( result ),
+                    schema.Objects.TryGet( result.Name ).TestRefEquals( result ),
+                    schema.Objects.TryGet( result.Index.Name ).TestRefEquals( result.Index ),
+                    column.ReferencingObjects.TestSequence(
+                        [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result.Index ), column ) ] ) )
+                .Go();
         }
 
         [Fact]
@@ -326,11 +326,10 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.SetPrimaryKey( oldPk.Name, oldPk.Index );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeSameAs( oldPk );
-                result.Should().BeSameAs( table.Constraints.TryGetPrimaryKey() );
-            }
+            Assertion.All(
+                    result.TestRefEquals( oldPk ),
+                    result.TestRefEquals( table.Constraints.TryGetPrimaryKey() ) )
+                .Go();
         }
 
         [Fact]
@@ -345,12 +344,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.SetPrimaryKey( "PK_NEW", oldPk.Index );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeSameAs( oldPk );
-                result.Should().BeSameAs( table.Constraints.TryGetPrimaryKey() );
-                result.Name.Should().Be( "PK_NEW" );
-            }
+            Assertion.All(
+                    result.TestRefEquals( oldPk ),
+                    result.TestRefEquals( table.Constraints.TryGetPrimaryKey() ),
+                    result.Name.TestEquals( "PK_NEW" ) )
+                .Go();
         }
 
         [Fact]
@@ -366,35 +364,32 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.SetPrimaryKey( oldPk.Name, ixColumn2 );
 
-            using ( new AssertionScope() )
-            {
-                result.Table.Should().BeSameAs( table );
-                result.Database.Should().BeSameAs( table.Database );
-                result.Type.Should().Be( SqlObjectType.PrimaryKey );
-                result.Name.Should().Be( "PK_T" );
-                result.Index.Table.Should().BeSameAs( table );
-                result.Index.Database.Should().BeSameAs( schema.Database );
-                result.Index.Type.Should().Be( SqlObjectType.Index );
-                result.Index.Name.Should().Be( "UIX_T_C2A" );
-                result.Index.Columns.Expressions.Should().BeSequentiallyEqualTo( ixColumn2 );
-                result.Index.ReferencedColumns.Should().BeSequentiallyEqualTo( c2 );
-                result.Index.ReferencedFilterColumns.Should().BeEmpty();
-                result.Index.PrimaryKey.Should().BeSameAs( result );
-                result.Index.IsUnique.Should().BeTrue();
-                result.Index.IsVirtual.Should().BeTrue();
-                result.Index.Filter.Should().BeNull();
-                result.ReferencingObjects.Should().BeEmpty();
-
-                sut.Count.Should().Be( 2 );
-                sut.Should().BeEquivalentTo( result, result.Index );
-                sut.TryGetPrimaryKey().Should().BeSameAs( result );
-                schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
-                schema.Objects.TryGet( result.Index.Name ).Should().BeSameAs( result.Index );
-                schema.Objects.TryGet( oldPk.Index.Name ).Should().BeNull();
-
-                oldPk.IsRemoved.Should().BeTrue();
-                oldPk.Index.IsRemoved.Should().BeTrue();
-            }
+            Assertion.All(
+                    result.Table.TestRefEquals( table ),
+                    result.Database.TestRefEquals( table.Database ),
+                    result.Type.TestEquals( SqlObjectType.PrimaryKey ),
+                    result.Name.TestEquals( "PK_T" ),
+                    result.Index.Table.TestRefEquals( table ),
+                    result.Index.Database.TestRefEquals( schema.Database ),
+                    result.Index.Type.TestEquals( SqlObjectType.Index ),
+                    result.Index.Name.TestEquals( "UIX_T_C2A" ),
+                    result.Index.Columns.Expressions.TestSequence( [ ixColumn2 ] ),
+                    result.Index.ReferencedColumns.TestSequence( [ c2 ] ),
+                    result.Index.ReferencedFilterColumns.TestEmpty(),
+                    result.Index.PrimaryKey.TestRefEquals( result ),
+                    result.Index.IsUnique.TestTrue(),
+                    result.Index.IsVirtual.TestTrue(),
+                    result.Index.Filter.TestNull(),
+                    result.ReferencingObjects.TestEmpty(),
+                    sut.Count.TestEquals( 2 ),
+                    sut.TestSetEqual( [ result, result.Index ] ),
+                    sut.TryGetPrimaryKey().TestRefEquals( result ),
+                    schema.Objects.TryGet( result.Name ).TestRefEquals( result ),
+                    schema.Objects.TryGet( result.Index.Name ).TestRefEquals( result.Index ),
+                    schema.Objects.TryGet( oldPk.Index.Name ).TestNull(),
+                    oldPk.IsRemoved.TestTrue(),
+                    oldPk.Index.IsRemoved.TestTrue() )
+                .Go();
         }
 
         [Fact]
@@ -410,36 +405,33 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.SetPrimaryKey( "PK_NEW", ixColumn2 );
 
-            using ( new AssertionScope() )
-            {
-                result.Table.Should().BeSameAs( table );
-                result.Database.Should().BeSameAs( table.Database );
-                result.Type.Should().Be( SqlObjectType.PrimaryKey );
-                result.Name.Should().Be( "PK_NEW" );
-                result.Index.Table.Should().BeSameAs( table );
-                result.Index.Database.Should().BeSameAs( schema.Database );
-                result.Index.Type.Should().Be( SqlObjectType.Index );
-                result.Index.Name.Should().Be( "UIX_T_C2A" );
-                result.Index.Columns.Expressions.Should().BeSequentiallyEqualTo( ixColumn2 );
-                result.Index.ReferencedColumns.Should().BeSequentiallyEqualTo( c2 );
-                result.Index.ReferencedFilterColumns.Should().BeEmpty();
-                result.Index.PrimaryKey.Should().BeSameAs( result );
-                result.Index.IsUnique.Should().BeTrue();
-                result.Index.IsVirtual.Should().BeTrue();
-                result.Index.Filter.Should().BeNull();
-                result.ReferencingObjects.Should().BeEmpty();
-
-                sut.Count.Should().Be( 2 );
-                sut.Should().BeEquivalentTo( result, result.Index );
-                sut.TryGetPrimaryKey().Should().BeSameAs( result );
-                schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
-                schema.Objects.TryGet( result.Index.Name ).Should().BeSameAs( result.Index );
-                schema.Objects.TryGet( oldPk.Name ).Should().BeNull();
-                schema.Objects.TryGet( oldPk.Index.Name ).Should().BeNull();
-
-                oldPk.IsRemoved.Should().BeTrue();
-                oldPk.Index.IsRemoved.Should().BeTrue();
-            }
+            Assertion.All(
+                    result.Table.TestRefEquals( table ),
+                    result.Database.TestRefEquals( table.Database ),
+                    result.Type.TestEquals( SqlObjectType.PrimaryKey ),
+                    result.Name.TestEquals( "PK_NEW" ),
+                    result.Index.Table.TestRefEquals( table ),
+                    result.Index.Database.TestRefEquals( schema.Database ),
+                    result.Index.Type.TestEquals( SqlObjectType.Index ),
+                    result.Index.Name.TestEquals( "UIX_T_C2A" ),
+                    result.Index.Columns.Expressions.TestSequence( [ ixColumn2 ] ),
+                    result.Index.ReferencedColumns.TestSequence( [ c2 ] ),
+                    result.Index.ReferencedFilterColumns.TestEmpty(),
+                    result.Index.PrimaryKey.TestRefEquals( result ),
+                    result.Index.IsUnique.TestTrue(),
+                    result.Index.IsVirtual.TestTrue(),
+                    result.Index.Filter.TestNull(),
+                    result.ReferencingObjects.TestEmpty(),
+                    sut.Count.TestEquals( 2 ),
+                    sut.TestSetEqual( [ result, result.Index ] ),
+                    sut.TryGetPrimaryKey().TestRefEquals( result ),
+                    schema.Objects.TryGet( result.Name ).TestRefEquals( result ),
+                    schema.Objects.TryGet( result.Index.Name ).TestRefEquals( result.Index ),
+                    schema.Objects.TryGet( oldPk.Name ).TestNull(),
+                    schema.Objects.TryGet( oldPk.Index.Name ).TestNull(),
+                    oldPk.IsRemoved.TestTrue(),
+                    oldPk.Index.IsRemoved.TestTrue() )
+                .Go();
         }
 
         [Fact]
@@ -456,35 +448,32 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.SetPrimaryKey( oldPk.Index.Name, ixColumn2 );
 
-            using ( new AssertionScope() )
-            {
-                result.Table.Should().BeSameAs( table );
-                result.Database.Should().BeSameAs( table.Database );
-                result.Type.Should().Be( SqlObjectType.PrimaryKey );
-                result.Name.Should().Be( "UIX_T_C1A" );
-                result.Index.Table.Should().BeSameAs( table );
-                result.Index.Database.Should().BeSameAs( schema.Database );
-                result.Index.Type.Should().Be( SqlObjectType.Index );
-                result.Index.Name.Should().Be( "UIX_T_C2A" );
-                result.Index.Columns.Expressions.Should().BeSequentiallyEqualTo( ixColumn2 );
-                result.Index.ReferencedColumns.Should().BeSequentiallyEqualTo( c2 );
-                result.Index.ReferencedFilterColumns.Should().BeEmpty();
-                result.Index.PrimaryKey.Should().BeSameAs( result );
-                result.Index.IsUnique.Should().BeTrue();
-                result.Index.IsVirtual.Should().BeTrue();
-                result.Index.Filter.Should().BeNull();
-                result.ReferencingObjects.Should().BeEmpty();
-
-                sut.Count.Should().Be( 2 );
-                sut.Should().BeEquivalentTo( result, result.Index );
-                sut.TryGetPrimaryKey().Should().BeSameAs( result );
-                schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
-                schema.Objects.TryGet( result.Index.Name ).Should().BeSameAs( result.Index );
-                schema.Objects.TryGet( oldPk.Name ).Should().BeNull();
-
-                oldPk.IsRemoved.Should().BeTrue();
-                oldPk.Index.IsRemoved.Should().BeTrue();
-            }
+            Assertion.All(
+                    result.Table.TestRefEquals( table ),
+                    result.Database.TestRefEquals( table.Database ),
+                    result.Type.TestEquals( SqlObjectType.PrimaryKey ),
+                    result.Name.TestEquals( "UIX_T_C1A" ),
+                    result.Index.Table.TestRefEquals( table ),
+                    result.Index.Database.TestRefEquals( schema.Database ),
+                    result.Index.Type.TestEquals( SqlObjectType.Index ),
+                    result.Index.Name.TestEquals( "UIX_T_C2A" ),
+                    result.Index.Columns.Expressions.TestSequence( [ ixColumn2 ] ),
+                    result.Index.ReferencedColumns.TestSequence( [ c2 ] ),
+                    result.Index.ReferencedFilterColumns.TestEmpty(),
+                    result.Index.PrimaryKey.TestRefEquals( result ),
+                    result.Index.IsUnique.TestTrue(),
+                    result.Index.IsVirtual.TestTrue(),
+                    result.Index.Filter.TestNull(),
+                    result.ReferencingObjects.TestEmpty(),
+                    sut.Count.TestEquals( 2 ),
+                    sut.TestSetEqual( [ result, result.Index ] ),
+                    sut.TryGetPrimaryKey().TestRefEquals( result ),
+                    schema.Objects.TryGet( result.Name ).TestRefEquals( result ),
+                    schema.Objects.TryGet( result.Index.Name ).TestRefEquals( result.Index ),
+                    schema.Objects.TryGet( oldPk.Name ).TestNull(),
+                    oldPk.IsRemoved.TestTrue(),
+                    oldPk.Index.IsRemoved.TestTrue() )
+                .Go();
         }
 
         [Fact]
@@ -500,9 +489,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.SetPrimaryKey( c2.Asc() ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -516,9 +507,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.SetPrimaryKey( index.Name, index ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -534,9 +527,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.SetPrimaryKey( index.Name, index ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -550,9 +545,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => table.Constraints.SetPrimaryKey( index ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -565,9 +562,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => table.Constraints.SetPrimaryKey( index ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -581,9 +580,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.SetPrimaryKey( index ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 2 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 2 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -596,9 +597,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => table.Constraints.SetPrimaryKey( index ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -611,9 +614,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => table.Constraints.SetPrimaryKey( index ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -627,9 +632,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => table.Constraints.SetPrimaryKey( index ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -644,9 +651,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.SetPrimaryKey( index ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -660,9 +669,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => table.Constraints.SetPrimaryKey( index ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Theory]
@@ -679,9 +690,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => table.Constraints.SetPrimaryKey( name, index ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -695,31 +708,26 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.CreateForeignKey( ix1, ix2 );
 
-            using ( new AssertionScope() )
-            {
-                result.Table.Should().BeSameAs( table );
-                result.Database.Should().BeSameAs( table.Database );
-                result.Type.Should().Be( SqlObjectType.ForeignKey );
-                result.Name.Should().Be( "FK_T_C1_REF_T" );
-                result.OriginIndex.Should().BeSameAs( ix1 );
-                result.ReferencedIndex.Should().BeSameAs( ix2 );
-                result.OnUpdateBehavior.Should().Be( ReferenceBehavior.Restrict );
-                result.OnDeleteBehavior.Should().Be( ReferenceBehavior.Restrict );
-                result.ReferencingObjects.Should().BeEmpty();
-
-                sut.Count.Should().Be( 3 );
-                sut.Should().BeEquivalentTo( ix1, ix2, result );
-                schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
-
-                ix1.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix1 ) );
-
-                ix2.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
-
-                table.ReferencingObjects.Should().BeEmpty();
-                schema.ReferencingObjects.Should().BeEmpty();
-            }
+            Assertion.All(
+                    result.Table.TestRefEquals( table ),
+                    result.Database.TestRefEquals( table.Database ),
+                    result.Type.TestEquals( SqlObjectType.ForeignKey ),
+                    result.Name.TestEquals( "FK_T_C1_REF_T" ),
+                    result.OriginIndex.TestRefEquals( ix1 ),
+                    result.ReferencedIndex.TestRefEquals( ix2 ),
+                    result.OnUpdateBehavior.TestEquals( ReferenceBehavior.Restrict ),
+                    result.OnDeleteBehavior.TestEquals( ReferenceBehavior.Restrict ),
+                    result.ReferencingObjects.TestEmpty(),
+                    sut.Count.TestEquals( 3 ),
+                    sut.TestSetEqual( [ ix1, ix2, result ] ),
+                    schema.Objects.TryGet( result.Name ).TestRefEquals( result ),
+                    ix1.ReferencingObjects.TestSequence(
+                        [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix1 ) ] ),
+                    ix2.ReferencingObjects.TestSequence(
+                        [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) ] ),
+                    table.ReferencingObjects.TestEmpty(),
+                    schema.ReferencingObjects.TestEmpty() )
+                .Go();
         }
 
         [Fact]
@@ -734,33 +742,27 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.CreateForeignKey( ix1, ix2 );
 
-            using ( new AssertionScope() )
-            {
-                result.Table.Should().BeSameAs( t2 );
-                result.Database.Should().BeSameAs( t2.Database );
-                result.Type.Should().Be( SqlObjectType.ForeignKey );
-                result.Name.Should().Be( "FK_T2_C2_REF_T1" );
-                result.OriginIndex.Should().BeSameAs( ix1 );
-                result.ReferencedIndex.Should().BeSameAs( ix2 );
-                result.OnUpdateBehavior.Should().Be( ReferenceBehavior.Restrict );
-                result.OnDeleteBehavior.Should().Be( ReferenceBehavior.Restrict );
-                result.ReferencingObjects.Should().BeEmpty();
-
-                sut.Count.Should().Be( 2 );
-                sut.Should().BeEquivalentTo( ix1, result );
-                schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
-
-                ix1.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix1 ) );
-
-                ix2.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
-
-                t1.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
-
-                schema.ReferencingObjects.Should().BeEmpty();
-            }
+            Assertion.All(
+                    result.Table.TestRefEquals( t2 ),
+                    result.Database.TestRefEquals( t2.Database ),
+                    result.Type.TestEquals( SqlObjectType.ForeignKey ),
+                    result.Name.TestEquals( "FK_T2_C2_REF_T1" ),
+                    result.OriginIndex.TestRefEquals( ix1 ),
+                    result.ReferencedIndex.TestRefEquals( ix2 ),
+                    result.OnUpdateBehavior.TestEquals( ReferenceBehavior.Restrict ),
+                    result.OnDeleteBehavior.TestEquals( ReferenceBehavior.Restrict ),
+                    result.ReferencingObjects.TestEmpty(),
+                    sut.Count.TestEquals( 2 ),
+                    sut.TestSetEqual( [ ix1, result ] ),
+                    schema.Objects.TryGet( result.Name ).TestRefEquals( result ),
+                    ix1.ReferencingObjects.TestSequence(
+                        [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix1 ) ] ),
+                    ix2.ReferencingObjects.TestSequence(
+                        [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) ] ),
+                    t1.ReferencingObjects.TestSequence(
+                        [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) ] ),
+                    schema.ReferencingObjects.TestEmpty() )
+                .Go();
         }
 
         [Fact]
@@ -777,34 +779,28 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.CreateForeignKey( ix1, ix2 );
 
-            using ( new AssertionScope() )
-            {
-                result.Table.Should().BeSameAs( t2 );
-                result.Database.Should().BeSameAs( t2.Database );
-                result.Type.Should().Be( SqlObjectType.ForeignKey );
-                result.Name.Should().Be( "FK_T2_C2_REF_foo_T1" );
-                result.OriginIndex.Should().BeSameAs( ix1 );
-                result.ReferencedIndex.Should().BeSameAs( ix2 );
-                result.OnUpdateBehavior.Should().Be( ReferenceBehavior.Restrict );
-                result.OnDeleteBehavior.Should().Be( ReferenceBehavior.Restrict );
-                result.ReferencingObjects.Should().BeEmpty();
-
-                sut.Count.Should().Be( 2 );
-                sut.Should().BeEquivalentTo( ix1, result );
-                schema2.Objects.TryGet( result.Name ).Should().BeSameAs( result );
-
-                ix1.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix1 ) );
-
-                ix2.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
-
-                t1.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
-
-                schema1.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
-            }
+            Assertion.All(
+                    result.Table.TestRefEquals( t2 ),
+                    result.Database.TestRefEquals( t2.Database ),
+                    result.Type.TestEquals( SqlObjectType.ForeignKey ),
+                    result.Name.TestEquals( "FK_T2_C2_REF_foo_T1" ),
+                    result.OriginIndex.TestRefEquals( ix1 ),
+                    result.ReferencedIndex.TestRefEquals( ix2 ),
+                    result.OnUpdateBehavior.TestEquals( ReferenceBehavior.Restrict ),
+                    result.OnDeleteBehavior.TestEquals( ReferenceBehavior.Restrict ),
+                    result.ReferencingObjects.TestEmpty(),
+                    sut.Count.TestEquals( 2 ),
+                    sut.TestSetEqual( [ ix1, result ] ),
+                    schema2.Objects.TryGet( result.Name ).TestRefEquals( result ),
+                    ix1.ReferencingObjects.TestSequence(
+                        [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix1 ) ] ),
+                    ix2.ReferencingObjects.TestSequence(
+                        [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) ] ),
+                    t1.ReferencingObjects.TestSequence(
+                        [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) ] ),
+                    schema1.ReferencingObjects.TestSequence(
+                        [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) ] ) )
+                .Go();
         }
 
         [Fact]
@@ -818,31 +814,26 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.CreateForeignKey( "FK_T", ix1, ix2 );
 
-            using ( new AssertionScope() )
-            {
-                result.Table.Should().BeSameAs( table );
-                result.Database.Should().BeSameAs( table.Database );
-                result.Type.Should().Be( SqlObjectType.ForeignKey );
-                result.Name.Should().Be( "FK_T" );
-                result.OriginIndex.Should().BeSameAs( ix1 );
-                result.ReferencedIndex.Should().BeSameAs( ix2 );
-                result.OnUpdateBehavior.Should().Be( ReferenceBehavior.Restrict );
-                result.OnDeleteBehavior.Should().Be( ReferenceBehavior.Restrict );
-                result.ReferencingObjects.Should().BeEmpty();
-
-                sut.Count.Should().Be( 3 );
-                sut.Should().BeEquivalentTo( ix1, ix2, result );
-                schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
-
-                ix1.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix1 ) );
-
-                ix2.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
-
-                table.ReferencingObjects.Should().BeEmpty();
-                schema.ReferencingObjects.Should().BeEmpty();
-            }
+            Assertion.All(
+                    result.Table.TestRefEquals( table ),
+                    result.Database.TestRefEquals( table.Database ),
+                    result.Type.TestEquals( SqlObjectType.ForeignKey ),
+                    result.Name.TestEquals( "FK_T" ),
+                    result.OriginIndex.TestRefEquals( ix1 ),
+                    result.ReferencedIndex.TestRefEquals( ix2 ),
+                    result.OnUpdateBehavior.TestEquals( ReferenceBehavior.Restrict ),
+                    result.OnDeleteBehavior.TestEquals( ReferenceBehavior.Restrict ),
+                    result.ReferencingObjects.TestEmpty(),
+                    sut.Count.TestEquals( 3 ),
+                    sut.TestSetEqual( [ ix1, ix2, result ] ),
+                    schema.Objects.TryGet( result.Name ).TestRefEquals( result ),
+                    ix1.ReferencingObjects.TestSequence(
+                        [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix1 ) ] ),
+                    ix2.ReferencingObjects.TestSequence(
+                        [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) ] ),
+                    table.ReferencingObjects.TestEmpty(),
+                    schema.ReferencingObjects.TestEmpty() )
+                .Go();
         }
 
         [Fact]
@@ -857,9 +848,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.CreateForeignKey( ix1, ix2 ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -873,9 +866,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.CreateForeignKey( "T", ix1, ix2 ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -888,9 +883,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.CreateForeignKey( ix1, ix1 ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -904,9 +901,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.CreateForeignKey( ix1, ix2 ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -920,9 +919,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.CreateForeignKey( ix1, ix2 ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -936,9 +937,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.CreateForeignKey( ix1, ix2 ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 2 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 2 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -952,9 +955,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.CreateForeignKey( ix1, ix2 ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -969,9 +974,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.CreateForeignKey( ix2, ix1 ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -987,9 +994,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.CreateForeignKey( ix1, ix2 ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -1004,9 +1013,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.CreateForeignKey( ix1, ix2 ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 2 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 2 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -1021,9 +1032,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.CreateForeignKey( ix1, ix2 ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 2 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 2 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -1037,9 +1050,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.CreateForeignKey( ix1, ix2 ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -1055,9 +1070,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.CreateForeignKey( ix1, ix2 ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -1071,9 +1088,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.CreateForeignKey( ix1, ix2 ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -1093,9 +1112,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.CreateForeignKey( ix1, ix2 ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -1109,9 +1130,13 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => (( ISqlConstraintBuilderCollection )sut).CreateForeignKey( ix1, ix2 ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectCastException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Expected == typeof( SqlIndexBuilder ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectCastException>(
+                            e => Assertion.All(
+                                e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                                e.Expected.TestEquals( typeof( SqlIndexBuilder ) ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -1125,9 +1150,13 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => (( ISqlConstraintBuilderCollection )sut).CreateForeignKey( ix1, ix2 ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectCastException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Expected == typeof( SqlIndexBuilder ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectCastException>(
+                            e => Assertion.All(
+                                e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                                e.Expected.TestEquals( typeof( SqlIndexBuilder ) ) ) ) )
+                .Go();
         }
 
         [Theory]
@@ -1146,9 +1175,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.CreateForeignKey( name, ix2, ix1 ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -1162,22 +1193,19 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.CreateCheck( condition );
 
-            using ( new AssertionScope() )
-            {
-                result.Table.Should().BeSameAs( table );
-                result.Database.Should().BeSameAs( table.Database );
-                result.Type.Should().Be( SqlObjectType.Check );
-                result.Name.Should().MatchRegex( "CHK_T_[0-9a-fA-F]{32}" );
-                result.Condition.Should().BeSameAs( condition );
-                result.ReferencedColumns.Should().BeSequentiallyEqualTo( c );
-
-                sut.Count.Should().Be( 1 );
-                sut.Should().BeEquivalentTo( result );
-                schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
-
-                c.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c ) );
-            }
+            Assertion.All(
+                    result.Table.TestRefEquals( table ),
+                    result.Database.TestRefEquals( table.Database ),
+                    result.Type.TestEquals( SqlObjectType.Check ),
+                    result.Name.TestMatch( new Regex( "CHK_T_[0-9a-fA-F]{32}" ) ),
+                    result.Condition.TestRefEquals( condition ),
+                    result.ReferencedColumns.TestSequence( [ c ] ),
+                    sut.Count.TestEquals( 1 ),
+                    sut.TestSetEqual( [ result ] ),
+                    schema.Objects.TryGet( result.Name ).TestRefEquals( result ),
+                    c.ReferencingObjects.TestSequence(
+                        [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c ) ] ) )
+                .Go();
         }
 
         [Fact]
@@ -1191,22 +1219,19 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.CreateCheck( "CHK", condition );
 
-            using ( new AssertionScope() )
-            {
-                result.Table.Should().BeSameAs( table );
-                result.Database.Should().BeSameAs( table.Database );
-                result.Type.Should().Be( SqlObjectType.Check );
-                result.Name.Should().MatchRegex( "CHK" );
-                result.Condition.Should().BeSameAs( condition );
-                result.ReferencedColumns.Should().BeSequentiallyEqualTo( c );
-
-                sut.Count.Should().Be( 1 );
-                sut.Should().BeEquivalentTo( result );
-                schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
-
-                c.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c ) );
-            }
+            Assertion.All(
+                    result.Table.TestRefEquals( table ),
+                    result.Database.TestRefEquals( table.Database ),
+                    result.Type.TestEquals( SqlObjectType.Check ),
+                    result.Name.TestMatch( new Regex( "CHK" ) ),
+                    result.Condition.TestRefEquals( condition ),
+                    result.ReferencedColumns.TestSequence( [ c ] ),
+                    sut.Count.TestEquals( 1 ),
+                    sut.TestSetEqual( [ result ] ),
+                    schema.Objects.TryGet( result.Name ).TestRefEquals( result ),
+                    c.ReferencingObjects.TestSequence(
+                        [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c ) ] ) )
+                .Go();
         }
 
         [Fact]
@@ -1219,9 +1244,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.CreateCheck( SqlNode.True() ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -1233,9 +1260,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.CreateCheck( "T", SqlNode.True() ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -1247,9 +1276,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.CreateCheck( SqlNode.WindowFunctions.RowNumber() == SqlNode.Literal( 0 ) ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Theory]
@@ -1266,9 +1297,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.CreateCheck( name, SqlNode.True() ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectBuilderException>()
-                .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectBuilderException>(
+                            e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
         }
 
         [Theory]
@@ -1286,7 +1319,7 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.Contains( name );
 
-            result.Should().Be( expected );
+            result.TestEquals( expected ).Go();
         }
 
         [Fact]
@@ -1299,7 +1332,7 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.Get( expected.Name );
 
-            result.Should().BeSameAs( expected );
+            result.TestRefEquals( expected ).Go();
         }
 
         [Fact]
@@ -1312,7 +1345,7 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.Get( "T" ) );
 
-            action.Should().ThrowExactly<KeyNotFoundException>();
+            action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
         }
 
         [Fact]
@@ -1325,7 +1358,7 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.TryGet( expected.Name );
 
-            result.Should().BeSameAs( expected );
+            result.TestRefEquals( expected ).Go();
         }
 
         [Fact]
@@ -1338,7 +1371,7 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.TryGet( "T" );
 
-            result.Should().BeNull();
+            result.TestNull().Go();
         }
 
         [Fact]
@@ -1351,7 +1384,7 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.GetIndex( index.Name );
 
-            result.Should().BeSameAs( index );
+            result.TestRefEquals( index ).Go();
         }
 
         [Fact]
@@ -1363,7 +1396,7 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.GetIndex( "T" ) );
 
-            action.Should().ThrowExactly<KeyNotFoundException>();
+            action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
         }
 
         [Fact]
@@ -1376,12 +1409,14 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.GetIndex( "CHK" ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectCastException>()
-                .AndMatch(
-                    e => e.Dialect == PostgreSqlDialect.Instance
-                        && e.Expected == typeof( SqlIndexBuilder )
-                        && e.Actual == typeof( PostgreSqlCheckBuilder ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectCastException>(
+                            e => Assertion.All(
+                                e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                                e.Expected.TestEquals( typeof( SqlIndexBuilder ) ),
+                                e.Actual.TestEquals( typeof( PostgreSqlCheckBuilder ) ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -1394,7 +1429,7 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.TryGetIndex( index.Name );
 
-            result.Should().BeSameAs( index );
+            result.TestRefEquals( index ).Go();
         }
 
         [Fact]
@@ -1406,7 +1441,7 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.TryGetIndex( "T" );
 
-            result.Should().BeNull();
+            result.TestNull().Go();
         }
 
         [Fact]
@@ -1419,7 +1454,7 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.TryGetIndex( "CHK" );
 
-            result.Should().BeNull();
+            result.TestNull().Go();
         }
 
         [Fact]
@@ -1434,7 +1469,7 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.GetForeignKey( foreignKey.Name );
 
-            result.Should().BeSameAs( foreignKey );
+            result.TestRefEquals( foreignKey ).Go();
         }
 
         [Fact]
@@ -1446,7 +1481,7 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.GetForeignKey( "T" ) );
 
-            action.Should().ThrowExactly<KeyNotFoundException>();
+            action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
         }
 
         [Fact]
@@ -1459,12 +1494,14 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.GetForeignKey( index.Name ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectCastException>()
-                .AndMatch(
-                    e => e.Dialect == PostgreSqlDialect.Instance
-                        && e.Expected == typeof( SqlForeignKeyBuilder )
-                        && e.Actual == typeof( PostgreSqlIndexBuilder ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectCastException>(
+                            e => Assertion.All(
+                                e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                                e.Expected.TestEquals( typeof( SqlForeignKeyBuilder ) ),
+                                e.Actual.TestEquals( typeof( PostgreSqlIndexBuilder ) ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -1479,7 +1516,7 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.TryGetForeignKey( foreignKey.Name );
 
-            result.Should().BeSameAs( foreignKey );
+            result.TestRefEquals( foreignKey ).Go();
         }
 
         [Fact]
@@ -1491,7 +1528,7 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.TryGetForeignKey( "T" );
 
-            result.Should().BeNull();
+            result.TestNull().Go();
         }
 
         [Fact]
@@ -1504,7 +1541,7 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.TryGetForeignKey( index.Name );
 
-            result.Should().BeNull();
+            result.TestNull().Go();
         }
 
         [Fact]
@@ -1517,7 +1554,7 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.GetCheck( check.Name );
 
-            result.Should().BeSameAs( check );
+            result.TestRefEquals( check ).Go();
         }
 
         [Fact]
@@ -1529,7 +1566,7 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.GetCheck( "T" ) );
 
-            action.Should().ThrowExactly<KeyNotFoundException>();
+            action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
         }
 
         [Fact]
@@ -1542,12 +1579,14 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.GetCheck( index.Name ) );
 
-            action.Should()
-                .ThrowExactly<SqlObjectCastException>()
-                .AndMatch(
-                    e => e.Dialect == PostgreSqlDialect.Instance
-                        && e.Expected == typeof( SqlCheckBuilder )
-                        && e.Actual == typeof( PostgreSqlIndexBuilder ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlObjectCastException>(
+                            e => Assertion.All(
+                                e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                                e.Expected.TestEquals( typeof( SqlCheckBuilder ) ),
+                                e.Actual.TestEquals( typeof( PostgreSqlIndexBuilder ) ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -1560,7 +1599,7 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.TryGetCheck( check.Name );
 
-            result.Should().BeSameAs( check );
+            result.TestRefEquals( check ).Go();
         }
 
         [Fact]
@@ -1572,7 +1611,7 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.TryGetCheck( "T" );
 
-            result.Should().BeNull();
+            result.TestNull().Go();
         }
 
         [Fact]
@@ -1585,7 +1624,7 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.TryGetCheck( index.Name );
 
-            result.Should().BeNull();
+            result.TestNull().Go();
         }
 
         [Fact]
@@ -1598,7 +1637,7 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.GetPrimaryKey();
 
-            result.Should().BeSameAs( expected );
+            result.TestRefEquals( expected ).Go();
         }
 
         [Fact]
@@ -1610,7 +1649,7 @@ public partial class PostgreSqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.GetPrimaryKey() );
 
-            action.Should().ThrowExactly<SqlObjectBuilderException>();
+            action.Test( exc => exc.TestType().Exact<SqlObjectBuilderException>() ).Go();
         }
 
         [Fact]
@@ -1623,7 +1662,7 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.TryGetPrimaryKey();
 
-            result.Should().BeSameAs( expected );
+            result.TestRefEquals( expected ).Go();
         }
 
         [Fact]
@@ -1635,7 +1674,7 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.TryGetPrimaryKey();
 
-            result.Should().BeNull();
+            result.TestNull().Go();
         }
 
         [Fact]
@@ -1652,15 +1691,14 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.Remove( index.Name );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeTrue();
-                sut.TryGet( index.Name ).Should().BeNull();
-                index.IsRemoved.Should().BeTrue();
-                schema.Objects.TryGet( index.Name ).Should().BeNull();
-                c1.ReferencingObjects.Should().BeEmpty();
-                c2.ReferencingObjects.Should().BeEmpty();
-            }
+            Assertion.All(
+                    result.TestTrue(),
+                    sut.TryGet( index.Name ).TestNull(),
+                    index.IsRemoved.TestTrue(),
+                    schema.Objects.TryGet( index.Name ).TestNull(),
+                    c1.ReferencingObjects.TestEmpty(),
+                    c2.ReferencingObjects.TestEmpty() )
+                .Go();
         }
 
         [Fact]
@@ -1675,12 +1713,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.Remove( index.Name );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeFalse();
-                index.IsRemoved.Should().BeFalse();
-                sut.Count.Should().Be( 4 );
-            }
+            Assertion.All(
+                    result.TestFalse(),
+                    index.IsRemoved.TestFalse(),
+                    sut.Count.TestEquals( 4 ) )
+                .Go();
         }
 
         [Fact]
@@ -1695,12 +1732,11 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.Remove( pk.Index.Name );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeFalse();
-                pk.Index.IsRemoved.Should().BeFalse();
-                sut.Count.Should().Be( 4 );
-            }
+            Assertion.All(
+                    result.TestFalse(),
+                    pk.Index.IsRemoved.TestFalse(),
+                    sut.Count.TestEquals( 4 ) )
+                .Go();
         }
 
         [Fact]
@@ -1714,18 +1750,17 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.Remove( pk.Name );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeTrue();
-                sut.TryGet( pk.Name ).Should().BeNull();
-                sut.TryGet( pk.Index.Name ).Should().BeNull();
-                sut.TryGetPrimaryKey().Should().BeNull();
-                pk.IsRemoved.Should().BeTrue();
-                pk.Index.IsRemoved.Should().BeTrue();
-                schema.Objects.TryGet( pk.Name ).Should().BeNull();
-                schema.Objects.TryGet( pk.Index.Name ).Should().BeNull();
-                column.ReferencingObjects.Should().BeEmpty();
-            }
+            Assertion.All(
+                    result.TestTrue(),
+                    sut.TryGet( pk.Name ).TestNull(),
+                    sut.TryGet( pk.Index.Name ).TestNull(),
+                    sut.TryGetPrimaryKey().TestNull(),
+                    pk.IsRemoved.TestTrue(),
+                    pk.Index.IsRemoved.TestTrue(),
+                    schema.Objects.TryGet( pk.Name ).TestNull(),
+                    schema.Objects.TryGet( pk.Index.Name ).TestNull(),
+                    column.ReferencingObjects.TestEmpty() )
+                .Go();
         }
 
         [Fact]
@@ -1740,13 +1775,12 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.Remove( pk.Name );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeFalse();
-                index.IsRemoved.Should().BeFalse();
-                sut.Count.Should().Be( 4 );
-                sut.TryGetPrimaryKey().Should().BeSameAs( pk );
-            }
+            Assertion.All(
+                    result.TestFalse(),
+                    index.IsRemoved.TestFalse(),
+                    sut.Count.TestEquals( 4 ),
+                    sut.TryGetPrimaryKey().TestRefEquals( pk ) )
+                .Go();
         }
 
         [Fact]
@@ -1761,13 +1795,12 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.Remove( pk.Name );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeFalse();
-                pk.Index.IsRemoved.Should().BeFalse();
-                sut.Count.Should().Be( 4 );
-                sut.TryGetPrimaryKey().Should().BeSameAs( pk );
-            }
+            Assertion.All(
+                    result.TestFalse(),
+                    pk.Index.IsRemoved.TestFalse(),
+                    sut.Count.TestEquals( 4 ),
+                    sut.TryGetPrimaryKey().TestRefEquals( pk ) )
+                .Go();
         }
 
         [Fact]
@@ -1782,16 +1815,15 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.Remove( fk.Name );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeTrue();
-                sut.Count.Should().Be( 2 );
-                sut.TryGet( fk.Name ).Should().BeNull();
-                fk.IsRemoved.Should().BeTrue();
-                schema.Objects.TryGet( fk.Name ).Should().BeNull();
-                ix1.ReferencingObjects.Should().BeEmpty();
-                ix2.ReferencingObjects.Should().BeEmpty();
-            }
+            Assertion.All(
+                    result.TestTrue(),
+                    sut.Count.TestEquals( 2 ),
+                    sut.TryGet( fk.Name ).TestNull(),
+                    fk.IsRemoved.TestTrue(),
+                    schema.Objects.TryGet( fk.Name ).TestNull(),
+                    ix1.ReferencingObjects.TestEmpty(),
+                    ix2.ReferencingObjects.TestEmpty() )
+                .Go();
         }
 
         [Fact]
@@ -1805,15 +1837,14 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.Remove( check.Name );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeTrue();
-                sut.Count.Should().Be( 0 );
-                sut.TryGet( check.Name ).Should().BeNull();
-                check.IsRemoved.Should().BeTrue();
-                schema.Objects.TryGet( check.Name ).Should().BeNull();
-                c.ReferencingObjects.Should().BeEmpty();
-            }
+            Assertion.All(
+                    result.TestTrue(),
+                    sut.Count.TestEquals( 0 ),
+                    sut.TryGet( check.Name ).TestNull(),
+                    check.IsRemoved.TestTrue(),
+                    schema.Objects.TryGet( check.Name ).TestNull(),
+                    c.ReferencingObjects.TestEmpty() )
+                .Go();
         }
 
         [Fact]
@@ -1825,7 +1856,7 @@ public partial class PostgreSqlTableBuilderTests
 
             var result = sut.Remove( "PK" );
 
-            result.Should().BeFalse();
+            result.TestFalse().Go();
         }
     }
 }

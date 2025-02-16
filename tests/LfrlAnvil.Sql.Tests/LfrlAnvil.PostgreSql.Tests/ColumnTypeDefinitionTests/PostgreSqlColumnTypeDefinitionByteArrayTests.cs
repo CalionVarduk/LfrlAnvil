@@ -15,7 +15,7 @@ public class PostgreSqlColumnTypeDefinitionByteArrayTests : TestsBase
     {
         var sut = _provider.GetByType<byte[]>();
         var result = sut.TryToDbLiteral( Array.Empty<byte>() );
-        result.Should().Be( "'\\x'::BYTEA" );
+        result.TestEquals( "'\\x'::BYTEA" ).Go();
     }
 
     [Fact]
@@ -24,7 +24,7 @@ public class PostgreSqlColumnTypeDefinitionByteArrayTests : TestsBase
         var value = new byte[] { 0, 10, 21, 31, 42, 58, 73, 89, 104, 129, 155, 181, 206, 233, 255 };
         var sut = _provider.GetByType<byte[]>();
         var result = sut.TryToDbLiteral( value );
-        result.Should().Be( "'\\x000A151F2A3A495968819BB5CEE9FF'::BYTEA" );
+        result.TestEquals( "'\\x000A151F2A3A495968819BB5CEE9FF'::BYTEA" ).Go();
     }
 
     [Fact]
@@ -32,7 +32,7 @@ public class PostgreSqlColumnTypeDefinitionByteArrayTests : TestsBase
     {
         var sut = _provider.GetByType<byte[]>();
         var result = sut.TryToDbLiteral( string.Empty );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -40,7 +40,7 @@ public class PostgreSqlColumnTypeDefinitionByteArrayTests : TestsBase
     {
         var sut = _provider.GetByType<byte[]>();
         var result = sut.TryToParameterValue( Array.Empty<byte>() );
-        result.Should().BeSameAs( Array.Empty<byte>() );
+        result.TestRefEquals( Array.Empty<byte>() ).Go();
     }
 
     [Fact]
@@ -49,7 +49,7 @@ public class PostgreSqlColumnTypeDefinitionByteArrayTests : TestsBase
         var value = new byte[] { 0, 10, 21, 31, 42, 58, 73, 89, 104, 129, 155, 181, 206, 233, 255 };
         var sut = _provider.GetByType<byte[]>();
         var result = sut.TryToParameterValue( value );
-        result.Should().BeSameAs( value );
+        result.TestRefEquals( value ).Go();
     }
 
     [Fact]
@@ -57,7 +57,7 @@ public class PostgreSqlColumnTypeDefinitionByteArrayTests : TestsBase
     {
         var sut = _provider.GetByType<byte[]>();
         var result = sut.TryToParameterValue( string.Empty );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -70,12 +70,11 @@ public class PostgreSqlColumnTypeDefinitionByteArrayTests : TestsBase
 
         sut.SetParameterInfo( parameter, isNullable );
 
-        using ( new AssertionScope() )
-        {
-            parameter.DbType.Should().Be( DbType.Binary );
-            parameter.NpgsqlDbType.Should().Be( NpgsqlDbType.Bytea );
-            parameter.IsNullable.Should().Be( isNullable );
-        }
+        Assertion.All(
+                parameter.DbType.TestEquals( DbType.Binary ),
+                parameter.NpgsqlDbType.TestEquals( NpgsqlDbType.Bytea ),
+                parameter.IsNullable.TestEquals( isNullable ) )
+            .Go();
     }
 
     [Theory]
@@ -88,6 +87,6 @@ public class PostgreSqlColumnTypeDefinitionByteArrayTests : TestsBase
 
         sut.SetParameterInfo( parameter, isNullable );
 
-        parameter.DbType.Should().Be( sut.DataType.DbType );
+        parameter.DbType.TestEquals( sut.DataType.DbType ).Go();
     }
 }

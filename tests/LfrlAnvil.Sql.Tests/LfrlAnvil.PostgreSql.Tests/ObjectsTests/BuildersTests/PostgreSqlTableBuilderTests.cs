@@ -7,9 +7,8 @@ using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.PostgreSql.Tests.ObjectsTests.BuildersTests;
 
@@ -23,7 +22,7 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( "[Table] foo.bar" );
+        result.TestEquals( "[Table] foo.bar" ).Go();
     }
 
     [Fact]
@@ -43,31 +42,30 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
 
         var actions = schema.Database.GetLastPendingActions( 1 );
 
-        using ( new AssertionScope() )
-        {
-            schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.Name.Should().Be( "T" );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    CREATE TABLE "foo"."T" (
-                                          "C5" BYTEA NOT NULL GENERATED ALWAYS AS ("C1" + 1) STORED,
-                                          "C1" INT4 NOT NULL,
-                                          "C2" INT4 NOT NULL,
-                                          "C6" BYTEA GENERATED ALWAYS AS ("C2" * "C5") STORED,
-                                          "C3" INT8 NOT NULL,
-                                          "C4" INT8 NOT NULL,
-                                          CONSTRAINT "PK_T" PRIMARY KEY ("C2"),
-                                          CONSTRAINT "FK_T_C1_REF_T" FOREIGN KEY ("C1") REFERENCES "foo"."T" ("C2") ON DELETE RESTRICT ON UPDATE RESTRICT,
-                                          CONSTRAINT "CHK_T_{GUID}" CHECK ("C1" > 0)
-                                        );
-                    """,
-                    "CREATE INDEX \"IX_T_C1A\" ON \"foo\".\"T\" (\"C1\" ASC);",
-                    "CREATE INDEX \"IX_T_C3A_C4D\" ON \"foo\".\"T\" (\"C3\" ASC, \"C4\" DESC);" );
-        }
+        Assertion.All(
+                schema.Objects.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.Name.TestEquals( "T" ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            CREATE TABLE "foo"."T" (
+                              "C5" BYTEA NOT NULL GENERATED ALWAYS AS ("C1" + 1) STORED,
+                              "C1" INT4 NOT NULL,
+                              "C2" INT4 NOT NULL,
+                              "C6" BYTEA GENERATED ALWAYS AS ("C2" * "C5") STORED,
+                              "C3" INT8 NOT NULL,
+                              "C4" INT8 NOT NULL,
+                              CONSTRAINT "PK_T" PRIMARY KEY ("C2"),
+                              CONSTRAINT "FK_T_C1_REF_T" FOREIGN KEY ("C1") REFERENCES "foo"."T" ("C2") ON DELETE RESTRICT ON UPDATE RESTRICT,
+                              CONSTRAINT "CHK_T_{GUID}" CHECK ("C1" > 0)
+                            );
+                            """,
+                            "CREATE INDEX \"IX_T_C1A\" ON \"foo\".\"T\" (\"C1\" ASC);",
+                            "CREATE INDEX \"IX_T_C3A_C4D\" ON \"foo\".\"T\" (\"C3\" ASC, \"C4\" DESC);" )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -80,7 +78,7 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Fact]
@@ -92,9 +90,11 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
 
         var action = Lambda.Of( () => schema.Database.Changes.CompletePendingChanges() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -108,11 +108,10 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
         var result = sut.SetName( sut.Name );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -128,11 +127,10 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
         var result = sut.SetName( oldName );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -149,18 +147,16 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
         var result = sut.SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            sut.Info.Should().Be( SqlRecordSetInfo.Create( "foo", "bar" ) );
-            recordSet.Info.Should().Be( sut.Info );
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( oldName ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE \"foo\".\"T\" RENAME TO \"bar\";" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                sut.Info.TestEquals( SqlRecordSetInfo.Create( "foo", "bar" ) ),
+                recordSet.Info.TestEquals( sut.Info ),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( oldName ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo\".\"T\" RENAME TO \"bar\";" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -183,18 +179,16 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
         var result = sut.SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "T" ).Should().BeNull();
-            fk1.IsRemoved.Should().BeFalse();
-            fk2.IsRemoved.Should().BeFalse();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE \"foo\".\"T\" RENAME TO \"bar\";" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "T" ).TestNull(),
+                fk1.IsRemoved.TestFalse(),
+                fk2.IsRemoved.TestFalse(),
+                actions.Select( a => a.Sql )
+                    .TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo\".\"T\" RENAME TO \"bar\";" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -222,19 +216,17 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
         var result = sut.SetName( "U" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "U" );
-            schema.Objects.TryGet( "U" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "T" ).Should().BeNull();
-            fk1.IsRemoved.Should().BeFalse();
-            fk2.IsRemoved.Should().BeFalse();
-            fk3.IsRemoved.Should().BeFalse();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE \"foo\".\"T1\" RENAME TO \"U\";" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "U" ),
+                schema.Objects.TryGet( "U" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "T" ).TestNull(),
+                fk1.IsRemoved.TestFalse(),
+                fk2.IsRemoved.TestFalse(),
+                fk3.IsRemoved.TestFalse(),
+                actions.Select( a => a.Sql )
+                    .TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo\".\"T1\" RENAME TO \"U\";" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -255,24 +247,23 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
         var result = sut.SetName( "U" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "U" );
-            schema.Objects.TryGet( "U" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "T1" ).Should().BeNull();
-            fk1.IsRemoved.Should().BeFalse();
-
-            actions.Should().HaveCount( 2 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE \"foo\".\"T1\" RENAME TO \"U\";" );
-            actions.ElementAtOrDefault( 1 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    ALTER TABLE "foo"."U"
-                                          ADD COLUMN "C3" INT4 NOT NULL DEFAULT (0);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "U" ),
+                schema.Objects.TryGet( "U" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "T1" ).TestNull(),
+                fk1.IsRemoved.TestFalse(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo\".\"T1\" RENAME TO \"U\";" ),
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            ALTER TABLE "foo"."U"
+                                ADD COLUMN "C3" INT4 NOT NULL DEFAULT (0);
+                            """ )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -290,19 +281,17 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
         var result = sut.SetName( "U" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "U" );
-            schema.Objects.TryGet( "U" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "T" ).Should().BeNull();
-            v1.IsRemoved.Should().BeFalse();
-            v2.IsRemoved.Should().BeFalse();
-            v3.IsRemoved.Should().BeFalse();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE \"foo\".\"T\" RENAME TO \"U\";" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "U" ),
+                schema.Objects.TryGet( "U" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "T" ).TestNull(),
+                v1.IsRemoved.TestFalse(),
+                v2.IsRemoved.TestFalse(),
+                v3.IsRemoved.TestFalse(),
+                actions.Select( a => a.Sql )
+                    .TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo\".\"T\" RENAME TO \"U\";" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -321,26 +310,25 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
         var result = sut.SetName( "U" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "U" );
-            schema.Objects.TryGet( "U" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "T" ).Should().BeNull();
-            v1.IsRemoved.Should().BeFalse();
-            v2.IsRemoved.Should().BeFalse();
-            v3.IsRemoved.Should().BeFalse();
-
-            actions.Should().HaveCount( 2 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE \"foo\".\"T\" RENAME TO \"U\";" );
-            actions.ElementAtOrDefault( 1 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    ALTER TABLE "foo"."U"
-                                          ADD COLUMN "D" INT4 NOT NULL DEFAULT (0);
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "U" ),
+                schema.Objects.TryGet( "U" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "T" ).TestNull(),
+                v1.IsRemoved.TestFalse(),
+                v2.IsRemoved.TestFalse(),
+                v3.IsRemoved.TestFalse(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo\".\"T\" RENAME TO \"U\";" ),
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            ALTER TABLE "foo"."U"
+                                ADD COLUMN "D" INT4 NOT NULL DEFAULT (0);
+                            """ )
+                    ] ) )
+            .Go();
     }
 
     [Theory]
@@ -356,9 +344,11 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( name ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -370,9 +360,11 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "bar" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -384,9 +376,11 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "PK_T" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -408,48 +402,43 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            schema.Objects.TryGet( sut.Name ).Should().BeNull();
-            schema.Objects.TryGet( pk.Name ).Should().BeNull();
-            schema.Objects.TryGet( pk.Index.Name ).Should().BeNull();
-            schema.Objects.TryGet( ix.Name ).Should().BeNull();
-            schema.Objects.TryGet( selfFk.Name ).Should().BeNull();
-            schema.Objects.TryGet( externalFk.Name ).Should().BeNull();
-            schema.Objects.TryGet( chk.Name ).Should().BeNull();
-
-            sut.IsRemoved.Should().BeTrue();
-            sut.ReferencingObjects.Should().BeEmpty();
-            sut.Columns.Should().BeEmpty();
-            sut.Constraints.Should().BeEmpty();
-            sut.Constraints.TryGetPrimaryKey().Should().BeNull();
-            c1.IsRemoved.Should().BeTrue();
-            c1.ReferencingObjects.Should().BeEmpty();
-            c2.IsRemoved.Should().BeTrue();
-            c2.ReferencingObjects.Should().BeEmpty();
-            pk.IsRemoved.Should().BeTrue();
-            pk.ReferencingObjects.Should().BeEmpty();
-            pk.Index.IsRemoved.Should().BeTrue();
-            pk.Index.ReferencingObjects.Should().BeEmpty();
-            pk.Index.Columns.Expressions.Should().BeEmpty();
-            pk.Index.PrimaryKey.Should().BeNull();
-            ix.IsRemoved.Should().BeTrue();
-            ix.ReferencingObjects.Should().BeEmpty();
-            ix.Columns.Expressions.Should().BeEmpty();
-            selfFk.IsRemoved.Should().BeTrue();
-            selfFk.ReferencingObjects.Should().BeEmpty();
-            externalFk.IsRemoved.Should().BeTrue();
-            externalFk.ReferencingObjects.Should().BeEmpty();
-            chk.IsRemoved.Should().BeTrue();
-            chk.ReferencingObjects.Should().BeEmpty();
-            chk.ReferencedColumns.Should().BeEmpty();
-
-            otherPk.Index.ReferencingObjects.Should().BeEmpty();
-            otherTable.ReferencingObjects.Should().BeEmpty();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "DROP TABLE \"foo\".\"T\";" );
-        }
+        Assertion.All(
+                schema.Objects.TryGet( sut.Name ).TestNull(),
+                schema.Objects.TryGet( pk.Name ).TestNull(),
+                schema.Objects.TryGet( pk.Index.Name ).TestNull(),
+                schema.Objects.TryGet( ix.Name ).TestNull(),
+                schema.Objects.TryGet( selfFk.Name ).TestNull(),
+                schema.Objects.TryGet( externalFk.Name ).TestNull(),
+                schema.Objects.TryGet( chk.Name ).TestNull(),
+                sut.IsRemoved.TestTrue(),
+                sut.ReferencingObjects.TestEmpty(),
+                sut.Columns.TestEmpty(),
+                sut.Constraints.TestEmpty(),
+                sut.Constraints.TryGetPrimaryKey().TestNull(),
+                c1.IsRemoved.TestTrue(),
+                c1.ReferencingObjects.TestEmpty(),
+                c2.IsRemoved.TestTrue(),
+                c2.ReferencingObjects.TestEmpty(),
+                pk.IsRemoved.TestTrue(),
+                pk.ReferencingObjects.TestEmpty(),
+                pk.Index.IsRemoved.TestTrue(),
+                pk.Index.ReferencingObjects.TestEmpty(),
+                pk.Index.Columns.Expressions.TestEmpty(),
+                pk.Index.PrimaryKey.TestNull(),
+                ix.IsRemoved.TestTrue(),
+                ix.ReferencingObjects.TestEmpty(),
+                ix.Columns.Expressions.TestEmpty(),
+                selfFk.IsRemoved.TestTrue(),
+                selfFk.ReferencingObjects.TestEmpty(),
+                externalFk.IsRemoved.TestTrue(),
+                externalFk.ReferencingObjects.TestEmpty(),
+                chk.IsRemoved.TestTrue(),
+                chk.ReferencingObjects.TestEmpty(),
+                chk.ReferencedColumns.TestEmpty(),
+                otherPk.Index.ReferencingObjects.TestEmpty(),
+                otherTable.ReferencingObjects.TestEmpty(),
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP TABLE \"foo\".\"T\";" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -464,29 +453,25 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
         sut.SetName( "bar" ).Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            schema.Objects.TryGet( sut.Name ).Should().BeNull();
-            schema.Objects.TryGet( pk.Name ).Should().BeNull();
-            schema.Objects.TryGet( pk.Index.Name ).Should().BeNull();
-
-            sut.IsRemoved.Should().BeTrue();
-            sut.ReferencingObjects.Should().BeEmpty();
-            sut.Columns.Should().BeEmpty();
-            sut.Constraints.Should().BeEmpty();
-            sut.Constraints.TryGetPrimaryKey().Should().BeNull();
-            c1.IsRemoved.Should().BeTrue();
-            c1.ReferencingObjects.Should().BeEmpty();
-            pk.IsRemoved.Should().BeTrue();
-            pk.ReferencingObjects.Should().BeEmpty();
-            pk.Index.IsRemoved.Should().BeTrue();
-            pk.Index.ReferencingObjects.Should().BeEmpty();
-            pk.Index.Columns.Expressions.Should().BeEmpty();
-            pk.Index.PrimaryKey.Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "DROP TABLE \"foo\".\"T\";" );
-        }
+        Assertion.All(
+                schema.Objects.TryGet( sut.Name ).TestNull(),
+                schema.Objects.TryGet( pk.Name ).TestNull(),
+                schema.Objects.TryGet( pk.Index.Name ).TestNull(),
+                sut.IsRemoved.TestTrue(),
+                sut.ReferencingObjects.TestEmpty(),
+                sut.Columns.TestEmpty(),
+                sut.Constraints.TestEmpty(),
+                sut.Constraints.TryGetPrimaryKey().TestNull(),
+                c1.IsRemoved.TestTrue(),
+                c1.ReferencingObjects.TestEmpty(),
+                pk.IsRemoved.TestTrue(),
+                pk.ReferencingObjects.TestEmpty(),
+                pk.Index.IsRemoved.TestTrue(),
+                pk.Index.ReferencingObjects.TestEmpty(),
+                pk.Index.Columns.Expressions.TestEmpty(),
+                pk.Index.PrimaryKey.TestNull(),
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP TABLE \"foo\".\"T\";" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -503,7 +488,7 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Fact]
@@ -519,9 +504,11 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -534,9 +521,11 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == PostgreSqlDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -554,16 +543,15 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
         a.SetName( "B" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
+        actions.Select( ac => ac.Sql )
+            .TestSequence(
+            [
+                (sql, _) => sql.SatisfySql(
                     "ALTER TABLE \"foo\".\"T\" RENAME COLUMN \"A\" TO \"__A__{GUID}__\";",
                     "ALTER TABLE \"foo\".\"T\" RENAME COLUMN \"B\" TO \"A\";",
-                    "ALTER TABLE \"foo\".\"T\" RENAME COLUMN \"__A__{GUID}__\" TO \"B\";" );
-        }
+                    "ALTER TABLE \"foo\".\"T\" RENAME COLUMN \"__A__{GUID}__\" TO \"B\";" )
+            ] )
+            .Go();
     }
 
     [Fact]
@@ -585,18 +573,17 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
         a.SetName( "D" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
+        actions.Select( ac => ac.Sql )
+            .TestSequence(
+            [
+                (sql, _) => sql.SatisfySql(
                     "ALTER TABLE \"foo\".\"T\" RENAME COLUMN \"A\" TO \"__A__{GUID}__\";",
                     "ALTER TABLE \"foo\".\"T\" RENAME COLUMN \"B\" TO \"A\";",
                     "ALTER TABLE \"foo\".\"T\" RENAME COLUMN \"C\" TO \"B\";",
                     "ALTER TABLE \"foo\".\"T\" RENAME COLUMN \"D\" TO \"C\";",
-                    "ALTER TABLE \"foo\".\"T\" RENAME COLUMN \"__A__{GUID}__\" TO \"D\";" );
-        }
+                    "ALTER TABLE \"foo\".\"T\" RENAME COLUMN \"__A__{GUID}__\" TO \"D\";" )
+            ] )
+            .Go();
     }
 
     [Fact]
@@ -617,16 +604,15 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
         a.SetName( "B" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
+        actions.Select( ac => ac.Sql )
+            .TestSequence(
+            [
+                (sql, _) => sql.SatisfySql(
                     "ALTER TABLE \"foo\".\"T\" RENAME COLUMN \"C\" TO \"D\";",
                     "ALTER TABLE \"foo\".\"T\" RENAME COLUMN \"B\" TO \"C\";",
-                    "ALTER TABLE \"foo\".\"T\" RENAME COLUMN \"A\" TO \"B\";" );
-        }
+                    "ALTER TABLE \"foo\".\"T\" RENAME COLUMN \"A\" TO \"B\";" )
+            ] )
+            .Go();
     }
 
     [Fact]
@@ -647,30 +633,29 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
         a.SetName( "D" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
+        actions.Select( ac => ac.Sql )
+            .TestSequence(
+            [
+                (sql, _) => sql.SatisfySql(
                     """
                     ALTER TABLE "foo"."T"
-                                          RENAME CONSTRAINT "A" TO "__A__{GUID}__";
+                        RENAME CONSTRAINT "A" TO "__A__{GUID}__";
                     """,
                     """
                     ALTER TABLE "foo"."T"
-                                          RENAME CONSTRAINT "B" TO "A";
+                        RENAME CONSTRAINT "B" TO "A";
                     """,
                     "ALTER INDEX \"foo\".\"C\" RENAME TO \"B\";",
                     """
                     ALTER TABLE "foo"."T"
-                                          RENAME CONSTRAINT "D" TO "C";
+                        RENAME CONSTRAINT "D" TO "C";
                     """,
                     """
                     ALTER TABLE "foo"."T"
-                                          RENAME CONSTRAINT "__A__{GUID}__" TO "D";
-                    """ );
-        }
+                        RENAME CONSTRAINT "__A__{GUID}__" TO "D";
+                    """ )
+            ] )
+            .Go();
     }
 
     [Fact]
@@ -690,22 +675,21 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
         a.SetName( "B" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
+        actions.Select( ac => ac.Sql )
+            .TestSequence(
+            [
+                (sql, _) => sql.SatisfySql(
                     "ALTER INDEX \"foo\".\"C\" RENAME TO \"D\";",
                     """
                     ALTER TABLE "foo"."T"
-                                          RENAME CONSTRAINT "B" TO "C";
+                        RENAME CONSTRAINT "B" TO "C";
                     """,
                     """
                     ALTER TABLE "foo"."T"
-                                          RENAME CONSTRAINT "A" TO "B";
-                    """ );
-        }
+                        RENAME CONSTRAINT "A" TO "B";
+                    """ )
+            ] )
+            .Go();
     }
 
     [Fact]
@@ -744,57 +728,56 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
         sut.Constraints.CreateForeignKey( ix2, sut.Constraints.CreateUniqueIndex( sut.Columns.Create( "C11" ).Asc() ) );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            actions.Should().HaveCount( 2 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE \"foo\".\"T\" RENAME TO \"U\";" );
-            actions.ElementAtOrDefault( 1 )
-                .Sql.Should()
-                .SatisfySql(
+        actions.Select( a => a.Sql )
+            .TestSequence(
+            [
+                (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo\".\"T\" RENAME TO \"U\";" ),
+                (sql, _) => sql.SatisfySql(
                     """
                     ALTER TABLE "foo"."U"
-                                          DROP CONSTRAINT "FK_T_C7_REF_T",
-                                          DROP CONSTRAINT "CHK_1";
+                        DROP CONSTRAINT "FK_T_C7_REF_T",
+                        DROP CONSTRAINT "CHK_1";
                     """,
                     "DROP INDEX \"foo\".\"IX_T_C2A\";",
                     """
                     ALTER TABLE "foo"."U"
-                                          DROP CONSTRAINT "PK_T";
+                        DROP CONSTRAINT "PK_T";
                     """,
                     """
                     ALTER TABLE "foo"."U"
-                                          ALTER COLUMN "C6" DROP EXPRESSION,
-                                          DROP COLUMN "C4",
-                                          DROP COLUMN "C5";
+                        ALTER COLUMN "C6" DROP EXPRESSION,
+                        DROP COLUMN "C4",
+                        DROP COLUMN "C5";
                     """,
                     "ALTER INDEX \"foo\".\"IX_T_C7A\" RENAME TO \"IX_2\";",
                     """
                     ALTER TABLE "foo"."U"
-                                          RENAME CONSTRAINT "FK" TO "FK_2";
+                        RENAME CONSTRAINT "FK" TO "FK_2";
                     """,
                     """
                     ALTER TABLE "foo"."U"
-                                          RENAME CONSTRAINT "CHK_2" TO "CHK_1";
+                        RENAME CONSTRAINT "CHK_2" TO "CHK_1";
                     """,
                     "ALTER TABLE \"foo\".\"U\" RENAME COLUMN \"C3\" TO \"X\";",
                     "ALTER TABLE \"foo\".\"U\" RENAME COLUMN \"C6\" TO \"Y\";",
                     """
                     ALTER TABLE "foo"."U"
-                                          ALTER COLUMN "X" DROP NOT NULL,
-                                          ALTER COLUMN "X" SET DATA TYPE INT8,
-                                          ADD COLUMN "C10" BYTEA NOT NULL DEFAULT ('\x'::BYTEA),
-                                          ADD COLUMN "C11" BYTEA NOT NULL DEFAULT ('\x'::BYTEA),
-                                          ADD COLUMN "C5" INT4 NOT NULL GENERATED ALWAYS AS (1) STORED,
-                                          ADD CONSTRAINT "PK_U" PRIMARY KEY ("C10");
+                        ALTER COLUMN "X" DROP NOT NULL,
+                        ALTER COLUMN "X" SET DATA TYPE INT8,
+                        ADD COLUMN "C10" BYTEA NOT NULL DEFAULT ('\x'::BYTEA),
+                        ADD COLUMN "C11" BYTEA NOT NULL DEFAULT ('\x'::BYTEA),
+                        ADD COLUMN "C5" INT4 NOT NULL GENERATED ALWAYS AS (1) STORED,
+                        ADD CONSTRAINT "PK_U" PRIMARY KEY ("C10");
                     """,
                     "CREATE INDEX \"IX_U_C2A_XD\" ON \"foo\".\"U\" (\"C2\" ASC, \"X\" DESC);",
                     "CREATE UNIQUE INDEX \"UIX_U_C11A\" ON \"foo\".\"U\" (\"C11\" ASC);",
                     """
                     ALTER TABLE "foo"."U"
-                                          ADD CONSTRAINT "CHK_3" CHECK (TRUE),
-                                          ADD CONSTRAINT "FK_U_C7_REF_U" FOREIGN KEY ("C7") REFERENCES "foo"."U" ("C11") ON DELETE RESTRICT ON UPDATE RESTRICT;
-                    """ );
-        }
+                        ADD CONSTRAINT "CHK_3" CHECK (TRUE),
+                        ADD CONSTRAINT "FK_U_C7_REF_U" FOREIGN KEY ("C7") REFERENCES "foo"."U" ("C11") ON DELETE RESTRICT ON UPDATE RESTRICT;
+                    """ )
+            ] )
+            .Go();
     }
 
     [Fact]
@@ -805,8 +788,10 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
 
         var result = sut.ForPostgreSql( action );
 
-        result.Should().BeSameAs( sut );
-        action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( sut );
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                action.CallAt( 0 ).Arguments.TestSequence( [ sut ] ) )
+            .Go();
     }
 
     [Fact]
@@ -817,7 +802,9 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
 
         var result = sut.ForPostgreSql( action );
 
-        result.Should().BeSameAs( sut );
-        action.Verify().CallCount.Should().Be( 0 );
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                action.CallCount().TestEquals( 0 ) )
+            .Go();
     }
 }

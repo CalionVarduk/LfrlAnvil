@@ -2,7 +2,6 @@
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using NpgsqlTypes;
 
 namespace LfrlAnvil.PostgreSql.Tests;
@@ -14,15 +13,14 @@ public class PostgreSqlDataTypeTests : TestsBase
     {
         var sut = PostgreSqlDataType.Boolean;
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( "BOOLEAN" );
-            sut.Value.Should().Be( NpgsqlDbType.Boolean );
-            sut.DbType.Should().Be( DbType.Boolean );
-            sut.Dialect.Should().BeSameAs( PostgreSqlDialect.Instance );
-            sut.Parameters.ToArray().Should().BeEmpty();
-            sut.ParameterDefinitions.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Name.TestEquals( "BOOLEAN" ),
+                sut.Value.TestEquals( NpgsqlDbType.Boolean ),
+                sut.DbType.TestEquals( DbType.Boolean ),
+                sut.Dialect.TestRefEquals( PostgreSqlDialect.Instance ),
+                sut.Parameters.ToArray().TestEmpty(),
+                sut.ParameterDefinitions.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -30,15 +28,14 @@ public class PostgreSqlDataTypeTests : TestsBase
     {
         var sut = PostgreSqlDataType.Int2;
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( "INT2" );
-            sut.Value.Should().Be( NpgsqlDbType.Smallint );
-            sut.DbType.Should().Be( DbType.Int16 );
-            sut.Dialect.Should().BeSameAs( PostgreSqlDialect.Instance );
-            sut.Parameters.ToArray().Should().BeEmpty();
-            sut.ParameterDefinitions.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Name.TestEquals( "INT2" ),
+                sut.Value.TestEquals( NpgsqlDbType.Smallint ),
+                sut.DbType.TestEquals( DbType.Int16 ),
+                sut.Dialect.TestRefEquals( PostgreSqlDialect.Instance ),
+                sut.Parameters.ToArray().TestEmpty(),
+                sut.ParameterDefinitions.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -46,15 +43,14 @@ public class PostgreSqlDataTypeTests : TestsBase
     {
         var sut = PostgreSqlDataType.Int4;
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( "INT4" );
-            sut.Value.Should().Be( NpgsqlDbType.Integer );
-            sut.DbType.Should().Be( DbType.Int32 );
-            sut.Dialect.Should().BeSameAs( PostgreSqlDialect.Instance );
-            sut.Parameters.ToArray().Should().BeEmpty();
-            sut.ParameterDefinitions.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Name.TestEquals( "INT4" ),
+                sut.Value.TestEquals( NpgsqlDbType.Integer ),
+                sut.DbType.TestEquals( DbType.Int32 ),
+                sut.Dialect.TestRefEquals( PostgreSqlDialect.Instance ),
+                sut.Parameters.ToArray().TestEmpty(),
+                sut.ParameterDefinitions.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -62,15 +58,14 @@ public class PostgreSqlDataTypeTests : TestsBase
     {
         var sut = PostgreSqlDataType.Int8;
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( "INT8" );
-            sut.Value.Should().Be( NpgsqlDbType.Bigint );
-            sut.DbType.Should().Be( DbType.Int64 );
-            sut.Dialect.Should().BeSameAs( PostgreSqlDialect.Instance );
-            sut.Parameters.ToArray().Should().BeEmpty();
-            sut.ParameterDefinitions.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Name.TestEquals( "INT8" ),
+                sut.Value.TestEquals( NpgsqlDbType.Bigint ),
+                sut.DbType.TestEquals( DbType.Int64 ),
+                sut.Dialect.TestRefEquals( PostgreSqlDialect.Instance ),
+                sut.Parameters.ToArray().TestEmpty(),
+                sut.ParameterDefinitions.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -78,15 +73,14 @@ public class PostgreSqlDataTypeTests : TestsBase
     {
         var sut = PostgreSqlDataType.Float4;
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( "FLOAT4" );
-            sut.Value.Should().Be( NpgsqlDbType.Real );
-            sut.DbType.Should().Be( DbType.Single );
-            sut.Dialect.Should().BeSameAs( PostgreSqlDialect.Instance );
-            sut.Parameters.ToArray().Should().BeEmpty();
-            sut.ParameterDefinitions.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Name.TestEquals( "FLOAT4" ),
+                sut.Value.TestEquals( NpgsqlDbType.Real ),
+                sut.DbType.TestEquals( DbType.Single ),
+                sut.Dialect.TestRefEquals( PostgreSqlDialect.Instance ),
+                sut.Parameters.ToArray().TestEmpty(),
+                sut.ParameterDefinitions.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -94,15 +88,14 @@ public class PostgreSqlDataTypeTests : TestsBase
     {
         var sut = PostgreSqlDataType.Float8;
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( "FLOAT8" );
-            sut.Value.Should().Be( NpgsqlDbType.Double );
-            sut.DbType.Should().Be( DbType.Double );
-            sut.Dialect.Should().BeSameAs( PostgreSqlDialect.Instance );
-            sut.Parameters.ToArray().Should().BeEmpty();
-            sut.ParameterDefinitions.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Name.TestEquals( "FLOAT8" ),
+                sut.Value.TestEquals( NpgsqlDbType.Double ),
+                sut.DbType.TestEquals( DbType.Double ),
+                sut.Dialect.TestRefEquals( PostgreSqlDialect.Instance ),
+                sut.Parameters.ToArray().TestEmpty(),
+                sut.ParameterDefinitions.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -110,19 +103,19 @@ public class PostgreSqlDataTypeTests : TestsBase
     {
         var sut = PostgreSqlDataType.Decimal;
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( "DECIMAL(29, 10)" );
-            sut.Value.Should().Be( NpgsqlDbType.Numeric );
-            sut.DbType.Should().Be( DbType.Decimal );
-            sut.Dialect.Should().BeSameAs( PostgreSqlDialect.Instance );
-            sut.Parameters.ToArray().Should().BeSequentiallyEqualTo( 29, 10 );
-            sut.ParameterDefinitions.ToArray()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    new SqlDataTypeParameter( "PRECISION", Bounds.Create( 0, 1000 ) ),
-                    new SqlDataTypeParameter( "SCALE", Bounds.Create( -1000, 1000 ) ) );
-        }
+        Assertion.All(
+                sut.Name.TestEquals( "DECIMAL(29, 10)" ),
+                sut.Value.TestEquals( NpgsqlDbType.Numeric ),
+                sut.DbType.TestEquals( DbType.Decimal ),
+                sut.Dialect.TestRefEquals( PostgreSqlDialect.Instance ),
+                sut.Parameters.ToArray().TestSequence( [ 29, 10 ] ),
+                sut.ParameterDefinitions.ToArray()
+                    .TestSequence(
+                    [
+                        new SqlDataTypeParameter( "PRECISION", Bounds.Create( 0, 1000 ) ),
+                        new SqlDataTypeParameter( "SCALE", Bounds.Create( -1000, 1000 ) )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -130,17 +123,15 @@ public class PostgreSqlDataTypeTests : TestsBase
     {
         var sut = PostgreSqlDataType.VarChar;
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( "VARCHAR" );
-            sut.Value.Should().Be( NpgsqlDbType.Varchar );
-            sut.DbType.Should().Be( DbType.String );
-            sut.Dialect.Should().BeSameAs( PostgreSqlDialect.Instance );
-            sut.Parameters.ToArray().Should().BeSequentiallyEqualTo( 10485760 );
-            sut.ParameterDefinitions.ToArray()
-                .Should()
-                .BeSequentiallyEqualTo( new SqlDataTypeParameter( "MAX_LENGTH", Bounds.Create( 0, 10485760 ) ) );
-        }
+        Assertion.All(
+                sut.Name.TestEquals( "VARCHAR" ),
+                sut.Value.TestEquals( NpgsqlDbType.Varchar ),
+                sut.DbType.TestEquals( DbType.String ),
+                sut.Dialect.TestRefEquals( PostgreSqlDialect.Instance ),
+                sut.Parameters.ToArray().TestSequence( [ 10485760 ] ),
+                sut.ParameterDefinitions.ToArray()
+                    .TestSequence( [ new SqlDataTypeParameter( "MAX_LENGTH", Bounds.Create( 0, 10485760 ) ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -148,15 +139,14 @@ public class PostgreSqlDataTypeTests : TestsBase
     {
         var sut = PostgreSqlDataType.Uuid;
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( "UUID" );
-            sut.Value.Should().Be( NpgsqlDbType.Uuid );
-            sut.DbType.Should().Be( DbType.Guid );
-            sut.Dialect.Should().BeSameAs( PostgreSqlDialect.Instance );
-            sut.Parameters.ToArray().Should().BeEmpty();
-            sut.ParameterDefinitions.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Name.TestEquals( "UUID" ),
+                sut.Value.TestEquals( NpgsqlDbType.Uuid ),
+                sut.DbType.TestEquals( DbType.Guid ),
+                sut.Dialect.TestRefEquals( PostgreSqlDialect.Instance ),
+                sut.Parameters.ToArray().TestEmpty(),
+                sut.ParameterDefinitions.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -164,15 +154,14 @@ public class PostgreSqlDataTypeTests : TestsBase
     {
         var sut = PostgreSqlDataType.Bytea;
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( "BYTEA" );
-            sut.Value.Should().Be( NpgsqlDbType.Bytea );
-            sut.DbType.Should().Be( DbType.Binary );
-            sut.Dialect.Should().BeSameAs( PostgreSqlDialect.Instance );
-            sut.Parameters.ToArray().Should().BeEmpty();
-            sut.ParameterDefinitions.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Name.TestEquals( "BYTEA" ),
+                sut.Value.TestEquals( NpgsqlDbType.Bytea ),
+                sut.DbType.TestEquals( DbType.Binary ),
+                sut.Dialect.TestRefEquals( PostgreSqlDialect.Instance ),
+                sut.Parameters.ToArray().TestEmpty(),
+                sut.ParameterDefinitions.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -180,15 +169,14 @@ public class PostgreSqlDataTypeTests : TestsBase
     {
         var sut = PostgreSqlDataType.Date;
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( "DATE" );
-            sut.Value.Should().Be( NpgsqlDbType.Date );
-            sut.DbType.Should().Be( DbType.Date );
-            sut.Dialect.Should().BeSameAs( PostgreSqlDialect.Instance );
-            sut.Parameters.ToArray().Should().BeEmpty();
-            sut.ParameterDefinitions.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Name.TestEquals( "DATE" ),
+                sut.Value.TestEquals( NpgsqlDbType.Date ),
+                sut.DbType.TestEquals( DbType.Date ),
+                sut.Dialect.TestRefEquals( PostgreSqlDialect.Instance ),
+                sut.Parameters.ToArray().TestEmpty(),
+                sut.ParameterDefinitions.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -196,15 +184,14 @@ public class PostgreSqlDataTypeTests : TestsBase
     {
         var sut = PostgreSqlDataType.Time;
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( "TIME" );
-            sut.Value.Should().Be( NpgsqlDbType.Time );
-            sut.DbType.Should().Be( DbType.Time );
-            sut.Dialect.Should().BeSameAs( PostgreSqlDialect.Instance );
-            sut.Parameters.ToArray().Should().BeEmpty();
-            sut.ParameterDefinitions.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Name.TestEquals( "TIME" ),
+                sut.Value.TestEquals( NpgsqlDbType.Time ),
+                sut.DbType.TestEquals( DbType.Time ),
+                sut.Dialect.TestRefEquals( PostgreSqlDialect.Instance ),
+                sut.Parameters.ToArray().TestEmpty(),
+                sut.ParameterDefinitions.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -212,15 +199,14 @@ public class PostgreSqlDataTypeTests : TestsBase
     {
         var sut = PostgreSqlDataType.Timestamp;
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( "TIMESTAMP" );
-            sut.Value.Should().Be( NpgsqlDbType.Timestamp );
-            sut.DbType.Should().Be( DbType.DateTime2 );
-            sut.Dialect.Should().BeSameAs( PostgreSqlDialect.Instance );
-            sut.Parameters.ToArray().Should().BeEmpty();
-            sut.ParameterDefinitions.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Name.TestEquals( "TIMESTAMP" ),
+                sut.Value.TestEquals( NpgsqlDbType.Timestamp ),
+                sut.DbType.TestEquals( DbType.DateTime2 ),
+                sut.Dialect.TestRefEquals( PostgreSqlDialect.Instance ),
+                sut.Parameters.ToArray().TestEmpty(),
+                sut.ParameterDefinitions.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -228,22 +214,21 @@ public class PostgreSqlDataTypeTests : TestsBase
     {
         var sut = PostgreSqlDataType.TimestampTz;
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( "TIMESTAMPTZ" );
-            sut.Value.Should().Be( NpgsqlDbType.TimestampTz );
-            sut.DbType.Should().Be( DbType.DateTime );
-            sut.Dialect.Should().BeSameAs( PostgreSqlDialect.Instance );
-            sut.Parameters.ToArray().Should().BeEmpty();
-            sut.ParameterDefinitions.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Name.TestEquals( "TIMESTAMPTZ" ),
+                sut.Value.TestEquals( NpgsqlDbType.TimestampTz ),
+                sut.DbType.TestEquals( DbType.DateTime ),
+                sut.Dialect.TestRefEquals( PostgreSqlDialect.Instance ),
+                sut.Parameters.ToArray().TestEmpty(),
+                sut.ParameterDefinitions.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
     public void CreateDecimal_ShouldReturnStaticDecimal_WhenPrecisionAndScaleAreDefault()
     {
         var sut = PostgreSqlDataType.CreateDecimal( 29, 10 );
-        sut.Should().BeSameAs( PostgreSqlDataType.Decimal );
+        sut.TestRefEquals( PostgreSqlDataType.Decimal ).Go();
     }
 
     [Theory]
@@ -256,15 +241,14 @@ public class PostgreSqlDataTypeTests : TestsBase
     {
         var sut = PostgreSqlDataType.CreateDecimal( precision, scale );
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( expected );
-            sut.Value.Should().Be( NpgsqlDbType.Numeric );
-            sut.DbType.Should().Be( DbType.Decimal );
-            sut.Dialect.Should().BeSameAs( PostgreSqlDialect.Instance );
-            sut.Parameters.ToArray().Should().BeSequentiallyEqualTo( precision, scale );
-            sut.ParameterDefinitions.ToArray().Should().BeSequentiallyEqualTo( PostgreSqlDataType.Decimal.ParameterDefinitions.ToArray() );
-        }
+        Assertion.All(
+                sut.Name.TestEquals( expected ),
+                sut.Value.TestEquals( NpgsqlDbType.Numeric ),
+                sut.DbType.TestEquals( DbType.Decimal ),
+                sut.Dialect.TestRefEquals( PostgreSqlDialect.Instance ),
+                sut.Parameters.TestSequence( [ precision, scale ] ),
+                sut.ParameterDefinitions.TestSequence( PostgreSqlDataType.Decimal.ParameterDefinitions.ToArray() ) )
+            .Go();
     }
 
     [Theory]
@@ -275,14 +259,14 @@ public class PostgreSqlDataTypeTests : TestsBase
     public void CreateDecimal_ShouldThrowSqlDataTypeException_WhenPrecisionOrScaleAreInvalid(int precision, int scale)
     {
         var action = Lambda.Of( () => PostgreSqlDataType.CreateDecimal( precision, scale ) );
-        action.Should().ThrowExactly<SqlDataTypeException>();
+        action.Test( exc => exc.TestType().Exact<SqlDataTypeException>() ).Go();
     }
 
     [Fact]
     public void CreateVarChar_ShouldReturnStaticVarChar_WhenMaxLengthIsTooLarge()
     {
         var sut = PostgreSqlDataType.CreateVarChar( 10485761 );
-        sut.Should().BeSameAs( PostgreSqlDataType.VarChar );
+        sut.TestRefEquals( PostgreSqlDataType.VarChar ).Go();
     }
 
     [Theory]
@@ -293,22 +277,21 @@ public class PostgreSqlDataTypeTests : TestsBase
     {
         var sut = PostgreSqlDataType.CreateVarChar( maxLength );
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( expected );
-            sut.Value.Should().Be( NpgsqlDbType.Varchar );
-            sut.DbType.Should().Be( DbType.String );
-            sut.Dialect.Should().BeSameAs( PostgreSqlDialect.Instance );
-            sut.Parameters.ToArray().Should().BeSequentiallyEqualTo( maxLength );
-            sut.ParameterDefinitions.ToArray().Should().BeSequentiallyEqualTo( PostgreSqlDataType.VarChar.ParameterDefinitions.ToArray() );
-        }
+        Assertion.All(
+                sut.Name.TestEquals( expected ),
+                sut.Value.TestEquals( NpgsqlDbType.Varchar ),
+                sut.DbType.TestEquals( DbType.String ),
+                sut.Dialect.TestRefEquals( PostgreSqlDialect.Instance ),
+                sut.Parameters.TestSequence( [ maxLength ] ),
+                sut.ParameterDefinitions.TestSequence( PostgreSqlDataType.VarChar.ParameterDefinitions.ToArray() ) )
+            .Go();
     }
 
     [Fact]
     public void CreateVarChar_ShouldThrowSqlDataTypeException_WhenMaxLengthIsLessThanZero()
     {
         var action = Lambda.Of( () => PostgreSqlDataType.CreateVarChar( -1 ) );
-        action.Should().ThrowExactly<SqlDataTypeException>();
+        action.Test( exc => exc.TestType().Exact<SqlDataTypeException>() ).Go();
     }
 
     [Fact]
@@ -316,15 +299,14 @@ public class PostgreSqlDataTypeTests : TestsBase
     {
         var sut = PostgreSqlDataType.Custom( "FOO", NpgsqlDbType.Geometry, DbType.Object );
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( "FOO" );
-            sut.Value.Should().Be( NpgsqlDbType.Geometry );
-            sut.DbType.Should().Be( DbType.Object );
-            sut.Dialect.Should().BeSameAs( PostgreSqlDialect.Instance );
-            sut.Parameters.ToArray().Should().BeEmpty();
-            sut.ParameterDefinitions.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Name.TestEquals( "FOO" ),
+                sut.Value.TestEquals( NpgsqlDbType.Geometry ),
+                sut.DbType.TestEquals( DbType.Object ),
+                sut.Dialect.TestRefEquals( PostgreSqlDialect.Instance ),
+                sut.Parameters.ToArray().TestEmpty(),
+                sut.ParameterDefinitions.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -332,7 +314,7 @@ public class PostgreSqlDataTypeTests : TestsBase
     {
         var sut = PostgreSqlDataType.Decimal;
         var result = sut.ToString();
-        result.Should().Be( "'DECIMAL(29, 10)' (Numeric)" );
+        result.TestEquals( "'DECIMAL(29, 10)' (Numeric)" ).Go();
     }
 
     [Fact]
@@ -341,7 +323,7 @@ public class PostgreSqlDataTypeTests : TestsBase
         var sut = PostgreSqlDataType.Decimal;
         var expected = HashCode.Combine( sut.Value, sut.Name );
         var result = sut.GetHashCode();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -349,7 +331,7 @@ public class PostgreSqlDataTypeTests : TestsBase
     {
         var sut = PostgreSqlDataType.Decimal;
         var result = ( NpgsqlDbType )sut;
-        result.Should().Be( sut.Value );
+        result.TestEquals( sut.Value ).Go();
     }
 
     [Theory]
@@ -361,7 +343,7 @@ public class PostgreSqlDataTypeTests : TestsBase
         var result = PostgreSqlDataType.Custom( name1, value1, DbType.Object )
             .Equals( PostgreSqlDataType.Custom( name2, value2, DbType.Object ) );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -376,7 +358,7 @@ public class PostgreSqlDataTypeTests : TestsBase
         bool expected)
     {
         var result = PostgreSqlDataType.Custom( name1, value1, DbType.Object ) == PostgreSqlDataType.Custom( name2, value2, DbType.Object );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -391,7 +373,7 @@ public class PostgreSqlDataTypeTests : TestsBase
         bool expected)
     {
         var result = PostgreSqlDataType.Custom( name1, value1, DbType.Object ) != PostgreSqlDataType.Custom( name2, value2, DbType.Object );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -410,14 +392,14 @@ public class PostgreSqlDataTypeTests : TestsBase
         var result = PostgreSqlDataType.Custom( name1, value1, DbType.Object )
             .CompareTo( PostgreSqlDataType.Custom( name2, value2, DbType.Object ) );
 
-        Math.Sign( result ).Should().Be( expectedSign );
+        Math.Sign( result ).TestEquals( expectedSign ).Go();
     }
 
     [Fact]
     public void CompareTo_ShouldReturnOne_WhenOtherIsNull()
     {
         var result = PostgreSqlDataType.Custom( "foo", NpgsqlDbType.Uuid, DbType.Object ).CompareTo( null );
-        result.Should().Be( 1 );
+        result.TestEquals( 1 ).Go();
     }
 
     [Theory]
@@ -434,7 +416,7 @@ public class PostgreSqlDataTypeTests : TestsBase
         bool expected)
     {
         var result = PostgreSqlDataType.Custom( name1, value1, DbType.Object ) > PostgreSqlDataType.Custom( name2, value2, DbType.Object );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -451,7 +433,7 @@ public class PostgreSqlDataTypeTests : TestsBase
         bool expected)
     {
         var result = PostgreSqlDataType.Custom( name1, value1, DbType.Object ) >= PostgreSqlDataType.Custom( name2, value2, DbType.Object );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -468,7 +450,7 @@ public class PostgreSqlDataTypeTests : TestsBase
         bool expected)
     {
         var result = PostgreSqlDataType.Custom( name1, value1, DbType.Object ) < PostgreSqlDataType.Custom( name2, value2, DbType.Object );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -485,6 +467,6 @@ public class PostgreSqlDataTypeTests : TestsBase
         bool expected)
     {
         var result = PostgreSqlDataType.Custom( name1, value1, DbType.Object ) <= PostgreSqlDataType.Custom( name2, value2, DbType.Object );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

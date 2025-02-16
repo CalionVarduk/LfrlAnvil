@@ -20,7 +20,7 @@ public class PostgreSqlColumnTypeDefinitionDateTimeOffsetTests : TestsBase
         var expected = $"'{dt}'";
         var sut = _provider.GetByType<DateTimeOffset>();
         var result = sut.TryToDbLiteral( value );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -28,7 +28,7 @@ public class PostgreSqlColumnTypeDefinitionDateTimeOffsetTests : TestsBase
     {
         var sut = _provider.GetByType<DateTimeOffset>();
         var result = sut.TryToDbLiteral( string.Empty );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -40,7 +40,7 @@ public class PostgreSqlColumnTypeDefinitionDateTimeOffsetTests : TestsBase
         var value = DateTimeOffset.Parse( dt );
         var sut = _provider.GetByType<DateTimeOffset>();
         var result = sut.TryToParameterValue( value );
-        result.Should().Be( dt );
+        result.TestEquals( dt ).Go();
     }
 
     [Fact]
@@ -48,7 +48,7 @@ public class PostgreSqlColumnTypeDefinitionDateTimeOffsetTests : TestsBase
     {
         var sut = _provider.GetByType<DateTimeOffset>();
         var result = sut.TryToParameterValue( string.Empty );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -61,12 +61,11 @@ public class PostgreSqlColumnTypeDefinitionDateTimeOffsetTests : TestsBase
 
         sut.SetParameterInfo( parameter, isNullable );
 
-        using ( new AssertionScope() )
-        {
-            parameter.DbType.Should().Be( sut.DataType.DbType );
-            parameter.NpgsqlDbType.Should().Be( NpgsqlDbType.Varchar );
-            parameter.IsNullable.Should().Be( isNullable );
-        }
+        Assertion.All(
+                parameter.DbType.TestEquals( sut.DataType.DbType ),
+                parameter.NpgsqlDbType.TestEquals( NpgsqlDbType.Varchar ),
+                parameter.IsNullable.TestEquals( isNullable ) )
+            .Go();
     }
 
     [Theory]
@@ -79,6 +78,6 @@ public class PostgreSqlColumnTypeDefinitionDateTimeOffsetTests : TestsBase
 
         sut.SetParameterInfo( parameter, isNullable );
 
-        parameter.DbType.Should().Be( sut.DataType.DbType );
+        parameter.DbType.TestEquals( sut.DataType.DbType ).Go();
     }
 }

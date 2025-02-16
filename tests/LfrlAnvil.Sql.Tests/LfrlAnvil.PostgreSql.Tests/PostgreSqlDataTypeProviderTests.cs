@@ -2,7 +2,6 @@
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using NpgsqlTypes;
 
 namespace LfrlAnvil.PostgreSql.Tests;
@@ -15,84 +14,84 @@ public class PostgreSqlDataTypeProviderTests : TestsBase
     public void GetBool_ShouldReturnBoolean()
     {
         var result = _sut.GetBool();
-        result.Should().BeSameAs( PostgreSqlDataType.Boolean );
+        result.TestRefEquals( PostgreSqlDataType.Boolean ).Go();
     }
 
     [Fact]
     public void GetInt8_ShouldReturnInt2()
     {
         var result = _sut.GetInt8();
-        result.Should().BeSameAs( PostgreSqlDataType.Int2 );
+        result.TestRefEquals( PostgreSqlDataType.Int2 ).Go();
     }
 
     [Fact]
     public void GetInt16_ShouldReturnInt2()
     {
         var result = _sut.GetInt16();
-        result.Should().BeSameAs( PostgreSqlDataType.Int2 );
+        result.TestRefEquals( PostgreSqlDataType.Int2 ).Go();
     }
 
     [Fact]
     public void GetInt32_ShouldReturnInt4()
     {
         var result = _sut.GetInt32();
-        result.Should().BeSameAs( PostgreSqlDataType.Int4 );
+        result.TestRefEquals( PostgreSqlDataType.Int4 ).Go();
     }
 
     [Fact]
     public void GetInt64_ShouldReturnInt8()
     {
         var result = _sut.GetInt64();
-        result.Should().BeSameAs( PostgreSqlDataType.Int8 );
+        result.TestRefEquals( PostgreSqlDataType.Int8 ).Go();
     }
 
     [Fact]
     public void GetUInt8_ShouldReturnInt2()
     {
         var result = _sut.GetUInt8();
-        result.Should().BeSameAs( PostgreSqlDataType.Int2 );
+        result.TestRefEquals( PostgreSqlDataType.Int2 ).Go();
     }
 
     [Fact]
     public void GetUInt16_ShouldReturnInt4()
     {
         var result = _sut.GetUInt16();
-        result.Should().BeSameAs( PostgreSqlDataType.Int4 );
+        result.TestRefEquals( PostgreSqlDataType.Int4 ).Go();
     }
 
     [Fact]
     public void GetUInt32_ShouldReturnInt8()
     {
         var result = _sut.GetUInt32();
-        result.Should().BeSameAs( PostgreSqlDataType.Int8 );
+        result.TestRefEquals( PostgreSqlDataType.Int8 ).Go();
     }
 
     [Fact]
     public void GetUInt64_ShouldReturnInt8()
     {
         var result = _sut.GetUInt64();
-        result.Should().BeSameAs( PostgreSqlDataType.Int8 );
+        result.TestRefEquals( PostgreSqlDataType.Int8 ).Go();
     }
 
     [Fact]
     public void GetFloat_ShouldReturnFloat4()
     {
         var result = _sut.GetFloat();
-        result.Should().BeSameAs( PostgreSqlDataType.Float4 );
+        result.TestRefEquals( PostgreSqlDataType.Float4 ).Go();
     }
 
     [Fact]
     public void GetDouble_ShouldReturnFloat8()
     {
         var result = _sut.GetDouble();
-        result.Should().BeSameAs( PostgreSqlDataType.Float8 );
+        result.TestRefEquals( PostgreSqlDataType.Float8 ).Go();
     }
 
     [Fact]
     public void GetDecimal_ShouldReturnDecimal()
     {
         var result = _sut.GetDecimal();
-        result.Should().BeSameAs( PostgreSqlDataType.Decimal );
+        result.TestRefEquals( PostgreSqlDataType.Decimal ).Go();
     }
 
     [Theory]
@@ -106,15 +105,14 @@ public class PostgreSqlDataTypeProviderTests : TestsBase
     {
         var sut = ( PostgreSqlDataType )_sut.GetDecimal( precision, scale );
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( expected );
-            sut.Value.Should().Be( NpgsqlDbType.Numeric );
-            sut.DbType.Should().Be( DbType.Decimal );
-            sut.Dialect.Should().BeSameAs( PostgreSqlDialect.Instance );
-            sut.Parameters.ToArray().Should().BeSequentiallyEqualTo( precision, scale );
-            sut.ParameterDefinitions.ToArray().Should().BeSequentiallyEqualTo( PostgreSqlDataType.Decimal.ParameterDefinitions.ToArray() );
-        }
+        Assertion.All(
+                sut.Name.TestEquals( expected ),
+                sut.Value.TestEquals( NpgsqlDbType.Numeric ),
+                sut.DbType.TestEquals( DbType.Decimal ),
+                sut.Dialect.TestRefEquals( PostgreSqlDialect.Instance ),
+                sut.Parameters.TestSequence( [ precision, scale ] ),
+                sut.ParameterDefinitions.TestSequence( PostgreSqlDataType.Decimal.ParameterDefinitions.ToArray() ) )
+            .Go();
     }
 
     [Theory]
@@ -125,28 +123,28 @@ public class PostgreSqlDataTypeProviderTests : TestsBase
     public void GetDecimal_ShouldThrowSqlDataTypeException_WhenPrecisionOrScaleAreInvalid(int precision, int scale)
     {
         var action = Lambda.Of( () => _sut.GetDecimal( precision, scale ) );
-        action.Should().ThrowExactly<SqlDataTypeException>();
+        action.Test( exc => exc.TestType().Exact<SqlDataTypeException>() ).Go();
     }
 
     [Fact]
     public void GetGuid_ShouldReturnUuid()
     {
         var result = _sut.GetGuid();
-        result.Should().BeSameAs( PostgreSqlDataType.Uuid );
+        result.TestRefEquals( PostgreSqlDataType.Uuid ).Go();
     }
 
     [Fact]
     public void GetString_ShouldReturnVarChar()
     {
         var result = _sut.GetString();
-        result.Should().BeSameAs( PostgreSqlDataType.VarChar );
+        result.TestRefEquals( PostgreSqlDataType.VarChar ).Go();
     }
 
     [Fact]
     public void GetString_WithMaxLength_ShouldReturnVarChar_WhenMaxLengthIsTooLarge()
     {
         var sut = _sut.GetString( 10485761 );
-        sut.Should().BeSameAs( PostgreSqlDataType.VarChar );
+        sut.TestRefEquals( PostgreSqlDataType.VarChar ).Go();
     }
 
     [Theory]
@@ -157,36 +155,35 @@ public class PostgreSqlDataTypeProviderTests : TestsBase
     {
         var sut = ( PostgreSqlDataType )_sut.GetString( maxLength );
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( expected );
-            sut.Value.Should().Be( NpgsqlDbType.Varchar );
-            sut.DbType.Should().Be( DbType.String );
-            sut.Dialect.Should().BeSameAs( PostgreSqlDialect.Instance );
-            sut.Parameters.ToArray().Should().BeSequentiallyEqualTo( maxLength );
-            sut.ParameterDefinitions.ToArray().Should().BeSequentiallyEqualTo( PostgreSqlDataType.VarChar.ParameterDefinitions.ToArray() );
-        }
+        Assertion.All(
+                sut.Name.TestEquals( expected ),
+                sut.Value.TestEquals( NpgsqlDbType.Varchar ),
+                sut.DbType.TestEquals( DbType.String ),
+                sut.Dialect.TestRefEquals( PostgreSqlDialect.Instance ),
+                sut.Parameters.TestSequence( [ maxLength ] ),
+                sut.ParameterDefinitions.TestSequence( PostgreSqlDataType.VarChar.ParameterDefinitions.ToArray() ) )
+            .Go();
     }
 
     [Fact]
     public void GetString_WithMaxLength_ShouldThrowSqlDataTypeException_WhenMaxLengthIsLessThanZero()
     {
         var action = Lambda.Of( () => _sut.GetString( -1 ) );
-        action.Should().ThrowExactly<SqlDataTypeException>();
+        action.Test( exc => exc.TestType().Exact<SqlDataTypeException>() ).Go();
     }
 
     [Fact]
     public void GetFixedString_ShouldReturnVarChar()
     {
         var result = _sut.GetFixedString();
-        result.Should().BeSameAs( PostgreSqlDataType.VarChar );
+        result.TestRefEquals( PostgreSqlDataType.VarChar ).Go();
     }
 
     [Fact]
     public void GetFixedString_WithLength_ShouldReturnVarChar_WhenLengthIsTooLarge()
     {
         var sut = _sut.GetFixedString( 10485761 );
-        sut.Should().BeSameAs( PostgreSqlDataType.VarChar );
+        sut.TestRefEquals( PostgreSqlDataType.VarChar ).Go();
     }
 
     [Theory]
@@ -197,91 +194,90 @@ public class PostgreSqlDataTypeProviderTests : TestsBase
     {
         var sut = ( PostgreSqlDataType )_sut.GetFixedString( length );
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( expected );
-            sut.Value.Should().Be( NpgsqlDbType.Varchar );
-            sut.DbType.Should().Be( DbType.String );
-            sut.Dialect.Should().BeSameAs( PostgreSqlDialect.Instance );
-            sut.Parameters.ToArray().Should().BeSequentiallyEqualTo( length );
-            sut.ParameterDefinitions.ToArray().Should().BeSequentiallyEqualTo( PostgreSqlDataType.VarChar.ParameterDefinitions.ToArray() );
-        }
+        Assertion.All(
+                sut.Name.TestEquals( expected ),
+                sut.Value.TestEquals( NpgsqlDbType.Varchar ),
+                sut.DbType.TestEquals( DbType.String ),
+                sut.Dialect.TestRefEquals( PostgreSqlDialect.Instance ),
+                sut.Parameters.TestSequence( [ length ] ),
+                sut.ParameterDefinitions.TestSequence( PostgreSqlDataType.VarChar.ParameterDefinitions.ToArray() ) )
+            .Go();
     }
 
     [Fact]
     public void GetFixedString_WithLength_ShouldThrowSqlDataTypeException_WhenLengthIsLessThanZero()
     {
         var action = Lambda.Of( () => _sut.GetFixedString( -1 ) );
-        action.Should().ThrowExactly<SqlDataTypeException>();
+        action.Test( exc => exc.TestType().Exact<SqlDataTypeException>() ).Go();
     }
 
     [Fact]
     public void GetTimestamp_ShouldReturnInt8()
     {
         var result = _sut.GetTimestamp();
-        result.Should().BeSameAs( PostgreSqlDataType.Int8 );
+        result.TestRefEquals( PostgreSqlDataType.Int8 ).Go();
     }
 
     [Fact]
     public void GetUtcDateTime_ShouldReturnTimestampTz()
     {
         var result = _sut.GetUtcDateTime();
-        result.Should().BeSameAs( PostgreSqlDataType.TimestampTz );
+        result.TestRefEquals( PostgreSqlDataType.TimestampTz ).Go();
     }
 
     [Fact]
     public void GetDateTime_ShouldReturnTimestamp()
     {
         var result = _sut.GetDateTime();
-        result.Should().BeSameAs( PostgreSqlDataType.Timestamp );
+        result.TestRefEquals( PostgreSqlDataType.Timestamp ).Go();
     }
 
     [Fact]
     public void GetTimeSpan_ShouldReturnInt8()
     {
         var result = _sut.GetTimeSpan();
-        result.Should().BeSameAs( PostgreSqlDataType.Int8 );
+        result.TestRefEquals( PostgreSqlDataType.Int8 ).Go();
     }
 
     [Fact]
     public void GetDate_ShouldReturnDate()
     {
         var result = _sut.GetDate();
-        result.Should().BeSameAs( PostgreSqlDataType.Date );
+        result.TestRefEquals( PostgreSqlDataType.Date ).Go();
     }
 
     [Fact]
     public void GetTime_ShouldReturnTime()
     {
         var result = _sut.GetTime();
-        result.Should().BeSameAs( PostgreSqlDataType.Time );
+        result.TestRefEquals( PostgreSqlDataType.Time ).Go();
     }
 
     [Fact]
     public void GetBinary_ShouldReturnBytea()
     {
         var result = _sut.GetBinary();
-        result.Should().BeSameAs( PostgreSqlDataType.Bytea );
+        result.TestRefEquals( PostgreSqlDataType.Bytea ).Go();
     }
 
     [Fact]
     public void GetBinary_WithMaxLength_ShouldReturnBytea()
     {
         var sut = _sut.GetBinary( 10485761 );
-        sut.Should().BeSameAs( PostgreSqlDataType.Bytea );
+        sut.TestRefEquals( PostgreSqlDataType.Bytea ).Go();
     }
 
     [Fact]
     public void GetFixedBinary_ShouldReturnBytea()
     {
         var result = _sut.GetFixedBinary();
-        result.Should().BeSameAs( PostgreSqlDataType.Bytea );
+        result.TestRefEquals( PostgreSqlDataType.Bytea ).Go();
     }
 
     [Fact]
     public void GetFixedBinary_WithLength_ShouldReturnBytea()
     {
         var sut = _sut.GetFixedBinary( 10485761 );
-        sut.Should().BeSameAs( PostgreSqlDataType.Bytea );
+        sut.TestRefEquals( PostgreSqlDataType.Bytea ).Go();
     }
 }

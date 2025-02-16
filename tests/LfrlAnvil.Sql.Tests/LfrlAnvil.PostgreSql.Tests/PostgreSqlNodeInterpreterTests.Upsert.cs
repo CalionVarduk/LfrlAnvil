@@ -31,8 +31,7 @@ public partial class PostgreSqlNodeInterpreterTests
                         r => new[] { r["a"], r["c"] } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     INSERT INTO qux ("a", "b")
                     VALUES
@@ -41,7 +40,8 @@ public partial class PostgreSqlNodeInterpreterTests
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = (qux."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -62,8 +62,7 @@ public partial class PostgreSqlNodeInterpreterTests
                         (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     INSERT INTO "common"."qux" ("a", "b")
                     VALUES
@@ -72,7 +71,8 @@ public partial class PostgreSqlNodeInterpreterTests
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = ("common"."qux"."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -93,8 +93,7 @@ public partial class PostgreSqlNodeInterpreterTests
                         (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     INSERT INTO "common"."qux" ("a", "b")
                     VALUES
@@ -103,7 +102,8 @@ public partial class PostgreSqlNodeInterpreterTests
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = ("common"."qux"."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -129,8 +129,7 @@ public partial class PostgreSqlNodeInterpreterTests
                         (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     INSERT INTO "qux" ("a", "b")
                     VALUES
@@ -139,7 +138,8 @@ public partial class PostgreSqlNodeInterpreterTests
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = ("qux"."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -176,8 +176,7 @@ public partial class PostgreSqlNodeInterpreterTests
                     r => new[] { r["a"], r["c"] } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     WITH "cba" AS (
                       SELECT * FROM abc
@@ -200,7 +199,8 @@ public partial class PostgreSqlNodeInterpreterTests
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = (qux."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -237,8 +237,7 @@ public partial class PostgreSqlNodeInterpreterTests
                     (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     WITH "cba" AS (
                       SELECT * FROM abc
@@ -261,7 +260,8 @@ public partial class PostgreSqlNodeInterpreterTests
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = ("common"."qux"."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -298,8 +298,7 @@ public partial class PostgreSqlNodeInterpreterTests
                     (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     WITH "cba" AS (
                       SELECT * FROM abc
@@ -322,7 +321,8 @@ public partial class PostgreSqlNodeInterpreterTests
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = ("common"."qux"."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -364,8 +364,7 @@ public partial class PostgreSqlNodeInterpreterTests
                     (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     WITH "cba" AS (
                       SELECT * FROM abc
@@ -388,7 +387,8 @@ public partial class PostgreSqlNodeInterpreterTests
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = ("qux"."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -412,8 +412,7 @@ public partial class PostgreSqlNodeInterpreterTests
                     r => new[] { r["a"], r["c"] } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     WITH "x" AS (
                       SELECT * FROM ipsum
@@ -430,7 +429,8 @@ public partial class PostgreSqlNodeInterpreterTests
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = (qux."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -454,8 +454,7 @@ public partial class PostgreSqlNodeInterpreterTests
                     (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     WITH "x" AS (
                       SELECT * FROM ipsum
@@ -472,7 +471,8 @@ public partial class PostgreSqlNodeInterpreterTests
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = ("common"."qux"."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -496,8 +496,7 @@ public partial class PostgreSqlNodeInterpreterTests
                     (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     WITH "x" AS (
                       SELECT * FROM ipsum
@@ -514,7 +513,8 @@ public partial class PostgreSqlNodeInterpreterTests
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = ("common"."qux"."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -543,8 +543,7 @@ public partial class PostgreSqlNodeInterpreterTests
                     (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     WITH "x" AS (
                       SELECT * FROM ipsum
@@ -561,7 +560,8 @@ public partial class PostgreSqlNodeInterpreterTests
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = ("qux"."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -577,15 +577,15 @@ public partial class PostgreSqlNodeInterpreterTests
                         r => new[] { r["a"], r["c"] } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     INSERT INTO qux ("a", "b")
                     SELECT * FROM bar
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = (qux."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -601,15 +601,15 @@ public partial class PostgreSqlNodeInterpreterTests
                         (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     INSERT INTO "common"."qux" ("a", "b")
                     SELECT * FROM bar
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = ("common"."qux"."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -625,15 +625,15 @@ public partial class PostgreSqlNodeInterpreterTests
                         (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     INSERT INTO "common"."qux" ("a", "b")
                     SELECT * FROM bar
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = ("common"."qux"."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -654,22 +654,23 @@ public partial class PostgreSqlNodeInterpreterTests
                         (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     INSERT INTO "qux" ("a", "b")
                     SELECT * FROM bar
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = ("qux"."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
         public void Visit_ShouldThrowSqlNodeVisitorException_WithoutConflictTargetAndTargetWithoutIdentityColumns()
         {
             var sut = CreateInterpreter();
-            var node = SqlNode.Values(
+            var node = SqlNode
+                .Values(
                     new[,]
                     {
                         { SqlNode.Literal( "foo" ), SqlNode.Literal( 5 ) }, { SqlNode.RawExpression( "bar.a" ), SqlNode.Literal( 25 ) }
@@ -681,7 +682,7 @@ public partial class PostgreSqlNodeInterpreterTests
 
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should().ThrowExactly<SqlNodeVisitorException>();
+            action.Test( exc => exc.TestType().Exact<SqlNodeVisitorException>() ).Go();
         }
 
         [Fact]
@@ -700,7 +701,7 @@ public partial class PostgreSqlNodeInterpreterTests
 
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should().ThrowExactly<SqlNodeVisitorException>();
+            action.Test( exc => exc.TestType().Exact<SqlNodeVisitorException>() ).Go();
         }
     }
 }

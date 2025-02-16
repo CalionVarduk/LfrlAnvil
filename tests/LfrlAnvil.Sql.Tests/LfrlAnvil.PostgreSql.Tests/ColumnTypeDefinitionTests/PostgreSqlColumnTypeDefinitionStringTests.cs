@@ -21,7 +21,7 @@ public class PostgreSqlColumnTypeDefinitionStringTests : TestsBase
     {
         var sut = _provider.GetByType<string>();
         var result = sut.TryToDbLiteral( value );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -29,7 +29,7 @@ public class PostgreSqlColumnTypeDefinitionStringTests : TestsBase
     {
         var sut = _provider.GetByType<string>();
         var result = sut.TryToDbLiteral( '0' );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -38,7 +38,7 @@ public class PostgreSqlColumnTypeDefinitionStringTests : TestsBase
         var value = "foo";
         var sut = _provider.GetByType<string>();
         var result = sut.TryToParameterValue( value );
-        result.Should().BeSameAs( value );
+        result.TestRefEquals( value ).Go();
     }
 
     [Fact]
@@ -46,7 +46,7 @@ public class PostgreSqlColumnTypeDefinitionStringTests : TestsBase
     {
         var sut = _provider.GetByType<string>();
         var result = sut.TryToParameterValue( '0' );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -59,12 +59,11 @@ public class PostgreSqlColumnTypeDefinitionStringTests : TestsBase
 
         sut.SetParameterInfo( parameter, isNullable );
 
-        using ( new AssertionScope() )
-        {
-            parameter.DbType.Should().Be( sut.DataType.DbType );
-            parameter.NpgsqlDbType.Should().Be( NpgsqlDbType.Varchar );
-            parameter.IsNullable.Should().Be( isNullable );
-        }
+        Assertion.All(
+                parameter.DbType.TestEquals( sut.DataType.DbType ),
+                parameter.NpgsqlDbType.TestEquals( NpgsqlDbType.Varchar ),
+                parameter.IsNullable.TestEquals( isNullable ) )
+            .Go();
     }
 
     [Theory]
@@ -77,6 +76,6 @@ public class PostgreSqlColumnTypeDefinitionStringTests : TestsBase
 
         sut.SetParameterInfo( parameter, isNullable );
 
-        parameter.DbType.Should().Be( sut.DataType.DbType );
+        parameter.DbType.TestEquals( sut.DataType.DbType ).Go();
     }
 }

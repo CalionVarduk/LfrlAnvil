@@ -21,7 +21,7 @@ public class PostgreSqlColumnTypeDefinitionFloatTests : TestsBase
     {
         var sut = _provider.GetByType<float>();
         var result = sut.TryToDbLiteral( value );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -29,7 +29,7 @@ public class PostgreSqlColumnTypeDefinitionFloatTests : TestsBase
     {
         var sut = _provider.GetByType<float>();
         var result = sut.TryToDbLiteral( 0.0 );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -37,7 +37,7 @@ public class PostgreSqlColumnTypeDefinitionFloatTests : TestsBase
     {
         var sut = _provider.GetByType<float>();
         var result = sut.TryToParameterValue( 123.625f );
-        result.Should().Be( 123.625 );
+        result.TestEquals( 123.625f ).Go();
     }
 
     [Fact]
@@ -45,7 +45,7 @@ public class PostgreSqlColumnTypeDefinitionFloatTests : TestsBase
     {
         var sut = _provider.GetByType<float>();
         var result = sut.TryToParameterValue( 0.0 );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -58,12 +58,11 @@ public class PostgreSqlColumnTypeDefinitionFloatTests : TestsBase
 
         sut.SetParameterInfo( parameter, isNullable );
 
-        using ( new AssertionScope() )
-        {
-            parameter.DbType.Should().Be( sut.DataType.DbType );
-            parameter.NpgsqlDbType.Should().Be( NpgsqlDbType.Real );
-            parameter.IsNullable.Should().Be( isNullable );
-        }
+        Assertion.All(
+                parameter.DbType.TestEquals( sut.DataType.DbType ),
+                parameter.NpgsqlDbType.TestEquals( NpgsqlDbType.Real ),
+                parameter.IsNullable.TestEquals( isNullable ) )
+            .Go();
     }
 
     [Theory]
@@ -76,6 +75,6 @@ public class PostgreSqlColumnTypeDefinitionFloatTests : TestsBase
 
         sut.SetParameterInfo( parameter, isNullable );
 
-        parameter.DbType.Should().Be( sut.DataType.DbType );
+        parameter.DbType.TestEquals( sut.DataType.DbType ).Go();
     }
 }

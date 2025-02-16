@@ -20,7 +20,7 @@ public class PostgreSqlColumnTypeDefinitionTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -28,6 +28,6 @@ public class PostgreSqlColumnTypeDefinitionTests : TestsBase
     {
         var provider = new PostgreSqlColumnTypeDefinitionProvider( new PostgreSqlColumnTypeDefinitionProviderBuilder() );
         var action = Lambda.Of( () => provider.GetByType<NpgsqlParameter>() );
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 }
