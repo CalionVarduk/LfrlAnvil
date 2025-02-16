@@ -4,7 +4,6 @@ using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sqlite.Tests;
@@ -19,7 +18,7 @@ public partial class SqliteNodeInterpreterTests
             var sut = CreateInterpreter();
             var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
             sut.Visit( dataSource.ToDeleteFrom() );
-            sut.Context.Sql.ToString().Should().Be( "DELETE FROM foo" );
+            sut.Context.Sql.ToString().TestEquals( "DELETE FROM foo" ).Go();
         }
 
         [Fact]
@@ -33,12 +32,12 @@ public partial class SqliteNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     DELETE FROM foo
                     WHERE foo."a" < 10
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -53,12 +52,12 @@ public partial class SqliteNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     DELETE FROM "common_foo" AS "bar"
                     WHERE "bar"."a" < 10
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -77,8 +76,7 @@ public partial class SqliteNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     WITH "cba" AS (
                       SELECT * FROM abc
@@ -89,7 +87,8 @@ public partial class SqliteNodeInterpreterTests
                     )
                     ORDER BY "f"."a" ASC
                     LIMIT 5 OFFSET 10
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -108,8 +107,7 @@ public partial class SqliteNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     WITH "cba" AS (
                       SELECT * FROM abc
@@ -125,7 +123,8 @@ public partial class SqliteNodeInterpreterTests
                       ORDER BY "f"."a" ASC
                       LIMIT 5 OFFSET 10
                     )
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -150,8 +149,7 @@ public partial class SqliteNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     WITH "cba" AS (
                       SELECT * FROM abc
@@ -170,7 +168,8 @@ public partial class SqliteNodeInterpreterTests
                       ORDER BY "f"."a" ASC
                       LIMIT 5 OFFSET 10
                     )
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -184,8 +183,7 @@ public partial class SqliteNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     DELETE FROM "common_foo"
                     WHERE "common_foo"."a" IN (
@@ -194,7 +192,8 @@ public partial class SqliteNodeInterpreterTests
                       FROM "common_foo" AS "f"
                       INNER JOIN bar ON "f"."a" = bar."a"
                     )
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -212,8 +211,7 @@ public partial class SqliteNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     WITH "cba" AS (
                       SELECT * FROM abc
@@ -226,7 +224,8 @@ public partial class SqliteNodeInterpreterTests
                       INNER JOIN bar AS "b" ON "f"."a" = "b"."a"
                       WHERE "f"."a" < 10
                     )
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -247,8 +246,7 @@ public partial class SqliteNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     WITH "cba" AS (
                       SELECT * FROM abc
@@ -265,7 +263,8 @@ public partial class SqliteNodeInterpreterTests
                       ORDER BY "f"."a" ASC
                       LIMIT 5
                     )
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -291,8 +290,7 @@ public partial class SqliteNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     WITH "cba" AS (
                       SELECT * FROM abc
@@ -312,7 +310,8 @@ public partial class SqliteNodeInterpreterTests
                       ORDER BY "f"."a" ASC
                       LIMIT 5 OFFSET 10
                     )
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -330,8 +329,7 @@ public partial class SqliteNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     DELETE FROM "common_foo"
                     WHERE "common_foo"."a" IN (
@@ -341,7 +339,8 @@ public partial class SqliteNodeInterpreterTests
                       INNER JOIN bar ON "f"."a" = bar."a"
                       GROUP BY "f"."b"
                     )
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -359,8 +358,7 @@ public partial class SqliteNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     DELETE FROM "common_foo"
                     WHERE EXISTS (
@@ -371,7 +369,8 @@ public partial class SqliteNodeInterpreterTests
                       WHERE ("common_foo"."a" = "f"."a") AND ("common_foo"."b" = "f"."b")
                       GROUP BY "f"."b"
                     )
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -389,8 +388,7 @@ public partial class SqliteNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     DELETE FROM "common_foo"
                     WHERE "common_foo"."a" IN (
@@ -400,7 +398,8 @@ public partial class SqliteNodeInterpreterTests
                       INNER JOIN bar ON "f"."a" = bar."a"
                       GROUP BY "f"."b"
                     )
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -418,8 +417,7 @@ public partial class SqliteNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     DELETE FROM "common_foo"
                     WHERE EXISTS (
@@ -430,7 +428,8 @@ public partial class SqliteNodeInterpreterTests
                       WHERE ("common_foo"."a" = "f"."a") AND ("common_foo"."b" = "f"."b")
                       GROUP BY "f"."b"
                     )
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -451,8 +450,7 @@ public partial class SqliteNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     DELETE FROM "common_foo"
                     WHERE EXISTS (
@@ -463,7 +461,8 @@ public partial class SqliteNodeInterpreterTests
                       WHERE ("f"."a" > 10) AND (("common_foo"."a" = "f"."a") AND ("common_foo"."b" = "f"."b"))
                       GROUP BY "f"."b"
                     )
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Theory]
@@ -492,8 +491,7 @@ public partial class SqliteNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     $"""
                      DELETE FROM {expectedName}
                      WHERE {expectedName}."a" IN (
@@ -503,7 +501,8 @@ public partial class SqliteNodeInterpreterTests
                        INNER JOIN bar ON "f"."a" = bar."a"
                        GROUP BY "f"."b"
                      )
-                     """ );
+                     """ )
+                .Go();
         }
 
         [Theory]
@@ -532,8 +531,7 @@ public partial class SqliteNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     $"""
                      DELETE FROM {expectedName}
                      WHERE EXISTS (
@@ -544,7 +542,8 @@ public partial class SqliteNodeInterpreterTests
                        WHERE ({expectedName}."a" = "f"."a") AND ({expectedName}."b" = "f"."b")
                        GROUP BY "f"."b"
                      )
-                     """ );
+                     """ )
+                .Go();
         }
 
         [Theory]
@@ -567,8 +566,7 @@ public partial class SqliteNodeInterpreterTests
             sut.Visit( dataSource.ToDeleteFrom() );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     $"""
                      DELETE FROM {expectedName}
                      WHERE EXISTS (
@@ -579,7 +577,8 @@ public partial class SqliteNodeInterpreterTests
                        WHERE ({expectedName}."a" = "f"."a") AND ({expectedName}."b" = "f"."b")
                        GROUP BY "f"."b"
                      )
-                     """ );
+                     """ )
+                .Go();
         }
 
         [Fact]
@@ -590,9 +589,11 @@ public partial class SqliteNodeInterpreterTests
             var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should()
-                .ThrowExactly<SqlNodeVisitorException>()
-                .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlNodeVisitorException>(
+                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -603,9 +604,11 @@ public partial class SqliteNodeInterpreterTests
             var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should()
-                .ThrowExactly<SqlNodeVisitorException>()
-                .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlNodeVisitorException>(
+                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -616,9 +619,11 @@ public partial class SqliteNodeInterpreterTests
             var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should()
-                .ThrowExactly<SqlNodeVisitorException>()
-                .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlNodeVisitorException>(
+                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -630,9 +635,11 @@ public partial class SqliteNodeInterpreterTests
             var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should()
-                .ThrowExactly<SqlNodeVisitorException>()
-                .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlNodeVisitorException>(
+                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -651,9 +658,11 @@ public partial class SqliteNodeInterpreterTests
             var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should()
-                .ThrowExactly<SqlNodeVisitorException>()
-                .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlNodeVisitorException>(
+                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -674,9 +683,11 @@ public partial class SqliteNodeInterpreterTests
             var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should()
-                .ThrowExactly<SqlNodeVisitorException>()
-                .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+            action.Test(
+                    exc => exc.TestType()
+                        .Exact<SqlNodeVisitorException>(
+                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+                .Go();
         }
     }
 }

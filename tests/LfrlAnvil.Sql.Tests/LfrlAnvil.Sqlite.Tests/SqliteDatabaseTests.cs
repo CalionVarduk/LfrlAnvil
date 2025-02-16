@@ -7,7 +7,6 @@ using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Versioning;
 using LfrlAnvil.Sqlite.Objects;
 using LfrlAnvil.Sqlite.Tests.Helpers;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sqlite.Tests;
 
@@ -21,25 +20,24 @@ public class SqliteDatabaseTests : TestsBase
         var dbBuilder = SqliteDatabaseBuilderMock.Create( arePositionalParametersEnabled );
         var sut = SqliteDatabaseMock.Create( dbBuilder );
 
-        using ( new AssertionScope() )
-        {
-            sut.Dialect.Should().BeSameAs( dbBuilder.Dialect );
-            sut.Version.Should().Be( new Version( "0.0" ) );
-            sut.ServerVersion.Should().BeSameAs( dbBuilder.ServerVersion );
-            sut.DataTypes.Should().BeSameAs( dbBuilder.DataTypes );
-            sut.TypeDefinitions.Should().BeSameAs( dbBuilder.TypeDefinitions );
-            sut.NodeInterpreters.Should().BeSameAs( dbBuilder.NodeInterpreters );
-            sut.QueryReaders.Should().BeSameAs( dbBuilder.QueryReaders );
-            sut.ParameterBinders.Should().BeSameAs( dbBuilder.ParameterBinders );
-            sut.ParameterBinders.SupportsPositionalParameters.Should().Be( arePositionalParametersEnabled );
-            sut.Schemas.Database.Should().BeSameAs( sut );
-            sut.Schemas.Count.Should().Be( 1 );
-            sut.Schemas.Default.Name.Should().BeEmpty();
-            sut.Schemas.Should().BeSequentiallyEqualTo( sut.Schemas.Default );
-            sut.Connector.Database.Should().BeSameAs( sut );
-            (( ISqlDatabaseConnector<DbConnection> )sut.Connector).Database.Should().BeSameAs( sut );
-            (( ISqlDatabaseConnector )sut.Connector).Database.Should().BeSameAs( sut );
-        }
+        Assertion.All(
+                sut.Dialect.TestRefEquals( dbBuilder.Dialect ),
+                sut.Version.TestEquals( new Version( "0.0" ) ),
+                sut.ServerVersion.TestRefEquals( dbBuilder.ServerVersion ),
+                sut.DataTypes.TestRefEquals( dbBuilder.DataTypes ),
+                sut.TypeDefinitions.TestRefEquals( dbBuilder.TypeDefinitions ),
+                sut.NodeInterpreters.TestRefEquals( dbBuilder.NodeInterpreters ),
+                sut.QueryReaders.TestRefEquals( dbBuilder.QueryReaders ),
+                sut.ParameterBinders.TestRefEquals( dbBuilder.ParameterBinders ),
+                sut.ParameterBinders.SupportsPositionalParameters.TestEquals( arePositionalParametersEnabled ),
+                sut.Schemas.Database.TestRefEquals( sut ),
+                sut.Schemas.Count.TestEquals( 1 ),
+                sut.Schemas.Default.Name.TestEmpty(),
+                sut.Schemas.TestSequence( [ sut.Schemas.Default ] ),
+                sut.Connector.Database.TestRefEquals( sut ),
+                (( ISqlDatabaseConnector<DbConnection> )sut.Connector).Database.TestRefEquals( sut ),
+                (( ISqlDatabaseConnector )sut.Connector).Database.TestRefEquals( sut ) )
+            .Go();
     }
 
     [Theory]
@@ -55,7 +53,7 @@ public class SqliteDatabaseTests : TestsBase
 
         var result = sut.Contains( name );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -68,7 +66,7 @@ public class SqliteDatabaseTests : TestsBase
 
         var result = sut.Get( "foo" );
 
-        result.Should().BeSameAs( sut.Default );
+        result.TestRefEquals( sut.Default ).Go();
     }
 
     [Fact]
@@ -81,7 +79,7 @@ public class SqliteDatabaseTests : TestsBase
 
         var action = Lambda.Of( () => sut.Get( "bar" ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -94,7 +92,7 @@ public class SqliteDatabaseTests : TestsBase
 
         var result = sut.TryGet( "foo" );
 
-        result.Should().BeSameAs( sut.Default );
+        result.TestRefEquals( sut.Default ).Go();
     }
 
     [Fact]
@@ -107,7 +105,7 @@ public class SqliteDatabaseTests : TestsBase
 
         var result = sut.TryGet( "bar" );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -122,11 +120,10 @@ public class SqliteDatabaseTests : TestsBase
         foreach ( var s in sut )
             result.Add( s );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().HaveCount( 2 );
-            result.Should().BeEquivalentTo( sut.Default, schema );
-        }
+        Assertion.All(
+                result.Count.TestEquals( 2 ),
+                result.TestSetEqual( [ sut.Default, schema ] ) )
+            .Go();
     }
 
     [Fact]
@@ -138,7 +135,7 @@ public class SqliteDatabaseTests : TestsBase
         var first = sut.Connector.Connect();
         var second = sut.Connector.Connect();
 
-        first.Should().BeSameAs( second );
+        first.TestRefEquals( second ).Go();
     }
 
     [Fact]
@@ -150,7 +147,7 @@ public class SqliteDatabaseTests : TestsBase
         var first = await sut.Connector.ConnectAsync();
         var second = await (( ISqlDatabaseConnector<DbConnection> )sut.Connector).ConnectAsync();
 
-        first.Should().BeSameAs( second );
+        first.TestRefEquals( second ).Go();
     }
 
     [Fact]
@@ -162,7 +159,7 @@ public class SqliteDatabaseTests : TestsBase
 
         sut.Dispose();
 
-        connection.State.Should().Be( ConnectionState.Closed );
+        connection.State.TestEquals( ConnectionState.Closed ).Go();
     }
 
     [Fact]
@@ -175,7 +172,7 @@ public class SqliteDatabaseTests : TestsBase
 
         var action = Lambda.Of( () => connection.Open() );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -187,6 +184,6 @@ public class SqliteDatabaseTests : TestsBase
 
         var action = Lambda.Of( () => connection.ConnectionString = connection.ConnectionString );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 }

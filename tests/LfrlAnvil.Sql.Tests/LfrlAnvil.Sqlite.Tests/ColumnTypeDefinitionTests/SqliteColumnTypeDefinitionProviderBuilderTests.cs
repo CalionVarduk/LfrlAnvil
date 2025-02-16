@@ -17,11 +17,10 @@ public class SqliteColumnTypeDefinitionProviderBuilderTests : TestsBase
         var definition = new TypeDefinition<StringBuilder>( SqliteDataType.Text, new StringBuilder() );
         var result = _sut.Register( definition );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( _sut );
-            _sut.Contains( definition.RuntimeType ).Should().BeTrue();
-        }
+        Assertion.All(
+                result.TestRefEquals( _sut ),
+                _sut.Contains( definition.RuntimeType ).TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -30,11 +29,10 @@ public class SqliteColumnTypeDefinitionProviderBuilderTests : TestsBase
         var definition = new TypeDefinition<int>( SqliteDataType.Integer, 0 );
         var result = _sut.Register( definition );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( _sut );
-            _sut.Contains( definition.RuntimeType ).Should().BeTrue();
-        }
+        Assertion.All(
+                result.TestRefEquals( _sut ),
+                _sut.Contains( definition.RuntimeType ).TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -48,46 +46,46 @@ public class SqliteColumnTypeDefinitionProviderBuilderTests : TestsBase
         var typeDefinitions = result.GetTypeDefinitions();
         var dataTypeDefinitions = result.GetDataTypeDefinitions();
 
-        using ( new AssertionScope() )
-        {
-            typeDefinitions.Count.Should().Be( 23 );
-            typeDefinitions.Select( t => (t.DataType, t.RuntimeType) )
-                .Should()
-                .BeEquivalentTo(
-                    (SqliteDataType.Integer, typeof( long )),
-                    (SqliteDataType.Real, typeof( double )),
-                    (SqliteDataType.Text, typeof( string )),
-                    (SqliteDataType.Integer, typeof( bool )),
-                    (SqliteDataType.Blob, typeof( byte[] )),
-                    (SqliteDataType.Integer, typeof( byte )),
-                    (SqliteDataType.Integer, typeof( sbyte )),
-                    (SqliteDataType.Integer, typeof( ushort )),
-                    (SqliteDataType.Integer, typeof( short )),
-                    (SqliteDataType.Integer, typeof( uint )),
-                    (SqliteDataType.Integer, typeof( int )),
-                    (SqliteDataType.Integer, typeof( ulong )),
-                    (SqliteDataType.Integer, typeof( TimeSpan )),
-                    (SqliteDataType.Real, typeof( float )),
-                    (SqliteDataType.Text, typeof( DateTime )),
-                    (SqliteDataType.Text, typeof( DateTimeOffset )),
-                    (SqliteDataType.Text, typeof( DateOnly )),
-                    (SqliteDataType.Text, typeof( TimeOnly )),
-                    (SqliteDataType.Text, typeof( decimal )),
-                    (SqliteDataType.Text, typeof( char )),
-                    (SqliteDataType.Blob, typeof( Guid )),
-                    (SqliteDataType.Text, typeof( StringBuilder )),
-                    (SqliteDataType.Any, typeof( object )) );
-
-            dataTypeDefinitions.Count.Should().Be( 5 );
-            dataTypeDefinitions.Select( t => t.DataType )
-                .Should()
-                .BeEquivalentTo(
-                    SqliteDataType.Any,
-                    SqliteDataType.Integer,
-                    SqliteDataType.Real,
-                    SqliteDataType.Text,
-                    SqliteDataType.Blob );
-        }
+        Assertion.All(
+                typeDefinitions.Count.TestEquals( 23 ),
+                typeDefinitions.Select( t => (t.DataType, t.RuntimeType) )
+                    .TestSetEqual(
+                    [
+                        (SqliteDataType.Integer, typeof( long )),
+                        (SqliteDataType.Real, typeof( double )),
+                        (SqliteDataType.Text, typeof( string )),
+                        (SqliteDataType.Integer, typeof( bool )),
+                        (SqliteDataType.Blob, typeof( byte[] )),
+                        (SqliteDataType.Integer, typeof( byte )),
+                        (SqliteDataType.Integer, typeof( sbyte )),
+                        (SqliteDataType.Integer, typeof( ushort )),
+                        (SqliteDataType.Integer, typeof( short )),
+                        (SqliteDataType.Integer, typeof( uint )),
+                        (SqliteDataType.Integer, typeof( int )),
+                        (SqliteDataType.Integer, typeof( ulong )),
+                        (SqliteDataType.Integer, typeof( TimeSpan )),
+                        (SqliteDataType.Real, typeof( float )),
+                        (SqliteDataType.Text, typeof( DateTime )),
+                        (SqliteDataType.Text, typeof( DateTimeOffset )),
+                        (SqliteDataType.Text, typeof( DateOnly )),
+                        (SqliteDataType.Text, typeof( TimeOnly )),
+                        (SqliteDataType.Text, typeof( decimal )),
+                        (SqliteDataType.Text, typeof( char )),
+                        (SqliteDataType.Blob, typeof( Guid )),
+                        (SqliteDataType.Text, typeof( StringBuilder )),
+                        (SqliteDataType.Any, typeof( object ))
+                    ] ),
+                dataTypeDefinitions.Count.TestEquals( 5 ),
+                dataTypeDefinitions.Select( t => t.DataType )
+                    .TestSetEqual(
+                    [
+                        SqliteDataType.Any,
+                        SqliteDataType.Integer,
+                        SqliteDataType.Real,
+                        SqliteDataType.Text,
+                        SqliteDataType.Blob
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -95,7 +93,7 @@ public class SqliteColumnTypeDefinitionProviderBuilderTests : TestsBase
     {
         var definition = new SqlColumnTypeDefinitionMock<int>( SqlDataTypeMock.Integer, 0 );
         var action = Lambda.Of( () => (( ISqlColumnTypeDefinitionProviderBuilder )_sut).Register( definition ) );
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Theory]
@@ -104,7 +102,7 @@ public class SqliteColumnTypeDefinitionProviderBuilderTests : TestsBase
     public void Contains_ShouldReturnTrue_WhenDefinitionExists(Type type, bool expected)
     {
         var result = _sut.Contains( type );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     public sealed class TypeDefinition<T> : SqliteColumnTypeDefinition<T>

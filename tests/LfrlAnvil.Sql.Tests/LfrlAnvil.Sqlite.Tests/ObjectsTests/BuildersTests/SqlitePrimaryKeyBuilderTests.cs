@@ -5,9 +5,8 @@ using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.Sqlite.Tests.Helpers;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.Sqlite.Tests.ObjectsTests.BuildersTests;
 
@@ -22,7 +21,7 @@ public class SqlitePrimaryKeyBuilderTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( "[PrimaryKey] foo_bar" );
+        result.TestEquals( "[PrimaryKey] foo_bar" ).Go();
     }
 
     [Fact]
@@ -38,33 +37,32 @@ public class SqlitePrimaryKeyBuilderTests : TestsBase
         var sut = table.Constraints.SetPrimaryKey( c2.Asc() );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            table.Constraints.TryGet( sut.Name ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.Name.Should().Be( "PK_T" );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    CREATE TABLE "__foo_T__{GUID}__" (
-                                          "C1" ANY NOT NULL,
-                                          "C2" ANY NOT NULL,
-                                          CONSTRAINT "foo_PK_T" PRIMARY KEY ("C2" ASC)
-                                        ) WITHOUT ROWID;
-                    """,
-                    """
-                    INSERT INTO "__foo_T__{GUID}__" ("C1", "C2")
-                                        SELECT
-                                          "foo_T"."C1",
-                                          "foo_T"."C2"
-                                        FROM "foo_T";
-                    """,
-                    "DROP TABLE \"foo_T\";",
-                    "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
-        }
+        Assertion.All(
+                table.Constraints.TryGet( sut.Name ).TestRefEquals( sut ),
+                schema.Objects.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.Name.TestEquals( "PK_T" ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            CREATE TABLE "__foo_T__{GUID}__" (
+                              "C1" ANY NOT NULL,
+                              "C2" ANY NOT NULL,
+                              CONSTRAINT "foo_PK_T" PRIMARY KEY ("C2" ASC)
+                            ) WITHOUT ROWID;
+                            """,
+                            """
+                            INSERT INTO "__foo_T__{GUID}__" ("C1", "C2")
+                            SELECT
+                              "foo_T"."C1",
+                              "foo_T"."C2"
+                            FROM "foo_T";
+                            """,
+                            "DROP TABLE \"foo_T\";",
+                            "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -78,11 +76,10 @@ public class SqlitePrimaryKeyBuilderTests : TestsBase
         var result = sut.SetName( sut.Name );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -98,11 +95,10 @@ public class SqlitePrimaryKeyBuilderTests : TestsBase
         var result = sut.SetName( oldName );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -117,34 +113,33 @@ public class SqlitePrimaryKeyBuilderTests : TestsBase
         var result = sut.SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            table.Constraints.TryGet( "bar" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( oldName ).Should().BeNull();
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( oldName ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    CREATE TABLE "__foo_T__{GUID}__" (
-                                          "C" ANY NOT NULL,
-                                          CONSTRAINT "foo_bar" PRIMARY KEY ("C" ASC)
-                                        ) WITHOUT ROWID;
-                    """,
-                    """
-                    INSERT INTO "__foo_T__{GUID}__" ("C")
-                                        SELECT
-                                          "foo_T"."C"
-                                        FROM "foo_T";
-                    """,
-                    "DROP TABLE \"foo_T\";",
-                    "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                table.Constraints.TryGet( "bar" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( oldName ).TestNull(),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( oldName ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            CREATE TABLE "__foo_T__{GUID}__" (
+                              "C" ANY NOT NULL,
+                              CONSTRAINT "foo_bar" PRIMARY KEY ("C" ASC)
+                            ) WITHOUT ROWID;
+                            """,
+                            """
+                            INSERT INTO "__foo_T__{GUID}__" ("C")
+                            SELECT
+                              "foo_T"."C"
+                            FROM "foo_T";
+                            """,
+                            "DROP TABLE \"foo_T\";",
+                            "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" )
+                    ] ) )
+            .Go();
     }
 
     [Theory]
@@ -161,9 +156,11 @@ public class SqlitePrimaryKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( name ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqliteDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -176,9 +173,11 @@ public class SqlitePrimaryKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "bar" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqliteDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -190,9 +189,11 @@ public class SqlitePrimaryKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "T" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqliteDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -206,11 +207,10 @@ public class SqlitePrimaryKeyBuilderTests : TestsBase
         var result = sut.SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -225,11 +225,10 @@ public class SqlitePrimaryKeyBuilderTests : TestsBase
         var result = sut.SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -243,34 +242,33 @@ public class SqlitePrimaryKeyBuilderTests : TestsBase
         var result = sut.SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "PK_T" );
-            table.Constraints.TryGet( "PK_T" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( "bar" ).Should().BeNull();
-            schema.Objects.TryGet( "PK_T" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "bar" ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    CREATE TABLE "__foo_T__{GUID}__" (
-                                          "C" ANY NOT NULL,
-                                          CONSTRAINT "foo_PK_T" PRIMARY KEY ("C" ASC)
-                                        ) WITHOUT ROWID;
-                    """,
-                    """
-                    INSERT INTO "__foo_T__{GUID}__" ("C")
-                                        SELECT
-                                          "foo_T"."C"
-                                        FROM "foo_T";
-                    """,
-                    "DROP TABLE \"foo_T\";",
-                    "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "PK_T" ),
+                table.Constraints.TryGet( "PK_T" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( "bar" ).TestNull(),
+                schema.Objects.TryGet( "PK_T" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "bar" ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            CREATE TABLE "__foo_T__{GUID}__" (
+                              "C" ANY NOT NULL,
+                              CONSTRAINT "foo_PK_T" PRIMARY KEY ("C" ASC)
+                            ) WITHOUT ROWID;
+                            """,
+                            """
+                            INSERT INTO "__foo_T__{GUID}__" ("C")
+                            SELECT
+                              "foo_T"."C"
+                            FROM "foo_T";
+                            """,
+                            "DROP TABLE \"foo_T\";",
+                            "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -283,9 +281,11 @@ public class SqlitePrimaryKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetDefaultName() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqliteDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -298,9 +298,11 @@ public class SqlitePrimaryKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetDefaultName() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqliteDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -313,19 +315,18 @@ public class SqlitePrimaryKeyBuilderTests : TestsBase
 
         sut.Remove();
 
-        using ( new AssertionScope() )
-        {
-            table.Constraints.TryGetPrimaryKey().Should().BeNull();
-            table.Constraints.TryGet( sut.Name ).Should().BeNull();
-            table.Constraints.TryGet( sut.Index.Name ).Should().BeNull();
-            schema.Objects.TryGet( sut.Name ).Should().BeNull();
-            schema.Objects.TryGet( sut.Index.Name ).Should().BeNull();
-            sut.IsRemoved.Should().BeTrue();
-            sut.Index.IsRemoved.Should().BeTrue();
-            sut.Index.PrimaryKey.Should().BeNull();
-            sut.Index.Columns.Expressions.Should().BeEmpty();
-            column.ReferencingObjects.Should().BeEmpty();
-        }
+        Assertion.All(
+                table.Constraints.TryGetPrimaryKey().TestNull(),
+                table.Constraints.TryGet( sut.Name ).TestNull(),
+                table.Constraints.TryGet( sut.Index.Name ).TestNull(),
+                schema.Objects.TryGet( sut.Name ).TestNull(),
+                schema.Objects.TryGet( sut.Index.Name ).TestNull(),
+                sut.IsRemoved.TestTrue(),
+                sut.Index.IsRemoved.TestTrue(),
+                sut.Index.PrimaryKey.TestNull(),
+                sut.Index.Columns.Expressions.TestEmpty(),
+                column.ReferencingObjects.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -343,7 +344,7 @@ public class SqlitePrimaryKeyBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Fact]
@@ -358,9 +359,11 @@ public class SqlitePrimaryKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqliteDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -375,9 +378,11 @@ public class SqlitePrimaryKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqliteDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -389,8 +394,10 @@ public class SqlitePrimaryKeyBuilderTests : TestsBase
 
         var result = sut.ForSqlite( action );
 
-        result.Should().BeSameAs( sut );
-        action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( sut );
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                action.CallAt( 0 ).Arguments.TestSequence( [ sut ] ) )
+            .Go();
     }
 
     [Fact]
@@ -401,7 +408,9 @@ public class SqlitePrimaryKeyBuilderTests : TestsBase
 
         var result = sut.ForSqlite( action );
 
-        result.Should().BeSameAs( sut );
-        action.Verify().CallCount.Should().Be( 0 );
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                action.CallCount().TestEquals( 0 ) )
+            .Go();
     }
 }

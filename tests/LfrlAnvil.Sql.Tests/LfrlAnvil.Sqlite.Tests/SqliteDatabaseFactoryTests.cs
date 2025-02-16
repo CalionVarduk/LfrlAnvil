@@ -3,6 +3,7 @@ using System.Data;
 using System.Data.Common;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
@@ -12,7 +13,6 @@ using LfrlAnvil.Sql.Versioning;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Internal;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sqlite.Tests;
 
@@ -22,7 +22,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
     public void Ctor_WithoutOptions_ShouldCreateWithDefaultOptions()
     {
         var sut = new SqliteDatabaseFactory();
-        sut.Options.Should().BeEquivalentTo( SqliteDatabaseFactoryOptions.Default );
+        sut.Options.TestEquals( SqliteDatabaseFactoryOptions.Default ).Go();
     }
 
     [Fact]
@@ -30,7 +30,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
     {
         var options = SqliteDatabaseFactoryOptions.Default.EnableConnectionPermanence().EnableForeignKeyChecks( false );
         var sut = new SqliteDatabaseFactory( options );
-        sut.Options.Should().BeEquivalentTo( options );
+        sut.Options.TestEquals( options ).Go();
     }
 
     [Fact]
@@ -48,13 +48,12 @@ public class SqliteDatabaseFactoryTests : TestsBase
                 .SetNodeInterpretersCreator( (_, _, _, _) => nodeInterpreters ) );
 
         var result = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() );
+        var db = ReinterpretCast.To<SqliteDatabase>( result.Database );
 
-        using ( new AssertionScope() )
-        {
-            var db = ReinterpretCast.To<SqliteDatabase>( result.Database );
-            db.TypeDefinitions.Should().BeSameAs( typeDefinitions );
-            db.NodeInterpreters.Should().BeSameAs( nodeInterpreters );
-        }
+        Assertion.All(
+                db.TypeDefinitions.TestRefEquals( typeDefinitions ),
+                db.NodeInterpreters.TestRefEquals( nodeInterpreters ) )
+            .Go();
     }
 
     [Fact]
@@ -64,25 +63,24 @@ public class SqliteDatabaseFactoryTests : TestsBase
 
         var result = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() );
         var versions = result.Database.GetRegisteredVersions();
+        var db = ReinterpretCast.To<SqliteDatabase>( result.Database );
 
-        using ( new AssertionScope() )
-        {
-            var db = ReinterpretCast.To<SqliteDatabase>( result.Database );
-            sut.Dialect.Should().BeSameAs( SqliteDialect.Instance );
-            result.Database.Schemas.Should().BeSequentiallyEqualTo( result.Database.Schemas.Default );
-            result.Database.Schemas.Default.Objects.Should().BeEmpty();
-            result.Exception.Should().BeNull();
-            result.CommittedVersions.Length.Should().Be( 0 );
-            result.PendingVersions.Length.Should().Be( 0 );
-            result.OldVersion.Should().Be( SqlDatabaseVersionHistory.InitialVersion );
-            result.NewVersion.Should().Be( SqlDatabaseVersionHistory.InitialVersion );
-            result.Database.Version.Should().Be( result.NewVersion );
-            result.Database.ServerVersion.Should().Be( db.Connector.Connect().ServerVersion );
-            result.Database.Connector.Database.Should().BeSameAs( result.Database );
-            (( ISqlDatabaseConnector<DbConnection> )result.Database.Connector).Database.Should().BeSameAs( result.Database );
-            (( ISqlDatabaseConnector )result.Database.Connector).Database.Should().BeSameAs( result.Database );
-            versions.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Dialect.TestRefEquals( SqliteDialect.Instance ),
+                result.Database.Schemas.TestSequence( [ result.Database.Schemas.Default ] ),
+                result.Database.Schemas.Default.Objects.TestEmpty(),
+                result.Exception.TestNull(),
+                result.CommittedVersions.Length.TestEquals( 0 ),
+                result.PendingVersions.Length.TestEquals( 0 ),
+                result.OldVersion.TestEquals( SqlDatabaseVersionHistory.InitialVersion ),
+                result.NewVersion.TestEquals( SqlDatabaseVersionHistory.InitialVersion ),
+                result.Database.Version.TestEquals( result.NewVersion ),
+                result.Database.ServerVersion.TestEquals( db.Connector.Connect().ServerVersion ),
+                result.Database.Connector.Database.TestRefEquals( result.Database ),
+                (( ISqlDatabaseConnector<DbConnection> )result.Database.Connector).Database.TestRefEquals( result.Database ),
+                (( ISqlDatabaseConnector )result.Database.Connector).Database.TestRefEquals( result.Database ),
+                versions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -105,16 +103,15 @@ public class SqliteDatabaseFactoryTests : TestsBase
 
         var versions = result.Database.GetRegisteredVersions();
 
-        using ( new AssertionScope() )
-        {
-            versionApplied.Should().BeFalse();
-            result.Exception.Should().BeNull();
-            result.CommittedVersions.Length.Should().Be( 0 );
-            result.PendingVersions.ToArray().Select( v => v.Value ).Should().BeSequentiallyEqualTo( Version.Parse( "0.1" ) );
-            result.OldVersion.Should().Be( SqlDatabaseVersionHistory.InitialVersion );
-            result.NewVersion.Should().Be( SqlDatabaseVersionHistory.InitialVersion );
-            versions.Should().BeEmpty();
-        }
+        Assertion.All(
+                versionApplied.TestFalse(),
+                result.Exception.TestNull(),
+                result.CommittedVersions.Length.TestEquals( 0 ),
+                result.PendingVersions.ToArray().Select( v => v.Value ).TestSequence( [ Version.Parse( "0.1" ) ] ),
+                result.OldVersion.TestEquals( SqlDatabaseVersionHistory.InitialVersion ),
+                result.NewVersion.TestEquals( SqlDatabaseVersionHistory.InitialVersion ),
+                versions.TestEmpty() )
+            .Go();
     }
 
     [Theory]
@@ -132,7 +129,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create( "DataSource=:memory:", history, SqlCreateDatabaseOptions.Default.SetMode( mode ) ) );
 
-        action.Should().Throw<Exception>().And.Should().BeSameAs( exception );
+        action.Test( exc => exc.TestRefEquals( exception ) ).Go();
     }
 
     [Fact]
@@ -165,41 +162,36 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var end = DateTime.UtcNow;
         var versions = result.Database.GetRegisteredVersions();
 
-        using ( new AssertionScope() )
-        {
-            result.Exception.Should().BeNull();
-            result.CommittedVersions.ToArray()
-                .Select( v => v.Value )
-                .Should()
-                .BeSequentiallyEqualTo( Version.Parse( "0.1" ), Version.Parse( "0.2" ), Version.Parse( "0.3" ) );
-
-            result.PendingVersions.Length.Should().Be( 0 );
-            result.OldVersion.Should().Be( SqlDatabaseVersionHistory.InitialVersion );
-            result.NewVersion.Should().Be( Version.Parse( "0.3" ) );
-
-            versions.Should().HaveCount( 3 );
-
-            var firstVersion = versions.ElementAtOrDefault( 0 );
-            (firstVersion?.Ordinal).Should().Be( 1 );
-            (firstVersion?.Version).Should().Be( Version.Parse( "0.1" ) );
-            (firstVersion?.Description).Should().Be( "1st version" );
-            (firstVersion?.CommitDateUtc).Should().BeOnOrAfter( start ).And.BeOnOrBefore( end );
-            (firstVersion?.CommitDuration).Should().BeGreaterThan( TimeSpan.Zero );
-
-            var secondVersion = versions.ElementAtOrDefault( 1 );
-            (secondVersion?.Ordinal).Should().Be( 2 );
-            (secondVersion?.Version).Should().Be( Version.Parse( "0.2" ) );
-            (secondVersion?.Description).Should().Be( "2nd version" );
-            (secondVersion?.CommitDateUtc).Should().BeOnOrAfter( firstVersion?.CommitDateUtc ?? DateTime.Now ).And.BeOnOrBefore( end );
-            (secondVersion?.CommitDuration).Should().BeGreaterThan( TimeSpan.Zero );
-
-            var thirdVersion = versions.ElementAtOrDefault( 2 );
-            (thirdVersion?.Ordinal).Should().Be( 3 );
-            (thirdVersion?.Version).Should().Be( Version.Parse( "0.3" ) );
-            (thirdVersion?.Description).Should().Be( "3rd version" );
-            (thirdVersion?.CommitDateUtc).Should().BeOnOrAfter( secondVersion?.CommitDateUtc ?? DateTime.Now ).And.BeOnOrBefore( end );
-            (thirdVersion?.CommitDuration).Should().BeGreaterThan( TimeSpan.Zero );
-        }
+        Assertion.All(
+                result.Exception.TestNull(),
+                result.CommittedVersions.ToArray()
+                    .Select( v => v.Value )
+                    .TestSequence( [ Version.Parse( "0.1" ), Version.Parse( "0.2" ), Version.Parse( "0.3" ) ] ),
+                result.PendingVersions.Length.TestEquals( 0 ),
+                result.OldVersion.TestEquals( SqlDatabaseVersionHistory.InitialVersion ),
+                result.NewVersion.TestEquals( Version.Parse( "0.3" ) ),
+                versions.TestSequence(
+                [
+                    (v, _) => Assertion.All(
+                        v.Ordinal.TestEquals( 1 ),
+                        v.Version.TestEquals( Version.Parse( "0.1" ) ),
+                        v.Description.TestEquals( "1st version" ),
+                        v.CommitDateUtc.TestInRange( start, end ),
+                        v.CommitDuration.TestGreaterThan( TimeSpan.Zero ) ),
+                    (v, _) => Assertion.All(
+                        v.Ordinal.TestEquals( 2 ),
+                        v.Version.TestEquals( Version.Parse( "0.2" ) ),
+                        v.Description.TestEquals( "2nd version" ),
+                        v.CommitDateUtc.TestInRange( versions.FirstOrDefault()?.CommitDateUtc ?? DateTime.Now, end ),
+                        v.CommitDuration.TestGreaterThan( TimeSpan.Zero ) ),
+                    (v, _) => Assertion.All(
+                        v.Ordinal.TestEquals( 3 ),
+                        v.Version.TestEquals( Version.Parse( "0.3" ) ),
+                        v.Description.TestEquals( "3rd version" ),
+                        v.CommitDateUtc.TestInRange( versions.ElementAtOrDefault( 1 )?.CommitDateUtc ?? DateTime.Now, end ),
+                        v.CommitDuration.TestGreaterThan( TimeSpan.Zero ) )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -232,27 +224,24 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var end = DateTime.UtcNow;
         var versions = result.Database.GetRegisteredVersions();
 
-        using ( new AssertionScope() )
-        {
-            result.Exception.Should().BeNull();
-            result.CommittedVersions.ToArray()
-                .Select( v => v.Value )
-                .Should()
-                .BeSequentiallyEqualTo( Version.Parse( "0.1" ), Version.Parse( "0.2" ), Version.Parse( "0.3" ) );
-
-            result.PendingVersions.Length.Should().Be( 0 );
-            result.OldVersion.Should().Be( SqlDatabaseVersionHistory.InitialVersion );
-            result.NewVersion.Should().Be( Version.Parse( "0.3" ) );
-
-            versions.Should().HaveCount( 1 );
-
-            var lastVersion = versions.ElementAtOrDefault( 0 );
-            (lastVersion?.Ordinal).Should().Be( 3 );
-            (lastVersion?.Version).Should().Be( Version.Parse( "0.3" ) );
-            (lastVersion?.Description).Should().Be( "3rd version" );
-            (lastVersion?.CommitDateUtc).Should().BeOnOrAfter( start ).And.BeOnOrBefore( end );
-            (lastVersion?.CommitDuration).Should().BeGreaterThan( TimeSpan.Zero );
-        }
+        Assertion.All(
+                result.Exception.TestNull(),
+                result.CommittedVersions.ToArray()
+                    .Select( v => v.Value )
+                    .TestSequence( [ Version.Parse( "0.1" ), Version.Parse( "0.2" ), Version.Parse( "0.3" ) ] ),
+                result.PendingVersions.Length.TestEquals( 0 ),
+                result.OldVersion.TestEquals( SqlDatabaseVersionHistory.InitialVersion ),
+                result.NewVersion.TestEquals( Version.Parse( "0.3" ) ),
+                versions.TestSequence(
+                [
+                    (v, _) => Assertion.All(
+                        v.Ordinal.TestEquals( 3 ),
+                        v.Version.TestEquals( Version.Parse( "0.3" ) ),
+                        v.Description.TestEquals( "3rd version" ),
+                        v.CommitDateUtc.TestInRange( start, end ),
+                        v.CommitDuration.TestGreaterThan( TimeSpan.Zero ) )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -288,26 +277,19 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var result = sut.Create( "DataSource=:memory:", history, SqlCreateDatabaseOptions.Default.SetMode( SqlDatabaseCreateMode.Commit ) );
         var versions = result.Database.GetRegisteredVersions();
 
-        using ( new AssertionScope() )
-        {
-            var exception =
-                ( SqliteForeignKeyCheckException? )result.Exception.Should().BeOfType<SqliteForeignKeyCheckException>().And.Subject;
-
-            (exception?.Version).Should().Be( Version.Parse( "0.2" ) );
-            (exception?.FailedTableNames).Should().BeSequentiallyEqualTo( "foo_T" );
-
-            result.CommittedVersions.ToArray().Select( v => v.Value ).Should().BeSequentiallyEqualTo( Version.Parse( "0.1" ) );
-            result.PendingVersions.ToArray()
-                .Select( v => v.Value )
-                .Should()
-                .BeSequentiallyEqualTo( Version.Parse( "0.2" ), Version.Parse( "0.3" ) );
-
-            result.OldVersion.Should().Be( SqlDatabaseVersionHistory.InitialVersion );
-            result.NewVersion.Should().Be( Version.Parse( "0.1" ) );
-
-            versions.Should().HaveCount( 1 );
-            (versions.ElementAtOrDefault( 0 )?.Version).Should().Be( Version.Parse( "0.1" ) );
-        }
+        Assertion.All(
+                result.Exception.TestType()
+                    .AssignableTo<SqliteForeignKeyCheckException>(
+                        e =>
+                            Assertion.All(
+                                e.Version.TestEquals( Version.Parse( "0.2" ) ),
+                                e.FailedTableNames.TestSequence( [ "foo_T" ] ) ) ),
+                result.CommittedVersions.ToArray().Select( v => v.Value ).TestSequence( [ Version.Parse( "0.1" ) ] ),
+                result.PendingVersions.ToArray().Select( v => v.Value ).TestSequence( [ Version.Parse( "0.2" ), Version.Parse( "0.3" ) ] ),
+                result.OldVersion.TestEquals( SqlDatabaseVersionHistory.InitialVersion ),
+                result.NewVersion.TestEquals( Version.Parse( "0.1" ) ),
+                versions.Select( v => v.Version ).TestSequence( [ Version.Parse( "0.1" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -343,24 +325,17 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var result = sut.Create( "DataSource=:memory:", history, SqlCreateDatabaseOptions.Default.SetMode( SqlDatabaseCreateMode.Commit ) );
         var versions = result.Database.GetRegisteredVersions();
 
-        using ( new AssertionScope() )
-        {
-            result.Exception.Should().BeNull();
-
-            result.CommittedVersions.ToArray()
-                .Select( v => v.Value )
-                .Should()
-                .BeSequentiallyEqualTo( Version.Parse( "0.1" ), Version.Parse( "0.2" ), Version.Parse( "0.3" ) );
-
-            result.PendingVersions.ToArray().Should().BeEmpty();
-            result.OldVersion.Should().Be( SqlDatabaseVersionHistory.InitialVersion );
-            result.NewVersion.Should().Be( Version.Parse( "0.3" ) );
-
-            versions.Should().HaveCount( 3 );
-            (versions.ElementAtOrDefault( 0 )?.Version).Should().Be( Version.Parse( "0.1" ) );
-            (versions.ElementAtOrDefault( 1 )?.Version).Should().Be( Version.Parse( "0.2" ) );
-            (versions.ElementAtOrDefault( 2 )?.Version).Should().Be( Version.Parse( "0.3" ) );
-        }
+        Assertion.All(
+                result.Exception.TestNull(),
+                result.CommittedVersions.ToArray()
+                    .Select( v => v.Value )
+                    .TestSequence( [ Version.Parse( "0.1" ), Version.Parse( "0.2" ), Version.Parse( "0.3" ) ] ),
+                result.PendingVersions.ToArray().TestEmpty(),
+                result.OldVersion.TestEquals( SqlDatabaseVersionHistory.InitialVersion ),
+                result.NewVersion.TestEquals( Version.Parse( "0.3" ) ),
+                versions.Select( v => v.Version )
+                    .TestSequence( [ Version.Parse( "0.1" ), Version.Parse( "0.2" ), Version.Parse( "0.3" ) ] ) )
+            .Go();
     }
 
     [Theory]
@@ -381,7 +356,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         cmd.CommandText = "PRAGMA encoding;";
         var actual = cmd.ExecuteScalar() as string;
 
-        actual.Should().MatchRegex( expected );
+        actual.TestMatch( new Regex( expected ) ).Go();
     }
 
     [Fact]
@@ -400,11 +375,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var result = DateOnly.Parse( reader.GetString( 0 ) );
         var max = DateOnly.FromDateTime( DateTime.Now );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeGreaterOrEqualTo( min );
-            result.Should().BeLessOrEqualTo( max );
-        }
+        result.TestInRange( min, max ).Go();
     }
 
     [Fact]
@@ -423,11 +394,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var result = TimeOnly.Parse( reader.GetString( 0 ) );
         var max = TimeOnly.FromDateTime( DateTime.Now );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeGreaterOrEqualTo( min );
-            result.Should().BeLessOrEqualTo( max );
-        }
+        result.TestInRange( min, max ).Go();
     }
 
     [Fact]
@@ -446,11 +413,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var result = DateTime.Parse( reader.GetString( 0 ) );
         var max = DateTime.Now;
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeOnOrAfter( min );
-            result.Should().BeOnOrBefore( max );
-        }
+        result.TestInRange( min, max ).Go();
     }
 
     [Fact]
@@ -469,11 +432,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var result = DateTime.Parse( reader.GetString( 0 ) );
         var max = DateTime.UtcNow;
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeOnOrAfter( min );
-            result.Should().BeOnOrBefore( max );
-        }
+        result.TestInRange( min, max ).Go();
     }
 
     [Fact]
@@ -492,11 +451,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var result = reader.GetInt64( 0 );
         var max = DateTime.UtcNow.Ticks;
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeGreaterOrEqualTo( min );
-            result.Should().BeLessOrEqualTo( max );
-        }
+        result.TestInRange( min, max ).Go();
     }
 
     [Fact]
@@ -515,7 +470,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
 
         var action = Lambda.Of( () => new Guid( result! ) );
 
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -532,7 +487,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetString( 0 );
 
-        result.Should().Be( "foobarqux" );
+        result.TestEquals( "foobarqux" ).Go();
     }
 
     [Fact]
@@ -549,7 +504,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetValue( 0 );
 
-        result.Should().BeOfType<DBNull>();
+        result.TestType().AssignableTo<DBNull>().Go();
     }
 
     [Fact]
@@ -566,7 +521,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetString( 0 );
 
-        result.Should().Be( "FOOBARQUX" );
+        result.TestEquals( "FOOBARQUX" ).Go();
     }
 
     [Fact]
@@ -583,7 +538,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetValue( 0 );
 
-        result.Should().BeOfType<DBNull>();
+        result.TestType().AssignableTo<DBNull>().Go();
     }
 
     [Fact]
@@ -600,7 +555,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetInt64( 0 );
 
-        result.Should().Be( 8 );
+        result.TestEquals( 8 ).Go();
     }
 
     [Fact]
@@ -617,7 +572,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetValue( 0 );
 
-        result.Should().BeOfType<DBNull>();
+        result.TestType().AssignableTo<DBNull>().Go();
     }
 
     [Fact]
@@ -634,7 +589,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetValue( 0 );
 
-        result.Should().BeOfType<DBNull>();
+        result.TestType().AssignableTo<DBNull>().Go();
     }
 
     [Fact]
@@ -651,7 +606,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetString( 0 );
 
-        result.Should().Be( "xuq.rab.oof" );
+        result.TestEquals( "xuq.rab.oof" ).Go();
     }
 
     [Fact]
@@ -668,7 +623,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetValue( 0 );
 
-        result.Should().BeOfType<DBNull>();
+        result.TestType().AssignableTo<DBNull>().Go();
     }
 
     [Fact]
@@ -685,7 +640,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetDouble( 0 );
 
-        result.Should().Be( 10.56 );
+        result.TestEquals( 10.56 ).Go();
     }
 
     [Fact]
@@ -702,7 +657,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetValue( 0 );
 
-        result.Should().BeOfType<DBNull>();
+        result.TestType().AssignableTo<DBNull>().Go();
     }
 
     [Fact]
@@ -719,7 +674,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetDouble( 0 );
 
-        result.Should().Be( 10.0 );
+        result.TestEquals( 10.0 ).Go();
     }
 
     [Theory]
@@ -739,7 +694,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetString( 0 );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -756,7 +711,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetValue( 0 );
 
-        result.Should().BeOfType<DBNull>();
+        result.TestType().AssignableTo<DBNull>().Go();
     }
 
     [Theory]
@@ -785,7 +740,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetInt64( 0 );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -814,7 +769,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetInt64( 0 );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -843,7 +798,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetValue( 0 );
 
-        result.Should().Be( expected ?? DBNull.Value );
+        result.TestEquals( expected is null ? DBNull.Value : ( long )( int )expected ).Go();
     }
 
     [Fact]
@@ -860,7 +815,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetValue( 0 );
 
-        result.Should().BeOfType<DBNull>();
+        result.TestType().AssignableTo<DBNull>().Go();
     }
 
     [Theory]
@@ -879,7 +834,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetValue( 0 );
 
-        result.Should().BeOfType<DBNull>();
+        result.TestType().AssignableTo<DBNull>().Go();
     }
 
     [Theory]
@@ -908,7 +863,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetValue( 0 );
 
-        result.Should().BeOfType<DBNull>();
+        result.TestType().AssignableTo<DBNull>().Go();
     }
 
     [Theory]
@@ -935,7 +890,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetString( 0 );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -962,7 +917,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetString( 0 );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -989,7 +944,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetValue( 0 );
 
-        result.Should().Be( ( object? )expected ?? DBNull.Value );
+        result.TestEquals( ( object? )expected ?? DBNull.Value ).Go();
     }
 
     [Fact]
@@ -1006,7 +961,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetValue( 0 );
 
-        result.Should().BeOfType<DBNull>();
+        result.TestType().AssignableTo<DBNull>().Go();
     }
 
     [Theory]
@@ -1027,7 +982,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetValue( 0 );
 
-        result.Should().BeOfType<DBNull>();
+        result.TestType().AssignableTo<DBNull>().Go();
     }
 
     [Theory]
@@ -1054,7 +1009,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetValue( 0 );
 
-        result.Should().BeOfType<DBNull>();
+        result.TestType().AssignableTo<DBNull>().Go();
     }
 
     [Theory]
@@ -1081,7 +1036,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetValue( 0 );
 
-        result.Should().BeOfType<DBNull>();
+        result.TestType().AssignableTo<DBNull>().Go();
     }
 
     [Theory]
@@ -1107,7 +1062,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetInt64( 0 );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -1132,7 +1087,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetInt64( 0 );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -1156,7 +1111,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetInt64( 0 );
 
-        result.Should().Be( 0 );
+        result.TestEquals( 0 ).Go();
     }
 
     [Theory]
@@ -1186,7 +1141,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetInt64( 0 );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -1215,7 +1170,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetInt64( 0 );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -1243,7 +1198,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetInt64( 0 );
 
-        result.Should().Be( 0 );
+        result.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -1262,7 +1217,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetInt64( 0 );
 
-        result.Should().Be( 1 );
+        result.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -1279,7 +1234,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetValue( 0 );
 
-        result.Should().BeOfType<DBNull>();
+        result.TestType().AssignableTo<DBNull>().Go();
     }
 
     [Theory]
@@ -1302,7 +1257,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetValue( 0 );
 
-        result.Should().BeOfType<DBNull>();
+        result.TestType().AssignableTo<DBNull>().Go();
     }
 
     [Theory]
@@ -1325,7 +1280,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetValue( 0 );
 
-        result.Should().BeOfType<DBNull>();
+        result.TestType().AssignableTo<DBNull>().Go();
     }
 
     [Theory]
@@ -1350,7 +1305,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetValue( 0 );
 
-        result.Should().BeOfType<DBNull>();
+        result.TestType().AssignableTo<DBNull>().Go();
     }
 
     [Theory]
@@ -1375,7 +1330,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetValue( 0 );
 
-        result.Should().BeOfType<DBNull>();
+        result.TestType().AssignableTo<DBNull>().Go();
     }
 
     [Theory]
@@ -1396,7 +1351,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetValue( 0 );
 
-        result.Should().BeOfType<DBNull>();
+        result.TestType().AssignableTo<DBNull>().Go();
     }
 
     [Theory]
@@ -1424,7 +1379,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetValue( 0 );
 
-        result.Should().BeOfType<DBNull>();
+        result.TestType().AssignableTo<DBNull>().Go();
     }
 
     [Theory]
@@ -1452,7 +1407,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetValue( 0 );
 
-        result.Should().BeOfType<DBNull>();
+        result.TestType().AssignableTo<DBNull>().Go();
     }
 
     [Theory]
@@ -1480,7 +1435,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetValue( 0 );
 
-        result.Should().BeOfType<DBNull>();
+        result.TestType().AssignableTo<DBNull>().Go();
     }
 
     [Theory]
@@ -1508,7 +1463,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetValue( 0 );
 
-        result.Should().BeOfType<DBNull>();
+        result.TestType().AssignableTo<DBNull>().Go();
     }
 
     [Fact]
@@ -1519,7 +1474,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
 
         var action = Lambda.Of( () => db.Connector.Connect( "Foreign Keys=false" ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -1528,12 +1483,11 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqlDatabaseFactoryProvider();
         var result = sut.RegisterSqlite();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.SupportedDialects.Should().BeSequentiallyEqualTo( SqliteDialect.Instance );
-            result.GetFor( SqliteDialect.Instance ).Should().BeOfType<SqliteDatabaseFactory>();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.SupportedDialects.TestSequence( [ SqliteDialect.Instance ] ),
+                result.GetFor( SqliteDialect.Instance ).TestType().AssignableTo<SqliteDatabaseFactory>() )
+            .Go();
     }
 
     public class Persistent : TestsBase
@@ -1561,27 +1515,22 @@ public class SqliteDatabaseFactoryTests : TestsBase
 
                 var versions = result2.Database.GetRegisteredVersions();
 
-                using ( new AssertionScope() )
-                {
-                    result1.Exception.Should().BeNull();
-                    result1.OldVersion.Should().Be( SqlDatabaseVersionHistory.InitialVersion );
-                    result1.NewVersion.Should().Be( Version.Parse( "0.1" ) );
-                    result1.CommittedVersions.ToArray().Select( v => v.Value ).Should().BeSequentiallyEqualTo( Version.Parse( "0.1" ) );
-                    result1.PendingVersions.Length.Should().Be( 0 );
-
-                    result2.Exception.Should().BeNull();
-                    result2.OldVersion.Should().Be( Version.Parse( "0.1" ) );
-                    result2.NewVersion.Should().Be( Version.Parse( "0.1" ) );
-                    result2.CommittedVersions.Length.Should().Be( 0 );
-                    result2.PendingVersions.Length.Should().Be( 0 );
-
-                    versions.Should().HaveCount( 1 );
-                    versions.ElementAtOrDefault( 0 )?.Version.Should().Be( Version.Parse( "0.1" ) );
-
-                    result2.Database.Connector.Database.Should().BeSameAs( result2.Database );
-                    (( ISqlDatabaseConnector<DbConnection> )result2.Database.Connector).Database.Should().BeSameAs( result2.Database );
-                    (( ISqlDatabaseConnector )result2.Database.Connector).Database.Should().BeSameAs( result2.Database );
-                }
+                Assertion.All(
+                        result1.Exception.TestNull(),
+                        result1.OldVersion.TestEquals( SqlDatabaseVersionHistory.InitialVersion ),
+                        result1.NewVersion.TestEquals( Version.Parse( "0.1" ) ),
+                        result1.CommittedVersions.ToArray().Select( v => v.Value ).TestSequence( [ Version.Parse( "0.1" ) ] ),
+                        result1.PendingVersions.Length.TestEquals( 0 ),
+                        result2.Exception.TestNull(),
+                        result2.OldVersion.TestEquals( Version.Parse( "0.1" ) ),
+                        result2.NewVersion.TestEquals( Version.Parse( "0.1" ) ),
+                        result2.CommittedVersions.Length.TestEquals( 0 ),
+                        result2.PendingVersions.Length.TestEquals( 0 ),
+                        versions.Select( v => v.Version ).TestSequence( [ Version.Parse( "0.1" ) ] ),
+                        result2.Database.Connector.Database.TestRefEquals( result2.Database ),
+                        (( ISqlDatabaseConnector<DbConnection> )result2.Database.Connector).Database.TestRefEquals( result2.Database ),
+                        (( ISqlDatabaseConnector )result2.Database.Connector).Database.TestRefEquals( result2.Database ) )
+                    .Go();
             }
             finally
             {
@@ -1635,36 +1584,25 @@ public class SqliteDatabaseFactoryTests : TestsBase
 
                 var versions = result2.Database.GetRegisteredVersions();
 
-                using ( new AssertionScope() )
-                {
-                    version1Modes.Should()
-                        .BeSequentiallyEqualTo( (SqlDatabaseCreateMode.Commit, true), (SqlDatabaseCreateMode.NoChanges, true) );
-
-                    version2Modes.Should()
-                        .BeSequentiallyEqualTo( (SqlDatabaseCreateMode.Commit, true), (SqlDatabaseCreateMode.NoChanges, true) );
-
-                    version3Modes.Should().BeSequentiallyEqualTo( (SqlDatabaseCreateMode.Commit, true) );
-
-                    result1.Exception.Should().BeNull();
-                    result1.OldVersion.Should().Be( SqlDatabaseVersionHistory.InitialVersion );
-                    result1.NewVersion.Should().Be( Version.Parse( "0.2" ) );
-                    result1.CommittedVersions.ToArray()
-                        .Select( v => v.Value )
-                        .Should()
-                        .BeSequentiallyEqualTo( Version.Parse( "0.1" ), Version.Parse( "0.2" ) );
-
-                    result1.PendingVersions.Length.Should().Be( 0 );
-
-                    result2.Exception.Should().BeNull();
-                    result2.OldVersion.Should().Be( Version.Parse( "0.2" ) );
-                    result2.NewVersion.Should().Be( Version.Parse( "0.3" ) );
-                    result2.CommittedVersions.ToArray().Select( v => v.Value ).Should().BeSequentiallyEqualTo( Version.Parse( "0.3" ) );
-                    result2.PendingVersions.Length.Should().Be( 0 );
-
-                    versions.Select( v => v.Version )
-                        .Should()
-                        .BeSequentiallyEqualTo( Version.Parse( "0.1" ), Version.Parse( "0.2" ), Version.Parse( "0.3" ) );
-                }
+                Assertion.All(
+                        version1Modes.TestSequence( [ (SqlDatabaseCreateMode.Commit, true), (SqlDatabaseCreateMode.NoChanges, true) ] ),
+                        version2Modes.TestSequence( [ (SqlDatabaseCreateMode.Commit, true), (SqlDatabaseCreateMode.NoChanges, true) ] ),
+                        version3Modes.TestSequence( [ (SqlDatabaseCreateMode.Commit, true) ] ),
+                        result1.Exception.TestNull(),
+                        result1.OldVersion.TestEquals( SqlDatabaseVersionHistory.InitialVersion ),
+                        result1.NewVersion.TestEquals( Version.Parse( "0.2" ) ),
+                        result1.CommittedVersions.ToArray()
+                            .Select( v => v.Value )
+                            .TestSequence( [ Version.Parse( "0.1" ), Version.Parse( "0.2" ) ] ),
+                        result1.PendingVersions.Length.TestEquals( 0 ),
+                        result2.Exception.TestNull(),
+                        result2.OldVersion.TestEquals( Version.Parse( "0.2" ) ),
+                        result2.NewVersion.TestEquals( Version.Parse( "0.3" ) ),
+                        result2.CommittedVersions.ToArray().Select( v => v.Value ).TestSequence( [ Version.Parse( "0.3" ) ] ),
+                        result2.PendingVersions.Length.TestEquals( 0 ),
+                        versions.Select( v => v.Version )
+                            .TestSequence( [ Version.Parse( "0.1" ), Version.Parse( "0.2" ), Version.Parse( "0.3" ) ] ) )
+                    .Go();
             }
             finally
             {
@@ -1695,28 +1633,45 @@ public class SqliteDatabaseFactoryTests : TestsBase
                 var connection = await (( ISqlDatabaseConnector )result.Database.Connector).ConnectAsync();
                 connection.Dispose();
 
-                using ( new AssertionScope() )
-                {
-                    callback.Verify().CallCount.Should().Be( 4 );
-
-                    var firstEvent = ( SqlDatabaseConnectionChangeEvent? )callback.Verify().CallAt( 0 ).Arguments.ElementAtOrDefault( 0 );
-                    (firstEvent?.StateChange).Should()
-                        .BeEquivalentTo( new StateChangeEventArgs( ConnectionState.Closed, ConnectionState.Open ) );
-
-                    var secondEvent = ( SqlDatabaseConnectionChangeEvent? )callback.Verify().CallAt( 1 ).Arguments.ElementAtOrDefault( 0 );
-                    (secondEvent?.StateChange).Should()
-                        .BeEquivalentTo( new StateChangeEventArgs( ConnectionState.Open, ConnectionState.Closed ) );
-
-                    var thirdEvent = ( SqlDatabaseConnectionChangeEvent? )callback.Verify().CallAt( 2 ).Arguments.ElementAtOrDefault( 0 );
-                    (thirdEvent?.Connection).Should().BeSameAs( connection );
-                    (thirdEvent?.StateChange).Should()
-                        .BeEquivalentTo( new StateChangeEventArgs( ConnectionState.Closed, ConnectionState.Open ) );
-
-                    var fourthEvent = ( SqlDatabaseConnectionChangeEvent? )callback.Verify().CallAt( 3 ).Arguments.ElementAtOrDefault( 0 );
-                    (fourthEvent?.Connection).Should().BeSameAs( connection );
-                    (fourthEvent?.StateChange).Should()
-                        .BeEquivalentTo( new StateChangeEventArgs( ConnectionState.Open, ConnectionState.Closed ) );
-                }
+                callback.CallCount()
+                    .TestEquals( 4 )
+                    .Then(
+                        _ => Assertion.All(
+                            callback.CallAt( 0 )
+                                .Arguments[0]
+                                .TestType()
+                                .Exact<SqlDatabaseConnectionChangeEvent>(
+                                    e =>
+                                        Assertion.All(
+                                            e.StateChange.OriginalState.TestEquals( ConnectionState.Closed ),
+                                            e.StateChange.CurrentState.TestEquals( ConnectionState.Open ) ) ),
+                            callback.CallAt( 1 )
+                                .Arguments[0]
+                                .TestType()
+                                .Exact<SqlDatabaseConnectionChangeEvent>(
+                                    e =>
+                                        Assertion.All(
+                                            e.StateChange.OriginalState.TestEquals( ConnectionState.Open ),
+                                            e.StateChange.CurrentState.TestEquals( ConnectionState.Closed ) ) ),
+                            callback.CallAt( 2 )
+                                .Arguments[0]
+                                .TestType()
+                                .Exact<SqlDatabaseConnectionChangeEvent>(
+                                    e =>
+                                        Assertion.All(
+                                            e.Connection.TestRefEquals( connection ),
+                                            e.StateChange.OriginalState.TestEquals( ConnectionState.Closed ),
+                                            e.StateChange.CurrentState.TestEquals( ConnectionState.Open ) ) ),
+                            callback.CallAt( 3 )
+                                .Arguments[0]
+                                .TestType()
+                                .Exact<SqlDatabaseConnectionChangeEvent>(
+                                    e =>
+                                        Assertion.All(
+                                            e.Connection.TestRefEquals( connection ),
+                                            e.StateChange.OriginalState.TestEquals( ConnectionState.Open ),
+                                            e.StateChange.CurrentState.TestEquals( ConnectionState.Closed ) ) ) ) )
+                    .Go();
             }
             finally
             {
@@ -1753,17 +1708,16 @@ public class SqliteDatabaseFactoryTests : TestsBase
                 await using var c8 = await (( ISqlDatabaseConnector<DbConnection> )db.Connector)
                     .ConnectAsync( "DataSource=other;Foreign Keys=false" );
 
-                using ( new AssertionScope() )
-                {
-                    c1.ConnectionString.Should().Be( connectionString );
-                    c2.ConnectionString.Should().Be( extendedConnectionString );
-                    c3.ConnectionString.Should().Be( connectionString );
-                    c4.ConnectionString.Should().Be( extendedConnectionString );
-                    c5.ConnectionString.Should().Be( connectionString );
-                    c6.ConnectionString.Should().Be( extendedConnectionString );
-                    c7.ConnectionString.Should().Be( connectionString );
-                    c8.ConnectionString.Should().Be( extendedConnectionString );
-                }
+                Assertion.All(
+                        c1.ConnectionString.TestEquals( connectionString ),
+                        c2.ConnectionString.TestEquals( extendedConnectionString ),
+                        c3.ConnectionString.TestEquals( connectionString ),
+                        c4.ConnectionString.TestEquals( extendedConnectionString ),
+                        c5.ConnectionString.TestEquals( connectionString ),
+                        c6.ConnectionString.TestEquals( extendedConnectionString ),
+                        c7.ConnectionString.TestEquals( connectionString ),
+                        c8.ConnectionString.TestEquals( extendedConnectionString ) )
+                    .Go();
             }
             finally
             {
@@ -1800,17 +1754,16 @@ public class SqliteDatabaseFactoryTests : TestsBase
                 await using var c8 = await (( ISqlDatabaseConnector<DbConnection> )db.Connector)
                     .ConnectAsync( "DataSource=other;Foreign Keys=false" );
 
-                using ( new AssertionScope() )
-                {
-                    c1.ConnectionString.Should().Be( connectionString );
-                    c2.ConnectionString.Should().Be( extendedConnectionString );
-                    c3.ConnectionString.Should().Be( connectionString );
-                    c4.ConnectionString.Should().Be( extendedConnectionString );
-                    c5.ConnectionString.Should().Be( connectionString );
-                    c6.ConnectionString.Should().Be( extendedConnectionString );
-                    c7.ConnectionString.Should().Be( connectionString );
-                    c8.ConnectionString.Should().Be( extendedConnectionString );
-                }
+                Assertion.All(
+                        c1.ConnectionString.TestEquals( connectionString ),
+                        c2.ConnectionString.TestEquals( extendedConnectionString ),
+                        c3.ConnectionString.TestEquals( connectionString ),
+                        c4.ConnectionString.TestEquals( extendedConnectionString ),
+                        c5.ConnectionString.TestEquals( connectionString ),
+                        c6.ConnectionString.TestEquals( extendedConnectionString ),
+                        c7.ConnectionString.TestEquals( connectionString ),
+                        c8.ConnectionString.TestEquals( extendedConnectionString ) )
+                    .Go();
             }
             finally
             {

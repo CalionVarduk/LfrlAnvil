@@ -7,9 +7,8 @@ using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.Sqlite.Tests.Helpers;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.Sqlite.Tests.ObjectsTests.BuildersTests;
 
@@ -23,7 +22,7 @@ public partial class SqliteTableBuilderTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( "[Table] foo_bar" );
+        result.TestEquals( "[Table] foo_bar" ).Go();
     }
 
     [Fact]
@@ -43,32 +42,31 @@ public partial class SqliteTableBuilderTests : TestsBase
 
         var actions = schema.Database.GetLastPendingActions( 0 );
 
-        using ( new AssertionScope() )
-        {
-            schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
-            schema.Database.Changes.ModifiedTables.Should().BeEquivalentTo( sut );
-            sut.Name.Should().Be( "T" );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    CREATE TABLE "foo_T" (
-                                          "C5" ANY NOT NULL GENERATED ALWAYS AS ("C1" + 1) VIRTUAL,
-                                          "C1" ANY NOT NULL,
-                                          "C2" ANY NOT NULL,
-                                          "C6" ANY GENERATED ALWAYS AS ("C2" * "C5") STORED,
-                                          "C3" ANY NOT NULL,
-                                          "C4" ANY NOT NULL,
-                                          CONSTRAINT "foo_PK_T" PRIMARY KEY ("C2" ASC),
-                                          CONSTRAINT "foo_FK_T_C1_REF_T" FOREIGN KEY ("C1") REFERENCES "foo_T" ("C2") ON DELETE RESTRICT ON UPDATE RESTRICT,
-                                          CONSTRAINT "foo_CHK_T_{GUID}" CHECK ("C1" > 0)
-                                        ) WITHOUT ROWID;
-                    """,
-                    "CREATE INDEX \"foo_IX_T_C1A\" ON \"foo_T\" (\"C1\" ASC);",
-                    "CREATE INDEX \"foo_IX_T_C3A_C4D\" ON \"foo_T\" (\"C3\" ASC, \"C4\" DESC);" );
-        }
+        Assertion.All(
+                schema.Objects.TryGet( sut.Name ).TestRefEquals( sut ),
+                schema.Database.Changes.ModifiedTables.TestSetEqual( [ sut ] ),
+                sut.Name.TestEquals( "T" ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            CREATE TABLE "foo_T" (
+                              "C5" ANY NOT NULL GENERATED ALWAYS AS ("C1" + 1) VIRTUAL,
+                              "C1" ANY NOT NULL,
+                              "C2" ANY NOT NULL,
+                              "C6" ANY GENERATED ALWAYS AS ("C2" * "C5") STORED,
+                              "C3" ANY NOT NULL,
+                              "C4" ANY NOT NULL,
+                              CONSTRAINT "foo_PK_T" PRIMARY KEY ("C2" ASC),
+                              CONSTRAINT "foo_FK_T_C1_REF_T" FOREIGN KEY ("C1") REFERENCES "foo_T" ("C2") ON DELETE RESTRICT ON UPDATE RESTRICT,
+                              CONSTRAINT "foo_CHK_T_{GUID}" CHECK ("C1" > 0)
+                            ) WITHOUT ROWID;
+                            """,
+                            "CREATE INDEX \"foo_IX_T_C1A\" ON \"foo_T\" (\"C1\" ASC);",
+                            "CREATE INDEX \"foo_IX_T_C3A_C4D\" ON \"foo_T\" (\"C3\" ASC, \"C4\" DESC);" )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -81,7 +79,7 @@ public partial class SqliteTableBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Fact]
@@ -93,9 +91,11 @@ public partial class SqliteTableBuilderTests : TestsBase
 
         var action = Lambda.Of( () => schema.Database.Changes.CompletePendingChanges() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqliteDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -109,11 +109,10 @@ public partial class SqliteTableBuilderTests : TestsBase
         var result = sut.SetName( sut.Name );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -129,11 +128,10 @@ public partial class SqliteTableBuilderTests : TestsBase
         var result = sut.SetName( oldName );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -151,19 +149,17 @@ public partial class SqliteTableBuilderTests : TestsBase
         var result = sut.SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            sut.Info.Should().Be( SqlRecordSetInfo.Create( "foo", "bar" ) );
-            recordSet.Info.Should().Be( sut.Info );
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( oldName ).Should().BeNull();
-            schema.Database.Changes.ModifiedTables.Should().BeEmpty();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_bar\";" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                sut.Info.TestEquals( SqlRecordSetInfo.Create( "foo", "bar" ) ),
+                recordSet.Info.TestEquals( sut.Info ),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( oldName ).TestNull(),
+                schema.Database.Changes.ModifiedTables.TestEmpty(),
+                actions.Select( a => a.Sql )
+                    .TestSequence( [ (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_bar\";" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -187,43 +183,42 @@ public partial class SqliteTableBuilderTests : TestsBase
         var result = sut.SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "T" ).Should().BeNull();
-            schema.Database.Changes.ModifiedTables.Should().BeEquivalentTo( sut );
-            fk1.IsRemoved.Should().BeFalse();
-            fk2.IsRemoved.Should().BeFalse();
-
-            actions.Should().HaveCount( 2 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_bar\";" );
-            actions.ElementAtOrDefault( 1 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP INDEX \"foo_IX_T_C2A\";",
-                    """
-                    CREATE TABLE "__foo_bar__{GUID}__" (
-                                          "C1" ANY NOT NULL,
-                                          "C2" ANY NOT NULL,
-                                          CONSTRAINT "foo_PK_T" PRIMARY KEY ("C1" ASC),
-                                          CONSTRAINT "foo_FK_T_C1_REF_U" FOREIGN KEY ("C1") REFERENCES "U" ("C") ON DELETE RESTRICT ON UPDATE RESTRICT,
-                                          CONSTRAINT "foo_FK_T_C2_REF_T" FOREIGN KEY ("C2") REFERENCES "foo_bar" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT,
-                                          CONSTRAINT "foo_CHK_T_{GUID}" CHECK ("C1" > 0)
-                                        ) WITHOUT ROWID;
-                    """,
-                    """
-                    INSERT INTO "__foo_bar__{GUID}__" ("C1", "C2")
-                                        SELECT
-                                          "foo_bar"."C1",
-                                          "foo_bar"."C2"
-                                        FROM "foo_bar";
-                    """,
-                    "DROP TABLE \"foo_bar\";",
-                    "ALTER TABLE \"__foo_bar__{GUID}__\" RENAME TO \"foo_bar\";",
-                    "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_bar\" (\"C2\" ASC);" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "T" ).TestNull(),
+                schema.Database.Changes.ModifiedTables.TestSetEqual( [ sut ] ),
+                fk1.IsRemoved.TestFalse(),
+                fk2.IsRemoved.TestFalse(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_bar\";" ),
+                        (sql, _) => sql.SatisfySql(
+                            "DROP INDEX \"foo_IX_T_C2A\";",
+                            """
+                            CREATE TABLE "__foo_bar__{GUID}__" (
+                              "C1" ANY NOT NULL,
+                              "C2" ANY NOT NULL,
+                              CONSTRAINT "foo_PK_T" PRIMARY KEY ("C1" ASC),
+                              CONSTRAINT "foo_FK_T_C1_REF_U" FOREIGN KEY ("C1") REFERENCES "U" ("C") ON DELETE RESTRICT ON UPDATE RESTRICT,
+                              CONSTRAINT "foo_FK_T_C2_REF_T" FOREIGN KEY ("C2") REFERENCES "foo_bar" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT,
+                              CONSTRAINT "foo_CHK_T_{GUID}" CHECK ("C1" > 0)
+                            ) WITHOUT ROWID;
+                            """,
+                            """
+                            INSERT INTO "__foo_bar__{GUID}__" ("C1", "C2")
+                            SELECT
+                              "foo_bar"."C1",
+                              "foo_bar"."C2"
+                            FROM "foo_bar";
+                            """,
+                            "DROP TABLE \"foo_bar\";",
+                            "ALTER TABLE \"__foo_bar__{GUID}__\" RENAME TO \"foo_bar\";",
+                            "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_bar\" (\"C2\" ASC);" )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -252,64 +247,58 @@ public partial class SqliteTableBuilderTests : TestsBase
         var result = sut.SetName( "U" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "U" );
-            schema.Objects.TryGet( "U" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "T" ).Should().BeNull();
-            schema.Database.Changes.ModifiedTables.Should().BeEquivalentTo( t2, t3 );
-            fk1.IsRemoved.Should().BeFalse();
-            fk2.IsRemoved.Should().BeFalse();
-            fk3.IsRemoved.Should().BeFalse();
-
-            actions.Should().HaveCount( 3 );
-
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE \"foo_T1\" RENAME TO \"foo_U\";" );
-
-            actions.ElementAtOrDefault( 1 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP INDEX \"foo_IX_T3_C4A\";",
-                    """
-                    CREATE TABLE "__foo_T3__{GUID}__" (
-                                          "C3" ANY NOT NULL,
-                                          "C4" ANY NOT NULL,
-                                          CONSTRAINT "foo_PK_T3" PRIMARY KEY ("C3" ASC),
-                                          CONSTRAINT "foo_FK_T3_C3_REF_T1" FOREIGN KEY ("C3") REFERENCES "foo_U" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT,
-                                          CONSTRAINT "foo_FK_T3_C4_REF_T1" FOREIGN KEY ("C4") REFERENCES "foo_U" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT
-                                        ) WITHOUT ROWID;
-                    """,
-                    """
-                    INSERT INTO "__foo_T3__{GUID}__" ("C3", "C4")
-                                        SELECT
-                                          "foo_T3"."C3",
-                                          "foo_T3"."C4"
-                                        FROM "foo_T3";
-                    """,
-                    "DROP TABLE \"foo_T3\";",
-                    "ALTER TABLE \"__foo_T3__{GUID}__\" RENAME TO \"foo_T3\";",
-                    "CREATE INDEX \"foo_IX_T3_C4A\" ON \"foo_T3\" (\"C4\" ASC);" );
-
-            actions.ElementAtOrDefault( 2 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    CREATE TABLE "__foo_T2__{GUID}__" (
-                                          "C2" ANY NOT NULL,
-                                          CONSTRAINT "foo_PK_T2" PRIMARY KEY ("C2" ASC),
-                                          CONSTRAINT "foo_FK_T2_C2_REF_T1" FOREIGN KEY ("C2") REFERENCES "foo_U" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT
-                                        ) WITHOUT ROWID;
-                    """,
-                    """
-                    INSERT INTO "__foo_T2__{GUID}__" ("C2")
-                                        SELECT
-                                          "foo_T2"."C2"
-                                        FROM "foo_T2";
-                    """,
-                    "DROP TABLE \"foo_T2\";",
-                    "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "U" ),
+                schema.Objects.TryGet( "U" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "T" ).TestNull(),
+                schema.Database.Changes.ModifiedTables.TestSetEqual( [ t2, t3 ] ),
+                fk1.IsRemoved.TestFalse(),
+                fk2.IsRemoved.TestFalse(),
+                fk3.IsRemoved.TestFalse(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo_T1\" RENAME TO \"foo_U\";" ),
+                        (sql, _) => sql.SatisfySql(
+                            "DROP INDEX \"foo_IX_T3_C4A\";",
+                            """
+                            CREATE TABLE "__foo_T3__{GUID}__" (
+                              "C3" ANY NOT NULL,
+                              "C4" ANY NOT NULL,
+                              CONSTRAINT "foo_PK_T3" PRIMARY KEY ("C3" ASC),
+                              CONSTRAINT "foo_FK_T3_C3_REF_T1" FOREIGN KEY ("C3") REFERENCES "foo_U" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT,
+                              CONSTRAINT "foo_FK_T3_C4_REF_T1" FOREIGN KEY ("C4") REFERENCES "foo_U" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT
+                            ) WITHOUT ROWID;
+                            """,
+                            """
+                            INSERT INTO "__foo_T3__{GUID}__" ("C3", "C4")
+                            SELECT
+                              "foo_T3"."C3",
+                              "foo_T3"."C4"
+                            FROM "foo_T3";
+                            """,
+                            "DROP TABLE \"foo_T3\";",
+                            "ALTER TABLE \"__foo_T3__{GUID}__\" RENAME TO \"foo_T3\";",
+                            "CREATE INDEX \"foo_IX_T3_C4A\" ON \"foo_T3\" (\"C4\" ASC);" ),
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            CREATE TABLE "__foo_T2__{GUID}__" (
+                              "C2" ANY NOT NULL,
+                              CONSTRAINT "foo_PK_T2" PRIMARY KEY ("C2" ASC),
+                              CONSTRAINT "foo_FK_T2_C2_REF_T1" FOREIGN KEY ("C2") REFERENCES "foo_U" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT
+                            ) WITHOUT ROWID;
+                            """,
+                            """
+                            INSERT INTO "__foo_T2__{GUID}__" ("C2")
+                            SELECT
+                              "foo_T2"."C2"
+                            FROM "foo_T2";
+                            """,
+                            "DROP TABLE \"foo_T2\";",
+                            "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -331,39 +320,36 @@ public partial class SqliteTableBuilderTests : TestsBase
         var result = sut.SetName( "U" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "U" );
-            schema.Objects.TryGet( "U" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "T" ).Should().BeNull();
-            schema.Database.Changes.ModifiedTables.Should().BeEquivalentTo( t2 );
-            fk.IsRemoved.Should().BeFalse();
-
-            actions.Should().HaveCount( 2 );
-
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE \"foo_T1\" RENAME TO \"foo_U\";" );
-
-            actions.ElementAtOrDefault( 1 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    CREATE TABLE "__foo_T2__{GUID}__" (
-                                          "C2" ANY NOT NULL,
-                                          "C3" ANY NOT NULL GENERATED ALWAYS AS ("C2" * 3) STORED,
-                                          CONSTRAINT "foo_PK_T2" PRIMARY KEY ("C2" ASC),
-                                          CONSTRAINT "foo_FK_T2_C2_REF_T1" FOREIGN KEY ("C2") REFERENCES "foo_U" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT
-                                        ) WITHOUT ROWID;
-                    """,
-                    """
-                    INSERT INTO "__foo_T2__{GUID}__" ("C2")
-                                        SELECT
-                                          "foo_T2"."C2"
-                                        FROM "foo_T2";
-                    """,
-                    "DROP TABLE \"foo_T2\";",
-                    "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "U" ),
+                schema.Objects.TryGet( "U" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "T" ).TestNull(),
+                schema.Database.Changes.ModifiedTables.TestSetEqual( [ t2 ] ),
+                fk.IsRemoved.TestFalse(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo_T1\" RENAME TO \"foo_U\";" ),
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            CREATE TABLE "__foo_T2__{GUID}__" (
+                              "C2" ANY NOT NULL,
+                              "C3" ANY NOT NULL GENERATED ALWAYS AS ("C2" * 3) STORED,
+                              CONSTRAINT "foo_PK_T2" PRIMARY KEY ("C2" ASC),
+                              CONSTRAINT "foo_FK_T2_C2_REF_T1" FOREIGN KEY ("C2") REFERENCES "foo_U" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT
+                            ) WITHOUT ROWID;
+                            """,
+                            """
+                            INSERT INTO "__foo_T2__{GUID}__" ("C2")
+                            SELECT
+                              "foo_T2"."C2"
+                            FROM "foo_T2";
+                            """,
+                            "DROP TABLE \"foo_T2\";",
+                            "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -385,58 +371,52 @@ public partial class SqliteTableBuilderTests : TestsBase
         var result = sut.SetName( "U" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "U" );
-            schema.Objects.TryGet( "U" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "T1" ).Should().BeNull();
-            schema.Database.Changes.ModifiedTables.Should().BeEquivalentTo( sut, t2 );
-            fk1.IsRemoved.Should().BeFalse();
-
-            actions.Should().HaveCount( 3 );
-
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE \"foo_T1\" RENAME TO \"foo_U\";" );
-
-            actions.ElementAtOrDefault( 1 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    CREATE TABLE "__foo_T2__{GUID}__" (
-                                          "C2" ANY NOT NULL,
-                                          CONSTRAINT "foo_PK_T2" PRIMARY KEY ("C2" ASC),
-                                          CONSTRAINT "foo_FK_T2_C2_REF_T1" FOREIGN KEY ("C2") REFERENCES "foo_U" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT
-                                        ) WITHOUT ROWID;
-                    """,
-                    """
-                    INSERT INTO "__foo_T2__{GUID}__" ("C2")
-                                        SELECT
-                                          "foo_T2"."C2"
-                                        FROM "foo_T2";
-                    """,
-                    "DROP TABLE \"foo_T2\";",
-                    "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" );
-
-            actions.ElementAtOrDefault( 2 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    CREATE TABLE "__foo_U__{GUID}__" (
-                                          "C1" ANY NOT NULL,
-                                          "C3" INTEGER NOT NULL DEFAULT (0),
-                                          CONSTRAINT "foo_PK_T1" PRIMARY KEY ("C1" ASC)
-                                        ) WITHOUT ROWID;
-                    """,
-                    """
-                    INSERT INTO "__foo_U__{GUID}__" ("C1", "C3")
-                                        SELECT
-                                          "foo_U"."C1",
-                                          0 AS "C3"
-                                        FROM "foo_U";
-                    """,
-                    "DROP TABLE \"foo_U\";",
-                    "ALTER TABLE \"__foo_U__{GUID}__\" RENAME TO \"foo_U\";" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "U" ),
+                schema.Objects.TryGet( "U" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "T1" ).TestNull(),
+                schema.Database.Changes.ModifiedTables.TestSetEqual( [ sut, t2 ] ),
+                fk1.IsRemoved.TestFalse(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo_T1\" RENAME TO \"foo_U\";" ),
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            CREATE TABLE "__foo_T2__{GUID}__" (
+                              "C2" ANY NOT NULL,
+                              CONSTRAINT "foo_PK_T2" PRIMARY KEY ("C2" ASC),
+                              CONSTRAINT "foo_FK_T2_C2_REF_T1" FOREIGN KEY ("C2") REFERENCES "foo_U" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT
+                            ) WITHOUT ROWID;
+                            """,
+                            """
+                            INSERT INTO "__foo_T2__{GUID}__" ("C2")
+                            SELECT
+                              "foo_T2"."C2"
+                            FROM "foo_T2";
+                            """,
+                            "DROP TABLE \"foo_T2\";",
+                            "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" ),
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            CREATE TABLE "__foo_U__{GUID}__" (
+                              "C1" ANY NOT NULL,
+                              "C3" INTEGER NOT NULL DEFAULT (0),
+                              CONSTRAINT "foo_PK_T1" PRIMARY KEY ("C1" ASC)
+                            ) WITHOUT ROWID;
+                            """,
+                            """
+                            INSERT INTO "__foo_U__{GUID}__" ("C1", "C3")
+                            SELECT
+                              "foo_U"."C1",
+                              0 AS "C3"
+                            FROM "foo_U";
+                            """,
+                            "DROP TABLE \"foo_U\";",
+                            "ALTER TABLE \"__foo_U__{GUID}__\" RENAME TO \"foo_U\";" )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -455,44 +435,38 @@ public partial class SqliteTableBuilderTests : TestsBase
         var result = sut.SetName( "U" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "U" );
-            schema.Objects.TryGet( "U" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "T" ).Should().BeNull();
-            schema.Database.Changes.ModifiedTables.Should().BeEmpty();
-            v1.IsRemoved.Should().BeFalse();
-            v2.IsRemoved.Should().BeFalse();
-            v3.IsRemoved.Should().BeFalse();
-
-            actions.Should().HaveCount( 3 );
-
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_U\";" );
-
-            actions.ElementAtOrDefault( 1 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP VIEW \"foo_V1\";",
-                    """
-                    CREATE VIEW "foo_V1" AS
-                                        SELECT
-                                          "foo_U"."C"
-                                        FROM "foo_U";
-                    """ );
-
-            actions.ElementAtOrDefault( 2 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP VIEW \"foo_V2\";",
-                    """
-                    CREATE VIEW "foo_V2" AS
-                                        SELECT
-                                          *
-                                        FROM "foo_V1"
-                                        INNER JOIN "foo_U" ON TRUE;
-                    """ );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "U" ),
+                schema.Objects.TryGet( "U" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "T" ).TestNull(),
+                schema.Database.Changes.ModifiedTables.TestEmpty(),
+                v1.IsRemoved.TestFalse(),
+                v2.IsRemoved.TestFalse(),
+                v3.IsRemoved.TestFalse(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_U\";" ),
+                        (sql, _) => sql.SatisfySql(
+                            "DROP VIEW \"foo_V1\";",
+                            """
+                            CREATE VIEW "foo_V1" AS
+                            SELECT
+                              "foo_U"."C"
+                            FROM "foo_U";
+                            """ ),
+                        (sql, _) => sql.SatisfySql(
+                            "DROP VIEW \"foo_V2\";",
+                            """
+                            CREATE VIEW "foo_V2" AS
+                            SELECT
+                              *
+                            FROM "foo_V1"
+                            INNER JOIN "foo_U" ON TRUE;
+                            """ )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -512,64 +486,55 @@ public partial class SqliteTableBuilderTests : TestsBase
         var result = sut.SetName( "U" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "U" );
-            schema.Objects.TryGet( "U" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "T" ).Should().BeNull();
-            schema.Database.Changes.ModifiedTables.Should().BeEquivalentTo( sut );
-            v1.IsRemoved.Should().BeFalse();
-            v2.IsRemoved.Should().BeFalse();
-            v3.IsRemoved.Should().BeFalse();
-
-            actions.Should().HaveCount( 4 );
-
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_U\";" );
-
-            actions.ElementAtOrDefault( 1 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP VIEW \"foo_V1\";",
-                    """
-                    CREATE VIEW "foo_V1" AS
-                                        SELECT
-                                          "foo_U"."C"
-                                        FROM "foo_U";
-                    """ );
-
-            actions.ElementAtOrDefault( 2 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP VIEW \"foo_V2\";",
-                    """
-                    CREATE VIEW "foo_V2" AS
-                                        SELECT
-                                          *
-                                        FROM "foo_V1"
-                                        INNER JOIN "foo_U" ON TRUE;
-                    """ );
-
-            actions.ElementAtOrDefault( 3 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    CREATE TABLE "__foo_U__{GUID}__" (
-                                          "C" ANY NOT NULL,
-                                          "D" INTEGER NOT NULL DEFAULT (0),
-                                          CONSTRAINT "foo_PK_T" PRIMARY KEY ("C" ASC)
-                                        ) WITHOUT ROWID;
-                    """,
-                    """
-                    INSERT INTO "__foo_U__{GUID}__" ("C", "D")
-                                        SELECT
-                                          "foo_U"."C",
-                                          0 AS "D"
-                                        FROM "foo_U";
-                    """,
-                    "DROP TABLE \"foo_U\";",
-                    "ALTER TABLE \"__foo_U__{GUID}__\" RENAME TO \"foo_U\";" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "U" ),
+                schema.Objects.TryGet( "U" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "T" ).TestNull(),
+                schema.Database.Changes.ModifiedTables.TestSetEqual( [ sut ] ),
+                v1.IsRemoved.TestFalse(),
+                v2.IsRemoved.TestFalse(),
+                v3.IsRemoved.TestFalse(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_U\";" ),
+                        (sql, _) => sql.SatisfySql(
+                            "DROP VIEW \"foo_V1\";",
+                            """
+                            CREATE VIEW "foo_V1" AS
+                            SELECT
+                              "foo_U"."C"
+                            FROM "foo_U";
+                            """ ),
+                        (sql, _) => sql.SatisfySql(
+                            "DROP VIEW \"foo_V2\";",
+                            """
+                            CREATE VIEW "foo_V2" AS
+                            SELECT
+                              *
+                            FROM "foo_V1"
+                            INNER JOIN "foo_U" ON TRUE;
+                            """ ),
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            CREATE TABLE "__foo_U__{GUID}__" (
+                              "C" ANY NOT NULL,
+                              "D" INTEGER NOT NULL DEFAULT (0),
+                              CONSTRAINT "foo_PK_T" PRIMARY KEY ("C" ASC)
+                            ) WITHOUT ROWID;
+                            """,
+                            """
+                            INSERT INTO "__foo_U__{GUID}__" ("C", "D")
+                            SELECT
+                              "foo_U"."C",
+                              0 AS "D"
+                            FROM "foo_U";
+                            """,
+                            "DROP TABLE \"foo_U\";",
+                            "ALTER TABLE \"__foo_U__{GUID}__\" RENAME TO \"foo_U\";" )
+                    ] ) )
+            .Go();
     }
 
     [Theory]
@@ -585,9 +550,11 @@ public partial class SqliteTableBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( name ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqliteDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -599,9 +566,11 @@ public partial class SqliteTableBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "bar" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqliteDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -613,9 +582,11 @@ public partial class SqliteTableBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "PK_T" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqliteDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -637,49 +608,44 @@ public partial class SqliteTableBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            schema.Objects.TryGet( sut.Name ).Should().BeNull();
-            schema.Objects.TryGet( pk.Name ).Should().BeNull();
-            schema.Objects.TryGet( pk.Index.Name ).Should().BeNull();
-            schema.Objects.TryGet( ix.Name ).Should().BeNull();
-            schema.Objects.TryGet( selfFk.Name ).Should().BeNull();
-            schema.Objects.TryGet( externalFk.Name ).Should().BeNull();
-            schema.Objects.TryGet( chk.Name ).Should().BeNull();
-            schema.Database.Changes.ModifiedTables.Should().BeEquivalentTo( otherTable );
-
-            sut.IsRemoved.Should().BeTrue();
-            sut.ReferencingObjects.Should().BeEmpty();
-            sut.Columns.Should().BeEmpty();
-            sut.Constraints.Should().BeEmpty();
-            sut.Constraints.TryGetPrimaryKey().Should().BeNull();
-            c1.IsRemoved.Should().BeTrue();
-            c1.ReferencingObjects.Should().BeEmpty();
-            c2.IsRemoved.Should().BeTrue();
-            c2.ReferencingObjects.Should().BeEmpty();
-            pk.IsRemoved.Should().BeTrue();
-            pk.ReferencingObjects.Should().BeEmpty();
-            pk.Index.IsRemoved.Should().BeTrue();
-            pk.Index.ReferencingObjects.Should().BeEmpty();
-            pk.Index.Columns.Expressions.Should().BeEmpty();
-            pk.Index.PrimaryKey.Should().BeNull();
-            ix.IsRemoved.Should().BeTrue();
-            ix.ReferencingObjects.Should().BeEmpty();
-            ix.Columns.Expressions.Should().BeEmpty();
-            selfFk.IsRemoved.Should().BeTrue();
-            selfFk.ReferencingObjects.Should().BeEmpty();
-            externalFk.IsRemoved.Should().BeTrue();
-            externalFk.ReferencingObjects.Should().BeEmpty();
-            chk.IsRemoved.Should().BeTrue();
-            chk.ReferencingObjects.Should().BeEmpty();
-            chk.ReferencedColumns.Should().BeEmpty();
-
-            otherPk.Index.ReferencingObjects.Should().BeEmpty();
-            otherTable.ReferencingObjects.Should().BeEmpty();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "DROP TABLE \"foo_T\";" );
-        }
+        Assertion.All(
+                schema.Objects.TryGet( sut.Name ).TestNull(),
+                schema.Objects.TryGet( pk.Name ).TestNull(),
+                schema.Objects.TryGet( pk.Index.Name ).TestNull(),
+                schema.Objects.TryGet( ix.Name ).TestNull(),
+                schema.Objects.TryGet( selfFk.Name ).TestNull(),
+                schema.Objects.TryGet( externalFk.Name ).TestNull(),
+                schema.Objects.TryGet( chk.Name ).TestNull(),
+                schema.Database.Changes.ModifiedTables.TestSetEqual( [ otherTable ] ),
+                sut.IsRemoved.TestTrue(),
+                sut.ReferencingObjects.TestEmpty(),
+                sut.Columns.TestEmpty(),
+                sut.Constraints.TestEmpty(),
+                sut.Constraints.TryGetPrimaryKey().TestNull(),
+                c1.IsRemoved.TestTrue(),
+                c1.ReferencingObjects.TestEmpty(),
+                c2.IsRemoved.TestTrue(),
+                c2.ReferencingObjects.TestEmpty(),
+                pk.IsRemoved.TestTrue(),
+                pk.ReferencingObjects.TestEmpty(),
+                pk.Index.IsRemoved.TestTrue(),
+                pk.Index.ReferencingObjects.TestEmpty(),
+                pk.Index.Columns.Expressions.TestEmpty(),
+                pk.Index.PrimaryKey.TestNull(),
+                ix.IsRemoved.TestTrue(),
+                ix.ReferencingObjects.TestEmpty(),
+                ix.Columns.Expressions.TestEmpty(),
+                selfFk.IsRemoved.TestTrue(),
+                selfFk.ReferencingObjects.TestEmpty(),
+                externalFk.IsRemoved.TestTrue(),
+                externalFk.ReferencingObjects.TestEmpty(),
+                chk.IsRemoved.TestTrue(),
+                chk.ReferencingObjects.TestEmpty(),
+                chk.ReferencedColumns.TestEmpty(),
+                otherPk.Index.ReferencingObjects.TestEmpty(),
+                otherTable.ReferencingObjects.TestEmpty(),
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP TABLE \"foo_T\";" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -694,30 +660,26 @@ public partial class SqliteTableBuilderTests : TestsBase
         sut.SetName( "bar" ).Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            schema.Objects.TryGet( sut.Name ).Should().BeNull();
-            schema.Objects.TryGet( pk.Name ).Should().BeNull();
-            schema.Objects.TryGet( pk.Index.Name ).Should().BeNull();
-            schema.Database.Changes.ModifiedTables.Should().BeEmpty();
-
-            sut.IsRemoved.Should().BeTrue();
-            sut.ReferencingObjects.Should().BeEmpty();
-            sut.Columns.Should().BeEmpty();
-            sut.Constraints.Should().BeEmpty();
-            sut.Constraints.TryGetPrimaryKey().Should().BeNull();
-            c1.IsRemoved.Should().BeTrue();
-            c1.ReferencingObjects.Should().BeEmpty();
-            pk.IsRemoved.Should().BeTrue();
-            pk.ReferencingObjects.Should().BeEmpty();
-            pk.Index.IsRemoved.Should().BeTrue();
-            pk.Index.ReferencingObjects.Should().BeEmpty();
-            pk.Index.Columns.Expressions.Should().BeEmpty();
-            pk.Index.PrimaryKey.Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "DROP TABLE \"foo_T\";" );
-        }
+        Assertion.All(
+                schema.Objects.TryGet( sut.Name ).TestNull(),
+                schema.Objects.TryGet( pk.Name ).TestNull(),
+                schema.Objects.TryGet( pk.Index.Name ).TestNull(),
+                schema.Database.Changes.ModifiedTables.TestEmpty(),
+                sut.IsRemoved.TestTrue(),
+                sut.ReferencingObjects.TestEmpty(),
+                sut.Columns.TestEmpty(),
+                sut.Constraints.TestEmpty(),
+                sut.Constraints.TryGetPrimaryKey().TestNull(),
+                c1.IsRemoved.TestTrue(),
+                c1.ReferencingObjects.TestEmpty(),
+                pk.IsRemoved.TestTrue(),
+                pk.ReferencingObjects.TestEmpty(),
+                pk.Index.IsRemoved.TestTrue(),
+                pk.Index.ReferencingObjects.TestEmpty(),
+                pk.Index.Columns.Expressions.TestEmpty(),
+                pk.Index.PrimaryKey.TestNull(),
+                actions.Select( a => a.Sql ).TestSequence( [ (sql, _) => sql.SatisfySql( "DROP TABLE \"foo_T\";" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -734,7 +696,7 @@ public partial class SqliteTableBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Fact]
@@ -750,9 +712,11 @@ public partial class SqliteTableBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqliteDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -765,9 +729,11 @@ public partial class SqliteTableBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqliteDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -785,16 +751,15 @@ public partial class SqliteTableBuilderTests : TestsBase
         a.SetName( "B" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
+        actions.Select( ac => ac.Sql )
+            .TestSequence(
+            [
+                (sql, _) => sql.SatisfySql(
                     "ALTER TABLE \"foo_T\" RENAME COLUMN \"A\" TO \"__A__{GUID}__\";",
                     "ALTER TABLE \"foo_T\" RENAME COLUMN \"B\" TO \"A\";",
-                    "ALTER TABLE \"foo_T\" RENAME COLUMN \"__A__{GUID}__\" TO \"B\";" );
-        }
+                    "ALTER TABLE \"foo_T\" RENAME COLUMN \"__A__{GUID}__\" TO \"B\";" )
+            ] )
+            .Go();
     }
 
     [Fact]
@@ -816,18 +781,17 @@ public partial class SqliteTableBuilderTests : TestsBase
         a.SetName( "D" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
+        actions.Select( ac => ac.Sql )
+            .TestSequence(
+            [
+                (sql, _) => sql.SatisfySql(
                     "ALTER TABLE \"foo_T\" RENAME COLUMN \"A\" TO \"__A__{GUID}__\";",
                     "ALTER TABLE \"foo_T\" RENAME COLUMN \"B\" TO \"A\";",
                     "ALTER TABLE \"foo_T\" RENAME COLUMN \"C\" TO \"B\";",
                     "ALTER TABLE \"foo_T\" RENAME COLUMN \"D\" TO \"C\";",
-                    "ALTER TABLE \"foo_T\" RENAME COLUMN \"__A__{GUID}__\" TO \"D\";" );
-        }
+                    "ALTER TABLE \"foo_T\" RENAME COLUMN \"__A__{GUID}__\" TO \"D\";" )
+            ] )
+            .Go();
     }
 
     [Fact]
@@ -848,16 +812,15 @@ public partial class SqliteTableBuilderTests : TestsBase
         a.SetName( "B" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
+        actions.Select( ac => ac.Sql )
+            .TestSequence(
+            [
+                (sql, _) => sql.SatisfySql(
                     "ALTER TABLE \"foo_T\" RENAME COLUMN \"C\" TO \"D\";",
                     "ALTER TABLE \"foo_T\" RENAME COLUMN \"B\" TO \"C\";",
-                    "ALTER TABLE \"foo_T\" RENAME COLUMN \"A\" TO \"B\";" );
-        }
+                    "ALTER TABLE \"foo_T\" RENAME COLUMN \"A\" TO \"B\";" )
+            ] )
+            .Go();
     }
 
     [Fact]
@@ -878,33 +841,32 @@ public partial class SqliteTableBuilderTests : TestsBase
         a.SetName( "D" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
+        actions.Select( ac => ac.Sql )
+            .TestSequence(
+            [
+                (sql, _) => sql.SatisfySql(
                     "DROP INDEX \"foo_C\";",
                     """
                     CREATE TABLE "__foo_T__{GUID}__" (
-                                          "P" ANY NOT NULL,
-                                          "I" ANY NOT NULL,
-                                          CONSTRAINT "foo_D" PRIMARY KEY ("P" ASC),
-                                          CONSTRAINT "foo_A" CHECK (TRUE),
-                                          CONSTRAINT "foo_C" CHECK (TRUE)
-                                        ) WITHOUT ROWID;
+                      "P" ANY NOT NULL,
+                      "I" ANY NOT NULL,
+                      CONSTRAINT "foo_D" PRIMARY KEY ("P" ASC),
+                      CONSTRAINT "foo_A" CHECK (TRUE),
+                      CONSTRAINT "foo_C" CHECK (TRUE)
+                    ) WITHOUT ROWID;
                     """,
                     """
                     INSERT INTO "__foo_T__{GUID}__" ("P", "I")
-                                        SELECT
-                                          "foo_T"."P",
-                                          "foo_T"."I"
-                                        FROM "foo_T";
+                    SELECT
+                      "foo_T"."P",
+                      "foo_T"."I"
+                    FROM "foo_T";
                     """,
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";",
-                    "CREATE INDEX \"foo_B\" ON \"foo_T\" (\"I\" ASC);" );
-        }
+                    "CREATE INDEX \"foo_B\" ON \"foo_T\" (\"I\" ASC);" )
+            ] )
+            .Go();
     }
 
     [Fact]
@@ -924,32 +886,31 @@ public partial class SqliteTableBuilderTests : TestsBase
         a.SetName( "B" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
+        actions.Select( ac => ac.Sql )
+            .TestSequence(
+            [
+                (sql, _) => sql.SatisfySql(
                     "DROP INDEX \"foo_C\";",
                     """
                     CREATE TABLE "__foo_T__{GUID}__" (
-                                          "P" ANY NOT NULL,
-                                          "I" ANY NOT NULL,
-                                          CONSTRAINT "foo_B" PRIMARY KEY ("P" ASC),
-                                          CONSTRAINT "foo_C" CHECK (TRUE)
-                                        ) WITHOUT ROWID;
+                      "P" ANY NOT NULL,
+                      "I" ANY NOT NULL,
+                      CONSTRAINT "foo_B" PRIMARY KEY ("P" ASC),
+                      CONSTRAINT "foo_C" CHECK (TRUE)
+                    ) WITHOUT ROWID;
                     """,
                     """
                     INSERT INTO "__foo_T__{GUID}__" ("P", "I")
-                                        SELECT
-                                          "foo_T"."P",
-                                          "foo_T"."I"
-                                        FROM "foo_T";
+                    SELECT
+                      "foo_T"."P",
+                      "foo_T"."I"
+                    FROM "foo_T";
                     """,
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";",
-                    "CREATE INDEX \"foo_D\" ON \"foo_T\" (\"I\" ASC);" );
-        }
+                    "CREATE INDEX \"foo_D\" ON \"foo_T\" (\"I\" ASC);" )
+            ] )
+            .Go();
     }
 
     [Fact]
@@ -988,49 +949,47 @@ public partial class SqliteTableBuilderTests : TestsBase
         sut.Constraints.CreateForeignKey( ix2, sut.Constraints.CreateUniqueIndex( sut.Columns.Create( "C11" ).Asc() ) );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            actions.Should().HaveCount( 2 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_U\";" );
-            actions.ElementAtOrDefault( 1 )
-                .Sql.Should()
-                .SatisfySql(
+        actions.Select( a => a.Sql )
+            .TestSequence(
+            [
+                (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_U\";" ),
+                (sql, _) => sql.SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
                     "DROP INDEX \"foo_IX_T_C7A\";",
                     "DROP INDEX \"foo_UIX_T_C8A\";",
                     "DROP INDEX \"foo_UIX_T_C9A\";",
                     """
                     CREATE TABLE "__foo_U__{GUID}__" (
-                                          "C1" ANY NOT NULL,
-                                          "C2" INTEGER NOT NULL,
-                                          "C11" ANY NOT NULL DEFAULT (X''),
-                                          "Y" INTEGER NOT NULL,
-                                          "C5" INTEGER NOT NULL GENERATED ALWAYS AS (1) STORED,
-                                          "C10" ANY NOT NULL DEFAULT (X''),
-                                          "C7" ANY NOT NULL,
-                                          "C8" ANY NOT NULL,
-                                          "C9" ANY NOT NULL,
-                                          "X" INTEGER,
-                                          CONSTRAINT "foo_PK_U" PRIMARY KEY ("C10" ASC),
-                                          CONSTRAINT "foo_FK_2" FOREIGN KEY ("C7") REFERENCES "foo_U" ("C9") ON DELETE RESTRICT ON UPDATE RESTRICT,
-                                          CONSTRAINT "foo_FK_U_C7_REF_U" FOREIGN KEY ("C7") REFERENCES "foo_U" ("C11") ON DELETE RESTRICT ON UPDATE RESTRICT,
-                                          CONSTRAINT "foo_CHK_1" CHECK (TRUE),
-                                          CONSTRAINT "foo_CHK_3" CHECK (TRUE)
-                                        ) WITHOUT ROWID;
+                      "C1" ANY NOT NULL,
+                      "C2" INTEGER NOT NULL,
+                      "C11" ANY NOT NULL DEFAULT (X''),
+                      "Y" INTEGER NOT NULL,
+                      "C5" INTEGER NOT NULL GENERATED ALWAYS AS (1) STORED,
+                      "C10" ANY NOT NULL DEFAULT (X''),
+                      "C7" ANY NOT NULL,
+                      "C8" ANY NOT NULL,
+                      "C9" ANY NOT NULL,
+                      "X" INTEGER,
+                      CONSTRAINT "foo_PK_U" PRIMARY KEY ("C10" ASC),
+                      CONSTRAINT "foo_FK_2" FOREIGN KEY ("C7") REFERENCES "foo_U" ("C9") ON DELETE RESTRICT ON UPDATE RESTRICT,
+                      CONSTRAINT "foo_FK_U_C7_REF_U" FOREIGN KEY ("C7") REFERENCES "foo_U" ("C11") ON DELETE RESTRICT ON UPDATE RESTRICT,
+                      CONSTRAINT "foo_CHK_1" CHECK (TRUE),
+                      CONSTRAINT "foo_CHK_3" CHECK (TRUE)
+                    ) WITHOUT ROWID;
                     """,
                     """
                     INSERT INTO "__foo_U__{GUID}__" ("C1", "C2", "C11", "Y", "C10", "C7", "C8", "C9", "X")
-                                        SELECT
-                                          "foo_U"."C1",
-                                          "foo_U"."C2",
-                                          X'' AS "C11",
-                                          "foo_U"."Y" AS "Y",
-                                          X'' AS "C10",
-                                          "foo_U"."C7",
-                                          "foo_U"."C8",
-                                          "foo_U"."C9",
-                                          "foo_U"."X" AS "X"
-                                        FROM "foo_U";
+                    SELECT
+                      "foo_U"."C1",
+                      "foo_U"."C2",
+                      X'' AS "C11",
+                      "foo_U"."Y" AS "Y",
+                      X'' AS "C10",
+                      "foo_U"."C7",
+                      "foo_U"."C8",
+                      "foo_U"."C9",
+                      "foo_U"."X" AS "X"
+                    FROM "foo_U";
                     """,
                     "DROP TABLE \"foo_U\";",
                     "ALTER TABLE \"__foo_U__{GUID}__\" RENAME TO \"foo_U\";",
@@ -1038,8 +997,9 @@ public partial class SqliteTableBuilderTests : TestsBase
                     "CREATE INDEX \"foo_IX_2\" ON \"foo_U\" (\"C7\" ASC);",
                     "CREATE INDEX \"foo_IX_U_C2A_XD\" ON \"foo_U\" (\"C2\" ASC, \"X\" DESC);",
                     "CREATE UNIQUE INDEX \"foo_UIX_T_C8A\" ON \"foo_U\" (\"C8\" ASC);",
-                    "CREATE UNIQUE INDEX \"foo_UIX_T_C9A\" ON \"foo_U\" (\"C9\" ASC);" );
-        }
+                    "CREATE UNIQUE INDEX \"foo_UIX_T_C9A\" ON \"foo_U\" (\"C9\" ASC);" )
+            ] )
+            .Go();
     }
 
     [Fact]
@@ -1061,18 +1021,17 @@ public partial class SqliteTableBuilderTests : TestsBase
         sut.Constraints.CreateIndex( c2.Asc(), c3.Desc() );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            actions.Should().HaveCount( 2 );
-            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_U\";" );
-            actions.ElementAtOrDefault( 1 )
-                .Sql.Should()
-                .SatisfySql(
+        actions.Select( a => a.Sql )
+            .TestSequence(
+            [
+                (sql, _) => sql.SatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_U\";" ),
+                (sql, _) => sql.SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
                     "ALTER TABLE \"foo_U\" DROP COLUMN \"C4\";",
                     "ALTER TABLE \"foo_U\" RENAME COLUMN \"C3\" TO \"X\";",
-                    "CREATE INDEX \"foo_IX_U_C2A_XD\" ON \"foo_U\" (\"C2\" ASC, \"X\" DESC);" );
-        }
+                    "CREATE INDEX \"foo_IX_U_C2A_XD\" ON \"foo_U\" (\"C2\" ASC, \"X\" DESC);" )
+            ] )
+            .Go();
     }
 
     [Fact]
@@ -1083,8 +1042,10 @@ public partial class SqliteTableBuilderTests : TestsBase
 
         var result = sut.ForSqlite( action );
 
-        result.Should().BeSameAs( sut );
-        action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( sut );
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                action.CallAt( 0 ).Arguments.TestSequence( [ sut ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1095,7 +1056,9 @@ public partial class SqliteTableBuilderTests : TestsBase
 
         var result = sut.ForSqlite( action );
 
-        result.Should().BeSameAs( sut );
-        action.Verify().CallCount.Should().Be( 0 );
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                action.CallCount().TestEquals( 0 ) )
+            .Go();
     }
 }

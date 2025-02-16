@@ -3,7 +3,6 @@ using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.Sqlite.Tests.Helpers;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sqlite.Tests.ObjectsTests.BuildersTests;
 
@@ -14,28 +13,24 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
     {
         var sut = SqliteDatabaseBuilderMock.Create();
 
-        using ( new AssertionScope() )
-        {
-            sut.Schemas.Count.Should().Be( 1 );
-            sut.Schemas.Database.Should().BeSameAs( sut );
-            sut.Schemas.Should().BeSequentiallyEqualTo( sut.Schemas.Default );
-
-            sut.Schemas.Default.Database.Should().BeSameAs( sut );
-            sut.Schemas.Default.Name.Should().BeEmpty();
-            sut.Schemas.Default.Objects.Should().BeEmpty();
-            sut.Schemas.Default.Objects.Schema.Should().BeSameAs( sut.Schemas.Default );
-
-            sut.Dialect.Should().BeSameAs( SqliteDialect.Instance );
-            sut.ServerVersion.Should().Be( "0.0.0" );
-
-            sut.Changes.Database.Should().BeSameAs( sut );
-            sut.Changes.Mode.Should().Be( SqlDatabaseCreateMode.DryRun );
-            sut.Changes.IsAttached.Should().BeTrue();
-            sut.Changes.ActiveObject.Should().BeNull();
-            sut.Changes.ActiveObjectExistenceState.Should().Be( default( SqlObjectExistenceState ) );
-            sut.Changes.IsActive.Should().BeTrue();
-            sut.Changes.GetPendingActions().ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Schemas.Count.TestEquals( 1 ),
+                sut.Schemas.Database.TestRefEquals( sut ),
+                sut.Schemas.TestSequence( [ sut.Schemas.Default ] ),
+                sut.Schemas.Default.Database.TestRefEquals( sut ),
+                sut.Schemas.Default.Name.TestEmpty(),
+                sut.Schemas.Default.Objects.TestEmpty(),
+                sut.Schemas.Default.Objects.Schema.TestRefEquals( sut.Schemas.Default ),
+                sut.Dialect.TestRefEquals( SqliteDialect.Instance ),
+                sut.ServerVersion.TestEquals( "0.0.0" ),
+                sut.Changes.Database.TestRefEquals( sut ),
+                sut.Changes.Mode.TestEquals( SqlDatabaseCreateMode.DryRun ),
+                sut.Changes.IsAttached.TestTrue(),
+                sut.Changes.ActiveObject.TestNull(),
+                sut.Changes.ActiveObjectExistenceState.TestEquals( default ),
+                sut.Changes.IsActive.TestTrue(),
+                sut.Changes.GetPendingActions().ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -43,7 +38,7 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
     {
         var sut = SqliteDatabaseBuilderMock.Create();
         var result = sut.AddConnectionChangeCallback( _ => { } );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -54,8 +49,10 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
 
         var result = sut.ForSqlite( action );
 
-        result.Should().BeSameAs( sut );
-        action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( sut );
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                action.CallAt( 0 ).Arguments.TestSequence( [ sut ] ) )
+            .Go();
     }
 
     [Fact]
@@ -66,7 +63,9 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
 
         var result = sut.ForSqlite( action );
 
-        result.Should().BeSameAs( sut );
-        action.Verify().CallCount.Should().Be( 0 );
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                action.CallCount().TestEquals( 0 ) )
+            .Go();
     }
 }

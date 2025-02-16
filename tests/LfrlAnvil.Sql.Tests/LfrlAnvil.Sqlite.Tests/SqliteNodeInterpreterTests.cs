@@ -6,7 +6,6 @@ using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sqlite.Tests;
@@ -17,11 +16,10 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     public void Interpreter_ShouldUseDoubleQuotesAsNameDelimiters()
     {
         var sut = CreateInterpreter();
-        using ( new AssertionScope() )
-        {
-            sut.BeginNameDelimiter.Should().Be( '"' );
-            sut.EndNameDelimiter.Should().Be( '"' );
-        }
+        Assertion.All(
+                sut.BeginNameDelimiter.TestEquals( '"' ),
+                sut.EndNameDelimiter.TestEquals( '"' ) )
+            .Go();
     }
 
     [Fact]
@@ -30,12 +28,11 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.RawExpression( "foo.a + @bar", SqlNode.Parameter<int>( "bar" ) ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.Context.Sql.ToString().Should().Be( "foo.a + @bar" );
-            sut.Context.Parameters.Should()
-                .BeSequentiallyEqualTo( new SqlNodeInterpreterContextParameter( "bar", TypeNullability.Create<int>(), null ) );
-        }
+        Assertion.All(
+                sut.Context.Sql.ToString().TestEquals( "foo.a + @bar" ),
+                sut.Context.Parameters.TestSequence(
+                    [ new SqlNodeInterpreterContextParameter( "bar", TypeNullability.Create<int>(), null ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -43,7 +40,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.VisitChild( SqlNode.RawExpression( "foo.a + @bar" ) );
-        sut.Context.Sql.ToString().Should().Be( "(foo.a + @bar)" );
+        sut.Context.Sql.ToString().TestEquals( "(foo.a + @bar)" ).Go();
     }
 
     [Fact]
@@ -51,7 +48,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.RawDataField( SqlNode.RawRecordSet( "foo" ), "bar" ) );
-        sut.Context.Sql.ToString().Should().Be( "foo.\"bar\"" );
+        sut.Context.Sql.ToString().TestEquals( "foo.\"bar\"" ).Go();
     }
 
     [Fact]
@@ -59,7 +56,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.RawDataField( SqlNode.RawRecordSet( SqlRecordSetInfo.Create( "foo", "bar" ) ), "qux" ) );
-        sut.Context.Sql.ToString().Should().Be( "\"foo_bar\".\"qux\"" );
+        sut.Context.Sql.ToString().TestEquals( "\"foo_bar\".\"qux\"" ).Go();
     }
 
     [Fact]
@@ -67,7 +64,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.VisitChild( SqlNode.RawDataField( SqlNode.RawRecordSet( "foo" ), "bar" ) );
-        sut.Context.Sql.ToString().Should().Be( "foo.\"bar\"" );
+        sut.Context.Sql.ToString().TestEquals( "foo.\"bar\"" ).Go();
     }
 
     [Theory]
@@ -78,7 +75,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         var sut = CreateInterpreter();
         var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
         sut.Visit( SqlNode.CreateTable( info, new[] { SqlNode.Column<int>( "qux" ) } ).AsSet().GetField( "qux" ) );
-        sut.Context.Sql.ToString().Should().Be( expected );
+        sut.Context.Sql.ToString().TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -89,7 +86,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         var sut = CreateInterpreter();
         var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
         sut.Visit( SqlNode.CreateTable( info, new[] { SqlNode.Column<int>( "qux" ) } ).AsSet( "lorem" ).GetField( "qux" ) );
-        sut.Context.Sql.ToString().Should().Be( "\"lorem\".\"qux\"" );
+        sut.Context.Sql.ToString().TestEquals( "\"lorem\".\"qux\"" ).Go();
     }
 
     [Fact]
@@ -97,7 +94,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.Null() );
-        sut.Context.Sql.ToString().Should().Be( "NULL" );
+        sut.Context.Sql.ToString().TestEquals( "NULL" ).Go();
     }
 
     [Fact]
@@ -105,7 +102,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.VisitChild( SqlNode.Null() );
-        sut.Context.Sql.ToString().Should().Be( "NULL" );
+        sut.Context.Sql.ToString().TestEquals( "NULL" ).Go();
     }
 
     [Fact]
@@ -113,7 +110,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.Literal( "fo'o" ) );
-        sut.Context.Sql.ToString().Should().Be( "'fo''o'" );
+        sut.Context.Sql.ToString().TestEquals( "'fo''o'" ).Go();
     }
 
     [Fact]
@@ -121,7 +118,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.VisitChild( SqlNode.Literal( 25 ) );
-        sut.Context.Sql.ToString().Should().Be( "25" );
+        sut.Context.Sql.ToString().TestEquals( "25" ).Go();
     }
 
     [Fact]
@@ -130,12 +127,11 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.Parameter<int>( "a" ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.Context.Sql.ToString().Should().Be( "@a" );
-            sut.Context.Parameters.Should()
-                .BeSequentiallyEqualTo( new SqlNodeInterpreterContextParameter( "a", TypeNullability.Create<int>(), null ) );
-        }
+        Assertion.All(
+                sut.Context.Sql.ToString().TestEquals( "@a" ),
+                sut.Context.Parameters.TestSequence(
+                    [ new SqlNodeInterpreterContextParameter( "a", TypeNullability.Create<int>(), null ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -144,12 +140,11 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.Parameter<int>( "a", index: 1 ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.Context.Sql.ToString().Should().Be( "@a" );
-            sut.Context.Parameters.Should()
-                .BeSequentiallyEqualTo( new SqlNodeInterpreterContextParameter( "a", TypeNullability.Create<int>(), null ) );
-        }
+        Assertion.All(
+                sut.Context.Sql.ToString().TestEquals( "@a" ),
+                sut.Context.Parameters.TestSequence(
+                    [ new SqlNodeInterpreterContextParameter( "a", TypeNullability.Create<int>(), null ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -158,12 +153,11 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         var sut = CreateInterpreter( SqliteNodeInterpreterOptions.Default.EnablePositionalParameters() );
         sut.Visit( SqlNode.Parameter<int>( "a", index: 0 ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.Context.Sql.ToString().Should().Be( "?1" );
-            sut.Context.Parameters.Should()
-                .BeSequentiallyEqualTo( new SqlNodeInterpreterContextParameter( "a", TypeNullability.Create<int>(), Index: 0 ) );
-        }
+        Assertion.All(
+                sut.Context.Sql.ToString().TestEquals( "?1" ),
+                sut.Context.Parameters.TestSequence(
+                    [ new SqlNodeInterpreterContextParameter( "a", TypeNullability.Create<int>(), Index: 0 ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -172,14 +166,12 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         var sut = CreateInterpreter();
         sut.VisitChild( SqlNode.Parameter<string>( "b", isNullable: true ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.Context.Sql.ToString().Should().Be( "@b" );
-            sut.Context.Parameters.Should().HaveCount( 1 );
-            sut.Context.Parameters.Should()
-                .BeSequentiallyEqualTo(
-                    new SqlNodeInterpreterContextParameter( "b", TypeNullability.Create<string>( isNullable: true ), null ) );
-        }
+        Assertion.All(
+                sut.Context.Sql.ToString().TestEquals( "@b" ),
+                sut.Context.Parameters.Count.TestEquals( 1 ),
+                sut.Context.Parameters.TestSequence(
+                    [ new SqlNodeInterpreterContextParameter( "b", TypeNullability.Create<string>( isNullable: true ), null ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -188,7 +180,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         var sut = CreateInterpreter();
         var table = SqlTableMock.Create<int>( "foo", new[] { "bar" } ).ToRecordSet();
         sut.Visit( table.GetField( "bar" ) );
-        sut.Context.Sql.ToString().Should().Be( "\"common_foo\".\"bar\"" );
+        sut.Context.Sql.ToString().TestEquals( "\"common_foo\".\"bar\"" ).Go();
     }
 
     [Fact]
@@ -197,7 +189,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         var sut = CreateInterpreter();
         var table = SqlNode.Table( SqlTableMock.Create<int>( "foo", new[] { "bar" } ) );
         sut.VisitChild( table.GetField( "bar" ) );
-        sut.Context.Sql.ToString().Should().Be( "\"common_foo\".\"bar\"" );
+        sut.Context.Sql.ToString().TestEquals( "\"common_foo\".\"bar\"" ).Go();
     }
 
     [Fact]
@@ -206,7 +198,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         var sut = CreateInterpreter();
         var table = SqlNode.Table( SqlTableBuilderMock.Create<int>( "foo", new[] { "bar" } ) );
         sut.Visit( table.GetField( "bar" ) );
-        sut.Context.Sql.ToString().Should().Be( "\"common_foo\".\"bar\"" );
+        sut.Context.Sql.ToString().TestEquals( "\"common_foo\".\"bar\"" ).Go();
     }
 
     [Fact]
@@ -215,7 +207,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         var sut = CreateInterpreter();
         var table = SqlNode.Table( SqlTableBuilderMock.Create<int>( "foo", new[] { "bar" } ) );
         sut.VisitChild( table.GetField( "bar" ) );
-        sut.Context.Sql.ToString().Should().Be( "\"common_foo\".\"bar\"" );
+        sut.Context.Sql.ToString().TestEquals( "\"common_foo\".\"bar\"" ).Go();
     }
 
     [Fact]
@@ -224,7 +216,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         var sut = CreateInterpreter();
         var query = SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["bar"].AsSelf() } ).AsSet( "qux" );
         sut.Visit( query.GetField( "bar" ) );
-        sut.Context.Sql.ToString().Should().Be( "\"qux\".\"bar\"" );
+        sut.Context.Sql.ToString().TestEquals( "\"qux\".\"bar\"" ).Go();
     }
 
     [Fact]
@@ -233,7 +225,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         var sut = CreateInterpreter();
         var query = SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["bar"].AsSelf() } ).AsSet( "qux" );
         sut.VisitChild( query.GetField( "bar" ) );
-        sut.Context.Sql.ToString().Should().Be( "\"qux\".\"bar\"" );
+        sut.Context.Sql.ToString().TestEquals( "\"qux\".\"bar\"" ).Go();
     }
 
     [Fact]
@@ -244,7 +236,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
             SqlViewMock.Create( "foo", SqlNode.RawRecordSet( "bar" ).ToDataSource().Select( s => new[] { s.From["qux"].AsSelf() } ) ) );
 
         sut.Visit( view.GetField( "qux" ) );
-        sut.Context.Sql.ToString().Should().Be( "\"common_foo\".\"qux\"" );
+        sut.Context.Sql.ToString().TestEquals( "\"common_foo\".\"qux\"" ).Go();
     }
 
     [Fact]
@@ -255,7 +247,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
             SqlViewMock.Create( "foo", SqlNode.RawRecordSet( "bar" ).ToDataSource().Select( s => new[] { s.From["qux"].AsSelf() } ) ) );
 
         sut.VisitChild( view.GetField( "qux" ) );
-        sut.Context.Sql.ToString().Should().Be( "\"common_foo\".\"qux\"" );
+        sut.Context.Sql.ToString().TestEquals( "\"common_foo\".\"qux\"" ).Go();
     }
 
     [Fact]
@@ -264,12 +256,12 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.RawCondition( "foo.a > 10" ).Then( SqlNode.RawExpression( "foo.b" ) ) );
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 WHEN foo.a > 10
                   THEN (foo.b)
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -278,12 +270,12 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.RawCondition( "foo.a > 10" ).Then( SqlNode.Literal( 25 ) ) );
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 WHEN foo.a > 10
                   THEN 25
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -300,8 +292,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
                 SqlNode.Literal( 25 ) ) );
 
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 CASE
                   WHEN foo.a > 10
@@ -310,7 +301,8 @@ public partial class SqliteNodeInterpreterTests : TestsBase
                     THEN @a
                   ELSE 25
                 END
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -327,8 +319,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
                 SqlNode.Literal( 25 ) ) );
 
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 (
                   CASE
@@ -339,7 +330,8 @@ public partial class SqliteNodeInterpreterTests : TestsBase
                     ELSE 25
                   END
                 )
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -348,13 +340,11 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.RawCondition( "foo.a > @a", SqlNode.Parameter<int>( "a" ) ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.Context.Parameters.Should()
-                .BeSequentiallyEqualTo( new SqlNodeInterpreterContextParameter( "a", TypeNullability.Create<int>(), null ) );
-
-            sut.Context.Sql.ToString().Should().Be( "foo.a > @a" );
-        }
+        Assertion.All(
+                sut.Context.Parameters.TestSequence(
+                    [ new SqlNodeInterpreterContextParameter( "a", TypeNullability.Create<int>(), null ) ] ),
+                sut.Context.Sql.ToString().TestEquals( "foo.a > @a" ) )
+            .Go();
     }
 
     [Fact]
@@ -362,7 +352,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.VisitChild( SqlNode.RawCondition( "foo.a > 10" ) );
-        sut.Context.Sql.ToString().Should().Be( "(foo.a > 10)" );
+        sut.Context.Sql.ToString().TestEquals( "(foo.a > 10)" ).Go();
     }
 
     [Fact]
@@ -370,7 +360,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.True() );
-        sut.Context.Sql.ToString().Should().Be( "TRUE" );
+        sut.Context.Sql.ToString().TestEquals( "TRUE" ).Go();
     }
 
     [Fact]
@@ -378,7 +368,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.VisitChild( SqlNode.True() );
-        sut.Context.Sql.ToString().Should().Be( "TRUE" );
+        sut.Context.Sql.ToString().TestEquals( "TRUE" ).Go();
     }
 
     [Fact]
@@ -386,7 +376,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.False() );
-        sut.Context.Sql.ToString().Should().Be( "FALSE" );
+        sut.Context.Sql.ToString().TestEquals( "FALSE" ).Go();
     }
 
     [Fact]
@@ -394,7 +384,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.VisitChild( SqlNode.False() );
-        sut.Context.Sql.ToString().Should().Be( "FALSE" );
+        sut.Context.Sql.ToString().TestEquals( "FALSE" ).Go();
     }
 
     [Fact]
@@ -402,7 +392,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.RawCondition( "foo.a > 10" ).ToValue() );
-        sut.Context.Sql.ToString().Should().Be( "foo.a > 10" );
+        sut.Context.Sql.ToString().TestEquals( "foo.a > 10" ).Go();
     }
 
     [Fact]
@@ -410,7 +400,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.VisitChild( SqlNode.RawCondition( "foo.a > 10" ).ToValue() );
-        sut.Context.Sql.ToString().Should().Be( "(foo.a > 10)" );
+        sut.Context.Sql.ToString().TestEquals( "(foo.a > 10)" ).Go();
     }
 
     [Fact]
@@ -418,7 +408,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.RawRecordSet( "foo", "bar" ) );
-        sut.Context.Sql.ToString().Should().Be( "foo AS \"bar\"" );
+        sut.Context.Sql.ToString().TestEquals( "foo AS \"bar\"" ).Go();
     }
 
     [Fact]
@@ -426,7 +416,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.RawRecordSet( SqlRecordSetInfo.Create( "foo", "bar" ), "qux" ) );
-        sut.Context.Sql.ToString().Should().Be( "\"foo_bar\" AS \"qux\"" );
+        sut.Context.Sql.ToString().TestEquals( "\"foo_bar\" AS \"qux\"" ).Go();
     }
 
     [Fact]
@@ -434,7 +424,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.VisitChild( SqlNode.RawRecordSet( "foo" ) );
-        sut.Context.Sql.ToString().Should().Be( "(foo)" );
+        sut.Context.Sql.ToString().TestEquals( "(foo)" ).Go();
     }
 
     [Fact]
@@ -442,7 +432,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlTableMock.Create<int>( "foo", new[] { "a" } ).ToRecordSet( "bar" ) );
-        sut.Context.Sql.ToString().Should().Be( "\"common_foo\" AS \"bar\"" );
+        sut.Context.Sql.ToString().TestEquals( "\"common_foo\" AS \"bar\"" ).Go();
     }
 
     [Fact]
@@ -450,7 +440,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.VisitChild( SqlTableMock.Create<int>( "foo", new[] { "a" } ).ToRecordSet() );
-        sut.Context.Sql.ToString().Should().Be( "(\"common_foo\")" );
+        sut.Context.Sql.ToString().TestEquals( "(\"common_foo\")" ).Go();
     }
 
     [Fact]
@@ -458,7 +448,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlTableBuilderMock.CreateEmpty( "foo" ).ToRecordSet( "bar" ) );
-        sut.Context.Sql.ToString().Should().Be( "\"common_foo\" AS \"bar\"" );
+        sut.Context.Sql.ToString().TestEquals( "\"common_foo\" AS \"bar\"" ).Go();
     }
 
     [Fact]
@@ -466,7 +456,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.VisitChild( SqlTableBuilderMock.CreateEmpty( "foo" ).ToRecordSet() );
-        sut.Context.Sql.ToString().Should().Be( "(\"common_foo\")" );
+        sut.Context.Sql.ToString().TestEquals( "(\"common_foo\")" ).Go();
     }
 
     [Fact]
@@ -474,7 +464,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlViewMock.Create( "foo" ).ToRecordSet( "bar" ) );
-        sut.Context.Sql.ToString().Should().Be( "\"common_foo\" AS \"bar\"" );
+        sut.Context.Sql.ToString().TestEquals( "\"common_foo\" AS \"bar\"" ).Go();
     }
 
     [Fact]
@@ -482,7 +472,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.VisitChild( SqlViewMock.Create( "foo" ).ToRecordSet() );
-        sut.Context.Sql.ToString().Should().Be( "(\"common_foo\")" );
+        sut.Context.Sql.ToString().TestEquals( "(\"common_foo\")" ).Go();
     }
 
     [Fact]
@@ -490,7 +480,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlViewBuilderMock.Create( "foo" ).ToRecordSet( "bar" ) );
-        sut.Context.Sql.ToString().Should().Be( "\"common_foo\" AS \"bar\"" );
+        sut.Context.Sql.ToString().TestEquals( "\"common_foo\" AS \"bar\"" ).Go();
     }
 
     [Fact]
@@ -498,7 +488,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.VisitChild( SqlViewBuilderMock.Create( "foo" ).ToRecordSet() );
-        sut.Context.Sql.ToString().Should().Be( "(\"common_foo\")" );
+        sut.Context.Sql.ToString().TestEquals( "(\"common_foo\")" ).Go();
     }
 
     [Fact]
@@ -507,13 +497,13 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.RawQuery( "SELECT * FROM foo" ).AsSet( "bar" ) );
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 (
                   SELECT * FROM foo
                 ) AS "bar"
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -522,13 +512,13 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         var sut = CreateInterpreter();
         sut.VisitChild( SqlNode.RawQuery( "SELECT * FROM foo" ).AsSet( "bar" ) );
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 ((
                     SELECT * FROM foo
                   ) AS "bar")
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -536,7 +526,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.RawQuery( "SELECT * FROM foo" ).ToCte( "bar" ).RecordSet.As( "qux" ) );
-        sut.Context.Sql.ToString().Should().Be( "\"bar\" AS \"qux\"" );
+        sut.Context.Sql.ToString().TestEquals( "\"bar\" AS \"qux\"" ).Go();
     }
 
     [Fact]
@@ -544,7 +534,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.VisitChild( SqlNode.RawQuery( "SELECT * FROM foo" ).ToCte( "bar" ).RecordSet );
-        sut.Context.Sql.ToString().Should().Be( "(\"bar\")" );
+        sut.Context.Sql.ToString().TestEquals( "(\"bar\")" ).Go();
     }
 
     [Theory]
@@ -555,7 +545,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         var sut = CreateInterpreter();
         var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
         sut.Visit( SqlNode.CreateTable( info, Array.Empty<SqlColumnDefinitionNode>() ).AsSet( "qux" ) );
-        sut.Context.Sql.ToString().Should().Be( expected );
+        sut.Context.Sql.ToString().TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -566,7 +556,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         var sut = CreateInterpreter();
         var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
         sut.VisitChild( SqlNode.CreateTable( info, Array.Empty<SqlColumnDefinitionNode>() ).AsSet() );
-        sut.Context.Sql.ToString().Should().Be( expected );
+        sut.Context.Sql.ToString().TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -577,7 +567,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         var sut = CreateInterpreter();
         var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
         sut.Visit( SqlNode.CreateView( info, SqlNode.RawQuery( "SELECT * FROM lorem" ) ).AsSet( "qux" ) );
-        sut.Context.Sql.ToString().Should().Be( expected );
+        sut.Context.Sql.ToString().TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -588,7 +578,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         var sut = CreateInterpreter();
         var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
         sut.VisitChild( SqlNode.CreateView( info, SqlNode.RawQuery( "SELECT * FROM bar" ) ).AsSet() );
-        sut.Context.Sql.ToString().Should().Be( expected );
+        sut.Context.Sql.ToString().TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -596,7 +586,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.RawRecordSet( "foo" ).LeftOn( SqlNode.RawCondition( "bar.a = foo.a" ) ) );
-        sut.Context.Sql.ToString().Should().Be( "LEFT JOIN foo ON bar.a = foo.a" );
+        sut.Context.Sql.ToString().TestEquals( "LEFT JOIN foo ON bar.a = foo.a" ).Go();
     }
 
     [Fact]
@@ -604,7 +594,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.RawRecordSet( "foo" ).RightOn( SqlNode.RawCondition( "bar.a = foo.a" ) ) );
-        sut.Context.Sql.ToString().Should().Be( "RIGHT JOIN foo ON bar.a = foo.a" );
+        sut.Context.Sql.ToString().TestEquals( "RIGHT JOIN foo ON bar.a = foo.a" ).Go();
     }
 
     [Fact]
@@ -612,7 +602,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.RawRecordSet( "foo" ).FullOn( SqlNode.RawCondition( "bar.a = foo.a" ) ) );
-        sut.Context.Sql.ToString().Should().Be( "FULL JOIN foo ON bar.a = foo.a" );
+        sut.Context.Sql.ToString().TestEquals( "FULL JOIN foo ON bar.a = foo.a" ).Go();
     }
 
     [Fact]
@@ -620,7 +610,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.RawRecordSet( "foo" ).InnerOn( SqlNode.RawCondition( "bar.a = foo.a" ) ) );
-        sut.Context.Sql.ToString().Should().Be( "INNER JOIN foo ON bar.a = foo.a" );
+        sut.Context.Sql.ToString().TestEquals( "INNER JOIN foo ON bar.a = foo.a" ).Go();
     }
 
     [Fact]
@@ -628,7 +618,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.RawRecordSet( "foo" ).Cross() );
-        sut.Context.Sql.ToString().Should().Be( "CROSS JOIN foo" );
+        sut.Context.Sql.ToString().TestEquals( "CROSS JOIN foo" ).Go();
     }
 
     [Fact]
@@ -636,7 +626,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.DummyDataSource() );
-        sut.Context.Sql.ToString().Should().Be( string.Empty );
+        sut.Context.Sql.ToString().TestEquals( string.Empty ).Go();
     }
 
     [Fact]
@@ -644,7 +634,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.RawRecordSet( "foo" ).ToDataSource() );
-        sut.Context.Sql.ToString().Should().Be( "FROM foo" );
+        sut.Context.Sql.ToString().TestEquals( "FROM foo" ).Go();
     }
 
     [Fact]
@@ -658,13 +648,13 @@ public partial class SqliteNodeInterpreterTests : TestsBase
                     SqlNode.RawRecordSet( "qux" ).LeftOn( SqlNode.RawCondition( "qux.b = foo.b" ) ) ) );
 
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 FROM foo
                 INNER JOIN bar ON bar.a = foo.a
                 LEFT JOIN qux ON qux.b = foo.b
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -672,7 +662,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.VisitChild( SqlNode.RawRecordSet( "foo" ).ToDataSource() );
-        sut.Context.Sql.ToString().Should().Be( "(FROM foo)" );
+        sut.Context.Sql.ToString().TestEquals( "(FROM foo)" ).Go();
     }
 
     [Fact]
@@ -680,7 +670,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.RawExpression( "foo.a" ).As( "b" ) );
-        sut.Context.Sql.ToString().Should().Be( "(foo.a) AS \"b\"" );
+        sut.Context.Sql.ToString().TestEquals( "(foo.a) AS \"b\"" ).Go();
     }
 
     [Fact]
@@ -688,7 +678,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.VisitChild( SqlNode.RawRecordSet( "foo" )["a"].AsSelf() );
-        sut.Context.Sql.ToString().Should().Be( "foo.\"a\"" );
+        sut.Context.Sql.ToString().TestEquals( "foo.\"a\"" ).Go();
     }
 
     [Fact]
@@ -708,7 +698,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
 
         sut.Visit( query.Selection[0] );
 
-        sut.Context.Sql.ToString().Should().Be( "\"a\"" );
+        sut.Context.Sql.ToString().TestEquals( "\"a\"" ).Go();
     }
 
     [Fact]
@@ -728,7 +718,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
 
         sut.VisitChild( query.Selection[0] );
 
-        sut.Context.Sql.ToString().Should().Be( "\"a\"" );
+        sut.Context.Sql.ToString().TestEquals( "\"a\"" ).Go();
     }
 
     [Fact]
@@ -736,7 +726,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.RawRecordSet( "foo" ).GetAll() );
-        sut.Context.Sql.ToString().Should().Be( "foo.*" );
+        sut.Context.Sql.ToString().TestEquals( "foo.*" ).Go();
     }
 
     [Fact]
@@ -744,7 +734,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.VisitChild( SqlNode.RawRecordSet( "foo" ).GetAll() );
-        sut.Context.Sql.ToString().Should().Be( "foo.*" );
+        sut.Context.Sql.ToString().TestEquals( "foo.*" ).Go();
     }
 
     [Fact]
@@ -752,7 +742,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.RawRecordSet( "foo" ).ToDataSource().GetAll() );
-        sut.Context.Sql.ToString().Should().Be( "*" );
+        sut.Context.Sql.ToString().TestEquals( "*" ).Go();
     }
 
     [Fact]
@@ -760,7 +750,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.VisitChild( SqlNode.RawRecordSet( "foo" ).ToDataSource().GetAll() );
-        sut.Context.Sql.ToString().Should().Be( "*" );
+        sut.Context.Sql.ToString().TestEquals( "*" ).Go();
     }
 
     [Fact]
@@ -768,7 +758,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.RawRecordSet( "foo" ).ToDataSource().From["a"].As( "b" ).ToExpression() );
-        sut.Context.Sql.ToString().Should().Be( "\"b\"" );
+        sut.Context.Sql.ToString().TestEquals( "\"b\"" ).Go();
     }
 
     [Fact]
@@ -776,7 +766,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.RawRecordSet( "foo" ).ToDataSource().GetAll() );
-        sut.Context.Sql.ToString().Should().Be( "*" );
+        sut.Context.Sql.ToString().TestEquals( "*" ).Go();
     }
 
     [Fact]
@@ -784,7 +774,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.VisitChild( SqlNode.RawRecordSet( "foo" ).ToDataSource().From["a"].AsSelf().ToExpression() );
-        sut.Context.Sql.ToString().Should().Be( "\"a\"" );
+        sut.Context.Sql.ToString().TestEquals( "\"a\"" ).Go();
     }
 
     [Fact]
@@ -793,13 +783,11 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.RawQuery( "SELECT * FROM foo WHERE foo.a = @a", SqlNode.Parameter<int>( "a" ) ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.Context.Parameters.Should()
-                .BeSequentiallyEqualTo( new SqlNodeInterpreterContextParameter( "a", TypeNullability.Create<int>(), null ) );
-
-            sut.Context.Sql.ToString().Should().Be( "SELECT * FROM foo WHERE foo.a = @a" );
-        }
+        Assertion.All(
+                sut.Context.Parameters.TestSequence(
+                    [ new SqlNodeInterpreterContextParameter( "a", TypeNullability.Create<int>(), null ) ] ),
+                sut.Context.Sql.ToString().TestEquals( "SELECT * FROM foo WHERE foo.a = @a" ) )
+            .Go();
     }
 
     [Fact]
@@ -808,13 +796,13 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         var sut = CreateInterpreter();
         sut.VisitChild( SqlNode.RawQuery( "SELECT * FROM foo" ) );
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 (
                   SELECT * FROM foo
                 )
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -840,27 +828,24 @@ public partial class SqliteNodeInterpreterTests : TestsBase
 
         sut.Visit( query );
 
-        using ( new AssertionScope() )
-        {
-            sut.Context.Parameters.Should()
-                .BeSequentiallyEqualTo( new SqlNodeInterpreterContextParameter( "p", TypeNullability.Create<int>(), null ) );
-
-            sut.Context.Sql.ToString()
-                .Should()
-                .Be(
-                    """
-                    SELECT
-                      "common_foo"."a",
-                      "common_foo"."b" AS "x",
-                      "lorem".*,
-                      "common_qux"."e",
-                      "common_qux"."f" AS "y",
-                      @p AS "z"
-                    FROM "common_foo"
-                    INNER JOIN "common_bar" AS "lorem" ON "lorem"."c" = "common_foo"."a"
-                    LEFT JOIN "common_qux" ON "common_qux"."e" = "common_foo"."b"
-                    """ );
-        }
+        Assertion.All(
+                sut.Context.Parameters.TestSequence(
+                    [ new SqlNodeInterpreterContextParameter( "p", TypeNullability.Create<int>(), null ) ] ),
+                sut.Context.Sql.ToString()
+                    .TestEquals(
+                        """
+                        SELECT
+                          "common_foo"."a",
+                          "common_foo"."b" AS "x",
+                          "lorem".*,
+                          "common_qux"."e",
+                          "common_qux"."f" AS "y",
+                          @p AS "z"
+                        FROM "common_foo"
+                        INNER JOIN "common_bar" AS "lorem" ON "lorem"."c" = "common_foo"."a"
+                        LEFT JOIN "common_qux" ON "common_qux"."e" = "common_foo"."b"
+                        """ ) )
+            .Go();
     }
 
     [Fact]
@@ -909,8 +894,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         sut.Visit( query );
 
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 WITH "cba" AS (
                   SELECT * FROM abc
@@ -937,7 +921,8 @@ public partial class SqliteNodeInterpreterTests : TestsBase
                   "wnd2" AS (ORDER BY "common_qux"."e" ASC, "common_qux"."f" DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
                 ORDER BY "common_foo"."b" ASC, "lorem"."c" DESC
                 LIMIT 50 OFFSET 100
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -957,8 +942,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         sut.Visit( query );
 
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 WITH RECURSIVE "cba" AS (
                   SELECT * FROM abc
@@ -975,7 +959,8 @@ public partial class SqliteNodeInterpreterTests : TestsBase
                 SELECT
                   foo."a"
                 FROM foo
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -990,14 +975,14 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         sut.Visit( query );
 
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 SELECT
                   foo."a"
                 FROM foo
                 LIMIT 100
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -1012,14 +997,14 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         sut.Visit( query );
 
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 SELECT
                   foo."a"
                 FROM foo
                 LIMIT -1 OFFSET 100
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -1034,15 +1019,15 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         sut.VisitChild( query );
 
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 (
                   SELECT
                     *
                   FROM "common_foo"
                 )
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -1055,15 +1040,15 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         sut.Visit( query );
 
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 SELECT * FROM foo
                 UNION ALL
                 SELECT * FROM bar
                 UNION
                 SELECT * FROM qux
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -1081,8 +1066,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         sut.Visit( query );
 
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 WITH "x" AS (
                   SELECT * FROM lorem
@@ -1094,7 +1078,8 @@ public partial class SqliteNodeInterpreterTests : TestsBase
                 SELECT * FROM qux
                 ORDER BY (a) ASC, (b) DESC
                 LIMIT 50 OFFSET 75
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -1107,8 +1092,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         sut.VisitChild( query );
 
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 (
                   
@@ -1123,7 +1107,8 @@ public partial class SqliteNodeInterpreterTests : TestsBase
                   SELECT * FROM qux
 
                 )
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -1133,12 +1118,12 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         sut.Visit( SqlNode.RawQuery( "SELECT * FROM qux" ).ToExcept() );
 
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 EXCEPT
                 SELECT * FROM qux
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -1148,12 +1133,12 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         sut.VisitChild( SqlNode.RawQuery( "SELECT * FROM qux" ).ToIntersect() );
 
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 INTERSECT
                 SELECT * FROM qux
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -1161,7 +1146,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.DistinctTrait() );
-        sut.Context.Sql.ToString().Should().Be( "DISTINCT" );
+        sut.Context.Sql.ToString().TestEquals( "DISTINCT" ).Go();
     }
 
     [Fact]
@@ -1169,7 +1154,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.FilterTrait( SqlNode.RawCondition( "foo.a > 10" ), isConjunction: true ) );
-        sut.Context.Sql.ToString().Should().Be( "WHERE foo.a > 10" );
+        sut.Context.Sql.ToString().TestEquals( "WHERE foo.a > 10" ).Go();
     }
 
     [Fact]
@@ -1177,7 +1162,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.AggregationTrait( SqlNode.RawExpression( "foo.a" ), SqlNode.RawExpression( "foo.b" ) ) );
-        sut.Context.Sql.ToString().Should().Be( "GROUP BY (foo.a), (foo.b)" );
+        sut.Context.Sql.ToString().TestEquals( "GROUP BY (foo.a), (foo.b)" ).Go();
     }
 
     [Fact]
@@ -1185,7 +1170,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.AggregationFilterTrait( SqlNode.RawCondition( "foo.a > 10" ), isConjunction: true ) );
-        sut.Context.Sql.ToString().Should().Be( "HAVING foo.a > 10" );
+        sut.Context.Sql.ToString().TestEquals( "HAVING foo.a > 10" ).Go();
     }
 
     [Fact]
@@ -1193,7 +1178,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.SortTrait( SqlNode.RawExpression( "foo.a" ).Asc(), SqlNode.RawExpression( "foo.b" ).Desc() ) );
-        sut.Context.Sql.ToString().Should().Be( "ORDER BY (foo.a) ASC, (foo.b) DESC" );
+        sut.Context.Sql.ToString().TestEquals( "ORDER BY (foo.a) ASC, (foo.b) DESC" ).Go();
     }
 
     [Fact]
@@ -1201,7 +1186,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.LimitTrait( SqlNode.Literal( 10 ) ) );
-        sut.Context.Sql.ToString().Should().Be( "LIMIT 10" );
+        sut.Context.Sql.ToString().TestEquals( "LIMIT 10" ).Go();
     }
 
     [Fact]
@@ -1209,7 +1194,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.OffsetTrait( SqlNode.Literal( 10 ) ) );
-        sut.Context.Sql.ToString().Should().Be( "OFFSET 10" );
+        sut.Context.Sql.ToString().TestEquals( "OFFSET 10" ).Go();
     }
 
     [Fact]
@@ -1222,8 +1207,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
                 SqlNode.RawQuery( "SELECT * FROM bar" ).ToCte( "B" ) ) );
 
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 WITH "A" AS (
                   SELECT * FROM foo
@@ -1231,7 +1215,8 @@ public partial class SqliteNodeInterpreterTests : TestsBase
                 "B" AS (
                   SELECT * FROM bar
                 )
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -1244,8 +1229,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
                 SqlNode.RawQuery( "SELECT * FROM bar" ).ToCte( "B" ).ToRecursive( SqlNode.RawQuery( "SELECT * FROM B" ).ToUnion() ) ) );
 
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 WITH RECURSIVE "A" AS (
                   SELECT * FROM foo
@@ -1259,7 +1243,8 @@ public partial class SqliteNodeInterpreterTests : TestsBase
                   SELECT * FROM B
 
                 )
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -1267,7 +1252,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.CommonTableExpressionTrait() );
-        sut.Context.Sql.ToString().Should().Be( "WITH" );
+        sut.Context.Sql.ToString().TestEquals( "WITH" ).Go();
     }
 
     [Fact]
@@ -1284,12 +1269,12 @@ public partial class SqliteNodeInterpreterTests : TestsBase
                     SqlNode.RowsWindowFrame( SqlWindowFrameBoundary.UnboundedPreceding, SqlWindowFrameBoundary.CurrentRow ) ) ) );
 
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 WINDOW "foo" AS (ORDER BY (qux.a) ASC),
                   "bar" AS (PARTITION BY (qux.a) ORDER BY (qux.b) DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -1297,7 +1282,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.WindowTrait( SqlNode.WindowDefinition( "foo", new[] { SqlNode.RawExpression( "qux.a" ).Asc() } ) ) );
-        sut.Context.Sql.ToString().Should().Be( "OVER \"foo\"" );
+        sut.Context.Sql.ToString().TestEquals( "OVER \"foo\"" ).Go();
     }
 
     [Fact]
@@ -1305,7 +1290,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.RawExpression( "foo.a" ).Asc() );
-        sut.Context.Sql.ToString().Should().Be( "(foo.a) ASC" );
+        sut.Context.Sql.ToString().TestEquals( "(foo.a) ASC" ).Go();
     }
 
     [Fact]
@@ -1318,8 +1303,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
                 .ToRecursive( SqlNode.RawQuery( "SELECT * FROM A WHERE A.depth < 10" ).ToUnionAll() ) );
 
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 "A" AS (
                   
@@ -1330,7 +1314,8 @@ public partial class SqliteNodeInterpreterTests : TestsBase
                   SELECT * FROM A WHERE A.depth < 10
 
                 )
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -1345,9 +1330,9 @@ public partial class SqliteNodeInterpreterTests : TestsBase
                 SqlNode.RowsWindowFrame( SqlWindowFrameBoundary.CurrentRow, SqlWindowFrameBoundary.UnboundedFollowing ) ) );
 
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
-                "\"foo\" AS (PARTITION BY (qux.a), (qux.b) ORDER BY (qux.c) ASC, (qux.d) DESC ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING)" );
+            .TestEquals(
+                "\"foo\" AS (PARTITION BY (qux.a), (qux.b) ORDER BY (qux.c) ASC, (qux.d) DESC ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING)" )
+            .Go();
     }
 
     [Fact]
@@ -1359,7 +1344,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
                 SqlWindowFrameBoundary.Preceding( SqlNode.Literal( 3 ) ),
                 SqlWindowFrameBoundary.Following( SqlNode.Literal( 5 ) ) ) );
 
-        sut.Context.Sql.ToString().Should().Be( "RANGE BETWEEN 3 PRECEDING AND 5 FOLLOWING" );
+        sut.Context.Sql.ToString().TestEquals( "RANGE BETWEEN 3 PRECEDING AND 5 FOLLOWING" ).Go();
     }
 
     [Fact]
@@ -1370,9 +1355,11 @@ public partial class SqliteNodeInterpreterTests : TestsBase
 
         var action = Lambda.Of( () => sut.Visit( node ) );
 
-        action.Should()
-            .ThrowExactly<UnrecognizedSqlNodeException>()
-            .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<UnrecognizedSqlNodeException>(
+                        e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1380,7 +1367,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.RawExpression( "foo.a" ).CastTo<string>() );
-        sut.Context.Sql.ToString().Should().Be( "CAST((foo.a) AS TEXT)" );
+        sut.Context.Sql.ToString().TestEquals( "CAST((foo.a) AS TEXT)" ).Go();
     }
 
     [Fact]
@@ -1388,7 +1375,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.VisitChild( SqlNode.RawExpression( "foo.a" ).CastTo<int>() );
-        sut.Context.Sql.ToString().Should().Be( "CAST((foo.a) AS INTEGER)" );
+        sut.Context.Sql.ToString().TestEquals( "CAST((foo.a) AS INTEGER)" ).Go();
     }
 
     [Fact]
@@ -1403,13 +1390,13 @@ public partial class SqliteNodeInterpreterTests : TestsBase
                 } ) );
 
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 VALUES
                 ('foo', 5),
                 ((bar.a), 25)
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -1424,19 +1411,16 @@ public partial class SqliteNodeInterpreterTests : TestsBase
                 """,
                 SqlNode.Parameter<int>( "a" ) ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.Context.Sql.ToString()
-                .Should()
-                .Be(
-                    """
-                    INSERT INTO foo (a, b)
-                    VALUES (@a, 1)
-                    """ );
-
-            sut.Context.Parameters.Should()
-                .BeSequentiallyEqualTo( new SqlNodeInterpreterContextParameter( "a", TypeNullability.Create<int>(), null ) );
-        }
+        Assertion.All(
+                sut.Context.Sql.ToString()
+                    .TestEquals(
+                        """
+                        INSERT INTO foo (a, b)
+                        VALUES (@a, 1)
+                        """ ),
+                sut.Context.Parameters.TestSequence(
+                    [ new SqlNodeInterpreterContextParameter( "a", TypeNullability.Create<int>(), null ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1452,14 +1436,14 @@ public partial class SqliteNodeInterpreterTests : TestsBase
                 .ToInsertInto( SqlNode.RawRecordSet( "qux" ), r => new[] { r["a"], r["b"] } ) );
 
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 INSERT INTO qux ("a", "b")
                 VALUES
                 ('foo', 5),
                 ((bar.a), 25)
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -1470,12 +1454,12 @@ public partial class SqliteNodeInterpreterTests : TestsBase
             SqlNode.RawQuery( "SELECT a, b FROM foo" ).ToInsertInto( SqlNode.RawRecordSet( "qux" ), r => new[] { r["a"], r["b"] } ) );
 
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 INSERT INTO qux ("a", "b")
                 SELECT a, b FROM foo
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -1506,8 +1490,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         sut.Visit( query.ToInsertInto( SqlNode.RawRecordSet( "qux" ), r => new[] { r["a"], r["b"] } ) );
 
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 WITH "cba" AS (
                   SELECT * FROM abc
@@ -1526,7 +1509,8 @@ public partial class SqliteNodeInterpreterTests : TestsBase
                 WINDOW "wnd" AS (ORDER BY "common_foo"."a" ASC)
                 ORDER BY "common_foo"."b" ASC
                 LIMIT 50 OFFSET 100
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -1543,8 +1527,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         sut.Visit( query.ToInsertInto( SqlNode.RawRecordSet( "lorem" ), r => new[] { r["a"], r["b"] } ) );
 
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 WITH "x" AS (
                   SELECT * FROM ipsum
@@ -1557,7 +1540,8 @@ public partial class SqliteNodeInterpreterTests : TestsBase
                 SELECT a, b FROM qux
                 ORDER BY (a) ASC
                 LIMIT 50 OFFSET 75
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -1565,7 +1549,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.RawRecordSet( "foo" )["a"].Assign( SqlNode.Literal( 50 ) ) );
-        sut.Context.Sql.ToString().Should().Be( "\"a\" = 50" );
+        sut.Context.Sql.ToString().TestEquals( "\"a\" = 50" ).Go();
     }
 
     [Fact]
@@ -1578,12 +1562,12 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         sut.Visit( node );
 
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 DELETE FROM "common_foo";
                 DELETE FROM "SQLITE_SEQUENCE" WHERE "name" = 'common_foo'
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -1596,12 +1580,12 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         sut.Visit( node );
 
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 DELETE FROM temp."foo";
                 DELETE FROM temp."SQLITE_SEQUENCE" WHERE "name" = 'foo'
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -1614,12 +1598,12 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         sut.Visit( node );
 
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 DELETE FROM "qux";
                 DELETE FROM "SQLITE_SEQUENCE" WHERE "name" = 'qux'
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -1635,8 +1619,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
                 SqlNode.CommitTransaction() ) );
 
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 PRAGMA read_uncommitted = 0;
                 BEGIN IMMEDIATE;
@@ -1648,7 +1631,8 @@ public partial class SqliteNodeInterpreterTests : TestsBase
                 SELECT * FROM qux;
 
                 COMMIT;
-                """ );
+                """ )
+            .Go();
     }
 
     [Theory]
@@ -1664,12 +1648,12 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         sut.Visit( SqlNode.BeginTransaction( isolationLevel ) );
 
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 PRAGMA read_uncommitted = 0;
                 BEGIN IMMEDIATE
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -1679,12 +1663,12 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         sut.Visit( SqlNode.BeginTransaction( IsolationLevel.ReadUncommitted ) );
 
         sut.Context.Sql.ToString()
-            .Should()
-            .Be(
+            .TestEquals(
                 """
                 PRAGMA read_uncommitted = 1;
                 BEGIN
-                """ );
+                """ )
+            .Go();
     }
 
     [Fact]
@@ -1692,7 +1676,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.CommitTransaction() );
-        sut.Context.Sql.ToString().Should().Be( "COMMIT" );
+        sut.Context.Sql.ToString().TestEquals( "COMMIT" ).Go();
     }
 
     [Fact]
@@ -1700,7 +1684,7 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     {
         var sut = CreateInterpreter();
         sut.Visit( SqlNode.RollbackTransaction() );
-        sut.Context.Sql.ToString().Should().Be( "ROLLBACK" );
+        sut.Context.Sql.ToString().TestEquals( "ROLLBACK" ).Go();
     }
 
     [Fact]
@@ -1711,9 +1695,11 @@ public partial class SqliteNodeInterpreterTests : TestsBase
 
         var action = Lambda.Of( () => sut.Visit( node ) );
 
-        action.Should()
-            .ThrowExactly<UnrecognizedSqlNodeException>()
-            .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, sut ) );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<UnrecognizedSqlNodeException>(
+                        e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+            .Go();
     }
 
     [Pure]

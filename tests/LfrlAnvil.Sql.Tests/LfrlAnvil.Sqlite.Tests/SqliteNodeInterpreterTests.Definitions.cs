@@ -16,7 +16,7 @@ public partial class SqliteNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.Column<int>( "a", isNullable: true ) );
-            sut.Context.Sql.ToString().Should().Be( "\"a\" INTEGER" );
+            sut.Context.Sql.ToString().TestEquals( "\"a\" INTEGER" ).Go();
         }
 
         [Fact]
@@ -24,7 +24,7 @@ public partial class SqliteNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.Column<string>( "a", isNullable: false ) );
-            sut.Context.Sql.ToString().Should().Be( "\"a\" TEXT NOT NULL" );
+            sut.Context.Sql.ToString().TestEquals( "\"a\" TEXT NOT NULL" ).Go();
         }
 
         [Fact]
@@ -32,7 +32,7 @@ public partial class SqliteNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.Column<string>( "a", defaultValue: SqlNode.Literal( "abc" ).Concat( SqlNode.Literal( "def" ) ) ) );
-            sut.Context.Sql.ToString().Should().Be( "\"a\" TEXT NOT NULL DEFAULT ('abc' || 'def')" );
+            sut.Context.Sql.ToString().TestEquals( "\"a\" TEXT NOT NULL DEFAULT ('abc' || 'def')" ).Go();
         }
 
         [Theory]
@@ -44,7 +44,7 @@ public partial class SqliteNodeInterpreterTests
         {
             var sut = CreateInterpreter();
             sut.Visit( SqlNode.Column<string>( "a", computation: new SqlColumnComputation( SqlNode.Literal( "abc" ), storage ) ) );
-            sut.Context.Sql.ToString().Should().Be( $"\"a\" TEXT NOT NULL GENERATED ALWAYS AS ('abc') {expectedStorage}" );
+            sut.Context.Sql.ToString().TestEquals( $"\"a\" TEXT NOT NULL GENERATED ALWAYS AS ('abc') {expectedStorage}" ).Go();
         }
 
         [Theory]
@@ -61,7 +61,7 @@ public partial class SqliteNodeInterpreterTests
                     isNullable: true,
                     computation: new SqlColumnComputation( SqlNode.Literal( "abc" ), storage ) ) );
 
-            sut.Context.Sql.ToString().Should().Be( $"\"a\" TEXT GENERATED ALWAYS AS ('abc') {expectedStorage}" );
+            sut.Context.Sql.ToString().TestEquals( $"\"a\" TEXT GENERATED ALWAYS AS ('abc') {expectedStorage}" ).Go();
         }
 
         [Fact]
@@ -70,7 +70,7 @@ public partial class SqliteNodeInterpreterTests
             var sut = CreateInterpreter();
             var typeDef = sut.TypeDefinitions.GetByDataType( SqliteDataType.Integer );
             sut.Visit( SqlNode.Column( "a", typeDef, isNullable: true ) );
-            sut.Context.Sql.ToString().Should().Be( "\"a\" INTEGER" );
+            sut.Context.Sql.ToString().TestEquals( "\"a\" INTEGER" ).Go();
         }
 
         [Fact]
@@ -79,7 +79,7 @@ public partial class SqliteNodeInterpreterTests
             var sut = CreateInterpreter();
             var typeDef = sut.TypeDefinitions.GetByDataType( SqliteDataType.Text );
             sut.Visit( SqlNode.Column( "a", typeDef, isNullable: false ) );
-            sut.Context.Sql.ToString().Should().Be( "\"a\" TEXT NOT NULL" );
+            sut.Context.Sql.ToString().TestEquals( "\"a\" TEXT NOT NULL" ).Go();
         }
 
         [Fact]
@@ -98,8 +98,8 @@ public partial class SqliteNodeInterpreterTests
             sut.Visit( node );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be( "CONSTRAINT \"foo_PK_foobar\" PRIMARY KEY (\"foo_bar\".\"a\" ASC, \"foo_bar\".\"b\" DESC)" );
+                .TestEquals( "CONSTRAINT \"foo_PK_foobar\" PRIMARY KEY (\"foo_bar\".\"a\" ASC, \"foo_bar\".\"b\" DESC)" )
+                .Go();
         }
 
         [Theory]
@@ -132,9 +132,9 @@ public partial class SqliteNodeInterpreterTests
             sut.Visit( node );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
-                    $"CONSTRAINT \"foo_FK_foobar_REF_qux\" FOREIGN KEY (\"a\", \"b\") REFERENCES \"common_qux\" (\"a\", \"b\") ON DELETE {onDeleteBehavior.Name} ON UPDATE {onUpdateBehavior.Name}" );
+                .TestEquals(
+                    $"CONSTRAINT \"foo_FK_foobar_REF_qux\" FOREIGN KEY (\"a\", \"b\") REFERENCES \"common_qux\" (\"a\", \"b\") ON DELETE {onDeleteBehavior.Name} ON UPDATE {onUpdateBehavior.Name}" )
+                .Go();
         }
 
         [Fact]
@@ -145,7 +145,7 @@ public partial class SqliteNodeInterpreterTests
             var node = SqlNode.Check( SqlSchemaObjectName.Create( "foo", "CHK_foobar" ), table["a"] > SqlNode.Literal( 10 ) );
             sut.Visit( node );
 
-            sut.Context.Sql.ToString().Should().Be( "CONSTRAINT \"foo_CHK_foobar\" CHECK (\"foo_bar\".\"a\" > 10)" );
+            sut.Context.Sql.ToString().TestEquals( "CONSTRAINT \"foo_CHK_foobar\" CHECK (\"foo_bar\".\"a\" > 10)" ).Go();
         }
 
         [Theory]
@@ -183,8 +183,7 @@ public partial class SqliteNodeInterpreterTests
             sut.Visit( node );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     $"""
                      CREATE TABLE{(ifNotExists ? " IF NOT EXISTS" : string.Empty)} {expectedName} (
                        "x" INTEGER NOT NULL,
@@ -194,7 +193,8 @@ public partial class SqliteNodeInterpreterTests
                        CONSTRAINT "FK_foobar_REF_qux" FOREIGN KEY ("y") REFERENCES qux ("y") ON DELETE RESTRICT ON UPDATE RESTRICT,
                        CONSTRAINT "CHK_foobar" CHECK ("z" > 100.0)
                      ) WITHOUT ROWID
-                     """ );
+                     """ )
+                .Go();
         }
 
         [Theory]
@@ -232,8 +232,7 @@ public partial class SqliteNodeInterpreterTests
             sut.Visit( node );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     $"""
                      CREATE TABLE{(ifNotExists ? " IF NOT EXISTS" : string.Empty)} {expectedName} (
                        "x" INTEGER NOT NULL,
@@ -243,7 +242,8 @@ public partial class SqliteNodeInterpreterTests
                        CONSTRAINT "FK_foobar_REF_qux" FOREIGN KEY ("y") REFERENCES qux ("y") ON DELETE RESTRICT ON UPDATE RESTRICT,
                        CONSTRAINT "CHK_foobar" CHECK ("z" > 100.0)
                      ) WITHOUT ROWID, STRICT
-                     """ );
+                     """ )
+                .Go();
         }
 
         [Theory]
@@ -257,12 +257,12 @@ public partial class SqliteNodeInterpreterTests
             sut.Visit( node );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     $"""
                      CREATE VIEW {expectedName} AS
                      SELECT * FROM qux
-                     """ );
+                     """ )
+                .Go();
         }
 
         [Theory]
@@ -276,13 +276,13 @@ public partial class SqliteNodeInterpreterTests
             sut.Visit( node );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     $"""
                      DROP VIEW IF EXISTS {expectedName};
                      CREATE VIEW {expectedName} AS
                      SELECT * FROM qux
-                     """ );
+                     """ )
+                .Go();
         }
 
         [Theory]
@@ -301,7 +301,7 @@ public partial class SqliteNodeInterpreterTests
 
             sut.Visit( node );
 
-            sut.Context.Sql.ToString().Should().Be( $"CREATE {expectedType} \"foo_bar\" ON qux (\"a\" ASC, \"b\" DESC)" );
+            sut.Context.Sql.ToString().TestEquals( $"CREATE {expectedType} \"foo_bar\" ON qux (\"a\" ASC, \"b\" DESC)" ).Go();
         }
 
         [Fact]
@@ -322,7 +322,7 @@ public partial class SqliteNodeInterpreterTests
 
             sut.Visit( node );
 
-            sut.Context.Sql.ToString().Should().Be( "CREATE INDEX temp.\"bar\" ON \"qux\" (\"a\" ASC, \"b\" DESC)" );
+            sut.Context.Sql.ToString().TestEquals( "CREATE INDEX temp.\"bar\" ON \"qux\" (\"a\" ASC, \"b\" DESC)" ).Go();
         }
 
         [Theory]
@@ -342,12 +342,12 @@ public partial class SqliteNodeInterpreterTests
             sut.Visit( node );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     $"""
                      DROP INDEX IF EXISTS "foo_bar";
                      CREATE {expectedType} "foo_bar" ON qux ("a" ASC, "b" DESC)
-                     """ );
+                     """ )
+                .Go();
         }
 
         [Fact]
@@ -366,8 +366,8 @@ public partial class SqliteNodeInterpreterTests
             sut.Visit( node );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be( "CREATE INDEX \"foo_bar\" ON qux (\"a\" ASC, \"b\" DESC) WHERE (\"a\" IS NOT NULL)" );
+                .TestEquals( "CREATE INDEX \"foo_bar\" ON qux (\"a\" ASC, \"b\" DESC) WHERE (\"a\" IS NOT NULL)" )
+                .Go();
         }
 
         [Theory]
@@ -378,7 +378,7 @@ public partial class SqliteNodeInterpreterTests
             var sut = CreateInterpreter();
             var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
             sut.Visit( SqlNode.RenameTable( info, SqlSchemaObjectName.Create( "qux", "lorem" ) ) );
-            sut.Context.Sql.ToString().Should().Be( expected );
+            sut.Context.Sql.ToString().TestEquals( expected ).Go();
         }
 
         [Theory]
@@ -389,7 +389,7 @@ public partial class SqliteNodeInterpreterTests
             var sut = CreateInterpreter();
             var info = isTableTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
             sut.Visit( SqlNode.RenameColumn( info, "qux", "lorem" ) );
-            sut.Context.Sql.ToString().Should().Be( expected );
+            sut.Context.Sql.ToString().TestEquals( expected ).Go();
         }
 
         [Theory]
@@ -400,7 +400,7 @@ public partial class SqliteNodeInterpreterTests
             var sut = CreateInterpreter();
             var info = isTableTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
             sut.Visit( SqlNode.AddColumn( info, SqlNode.Column<int>( "qux", defaultValue: SqlNode.Literal( 10 ) ) ) );
-            sut.Context.Sql.ToString().Should().Be( expected );
+            sut.Context.Sql.ToString().TestEquals( expected ).Go();
         }
 
         [Theory]
@@ -411,7 +411,7 @@ public partial class SqliteNodeInterpreterTests
             var sut = CreateInterpreter();
             var info = isTableTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
             sut.Visit( SqlNode.DropColumn( info, "qux" ) );
-            sut.Context.Sql.ToString().Should().Be( expected );
+            sut.Context.Sql.ToString().TestEquals( expected ).Go();
         }
 
         [Theory]
@@ -424,7 +424,7 @@ public partial class SqliteNodeInterpreterTests
             var sut = CreateInterpreter();
             var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
             sut.Visit( SqlNode.DropTable( info, ifExists ) );
-            sut.Context.Sql.ToString().Should().Be( expected );
+            sut.Context.Sql.ToString().TestEquals( expected ).Go();
         }
 
         [Theory]
@@ -437,7 +437,7 @@ public partial class SqliteNodeInterpreterTests
             var sut = CreateInterpreter();
             var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
             sut.Visit( SqlNode.DropView( info, ifExists ) );
-            sut.Context.Sql.ToString().Should().Be( expected );
+            sut.Context.Sql.ToString().TestEquals( expected ).Go();
         }
 
         [Theory]
@@ -453,7 +453,7 @@ public partial class SqliteNodeInterpreterTests
 
             sut.Visit( SqlNode.DropIndex( recordSet, name, ifExists ) );
 
-            sut.Context.Sql.ToString().Should().Be( expected );
+            sut.Context.Sql.ToString().TestEquals( expected ).Go();
         }
     }
 }

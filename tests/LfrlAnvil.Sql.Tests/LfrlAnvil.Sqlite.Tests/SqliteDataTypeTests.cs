@@ -11,15 +11,14 @@ public class SqliteDataTypeTests : TestsBase
     {
         var sut = SqliteDataType.Integer;
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( "INTEGER" );
-            sut.Value.Should().Be( SqliteType.Integer );
-            sut.DbType.Should().Be( DbType.Int64 );
-            sut.Dialect.Should().BeSameAs( SqliteDialect.Instance );
-            (( ISqlDataType )sut).Parameters.ToArray().Should().BeEmpty();
-            (( ISqlDataType )sut).ParameterDefinitions.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Name.TestEquals( "INTEGER" ),
+                sut.Value.TestEquals( SqliteType.Integer ),
+                sut.DbType.TestEquals( DbType.Int64 ),
+                sut.Dialect.TestRefEquals( SqliteDialect.Instance ),
+                (( ISqlDataType )sut).Parameters.ToArray().TestEmpty(),
+                (( ISqlDataType )sut).ParameterDefinitions.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -27,15 +26,14 @@ public class SqliteDataTypeTests : TestsBase
     {
         var sut = SqliteDataType.Real;
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( "REAL" );
-            sut.Value.Should().Be( SqliteType.Real );
-            sut.DbType.Should().Be( DbType.Double );
-            sut.Dialect.Should().BeSameAs( SqliteDialect.Instance );
-            (( ISqlDataType )sut).Parameters.ToArray().Should().BeEmpty();
-            (( ISqlDataType )sut).ParameterDefinitions.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Name.TestEquals( "REAL" ),
+                sut.Value.TestEquals( SqliteType.Real ),
+                sut.DbType.TestEquals( DbType.Double ),
+                sut.Dialect.TestRefEquals( SqliteDialect.Instance ),
+                (( ISqlDataType )sut).Parameters.ToArray().TestEmpty(),
+                (( ISqlDataType )sut).ParameterDefinitions.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -43,15 +41,14 @@ public class SqliteDataTypeTests : TestsBase
     {
         var sut = SqliteDataType.Text;
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( "TEXT" );
-            sut.Value.Should().Be( SqliteType.Text );
-            sut.DbType.Should().Be( DbType.String );
-            sut.Dialect.Should().BeSameAs( SqliteDialect.Instance );
-            (( ISqlDataType )sut).Parameters.ToArray().Should().BeEmpty();
-            (( ISqlDataType )sut).ParameterDefinitions.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Name.TestEquals( "TEXT" ),
+                sut.Value.TestEquals( SqliteType.Text ),
+                sut.DbType.TestEquals( DbType.String ),
+                sut.Dialect.TestRefEquals( SqliteDialect.Instance ),
+                (( ISqlDataType )sut).Parameters.ToArray().TestEmpty(),
+                (( ISqlDataType )sut).ParameterDefinitions.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -59,15 +56,14 @@ public class SqliteDataTypeTests : TestsBase
     {
         var sut = SqliteDataType.Blob;
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( "BLOB" );
-            sut.Value.Should().Be( SqliteType.Blob );
-            sut.DbType.Should().Be( DbType.Binary );
-            sut.Dialect.Should().BeSameAs( SqliteDialect.Instance );
-            (( ISqlDataType )sut).Parameters.ToArray().Should().BeEmpty();
-            (( ISqlDataType )sut).ParameterDefinitions.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Name.TestEquals( "BLOB" ),
+                sut.Value.TestEquals( SqliteType.Blob ),
+                sut.DbType.TestEquals( DbType.Binary ),
+                sut.Dialect.TestRefEquals( SqliteDialect.Instance ),
+                (( ISqlDataType )sut).Parameters.ToArray().TestEmpty(),
+                (( ISqlDataType )sut).ParameterDefinitions.ToArray().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -75,14 +71,13 @@ public class SqliteDataTypeTests : TestsBase
     {
         var sut = SqliteDataType.Any;
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( "ANY" );
-            sut.Value.Should().Be( 0 );
-            sut.DbType.Should().Be( DbType.Object );
-            sut.Dialect.Should().BeSameAs( SqliteDialect.Instance );
-            (( ISqlDataType )sut).Parameters.ToArray().Should().BeEmpty();
-            (( ISqlDataType )sut).ParameterDefinitions.ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Name.TestEquals( "ANY" ),
+                sut.Value.TestEquals( ( SqliteType )0 ),
+                sut.DbType.TestEquals( DbType.Object ),
+                sut.Dialect.TestRefEquals( SqliteDialect.Instance ),
+                (( ISqlDataType )sut).Parameters.ToArray().TestEmpty(),
+                (( ISqlDataType )sut).ParameterDefinitions.ToArray().TestEmpty() )
+            .Go();
     }
 }

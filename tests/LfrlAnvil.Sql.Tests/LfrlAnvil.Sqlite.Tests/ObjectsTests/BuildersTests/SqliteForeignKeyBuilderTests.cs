@@ -6,9 +6,8 @@ using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.Sqlite.Tests.Helpers;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql;
-using LfrlAnvil.TestExtensions.Sql.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Assertions;
 
 namespace LfrlAnvil.Sqlite.Tests.ObjectsTests.BuildersTests;
 
@@ -25,7 +24,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( "[ForeignKey] foo_bar" );
+        result.TestEquals( "[ForeignKey] foo_bar" ).Go();
     }
 
     [Fact]
@@ -40,47 +39,43 @@ public class SqliteForeignKeyBuilderTests : TestsBase
         var sut = table.Constraints.CreateForeignKey( ix2, ix1 );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            table.Constraints.TryGet( sut.Name ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.Name.Should().Be( "FK_T_C2_REF_T" );
-            sut.OriginIndex.Should().BeSameAs( ix2 );
-            sut.ReferencedIndex.Should().BeSameAs( ix1 );
-
-            ix1.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
-
-            ix2.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) );
-
-            table.ReferencingObjects.Should().BeEmpty();
-            schema.ReferencingObjects.Should().BeEmpty();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP INDEX \"foo_IX_T_C2A\";",
-                    """
-                    CREATE TABLE "__foo_T__{GUID}__" (
-                                          "C1" ANY NOT NULL,
-                                          "C2" ANY NOT NULL,
-                                          CONSTRAINT "foo_PK_T" PRIMARY KEY ("C1" ASC),
-                                          CONSTRAINT "foo_FK_T_C2_REF_T" FOREIGN KEY ("C2") REFERENCES "foo_T" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT
-                                        ) WITHOUT ROWID;
-                    """,
-                    """
-                    INSERT INTO "__foo_T__{GUID}__" ("C1", "C2")
-                                        SELECT
-                                          "foo_T"."C1",
-                                          "foo_T"."C2"
-                                        FROM "foo_T";
-                    """,
-                    "DROP TABLE \"foo_T\";",
-                    "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";",
-                    "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" );
-        }
+        Assertion.All(
+                table.Constraints.TryGet( sut.Name ).TestRefEquals( sut ),
+                schema.Objects.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.Name.TestEquals( "FK_T_C2_REF_T" ),
+                sut.OriginIndex.TestRefEquals( ix2 ),
+                sut.ReferencedIndex.TestRefEquals( ix1 ),
+                ix1.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) ] ),
+                ix2.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) ] ),
+                table.ReferencingObjects.TestEmpty(),
+                schema.ReferencingObjects.TestEmpty(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            "DROP INDEX \"foo_IX_T_C2A\";",
+                            """
+                            CREATE TABLE "__foo_T__{GUID}__" (
+                              "C1" ANY NOT NULL,
+                              "C2" ANY NOT NULL,
+                              CONSTRAINT "foo_PK_T" PRIMARY KEY ("C1" ASC),
+                              CONSTRAINT "foo_FK_T_C2_REF_T" FOREIGN KEY ("C2") REFERENCES "foo_T" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT
+                            ) WITHOUT ROWID;
+                            """,
+                            """
+                            INSERT INTO "__foo_T__{GUID}__" ("C1", "C2")
+                            SELECT
+                              "foo_T"."C1",
+                              "foo_T"."C2"
+                            FROM "foo_T";
+                            """,
+                            "DROP TABLE \"foo_T\";",
+                            "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";",
+                            "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -96,45 +91,40 @@ public class SqliteForeignKeyBuilderTests : TestsBase
         var sut = t2.Constraints.CreateForeignKey( ix2, ix1 );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            t2.Constraints.TryGet( sut.Name ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.Name.Should().Be( "FK_T2_C2_REF_T" );
-            sut.OriginIndex.Should().BeSameAs( ix2 );
-            sut.ReferencedIndex.Should().BeSameAs( ix1 );
-
-            ix1.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
-
-            ix2.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) );
-
-            table.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
-
-            schema.ReferencingObjects.Should().BeEmpty();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    CREATE TABLE "__foo_T2__{GUID}__" (
-                                          "C2" ANY NOT NULL,
-                                          CONSTRAINT "foo_PK_T2" PRIMARY KEY ("C2" ASC),
-                                          CONSTRAINT "foo_FK_T2_C2_REF_T" FOREIGN KEY ("C2") REFERENCES "foo_T" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT
-                                        ) WITHOUT ROWID;
-                    """,
-                    """
-                    INSERT INTO "__foo_T2__{GUID}__" ("C2")
-                                        SELECT
-                                          "foo_T2"."C2"
-                                        FROM "foo_T2";
-                    """,
-                    "DROP TABLE \"foo_T2\";",
-                    "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" );
-        }
+        Assertion.All(
+                t2.Constraints.TryGet( sut.Name ).TestRefEquals( sut ),
+                schema.Objects.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.Name.TestEquals( "FK_T2_C2_REF_T" ),
+                sut.OriginIndex.TestRefEquals( ix2 ),
+                sut.ReferencedIndex.TestRefEquals( ix1 ),
+                ix1.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) ] ),
+                ix2.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) ] ),
+                table.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) ] ),
+                schema.ReferencingObjects.TestEmpty(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            CREATE TABLE "__foo_T2__{GUID}__" (
+                              "C2" ANY NOT NULL,
+                              CONSTRAINT "foo_PK_T2" PRIMARY KEY ("C2" ASC),
+                              CONSTRAINT "foo_FK_T2_C2_REF_T" FOREIGN KEY ("C2") REFERENCES "foo_T" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT
+                            ) WITHOUT ROWID;
+                            """,
+                            """
+                            INSERT INTO "__foo_T2__{GUID}__" ("C2")
+                            SELECT
+                              "foo_T2"."C2"
+                            FROM "foo_T2";
+                            """,
+                            "DROP TABLE \"foo_T2\";",
+                            "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -151,46 +141,41 @@ public class SqliteForeignKeyBuilderTests : TestsBase
         var sut = t2.Constraints.CreateForeignKey( ix2, ix1 );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            t2.Constraints.TryGet( sut.Name ).Should().BeSameAs( sut );
-            s2.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
-            sut.Name.Should().Be( "FK_T2_C2_REF_foo_T" );
-            sut.OriginIndex.Should().BeSameAs( ix2 );
-            sut.ReferencedIndex.Should().BeSameAs( ix1 );
-
-            ix1.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
-
-            ix2.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) );
-
-            table.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
-
-            schema.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    CREATE TABLE "__bar_T2__{GUID}__" (
-                                          "C2" ANY NOT NULL,
-                                          CONSTRAINT "bar_PK_T2" PRIMARY KEY ("C2" ASC),
-                                          CONSTRAINT "bar_FK_T2_C2_REF_foo_T" FOREIGN KEY ("C2") REFERENCES "foo_T" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT
-                                        ) WITHOUT ROWID;
-                    """,
-                    """
-                    INSERT INTO "__bar_T2__{GUID}__" ("C2")
-                                        SELECT
-                                          "bar_T2"."C2"
-                                        FROM "bar_T2";
-                    """,
-                    "DROP TABLE \"bar_T2\";",
-                    "ALTER TABLE \"__bar_T2__{GUID}__\" RENAME TO \"bar_T2\";" );
-        }
+        Assertion.All(
+                t2.Constraints.TryGet( sut.Name ).TestRefEquals( sut ),
+                s2.Objects.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.Name.TestEquals( "FK_T2_C2_REF_foo_T" ),
+                sut.OriginIndex.TestRefEquals( ix2 ),
+                sut.ReferencedIndex.TestRefEquals( ix1 ),
+                ix1.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) ] ),
+                ix2.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) ] ),
+                table.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) ] ),
+                schema.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) ] ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            CREATE TABLE "__bar_T2__{GUID}__" (
+                              "C2" ANY NOT NULL,
+                              CONSTRAINT "bar_PK_T2" PRIMARY KEY ("C2" ASC),
+                              CONSTRAINT "bar_FK_T2_C2_REF_foo_T" FOREIGN KEY ("C2") REFERENCES "foo_T" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT
+                            ) WITHOUT ROWID;
+                            """,
+                            """
+                            INSERT INTO "__bar_T2__{GUID}__" ("C2")
+                            SELECT
+                              "bar_T2"."C2"
+                            FROM "bar_T2";
+                            """,
+                            "DROP TABLE \"bar_T2\";",
+                            "ALTER TABLE \"__bar_T2__{GUID}__\" RENAME TO \"bar_T2\";" )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -206,7 +191,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Fact]
@@ -222,11 +207,10 @@ public class SqliteForeignKeyBuilderTests : TestsBase
         var result = sut.SetName( sut.Name );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -244,11 +228,10 @@ public class SqliteForeignKeyBuilderTests : TestsBase
         var result = sut.SetName( oldName );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -265,39 +248,38 @@ public class SqliteForeignKeyBuilderTests : TestsBase
         var result = sut.SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "bar" );
-            table.Constraints.TryGet( "bar" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( oldName ).Should().BeNull();
-            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( oldName ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP INDEX \"foo_IX_T_C2A\";",
-                    """
-                    CREATE TABLE "__foo_T__{GUID}__" (
-                                          "C2" ANY NOT NULL,
-                                          "C1" ANY NOT NULL,
-                                          CONSTRAINT "foo_PK_T" PRIMARY KEY ("C1" ASC),
-                                          CONSTRAINT "foo_bar" FOREIGN KEY ("C2") REFERENCES "foo_T" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT
-                                        ) WITHOUT ROWID;
-                    """,
-                    """
-                    INSERT INTO "__foo_T__{GUID}__" ("C2", "C1")
-                                        SELECT
-                                          "foo_T"."C2",
-                                          "foo_T"."C1"
-                                        FROM "foo_T";
-                    """,
-                    "DROP TABLE \"foo_T\";",
-                    "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";",
-                    "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                table.Constraints.TryGet( "bar" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( oldName ).TestNull(),
+                schema.Objects.TryGet( "bar" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( oldName ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            "DROP INDEX \"foo_IX_T_C2A\";",
+                            """
+                            CREATE TABLE "__foo_T__{GUID}__" (
+                              "C2" ANY NOT NULL,
+                              "C1" ANY NOT NULL,
+                              CONSTRAINT "foo_PK_T" PRIMARY KEY ("C1" ASC),
+                              CONSTRAINT "foo_bar" FOREIGN KEY ("C2") REFERENCES "foo_T" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT
+                            ) WITHOUT ROWID;
+                            """,
+                            """
+                            INSERT INTO "__foo_T__{GUID}__" ("C2", "C1")
+                            SELECT
+                              "foo_T"."C2",
+                              "foo_T"."C1"
+                            FROM "foo_T";
+                            """,
+                            "DROP TABLE \"foo_T\";",
+                            "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";",
+                            "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" )
+                    ] ) )
+            .Go();
     }
 
     [Theory]
@@ -316,9 +298,11 @@ public class SqliteForeignKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( name ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqliteDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -333,9 +317,11 @@ public class SqliteForeignKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "bar" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqliteDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -349,9 +335,11 @@ public class SqliteForeignKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "T" ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqliteDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -367,11 +355,10 @@ public class SqliteForeignKeyBuilderTests : TestsBase
         var result = sut.SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -388,11 +375,10 @@ public class SqliteForeignKeyBuilderTests : TestsBase
         var result = sut.SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -408,39 +394,38 @@ public class SqliteForeignKeyBuilderTests : TestsBase
         var result = sut.SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "FK_T_C2_REF_T" );
-            table.Constraints.TryGet( "FK_T_C2_REF_T" ).Should().BeSameAs( sut );
-            table.Constraints.TryGet( "bar" ).Should().BeNull();
-            schema.Objects.TryGet( "FK_T_C2_REF_T" ).Should().BeSameAs( sut );
-            schema.Objects.TryGet( "bar" ).Should().BeNull();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP INDEX \"foo_IX_T_C2A\";",
-                    """
-                    CREATE TABLE "__foo_T__{GUID}__" (
-                                          "C2" ANY NOT NULL,
-                                          "C1" ANY NOT NULL,
-                                          CONSTRAINT "foo_PK_T" PRIMARY KEY ("C1" ASC),
-                                          CONSTRAINT "foo_FK_T_C2_REF_T" FOREIGN KEY ("C2") REFERENCES "foo_T" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT
-                                        ) WITHOUT ROWID;
-                    """,
-                    """
-                    INSERT INTO "__foo_T__{GUID}__" ("C2", "C1")
-                                        SELECT
-                                          "foo_T"."C2",
-                                          "foo_T"."C1"
-                                        FROM "foo_T";
-                    """,
-                    "DROP TABLE \"foo_T\";",
-                    "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";",
-                    "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "FK_T_C2_REF_T" ),
+                table.Constraints.TryGet( "FK_T_C2_REF_T" ).TestRefEquals( sut ),
+                table.Constraints.TryGet( "bar" ).TestNull(),
+                schema.Objects.TryGet( "FK_T_C2_REF_T" ).TestRefEquals( sut ),
+                schema.Objects.TryGet( "bar" ).TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            "DROP INDEX \"foo_IX_T_C2A\";",
+                            """
+                            CREATE TABLE "__foo_T__{GUID}__" (
+                              "C2" ANY NOT NULL,
+                              "C1" ANY NOT NULL,
+                              CONSTRAINT "foo_PK_T" PRIMARY KEY ("C1" ASC),
+                              CONSTRAINT "foo_FK_T_C2_REF_T" FOREIGN KEY ("C2") REFERENCES "foo_T" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT
+                            ) WITHOUT ROWID;
+                            """,
+                            """
+                            INSERT INTO "__foo_T__{GUID}__" ("C2", "C1")
+                            SELECT
+                              "foo_T"."C2",
+                              "foo_T"."C1"
+                            FROM "foo_T";
+                            """,
+                            "DROP TABLE \"foo_T\";",
+                            "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";",
+                            "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -455,9 +440,11 @@ public class SqliteForeignKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetDefaultName() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqliteDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -472,9 +459,11 @@ public class SqliteForeignKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetDefaultName() );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqliteDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Theory]
@@ -494,35 +483,34 @@ public class SqliteForeignKeyBuilderTests : TestsBase
         var result = sut.SetOnDeleteBehavior( behavior );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.OnDeleteBehavior.Should().Be( behavior );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP INDEX \"foo_IX_T_C2A\";",
-                    $$"""
-                      CREATE TABLE "__foo_T__{GUID}__" (
-                                            "C2" ANY,
-                                            "C1" ANY NOT NULL,
-                                            CONSTRAINT "foo_PK_T" PRIMARY KEY ("C1" ASC),
-                                            CONSTRAINT "foo_FK_T_C2_REF_T" FOREIGN KEY ("C2") REFERENCES "foo_T" ("C1") ON DELETE {{behavior.Name}} ON UPDATE RESTRICT
-                                          ) WITHOUT ROWID;
-                      """,
-                    """
-                    INSERT INTO "__foo_T__{GUID}__" ("C2", "C1")
-                                        SELECT
-                                          "foo_T"."C2",
-                                          "foo_T"."C1"
-                                        FROM "foo_T";
-                    """,
-                    "DROP TABLE \"foo_T\";",
-                    "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";",
-                    "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.OnDeleteBehavior.TestEquals( behavior ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            "DROP INDEX \"foo_IX_T_C2A\";",
+                            $$"""
+                              CREATE TABLE "__foo_T__{GUID}__" (
+                                "C2" ANY,
+                                "C1" ANY NOT NULL,
+                                CONSTRAINT "foo_PK_T" PRIMARY KEY ("C1" ASC),
+                                CONSTRAINT "foo_FK_T_C2_REF_T" FOREIGN KEY ("C2") REFERENCES "foo_T" ("C1") ON DELETE {{behavior.Name}} ON UPDATE RESTRICT
+                              ) WITHOUT ROWID;
+                              """,
+                            """
+                            INSERT INTO "__foo_T__{GUID}__" ("C2", "C1")
+                            SELECT
+                              "foo_T"."C2",
+                              "foo_T"."C1"
+                            FROM "foo_T";
+                            """,
+                            "DROP TABLE \"foo_T\";",
+                            "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";",
+                            "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -538,11 +526,10 @@ public class SqliteForeignKeyBuilderTests : TestsBase
         var result = sut.SetOnDeleteBehavior( ReferenceBehavior.Restrict );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -559,11 +546,10 @@ public class SqliteForeignKeyBuilderTests : TestsBase
         var result = sut.SetOnDeleteBehavior( ReferenceBehavior.Restrict );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -577,9 +563,11 @@ public class SqliteForeignKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetOnDeleteBehavior( ReferenceBehavior.SetNull ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqliteDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -594,9 +582,11 @@ public class SqliteForeignKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetOnDeleteBehavior( ReferenceBehavior.Cascade ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqliteDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Theory]
@@ -616,35 +606,34 @@ public class SqliteForeignKeyBuilderTests : TestsBase
         var result = sut.SetOnUpdateBehavior( behavior );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.OnUpdateBehavior.Should().Be( behavior );
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP INDEX \"foo_IX_T_C2A\";",
-                    $$"""
-                      CREATE TABLE "__foo_T__{GUID}__" (
-                                            "C2" ANY,
-                                            "C1" ANY NOT NULL,
-                                            CONSTRAINT "foo_PK_T" PRIMARY KEY ("C1" ASC),
-                                            CONSTRAINT "foo_FK_T_C2_REF_T" FOREIGN KEY ("C2") REFERENCES "foo_T" ("C1") ON DELETE RESTRICT ON UPDATE {{behavior.Name}}
-                                          ) WITHOUT ROWID;
-                      """,
-                    """
-                    INSERT INTO "__foo_T__{GUID}__" ("C2", "C1")
-                                        SELECT
-                                          "foo_T"."C2",
-                                          "foo_T"."C1"
-                                        FROM "foo_T";
-                    """,
-                    "DROP TABLE \"foo_T\";",
-                    "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";",
-                    "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.OnUpdateBehavior.TestEquals( behavior ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            "DROP INDEX \"foo_IX_T_C2A\";",
+                            $$"""
+                              CREATE TABLE "__foo_T__{GUID}__" (
+                                "C2" ANY,
+                                "C1" ANY NOT NULL,
+                                CONSTRAINT "foo_PK_T" PRIMARY KEY ("C1" ASC),
+                                CONSTRAINT "foo_FK_T_C2_REF_T" FOREIGN KEY ("C2") REFERENCES "foo_T" ("C1") ON DELETE RESTRICT ON UPDATE {{behavior.Name}}
+                              ) WITHOUT ROWID;
+                              """,
+                            """
+                            INSERT INTO "__foo_T__{GUID}__" ("C2", "C1")
+                            SELECT
+                              "foo_T"."C2",
+                              "foo_T"."C1"
+                            FROM "foo_T";
+                            """,
+                            "DROP TABLE \"foo_T\";",
+                            "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";",
+                            "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -660,11 +649,10 @@ public class SqliteForeignKeyBuilderTests : TestsBase
         var result = sut.SetOnUpdateBehavior( ReferenceBehavior.Restrict );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -681,11 +669,10 @@ public class SqliteForeignKeyBuilderTests : TestsBase
         var result = sut.SetOnUpdateBehavior( ReferenceBehavior.Restrict );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -699,9 +686,11 @@ public class SqliteForeignKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetOnUpdateBehavior( ReferenceBehavior.SetNull ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqliteDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -716,9 +705,11 @@ public class SqliteForeignKeyBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetOnUpdateBehavior( ReferenceBehavior.Cascade ) );
 
-        action.Should()
-            .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>(
+                        e => Assertion.All( e.Dialect.TestEquals( SqliteDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -734,37 +725,36 @@ public class SqliteForeignKeyBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            table.Constraints.TryGet( sut.Name ).Should().BeNull();
-            schema.Objects.TryGet( sut.Name ).Should().BeNull();
-            sut.IsRemoved.Should().BeTrue();
-            ix1.ReferencingObjects.Should().BeEmpty();
-            ix2.ReferencingObjects.Should().BeEmpty();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP INDEX \"foo_IX_T_C2A\";",
-                    """
-                    CREATE TABLE "__foo_T__{GUID}__" (
-                                          "C2" ANY NOT NULL,
-                                          "C1" ANY NOT NULL,
-                                          CONSTRAINT "foo_PK_T" PRIMARY KEY ("C1" ASC)
-                                        ) WITHOUT ROWID;
-                    """,
-                    """
-                    INSERT INTO "__foo_T__{GUID}__" ("C2", "C1")
-                                        SELECT
-                                          "foo_T"."C2",
-                                          "foo_T"."C1"
-                                        FROM "foo_T";
-                    """,
-                    "DROP TABLE \"foo_T\";",
-                    "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";",
-                    "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" );
-        }
+        Assertion.All(
+                table.Constraints.TryGet( sut.Name ).TestNull(),
+                schema.Objects.TryGet( sut.Name ).TestNull(),
+                sut.IsRemoved.TestTrue(),
+                ix1.ReferencingObjects.TestEmpty(),
+                ix2.ReferencingObjects.TestEmpty(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            "DROP INDEX \"foo_IX_T_C2A\";",
+                            """
+                            CREATE TABLE "__foo_T__{GUID}__" (
+                              "C2" ANY NOT NULL,
+                              "C1" ANY NOT NULL,
+                              CONSTRAINT "foo_PK_T" PRIMARY KEY ("C1" ASC)
+                            ) WITHOUT ROWID;
+                            """,
+                            """
+                            INSERT INTO "__foo_T__{GUID}__" ("C2", "C1")
+                            SELECT
+                              "foo_T"."C2",
+                              "foo_T"."C1"
+                            FROM "foo_T";
+                            """,
+                            "DROP TABLE \"foo_T\";",
+                            "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";",
+                            "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -781,34 +771,33 @@ public class SqliteForeignKeyBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            t2.Constraints.TryGet( sut.Name ).Should().BeNull();
-            schema.Objects.TryGet( sut.Name ).Should().BeNull();
-            sut.IsRemoved.Should().BeTrue();
-            ix1.ReferencingObjects.Should().BeEmpty();
-            ix2.ReferencingObjects.Should().BeEmpty();
-            table.ReferencingObjects.Should().BeEmpty();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    CREATE TABLE "__foo_T2__{GUID}__" (
-                                          "C2" ANY NOT NULL,
-                                          CONSTRAINT "foo_PK_T2" PRIMARY KEY ("C2" ASC)
-                                        ) WITHOUT ROWID;
-                    """,
-                    """
-                    INSERT INTO "__foo_T2__{GUID}__" ("C2")
-                                        SELECT
-                                          "foo_T2"."C2"
-                                        FROM "foo_T2";
-                    """,
-                    "DROP TABLE \"foo_T2\";",
-                    "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" );
-        }
+        Assertion.All(
+                t2.Constraints.TryGet( sut.Name ).TestNull(),
+                schema.Objects.TryGet( sut.Name ).TestNull(),
+                sut.IsRemoved.TestTrue(),
+                ix1.ReferencingObjects.TestEmpty(),
+                ix2.ReferencingObjects.TestEmpty(),
+                table.ReferencingObjects.TestEmpty(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            CREATE TABLE "__foo_T2__{GUID}__" (
+                              "C2" ANY NOT NULL,
+                              CONSTRAINT "foo_PK_T2" PRIMARY KEY ("C2" ASC)
+                            ) WITHOUT ROWID;
+                            """,
+                            """
+                            INSERT INTO "__foo_T2__{GUID}__" ("C2")
+                            SELECT
+                              "foo_T2"."C2"
+                            FROM "foo_T2";
+                            """,
+                            "DROP TABLE \"foo_T2\";",
+                            "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -826,35 +815,34 @@ public class SqliteForeignKeyBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        using ( new AssertionScope() )
-        {
-            t2.Constraints.TryGet( sut.Name ).Should().BeNull();
-            s2.Objects.TryGet( sut.Name ).Should().BeNull();
-            sut.IsRemoved.Should().BeTrue();
-            ix1.ReferencingObjects.Should().BeEmpty();
-            ix2.ReferencingObjects.Should().BeEmpty();
-            table.ReferencingObjects.Should().BeEmpty();
-            schema.ReferencingObjects.Should().BeEmpty();
-
-            actions.Should().HaveCount( 1 );
-            actions.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    """
-                    CREATE TABLE "__bar_T2__{GUID}__" (
-                                          "C2" ANY NOT NULL,
-                                          CONSTRAINT "bar_PK_T2" PRIMARY KEY ("C2" ASC)
-                                        ) WITHOUT ROWID;
-                    """,
-                    """
-                    INSERT INTO "__bar_T2__{GUID}__" ("C2")
-                                        SELECT
-                                          "bar_T2"."C2"
-                                        FROM "bar_T2";
-                    """,
-                    "DROP TABLE \"bar_T2\";",
-                    "ALTER TABLE \"__bar_T2__{GUID}__\" RENAME TO \"bar_T2\";" );
-        }
+        Assertion.All(
+                t2.Constraints.TryGet( sut.Name ).TestNull(),
+                s2.Objects.TryGet( sut.Name ).TestNull(),
+                sut.IsRemoved.TestTrue(),
+                ix1.ReferencingObjects.TestEmpty(),
+                ix2.ReferencingObjects.TestEmpty(),
+                table.ReferencingObjects.TestEmpty(),
+                schema.ReferencingObjects.TestEmpty(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.SatisfySql(
+                            """
+                            CREATE TABLE "__bar_T2__{GUID}__" (
+                              "C2" ANY NOT NULL,
+                              CONSTRAINT "bar_PK_T2" PRIMARY KEY ("C2" ASC)
+                            ) WITHOUT ROWID;
+                            """,
+                            """
+                            INSERT INTO "__bar_T2__{GUID}__" ("C2")
+                            SELECT
+                              "bar_T2"."C2"
+                            FROM "bar_T2";
+                            """,
+                            "DROP TABLE \"bar_T2\";",
+                            "ALTER TABLE \"__bar_T2__{GUID}__\" RENAME TO \"bar_T2\";" )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -873,7 +861,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
         sut.Remove();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        actions.Should().BeEmpty();
+        actions.TestEmpty().Go();
     }
 
     [Fact]
@@ -887,8 +875,10 @@ public class SqliteForeignKeyBuilderTests : TestsBase
 
         var result = sut.ForSqlite( action );
 
-        result.Should().BeSameAs( sut );
-        action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( sut );
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                action.CallAt( 0 ).Arguments.TestSequence( [ sut ] ) )
+            .Go();
     }
 
     [Fact]
@@ -899,7 +889,9 @@ public class SqliteForeignKeyBuilderTests : TestsBase
 
         var result = sut.ForSqlite( action );
 
-        result.Should().BeSameAs( sut );
-        action.Verify().CallCount.Should().Be( 0 );
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                action.CallCount().TestEquals( 0 ) )
+            .Go();
     }
 }

@@ -16,7 +16,7 @@ public class SqliteColumnTypeDefinitionObjectTests : TestsBase
         var value = 12345L;
         var sut = _provider.GetByType<object>();
         var result = sut.TryToDbLiteral( value );
-        result.Should().Be( "12345" );
+        result.TestEquals( "12345" ).Go();
     }
 
     [Fact]
@@ -25,7 +25,7 @@ public class SqliteColumnTypeDefinitionObjectTests : TestsBase
         var value = 12345.0625;
         var sut = _provider.GetByType<object>();
         var result = sut.TryToDbLiteral( value );
-        result.Should().Be( "12345.0625" );
+        result.TestEquals( "12345.0625" ).Go();
     }
 
     [Fact]
@@ -34,7 +34,7 @@ public class SqliteColumnTypeDefinitionObjectTests : TestsBase
         var value = "foo'bar";
         var sut = _provider.GetByType<object>();
         var result = sut.TryToDbLiteral( value );
-        result.Should().Be( "'foo''bar'" );
+        result.TestEquals( "'foo''bar'" ).Go();
     }
 
     [Fact]
@@ -43,7 +43,7 @@ public class SqliteColumnTypeDefinitionObjectTests : TestsBase
         var value = new byte[] { 123, 45, 6 };
         var sut = _provider.GetByType<object>();
         var result = sut.TryToDbLiteral( value );
-        result.Should().Be( "X'7B2D06'" );
+        result.TestEquals( "X'7B2D06'" ).Go();
     }
 
     [Fact]
@@ -51,7 +51,7 @@ public class SqliteColumnTypeDefinitionObjectTests : TestsBase
     {
         var sut = _provider.GetByType<object>();
         var action = Lambda.Of( () => sut.TryToDbLiteral( new object() ) );
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -60,7 +60,7 @@ public class SqliteColumnTypeDefinitionObjectTests : TestsBase
         var value = 12345L;
         var sut = _provider.GetByType<object>();
         var result = sut.TryToParameterValue( value );
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -69,7 +69,7 @@ public class SqliteColumnTypeDefinitionObjectTests : TestsBase
         var value = 12345.0625;
         var sut = _provider.GetByType<object>();
         var result = sut.TryToParameterValue( value );
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -78,7 +78,7 @@ public class SqliteColumnTypeDefinitionObjectTests : TestsBase
         var value = "foo'bar";
         var sut = _provider.GetByType<object>();
         var result = sut.TryToParameterValue( value );
-        result.Should().BeSameAs( value );
+        result.TestRefEquals( value ).Go();
     }
 
     [Fact]
@@ -87,7 +87,7 @@ public class SqliteColumnTypeDefinitionObjectTests : TestsBase
         var value = new byte[] { 123, 45, 6 };
         var sut = _provider.GetByType<object>();
         var result = sut.TryToParameterValue( value );
-        result.Should().BeSameAs( value );
+        result.TestRefEquals( value ).Go();
     }
 
     [Fact]
@@ -96,7 +96,7 @@ public class SqliteColumnTypeDefinitionObjectTests : TestsBase
         var value = new object();
         var sut = _provider.GetByType<object>();
         var result = sut.TryToParameterValue( value );
-        result.Should().BeSameAs( value );
+        result.TestRefEquals( value ).Go();
     }
 
     [Fact]
@@ -107,12 +107,11 @@ public class SqliteColumnTypeDefinitionObjectTests : TestsBase
 
         sut.SetParameterInfo( parameter, isNullable: true );
 
-        using ( new AssertionScope() )
-        {
-            parameter.DbType.Should().Be( sut.DataType.DbType );
-            parameter.SqliteType.Should().Be( SqliteType.Text );
-            parameter.IsNullable.Should().BeTrue();
-        }
+        Assertion.All(
+                parameter.DbType.TestEquals( sut.DataType.DbType ),
+                parameter.SqliteType.TestEquals( SqliteType.Text ),
+                parameter.IsNullable.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -123,12 +122,11 @@ public class SqliteColumnTypeDefinitionObjectTests : TestsBase
 
         sut.SetParameterInfo( parameter, isNullable: false );
 
-        using ( new AssertionScope() )
-        {
-            parameter.DbType.Should().Be( DbType.String );
-            parameter.SqliteType.Should().Be( SqliteType.Text );
-            parameter.IsNullable.Should().BeFalse();
-        }
+        Assertion.All(
+                parameter.DbType.TestEquals( DbType.String ),
+                parameter.SqliteType.TestEquals( SqliteType.Text ),
+                parameter.IsNullable.TestFalse() )
+            .Go();
     }
 
     [Theory]
@@ -141,6 +139,6 @@ public class SqliteColumnTypeDefinitionObjectTests : TestsBase
 
         sut.SetParameterInfo( parameter, isNullable );
 
-        parameter.DbType.Should().Be( sut.DataType.DbType );
+        parameter.DbType.TestEquals( sut.DataType.DbType ).Go();
     }
 }

@@ -19,7 +19,7 @@ public class SqliteColumnTypeDefinitionDateTimeOffsetTests : TestsBase
         var expected = $"'{dt}'";
         var sut = _provider.GetByType<DateTimeOffset>();
         var result = sut.TryToDbLiteral( value );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -27,7 +27,7 @@ public class SqliteColumnTypeDefinitionDateTimeOffsetTests : TestsBase
     {
         var sut = _provider.GetByType<DateTimeOffset>();
         var result = sut.TryToDbLiteral( string.Empty );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -39,7 +39,7 @@ public class SqliteColumnTypeDefinitionDateTimeOffsetTests : TestsBase
         var value = DateTimeOffset.Parse( dt );
         var sut = _provider.GetByType<DateTimeOffset>();
         var result = sut.TryToParameterValue( value );
-        result.Should().Be( dt );
+        result.TestEquals( dt ).Go();
     }
 
     [Fact]
@@ -47,7 +47,7 @@ public class SqliteColumnTypeDefinitionDateTimeOffsetTests : TestsBase
     {
         var sut = _provider.GetByType<DateTimeOffset>();
         var result = sut.TryToParameterValue( string.Empty );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -60,12 +60,11 @@ public class SqliteColumnTypeDefinitionDateTimeOffsetTests : TestsBase
 
         sut.SetParameterInfo( parameter, isNullable );
 
-        using ( new AssertionScope() )
-        {
-            parameter.DbType.Should().Be( sut.DataType.DbType );
-            parameter.SqliteType.Should().Be( SqliteType.Text );
-            parameter.IsNullable.Should().Be( isNullable );
-        }
+        Assertion.All(
+                parameter.DbType.TestEquals( sut.DataType.DbType ),
+                parameter.SqliteType.TestEquals( SqliteType.Text ),
+                parameter.IsNullable.TestEquals( isNullable ) )
+            .Go();
     }
 
     [Theory]
@@ -78,6 +77,6 @@ public class SqliteColumnTypeDefinitionDateTimeOffsetTests : TestsBase
 
         sut.SetParameterInfo( parameter, isNullable );
 
-        parameter.DbType.Should().Be( sut.DataType.DbType );
+        parameter.DbType.TestEquals( sut.DataType.DbType ).Go();
     }
 }

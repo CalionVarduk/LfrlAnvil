@@ -7,16 +7,15 @@ public class SqliteNodeInterpreterOptionsTests : TestsBase
     {
         var sut = SqliteNodeInterpreterOptions.Default;
 
-        using ( new AssertionScope() )
-        {
-            sut.TypeDefinitions.Should().BeNull();
-            sut.IsStrictModeEnabled.Should().BeFalse();
-            sut.IsUpdateFromEnabled.Should().BeTrue();
-            sut.IsUpdateOrDeleteLimitEnabled.Should().BeTrue();
-            sut.IsAggregateFunctionOrderingEnabled.Should().BeFalse();
-            sut.ArePositionalParametersEnabled.Should().BeFalse();
-            sut.UpsertOptions.Should().Be( SqliteUpsertOptions.Supported );
-        }
+        Assertion.All(
+                sut.TypeDefinitions.TestNull(),
+                sut.IsStrictModeEnabled.TestFalse(),
+                sut.IsUpdateFromEnabled.TestTrue(),
+                sut.IsUpdateOrDeleteLimitEnabled.TestTrue(),
+                sut.IsAggregateFunctionOrderingEnabled.TestFalse(),
+                sut.ArePositionalParametersEnabled.TestFalse(),
+                sut.UpsertOptions.TestEquals( SqliteUpsertOptions.Supported ) )
+            .Go();
     }
 
     [Fact]
@@ -26,16 +25,15 @@ public class SqliteNodeInterpreterOptionsTests : TestsBase
         var sut = SqliteNodeInterpreterOptions.Default;
         var result = sut.SetTypeDefinitions( typeDefinitions );
 
-        using ( new AssertionScope() )
-        {
-            result.TypeDefinitions.Should().BeSameAs( typeDefinitions );
-            result.IsStrictModeEnabled.Should().Be( sut.IsStrictModeEnabled );
-            result.IsUpdateFromEnabled.Should().Be( sut.IsUpdateFromEnabled );
-            result.IsUpdateOrDeleteLimitEnabled.Should().Be( sut.IsUpdateOrDeleteLimitEnabled );
-            result.IsAggregateFunctionOrderingEnabled.Should().Be( sut.IsAggregateFunctionOrderingEnabled );
-            result.ArePositionalParametersEnabled.Should().Be( sut.ArePositionalParametersEnabled );
-            result.UpsertOptions.Should().Be( sut.UpsertOptions );
-        }
+        Assertion.All(
+                result.TypeDefinitions.TestRefEquals( typeDefinitions ),
+                result.IsStrictModeEnabled.TestEquals( sut.IsStrictModeEnabled ),
+                result.IsUpdateFromEnabled.TestEquals( sut.IsUpdateFromEnabled ),
+                result.IsUpdateOrDeleteLimitEnabled.TestEquals( sut.IsUpdateOrDeleteLimitEnabled ),
+                result.IsAggregateFunctionOrderingEnabled.TestEquals( sut.IsAggregateFunctionOrderingEnabled ),
+                result.ArePositionalParametersEnabled.TestEquals( sut.ArePositionalParametersEnabled ),
+                result.UpsertOptions.TestEquals( sut.UpsertOptions ) )
+            .Go();
     }
 
     [Fact]
@@ -44,16 +42,15 @@ public class SqliteNodeInterpreterOptionsTests : TestsBase
         var sut = SqliteNodeInterpreterOptions.Default;
         var result = sut.SetTypeDefinitions( null );
 
-        using ( new AssertionScope() )
-        {
-            result.TypeDefinitions.Should().BeNull();
-            result.IsStrictModeEnabled.Should().Be( sut.IsStrictModeEnabled );
-            result.IsUpdateFromEnabled.Should().Be( sut.IsUpdateFromEnabled );
-            result.IsUpdateOrDeleteLimitEnabled.Should().Be( sut.IsUpdateOrDeleteLimitEnabled );
-            result.IsAggregateFunctionOrderingEnabled.Should().Be( sut.IsAggregateFunctionOrderingEnabled );
-            result.ArePositionalParametersEnabled.Should().Be( sut.ArePositionalParametersEnabled );
-            result.UpsertOptions.Should().Be( sut.UpsertOptions );
-        }
+        Assertion.All(
+                result.TypeDefinitions.TestNull(),
+                result.IsStrictModeEnabled.TestEquals( sut.IsStrictModeEnabled ),
+                result.IsUpdateFromEnabled.TestEquals( sut.IsUpdateFromEnabled ),
+                result.IsUpdateOrDeleteLimitEnabled.TestEquals( sut.IsUpdateOrDeleteLimitEnabled ),
+                result.IsAggregateFunctionOrderingEnabled.TestEquals( sut.IsAggregateFunctionOrderingEnabled ),
+                result.ArePositionalParametersEnabled.TestEquals( sut.ArePositionalParametersEnabled ),
+                result.UpsertOptions.TestEquals( sut.UpsertOptions ) )
+            .Go();
     }
 
     [Theory]
@@ -64,16 +61,15 @@ public class SqliteNodeInterpreterOptionsTests : TestsBase
         var sut = SqliteNodeInterpreterOptions.Default;
         var result = sut.EnableStrictMode( enabled );
 
-        using ( new AssertionScope() )
-        {
-            result.TypeDefinitions.Should().BeSameAs( sut.TypeDefinitions );
-            result.IsStrictModeEnabled.Should().Be( enabled );
-            result.IsUpdateFromEnabled.Should().Be( sut.IsUpdateFromEnabled );
-            result.IsUpdateOrDeleteLimitEnabled.Should().Be( sut.IsUpdateOrDeleteLimitEnabled );
-            result.IsAggregateFunctionOrderingEnabled.Should().Be( sut.IsAggregateFunctionOrderingEnabled );
-            result.ArePositionalParametersEnabled.Should().Be( sut.ArePositionalParametersEnabled );
-            result.UpsertOptions.Should().Be( sut.UpsertOptions );
-        }
+        Assertion.All(
+                result.TypeDefinitions.TestRefEquals( sut.TypeDefinitions ),
+                result.IsStrictModeEnabled.TestEquals( enabled ),
+                result.IsUpdateFromEnabled.TestEquals( sut.IsUpdateFromEnabled ),
+                result.IsUpdateOrDeleteLimitEnabled.TestEquals( sut.IsUpdateOrDeleteLimitEnabled ),
+                result.IsAggregateFunctionOrderingEnabled.TestEquals( sut.IsAggregateFunctionOrderingEnabled ),
+                result.ArePositionalParametersEnabled.TestEquals( sut.ArePositionalParametersEnabled ),
+                result.UpsertOptions.TestEquals( sut.UpsertOptions ) )
+            .Go();
     }
 
     [Theory]
@@ -84,16 +80,15 @@ public class SqliteNodeInterpreterOptionsTests : TestsBase
         var sut = SqliteNodeInterpreterOptions.Default;
         var result = sut.EnableUpdateFrom( enabled );
 
-        using ( new AssertionScope() )
-        {
-            result.TypeDefinitions.Should().BeSameAs( sut.TypeDefinitions );
-            result.IsStrictModeEnabled.Should().Be( sut.IsStrictModeEnabled );
-            result.IsUpdateFromEnabled.Should().Be( enabled );
-            result.IsUpdateOrDeleteLimitEnabled.Should().Be( sut.IsUpdateOrDeleteLimitEnabled );
-            result.IsAggregateFunctionOrderingEnabled.Should().Be( sut.IsAggregateFunctionOrderingEnabled );
-            result.ArePositionalParametersEnabled.Should().Be( sut.ArePositionalParametersEnabled );
-            result.UpsertOptions.Should().Be( sut.UpsertOptions );
-        }
+        Assertion.All(
+                result.TypeDefinitions.TestRefEquals( sut.TypeDefinitions ),
+                result.IsStrictModeEnabled.TestEquals( sut.IsStrictModeEnabled ),
+                result.IsUpdateFromEnabled.TestEquals( enabled ),
+                result.IsUpdateOrDeleteLimitEnabled.TestEquals( sut.IsUpdateOrDeleteLimitEnabled ),
+                result.IsAggregateFunctionOrderingEnabled.TestEquals( sut.IsAggregateFunctionOrderingEnabled ),
+                result.ArePositionalParametersEnabled.TestEquals( sut.ArePositionalParametersEnabled ),
+                result.UpsertOptions.TestEquals( sut.UpsertOptions ) )
+            .Go();
     }
 
     [Theory]
@@ -104,16 +99,15 @@ public class SqliteNodeInterpreterOptionsTests : TestsBase
         var sut = SqliteNodeInterpreterOptions.Default;
         var result = sut.EnableUpdateOrDeleteLimit( enabled );
 
-        using ( new AssertionScope() )
-        {
-            result.TypeDefinitions.Should().BeSameAs( sut.TypeDefinitions );
-            result.IsStrictModeEnabled.Should().Be( sut.IsStrictModeEnabled );
-            result.IsUpdateFromEnabled.Should().Be( sut.IsUpdateFromEnabled );
-            result.IsUpdateOrDeleteLimitEnabled.Should().Be( enabled );
-            result.IsAggregateFunctionOrderingEnabled.Should().Be( sut.IsAggregateFunctionOrderingEnabled );
-            result.ArePositionalParametersEnabled.Should().Be( sut.ArePositionalParametersEnabled );
-            result.UpsertOptions.Should().Be( sut.UpsertOptions );
-        }
+        Assertion.All(
+                result.TypeDefinitions.TestRefEquals( sut.TypeDefinitions ),
+                result.IsStrictModeEnabled.TestEquals( sut.IsStrictModeEnabled ),
+                result.IsUpdateFromEnabled.TestEquals( sut.IsUpdateFromEnabled ),
+                result.IsUpdateOrDeleteLimitEnabled.TestEquals( enabled ),
+                result.IsAggregateFunctionOrderingEnabled.TestEquals( sut.IsAggregateFunctionOrderingEnabled ),
+                result.ArePositionalParametersEnabled.TestEquals( sut.ArePositionalParametersEnabled ),
+                result.UpsertOptions.TestEquals( sut.UpsertOptions ) )
+            .Go();
     }
 
     [Theory]
@@ -124,16 +118,15 @@ public class SqliteNodeInterpreterOptionsTests : TestsBase
         var sut = SqliteNodeInterpreterOptions.Default;
         var result = sut.EnableAggregateFunctionOrdering( enabled );
 
-        using ( new AssertionScope() )
-        {
-            result.TypeDefinitions.Should().BeSameAs( sut.TypeDefinitions );
-            result.IsStrictModeEnabled.Should().Be( sut.IsStrictModeEnabled );
-            result.IsUpdateFromEnabled.Should().Be( sut.IsUpdateFromEnabled );
-            result.IsUpdateOrDeleteLimitEnabled.Should().Be( sut.IsUpdateOrDeleteLimitEnabled );
-            result.IsAggregateFunctionOrderingEnabled.Should().Be( enabled );
-            result.ArePositionalParametersEnabled.Should().Be( sut.ArePositionalParametersEnabled );
-            result.UpsertOptions.Should().Be( sut.UpsertOptions );
-        }
+        Assertion.All(
+                result.TypeDefinitions.TestRefEquals( sut.TypeDefinitions ),
+                result.IsStrictModeEnabled.TestEquals( sut.IsStrictModeEnabled ),
+                result.IsUpdateFromEnabled.TestEquals( sut.IsUpdateFromEnabled ),
+                result.IsUpdateOrDeleteLimitEnabled.TestEquals( sut.IsUpdateOrDeleteLimitEnabled ),
+                result.IsAggregateFunctionOrderingEnabled.TestEquals( enabled ),
+                result.ArePositionalParametersEnabled.TestEquals( sut.ArePositionalParametersEnabled ),
+                result.UpsertOptions.TestEquals( sut.UpsertOptions ) )
+            .Go();
     }
 
     [Theory]
@@ -144,16 +137,15 @@ public class SqliteNodeInterpreterOptionsTests : TestsBase
         var sut = SqliteNodeInterpreterOptions.Default;
         var result = sut.EnablePositionalParameters( enabled );
 
-        using ( new AssertionScope() )
-        {
-            result.TypeDefinitions.Should().BeSameAs( sut.TypeDefinitions );
-            result.IsStrictModeEnabled.Should().Be( sut.IsStrictModeEnabled );
-            result.IsUpdateFromEnabled.Should().Be( sut.IsUpdateFromEnabled );
-            result.IsUpdateOrDeleteLimitEnabled.Should().Be( sut.IsUpdateOrDeleteLimitEnabled );
-            result.IsAggregateFunctionOrderingEnabled.Should().Be( sut.IsAggregateFunctionOrderingEnabled );
-            result.ArePositionalParametersEnabled.Should().Be( enabled );
-            result.UpsertOptions.Should().Be( sut.UpsertOptions );
-        }
+        Assertion.All(
+                result.TypeDefinitions.TestRefEquals( sut.TypeDefinitions ),
+                result.IsStrictModeEnabled.TestEquals( sut.IsStrictModeEnabled ),
+                result.IsUpdateFromEnabled.TestEquals( sut.IsUpdateFromEnabled ),
+                result.IsUpdateOrDeleteLimitEnabled.TestEquals( sut.IsUpdateOrDeleteLimitEnabled ),
+                result.IsAggregateFunctionOrderingEnabled.TestEquals( sut.IsAggregateFunctionOrderingEnabled ),
+                result.ArePositionalParametersEnabled.TestEquals( enabled ),
+                result.UpsertOptions.TestEquals( sut.UpsertOptions ) )
+            .Go();
     }
 
     [Theory]
@@ -170,15 +162,14 @@ public class SqliteNodeInterpreterOptionsTests : TestsBase
         var sut = SqliteNodeInterpreterOptions.Default;
         var result = sut.SetUpsertOptions( options );
 
-        using ( new AssertionScope() )
-        {
-            result.TypeDefinitions.Should().BeSameAs( sut.TypeDefinitions );
-            result.IsStrictModeEnabled.Should().Be( sut.IsStrictModeEnabled );
-            result.IsUpdateFromEnabled.Should().Be( sut.IsUpdateFromEnabled );
-            result.IsUpdateOrDeleteLimitEnabled.Should().Be( sut.IsUpdateOrDeleteLimitEnabled );
-            result.IsAggregateFunctionOrderingEnabled.Should().Be( sut.IsAggregateFunctionOrderingEnabled );
-            result.ArePositionalParametersEnabled.Should().Be( sut.ArePositionalParametersEnabled );
-            result.UpsertOptions.Should().Be( expected );
-        }
+        Assertion.All(
+                result.TypeDefinitions.TestRefEquals( sut.TypeDefinitions ),
+                result.IsStrictModeEnabled.TestEquals( sut.IsStrictModeEnabled ),
+                result.IsUpdateFromEnabled.TestEquals( sut.IsUpdateFromEnabled ),
+                result.IsUpdateOrDeleteLimitEnabled.TestEquals( sut.IsUpdateOrDeleteLimitEnabled ),
+                result.IsAggregateFunctionOrderingEnabled.TestEquals( sut.IsAggregateFunctionOrderingEnabled ),
+                result.ArePositionalParametersEnabled.TestEquals( sut.ArePositionalParametersEnabled ),
+                result.UpsertOptions.TestEquals( expected ) )
+            .Go();
     }
 }

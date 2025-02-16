@@ -31,8 +31,7 @@ public partial class SqliteNodeInterpreterTests
                         r => new[] { r["a"], r["c"] } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     INSERT INTO qux ("a", "b")
                     VALUES
@@ -41,7 +40,8 @@ public partial class SqliteNodeInterpreterTests
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = (qux."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -62,8 +62,7 @@ public partial class SqliteNodeInterpreterTests
                         (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     INSERT INTO "common_qux" ("a", "b")
                     VALUES
@@ -72,7 +71,8 @@ public partial class SqliteNodeInterpreterTests
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = ("common_qux"."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -93,8 +93,7 @@ public partial class SqliteNodeInterpreterTests
                         (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     INSERT INTO "common_qux" ("a", "b")
                     VALUES
@@ -103,7 +102,8 @@ public partial class SqliteNodeInterpreterTests
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = ("common_qux"."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -129,8 +129,7 @@ public partial class SqliteNodeInterpreterTests
                         (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     INSERT INTO "qux" ("a", "b")
                     VALUES
@@ -139,7 +138,8 @@ public partial class SqliteNodeInterpreterTests
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = ("qux"."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -161,8 +161,7 @@ public partial class SqliteNodeInterpreterTests
                         (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     INSERT INTO qux ("a", "b")
                     VALUES
@@ -171,7 +170,8 @@ public partial class SqliteNodeInterpreterTests
                     ON CONFLICT DO UPDATE SET
                       "b" = (qux."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -208,8 +208,7 @@ public partial class SqliteNodeInterpreterTests
                     r => new[] { r["a"], r["c"] } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     WITH "cba" AS (
                       SELECT * FROM abc
@@ -231,7 +230,8 @@ public partial class SqliteNodeInterpreterTests
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = (qux."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -268,8 +268,7 @@ public partial class SqliteNodeInterpreterTests
                     (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     WITH "cba" AS (
                       SELECT * FROM abc
@@ -291,7 +290,8 @@ public partial class SqliteNodeInterpreterTests
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = ("common_qux"."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -328,8 +328,7 @@ public partial class SqliteNodeInterpreterTests
                     (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     WITH "cba" AS (
                       SELECT * FROM abc
@@ -351,7 +350,8 @@ public partial class SqliteNodeInterpreterTests
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = ("common_qux"."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -393,8 +393,7 @@ public partial class SqliteNodeInterpreterTests
                     (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     WITH "cba" AS (
                       SELECT * FROM abc
@@ -416,7 +415,8 @@ public partial class SqliteNodeInterpreterTests
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = ("qux"."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -454,8 +454,7 @@ public partial class SqliteNodeInterpreterTests
                     (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     WITH "cba" AS (
                       SELECT * FROM abc
@@ -477,7 +476,8 @@ public partial class SqliteNodeInterpreterTests
                     ON CONFLICT DO UPDATE SET
                       "b" = (qux."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -498,8 +498,7 @@ public partial class SqliteNodeInterpreterTests
                     r => new[] { r["a"], r["c"] } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     INSERT INTO qux ("a", "b")
                     SELECT
@@ -510,7 +509,8 @@ public partial class SqliteNodeInterpreterTests
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = (qux."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -534,8 +534,7 @@ public partial class SqliteNodeInterpreterTests
                     r => new[] { r["a"], r["c"] } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     WITH "x" AS (
                       SELECT * FROM ipsum
@@ -554,7 +553,8 @@ public partial class SqliteNodeInterpreterTests
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = (qux."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -578,8 +578,7 @@ public partial class SqliteNodeInterpreterTests
                     (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     WITH "x" AS (
                       SELECT * FROM ipsum
@@ -598,7 +597,8 @@ public partial class SqliteNodeInterpreterTests
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = ("common_qux"."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -622,8 +622,7 @@ public partial class SqliteNodeInterpreterTests
                     (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     WITH "x" AS (
                       SELECT * FROM ipsum
@@ -642,7 +641,8 @@ public partial class SqliteNodeInterpreterTests
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = ("common_qux"."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -671,8 +671,7 @@ public partial class SqliteNodeInterpreterTests
                     (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     WITH "x" AS (
                       SELECT * FROM ipsum
@@ -691,7 +690,8 @@ public partial class SqliteNodeInterpreterTests
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = ("qux"."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -716,8 +716,7 @@ public partial class SqliteNodeInterpreterTests
                     (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     WITH "x" AS (
                       SELECT * FROM ipsum
@@ -736,7 +735,8 @@ public partial class SqliteNodeInterpreterTests
                     ON CONFLICT DO UPDATE SET
                       "b" = (qux."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -752,15 +752,15 @@ public partial class SqliteNodeInterpreterTests
                         r => new[] { r["a"], r["c"] } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     INSERT INTO qux ("a", "b")
                     SELECT * FROM bar
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = (qux."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -776,15 +776,15 @@ public partial class SqliteNodeInterpreterTests
                         (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     INSERT INTO "common_qux" ("a", "b")
                     SELECT * FROM bar
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = ("common_qux"."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -800,15 +800,15 @@ public partial class SqliteNodeInterpreterTests
                         (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     INSERT INTO "common_qux" ("a", "b")
                     SELECT * FROM bar
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = ("common_qux"."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -829,15 +829,15 @@ public partial class SqliteNodeInterpreterTests
                         (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     INSERT INTO "qux" ("a", "b")
                     SELECT * FROM bar
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = ("qux"."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -854,15 +854,15 @@ public partial class SqliteNodeInterpreterTests
                         (r, i) => new[] { r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) } ) );
 
             sut.Context.Sql.ToString()
-                .Should()
-                .Be(
+                .TestEquals(
                     """
                     INSERT INTO qux ("a", "b")
                     SELECT * FROM bar
                     ON CONFLICT DO UPDATE SET
                       "b" = (qux."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
-                    """ );
+                    """ )
+                .Go();
         }
 
         [Fact]
@@ -881,7 +881,7 @@ public partial class SqliteNodeInterpreterTests
 
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should().ThrowExactly<SqlNodeVisitorException>();
+            action.Test( exc => exc.TestType().Exact<SqlNodeVisitorException>() ).Go();
         }
 
         [Fact]
@@ -900,7 +900,7 @@ public partial class SqliteNodeInterpreterTests
 
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should().ThrowExactly<SqlNodeVisitorException>();
+            action.Test( exc => exc.TestType().Exact<SqlNodeVisitorException>() ).Go();
         }
 
         [Fact]
@@ -920,7 +920,7 @@ public partial class SqliteNodeInterpreterTests
 
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Should().ThrowExactly<UnrecognizedSqlNodeException>();
+            action.Test( exc => exc.TestType().Exact<UnrecognizedSqlNodeException>() ).Go();
         }
     }
 }

@@ -19,7 +19,7 @@ public class SqliteColumnTypeDefinitionTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -27,6 +27,6 @@ public class SqliteColumnTypeDefinitionTests : TestsBase
     {
         var provider = new SqliteColumnTypeDefinitionProvider( new SqliteColumnTypeDefinitionProviderBuilder() );
         var action = Lambda.Of( () => provider.GetByType<SqliteParameter>() );
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 }

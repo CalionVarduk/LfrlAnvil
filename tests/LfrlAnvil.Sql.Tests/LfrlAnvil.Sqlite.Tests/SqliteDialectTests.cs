@@ -6,6 +6,6 @@ public class SqliteDialectTests : TestsBase
     public void Instance_ShouldHaveCorrectName()
     {
         var sut = SqliteDialect.Instance;
-        sut.Name.Should().Be( "SQLite" );
+        sut.Name.TestEquals( "SQLite" ).Go();
     }
 }
