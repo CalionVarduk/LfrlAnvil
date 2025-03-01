@@ -159,6 +159,12 @@ internal struct SynchronousScheduler
             _reset.Set();
     }
 
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void PausePing()
+    {
+        _nextSendPingTimestamp = TimeoutEntry.MaxTimestamp;
+    }
+
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal Duration GetPingDelay(MessageBrokerClient client)

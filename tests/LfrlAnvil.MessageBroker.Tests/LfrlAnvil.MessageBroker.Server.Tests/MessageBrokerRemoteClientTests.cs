@@ -25,7 +25,8 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         await using var server = new MessageBrokerServer(
             () => new TimestampProvider(),
             originalEndPoint,
-            MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetEventHandler( logs.Add )
                 .SetClientEventHandlerFactory(
                     _ =>
@@ -72,12 +73,14 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
                         r.IsLittleEndian.TestTrue(),
                         r.MessageTimeout.TestEquals( Duration.FromSeconds( 1 ) ),
                         r.PingInterval.TestEquals( Duration.FromSeconds( 10 ) ),
-                        r.State.TestEquals( MessageBrokerRemoteClientState.Running ) ) ),
+                        r.State.TestEquals( MessageBrokerRemoteClientState.Running ),
+                        r.LinkedChannels.Count.TestEquals( 0 ),
+                        r.LinkedChannels.GetAll().TestEmpty() ) ),
                 AssertClientData(
                     client.GetAllReceived(),
                     (Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload,
                         MessageBrokerClientEndpoint.HandshakeAcceptedResponse) ),
-                logs.GetAll()
+                logs.GetAllServer()
                     .TestContainsSequence(
                     [
                         $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
@@ -169,12 +172,14 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
                         r.IsLittleEndian.TestTrue(),
                         r.MessageTimeout.TestEquals( Duration.FromSeconds( 1.5 ) ),
                         r.PingInterval.TestEquals( Duration.FromSeconds( 15 ) ),
-                        r.State.TestEquals( MessageBrokerRemoteClientState.Running ) ) ),
+                        r.State.TestEquals( MessageBrokerRemoteClientState.Running ),
+                        r.LinkedChannels.Count.TestEquals( 0 ),
+                        r.LinkedChannels.GetAll().TestEmpty() ) ),
                 AssertClientData(
                     client.GetAllReceived(),
                     (Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload,
                         MessageBrokerClientEndpoint.HandshakeAcceptedResponse) ),
-                logs.GetAll()
+                logs.GetAllServer()
                     .TestContainsSequence(
                     [
                         $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
@@ -279,7 +284,9 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
                         r.IsLittleEndian.TestTrue(),
                         r.MessageTimeout.TestEquals( Duration.FromSeconds( 1 ) ),
                         r.PingInterval.TestEquals( Duration.FromSeconds( 10 ) ),
-                        r.State.TestEquals( MessageBrokerRemoteClientState.Running ) ) ),
+                        r.State.TestEquals( MessageBrokerRemoteClientState.Running ),
+                        r.LinkedChannels.Count.TestEquals( 0 ),
+                        r.LinkedChannels.GetAll().TestEmpty() ) ),
                 remoteClient2.TestNotNull(
                     r => Assertion.All(
                         r.TestRefEquals( server.Clients.TryGetByName( "bar" ) ),
@@ -291,7 +298,9 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
                         r.IsLittleEndian.TestTrue(),
                         r.MessageTimeout.TestEquals( Duration.FromSeconds( 1.5 ) ),
                         r.PingInterval.TestEquals( Duration.FromSeconds( 15 ) ),
-                        r.State.TestEquals( MessageBrokerRemoteClientState.Running ) ) ),
+                        r.State.TestEquals( MessageBrokerRemoteClientState.Running ),
+                        r.LinkedChannels.Count.TestEquals( 0 ),
+                        r.LinkedChannels.GetAll().TestEmpty() ) ),
                 AssertClientData(
                     client1.GetAllReceived(),
                     (Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload,
@@ -300,7 +309,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
                     client2.GetAllReceived(),
                     (Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload,
                         MessageBrokerClientEndpoint.HandshakeAcceptedResponse) ),
-                serverLogs.GetAll()
+                serverLogs.GetAllServer()
                     .TestContainsSequence(
                     [
                         $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(1 second(s) : 1.5 second(s)), AcceptablePingInterval = Bounds(10 second(s) : 15 second(s)))",
@@ -380,7 +389,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         Assertion.All(
                 server.Clients.Count.TestEquals( 0 ),
-                logs.GetAll()
+                logs.GetAllServer()
                     .TestContainsSequence(
                     [
                         $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
@@ -417,7 +426,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
                 .SetStreamDecorator(
                     (c, ns) =>
                     {
-                        endSource.Complete( (c, Task.Factory.StartNew( c.Dispose )) );
+                        endSource.Complete( (c, Task.Factory.StartNew( () => c.DisconnectAsync().AsTask().Wait() )) );
                         return ValueTask.FromResult<Stream>( ns );
                     } ) );
 
@@ -442,7 +451,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
                 remoteClient.LocalEndPoint.TestNull(),
                 remoteClient.RemoteEndPoint.TestNull(),
                 remoteClient.State.TestEquals( MessageBrokerRemoteClientState.Disposed ),
-                logs.GetAll()
+                logs.GetAllServer()
                     .TestContainsSequence(
                     [
                         $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
@@ -499,7 +508,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         Assertion.All(
                 server.Clients.Count.TestEquals( 0 ),
-                logs.GetAll()
+                logs.GetAllServer()
                     .TestContainsSequence(
                     [
                         $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
@@ -567,7 +576,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         Assertion.All(
                 server.Clients.Count.TestEquals( 0 ),
-                logs.GetAll()
+                logs.GetAllServer()
                     .TestContainsSequence(
                     [
                         $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
@@ -630,7 +639,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         Assertion.All(
                 server.Clients.Count.TestEquals( 0 ),
-                logs.GetAll()
+                logs.GetAllServer()
                     .TestContainsSequence(
                     [
                         $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
@@ -700,7 +709,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         Assertion.All(
                 server.Clients.Count.TestEquals( 0 ),
-                logs.GetAll()
+                logs.GetAllServer()
                     .TestContainsSequence(
                     [
                         $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
@@ -767,7 +776,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         Assertion.All(
                 server.Clients.Count.TestEquals( 0 ),
-                logs.GetAll()
+                logs.GetAllServer()
                     .TestContainsSequence(
                     [
                         $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
@@ -839,7 +848,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
                     client.GetAllReceived(),
                     (Protocol.PacketHeader.Length + Protocol.HandshakeRejectedResponse.Payload,
                         MessageBrokerClientEndpoint.HandshakeRejectedResponse) ),
-                logs.GetAll()
+                logs.GetAllServer()
                     .TestContainsSequence(
                     [
                         $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
@@ -918,7 +927,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
                     client.GetAllReceived(),
                     (Protocol.PacketHeader.Length + Protocol.HandshakeRejectedResponse.Payload,
                         MessageBrokerClientEndpoint.HandshakeRejectedResponse) ),
-                logs.GetAll()
+                logs.GetAllServer()
                     .TestContainsSequence(
                     [
                         $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
@@ -1022,7 +1031,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
                     client2.GetAllReceived(),
                     (Protocol.PacketHeader.Length + Protocol.HandshakeRejectedResponse.Payload,
                         MessageBrokerClientEndpoint.HandshakeRejectedResponse) ),
-                serverLogs.GetAll()
+                serverLogs.GetAllServer()
                     .TestContainsSequence(
                     [
                         $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
@@ -1099,7 +1108,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         Assertion.All(
                 server.Clients.Count.TestEquals( 0 ),
-                logs.GetAll()
+                logs.GetAllServer()
                     .TestContainsSequence(
                     [
                         $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
@@ -1173,7 +1182,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         Assertion.All(
                 server.Clients.Count.TestEquals( 0 ),
-                logs.GetAll()
+                logs.GetAllServer()
                     .TestContainsSequence(
                     [
                         $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
@@ -1291,7 +1300,10 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         await clientTask;
         await Task.Delay( 15 );
-        server.Clients.TryGetById( 1 )?.Dispose();
+        var remoteClient = server.Clients.TryGetById( 1 );
+        if ( remoteClient is not null )
+            await remoteClient.DisconnectAsync();
+
         await endSource.Task;
 
         Assertion.All(

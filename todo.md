@@ -30,6 +30,18 @@ Sql:
 - IncludedColumns for IXs? simple blocking link to SqlColumnBuilder (low priority)
     - from implemented dialects only postgresql supports this
 
+message broker:
+
+- server-side, remote clients' sync schedulers need rethinking
+- each scheduler spawns a new thread, which isn't good...
+- server needs a single scheduler that asynchronously handles remote clients' schedule invocations
+- this way only one thread needs to be created, by the server
+- remote clients will fully use async/await, which should work well with thread pool
+
+reactive timer & scheduler:
+
+- add 'long-running' flag to start-async methods
+
 ### Terminal
 
 project idea:
@@ -61,12 +73,12 @@ project idea:
         - client sends message
             - \[stage 2\] client can limit target clients by providing their ids, by default all subscribed clients are notified
         - server moves message to channel's storage
-        - server immediately responds with ack/nack (ack contains message id)
+        - server immediately responds with ack/nack (ack contains message id - uint64)
         - server propagates message from channel to all subscribers (channel's task loop)
         - \[stage 2\] subscriber moves message to un-acked messages collection
         - subscriber notifies remote client's task loop that there is message to send
         - remote client sends message to client
-        - client receives message and is notified of it through it's local subscription instance
+        - client receives message and is notified of it through its local subscription instance
         - \[stage 2\] client needs to respond with ack/nack (not immediately)
             - message headers get additional re-send-no (starts from 0) & re-delivery-no (starts from 0) fields
             - ack notifies the server that message was processed & removes it from waiting-for-ack messages collection
@@ -93,7 +105,6 @@ project idea:
                 - and client should be able to react accordingly before a disaster happens
             - it's more important to NOT LOSE messages rather than making sure they are unique
 - server should be allowed to send messages to any channel or subscriber
-- minor tweak: buffer pool token disposal isn't wrapped in try/catch (do it just in case)
 
 ### MessageBroker: Max Packet Length & Batching
 
@@ -105,6 +116,16 @@ project idea:
             - then read all chunks from stream and move them to a single large buffer, then notify
             - otherwise, notify on the fly, with additional chunk-no & chunk-count & total-size info in subscriber event header
                 - basically, moves the responsibility to the consumer, but becomes more complex to handle (every msg needs to be checked)
+                - only the last chunk can be acked?
+                - any chunk can be nacked?
+                    - client may have to locally store msg ids
+                    - since server may continue sending next chunks before registering the nack and stopping
+                    - client will then continue reading re-send once server sends chunk 0 again
+                    - anything else will be discarded
+                    - or, each chunk is treated as a separate msg?
+                        - so, nack would only apply to that particular chunk instead of the whole thing
+                        - then, its on the client's consumer to correctly put all chunks together if it nacked any of them
+                - 'ignore large packet buffering' could be configurable per subscriber
 - packets queued up for sending will be batched together, as long as batch's length does not exceed packed size limit
     - max messages-in-single-batch-count can be configured (unlimited by default) or even disabled, send only, reading does not care
     - message readers must be prepared to handle batch packets (preserve message order)
@@ -185,9 +206,18 @@ project idea:
 
 ### MessageBroker: Server Maintenance
 
-- allow the server to disconnect clients
+- allow the server to disconnect clients (already implemented)
 - delete channels
 - delete subscribers
+- delete client-channel links
+- deleting sends a notification request to the relevant client and doesn't wait for a response
+    - it's on the client to handle this correctly
+    - however, try to make it so that any 'racing' due to async doesn't cause the client to be auto-disposed
+    - e.g. server drops channel
+    - at the same time, client sends msg through that channel
+    - server discards msg, since client is no longer linked to that channel
+        - this should not drop server-client connection
+        - server should simply nack msg sent by client
 
 ### Dependencies: Generic dependency types
 

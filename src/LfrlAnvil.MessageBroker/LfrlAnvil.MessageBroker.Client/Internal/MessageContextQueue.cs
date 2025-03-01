@@ -103,6 +103,9 @@ internal struct MessageContextQueue
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void ActivatePendingResponseSource(MessageBrokerClient client, ManualResetValueTaskSource<IncomingPacketToken> source)
     {
+        if ( source.Status != ValueTaskSourceStatus.Pending )
+            return;
+
         ref var token = ref _pendingResponses[_activePendingResponses++];
         Assume.Equals( source, token.Source );
         Assume.Equals( token.Timeout, TimeoutEntry.MaxTimestamp );
@@ -127,15 +130,22 @@ internal struct MessageContextQueue
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void ResetPendingResponse(ManualResetValueTaskSource<IncomingPacketToken> source)
+    internal void NotifyPendingResponseSource(ManualResetValueTaskSource<IncomingPacketToken> source, IncomingPacketToken token)
     {
-        Assume.IsNotNull( source );
         Assume.False( _pendingResponses.IsEmpty );
-        Assume.Equals( source, _pendingResponses.First().Source );
-        Assume.NotEquals( _pendingResponses.First().Timeout, TimeoutEntry.MaxTimestamp );
+        ref var first = ref _pendingResponses.First();
+        Assume.Equals( source, first.Source );
 
-        --_activePendingResponses;
+        if ( first.Timeout != TimeoutEntry.MaxTimestamp )
+            --_activePendingResponses;
+
         _pendingResponses.Dequeue();
+        source.SetResult( token );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void ResetPendingResponseSource(ManualResetValueTaskSource<IncomingPacketToken> source)
+    {
         source.Reset();
         _incomingPendingResponseSourceCache.Push( source );
     }

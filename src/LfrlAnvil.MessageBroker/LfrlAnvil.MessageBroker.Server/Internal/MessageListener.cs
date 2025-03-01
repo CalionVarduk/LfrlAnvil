@@ -18,6 +18,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using LfrlAnvil.MessageBroker.Server.Buffering;
 using LfrlAnvil.MessageBroker.Server.Events;
 
 namespace LfrlAnvil.MessageBroker.Server.Internal;
@@ -57,7 +58,7 @@ internal struct MessageListener
         using ( client.AcquireLock() )
             client.MessageListener._task = null;
 
-        await client.DisposeAsync().ConfigureAwait( false );
+        await client.DisconnectAsync().ConfigureAwait( false );
     }
 
     internal void SetUnderlyingTask(Task? task)
@@ -81,9 +82,9 @@ internal struct MessageListener
             client.Emit( MessageBrokerRemoteClientEvent.WaitingForMessage( client ) );
 
             Protocol.PacketHeader header;
+            CancellationToken timeoutToken;
             try
             {
-                CancellationToken timeoutToken;
                 using ( client.AcquireLock() )
                 {
                     if ( client.ShouldCancel )
@@ -103,19 +104,43 @@ internal struct MessageListener
 
             client.Emit( MessageBrokerRemoteClientEvent.MessageReceived( client, header ) );
 
+            BinaryBufferToken packetBufferToken = default;
+            var packetBuffer = Memory<byte>.Empty;
             if ( header.GetServerEndpoint() != MessageBrokerServerEndpoint.PingRequest )
             {
-                client.HandleUnexpectedEndpoint( header );
-                break;
+                var packetLength = Protocol.AssertPacketLength( client, header );
+                if ( packetLength.Exception is not null )
+                {
+                    client.Emit( MessageBrokerRemoteClientEvent.MessageRejected( client, header, packetLength.Exception ) );
+                    break;
+                }
+
+                if ( packetLength.Value > 0 )
+                {
+                    packetBufferToken = client.RentBuffer( packetLength.Value, out packetBuffer ).EnableClearing();
+                    try
+                    {
+                        await stream.ReadExactlyAsync( packetBuffer, timeoutToken ).ConfigureAwait( false );
+                    }
+                    catch ( Exception exc )
+                    {
+                        client.Emit( MessageBrokerRemoteClientEvent.WaitingForMessage( client, exc ) );
+                        client.DisposeBufferToken( packetBufferToken );
+                        break;
+                    }
+                }
             }
 
             using ( client.AcquireLock() )
             {
                 if ( client.ShouldCancel )
+                {
+                    client.DisposeBufferToken( packetBufferToken );
                     return TaskStopReason.OwnerDisposed;
+                }
 
                 client.SynchronousScheduler.ResetReadTimeout();
-                client.MessageContextQueue.EnqueueRequest( header, default, default );
+                client.MessageContextQueue.EnqueueRequest( header, packetBufferToken, packetBuffer );
                 client.RequestHandler.SignalContinuation();
             }
         }

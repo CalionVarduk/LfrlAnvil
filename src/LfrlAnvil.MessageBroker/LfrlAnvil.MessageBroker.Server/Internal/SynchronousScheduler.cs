@@ -146,7 +146,7 @@ internal struct SynchronousScheduler
             using ( client.AcquireLock() )
                 client.SynchronousScheduler._task = null;
 
-            client.Dispose();
+            client.DisconnectAsync().AsTask().Wait();
         }
     }
 

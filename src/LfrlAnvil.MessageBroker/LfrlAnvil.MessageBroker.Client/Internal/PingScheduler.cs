@@ -187,7 +187,7 @@ internal struct PingScheduler
                 if ( client.ShouldCancel )
                     return TaskStopReason.OwnerDisposed;
 
-                client.MessageContextQueue.ResetPendingResponse( responseSource );
+                client.MessageContextQueue.ResetPendingResponseSource( responseSource );
             }
 
             if ( response.Header.GetClientEndpoint() != MessageBrokerClientEndpoint.PingResponse )

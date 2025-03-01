@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.MessageBroker.Server.Events;
@@ -10,12 +11,12 @@ using LfrlAnvil.MessageBroker.Server.Internal;
 
 namespace LfrlAnvil.MessageBroker.Server.Tests.Helpers;
 
-public sealed class ClientMock : IDisposable
+internal sealed class ClientMock : IDisposable
 {
     private readonly TcpClient _client = new TcpClient();
     private readonly List<byte[]> _received = new List<byte[]>();
 
-    public ClientMock()
+    internal ClientMock()
     {
         _client.NoDelay = true;
         _client.SendTimeout = ChronoConstants.MillisecondsPerSecond;
@@ -30,7 +31,7 @@ public sealed class ClientMock : IDisposable
         }
     }
 
-    public void Connect(IPEndPoint endPoint)
+    internal void Connect(IPEndPoint endPoint)
     {
         lock ( _client )
         {
@@ -38,7 +39,7 @@ public sealed class ClientMock : IDisposable
         }
     }
 
-    public byte[] Read(int length)
+    internal byte[] Read(int length)
     {
         lock ( _client )
         {
@@ -49,7 +50,7 @@ public sealed class ClientMock : IDisposable
         }
     }
 
-    public void SendHandshake(string name, Duration messageTimeout, Duration pingInterval, uint? payload = null)
+    internal void SendHandshake(string name, Duration messageTimeout, Duration pingInterval, uint? payload = null)
     {
         var preparedName = EncodeableText.Create( TextEncoding.Instance, name ).GetValueOrThrow();
         var buffer = new byte[Protocol.PacketHeader.Length + Protocol.HandshakeRequestHeader.Length + preparedName.ByteCount];
@@ -74,7 +75,7 @@ public sealed class ClientMock : IDisposable
         Send( buffer );
     }
 
-    public void SendConfirmHandshakeResponse(uint? payload = null)
+    internal void SendConfirmHandshakeResponse(uint? payload = null)
     {
         var buffer = new byte[Protocol.PacketHeader.Length];
         var writer = new BinaryContractWriter( buffer );
@@ -83,7 +84,7 @@ public sealed class ClientMock : IDisposable
         Send( buffer );
     }
 
-    public void SendPing(uint? payload = null)
+    internal void SendPing(uint? payload = null)
     {
         var buffer = new byte[Protocol.PacketHeader.Length];
         var writer = new BinaryContractWriter( buffer );
@@ -92,7 +93,19 @@ public sealed class ClientMock : IDisposable
         Send( buffer );
     }
 
-    public void Send(byte[] data)
+    internal void SendLinkChannelRequest(string name, uint? payload = null)
+    {
+        var preparedName = EncodeableText.Create( TextEncoding.Instance, name ).GetValueOrThrow();
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.LinkChannelRequestHeader.Length + preparedName.ByteCount];
+        var writer = new BinaryContractWriter( buffer );
+        writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.LinkChannelRequest );
+        writer.MoveWrite( payload ?? ( uint )(Protocol.LinkChannelRequestHeader.Length + preparedName.ByteCount) );
+        writer.MoveWrite( 0 );
+        preparedName.Encode( writer.GetSpan( preparedName.ByteCount ) ).ThrowIfError();
+        Send( buffer );
+    }
+
+    internal void Send(byte[] data)
     {
         lock ( _client )
         {
@@ -100,8 +113,29 @@ public sealed class ClientMock : IDisposable
         }
     }
 
+    internal Task EstablishHandshake(
+        MessageBrokerServer server,
+        string? name = null,
+        Duration? messageTimeout = null,
+        Duration? pingInterval = null)
+    {
+        return Task.Factory.StartNew(
+            () =>
+            {
+                Connect( server.LocalEndPoint );
+                SendHandshake( name ?? "test", messageTimeout ?? Duration.FromSeconds( 1 ), pingInterval ?? Duration.FromSeconds( 10 ) );
+                Read( Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload );
+                SendConfirmHandshakeResponse();
+            } );
+    }
+
+    internal Task GetTask(Action<ClientMock> action)
+    {
+        return Task.Factory.StartNew( () => action( this ) );
+    }
+
     [Pure]
-    public byte[][] GetAllReceived()
+    internal byte[][] GetAllReceived()
     {
         lock ( _client )
             return _received.ToArray();

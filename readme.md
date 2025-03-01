@@ -28,6 +28,9 @@ Following is the list of all individual projects, in no particular order
 - LfrlAnvil.Computable:
   - [LfrlAnvil.Computable.Automata](./src/LfrlAnvil.Computable/LfrlAnvil.Computable.Automata/.docs/readme.md)
   - [LfrlAnvil.Computable.Expressions](./src/LfrlAnvil.Computable/LfrlAnvil.Computable.Expressions/.docs/readme.md)
+- LfrlAnvil.MessageBroker:
+  - [LfrlAnvil.MessageBroker.Client](./src/LfrlAnvil.MessageBroker/LfrlAnvil.MessageBroker.Client/.docs/readme.md)
+  - [LfrlAnvil.MessageBroker.Server](./src/LfrlAnvil.MessageBroker/LfrlAnvil.MessageBroker.Server/.docs/readme.md)
 - LfrlAnvil.Reactive:
   - [LfrlAnvil.Reactive.Core](./src/LfrlAnvil.Reactive/LfrlAnvil.Reactive.Core/.docs/readme.md)
   - [LfrlAnvil.Reactive.Chrono](./src/LfrlAnvil.Reactive/LfrlAnvil.Reactive.Chrono/.docs/readme.md)

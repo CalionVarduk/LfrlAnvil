@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Net;
@@ -34,8 +35,9 @@ namespace LfrlAnvil.MessageBroker.Server;
 /// <summary>
 /// Represents a remote message broker client.
 /// </summary>
-public sealed partial class MessageBrokerRemoteClient : IDisposable, IAsyncDisposable
+public sealed partial class MessageBrokerRemoteClient
 {
+    internal readonly Dictionary<int, MessageBrokerChannel> LinkedChannelsById;
     internal SynchronousScheduler SynchronousScheduler;
     internal MessageListener MessageListener;
     internal RequestHandler RequestHandler;
@@ -63,6 +65,7 @@ public sealed partial class MessageBrokerRemoteClient : IDisposable, IAsyncDispo
         PingInterval = Duration.Zero;
         _state = MessageBrokerRemoteClientState.Created;
 
+        LinkedChannelsById = new Dictionary<int, MessageBrokerChannel>();
         SynchronousScheduler = SynchronousScheduler.Create();
         MessageListener = MessageListener.Create();
         RequestHandler = RequestHandler.Create();
@@ -162,17 +165,19 @@ public sealed partial class MessageBrokerRemoteClient : IDisposable, IAsyncDispo
         }
     }
 
+    /// <summary>
+    /// Collection of <see cref="MessageBrokerChannel"/> instances to which this client is linked to.
+    /// </summary>
+    public MessageBrokerRemoteClientLinkedChannelCollection LinkedChannels => new MessageBrokerRemoteClientLinkedChannelCollection( this );
+
     internal Duration MaxReadTimeout { get; private set; }
     internal bool ShouldCancel => _state >= MessageBrokerRemoteClientState.Disposing;
 
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        DisposeAsync().AsTask().Wait();
-    }
-
-    /// <inheritdoc />
-    public async ValueTask DisposeAsync()
+    /// <summary>
+    /// Disconnects this client from the server.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous disconnect operation.</returns>
+    public async ValueTask DisconnectAsync()
     {
         using ( AcquireLock() )
         {
@@ -182,53 +187,33 @@ public sealed partial class MessageBrokerRemoteClient : IDisposable, IAsyncDispo
             _state = MessageBrokerRemoteClientState.Disposing;
         }
 
-        Emit( MessageBrokerRemoteClientEvent.Disposing( this ) );
-
-        Task? synchronousSchedulerTask;
-        Task? requestHandlerTask;
-        Task? messageReceiverTask;
-
-        Exception? exception;
-        using ( AcquireLock() )
-        {
-            synchronousSchedulerTask = SynchronousScheduler.DiscardUnderlyingTask();
-            requestHandlerTask = RequestHandler.DiscardUnderlyingTask();
-            messageReceiverTask = MessageListener.DiscardUnderlyingTask();
-            MessageContextQueue.Dispose();
-            RequestHandler.Dispose();
-            exception = SynchronousScheduler.BeginDispose();
-        }
-
-        if ( exception is not null )
-            Emit( MessageBrokerRemoteClientEvent.Unexpected( this, exception ) );
-
-        if ( synchronousSchedulerTask is not null )
-            await synchronousSchedulerTask.ConfigureAwait( false );
-
-        if ( requestHandlerTask is not null )
-            await requestHandlerTask.ConfigureAwait( false );
-
-        if ( messageReceiverTask is not null )
-            await messageReceiverTask.ConfigureAwait( false );
-
-        using ( AcquireLock() )
-            exception = SynchronousScheduler.EndDispose();
-
-        if ( exception is not null )
-            Emit( MessageBrokerRemoteClientEvent.Unexpected( this, exception ) );
-
-        using ( AcquireLock() )
-            exception = _tcp.TryDispose().Exception;
-
-        if ( exception is not null )
-            Emit( MessageBrokerRemoteClientEvent.Unexpected( this, exception ) );
+        var channels = await DisposeAsync( extractChannels: true ).ConfigureAwait( false );
+        foreach ( var channel in channels )
+            channel.OnClientDisconnected( this );
 
         using ( AcquireLock() )
             _state = MessageBrokerRemoteClientState.Disposed;
 
-        exception = RemoteClientCollection.Remove( this ).Exception;
+        var exception = RemoteClientCollection.Remove( this ).Exception;
         if ( exception is not null )
             Emit( MessageBrokerRemoteClientEvent.Unexpected( this, exception ) );
+
+        Emit( MessageBrokerRemoteClientEvent.Disposed( this ) );
+    }
+
+    internal async ValueTask OnServerDisposedAsync()
+    {
+        using ( AcquireLock() )
+        {
+            if ( ShouldCancel )
+                return;
+
+            _state = MessageBrokerRemoteClientState.Disposing;
+        }
+
+        await DisposeAsync( extractChannels: false ).ConfigureAwait( false );
+        using ( AcquireLock() )
+            _state = MessageBrokerRemoteClientState.Disposed;
 
         Emit( MessageBrokerRemoteClientEvent.Disposed( this ) );
     }
@@ -258,7 +243,7 @@ public sealed partial class MessageBrokerRemoteClient : IDisposable, IAsyncDispo
         catch ( Exception exc )
         {
             Emit( MessageBrokerRemoteClientEvent.Unexpected( this, exc ) );
-            Dispose();
+            DisconnectAsync().AsTask().Wait();
         }
     }
 
@@ -372,5 +357,69 @@ public sealed partial class MessageBrokerRemoteClient : IDisposable, IAsyncDispo
 
         Emit( MessageBrokerRemoteClientEvent.MessageSent( this, header, contextId ) );
         return Result.Valid;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void DisposeBufferToken(BinaryBufferToken token)
+    {
+        var exc = token.TryDispose().Exception;
+        if ( exc is not null )
+            Emit( MessageBrokerRemoteClientEvent.Unexpected( this, exc ) );
+    }
+
+    private async ValueTask<MessageBrokerChannel[]> DisposeAsync(bool extractChannels)
+    {
+        Emit( MessageBrokerRemoteClientEvent.Disposing( this ) );
+
+        Task? synchronousSchedulerTask;
+        Task? requestHandlerTask;
+        Task? messageReceiverTask;
+
+        Exception? exception;
+        var channels = Array.Empty<MessageBrokerChannel>();
+        using ( AcquireLock() )
+        {
+            if ( extractChannels && LinkedChannelsById.Count > 0 )
+            {
+                var i = 0;
+                channels = new MessageBrokerChannel[LinkedChannelsById.Count];
+                foreach ( var channel in LinkedChannelsById.Values )
+                    channels[i++] = channel;
+            }
+
+            LinkedChannelsById.Clear();
+            synchronousSchedulerTask = SynchronousScheduler.DiscardUnderlyingTask();
+            requestHandlerTask = RequestHandler.DiscardUnderlyingTask();
+            messageReceiverTask = MessageListener.DiscardUnderlyingTask();
+            MessageContextQueue.Dispose();
+            RequestHandler.Dispose();
+            exception = SynchronousScheduler.BeginDispose();
+        }
+
+        if ( exception is not null )
+            Emit( MessageBrokerRemoteClientEvent.Unexpected( this, exception ) );
+
+        if ( synchronousSchedulerTask is not null )
+            await synchronousSchedulerTask.ConfigureAwait( false );
+
+        if ( requestHandlerTask is not null )
+            await requestHandlerTask.ConfigureAwait( false );
+
+        if ( messageReceiverTask is not null )
+            await messageReceiverTask.ConfigureAwait( false );
+
+        using ( AcquireLock() )
+            exception = SynchronousScheduler.EndDispose();
+
+        if ( exception is not null )
+            Emit( MessageBrokerRemoteClientEvent.Unexpected( this, exception ) );
+
+        using ( AcquireLock() )
+            exception = _tcp.TryDispose().Exception;
+
+        if ( exception is not null )
+            Emit( MessageBrokerRemoteClientEvent.Unexpected( this, exception ) );
+
+        return channels;
     }
 }

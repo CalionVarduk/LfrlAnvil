@@ -34,27 +34,20 @@ public partial class MessageBrokerRemoteClientTests
                         } ) );
 
             await server.StartAsync();
-            var endPoint = server.LocalEndPoint;
 
             using var client = new ClientMock();
-            var clientTask = Task.Factory.StartNew(
-                o =>
+            await client.EstablishHandshake( server, pingInterval: Duration.FromSeconds( 0.2 ) );
+            await client.GetTask(
+                c =>
                 {
-                    var c = ( ClientMock )o!;
-                    c.Connect( endPoint );
-                    c.SendHandshake( "test", Duration.FromSeconds( 1 ), Duration.FromSeconds( 0.2 ) );
-                    c.Read( Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload );
-                    c.SendConfirmHandshakeResponse();
                     Thread.Sleep( 150 );
                     c.SendPing();
                     c.Read( Protocol.PacketHeader.Length );
                     Thread.Sleep( 150 );
                     c.SendPing();
                     c.Read( Protocol.PacketHeader.Length );
-                },
-                client );
+                } );
 
-            await clientTask;
             var remoteClient = server.Clients.TryGetByName( "test" );
             await endSource.Task;
 
@@ -96,22 +89,10 @@ public partial class MessageBrokerRemoteClientTests
                         } ) );
 
             await server.StartAsync();
-            var endPoint = server.LocalEndPoint;
 
             using var client = new ClientMock();
-            var clientTask = Task.Factory.StartNew(
-                o =>
-                {
-                    var c = ( ClientMock )o!;
-                    c.Connect( endPoint );
-                    c.SendHandshake( "test", Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ) );
-                    c.Read( Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload );
-                    c.SendConfirmHandshakeResponse();
-                    c.SendConfirmHandshakeResponse();
-                },
-                client );
-
-            await clientTask;
+            await client.EstablishHandshake( server );
+            await client.GetTask( c => c.SendConfirmHandshakeResponse( payload: 0 ) );
             await endSource.Task;
 
             Assertion.All(
@@ -121,7 +102,7 @@ public partial class MessageBrokerRemoteClientTests
                             (x, _) => x.TestStartsWith(
                                 """
                                 [1::'test'::<ROOT>] [MessageRejected] [PacketLength: 5] Encountered an error:
-                                LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid ConfirmHandshakeResponse with payload 16973310 from client [1] 'test'. Encountered 1 error(s):
+                                LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid ConfirmHandshakeResponse with payload 0 from client [1] 'test'. Encountered 1 error(s):
                                 1. Received unexpected server endpoint.
                                 """ ) ) )
                 .Go();
@@ -147,22 +128,10 @@ public partial class MessageBrokerRemoteClientTests
                         } ) );
 
             await server.StartAsync();
-            var endPoint = server.LocalEndPoint;
 
             using var client = new ClientMock();
-            var clientTask = Task.Factory.StartNew(
-                o =>
-                {
-                    var c = ( ClientMock )o!;
-                    c.Connect( endPoint );
-                    c.SendHandshake( "test", Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ) );
-                    c.Read( Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload );
-                    c.SendConfirmHandshakeResponse();
-                    c.SendPing( payload: 1 );
-                },
-                client );
-
-            await clientTask;
+            await client.EstablishHandshake( server );
+            await client.GetTask( c => c.SendPing( payload: 1 ) );
             await endSource.Task;
 
             Assertion.All(
@@ -204,21 +173,9 @@ public partial class MessageBrokerRemoteClientTests
                         } ) );
 
             await server.StartAsync();
-            var endPoint = server.LocalEndPoint;
 
             using var client = new ClientMock();
-            var clientTask = Task.Factory.StartNew(
-                o =>
-                {
-                    var c = ( ClientMock )o!;
-                    c.Connect( endPoint );
-                    c.SendHandshake( "test", Duration.FromSeconds( 0.4 ), Duration.FromTicks( 1 ) );
-                    c.Read( Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload );
-                    c.SendConfirmHandshakeResponse();
-                },
-                client );
-
-            await clientTask;
+            await client.EstablishHandshake( server, messageTimeout: Duration.FromSeconds( 0.4 ), pingInterval: Duration.FromTicks( 1 ) );
             await endSource.Task;
 
             Assertion.All(

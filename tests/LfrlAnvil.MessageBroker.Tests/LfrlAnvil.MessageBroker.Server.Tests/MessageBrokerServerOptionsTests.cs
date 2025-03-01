@@ -20,6 +20,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 sut.AcceptablePingInterval.TestNull(),
                 sut.EventHandler.TestNull(),
                 sut.ClientEventHandlerFactory.TestNull(),
+                sut.ChannelEventHandlerFactory.TestNull(),
                 sut.StreamDecorator.TestNull() )
             .Go();
     }
@@ -40,6 +41,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
+                result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -60,6 +62,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
+                result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -80,6 +83,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
+                result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -100,6 +104,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
+                result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -120,6 +125,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.AcceptablePingInterval.TestEquals( value ),
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
+                result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -140,6 +146,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
                 result.EventHandler.TestEquals( value ),
                 result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
+                result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -160,6 +167,28 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.ClientEventHandlerFactory.TestEquals( value ),
+                result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
+                result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetChannelEventHandlerFactory_ShouldChangeValue()
+    {
+        Func<MessageBrokerChannel, MessageBrokerChannelEventHandler?> value = _ => _ => { };
+        var sut = MessageBrokerServerOptions.Default;
+
+        var result = sut.SetChannelEventHandlerFactory( value );
+
+        Assertion.All(
+                result.Tcp.TestEquals( sut.Tcp ),
+                result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
+                result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
+                result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
+                result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
+                result.EventHandler.TestEquals( sut.EventHandler ),
+                result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
+                result.ChannelEventHandlerFactory.TestEquals( value ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -180,6 +209,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
+                result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamDecorator.TestRefEquals( value ) )
             .Go();
     }

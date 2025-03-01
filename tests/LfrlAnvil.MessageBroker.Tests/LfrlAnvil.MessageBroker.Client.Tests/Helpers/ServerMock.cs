@@ -3,6 +3,7 @@ using System.Diagnostics.Contracts;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.MessageBroker.Client.Events;
@@ -10,7 +11,7 @@ using LfrlAnvil.MessageBroker.Client.Internal;
 
 namespace LfrlAnvil.MessageBroker.Client.Tests.Helpers;
 
-public sealed class ServerMock : IDisposable
+internal sealed class ServerMock : IDisposable
 {
     private readonly TcpListener _listener = new TcpListener( IPAddress.Loopback, 0 );
     private readonly List<byte[]> _received = new List<byte[]>();
@@ -26,7 +27,7 @@ public sealed class ServerMock : IDisposable
         }
     }
 
-    public IPEndPoint Start()
+    internal IPEndPoint Start()
     {
         lock ( _listener )
         {
@@ -35,7 +36,7 @@ public sealed class ServerMock : IDisposable
         }
     }
 
-    public void WaitForClient()
+    internal void WaitForClient()
     {
         lock ( _listener )
         {
@@ -48,7 +49,7 @@ public sealed class ServerMock : IDisposable
         }
     }
 
-    public byte[] Read(int length)
+    internal byte[] Read(int length)
     {
         lock ( _listener )
         {
@@ -60,7 +61,7 @@ public sealed class ServerMock : IDisposable
         }
     }
 
-    public void SendHandshakeAccepted(int id, Duration messageTimeout, Duration pingInterval, uint? payload = null)
+    internal void SendHandshakeAccepted(int id, Duration messageTimeout, Duration pingInterval, uint? payload = null)
     {
         var buffer = new byte[Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Length];
         var writer = new BinaryContractWriter( buffer );
@@ -73,7 +74,7 @@ public sealed class ServerMock : IDisposable
         Send( buffer );
     }
 
-    public void SendHandshakeRejected(bool invalidNameLength, bool nameDecodingFailure, bool nameAlreadyExists, uint? payload = null)
+    internal void SendHandshakeRejected(bool invalidNameLength, bool nameDecodingFailure, bool nameAlreadyExists, uint? payload = null)
     {
         var buffer = new byte[Protocol.PacketHeader.Length + Protocol.HandshakeRejectedResponse.Length];
         var writer = new BinaryContractWriter( buffer );
@@ -83,17 +84,37 @@ public sealed class ServerMock : IDisposable
         Send( buffer );
     }
 
-    public void SendPing(uint? endiannessPayload = null, uint? payload = null)
+    internal void SendPing(uint? endiannessPayload = null)
     {
         var buffer = new byte[Protocol.PacketHeader.Length];
         var writer = new BinaryContractWriter( buffer );
         writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.PingResponse );
-        writer.Write( payload ?? Protocol.PacketHeader.Length );
         writer.Write( endiannessPayload ?? Protocol.Endianness.VerificationPayload );
         Send( buffer );
     }
 
-    public void Send(byte[] data)
+    internal void SendChannelLinkedResponse(bool created, int id, uint? payload = null)
+    {
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.ChannelLinkedResponse.Length];
+        var writer = new BinaryContractWriter( buffer );
+        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.ChannelLinkedResponse );
+        writer.MoveWrite( payload ?? Protocol.ChannelLinkedResponse.Length );
+        writer.MoveWrite( ( byte )(created ? 1 : 0) );
+        writer.Write( ( uint )id );
+        Send( buffer );
+    }
+
+    internal void SendLinkChannelFailureResponse(bool clientAlreadyLinkedToChannel, bool linkCancelled, uint? payload = null)
+    {
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.LinkChannelFailureResponse.Length];
+        var writer = new BinaryContractWriter( buffer );
+        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.LinkChannelFailureResponse );
+        writer.MoveWrite( payload ?? Protocol.LinkChannelFailureResponse.Length );
+        writer.Write( ( byte )((clientAlreadyLinkedToChannel ? 1 : 0) | (linkCancelled ? 2 : 0)) );
+        Send( buffer );
+    }
+
+    internal void Send(byte[] data)
     {
         lock ( _listener )
         {
@@ -102,8 +123,34 @@ public sealed class ServerMock : IDisposable
         }
     }
 
+    internal async Task<Protocol.HandshakeRequest> EstablishHandshake(
+        MessageBrokerClient client,
+        int? id = null,
+        Duration? messageTimeout = null,
+        Duration? pingInterval = null)
+    {
+        var handshakeRequest = new Protocol.HandshakeRequest( client );
+        var serverTask = Task.Factory.StartNew(
+            () =>
+            {
+                WaitForClient();
+                Read( handshakeRequest.Length );
+                SendHandshakeAccepted( id ?? 1, messageTimeout ?? Duration.FromSeconds( 1 ), pingInterval ?? Duration.FromSeconds( 10 ) );
+                Read( Protocol.PacketHeader.Length );
+            } );
+
+        await client.StartAsync();
+        await serverTask;
+        return handshakeRequest;
+    }
+
+    internal Task GetTask(Action<ServerMock> action)
+    {
+        return Task.Factory.StartNew( () => action( this ) );
+    }
+
     [Pure]
-    public byte[][] GetAllReceived()
+    internal byte[][] GetAllReceived()
     {
         lock ( _listener )
             return _received.ToArray();

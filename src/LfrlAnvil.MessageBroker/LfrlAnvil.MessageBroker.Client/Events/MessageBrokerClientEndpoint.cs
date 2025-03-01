@@ -32,5 +32,15 @@ public enum MessageBrokerClientEndpoint : byte
     /// <summary>
     /// Represents server's response to client's valid handshake request.
     /// </summary>
-    HandshakeAcceptedResponse = 6
+    HandshakeAcceptedResponse = 6,
+
+    /// <summary>
+    /// Represents server's response to client's valid link channel request.
+    /// </summary>
+    ChannelLinkedResponse = 8,
+
+    /// <summary>
+    /// Represents server's response to client's invalid link channel request.
+    /// </summary>
+    LinkChannelFailureResponse = 10
 }

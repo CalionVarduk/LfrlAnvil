@@ -42,6 +42,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     internal MessageListener MessageListener;
     internal MessageContextQueue MessageContextQueue;
     internal PingScheduler PingScheduler;
+    internal LinkedChannelCollection LinkedChannelCollection;
 
     private readonly MessageBrokerClientEventHandler? _eventHandler;
     private readonly ITimestampProvider _timestamps;
@@ -89,6 +90,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         MessageListener = MessageListener.Create();
         MessageContextQueue = MessageContextQueue.Create();
         PingScheduler = PingScheduler.Create();
+        LinkedChannelCollection = LinkedChannelCollection.Create();
     }
 
     /// <summary>
@@ -164,6 +166,11 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Collection of <see cref="MessageBrokerLinkedChannel"/> instances.
+    /// </summary>
+    public MessageBrokerLinkedChannelCollection Channels => new MessageBrokerLinkedChannelCollection( this );
+
     internal bool ShouldCancel => _state >= MessageBrokerClientState.Disposing;
 
     /// <inheritdoc />
@@ -192,6 +199,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         Exception? exception;
         using ( AcquireLock() )
         {
+            LinkedChannelCollection.Clear();
             synchronousSchedulerTask = SynchronousScheduler.DiscardUnderlyingTask();
             pingSchedulerTask = PingScheduler.DiscardUnderlyingTask();
             messageListenerTask = MessageListener.DiscardUnderlyingTask();
@@ -399,9 +407,10 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     internal async ValueTask<Result> WriteAsync(
         Protocol.PacketHeader header,
         ReadOnlyMemory<byte> data,
-        ulong contextId = MessageBrokerClientEvent.RootContextId)
+        ulong contextId = MessageBrokerClientEvent.RootContextId,
+        object? eventData = null)
     {
-        Emit( MessageBrokerClientEvent.SendingMessage( this, header, contextId ) );
+        Emit( MessageBrokerClientEvent.SendingMessage( this, header, contextId, eventData ) );
 
         Stream? stream = null;
         CancellationToken timeoutToken = default;
@@ -510,7 +519,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
 
     [StackTraceHidden]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void AssertState(MessageBrokerClientState expected)
+    internal void AssertState(MessageBrokerClientState expected)
     {
         if ( _state != expected )
             ExceptionThrower.Throw( new MessageBrokerClientStateException( this, _state, expected ) );
@@ -518,16 +527,24 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private MessageBrokerClientDisposedException DisposedException()
+    internal MessageBrokerClientDisposedException DisposedException()
     {
         return new MessageBrokerClientDisposedException( this );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private Result EmitError(MessageBrokerClientEvent e)
+    internal Exception EmitError(MessageBrokerClientEvent e)
     {
         Assume.IsNotNull( e.Exception );
         Emit( e );
         return e.Exception;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void DisposeBufferToken(BinaryBufferToken token)
+    {
+        var exc = token.TryDispose().Exception;
+        if ( exc is not null )
+            Emit( MessageBrokerClientEvent.Unexpected( this, exc ) );
     }
 }

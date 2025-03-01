@@ -37,14 +37,14 @@ public readonly struct MessageBrokerClientEvent
         ulong contextId = RootContextId,
         byte endpointCode = 0,
         uint payload = 0,
-        Exception? exception = null)
+        object? data = null)
     {
         Client = client;
         ContextId = contextId;
         Payload = payload;
         EndpointCode = endpointCode;
         Type = type;
-        Exception = exception;
+        Data = data;
     }
 
     /// <summary>
@@ -75,9 +75,14 @@ public readonly struct MessageBrokerClientEvent
     public MessageBrokerClientEventType Type { get; }
 
     /// <summary>
+    /// Additional data associated with this event.
+    /// </summary>
+    public object? Data { get; }
+
+    /// <summary>
     /// Error associated with this event.
     /// </summary>
-    public Exception? Exception { get; }
+    public Exception? Exception => Data as Exception;
 
     /// <summary>
     /// Specifies the length of sent or received network packet, with which this event is associated.
@@ -96,7 +101,7 @@ public readonly struct MessageBrokerClientEvent
                 case MessageBrokerClientEventType.SendingMessage:
                 case MessageBrokerClientEventType.MessageSent:
                     return Protocol.PacketHeader.Length
-                        + (GetServerEndpoint() != MessageBrokerServerEndpoint.HandshakeRequest ? 0 : unchecked( ( int )Payload ));
+                        + (GetServerEndpoint() < MessageBrokerServerEndpoint.HandshakeRequest ? 0 : unchecked( ( int )Payload ));
                 default:
                     return 0;
             }
@@ -111,6 +116,7 @@ public readonly struct MessageBrokerClientEvent
     /// <summary>
     /// Specifies whether or not this event contains an <see cref="Exception"/> which represents operation cancellation.
     /// </summary>
+    [MemberNotNullWhen( true, nameof( Data ) )]
     [MemberNotNullWhen( true, nameof( Exception ) )]
     public bool IsCancellation => Exception is OperationCanceledException;
 
@@ -138,14 +144,15 @@ public readonly struct MessageBrokerClientEvent
                 .Append( packetLength.ToString( CultureInfo.InvariantCulture ) )
                 .Append( ']' );
 
-        if ( Exception is not null )
+        var exc = Exception;
+        if ( exc is not null )
         {
-            if ( ! IsCancellation || Exception is MessageBrokerClientResponseTimeoutException )
-                builder.AppendLine( " Encountered an error:" ).Append( Exception );
+            if ( ! IsCancellation || exc is MessageBrokerClientResponseTimeoutException )
+                builder.AppendLine( " Encountered an error:" ).Append( exc );
             else
             {
                 builder.Append( " Operation cancelled" );
-                if ( Exception is MessageBrokerClientDisposedException )
+                if ( exc is MessageBrokerClientDisposedException )
                     builder.Append( " (client disposed)" );
             }
         }
@@ -189,10 +196,18 @@ public readonly struct MessageBrokerClientEvent
                             .Append( Client.PingInterval )
                             .Append( ')' );
                     }
+                    else if ( GetClientEndpoint() == MessageBrokerClientEndpoint.ChannelLinkedResponse
+                        && Data is MessageBrokerLinkedChannel channel )
+                        builder.Append( " (Id = " ).Append( channel.Id ).Append( ')' );
 
                     break;
 
                 case MessageBrokerClientEventType.SendingMessage:
+                    builder.AppendSpace().Append( GetServerEndpoint().ToString() );
+                    if ( GetServerEndpoint() == MessageBrokerServerEndpoint.LinkChannelRequest && Data is string channelName )
+                        builder.Append( " (ChannelName = '" ).Append( channelName ).Append( "')" );
+
+                    break;
                 case MessageBrokerClientEventType.MessageSent:
                     builder.AppendSpace().Append( GetServerEndpoint().ToString() );
                     break;
@@ -237,7 +252,7 @@ public readonly struct MessageBrokerClientEvent
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerClientEvent Connecting(MessageBrokerClient client, Exception? exception = null)
     {
-        return new MessageBrokerClientEvent( client, MessageBrokerClientEventType.Connecting, exception: exception );
+        return new MessageBrokerClientEvent( client, MessageBrokerClientEventType.Connecting, data: exception );
     }
 
     [Pure]
@@ -251,7 +266,7 @@ public readonly struct MessageBrokerClientEvent
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerClientEvent WaitingForMessage(MessageBrokerClient client, Exception? exception = null)
     {
-        return new MessageBrokerClientEvent( client, MessageBrokerClientEventType.WaitingForMessage, exception: exception );
+        return new MessageBrokerClientEvent( client, MessageBrokerClientEventType.WaitingForMessage, data: exception );
     }
 
     [Pure]
@@ -276,14 +291,16 @@ public readonly struct MessageBrokerClientEvent
     internal static MessageBrokerClientEvent MessageAccepted(
         MessageBrokerClient client,
         Protocol.PacketHeader header,
-        ulong contextId = RootContextId)
+        ulong contextId = RootContextId,
+        object? data = null)
     {
         return new MessageBrokerClientEvent(
             client,
             MessageBrokerClientEventType.MessageAccepted,
             contextId,
             header.EndpointCode,
-            header.Payload );
+            header.Payload,
+            data );
     }
 
     [Pure]
@@ -309,7 +326,7 @@ public readonly struct MessageBrokerClientEvent
         MessageBrokerClient client,
         Protocol.PacketHeader header,
         ulong contextId,
-        Exception? exception = null)
+        object? data = null)
     {
         return new MessageBrokerClientEvent(
             client,
@@ -317,7 +334,7 @@ public readonly struct MessageBrokerClientEvent
             contextId,
             header.EndpointCode,
             header.Payload,
-            exception );
+            data );
     }
 
     [Pure]
@@ -350,6 +367,6 @@ public readonly struct MessageBrokerClientEvent
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerClientEvent Unexpected(MessageBrokerClient client, Exception exception)
     {
-        return new MessageBrokerClientEvent( client, MessageBrokerClientEventType.Unexpected, exception: exception );
+        return new MessageBrokerClientEvent( client, MessageBrokerClientEventType.Unexpected, data: exception );
     }
 }

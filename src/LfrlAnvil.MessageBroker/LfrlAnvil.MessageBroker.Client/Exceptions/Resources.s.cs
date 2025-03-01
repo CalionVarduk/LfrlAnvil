@@ -28,7 +28,7 @@ internal static class Resources
     internal const string UnexpectedClientEndpoint = "Received unexpected client endpoint.";
     internal const string ClientNameLengthOutOfBounds = "Server found client's name length to be out of bounds.";
 
-    internal static readonly string ServerFailedToDecodeName
+    internal static readonly string ServerFailedToDecodeClientName
         = $"Server failed to decode client's name using {TextEncoding.Instance.EncodingName} encoding.";
 
     [Pure]
@@ -54,6 +54,13 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string UnexpectedPacketLength(int length)
+    {
+        return $"Expected packet length to be in [0, {int.MaxValue}] range but found {length}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string InvalidEndiannessPayload(uint received)
     {
         return $"Expected endianness verification payload to be {Protocol.Endianness.VerificationPayload:x8} but found {received:x8}.";
@@ -61,9 +68,30 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string IdIsNotPositive(int received)
+    internal static string ClientIdIsNotPositive(int received)
     {
         return $"Expected client ID to be greater than 0 but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string ChannelIdIsNotPositive(int received)
+    {
+        return $"Expected channel ID to be greater than 0 but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string ClientAlreadyLinkedToChannel(string channelName)
+    {
+        return $"Client is already linked to channel '{channelName}'.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string ClientChannelLinkCancelled(string channelName)
+    {
+        return $"Linking client to channel '{channelName}' has been cancelled by the server.";
     }
 
     [Pure]

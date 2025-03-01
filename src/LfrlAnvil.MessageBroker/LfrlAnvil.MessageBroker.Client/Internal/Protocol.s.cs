@@ -194,7 +194,7 @@ internal static class Protocol
             var result = Chain<string>.Empty;
 
             if ( Id <= 0 )
-                result = result.Extend( Resources.IdIsNotPositive( Id ) );
+                result = result.Extend( Resources.ClientIdIsNotPositive( Id ) );
 
             if ( ! Defaults.Temporal.TimeoutBounds.Contains( MessageTimeout ) )
                 result = result.Extend( Resources.MessageTimeoutIsOutOfBounds( MessageTimeout ) );
@@ -246,7 +246,7 @@ internal static class Protocol
                 result = result.Extend( Resources.ClientNameLengthOutOfBounds );
 
             if ( NameDecodingFailure )
-                result = result.Extend( Resources.ServerFailedToDecodeName );
+                result = result.Extend( Resources.ServerFailedToDecodeClientName );
 
             if ( NameAlreadyExists )
                 result = result.Extend( Resources.ClientNameAlreadyExists );
@@ -272,6 +272,125 @@ internal static class Protocol
         internal static PacketHeader Create()
         {
             return PacketHeader.Create( MessageBrokerServerEndpoint.PingRequest, Endianness.VerificationPayload );
+        }
+    }
+
+    internal readonly struct LinkChannelRequest
+    {
+        internal readonly PacketHeader Header;
+        internal readonly byte Flags;
+        internal readonly EncodeableText ChannelName;
+
+        internal LinkChannelRequest(string name)
+        {
+            Flags = 0;
+            ChannelName = TextEncoding.Prepare( name ).GetValueOrThrow();
+            Header = PacketHeader.Create(
+                MessageBrokerServerEndpoint.LinkChannelRequest,
+                sizeof( byte ) + ( uint )ChannelName.ByteCount );
+        }
+
+        internal int Length => PacketHeader.Length + unchecked( ( int )Header.Payload );
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"[{Header}] Flags = {Flags}, ChannelName = ({ChannelName})";
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal void Serialize(Memory<byte> target, bool reverseEndianness)
+        {
+            Assume.Equals( target.Length, Length );
+            var writer = new BinaryContractWriter( target.Span );
+            writer.MoveWrite( Header.EndpointCode );
+            writer.MoveWrite( reverseEndianness ? BinaryPrimitives.ReverseEndianness( Header.Payload ) : Header.Payload );
+            writer.MoveWrite( Flags );
+            ChannelName.Encode( writer.GetSpan( ChannelName.ByteCount ) ).ThrowIfError();
+        }
+    }
+
+    internal readonly struct ChannelLinkedResponse
+    {
+        internal const int Length = sizeof( byte ) + sizeof( uint );
+        internal readonly byte Flags;
+        internal readonly int Id;
+
+        private ChannelLinkedResponse(byte flags, int id)
+        {
+            Flags = flags;
+            Id = id;
+        }
+
+        internal bool Created => (Flags & 1) != 0;
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"Flags = {Flags}, Id = {Id}";
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static ChannelLinkedResponse Parse(ReadOnlyMemory<byte> source, bool reverseEndianness)
+        {
+            Assume.Equals( source.Length, Length );
+            var reader = new BinaryContractReader( source.Span );
+            var flags = reader.MoveReadInt8();
+            var id = unchecked( ( int )reader.ReadInt32() );
+            return new ChannelLinkedResponse( flags, reverseEndianness ? BinaryPrimitives.ReverseEndianness( id ) : id );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal Chain<string> StringifyErrors()
+        {
+            return Id > 0 ? Chain<string>.Empty : Chain.Create( Resources.ChannelIdIsNotPositive( Id ) );
+        }
+    }
+
+    internal readonly struct LinkChannelFailureResponse
+    {
+        internal const int Length = sizeof( byte );
+        internal readonly byte Flags;
+
+        private LinkChannelFailureResponse(byte flags)
+        {
+            Flags = flags;
+        }
+
+        internal bool ClientAlreadyLinkedToChannel => (Flags & 1) != 0;
+        internal bool LinkCancelled => (Flags & 2) != 0;
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"Flags = {Flags}";
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static LinkChannelFailureResponse Parse(ReadOnlyMemory<byte> source)
+        {
+            Assume.Equals( source.Length, Length );
+            var reader = new BinaryContractReader( source.Span );
+            var flags = reader.ReadInt8();
+            return new LinkChannelFailureResponse( flags );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal Chain<string> StringifyErrors(string channelName)
+        {
+            var result = Chain<string>.Empty;
+
+            if ( ClientAlreadyLinkedToChannel )
+                result = result.Extend( Resources.ClientAlreadyLinkedToChannel( channelName ) );
+
+            if ( LinkCancelled )
+                result = result.Extend( Resources.ClientChannelLinkCancelled( channelName ) );
+
+            return result;
         }
     }
 
@@ -316,5 +435,16 @@ internal static class Protocol
         return header.Payload != expected
             ? ProtocolException( client, header, Chain.Create( Resources.InvalidHeaderPayload( expected ) ) )
             : null;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static Result<int> AssertPacketLength(MessageBrokerClient client, PacketHeader header)
+    {
+        var result = unchecked( ( int )header.Payload );
+        if ( result >= 0 )
+            return result;
+
+        return ProtocolException( client, header, Chain.Create( Resources.UnexpectedPacketLength( result ) ) );
     }
 }

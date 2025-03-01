@@ -46,6 +46,7 @@ public readonly record struct MessageBrokerServerOptions(
     Bounds<Duration>? AcceptablePingInterval,
     MessageBrokerServerEventHandler? EventHandler,
     Func<MessageBrokerRemoteClient, MessageBrokerRemoteClientEventHandler?>? ClientEventHandlerFactory,
+    Func<MessageBrokerChannel, MessageBrokerChannelEventHandler?>? ChannelEventHandlerFactory,
     MessageBrokerRemoteClientStreamDecorator? StreamDecorator
 )
 {
@@ -71,6 +72,7 @@ public readonly record struct MessageBrokerServerOptions(
             AcceptablePingInterval,
             EventHandler,
             ClientEventHandlerFactory,
+            ChannelEventHandlerFactory,
             StreamDecorator );
     }
 
@@ -91,6 +93,7 @@ public readonly record struct MessageBrokerServerOptions(
             AcceptablePingInterval,
             EventHandler,
             ClientEventHandlerFactory,
+            ChannelEventHandlerFactory,
             StreamDecorator );
     }
 
@@ -111,6 +114,7 @@ public readonly record struct MessageBrokerServerOptions(
             AcceptablePingInterval,
             EventHandler,
             ClientEventHandlerFactory,
+            ChannelEventHandlerFactory,
             StreamDecorator );
     }
 
@@ -131,6 +135,7 @@ public readonly record struct MessageBrokerServerOptions(
             AcceptablePingInterval,
             EventHandler,
             ClientEventHandlerFactory,
+            ChannelEventHandlerFactory,
             StreamDecorator );
     }
 
@@ -151,6 +156,7 @@ public readonly record struct MessageBrokerServerOptions(
             value,
             EventHandler,
             ClientEventHandlerFactory,
+            ChannelEventHandlerFactory,
             StreamDecorator );
     }
 
@@ -171,6 +177,7 @@ public readonly record struct MessageBrokerServerOptions(
             AcceptablePingInterval,
             value,
             ClientEventHandlerFactory,
+            ChannelEventHandlerFactory,
             StreamDecorator );
     }
 
@@ -192,6 +199,28 @@ public readonly record struct MessageBrokerServerOptions(
             AcceptablePingInterval,
             EventHandler,
             value,
+            ChannelEventHandlerFactory,
+            StreamDecorator );
+    }
+
+    /// <summary>
+    /// Allows to change <see cref="ChannelEventHandlerFactory"/>.
+    /// </summary>
+    /// <param name="value">New value.</param>
+    /// <returns>New <see cref="MessageBrokerServerOptions"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public MessageBrokerServerOptions SetChannelEventHandlerFactory(Func<MessageBrokerChannel, MessageBrokerChannelEventHandler?>? value)
+    {
+        return new MessageBrokerServerOptions(
+            Tcp,
+            MinMemoryPoolSegmentLength,
+            HandshakeTimeout,
+            AcceptableMessageTimeout,
+            AcceptablePingInterval,
+            EventHandler,
+            ClientEventHandlerFactory,
+            value,
             StreamDecorator );
     }
 
@@ -212,6 +241,7 @@ public readonly record struct MessageBrokerServerOptions(
             AcceptablePingInterval,
             EventHandler,
             ClientEventHandlerFactory,
+            ChannelEventHandlerFactory,
             value );
     }
 }

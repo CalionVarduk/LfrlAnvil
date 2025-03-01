@@ -36,7 +36,9 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
 {
     internal ClientListener ClientListener;
     internal RemoteClientCollection RemoteClientCollection;
+    internal ChannelCollection ChannelCollection;
     internal readonly Func<MessageBrokerRemoteClient, MessageBrokerRemoteClientEventHandler?>? RemoteClientEventHandlerFactory;
+    internal readonly Func<MessageBrokerChannel, MessageBrokerChannelEventHandler?>? ChannelEventHandlerFactory;
     internal readonly MessageBrokerRemoteClientStreamDecorator? StreamDecorator;
     internal readonly Func<ITimestampProvider> TimestampsFactory;
 
@@ -64,11 +66,13 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         AcceptablePingInterval = Defaults.Temporal.GetActualPingIntervalBounds( options.AcceptablePingInterval );
         _eventHandler = options.EventHandler;
         RemoteClientEventHandlerFactory = options.ClientEventHandlerFactory;
+        ChannelEventHandlerFactory = options.ChannelEventHandlerFactory;
         StreamDecorator = options.StreamDecorator;
         _state = MessageBrokerServerState.Created;
 
         ClientListener = ClientListener.Create();
         RemoteClientCollection = RemoteClientCollection.Create( options.Tcp, options.MinMemoryPoolSegmentLength );
+        ChannelCollection = ChannelCollection.Create();
     }
 
     /// <summary>
@@ -111,6 +115,11 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     /// </summary>
     public MessageBrokerRemoteClientCollection Clients => new MessageBrokerRemoteClientCollection( this );
 
+    /// <summary>
+    /// Collection of attached <see cref="MessageBrokerChannel"/> instances.
+    /// </summary>
+    public MessageBrokerChannelCollection Channels => new MessageBrokerChannelCollection( this );
+
     internal bool ShouldCancel => _state >= MessageBrokerServerState.Disposing;
 
     /// <inheritdoc />
@@ -134,9 +143,11 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
 
         Exception? exception = null;
         MessageBrokerRemoteClient[] clients;
+        MessageBrokerChannel[] channels;
         Task? clientListenerTask;
         using ( AcquireLock() )
         {
+            channels = ChannelCollection.Dispose();
             clients = RemoteClientCollection.Dispose();
             clientListenerTask = ClientListener.DiscardUnderlyingTask();
             ClientListener.Dispose();
@@ -155,7 +166,10 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         if ( exception is not null )
             Emit( MessageBrokerServerEvent.Unexpected( this, exception ) );
 
-        await Parallel.ForEachAsync( clients, static (c, _) => c.DisposeAsync() ).ConfigureAwait( false );
+        foreach ( var channel in channels )
+            channel.OnServerDisposed();
+
+        await Parallel.ForEachAsync( clients, static (c, _) => c.OnServerDisposedAsync() ).ConfigureAwait( false );
 
         if ( clientListenerTask is not null )
             await clientListenerTask.ConfigureAwait( false );

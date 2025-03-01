@@ -100,4 +100,29 @@ internal static class Resources
     {
         return $"Client with name '{name}' already exists.";
     }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string UnexpectedPacketLength(int length)
+    {
+        return $"Expected packet length to be in [0, {int.MaxValue}] range but found {length}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string FailedToCreateClientChannelLink(
+        int clientId,
+        string clientName,
+        int channelId,
+        string channelName,
+        Protocol.LinkChannelFailureResponse.Reasons reason)
+    {
+        Assume.NotEquals( reason, Protocol.LinkChannelFailureResponse.Reasons.None );
+        var reasonText = reason == Protocol.LinkChannelFailureResponse.Reasons.AlreadyLinked
+            ? "it is already linked to the channel"
+            : "the linking process was cancelled";
+
+        return
+            $"Message broker client [{clientId}] '{clientName}' could not be linked to channel [{channelId}] '{channelName}' because {reasonText}.";
+    }
 }

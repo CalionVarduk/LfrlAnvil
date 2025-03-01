@@ -18,6 +18,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using LfrlAnvil.MessageBroker.Client.Buffering;
 using LfrlAnvil.MessageBroker.Client.Events;
 
 namespace LfrlAnvil.MessageBroker.Client.Internal;
@@ -128,14 +129,44 @@ internal struct MessageListener
                 break;
             }
 
-            Assume.Equals( target.ServerEndpoint, MessageBrokerServerEndpoint.PingRequest );
+            BinaryBufferToken packetBufferToken = default;
+            var packetBuffer = Memory<byte>.Empty;
+            if ( target.ServerEndpoint != MessageBrokerServerEndpoint.PingRequest )
+            {
+                var packetLength = Protocol.AssertPacketLength( client, header );
+                if ( packetLength.Exception is not null )
+                {
+                    client.Emit( MessageBrokerClientEvent.MessageRejected( client, header, packetLength.Exception, target.ContextId ) );
+                    break;
+                }
+
+                if ( packetLength.Value > 0 )
+                {
+                    packetBufferToken = client.RentBuffer( packetLength.Value, out packetBuffer ).EnableClearing();
+                    try
+                    {
+                        await stream.ReadExactlyAsync( packetBuffer, timeoutToken ).ConfigureAwait( false );
+                    }
+                    catch ( Exception exc )
+                    {
+                        client.Emit( MessageBrokerClientEvent.WaitingForMessage( client, exc ) );
+                        client.DisposeBufferToken( packetBufferToken );
+                        break;
+                    }
+                }
+            }
 
             using ( client.AcquireLock() )
             {
                 if ( client.ShouldCancel )
+                {
+                    client.DisposeBufferToken( packetBufferToken );
                     return TaskStopReason.OwnerDisposed;
+                }
 
-                target.Source.SetResult( IncomingPacketToken.Ok( header, default, default ) );
+                client.MessageContextQueue.NotifyPendingResponseSource(
+                    target.Source,
+                    IncomingPacketToken.Ok( header, packetBufferToken, packetBuffer ) );
             }
         }
 

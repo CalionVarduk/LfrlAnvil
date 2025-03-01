@@ -74,7 +74,7 @@ internal struct RemoteClientCollection
     {
         using ( server.AcquireLock() )
         {
-            if ( server.RemoteClientCollection._byId.Count == 0 )
+            if ( server.RemoteClientCollection._byId.IsEmpty )
                 return Array.Empty<MessageBrokerRemoteClient>();
 
             var i = 0;

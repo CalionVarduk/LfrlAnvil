@@ -26,7 +26,9 @@ public class MessageBrokerServerTests : TestsBase
                 sut.AcceptablePingInterval.TestEquals( Bounds.Create( Duration.FromMilliseconds( 1 ), Duration.FromHours( 24 ) ) ),
                 sut.State.TestEquals( MessageBrokerServerState.Created ),
                 sut.Clients.Count.TestEquals( 0 ),
-                sut.Clients.GetAll().TestEmpty() )
+                sut.Clients.GetAll().TestEmpty(),
+                sut.Channels.Count.TestEquals( 0 ),
+                sut.Channels.GetAll().TestEmpty() )
             .Go();
     }
 
@@ -70,7 +72,9 @@ public class MessageBrokerServerTests : TestsBase
                         Duration.FromMilliseconds( expectedMaxPingIntervalMs ) ) ),
                 sut.State.TestEquals( MessageBrokerServerState.Created ),
                 sut.Clients.Count.TestEquals( 0 ),
-                sut.Clients.GetAll().TestEmpty() )
+                sut.Clients.GetAll().TestEmpty(),
+                sut.Channels.Count.TestEquals( 0 ),
+                sut.Channels.GetAll().TestEmpty() )
             .Go();
     }
 
@@ -87,7 +91,7 @@ public class MessageBrokerServerTests : TestsBase
 
         var result = await server.StartAsync();
         var localEndPoint = server.LocalEndPoint;
-        var events = logs.GetAll();
+        var events = logs.GetAllServer();
 
         Assertion.All(
                 result.Exception.TestNull(),
@@ -121,7 +125,7 @@ public class MessageBrokerServerTests : TestsBase
 
         var result = await server.StartAsync();
         var localEndPoint = server.LocalEndPoint;
-        var events = logs.GetAll();
+        var events = logs.GetAllServer();
 
         Assertion.All(
                 result.Exception.TestNull(),
@@ -202,7 +206,7 @@ public class MessageBrokerServerTests : TestsBase
 
         Assertion.All(
                 result.Exception.TestType().Exact<MessageBrokerServerDisposedException>( e => e.Server.TestRefEquals( server ) ),
-                logs.GetAll()
+                logs.GetAllServer()
                     .TestSequence(
                     [
                         $"[Starting] At {localEndPoint} (HandshakeTimeout = 15 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
@@ -233,7 +237,7 @@ public class MessageBrokerServerTests : TestsBase
 
         Assertion.All(
                 result.Exception.TestType().Exact<MessageBrokerServerDisposedException>( e => e.Server.TestRefEquals( server ) ),
-                logs.GetAll()
+                logs.GetAllServer()
                     .TestCount( count => count.TestEquals( 6 ) )
                     .Then(
                         l => Assertion.All(
@@ -275,7 +279,7 @@ public class MessageBrokerServerTests : TestsBase
 
         Assertion.All(
                 result.Exception.TestType().AssignableTo<SocketException>(),
-                logs.GetAll()
+                logs.GetAllServer()
                     .TestCount( count => count.TestEquals( 4 ) )
                     .Then(
                         l => Assertion.All(
@@ -345,24 +349,19 @@ public class MessageBrokerServerTests : TestsBase
 
         Assertion.All(
                 sut.Clients.Count.TestEquals( 0 ),
-                logs.GetAll()
-                    .TestCount( count => count.TestEquals( 4 ) )
-                    .Then(
-                        l => Assertion.All(
-                            l
-                                .SkipLast( 1 )
-                                .TestSequence(
-                                [
-                                    $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                                    $"[Started] At {endPoint}",
-                                    "[WaitingForClient]"
-                                ] ),
-                            l[^1]
-                                .TestStartsWith(
-                                    """
-                                    [ClientRejected] Encountered an error:
-                                    System.Exception: failure
-                                    """ ) ) ) )
+                logs.GetAllServer()
+                    .TestContainsContiguousSequence(
+                    [
+                        (l, _) => l.TestEquals(
+                            $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))" ),
+                        (l, _) => l.TestEquals( $"[Started] At {endPoint}" ),
+                        (l, _) => l.TestEquals( "[WaitingForClient]" ),
+                        (l, _) => l.TestStartsWith(
+                            """
+                            [ClientRejected] Encountered an error:
+                            System.Exception: failure
+                            """ )
+                    ] ) )
             .Go();
     }
 }

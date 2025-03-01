@@ -32,5 +32,10 @@ public enum MessageBrokerServerEndpoint : byte
     /// <summary>
     /// Represents handshake request sent by client.
     /// </summary>
-    HandshakeRequest = 3
+    HandshakeRequest = 3,
+
+    /// <summary>
+    /// Represents link channel request sent by client.
+    /// </summary>
+    LinkChannelRequest = 5
 }

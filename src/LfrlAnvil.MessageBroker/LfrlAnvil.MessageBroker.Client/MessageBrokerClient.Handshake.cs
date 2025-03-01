@@ -63,7 +63,7 @@ public sealed partial class MessageBrokerClient
         }
         finally
         {
-            bufferToken.Dispose();
+            DisposeBufferToken( bufferToken );
         }
     }
 
@@ -86,7 +86,7 @@ public sealed partial class MessageBrokerClient
         }
         catch ( Exception exc )
         {
-            return ValueTask.FromResult( EmitError( MessageBrokerClientEvent.Unexpected( this, exc ) ) );
+            return ValueTask.FromResult<Result>( EmitError( MessageBrokerClientEvent.Unexpected( this, exc ) ) );
         }
 
         return WriteAsync( handshake.Header, data );
@@ -240,7 +240,7 @@ public sealed partial class MessageBrokerClient
         }
         catch ( Exception exc )
         {
-            return ValueTask.FromResult( EmitError( MessageBrokerClientEvent.Unexpected( this, exc ) ) );
+            return ValueTask.FromResult<Result>( EmitError( MessageBrokerClientEvent.Unexpected( this, exc ) ) );
         }
 
         return WriteAsync( response, data );

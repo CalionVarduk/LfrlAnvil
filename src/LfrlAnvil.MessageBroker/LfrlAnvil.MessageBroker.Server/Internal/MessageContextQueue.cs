@@ -17,6 +17,7 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks.Sources;
 using LfrlAnvil.Async;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.MessageBroker.Server.Buffering;
 
 namespace LfrlAnvil.MessageBroker.Server.Internal;
@@ -44,14 +45,16 @@ internal struct MessageContextQueue
 
     internal void Dispose()
     {
-        _incomingRequests = QueueSlim<IncomingPacketToken>.Create();
-
         foreach ( var source in _pendingOutgoingWriters )
         {
             if ( source.Status == ValueTaskSourceStatus.Pending )
                 source.SetResult( default );
         }
 
+        foreach ( var request in _incomingRequests )
+            request.BufferToken.TryDispose();
+
+        _incomingRequests = QueueSlim<IncomingPacketToken>.Create();
         _pendingOutgoingWriters = QueueSlim<ManualResetValueTaskSource<bool>>.Create();
         _writerTokenSourceCache = StackSlim<ManualResetValueTaskSource<bool>>.Create();
     }

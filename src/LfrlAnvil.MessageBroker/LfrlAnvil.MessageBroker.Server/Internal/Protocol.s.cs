@@ -233,6 +233,103 @@ internal static class Protocol
         }
     }
 
+    internal readonly struct LinkChannelRequestHeader
+    {
+        internal const int Length = sizeof( byte );
+        internal readonly byte Flags;
+
+        private LinkChannelRequestHeader(byte flags)
+        {
+            Flags = flags;
+        }
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"Flags = {Flags}";
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static LinkChannelRequestHeader Parse(ReadOnlyMemory<byte> source)
+        {
+            Assume.Equals( source.Length, Length );
+
+            var reader = new BinaryContractReader( source.Span );
+            var flags = reader.MoveReadInt8();
+            Assume.Equals( flags, 0 );
+
+            return new LinkChannelRequestHeader( flags );
+        }
+    }
+
+    internal readonly struct ChannelLinkedResponse
+    {
+        internal const int Payload = sizeof( byte ) + sizeof( uint );
+        internal readonly PacketHeader Header;
+        internal readonly byte Flags;
+        internal readonly int Id;
+
+        internal ChannelLinkedResponse(MessageBrokerChannel channel, bool created)
+        {
+            Header = PacketHeader.Create( MessageBrokerClientEndpoint.ChannelLinkedResponse, Payload );
+            Flags = ( byte )(created ? 1 : 0);
+            Id = channel.Id;
+        }
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"[{Header}] Flags = {Flags}, Id = {Id}";
+        }
+
+        internal void Serialize(Memory<byte> target)
+        {
+            Assume.Equals( target.Length, PacketHeader.Length + Payload );
+            var writer = new BinaryContractWriter( target.Span );
+            writer.MoveWrite( Header.EndpointCode );
+            writer.MoveWrite( Header.Payload );
+            writer.MoveWrite( Flags );
+            writer.Write( unchecked( ( uint )Id ) );
+        }
+    }
+
+    internal readonly struct LinkChannelFailureResponse
+    {
+        [Flags]
+        internal enum Reasons : byte
+        {
+            None = 0,
+            AlreadyLinked = 1,
+            LinkCancelled = 2
+        }
+
+        internal const int Payload = sizeof( byte );
+        internal readonly PacketHeader Header;
+        internal readonly byte Flags;
+
+        internal LinkChannelFailureResponse(Reasons reasons)
+        {
+            Header = PacketHeader.Create( MessageBrokerClientEndpoint.LinkChannelFailureResponse, Payload );
+            Flags = ( byte )reasons;
+        }
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"[{Header}] Flags = {Flags}";
+        }
+
+        internal void Serialize(Memory<byte> target)
+        {
+            Assume.Equals( target.Length, PacketHeader.Length + Payload );
+            var writer = new BinaryContractWriter( target.Span );
+            writer.MoveWrite( Header.EndpointCode );
+            writer.MoveWrite( Header.Payload );
+            writer.Write( Flags );
+        }
+    }
+
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerServerProtocolException ProtocolException(
@@ -274,5 +371,16 @@ internal static class Protocol
         int length)
     {
         return ProtocolException( client, header, Chain.Create( Resources.InvalidNameLength( length ) ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static Result<int> AssertPacketLength(MessageBrokerRemoteClient client, PacketHeader header)
+    {
+        var result = unchecked( ( int )header.Payload );
+        if ( result >= 0 )
+            return result;
+
+        return ProtocolException( client, header, Chain.Create( Resources.UnexpectedPacketLength( result ) ) );
     }
 }

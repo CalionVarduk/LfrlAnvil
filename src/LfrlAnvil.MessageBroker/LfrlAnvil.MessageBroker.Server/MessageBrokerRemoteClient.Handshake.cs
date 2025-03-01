@@ -67,7 +67,7 @@ public sealed partial class MessageBrokerRemoteClient
                             using ( AcquireLock() )
                                 MessageListener.SetUnderlyingTask( null );
 
-                            await DisposeAsync().ConfigureAwait( false );
+                            await DisconnectAsync().ConfigureAwait( false );
                         }
 
                         return;
@@ -80,7 +80,7 @@ public sealed partial class MessageBrokerRemoteClient
                 using ( AcquireLock() )
                     MessageListener.SetUnderlyingTask( null );
 
-                await DisposeAsync().ConfigureAwait( false );
+                await DisconnectAsync().ConfigureAwait( false );
             } );
     }
 
@@ -172,7 +172,7 @@ public sealed partial class MessageBrokerRemoteClient
         }
         finally
         {
-            bufferToken.Dispose();
+            DisposeBufferToken( bufferToken );
         }
     }
 

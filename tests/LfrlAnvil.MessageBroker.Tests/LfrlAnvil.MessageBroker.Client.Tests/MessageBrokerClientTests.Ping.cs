@@ -37,25 +37,18 @@ public partial class MessageBrokerClientTests
                                 endSource.Complete();
                         } ) );
 
-            var handshakeRequest = new Protocol.HandshakeRequest( client );
-            var serverTask = Task.Factory.StartNew(
-                o =>
+            var handshakeRequest = await server.EstablishHandshake( client, pingInterval: Duration.FromSeconds( 0.2 ) );
+            var serverTask = server.GetTask(
+                s =>
                 {
-                    var s = ( ServerMock )o!;
-                    s.WaitForClient();
-                    s.Read( handshakeRequest.Length );
-                    s.SendHandshakeAccepted( 1, Duration.FromSeconds( 1 ), Duration.FromSeconds( 0.2 ) );
-                    s.Read( Protocol.PacketHeader.Length );
                     Thread.Sleep( 150 );
                     s.Read( Protocol.PacketHeader.Length );
                     s.SendPing();
                     Thread.Sleep( 150 );
                     s.Read( Protocol.PacketHeader.Length );
                     s.SendPing();
-                },
-                server );
+                } );
 
-            await client.StartAsync();
             await serverTask;
             await endSource.Task;
 
@@ -108,24 +101,20 @@ public partial class MessageBrokerClientTests
                                 endSource.Complete( e.Client.DisposeAsync().AsTask() );
                         } ) );
 
-            var handshakeRequest = new Protocol.HandshakeRequest( client );
-            var serverTask = Task.Factory.StartNew(
-                o =>
+            var handshakeRequest = await server.EstablishHandshake(
+                client,
+                messageTimeout: Duration.FromSeconds( 0.2 ),
+                pingInterval: Duration.FromSeconds( 0.2 ) );
+
+            var serverTask = server.GetTask(
+                s =>
                 {
-                    var s = ( ServerMock )o!;
-                    s.WaitForClient();
-                    s.Read( handshakeRequest.Length );
-                    s.SendHandshakeAccepted( 1, Duration.FromSeconds( 0.2 ), Duration.FromSeconds( 0.2 ) );
-                    s.Read( Protocol.PacketHeader.Length );
                     Thread.Sleep( 150 );
                     s.Read( Protocol.PacketHeader.Length );
-                },
-                server );
+                } );
 
-            await client.StartAsync();
             await serverTask;
-            var disposeTask = await endSource.Task;
-            await disposeTask;
+            await endSource.Task.Unwrap();
 
             var serverData = server.GetAllReceived();
 
@@ -168,21 +157,18 @@ public partial class MessageBrokerClientTests
                                 endSource.Complete();
                         } ) );
 
-            var handshakeRequest = new Protocol.HandshakeRequest( client );
-            var serverTask = Task.Factory.StartNew(
-                o =>
+            var handshakeRequest = await server.EstablishHandshake(
+                client,
+                messageTimeout: Duration.FromSeconds( 0.2 ),
+                pingInterval: Duration.FromSeconds( 0.2 ) );
+
+            var serverTask = server.GetTask(
+                s =>
                 {
-                    var s = ( ServerMock )o!;
-                    s.WaitForClient();
-                    s.Read( handshakeRequest.Length );
-                    s.SendHandshakeAccepted( 1, Duration.FromSeconds( 0.2 ), Duration.FromSeconds( 0.2 ) );
-                    s.Read( Protocol.PacketHeader.Length );
                     Thread.Sleep( 150 );
                     s.Read( Protocol.PacketHeader.Length );
-                },
-                server );
+                } );
 
-            await client.StartAsync();
             await serverTask;
             await endSource.Task;
 
@@ -229,22 +215,15 @@ public partial class MessageBrokerClientTests
                                 endSource.Complete();
                         } ) );
 
-            var handshakeRequest = new Protocol.HandshakeRequest( client );
-            var serverTask = Task.Factory.StartNew(
-                o =>
+            var handshakeRequest = await server.EstablishHandshake( client, pingInterval: Duration.FromSeconds( 0.2 ) );
+            var serverTask = server.GetTask(
+                s =>
                 {
-                    var s = ( ServerMock )o!;
-                    s.WaitForClient();
-                    s.Read( handshakeRequest.Length );
-                    s.SendHandshakeAccepted( 1, Duration.FromSeconds( 1 ), Duration.FromSeconds( 0.2 ) );
-                    s.Read( Protocol.PacketHeader.Length );
                     Thread.Sleep( 150 );
                     s.Read( Protocol.PacketHeader.Length );
                     s.Send( [ 0, 0, 0, 0, 0 ] );
-                },
-                server );
+                } );
 
-            await client.StartAsync();
             await serverTask;
             await endSource.Task;
 
@@ -292,22 +271,15 @@ public partial class MessageBrokerClientTests
                                 endSource.Complete();
                         } ) );
 
-            var handshakeRequest = new Protocol.HandshakeRequest( client );
-            var serverTask = Task.Factory.StartNew(
-                o =>
+            var handshakeRequest = await server.EstablishHandshake( client, pingInterval: Duration.FromSeconds( 0.2 ) );
+            var serverTask = server.GetTask(
+                s =>
                 {
-                    var s = ( ServerMock )o!;
-                    s.WaitForClient();
-                    s.Read( handshakeRequest.Length );
-                    s.SendHandshakeAccepted( 1, Duration.FromSeconds( 1 ), Duration.FromSeconds( 0.2 ) );
-                    s.Read( Protocol.PacketHeader.Length );
                     Thread.Sleep( 150 );
                     s.Read( Protocol.PacketHeader.Length );
                     s.SendPing( endiannessPayload: 1 );
-                },
-                server );
+                } );
 
-            await client.StartAsync();
             await serverTask;
             await endSource.Task;
 
