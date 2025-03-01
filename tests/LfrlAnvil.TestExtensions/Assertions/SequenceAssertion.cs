@@ -38,12 +38,12 @@ internal sealed class SequenceAssertion<T> : SubjectAssertion<IReadOnlyList<T>>
                     }
                     catch ( XunitException exc )
                     {
-                        errors.Add( $"@[{i}] {exc.Message.Indent()}" );
+                        errors.Add( $"[@{i}] {exc.Message.Indent()}" );
                     }
                 }
 
                 if ( elements.Count != ElementAssertions.Count )
-                    errors.Add( $"Expected exactly {ElementAssertions.Count} elements but found {elements.Count}." );
+                    errors.Add( $"Expected exactly {ElementAssertions.Count} element(s) but found {elements.Count}." );
 
                 if ( errors.Count > 0 )
                     Throw(

@@ -340,7 +340,8 @@ public static class ObjectExtensions
     /// </summary>
     /// <param name="obj">Object to dispose.</param>
     /// <returns><see cref="Result"/> instance that specifies whether or not the disposal operation was successful.</returns>
-    public static Result TryDispose(this IDisposable obj)
+    public static Result TryDispose<T>(this T obj)
+        where T : IDisposable
     {
         try
         {
