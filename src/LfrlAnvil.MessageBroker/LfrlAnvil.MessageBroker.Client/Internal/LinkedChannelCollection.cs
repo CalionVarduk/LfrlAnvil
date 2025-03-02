@@ -1,4 +1,18 @@
-﻿using System;
+﻿// Copyright 2025 Łukasz Furlepa
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
@@ -129,7 +143,10 @@ internal readonly struct LinkedChannelCollection
 
             var result = await client.WriteAsync( request.Header, buffer, contextId, name ).ConfigureAwait( false );
             if ( result.Exception is not null )
+            {
+                await client.DisposeAsync().ConfigureAwait( false );
                 return result.Exception;
+            }
 
             using ( client.AcquireLock() )
             {
@@ -254,9 +271,190 @@ internal readonly struct LinkedChannelCollection
                 }
                 default:
                 {
-                    var error = client.HandleUnexpectedEndpoint( response.Header, contextId ).Exception;
+                    var error = client.HandleUnexpectedEndpoint( response.Header, contextId );
                     await client.DisposeAsync().ConfigureAwait( false );
-                    Assume.IsNotNull( error );
+                    return error;
+                }
+            }
+        }
+        catch ( Exception exc )
+        {
+            client.Emit( MessageBrokerClientEvent.Unexpected( client, exc ) );
+            await client.DisposeAsync().ConfigureAwait( false );
+            return exc;
+        }
+        finally
+        {
+            client.DisposeBufferToken( response.BufferToken );
+        }
+    }
+
+    internal static async ValueTask<Result<MessageBrokerChannelUnlinkResult>> UnlinkAsync(
+        MessageBrokerLinkedChannel channel,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        bool reverseEndianness;
+        var client = channel.Client;
+        using ( client.AcquireLock() )
+        {
+            if ( client.ShouldCancel )
+                ExceptionThrower.Throw( client.DisposedException() );
+
+            if ( ! channel.Unlink() )
+                return MessageBrokerChannelUnlinkResult.NotLinked;
+
+            reverseEndianness = BitConverter.IsLittleEndian != client.IsServerLittleEndian;
+        }
+
+        ManualResetValueTaskSource<IncomingPacketToken> responseSource;
+        Protocol.UnlinkChannelRequest request;
+        ulong contextId;
+
+        var bufferToken = default( BinaryBufferToken );
+        try
+        {
+            request = new Protocol.UnlinkChannelRequest( channel.Id );
+            bufferToken = client.RentBuffer( Protocol.UnlinkChannelRequest.Length, out var buffer ).EnableClearing();
+            request.Serialize( buffer, reverseEndianness );
+
+            ManualResetValueTaskSource<bool> writerSource;
+            using ( client.AcquireLock() )
+            {
+                if ( client.ShouldCancel )
+                    return client.DisposedException();
+
+                contextId = client.MessageContextQueue.AcquireContextId();
+                writerSource = client.MessageContextQueue.AcquireWriterSource();
+            }
+
+            if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
+                return client.DisposedException();
+
+            using ( client.AcquireLock() )
+            {
+                if ( client.ShouldCancel )
+                    return client.DisposedException();
+
+                client.SynchronousScheduler.PausePing();
+                responseSource = client.MessageContextQueue.AcquirePendingResponseSource( contextId, request.Header.GetServerEndpoint() );
+            }
+
+            var result = await client.WriteAsync( request.Header, buffer, contextId, channel ).ConfigureAwait( false );
+            if ( result.Exception is not null )
+            {
+                await client.DisposeAsync().ConfigureAwait( false );
+                return result.Exception;
+            }
+
+            using ( client.AcquireLock() )
+            {
+                if ( client.ShouldCancel )
+                    return client.DisposedException();
+
+                client.MessageContextQueue.ResetOutgoingWriter( client, writerSource );
+                client.MessageContextQueue.ActivatePendingResponseSource( client, responseSource );
+                client.SynchronousScheduler.SchedulePing( client );
+            }
+        }
+        catch ( Exception exc )
+        {
+            client.Emit( MessageBrokerClientEvent.Unexpected( client, exc ) );
+            await client.DisposeAsync().ConfigureAwait( false );
+            return exc;
+        }
+        finally
+        {
+            client.DisposeBufferToken( bufferToken );
+        }
+
+        var response = await responseSource.GetTask().ConfigureAwait( false );
+        try
+        {
+            if ( response.Type != IncomingPacketToken.Result.Ok )
+            {
+                if ( response.Type == IncomingPacketToken.Result.Disposed )
+                    return client.DisposedException();
+
+                var error = new MessageBrokerClientResponseTimeoutException(
+                    client,
+                    request.Header.GetServerEndpoint(),
+                    MessageBrokerClientEndpoint.ChannelUnlinkedResponse );
+
+                client.Emit( MessageBrokerClientEvent.WaitingForMessage( client, error ) );
+                await client.DisposeAsync().ConfigureAwait( false );
+                return error;
+            }
+
+            using ( client.AcquireLock() )
+            {
+                if ( client.ShouldCancel )
+                    return client.DisposedException();
+
+                client.MessageContextQueue.ResetPendingResponseSource( responseSource );
+            }
+
+            switch ( response.Header.GetClientEndpoint() )
+            {
+                case MessageBrokerClientEndpoint.ChannelUnlinkedResponse:
+                {
+                    client.Emit( MessageBrokerClientEvent.MessageReceived( client, response.Header, contextId ) );
+
+                    var exc = Protocol.AssertPayload( client, response.Header, Protocol.ChannelUnlinkedResponse.Length );
+                    if ( exc is not null )
+                    {
+                        client.Emit( MessageBrokerClientEvent.MessageRejected( client, response.Header, exc, contextId ) );
+                        await client.DisposeAsync().ConfigureAwait( false );
+                        return exc;
+                    }
+
+                    var parsedResponse = Protocol.ChannelUnlinkedResponse.Parse( response.Data );
+
+                    bool cancel;
+                    using ( client.AcquireLock() )
+                    {
+                        cancel = client.ShouldCancel;
+                        if ( ! cancel )
+                        {
+                            client.LinkedChannelCollection._byId.Remove( channel.Id );
+                            client.LinkedChannelCollection._byName.Remove( channel.Name );
+                        }
+                    }
+
+                    if ( cancel )
+                        return client.EmitError(
+                            MessageBrokerClientEvent.MessageReceived( client, response.Header, contextId, client.DisposedException() ) );
+
+                    client.Emit( MessageBrokerClientEvent.MessageAccepted( client, response.Header, contextId ) );
+                    return parsedResponse.ChannelRemoved
+                        ? MessageBrokerChannelUnlinkResult.UnlinkedAndChannelRemoved
+                        : MessageBrokerChannelUnlinkResult.Unlinked;
+                }
+                case MessageBrokerClientEndpoint.UnlinkChannelFailureResponse:
+                {
+                    client.Emit( MessageBrokerClientEvent.MessageReceived( client, response.Header, contextId ) );
+
+                    var exc = Protocol.AssertPayload( client, response.Header, Protocol.UnlinkChannelFailureResponse.Length );
+                    if ( exc is not null )
+                    {
+                        client.Emit( MessageBrokerClientEvent.MessageRejected( client, response.Header, exc, contextId ) );
+                        await client.DisposeAsync().ConfigureAwait( false );
+                        return exc;
+                    }
+
+                    var parsedResponse = Protocol.UnlinkChannelFailureResponse.Parse( response.Data );
+                    return client.EmitError(
+                        MessageBrokerClientEvent.MessageReceived(
+                            client,
+                            response.Header,
+                            contextId,
+                            Protocol.RequestException( client, request.Header, parsedResponse.StringifyErrors( channel ) ) ) );
+                }
+                default:
+                {
+                    var error = client.HandleUnexpectedEndpoint( response.Header, contextId );
+                    await client.DisposeAsync().ConfigureAwait( false );
                     return error;
                 }
             }

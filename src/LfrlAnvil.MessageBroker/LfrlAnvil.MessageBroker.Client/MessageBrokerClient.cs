@@ -394,14 +394,10 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal Result HandleUnexpectedEndpoint(Protocol.PacketHeader header, ulong contextId = 0)
+    internal Exception HandleUnexpectedEndpoint(Protocol.PacketHeader header, ulong contextId = 0)
     {
-        return EmitError(
-            MessageBrokerClientEvent.MessageRejected(
-                this,
-                header,
-                Protocol.UnexpectedClientEndpointException( this, header ),
-                contextId ) );
+        var exc = Protocol.UnexpectedClientEndpointException( this, header );
+        return EmitError( MessageBrokerClientEvent.MessageRejected( this, header, exc, contextId ) );
     }
 
     internal async ValueTask<Result> WriteAsync(

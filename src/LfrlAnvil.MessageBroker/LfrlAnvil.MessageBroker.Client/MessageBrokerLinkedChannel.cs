@@ -1,5 +1,22 @@
-﻿using System.Runtime.CompilerServices;
+﻿// Copyright 2025 Łukasz Furlepa
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 using LfrlAnvil.Async;
+using LfrlAnvil.MessageBroker.Client.Internal;
 
 namespace LfrlAnvil.MessageBroker.Client;
 
@@ -47,13 +64,35 @@ public sealed class MessageBrokerLinkedChannel
         }
     }
 
-    // TODO: add UnlinkAsync method
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    public ValueTask<Result<MessageBrokerChannelUnlinkResult>> UnlinkAsync(CancellationToken cancellationToken = default)
+    {
+        return LinkedChannelCollection.UnlinkAsync( this, cancellationToken );
+    }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void OnClientDisposed()
     {
         using ( AcquireLock() )
             _state = MessageBrokerLinkedChannelState.Unlinked;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool Unlink()
+    {
+        using ( AcquireLock() )
+        {
+            if ( _state == MessageBrokerLinkedChannelState.Unlinked )
+                return false;
+
+            _state = MessageBrokerLinkedChannelState.Unlinked;
+        }
+
+        return true;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

@@ -123,6 +123,11 @@ internal struct RequestHandler
                     {
                         MessageBrokerServerEndpoint.LinkChannelRequest => await HandleLinkChannelRequestAsync( client, contextId, request )
                             .ConfigureAwait( false ),
+                        MessageBrokerServerEndpoint.UnlinkChannelRequest => await HandleUnlinkChannelRequestAsync(
+                                client,
+                                contextId,
+                                request )
+                            .ConfigureAwait( false ),
                         MessageBrokerServerEndpoint.PingRequest => await HandlePingRequestAsync(
                                 client,
                                 contextId,
@@ -231,6 +236,19 @@ internal struct RequestHandler
                     channel.LinkedClientsById.Add( client.Id, client );
             }
 
+            // NOTE:
+            // this may be an issue later on for batching packets
+            // it's here because when server gets a feature that allows it to remove channels
+            // then linked clients need to be notified that it happened
+            // however, without 'reserving' writer source immediately here there may be a situation
+            // where channel-removed-notification would acquire writer source BEFORE this
+            // so the client would receive notification that it was unlinked from a channel it doesn't yet have registered locally
+            // and then it would receive response to link-to-channel request
+            // which would cause it to have the link erroneously active locally
+            //
+            // for batching, either the link itself needs a status (creating, active, disposed), for removing a single client-channel link
+            // or response has to be prepared here, in client's lock (the issue is event emitting)
+            // removing the whole channel may have to set channel status to disposing first, then remove all links, then the channel
             writerSource = client.MessageContextQueue.AcquireWriterSource();
         }
 
@@ -270,6 +288,120 @@ internal struct RequestHandler
 
             var responseLength = Protocol.PacketHeader.Length + Protocol.ChannelLinkedResponse.Payload;
             var response = new Protocol.ChannelLinkedResponse( channel, ! result.Value.Exists );
+            if ( data.Length < responseLength )
+                data = bufferToken.SetLength( responseLength );
+
+            responseHeader = response.Header;
+            responseData = data.Slice( 0, responseLength );
+            response.Serialize( responseData );
+        }
+
+        if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
+            return HandleRequestResult.OwnerDisposed();
+
+        var writeResult = await client.WriteAsync( responseHeader, responseData, contextId ).ConfigureAwait( false );
+        if ( writeResult.Exception is not null )
+            return HandleRequestResult.Error();
+
+        using ( client.AcquireLock() )
+        {
+            if ( client.ShouldCancel )
+                return HandleRequestResult.OwnerDisposed();
+
+            client.MessageContextQueue.ResetOutgoingWriter( client, writerSource );
+            return HandleRequestResult.Ok( client.MessageContextQueue.ContainsEnqueuedRequests() );
+        }
+    }
+
+    private static async ValueTask<HandleRequestResult> HandleUnlinkChannelRequestAsync(
+        MessageBrokerRemoteClient client,
+        ulong contextId,
+        IncomingPacketToken request)
+    {
+        var bufferToken = request.BufferToken;
+        var data = request.Data;
+
+        client.Emit( MessageBrokerRemoteClientEvent.MessageReceived( client, request.Header, contextId ) );
+
+        var exc = Protocol.AssertPayload( client, request.Header, Protocol.UnlinkChannelRequest.Length );
+        if ( exc is not null )
+        {
+            client.Emit( MessageBrokerRemoteClientEvent.MessageRejected( client, request.Header, exc, contextId ) );
+            return HandleRequestResult.Error();
+        }
+
+        var parsedRequest = Protocol.UnlinkChannelRequest.Parse( data );
+        var channel = ChannelCollection.TryGetById( client.Server, parsedRequest.ChannelId );
+
+        var unlinkResult = MessageBrokerChannel.UnlinkResult.NoChanges;
+        var rejectionReasons = Protocol.UnlinkChannelFailureResponse.Reasons.None;
+        ManualResetValueTaskSource<bool> writerSource;
+
+        using ( client.AcquireLock() )
+        {
+            if ( client.ShouldCancel )
+                return HandleRequestResult.OwnerDisposed();
+
+            if ( channel is null )
+                rejectionReasons = Protocol.UnlinkChannelFailureResponse.Reasons.ClientNotLinked;
+            else
+            {
+                using ( channel.AcquireLock() )
+                {
+                    unlinkResult = channel.BeginUnlink( client );
+                    if ( unlinkResult == MessageBrokerChannel.UnlinkResult.NoChanges )
+                        rejectionReasons = Protocol.UnlinkChannelFailureResponse.Reasons.ClientNotLinked;
+                    else
+                        client.LinkedChannelsById.Remove( parsedRequest.ChannelId );
+                }
+            }
+
+            writerSource = client.MessageContextQueue.AcquireWriterSource();
+        }
+
+        Protocol.PacketHeader responseHeader;
+        Memory<byte> responseData;
+
+        if ( rejectionReasons != Protocol.UnlinkChannelFailureResponse.Reasons.None )
+        {
+            client.Emit(
+                MessageBrokerRemoteClientEvent.MessageRejected(
+                    client,
+                    request.Header,
+                    new MessageBrokerRemoteClientChannelLinkException(
+                        client,
+                        channel,
+                        channel is null
+                            ? Resources.FailedToUnlinkClientFromNonExistingChannel( client.Id, client.Name, parsedRequest.ChannelId )
+                            : Resources.FailedToUnlinkClientFromChannel(
+                                client.Id,
+                                client.Name,
+                                channel.Id,
+                                channel.Name ) ),
+                    contextId ) );
+
+            var responseLength = Protocol.PacketHeader.Length + Protocol.UnlinkChannelFailureResponse.Payload;
+            var response = new Protocol.UnlinkChannelFailureResponse( rejectionReasons );
+            if ( data.Length < responseLength )
+                data = bufferToken.SetLength( responseLength );
+
+            responseHeader = response.Header;
+            responseData = data.Slice( 0, responseLength );
+            response.Serialize( responseData );
+        }
+        else
+        {
+            Assume.IsNotNull( channel );
+            Assume.NotEquals( unlinkResult, MessageBrokerChannel.UnlinkResult.NoChanges );
+
+            channel.Emit( MessageBrokerChannelEvent.Unlinked( channel, client, contextId ) );
+            if ( unlinkResult == MessageBrokerChannel.UnlinkResult.Disposing )
+                channel.DisposeDueToLackOfReferences();
+
+            client.Emit( MessageBrokerRemoteClientEvent.MessageAccepted( client, request.Header, contextId ) );
+
+            var responseLength = Protocol.PacketHeader.Length + Protocol.ChannelUnlinkedResponse.Payload;
+            var response = new Protocol.ChannelUnlinkedResponse( unlinkResult == MessageBrokerChannel.UnlinkResult.Disposing );
             if ( data.Length < responseLength )
                 data = bufferToken.SetLength( responseLength );
 

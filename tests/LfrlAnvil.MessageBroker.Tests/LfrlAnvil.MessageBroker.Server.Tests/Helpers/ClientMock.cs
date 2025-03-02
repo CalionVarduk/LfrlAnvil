@@ -105,6 +105,16 @@ internal sealed class ClientMock : IDisposable
         Send( buffer );
     }
 
+    internal void SendUnlinkChannelRequest(int id, uint? payload = null)
+    {
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.UnlinkChannelRequest.Length];
+        var writer = new BinaryContractWriter( buffer );
+        writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.UnlinkChannelRequest );
+        writer.MoveWrite( payload ?? Protocol.UnlinkChannelRequest.Length );
+        writer.Write( ( uint )id );
+        Send( buffer );
+    }
+
     internal void Send(byte[] data)
     {
         lock ( _client )

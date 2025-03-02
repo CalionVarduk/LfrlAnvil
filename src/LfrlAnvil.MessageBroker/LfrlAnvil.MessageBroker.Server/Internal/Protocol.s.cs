@@ -256,7 +256,7 @@ internal static class Protocol
             Assume.Equals( source.Length, Length );
 
             var reader = new BinaryContractReader( source.Span );
-            var flags = reader.MoveReadInt8();
+            var flags = reader.ReadInt8();
             Assume.Equals( flags, 0 );
 
             return new LinkChannelRequestHeader( flags );
@@ -330,6 +330,96 @@ internal static class Protocol
         }
     }
 
+    internal readonly struct UnlinkChannelRequest
+    {
+        internal const int Length = sizeof( uint );
+        internal readonly int ChannelId;
+
+        private UnlinkChannelRequest(int channelId)
+        {
+            ChannelId = channelId;
+        }
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"ChannelId = {ChannelId}";
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static UnlinkChannelRequest Parse(ReadOnlyMemory<byte> source)
+        {
+            Assume.Equals( source.Length, Length );
+            var reader = new BinaryContractReader( source.Span );
+            var channelId = unchecked( ( int )reader.ReadInt32() );
+            return new UnlinkChannelRequest( channelId );
+        }
+    }
+
+    internal readonly struct ChannelUnlinkedResponse
+    {
+        internal const int Payload = sizeof( byte );
+        internal readonly PacketHeader Header;
+        internal readonly byte Flags;
+
+        internal ChannelUnlinkedResponse(bool channelRemoved)
+        {
+            Header = PacketHeader.Create( MessageBrokerClientEndpoint.ChannelUnlinkedResponse, Payload );
+            Flags = ( byte )(channelRemoved ? 1 : 0);
+        }
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"[{Header}] Flags = {Flags}";
+        }
+
+        internal void Serialize(Memory<byte> target)
+        {
+            Assume.Equals( target.Length, PacketHeader.Length + Payload );
+            var writer = new BinaryContractWriter( target.Span );
+            writer.MoveWrite( Header.EndpointCode );
+            writer.MoveWrite( Header.Payload );
+            writer.Write( Flags );
+        }
+    }
+
+    internal readonly struct UnlinkChannelFailureResponse
+    {
+        [Flags]
+        internal enum Reasons : byte
+        {
+            None = 0,
+            ClientNotLinked = 1
+        }
+
+        internal const int Payload = sizeof( byte );
+        internal readonly PacketHeader Header;
+        internal readonly byte Flags;
+
+        internal UnlinkChannelFailureResponse(Reasons reasons)
+        {
+            Header = PacketHeader.Create( MessageBrokerClientEndpoint.UnlinkChannelFailureResponse, Payload );
+            Flags = ( byte )reasons;
+        }
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"[{Header}] Flags = {Flags}";
+        }
+
+        internal void Serialize(Memory<byte> target)
+        {
+            Assume.Equals( target.Length, PacketHeader.Length + Payload );
+            var writer = new BinaryContractWriter( target.Span );
+            writer.MoveWrite( Header.EndpointCode );
+            writer.MoveWrite( Header.Payload );
+            writer.Write( Flags );
+        }
+    }
+
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerServerProtocolException ProtocolException(
@@ -371,6 +461,18 @@ internal static class Protocol
         int length)
     {
         return ProtocolException( client, header, Chain.Create( Resources.InvalidNameLength( length ) ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerServerProtocolException? AssertPayload(
+        MessageBrokerRemoteClient client,
+        PacketHeader header,
+        uint expected)
+    {
+        return header.Payload != expected
+            ? ProtocolException( client, header, Chain.Create( Resources.InvalidHeaderPayload( expected ) ) )
+            : null;
     }
 
     [Pure]

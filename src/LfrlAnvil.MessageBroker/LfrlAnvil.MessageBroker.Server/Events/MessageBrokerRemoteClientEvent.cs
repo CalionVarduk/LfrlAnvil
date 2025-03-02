@@ -121,10 +121,19 @@ public readonly struct MessageBrokerRemoteClientEvent
     [Pure]
     public override string ToString()
     {
-        var builder = new StringBuilder( capacity: Client.Name.Length + 96 )
-            .Append( '[' )
-            .Append( Client.Id.ToString( CultureInfo.InvariantCulture ) );
+        var builder = new StringBuilder( capacity: Client.Name.Length + 96 );
+        ToString( builder );
+        return builder.ToString();
+    }
 
+    /// <summary>
+    /// Appends a string representation of this <see cref="MessageBrokerRemoteClientEvent"/> instance
+    /// to the provided <see cref="StringBuilder"/>.
+    /// </summary>
+    /// <param name="builder"><see cref="StringBuilder"/> to append this event to.</param>
+    public void ToString(StringBuilder builder)
+    {
+        builder.Append( '[' ).Append( Client.Id.ToString( CultureInfo.InvariantCulture ) );
         if ( Client.Name.Length > 0 )
             builder.Append( "::'" ).Append( Client.Name ).Append( '\'' );
 
@@ -209,8 +218,6 @@ public readonly struct MessageBrokerRemoteClientEvent
                     break;
             }
         }
-
-        return builder.ToString();
     }
 
     /// <summary>

@@ -127,7 +127,18 @@ public readonly struct MessageBrokerClientEvent
     [Pure]
     public override string ToString()
     {
-        var builder = new StringBuilder( capacity: Client.Name.Length + 96 )
+        var builder = new StringBuilder( capacity: Client.Name.Length + 96 );
+        ToString( builder );
+        return builder.ToString();
+    }
+
+    /// <summary>
+    /// Appends a string representation of this <see cref="MessageBrokerClientEvent"/> instance to the provided <see cref="StringBuilder"/>.
+    /// </summary>
+    /// <param name="builder"><see cref="StringBuilder"/> to append this event to.</param>
+    public void ToString(StringBuilder builder)
+    {
+        builder
             .Append( "['" )
             .Append( Client.Name )
             .Append( "'::" )
@@ -204,8 +215,21 @@ public readonly struct MessageBrokerClientEvent
 
                 case MessageBrokerClientEventType.SendingMessage:
                     builder.AppendSpace().Append( GetServerEndpoint().ToString() );
-                    if ( GetServerEndpoint() == MessageBrokerServerEndpoint.LinkChannelRequest && Data is string channelName )
-                        builder.Append( " (ChannelName = '" ).Append( channelName ).Append( "')" );
+                    if ( GetServerEndpoint() == MessageBrokerServerEndpoint.LinkChannelRequest )
+                    {
+                        if ( Data is string channelName )
+                            builder.Append( " (ChannelName = '" ).Append( channelName ).Append( "')" );
+                    }
+                    else if ( GetServerEndpoint() == MessageBrokerServerEndpoint.UnlinkChannelRequest )
+                    {
+                        if ( Data is MessageBrokerLinkedChannel channel )
+                            builder
+                                .Append( " (ChannelId = " )
+                                .Append( channel.Id.ToString( CultureInfo.InvariantCulture ) )
+                                .Append( ", ChannelName = '" )
+                                .Append( channel.Name )
+                                .Append( "')" );
+                    }
 
                     break;
                 case MessageBrokerClientEventType.MessageSent:
@@ -224,8 +248,6 @@ public readonly struct MessageBrokerClientEvent
                     break;
             }
         }
-
-        return builder.ToString();
     }
 
     /// <summary>

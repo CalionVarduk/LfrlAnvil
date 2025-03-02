@@ -394,6 +394,109 @@ internal static class Protocol
         }
     }
 
+    internal readonly struct UnlinkChannelRequest
+    {
+        internal const int Length = PacketHeader.Length + sizeof( uint );
+        internal readonly PacketHeader Header;
+        internal readonly int ChannelId;
+
+        internal UnlinkChannelRequest(int channelId)
+        {
+            ChannelId = channelId;
+            Header = PacketHeader.Create( MessageBrokerServerEndpoint.UnlinkChannelRequest, sizeof( uint ) );
+        }
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"[{Header}] ChannelId = {ChannelId}";
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal void Serialize(Memory<byte> target, bool reverseEndianness)
+        {
+            Assume.Equals( target.Length, Length );
+
+            var payload = Header.Payload;
+            var channelId = unchecked( ( uint )ChannelId );
+            if ( reverseEndianness )
+            {
+                payload = BinaryPrimitives.ReverseEndianness( payload );
+                channelId = BinaryPrimitives.ReverseEndianness( channelId );
+            }
+
+            var writer = new BinaryContractWriter( target.Span );
+            writer.MoveWrite( Header.EndpointCode );
+            writer.MoveWrite( payload );
+            writer.Write( channelId );
+        }
+    }
+
+    internal readonly struct ChannelUnlinkedResponse
+    {
+        internal const int Length = sizeof( byte );
+        internal readonly byte Flags;
+
+        private ChannelUnlinkedResponse(byte flags)
+        {
+            Flags = flags;
+        }
+
+        internal bool ChannelRemoved => (Flags & 1) != 0;
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"Flags = {Flags}";
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static ChannelUnlinkedResponse Parse(ReadOnlyMemory<byte> source)
+        {
+            Assume.Equals( source.Length, Length );
+            var reader = new BinaryContractReader( source.Span );
+            var flags = reader.ReadInt8();
+            return new ChannelUnlinkedResponse( flags );
+        }
+    }
+
+    internal readonly struct UnlinkChannelFailureResponse
+    {
+        internal const int Length = sizeof( byte );
+        internal readonly byte Flags;
+
+        private UnlinkChannelFailureResponse(byte flags)
+        {
+            Flags = flags;
+        }
+
+        internal bool ClientNotLinked => (Flags & 1) != 0;
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"Flags = {Flags}";
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static UnlinkChannelFailureResponse Parse(ReadOnlyMemory<byte> source)
+        {
+            Assume.Equals( source.Length, Length );
+            var reader = new BinaryContractReader( source.Span );
+            var flags = reader.ReadInt8();
+            return new UnlinkChannelFailureResponse( flags );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal Chain<string> StringifyErrors(MessageBrokerLinkedChannel channel)
+        {
+            return ClientNotLinked ? Chain.Create( Resources.ClientIsNotLinkedToChannel( channel.Id, channel.Name ) ) : Chain<string>.Empty;
+        }
+    }
+
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerClientRequestException RequestException(

@@ -50,6 +50,13 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string InvalidHeaderPayload(uint payload)
+    {
+        return $"Expected header payload to be {payload}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string ServerPayloadRejected(
         int clientId,
         string clientName,
@@ -124,5 +131,20 @@ internal static class Resources
 
         return
             $"Message broker client [{clientId}] '{clientName}' could not be linked to channel [{channelId}] '{channelName}' because {reasonText}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string FailedToUnlinkClientFromChannel(int clientId, string clientName, int channelId, string channelName)
+    {
+        return
+            $"Message broker client [{clientId}] '{clientName}' could not be unlinked from channel [{channelId}] '{channelName}' because they are not linked to begin with.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string FailedToUnlinkClientFromNonExistingChannel(int clientId, string clientName, int channelId)
+    {
+        return $"Message broker client [{clientId}] '{clientName}' could not be unlinked from non-existing channel with ID {channelId}.";
     }
 }

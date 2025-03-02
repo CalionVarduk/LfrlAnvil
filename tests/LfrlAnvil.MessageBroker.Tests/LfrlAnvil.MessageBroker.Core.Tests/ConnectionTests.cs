@@ -5,6 +5,8 @@ using LfrlAnvil.MessageBroker.Client;
 using LfrlAnvil.MessageBroker.Client.Events;
 using LfrlAnvil.MessageBroker.Client.Exceptions;
 using LfrlAnvil.MessageBroker.Server;
+using LfrlAnvil.MessageBroker.Server.Events;
+using MessageBrokerClientEndpoint = LfrlAnvil.MessageBroker.Client.Events.MessageBrokerClientEndpoint;
 
 namespace LfrlAnvil.MessageBroker.Core.Tests;
 
@@ -90,5 +92,79 @@ public class ConnectionTests : TestsBase
                 server.Clients.Count.TestEquals( 1 ),
                 result.Exception.TestType().AssignableTo<MessageBrokerClientRequestException>() )
             .Go();
+    }
+
+    [Fact]
+    public async Task ClientDispose_ShouldRemoveClientFromServer()
+    {
+        var endSource = new SafeTaskCompletionSource();
+        await using var server = new MessageBrokerServer(
+            () => new TimestampProvider(),
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetClientEventHandlerFactory(
+                    _ => e =>
+                    {
+                        if ( e.Type == MessageBrokerRemoteClientEventType.Disposed )
+                            endSource.Complete();
+                    } ) );
+
+        await server.StartAsync();
+
+        var client = new MessageBrokerClient(
+            new TimestampProvider(),
+            server.LocalEndPoint,
+            "test",
+            MessageBrokerClientOptions.Default
+                .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) ) );
+
+        await client.StartAsync();
+        var remoteClient = server.Clients.TryGetById( 1 );
+        await client.DisposeAsync();
+        await endSource.Task;
+
+        Assertion.All(
+                remoteClient.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Disposed ) ),
+                server.Clients.Count.TestEquals( 0 ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task RemoteClientDisconnect_ShouldDisposeClient()
+    {
+        var endSource = new SafeTaskCompletionSource();
+        await using var server = new MessageBrokerServer(
+            () => new TimestampProvider(),
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) ) );
+
+        await server.StartAsync();
+
+        await using var client = new MessageBrokerClient(
+            new TimestampProvider(),
+            server.LocalEndPoint,
+            "test",
+            MessageBrokerClientOptions.Default
+                .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) )
+                .SetEventHandler(
+                    e =>
+                    {
+                        if ( e.Type == MessageBrokerClientEventType.Disposed )
+                            endSource.Complete();
+                    } ) );
+
+        await client.StartAsync();
+        var remoteClient = server.Clients.TryGetById( 1 );
+        if ( remoteClient is not null )
+            await remoteClient.DisconnectAsync();
+
+        await endSource.Task;
+
+        client.State.TestEquals( MessageBrokerClientState.Disposed ).Go();
     }
 }

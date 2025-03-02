@@ -129,6 +129,14 @@ project idea:
 - packets queued up for sending will be batched together, as long as batch's length does not exceed packed size limit
     - max messages-in-single-batch-count can be configured (unlimited by default) or even disabled, send only, reading does not care
     - message readers must be prepared to handle batch packets (preserve message order)
+      - listeners will hold batch packet data in a single large buffer
+      - each msg in batch could have its own new buffer made and data could be copied from the large buffer
+      - however, that's not optimal, due to more memory usage & copying
+      - one easy solution would be to allow memory-pool to 'split' a buffer token in two, at the specified position
+      - this way, the large buffer could be split as many times as necessary
+      - no copying would be done and no additional mem-alloc would happen
+      - and each smaller split buffer would be returned to the pool when it's done
+      - which avoids the issue of ref-counting in order to return the whole large buffer
 - server's handshake request handling must verify incoming packet length
     - the same applies to create channel, subscriber etc. requests
 

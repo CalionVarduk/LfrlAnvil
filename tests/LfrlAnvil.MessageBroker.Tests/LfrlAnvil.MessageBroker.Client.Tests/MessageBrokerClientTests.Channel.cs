@@ -556,5 +556,487 @@ public partial class MessageBrokerClientTests
                         ] ) )
                 .Go();
         }
+
+        [Theory]
+        [InlineData( true )]
+        [InlineData( false )]
+        public async Task UnlinkAsync_ShouldUnlinkChannelCorrectly(bool channelRemoved)
+        {
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                new TimestampProvider(),
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetEventHandler( logs.Add ) );
+
+            var channelId = 1;
+            var channelName = "foo";
+            var handshakeRequest = await server.EstablishHandshake( client );
+            var linkRequest = new Protocol.LinkChannelRequest( channelName );
+            var expectedResult = channelRemoved
+                ? MessageBrokerChannelUnlinkResult.UnlinkedAndChannelRemoved
+                : MessageBrokerChannelUnlinkResult.Unlinked;
+
+            var serverTask = server.GetTask(
+                s =>
+                {
+                    s.Read( linkRequest.Length );
+                    s.SendChannelLinkedResponse( true, channelId );
+                    s.Read( Protocol.UnlinkChannelRequest.Length );
+                    s.SendChannelUnlinkedResponse( channelRemoved );
+                } );
+
+            var result = Result.Create( MessageBrokerChannelUnlinkResult.NotLinked );
+            await client.Channels.LinkAsync( channelName );
+            var channel = client.Channels.TryGetById( channelId );
+            if ( channel is not null )
+                result = await channel.UnlinkAsync();
+
+            await serverTask;
+
+            Assertion.All(
+                    result.Exception.TestNull(),
+                    result.Value.TestEquals( expectedResult ),
+                    channel.TestNotNull( c => c.State.TestEquals( MessageBrokerLinkedChannelState.Unlinked ) ),
+                    client.Channels.Count.TestEquals( 0 ),
+                    client.Channels.GetAll().TestEmpty(),
+                    client.Channels.TryGetByName( channelName ).TestNull(),
+                    client.Channels.TryGetById( channelId ).TestNull(),
+                    logs.GetAll()
+                        .TestContainsSequence(
+                        [
+                            "['test'::2] [SendingMessage] [PacketLength: 9] UnlinkChannelRequest (ChannelId = 1, ChannelName = 'foo')",
+                            "['test'::2] [MessageSent] [PacketLength: 9] UnlinkChannelRequest",
+                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 6] ChannelUnlinkedResponse",
+                            "['test'::2] [MessageReceived] [PacketLength: 6] Begin handling ChannelUnlinkedResponse",
+                            "['test'::2] [MessageAccepted] [PacketLength: 6] ChannelUnlinkedResponse"
+                        ] ),
+                    AssertServerData(
+                        server.GetAllReceived(),
+                        (handshakeRequest.Length, MessageBrokerServerEndpoint.HandshakeRequest),
+                        (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.ConfirmHandshakeResponse),
+                        (linkRequest.Length, MessageBrokerServerEndpoint.LinkChannelRequest),
+                        (Protocol.UnlinkChannelRequest.Length, MessageBrokerServerEndpoint.UnlinkChannelRequest) ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task UnlinkAsync_ShouldNotThrow_WhenChannelIsAlreadyLocallyUnlinked()
+        {
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                new TimestampProvider(),
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) ) );
+
+            await server.EstablishHandshake( client );
+
+            var channelName = "foo";
+            var linkRequest = new Protocol.LinkChannelRequest( channelName );
+            var serverTask = server.GetTask(
+                s =>
+                {
+                    s.Read( linkRequest.Length );
+                    s.SendChannelLinkedResponse( true, 1 );
+                    s.Read( Protocol.UnlinkChannelRequest.Length );
+                    s.SendChannelUnlinkedResponse( true );
+                } );
+
+            var result = Result.Create( MessageBrokerChannelUnlinkResult.Unlinked );
+            await client.Channels.LinkAsync( channelName );
+            var channel = client.Channels.TryGetById( 1 );
+            if ( channel is not null )
+            {
+                await channel.UnlinkAsync();
+                result = await channel.UnlinkAsync();
+            }
+
+            await serverTask;
+
+            Assertion.All(
+                    result.Exception.TestNull(),
+                    result.Value.TestEquals( MessageBrokerChannelUnlinkResult.NotLinked ) )
+                .Go();
+        }
+
+        [Fact]
+        public void UnlinkAsync_ShouldThrowTaskCanceledException_WhenCancellationTokenIsCancelled()
+        {
+            using var client = new MessageBrokerClient( new TimestampProvider(), new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
+            var channel = new MessageBrokerLinkedChannel( client, 1, "foo" );
+
+            var action = Lambda.Of( () => channel.UnlinkAsync( new CancellationToken( canceled: true ) ) );
+
+            action.Test( exc => exc.TestType().AssignableTo<TaskCanceledException>() ).Go();
+        }
+
+        [Fact]
+        public async Task UnlinkAsync_ShouldThrowMessageBrokerClientDisposedException_WhenClientIsDisposed()
+        {
+            var client = new MessageBrokerClient( new TimestampProvider(), new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
+            var channel = new MessageBrokerLinkedChannel( client, 1, "foo" );
+            await client.DisposeAsync();
+
+            Exception? exception = null;
+            try
+            {
+                _ = await channel.UnlinkAsync();
+            }
+            catch ( Exception exc )
+            {
+                exception = exc;
+            }
+
+            exception.TestType().Exact<MessageBrokerClientDisposedException>( e => e.Client.TestRefEquals( client ) ).Go();
+        }
+
+        [Fact]
+        public async Task UnlinkAsync_ShouldReturnErrorAndDisposeClient_WhenServerDoesNotRespondInTime()
+        {
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                new TimestampProvider(),
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetEventHandler( logs.Add ) );
+
+            await server.EstablishHandshake( client );
+            var serverTask = server.GetTask(
+                s =>
+                {
+                    var request = new Protocol.LinkChannelRequest( "foo" );
+                    s.Read( request.Length );
+                    s.SendChannelLinkedResponse( true, 1 );
+                } );
+
+            await client.Channels.LinkAsync( "foo" );
+            await serverTask;
+
+            var result = Result.Create( MessageBrokerChannelUnlinkResult.NotLinked );
+            var channel = client.Channels.TryGetById( 1 );
+            if ( channel is not null )
+                result = await channel.UnlinkAsync();
+
+            Assertion.All(
+                    client.State.TestEquals( MessageBrokerClientState.Disposed ),
+                    result.Exception.TestType()
+                        .Exact<MessageBrokerClientResponseTimeoutException>(
+                            exc => Assertion.All(
+                                exc.Client.TestRefEquals( client ),
+                                exc.RequestEndpoint.TestEquals( MessageBrokerServerEndpoint.UnlinkChannelRequest ),
+                                exc.ResponseEndpoint.TestEquals( MessageBrokerClientEndpoint.ChannelUnlinkedResponse ) ) ),
+                    logs.GetAll()
+                        .TestContainsSequence(
+                        [
+                            "['test'::2] [SendingMessage] [PacketLength: 9] UnlinkChannelRequest (ChannelId = 1, ChannelName = 'foo')",
+                            "['test'::2] [MessageSent] [PacketLength: 9] UnlinkChannelRequest",
+                            """
+                            ['test'::<ROOT>] [WaitingForMessage] Encountered an error:
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Message broker server failed to respond with ChannelUnlinkedResponse packet to 'test' client's UnlinkChannelRequest request in the specified amount of time (1000 milliseconds).
+                            """
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task UnlinkAsync_ShouldReturnError_WhenClientIsDisposedBeforeServerResponds()
+        {
+            var channelLinked = Ref.Create( false );
+            var endSource = new SafeTaskCompletionSource<Task>();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                new TimestampProvider(),
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetEventHandler(
+                        e =>
+                        {
+                            bool linked;
+                            lock ( channelLinked )
+                                linked = channelLinked.Value;
+
+                            if ( linked
+                                && e.Type == MessageBrokerClientEventType.SendingMessage
+                                && e.GetServerEndpoint() == MessageBrokerServerEndpoint.PingRequest )
+                                endSource.Complete( e.Client.DisposeAsync().AsTask() );
+                        } ) );
+
+            await server.EstablishHandshake( client, pingInterval: Duration.FromSeconds( 0.2 ) );
+            var serverTask = server.GetTask(
+                s =>
+                {
+                    var request = new Protocol.LinkChannelRequest( "foo" );
+                    s.Read( request.Length );
+                    s.SendChannelLinkedResponse( true, 1 );
+                } );
+
+            await client.Channels.LinkAsync( "foo" );
+            await serverTask;
+            var channel = client.Channels.TryGetById( 1 );
+            lock ( channelLinked )
+                channelLinked.Value = true;
+
+            var result = Result.Create( MessageBrokerChannelUnlinkResult.Unlinked );
+            if ( channel is not null )
+                result = await channel.UnlinkAsync();
+
+            await endSource.Task.Unwrap();
+
+            result.Exception.TestType().Exact<MessageBrokerClientDisposedException>( exc => exc.Client.TestRefEquals( client ) ).Go();
+        }
+
+        [Fact]
+        public async Task UnlinkAsync_ShouldReturnErrorAndDisposeClient_WhenServerRespondsWithChannelUnlinkedResponseWithInvalidPayload()
+        {
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                new TimestampProvider(),
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetEventHandler( logs.Add ) );
+
+            await server.EstablishHandshake( client );
+            var serverTask = server.GetTask(
+                s =>
+                {
+                    var request = new Protocol.LinkChannelRequest( "foo" );
+                    s.Read( request.Length );
+                    s.SendChannelLinkedResponse( true, 1 );
+                    s.Read( Protocol.UnlinkChannelRequest.Length );
+                    s.SendChannelUnlinkedResponse( true, payload: 0 );
+                } );
+
+            await client.Channels.LinkAsync( "foo" );
+            var channel = client.Channels.TryGetById( 1 );
+
+            var result = Result.Create( MessageBrokerChannelUnlinkResult.Unlinked );
+            if ( channel is not null )
+                result = await channel.UnlinkAsync();
+
+            await serverTask;
+
+            Assertion.All(
+                    client.State.TestEquals( MessageBrokerClientState.Disposed ),
+                    result.Exception.TestType()
+                        .Exact<MessageBrokerClientProtocolException>(
+                            exc => Assertion.All(
+                                exc.Client.TestRefEquals( client ),
+                                exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.ChannelUnlinkedResponse ),
+                                exc.Payload.TestEquals( 0U ) ) ),
+                    logs.GetAll()
+                        .TestContainsSequence(
+                        [
+                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 5] ChannelUnlinkedResponse",
+                            "['test'::2] [MessageReceived] [PacketLength: 5] Begin handling ChannelUnlinkedResponse",
+                            """
+                            ['test'::2] [MessageRejected] [PacketLength: 5] Encountered an error:
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid ChannelUnlinkedResponse with payload 0 from the server. Encountered 1 error(s):
+                            1. Expected header payload to be 1.
+                            """
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task UnlinkAsync_ShouldReturnError_WhenServerRespondsWithUnlinkChannelFailureResponse()
+        {
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                new TimestampProvider(),
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetEventHandler( logs.Add ) );
+
+            await server.EstablishHandshake( client );
+            var serverTask = server.GetTask(
+                s =>
+                {
+                    var request = new Protocol.LinkChannelRequest( "foo" );
+                    s.Read( request.Length );
+                    s.SendChannelLinkedResponse( true, 1 );
+                    s.Read( Protocol.UnlinkChannelRequest.Length );
+                    s.SendUnlinkChannelFailureResponse( true );
+                } );
+
+            await client.Channels.LinkAsync( "foo" );
+            var channel = client.Channels.TryGetById( 1 );
+
+            var result = Result.Create( MessageBrokerChannelUnlinkResult.Unlinked );
+            if ( channel is not null )
+                result = await channel.UnlinkAsync();
+
+            await serverTask;
+
+            Assertion.All(
+                    client.State.TestEquals( MessageBrokerClientState.Running ),
+                    result.Exception.TestType()
+                        .Exact<MessageBrokerClientRequestException>(
+                            exc => Assertion.All(
+                                exc.Client.TestRefEquals( client ),
+                                exc.Endpoint.TestEquals( MessageBrokerServerEndpoint.UnlinkChannelRequest ),
+                                exc.Payload.TestEquals( ( uint )sizeof( uint ) ) ) ),
+                    logs.GetAll()
+                        .TestContainsSequence(
+                        [
+                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 6] UnlinkChannelFailureResponse",
+                            "['test'::2] [MessageReceived] [PacketLength: 6] Begin handling UnlinkChannelFailureResponse",
+                            """
+                            ['test'::2] [MessageReceived] [PacketLength: 6] Encountered an error:
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientRequestException: Message broker server rejected an invalid UnlinkChannelRequest with payload 4 sent by client 'test'. Encountered 1 error(s):
+                            1. Client is not linked to channel [1] 'foo'.
+                            """
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task
+            UnlinkAsync_ShouldReturnErrorAndDisposeClient_WhenServerRespondsWithUnlinkChannelFailureResponseWithInvalidPayload()
+        {
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                new TimestampProvider(),
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetEventHandler( logs.Add ) );
+
+            await server.EstablishHandshake( client );
+            var serverTask = server.GetTask(
+                s =>
+                {
+                    var request = new Protocol.LinkChannelRequest( "foo" );
+                    s.Read( request.Length );
+                    s.SendChannelLinkedResponse( true, 1 );
+                    s.Read( Protocol.UnlinkChannelRequest.Length );
+                    s.SendUnlinkChannelFailureResponse( true, payload: 0 );
+                } );
+
+            await client.Channels.LinkAsync( "foo" );
+            var channel = client.Channels.TryGetById( 1 );
+
+            var result = Result.Create( MessageBrokerChannelUnlinkResult.Unlinked );
+            if ( channel is not null )
+                result = await channel.UnlinkAsync();
+
+            await serverTask;
+
+            Assertion.All(
+                    client.State.TestEquals( MessageBrokerClientState.Disposed ),
+                    result.Exception.TestType()
+                        .Exact<MessageBrokerClientProtocolException>(
+                            exc => Assertion.All(
+                                exc.Client.TestRefEquals( client ),
+                                exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.UnlinkChannelFailureResponse ),
+                                exc.Payload.TestEquals( 0U ) ) ),
+                    logs.GetAll()
+                        .TestContainsSequence(
+                        [
+                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 5] UnlinkChannelFailureResponse",
+                            "['test'::2] [MessageReceived] [PacketLength: 5] Begin handling UnlinkChannelFailureResponse",
+                            """
+                            ['test'::2] [MessageRejected] [PacketLength: 5] Encountered an error:
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid UnlinkChannelFailureResponse with payload 0 from the server. Encountered 1 error(s):
+                            1. Expected header payload to be 1.
+                            """
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task UnlinkAsync_ShouldReturnErrorAndDisposeClient_WhenServerRespondsWithInvalidEndpoint()
+        {
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                new TimestampProvider(),
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetEventHandler( logs.Add ) );
+
+            await server.EstablishHandshake( client );
+            var serverTask = server.GetTask(
+                s =>
+                {
+                    var request = new Protocol.LinkChannelRequest( "foo" );
+                    s.Read( request.Length );
+                    s.SendChannelLinkedResponse( true, 1 );
+                    s.Read( Protocol.UnlinkChannelRequest.Length );
+                    s.Send( [ 0, 0, 0, 0, 0 ] );
+                } );
+
+            await client.Channels.LinkAsync( "foo" );
+            var channel = client.Channels.TryGetById( 1 );
+
+            var result = Result.Create( MessageBrokerChannelUnlinkResult.Unlinked );
+            if ( channel is not null )
+                result = await channel.UnlinkAsync();
+
+            await serverTask;
+
+            Assertion.All(
+                    client.State.TestEquals( MessageBrokerClientState.Disposed ),
+                    result.Exception.TestType()
+                        .Exact<MessageBrokerClientProtocolException>(
+                            exc => Assertion.All(
+                                exc.Client.TestRefEquals( client ),
+                                exc.Endpoint.TestEquals( ( MessageBrokerClientEndpoint )0 ),
+                                exc.Payload.TestEquals( 0U ) ) ),
+                    logs.GetAll()
+                        .TestContainsSequence(
+                        [
+                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 5] 0",
+                            """
+                            ['test'::2] [MessageRejected] [PacketLength: 5] Encountered an error:
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid 0 with payload 0 from the server. Encountered 1 error(s):
+                            1. Received unexpected client endpoint.
+                            """
+                        ] ) )
+                .Go();
+        }
     }
 }

@@ -62,7 +62,18 @@ public readonly struct MessageBrokerServerEvent
     [Pure]
     public override string ToString()
     {
-        var builder = new StringBuilder( capacity: 96 ).Append( '[' ).Append( Type.ToString() ).Append( ']' );
+        var builder = new StringBuilder( capacity: 96 );
+        ToString( builder );
+        return builder.ToString();
+    }
+
+    /// <summary>
+    /// Appends a string representation of this <see cref="MessageBrokerServerEvent"/> instance to the provided <see cref="StringBuilder"/>.
+    /// </summary>
+    /// <param name="builder"><see cref="StringBuilder"/> to append this event to.</param>
+    public void ToString(StringBuilder builder)
+    {
+        builder.Append( '[' ).Append( Type.ToString() ).Append( ']' );
         if ( Exception is not null )
         {
             if ( ! IsCancellation )
@@ -108,8 +119,6 @@ public readonly struct MessageBrokerServerEvent
                     break;
             }
         }
-
-        return builder.ToString();
     }
 
     [Pure]

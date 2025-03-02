@@ -96,6 +96,13 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string ClientIsNotLinkedToChannel(int channelId, string channelName)
+    {
+        return $"Client is not linked to channel [{channelId}] '{channelName}'.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string MessageTimeoutIsOutOfBounds(Duration timeout)
     {
         return $"Expected received message timeout to be in {GetBounds( Defaults.Temporal.TimeoutBounds )} range but found {timeout}.";

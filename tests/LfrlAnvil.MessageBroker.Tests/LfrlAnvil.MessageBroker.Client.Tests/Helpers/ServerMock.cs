@@ -114,6 +114,26 @@ internal sealed class ServerMock : IDisposable
         Send( buffer );
     }
 
+    internal void SendChannelUnlinkedResponse(bool channelRemoved, uint? payload = null)
+    {
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.ChannelUnlinkedResponse.Length];
+        var writer = new BinaryContractWriter( buffer );
+        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.ChannelUnlinkedResponse );
+        writer.MoveWrite( payload ?? Protocol.ChannelUnlinkedResponse.Length );
+        writer.Write( ( byte )(channelRemoved ? 1 : 0) );
+        Send( buffer );
+    }
+
+    internal void SendUnlinkChannelFailureResponse(bool clientNotLinked, uint? payload = null)
+    {
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.UnlinkChannelFailureResponse.Length];
+        var writer = new BinaryContractWriter( buffer );
+        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.UnlinkChannelFailureResponse );
+        writer.MoveWrite( payload ?? Protocol.UnlinkChannelFailureResponse.Length );
+        writer.Write( ( byte )(clientNotLinked ? 1 : 0) );
+        Send( buffer );
+    }
+
     internal void Send(byte[] data)
     {
         lock ( _listener )

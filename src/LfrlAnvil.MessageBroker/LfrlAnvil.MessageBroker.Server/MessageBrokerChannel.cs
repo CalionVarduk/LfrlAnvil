@@ -1,4 +1,18 @@
-﻿using System.Collections.Generic;
+﻿// Copyright 2025 Łukasz Furlepa
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Async;
 using LfrlAnvil.MessageBroker.Server.Events;
@@ -60,22 +74,34 @@ public sealed class MessageBrokerChannel
 
     internal bool ShouldCancel => _state >= MessageBrokerChannelState.Disposing;
 
-    internal void OnClientDisconnected(MessageBrokerRemoteClient client)
+    internal enum UnlinkResult : byte
     {
-        bool dispose;
-        using ( AcquireLock() )
+        NoChanges = 0,
+        Unlinked = 1,
+        Disposing = 2
+    }
+
+    internal UnlinkResult BeginUnlink(MessageBrokerRemoteClient client)
+    {
+        if ( ShouldCancel || ! LinkedClientsById.Remove( client.Id ) )
+            return UnlinkResult.NoChanges;
+
+        UnlinkResult result;
+        if ( LinkedClientsById.Count == 0 )
         {
-            if ( ShouldCancel || ! LinkedClientsById.Remove( client.Id ) )
-                return;
-
-            dispose = LinkedClientsById.Count == 0;
-            if ( dispose )
-                _state = MessageBrokerChannelState.Disposing;
+            result = UnlinkResult.Disposing;
+            _state = MessageBrokerChannelState.Disposing;
         }
+        else
+            result = UnlinkResult.Unlinked;
 
-        Emit( MessageBrokerChannelEvent.Unlinked( this, client ) );
-        if ( ! dispose )
-            return;
+        return result;
+    }
+
+    internal void DisposeDueToLackOfReferences()
+    {
+        Assume.IsEmpty( LinkedClientsById );
+        Assume.Equals( State, MessageBrokerChannelState.Disposing );
 
         Emit( MessageBrokerChannelEvent.Disposing( this ) );
 
@@ -87,6 +113,20 @@ public sealed class MessageBrokerChannel
             _state = MessageBrokerChannelState.Disposed;
 
         Emit( MessageBrokerChannelEvent.Disposed( this ) );
+    }
+
+    internal void OnClientDisconnected(MessageBrokerRemoteClient client)
+    {
+        UnlinkResult result;
+        using ( AcquireLock() )
+            result = BeginUnlink( client );
+
+        if ( result == UnlinkResult.NoChanges )
+            return;
+
+        Emit( MessageBrokerChannelEvent.Unlinked( this, client ) );
+        if ( result == UnlinkResult.Disposing )
+            DisposeDueToLackOfReferences();
     }
 
     internal void OnServerDisposed()
