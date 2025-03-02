@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2025 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -130,14 +130,17 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
     /// <summary>
     /// Attempts to start this timer asynchronously.
     /// </summary>
+    /// <param name="longRunning">
+    /// Specifies whether or not to explicitly use the <see cref="TaskCreationOptions.LongRunning"/> flag. Equal to <b>true</b> by default.
+    /// </param>
     /// <returns>
     /// New <see cref="Task"/> instance that completes when this timer is done or is stopped
     /// or <see cref="Task.CompletedTask"/> when this timer has been disposed
     /// or cancelled <see cref="Task"/> when this timer is already running.
     /// </returns>
-    public Task StartAsync()
+    public Task StartAsync(bool longRunning = true)
     {
-        var (task, result) = TryStartCore( Interval, Task.Factory );
+        var (task, result) = TryStartCore( Interval, longRunning, Task.Factory );
         return GetStartedTask( task, result );
     }
 
@@ -145,15 +148,18 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
     /// Attempts to start this timer asynchronously.
     /// </summary>
     /// <param name="scheduler">Task scheduler.</param>
+    /// <param name="longRunning">
+    /// Specifies whether or not to explicitly use the <see cref="TaskCreationOptions.LongRunning"/> flag. Equal to <b>true</b> by default.
+    /// </param>
     /// <returns>
     /// New <see cref="Task"/> instance that completes when this timer is done or is stopped
     /// or <see cref="Task.CompletedTask"/> when this timer has been disposed
     /// or cancelled <see cref="Task"/> when this timer is already running.
     /// </returns>
-    public Task StartAsync(TaskScheduler scheduler)
+    public Task StartAsync(TaskScheduler scheduler, bool longRunning = true)
     {
         var taskFactory = new TaskFactory( scheduler );
-        var (task, result) = TryStartCore( Interval, taskFactory );
+        var (task, result) = TryStartCore( Interval, longRunning, taskFactory );
         return GetStartedTask( task, result );
     }
 
@@ -161,6 +167,9 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
     /// Attempts to start this timer asynchronously with an initial <paramref name="delay"/>.
     /// </summary>
     /// <param name="delay">Time that must elapse before emitting the first event.</param>
+    /// <param name="longRunning">
+    /// Specifies whether or not to explicitly use the <see cref="TaskCreationOptions.LongRunning"/> flag. Equal to <b>true</b> by default.
+    /// </param>
     /// <returns>
     /// New <see cref="Task"/> instance that completes when this timer is done or is stopped
     /// or <see cref="Task.CompletedTask"/> when this timer has been disposed
@@ -169,10 +178,10 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
     /// <exception cref="ArgumentOutOfRangeException">
     /// When <paramref name="delay"/> is less than <b>1 tick</b> or greater than <see cref="Int32.MaxValue"/> milliseconds.
     /// </exception>
-    public Task StartAsync(Duration delay)
+    public Task StartAsync(Duration delay, bool longRunning = true)
     {
         Ensure.IsInRange( delay, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ) );
-        var (task, result) = TryStartCore( delay, Task.Factory );
+        var (task, result) = TryStartCore( delay, longRunning, Task.Factory );
         return GetStartedTask( task, result );
     }
 
@@ -181,6 +190,9 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
     /// </summary>
     /// <param name="scheduler">Task scheduler.</param>
     /// <param name="delay">Time that must elapse before emitting the first event.</param>
+    /// <param name="longRunning">
+    /// Specifies whether or not to explicitly use the <see cref="TaskCreationOptions.LongRunning"/> flag. Equal to <b>true</b> by default.
+    /// </param>
     /// <returns>
     /// New <see cref="Task"/> instance that completes when this timer is done or is stopped
     /// or <see cref="Task.CompletedTask"/> when this timer has been disposed
@@ -189,11 +201,11 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
     /// <exception cref="ArgumentOutOfRangeException">
     /// When <paramref name="delay"/> is less than <b>1 tick</b> or greater than <see cref="Int32.MaxValue"/> milliseconds.
     /// </exception>
-    public Task StartAsync(TaskScheduler scheduler, Duration delay)
+    public Task StartAsync(TaskScheduler scheduler, Duration delay, bool longRunning = true)
     {
         Ensure.IsInRange( delay, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ) );
         var taskFactory = new TaskFactory( scheduler );
-        var (task, result) = TryStartCore( delay, taskFactory );
+        var (task, result) = TryStartCore( delay, longRunning, taskFactory );
         return GetStartedTask( task, result );
     }
 
@@ -240,7 +252,7 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
         return result == StartResult.Disposed ? Task.CompletedTask : Task.FromCanceled( new CancellationToken( true ) );
     }
 
-    private (Task? Task, StartResult Result) TryStartCore(Duration delay, TaskFactory? taskFactory = null)
+    private (Task? Task, StartResult Result) TryStartCore(Duration delay, bool longRunning = false, TaskFactory? taskFactory = null)
     {
         using ( ExclusiveLock.Enter( Sync ) )
         {
@@ -256,7 +268,10 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
         }
 
         if ( taskFactory is not null )
-            return (taskFactory.StartNew( RunBlockingTimer ), StartResult.Started);
+            return (
+                longRunning
+                    ? taskFactory.StartNew( RunBlockingTimer, TaskCreationOptions.LongRunning )
+                    : taskFactory.StartNew( RunBlockingTimer ), StartResult.Started);
 
         RunBlockingTimer();
         return (Task.CompletedTask, StartResult.Started);

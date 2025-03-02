@@ -38,10 +38,6 @@ message broker:
 - this way only one thread needs to be created, by the server
 - remote clients will fully use async/await, which should work well with thread pool
 
-reactive timer & scheduler:
-
-- add 'long-running' flag to start-async methods
-
 ### Terminal
 
 project idea:

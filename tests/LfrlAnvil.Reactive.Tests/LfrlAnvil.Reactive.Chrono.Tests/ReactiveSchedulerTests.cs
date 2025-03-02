@@ -992,7 +992,7 @@ public class ReactiveSchedulerTests : TestsBase
         var timestamps = new Timestamps();
         var sut = new ReactiveScheduler<string>( timestamps );
 
-        var result = sut.StartAsync( TaskScheduler.Current );
+        var result = sut.StartAsync( scheduler: TaskScheduler.Current );
         var state = sut.State;
         var isRunning = ! result.IsCompleted;
         sut.Dispose();

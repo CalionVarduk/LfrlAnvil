@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2025 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -79,12 +79,15 @@ public interface IReactiveScheduler<TKey> : IDisposable
     /// <summary>
     /// Starts this scheduler asynchronously.
     /// </summary>
+    /// <param name="longRunning">
+    /// Specifies whether or not to explicitly use the <see cref="TaskCreationOptions.LongRunning"/> flag. Equal to <b>true</b> by default.
+    /// </param>
     /// <param name="scheduler">Optional task scheduler.</param>
     /// <returns>
     /// New <see cref="Task"/> instance that completes when this scheduler is done
     /// or <see cref="Task.CompletedTask"/> when this scheduler has already been started.
     /// </returns>
-    Task StartAsync(TaskScheduler? scheduler = null);
+    Task StartAsync(bool longRunning = true, TaskScheduler? scheduler = null);
 
     /// <summary>
     /// Attempts to schedule the provided <paramref name="task"/>.

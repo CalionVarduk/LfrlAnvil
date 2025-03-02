@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2025 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -169,13 +169,13 @@ public class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
     }
 
     /// <inheritdoc />
-    public Task StartAsync(TaskScheduler? scheduler = null)
+    public Task StartAsync(bool longRunning = true, TaskScheduler? scheduler = null)
     {
         if ( ! _state.Write( ReactiveSchedulerState.Running, ReactiveSchedulerState.Created ) )
             return Task.CompletedTask;
 
         var taskFactory = scheduler is null ? Task.Factory : new TaskFactory( scheduler );
-        return taskFactory.StartNew( RunCore );
+        return longRunning ? taskFactory.StartNew( RunCore, TaskCreationOptions.LongRunning ) : taskFactory.StartNew( RunCore );
     }
 
     /// <inheritdoc />
