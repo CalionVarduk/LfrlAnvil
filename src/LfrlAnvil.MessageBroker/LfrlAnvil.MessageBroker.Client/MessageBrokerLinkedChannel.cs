@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
+using LfrlAnvil.MessageBroker.Client.Exceptions;
 using LfrlAnvil.MessageBroker.Client.Internal;
 
 namespace LfrlAnvil.MessageBroker.Client;
@@ -65,10 +67,20 @@ public sealed class MessageBrokerLinkedChannel
     }
 
     /// <summary>
-    ///
+    /// Attempts to unlink this channel from the client.
     /// </summary>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
+    /// <param name="cancellationToken">Optional <see cref="CancellationToken"/>.</param>
+    /// <returns>
+    /// A task that represents the operation, which returns a <see cref="Result{T}"/> instance,
+    /// with underlying <see cref="MessageBrokerChannelUnlinkResult"/> instance.
+    /// </returns>
+    /// <exception cref="OperationCanceledException">When <paramref name="cancellationToken"/> has been cancelled.</exception>
+    /// <exception cref="MessageBrokerClientDisposedException">When client has already been disposed.</exception>
+    /// <remarks>
+    /// Unexpected errors encountered during channel unlinking will cause the client to be automatically disposed.
+    /// Returned <see cref="Result{T}"/> will only be valid when either the channel has been successfully unlinked from the client
+    /// on the server side, or the channel is already locally unlinked from the client, which will cancel the request to the server.
+    /// </remarks>
     public ValueTask<Result<MessageBrokerChannelUnlinkResult>> UnlinkAsync(CancellationToken cancellationToken = default)
     {
         return LinkedChannelCollection.UnlinkAsync( this, cancellationToken );

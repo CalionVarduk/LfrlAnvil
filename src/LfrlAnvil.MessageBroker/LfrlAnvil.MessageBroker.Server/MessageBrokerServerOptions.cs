@@ -37,6 +37,7 @@ namespace LfrlAnvil.MessageBroker.Server;
 /// </param>
 /// <param name="EventHandler"><see cref="MessageBrokerServerEvent"/> callback.</param>
 /// <param name="ClientEventHandlerFactory">Factory of <see cref="MessageBrokerRemoteClientEventHandler"/> callbacks.</param>
+/// <param name="ChannelEventHandlerFactory">Factory of <see cref="MessageBrokerChannelEventHandler"/> callbacks.</param>
 /// <param name="StreamDecorator"><see cref="MessageBrokerRemoteClientStreamDecorator"/> callback.</param>
 public readonly record struct MessageBrokerServerOptions(
     MessageBrokerTcpServerOptions Tcp,
