@@ -14,11 +14,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
@@ -38,6 +40,7 @@ namespace LfrlAnvil.MessageBroker.Server;
 public sealed partial class MessageBrokerRemoteClient
 {
     internal readonly Dictionary<int, MessageBrokerChannel> LinkedChannelsById;
+    internal readonly Dictionary<int, MessageBrokerSubscription> SubscriptionsByChannelId;
     internal SynchronousScheduler SynchronousScheduler;
     internal MessageListener MessageListener;
     internal RequestHandler RequestHandler;
@@ -66,6 +69,7 @@ public sealed partial class MessageBrokerRemoteClient
         _state = MessageBrokerRemoteClientState.Created;
 
         LinkedChannelsById = new Dictionary<int, MessageBrokerChannel>();
+        SubscriptionsByChannelId = new Dictionary<int, MessageBrokerSubscription>();
         SynchronousScheduler = SynchronousScheduler.Create();
         MessageListener = MessageListener.Create();
         RequestHandler = RequestHandler.Create();
@@ -170,6 +174,11 @@ public sealed partial class MessageBrokerRemoteClient
     /// </summary>
     public MessageBrokerRemoteClientLinkedChannelCollection LinkedChannels => new MessageBrokerRemoteClientLinkedChannelCollection( this );
 
+    /// <summary>
+    /// Collection of <see cref="MessageBrokerSubscription"/> instances attached to this client, identified by channel ids.
+    /// </summary>
+    public MessageBrokerRemoteClientSubscriptionCollection Subscriptions => new MessageBrokerRemoteClientSubscriptionCollection( this );
+
     internal Duration MaxReadTimeout { get; private set; }
     internal bool ShouldCancel => _state >= MessageBrokerRemoteClientState.Disposing;
 
@@ -187,9 +196,12 @@ public sealed partial class MessageBrokerRemoteClient
             _state = MessageBrokerRemoteClientState.Disposing;
         }
 
-        var channels = await DisposeAsync( extractChannels: true ).ConfigureAwait( false );
+        var (channels, subscriptions) = await DisposeAsync( extractChildren: true ).ConfigureAwait( false );
         foreach ( var channel in channels )
-            channel.OnClientDisconnected( this );
+            channel.OnLinkDisposing( this );
+
+        foreach ( var subscription in subscriptions )
+            subscription.OnClientDisconnected();
 
         using ( AcquireLock() )
             _state = MessageBrokerRemoteClientState.Disposed;
@@ -211,7 +223,7 @@ public sealed partial class MessageBrokerRemoteClient
             _state = MessageBrokerRemoteClientState.Disposing;
         }
 
-        await DisposeAsync( extractChannels: false ).ConfigureAwait( false );
+        await DisposeAsync( extractChildren: false ).ConfigureAwait( false );
         using ( AcquireLock() )
             _state = MessageBrokerRemoteClientState.Disposed;
 
@@ -245,6 +257,30 @@ public sealed partial class MessageBrokerRemoteClient
             Emit( MessageBrokerRemoteClientEvent.Unexpected( this, exc ) );
             DisconnectAsync().AsTask().Wait();
         }
+    }
+
+    internal bool SubscribeTo(MessageBrokerChannel channel, [MaybeNullWhen( false )] out MessageBrokerSubscription result)
+    {
+        ref var subscription = ref CollectionsMarshal.GetValueRefOrAddDefault( channel.SubscriptionsByClientId, Id, out var exists )!;
+        if ( exists )
+        {
+            result = subscription;
+            return false;
+        }
+
+        try
+        {
+            subscription = new MessageBrokerSubscription( this, channel );
+        }
+        catch
+        {
+            channel.SubscriptionsByClientId.Remove( Id );
+            throw;
+        }
+
+        SubscriptionsByChannelId.Add( channel.Id, subscription );
+        result = subscription;
+        return true;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -367,7 +403,7 @@ public sealed partial class MessageBrokerRemoteClient
             Emit( MessageBrokerRemoteClientEvent.Unexpected( this, exc ) );
     }
 
-    private async ValueTask<MessageBrokerChannel[]> DisposeAsync(bool extractChannels)
+    private async ValueTask<(MessageBrokerChannel[] Channels, MessageBrokerSubscription[] Subscriptions)> DisposeAsync(bool extractChildren)
     {
         Emit( MessageBrokerRemoteClientEvent.Disposing( this ) );
 
@@ -377,17 +413,30 @@ public sealed partial class MessageBrokerRemoteClient
 
         Exception? exception;
         var channels = Array.Empty<MessageBrokerChannel>();
+        var subscriptions = Array.Empty<MessageBrokerSubscription>();
         using ( AcquireLock() )
         {
-            if ( extractChannels && LinkedChannelsById.Count > 0 )
+            if ( extractChildren )
             {
-                var i = 0;
-                channels = new MessageBrokerChannel[LinkedChannelsById.Count];
-                foreach ( var channel in LinkedChannelsById.Values )
-                    channels[i++] = channel;
+                if ( LinkedChannelsById.Count > 0 )
+                {
+                    var i = 0;
+                    channels = new MessageBrokerChannel[LinkedChannelsById.Count];
+                    foreach ( var channel in LinkedChannelsById.Values )
+                        channels[i++] = channel;
+                }
+
+                if ( SubscriptionsByChannelId.Count > 0 )
+                {
+                    var i = 0;
+                    subscriptions = new MessageBrokerSubscription[SubscriptionsByChannelId.Count];
+                    foreach ( var subscription in SubscriptionsByChannelId.Values )
+                        subscriptions[i++] = subscription;
+                }
             }
 
             LinkedChannelsById.Clear();
+            SubscriptionsByChannelId.Clear();
             synchronousSchedulerTask = SynchronousScheduler.DiscardUnderlyingTask();
             requestHandlerTask = RequestHandler.DiscardUnderlyingTask();
             messageReceiverTask = MessageListener.DiscardUnderlyingTask();
@@ -420,6 +469,6 @@ public sealed partial class MessageBrokerRemoteClient
         if ( exception is not null )
             Emit( MessageBrokerRemoteClientEvent.Unexpected( this, exception ) );
 
-        return channels;
+        return (channels, subscriptions);
     }
 }

@@ -128,6 +128,8 @@ internal struct RequestHandler
                                 contextId,
                                 request )
                             .ConfigureAwait( false ),
+                        MessageBrokerServerEndpoint.SubscribeRequest => await HandleSubscribeRequestAsync( client, contextId, request )
+                            .ConfigureAwait( false ),
                         MessageBrokerServerEndpoint.PingRequest => await HandlePingRequestAsync(
                                 client,
                                 contextId,
@@ -162,6 +164,7 @@ internal struct RequestHandler
         }
     }
 
+    // TODO: rename Link to Bind
     private static async ValueTask<HandleRequestResult> HandleLinkChannelRequestAsync(
         MessageBrokerRemoteClient client,
         ulong contextId,
@@ -199,23 +202,23 @@ internal struct RequestHandler
                 MessageBrokerRemoteClientEvent.MessageRejected(
                     client,
                     request.Header,
-                    Protocol.InvalidNameLengthException( client, request.Header, name.Value.Length ) ) );
+                    Protocol.InvalidNameLengthException( client, request.Header, name.Value.Length ),
+                    contextId ) );
 
             return HandleRequestResult.Error();
         }
 
-        var result = ChannelCollection.Register( client.Server, name.Value );
-        if ( result.Exception is not null )
+        ChannelCollection.RegistrationResult result;
+        using ( client.Server.AcquireLock() )
         {
-            if ( result.Exception is MessageBrokerServerDisposedException )
+            if ( client.Server.ShouldCancel )
                 return HandleRequestResult.OwnerDisposed();
 
-            client.Emit( MessageBrokerRemoteClientEvent.Unexpected( client, result.Exception ) );
-            return HandleRequestResult.Error();
+            result = ChannelCollection.Register( client.Server, name.Value );
         }
 
-        var channel = result.Value.Channel;
-        if ( ! result.Value.Exists )
+        var channel = result.Channel;
+        if ( ! result.Exists )
             channel.Emit( MessageBrokerChannelEvent.Created( channel, client, contextId ) );
 
         ManualResetValueTaskSource<bool> writerSource;
@@ -229,7 +232,7 @@ internal struct RequestHandler
             using ( channel.AcquireLock() )
             {
                 if ( channel.ShouldCancel )
-                    rejectionReasons = Protocol.LinkChannelFailureResponse.Reasons.LinkCancelled;
+                    rejectionReasons = Protocol.LinkChannelFailureResponse.Reasons.LinkingCancelled;
                 else if ( ! client.LinkedChannelsById.TryAdd( channel.Id, channel ) )
                     rejectionReasons = Protocol.LinkChannelFailureResponse.Reasons.AlreadyLinked;
                 else
@@ -250,6 +253,29 @@ internal struct RequestHandler
             // or response has to be prepared here, in client's lock (the issue is event emitting)
             // removing the whole channel may have to set channel status to disposing first, then remove all links, then the channel
             writerSource = client.MessageContextQueue.AcquireWriterSource();
+
+            // TODO:
+            // I think it would be better to do it all atomically:
+            // lock server => get-or-add channel
+            // lock client
+            // lock channel => link client with channel
+            // prepare response
+            // acquire write source
+            // unlock channel
+            // unlock client
+            // unlock server
+            //
+            // this would remove the need for 'x cancelled' rejections
+
+            // TODO:
+            // think about whether or not storing links directly in client/channel is necessary
+            // maybe server could store a single map?
+            // it might be an issue when e.g. client is disconnected
+            // ^ relevant channels must be unlinked, enumerating all channels on the server feels wrong
+            // server may have to have a map of links (just like with subscriptions)
+            // ^ or does it...? both those maps might be unnecessary
+            // ^ let server worry about clients/channels/queues
+            // ^ and let clients/channels worry about links/subscriptions
         }
 
         Protocol.PacketHeader responseHeader;
@@ -287,7 +313,7 @@ internal struct RequestHandler
             client.Emit( MessageBrokerRemoteClientEvent.MessageAccepted( client, request.Header, contextId ) );
 
             var responseLength = Protocol.PacketHeader.Length + Protocol.ChannelLinkedResponse.Payload;
-            var response = new Protocol.ChannelLinkedResponse( channel, ! result.Value.Exists );
+            var response = new Protocol.ChannelLinkedResponse( channel, ! result.Exists );
             if ( data.Length < responseLength )
                 data = bufferToken.SetLength( responseLength );
 
@@ -402,6 +428,160 @@ internal struct RequestHandler
 
             var responseLength = Protocol.PacketHeader.Length + Protocol.ChannelUnlinkedResponse.Payload;
             var response = new Protocol.ChannelUnlinkedResponse( unlinkResult == MessageBrokerChannel.UnlinkResult.Disposing );
+            if ( data.Length < responseLength )
+                data = bufferToken.SetLength( responseLength );
+
+            responseHeader = response.Header;
+            responseData = data.Slice( 0, responseLength );
+            response.Serialize( responseData );
+        }
+
+        if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
+            return HandleRequestResult.OwnerDisposed();
+
+        var writeResult = await client.WriteAsync( responseHeader, responseData, contextId ).ConfigureAwait( false );
+        if ( writeResult.Exception is not null )
+            return HandleRequestResult.Error();
+
+        using ( client.AcquireLock() )
+        {
+            if ( client.ShouldCancel )
+                return HandleRequestResult.OwnerDisposed();
+
+            client.MessageContextQueue.ResetOutgoingWriter( client, writerSource );
+            return HandleRequestResult.Ok( client.MessageContextQueue.ContainsEnqueuedRequests() );
+        }
+    }
+
+    private static async ValueTask<HandleRequestResult> HandleSubscribeRequestAsync(
+        MessageBrokerRemoteClient client,
+        ulong contextId,
+        IncomingPacketToken request)
+    {
+        var bufferToken = request.BufferToken;
+        var data = request.Data;
+
+        client.Emit( MessageBrokerRemoteClientEvent.MessageReceived( client, request.Header, contextId ) );
+
+        if ( request.Data.Length < Protocol.SubscribeRequestHeader.Length )
+        {
+            client.Emit(
+                MessageBrokerRemoteClientEvent.MessageRejected(
+                    client,
+                    request.Header,
+                    Protocol.InvalidPacketLengthException( client, request.Header ),
+                    contextId ) );
+
+            return HandleRequestResult.Error();
+        }
+
+        var parsedRequest = Protocol.SubscribeRequestHeader.Parse( data.Slice( 0, Protocol.SubscribeRequestHeader.Length ) );
+        var channelName = TextEncoding.Parse( data.Slice( Protocol.SubscribeRequestHeader.Length ) );
+        if ( channelName.Exception is not null )
+        {
+            client.Emit( MessageBrokerRemoteClientEvent.MessageRejected( client, request.Header, channelName.Exception, contextId ) );
+            return HandleRequestResult.Error();
+        }
+
+        Assume.IsNotNull( channelName.Value );
+        if ( ! Defaults.NameLengthBounds.Contains( channelName.Value.Length ) )
+        {
+            client.Emit(
+                MessageBrokerRemoteClientEvent.MessageRejected(
+                    client,
+                    request.Header,
+                    Protocol.InvalidNameLengthException( client, request.Header, channelName.Value.Length ),
+                    contextId ) );
+
+            return HandleRequestResult.Error();
+        }
+
+        ManualResetValueTaskSource<bool> writerSource;
+        MessageBrokerSubscription? subscription = null;
+        var rejectionReasons = Protocol.SubscribeFailureResponse.Reasons.None;
+        ChannelCollection.RegistrationResult? result;
+
+        using ( client.Server.AcquireLock() )
+        {
+            if ( client.Server.ShouldCancel )
+                return HandleRequestResult.OwnerDisposed();
+
+            result = ChannelCollection.TryRegister( client.Server, channelName.Value, parsedRequest.CreateChannelIfNotExists );
+            if ( result is null )
+            {
+                rejectionReasons = Protocol.SubscribeFailureResponse.Reasons.ChannelDoesNotExist;
+                using ( client.AcquireLock() )
+                {
+                    if ( client.ShouldCancel )
+                        return HandleRequestResult.OwnerDisposed();
+
+                    writerSource = client.MessageContextQueue.AcquireWriterSource();
+                }
+            }
+            else
+            {
+                var channel = result.Value.Channel;
+                using ( client.AcquireLock() )
+                {
+                    if ( client.ShouldCancel )
+                        return HandleRequestResult.OwnerDisposed();
+
+                    using ( channel.AcquireLock() )
+                    {
+                        if ( channel.ShouldCancel )
+                            rejectionReasons = Protocol.SubscribeFailureResponse.Reasons.SubscribingCancelled;
+                        else if ( ! client.SubscribeTo( channel, out subscription ) )
+                            rejectionReasons = Protocol.SubscribeFailureResponse.Reasons.AlreadySubscribed;
+                    }
+
+                    writerSource = client.MessageContextQueue.AcquireWriterSource();
+                }
+            }
+        }
+
+        Protocol.PacketHeader responseHeader;
+        Memory<byte> responseData;
+
+        if ( rejectionReasons != Protocol.SubscribeFailureResponse.Reasons.None )
+        {
+            client.Emit(
+                MessageBrokerRemoteClientEvent.MessageRejected(
+                    client,
+                    request.Header,
+                    new MessageBrokerRemoteClientSubscriptionException(
+                        client,
+                        result?.Channel,
+                        subscription,
+                        Resources.FailedToCreateSubscription(
+                            client.Id,
+                            client.Name,
+                            result?.Channel.Id,
+                            channelName.Value,
+                            rejectionReasons ) ),
+                    contextId ) );
+
+            var responseLength = Protocol.PacketHeader.Length + Protocol.SubscribeFailureResponse.Payload;
+            var response = new Protocol.SubscribeFailureResponse( rejectionReasons );
+            if ( data.Length < responseLength )
+                data = bufferToken.SetLength( responseLength );
+
+            responseHeader = response.Header;
+            responseData = data.Slice( 0, responseLength );
+            response.Serialize( responseData );
+        }
+        else
+        {
+            Assume.IsNotNull( result );
+            Assume.IsNotNull( subscription );
+
+            if ( ! result.Value.Exists )
+                result.Value.Channel.Emit( MessageBrokerChannelEvent.Created( result.Value.Channel, client, contextId ) );
+
+            subscription.Emit( MessageBrokerSubscriptionEvent.Created( subscription, contextId ) );
+            client.Emit( MessageBrokerRemoteClientEvent.MessageAccepted( client, request.Header, contextId ) );
+
+            var responseLength = Protocol.PacketHeader.Length + Protocol.SubscribedResponse.Payload;
+            var response = new Protocol.SubscribedResponse( ! result.Value.Exists, result.Value.Channel.Id );
             if ( data.Length < responseLength )
                 data = bufferToken.SetLength( responseLength );
 

@@ -22,6 +22,7 @@ using LfrlAnvil.MessageBroker.Client.Internal;
 
 namespace LfrlAnvil.MessageBroker.Client;
 
+// TODO: rename to MessageBrokerPublisher
 /// <summary>
 /// Represents a message broker channel linked to the client, which allows to publish messages.
 /// </summary>
@@ -39,7 +40,7 @@ public sealed class MessageBrokerLinkedChannel
     }
 
     /// <summary>
-    /// <see cref="MessageBrokerClient"/> instance to which this channel is linked to.
+    /// <see cref="MessageBrokerClient"/> instance that owns this channel.
     /// </summary>
     public MessageBrokerClient Client { get; }
 

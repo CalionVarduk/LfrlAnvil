@@ -101,6 +101,11 @@ project idea:
                 - and client should be able to react accordingly before a disaster happens
             - it's more important to NOT LOSE messages rather than making sure they are unique
 - server should be allowed to send messages to any channel or subscriber
+- \[stage 4\] channel synchronization groups (queues):
+  - each client-channel link can define a custom synchronization group key (string)
+  - each such group acts as a separate synced queue of messages that were received from the client
+  - and are yet to be propagated to subscribers
+  - each channel by default uses a queue with the same name
 
 ### MessageBroker: Max Packet Length & Batching
 

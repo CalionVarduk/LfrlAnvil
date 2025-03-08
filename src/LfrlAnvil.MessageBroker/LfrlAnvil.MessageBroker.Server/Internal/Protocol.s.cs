@@ -301,7 +301,7 @@ internal static class Protocol
         {
             None = 0,
             AlreadyLinked = 1,
-            LinkCancelled = 2
+            LinkingCancelled = 2
         }
 
         internal const int Payload = sizeof( byte );
@@ -401,6 +401,103 @@ internal static class Protocol
         internal UnlinkChannelFailureResponse(Reasons reasons)
         {
             Header = PacketHeader.Create( MessageBrokerClientEndpoint.UnlinkChannelFailureResponse, Payload );
+            Flags = ( byte )reasons;
+        }
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"[{Header}] Flags = {Flags}";
+        }
+
+        internal void Serialize(Memory<byte> target)
+        {
+            Assume.Equals( target.Length, PacketHeader.Length + Payload );
+            var writer = new BinaryContractWriter( target.Span );
+            writer.MoveWrite( Header.EndpointCode );
+            writer.MoveWrite( Header.Payload );
+            writer.Write( Flags );
+        }
+    }
+
+    internal readonly struct SubscribeRequestHeader
+    {
+        internal const int Length = sizeof( byte );
+        internal readonly byte Flags;
+
+        private SubscribeRequestHeader(byte flags)
+        {
+            Flags = flags;
+        }
+
+        internal bool CreateChannelIfNotExists => (Flags & 1) != 0;
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"Flags = {Flags}";
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static SubscribeRequestHeader Parse(ReadOnlyMemory<byte> source)
+        {
+            Assume.Equals( source.Length, Length );
+            var reader = new BinaryContractReader( source.Span );
+            var flags = reader.ReadInt8();
+            return new SubscribeRequestHeader( flags );
+        }
+    }
+
+    internal readonly struct SubscribedResponse
+    {
+        internal const int Payload = sizeof( byte ) + sizeof( uint );
+        internal readonly PacketHeader Header;
+        internal readonly byte Flags;
+        internal readonly int ChannelId;
+
+        internal SubscribedResponse(bool channelCreated, int channelId)
+        {
+            Header = PacketHeader.Create( MessageBrokerClientEndpoint.SubscribedResponse, Payload );
+            Flags = ( byte )(channelCreated ? 1 : 0);
+            ChannelId = channelId;
+        }
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"[{Header}] Flags = {Flags}, ChannelId = {ChannelId}";
+        }
+
+        internal void Serialize(Memory<byte> target)
+        {
+            Assume.Equals( target.Length, PacketHeader.Length + Payload );
+            var writer = new BinaryContractWriter( target.Span );
+            writer.MoveWrite( Header.EndpointCode );
+            writer.MoveWrite( Header.Payload );
+            writer.MoveWrite( Flags );
+            writer.Write( unchecked( ( uint )ChannelId ) );
+        }
+    }
+
+    internal readonly struct SubscribeFailureResponse
+    {
+        [Flags]
+        internal enum Reasons : byte
+        {
+            None = 0,
+            ChannelDoesNotExist = 1,
+            AlreadySubscribed = 2,
+            SubscribingCancelled = 4
+        }
+
+        internal const int Payload = sizeof( byte );
+        internal readonly PacketHeader Header;
+        internal readonly byte Flags;
+
+        internal SubscribeFailureResponse(Reasons reasons)
+        {
+            Header = PacketHeader.Create( MessageBrokerClientEndpoint.SubscribeFailureResponse, Payload );
             Flags = ( byte )reasons;
         }
 

@@ -39,6 +39,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     internal ChannelCollection ChannelCollection;
     internal readonly Func<MessageBrokerRemoteClient, MessageBrokerRemoteClientEventHandler?>? RemoteClientEventHandlerFactory;
     internal readonly Func<MessageBrokerChannel, MessageBrokerChannelEventHandler?>? ChannelEventHandlerFactory;
+    internal readonly Func<MessageBrokerSubscription, MessageBrokerSubscriptionEventHandler?>? SubscriptionEventHandlerFactory;
     internal readonly MessageBrokerRemoteClientStreamDecorator? StreamDecorator;
     internal readonly Func<ITimestampProvider> TimestampsFactory;
 
@@ -67,6 +68,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         _eventHandler = options.EventHandler;
         RemoteClientEventHandlerFactory = options.ClientEventHandlerFactory;
         ChannelEventHandlerFactory = options.ChannelEventHandlerFactory;
+        SubscriptionEventHandlerFactory = options.SubscriptionEventHandlerFactory;
         StreamDecorator = options.StreamDecorator;
         _state = MessageBrokerServerState.Created;
 

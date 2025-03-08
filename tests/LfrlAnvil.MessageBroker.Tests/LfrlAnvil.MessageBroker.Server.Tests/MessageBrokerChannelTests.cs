@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Exceptions;
-using LfrlAnvil.MessageBroker.Server.Internal;
 using LfrlAnvil.MessageBroker.Server.Tests.Helpers;
 
 namespace LfrlAnvil.MessageBroker.Server.Tests;
@@ -13,13 +12,21 @@ public class MessageBrokerChannelTests : TestsBase
     [Fact]
     public async Task Creation_ShouldCreateChannelAndClientLinkCorrectly()
     {
+        var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
         await using var server = new MessageBrokerServer(
             () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetClientEventHandlerFactory( _ => logs.Add )
+                .SetClientEventHandlerFactory(
+                    _ => e =>
+                    {
+                        logs.Add( e );
+                        if ( e.Type == MessageBrokerRemoteClientEventType.MessageSent
+                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.ChannelLinkedResponse )
+                            endSource.Complete();
+                    } )
                 .SetChannelEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -30,8 +37,10 @@ public class MessageBrokerChannelTests : TestsBase
             c =>
             {
                 c.SendLinkChannelRequest( "c" );
-                c.Read( Protocol.PacketHeader.Length + Protocol.ChannelLinkedResponse.Payload );
+                c.ReadChannelLinkedResponse();
             } );
+
+        await endSource.Task;
 
         var remoteClient = server.Clients.TryGetById( 1 );
         var channel = server.Channels.TryGetByName( "c" );
@@ -46,7 +55,9 @@ public class MessageBrokerChannelTests : TestsBase
                         c.State.TestEquals( MessageBrokerChannelState.Running ),
                         c.LinkedClients.Count.TestEquals( 1 ),
                         c.LinkedClients.GetAll().TestSequence( [ (cl, _) => cl.TestRefEquals( remoteClient ) ] ),
-                        c.LinkedClients.TryGetById( 1 ).TestRefEquals( remoteClient ) ) ),
+                        c.LinkedClients.TryGetById( 1 ).TestRefEquals( remoteClient ),
+                        c.Subscriptions.Count.TestEquals( 0 ),
+                        c.Subscriptions.GetAll().TestEmpty() ) ),
                 remoteClient.TestNotNull(
                     c => Assertion.All(
                         "client",
@@ -103,7 +114,7 @@ public class MessageBrokerChannelTests : TestsBase
             c =>
             {
                 c.SendLinkChannelRequest( "c" );
-                c.Read( Protocol.PacketHeader.Length + Protocol.ChannelLinkedResponse.Payload );
+                c.ReadChannelLinkedResponse();
             } );
 
         using var client2 = new ClientMock();
@@ -112,7 +123,7 @@ public class MessageBrokerChannelTests : TestsBase
             c =>
             {
                 c.SendLinkChannelRequest( "c" );
-                c.Read( Protocol.PacketHeader.Length + Protocol.ChannelLinkedResponse.Payload );
+                c.ReadChannelLinkedResponse();
             } );
 
         var remoteClient1 = server.Clients.TryGetById( 1 );
@@ -131,7 +142,9 @@ public class MessageBrokerChannelTests : TestsBase
                         c.LinkedClients.Count.TestEquals( 2 ),
                         c.LinkedClients.GetAll().TestSetEqual( [ remoteClient1, remoteClient2 ] ),
                         c.LinkedClients.TryGetById( 1 ).TestRefEquals( remoteClient1 ),
-                        c.LinkedClients.TryGetById( 2 ).TestRefEquals( remoteClient2 ) ) ),
+                        c.LinkedClients.TryGetById( 2 ).TestRefEquals( remoteClient2 ),
+                        c.Subscriptions.Count.TestEquals( 0 ),
+                        c.Subscriptions.GetAll().TestEmpty() ) ),
                 remoteClient1.TestNotNull(
                     c => Assertion.All(
                         "client1",
@@ -304,7 +317,7 @@ public class MessageBrokerChannelTests : TestsBase
                         "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 6] LinkChannelRequest",
                         "[1::'test'::1] [MessageReceived] [PacketLength: 6] Begin handling LinkChannelRequest",
                         """
-                        [1::'test'::<ROOT>] [MessageRejected] [PacketLength: 6] Encountered an error:
+                        [1::'test'::1] [MessageRejected] [PacketLength: 6] Encountered an error:
                         LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid LinkChannelRequest with payload 1 from client [1] 'test'. Encountered 1 error(s):
                         1. Expected name length to be in [1, 512] range but found 0.
                         """,
@@ -351,7 +364,7 @@ public class MessageBrokerChannelTests : TestsBase
                         "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 519] LinkChannelRequest",
                         "[1::'test'::1] [MessageReceived] [PacketLength: 519] Begin handling LinkChannelRequest",
                         """
-                        [1::'test'::<ROOT>] [MessageRejected] [PacketLength: 519] Encountered an error:
+                        [1::'test'::1] [MessageRejected] [PacketLength: 519] Encountered an error:
                         LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid LinkChannelRequest with payload 514 from client [1] 'test'. Encountered 1 error(s):
                         1. Expected name length to be in [1, 512] range but found 513.
                         """,
@@ -365,6 +378,7 @@ public class MessageBrokerChannelTests : TestsBase
     public async Task LinkRequest_ShouldBeRejected_WhenClientIsAlreadyLinkedToChannel()
     {
         Exception? exception = null;
+        var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
         await using var server = new MessageBrokerServer(
             () => new TimestampProvider(),
@@ -377,6 +391,10 @@ public class MessageBrokerChannelTests : TestsBase
                         logs.Add( e );
                         if ( e.Type == MessageBrokerRemoteClientEventType.MessageRejected )
                             exception = e.Exception;
+
+                        if ( e.Type == MessageBrokerRemoteClientEventType.MessageSent
+                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.LinkChannelFailureResponse )
+                            endSource.Complete();
                     } ) );
 
         await server.StartAsync();
@@ -388,10 +406,12 @@ public class MessageBrokerChannelTests : TestsBase
             c =>
             {
                 c.SendLinkChannelRequest( "c" );
-                c.Read( Protocol.PacketHeader.Length + Protocol.ChannelLinkedResponse.Payload );
+                c.ReadChannelLinkedResponse();
                 c.SendLinkChannelRequest( "c" );
-                c.Read( Protocol.PacketHeader.Length + Protocol.LinkChannelFailureResponse.Payload );
+                c.ReadLinkChannelFailureResponse();
             } );
+
+        await endSource.Task;
 
         var channel = server.Channels.TryGetById( 1 );
 
@@ -435,13 +455,21 @@ public class MessageBrokerChannelTests : TestsBase
     [Fact]
     public async Task Creation_ShouldNotThrow_WhenChannelEventHandlerThrows()
     {
+        var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
         await using var server = new MessageBrokerServer(
             () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetClientEventHandlerFactory( _ => logs.Add )
+                .SetClientEventHandlerFactory(
+                    _ => e =>
+                    {
+                        logs.Add( e );
+                        if ( e.Type == MessageBrokerRemoteClientEventType.MessageSent
+                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.ChannelLinkedResponse )
+                            endSource.Complete();
+                    } )
                 .SetChannelEventHandlerFactory( _ => _ => throw new Exception( "foo" ) ) );
 
         await server.StartAsync();
@@ -453,8 +481,10 @@ public class MessageBrokerChannelTests : TestsBase
             c =>
             {
                 c.SendLinkChannelRequest( "c" );
-                c.Read( Protocol.PacketHeader.Length + Protocol.ChannelLinkedResponse.Payload );
+                c.ReadChannelLinkedResponse();
             } );
+
+        await endSource.Task;
 
         var channel = server.Channels.TryGetById( 1 );
 
@@ -503,7 +533,7 @@ public class MessageBrokerChannelTests : TestsBase
             c =>
             {
                 c.SendLinkChannelRequest( "c" );
-                c.Read( Protocol.PacketHeader.Length + Protocol.ChannelLinkedResponse.Payload );
+                c.ReadChannelLinkedResponse();
             } );
 
         var remoteClient = server.Clients.TryGetById( 1 );
@@ -550,7 +580,7 @@ public class MessageBrokerChannelTests : TestsBase
             c =>
             {
                 c.SendLinkChannelRequest( "c" );
-                c.Read( Protocol.PacketHeader.Length + Protocol.ChannelLinkedResponse.Payload );
+                c.ReadChannelLinkedResponse();
             } );
 
         var remoteClient = server.Clients.TryGetById( 1 );
@@ -599,7 +629,7 @@ public class MessageBrokerChannelTests : TestsBase
             c =>
             {
                 c.SendLinkChannelRequest( "c" );
-                c.Read( Protocol.PacketHeader.Length + Protocol.ChannelLinkedResponse.Payload );
+                c.ReadChannelLinkedResponse();
             } );
 
         using var client2 = new ClientMock();
@@ -608,7 +638,7 @@ public class MessageBrokerChannelTests : TestsBase
             c =>
             {
                 c.SendLinkChannelRequest( "c" );
-                c.Read( Protocol.PacketHeader.Length + Protocol.ChannelLinkedResponse.Payload );
+                c.ReadChannelLinkedResponse();
             } );
 
         var remoteClient1 = server.Clients.TryGetById( 1 );
@@ -647,13 +677,21 @@ public class MessageBrokerChannelTests : TestsBase
     [Fact]
     public async Task Unlink_ShouldUnlinkLastClientFromChannelAndRemoveIt()
     {
+        var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
         await using var server = new MessageBrokerServer(
             () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetClientEventHandlerFactory( _ => logs.Add )
+                .SetClientEventHandlerFactory(
+                    _ => e =>
+                    {
+                        logs.Add( e );
+                        if ( e.Type == MessageBrokerRemoteClientEventType.MessageSent
+                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.ChannelUnlinkedResponse )
+                            endSource.Complete();
+                    } )
                 .SetChannelEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -664,7 +702,7 @@ public class MessageBrokerChannelTests : TestsBase
             c =>
             {
                 c.SendLinkChannelRequest( "c" );
-                c.Read( Protocol.PacketHeader.Length + Protocol.ChannelLinkedResponse.Payload );
+                c.ReadChannelLinkedResponse();
             } );
 
         var remoteClient = server.Clients.TryGetById( 1 );
@@ -673,8 +711,10 @@ public class MessageBrokerChannelTests : TestsBase
             c =>
             {
                 c.SendUnlinkChannelRequest( 1 );
-                c.Read( Protocol.PacketHeader.Length + Protocol.ChannelUnlinkedResponse.Payload );
+                c.ReadChannelUnlinkedResponse();
             } );
+
+        await endSource.Task;
 
         Assertion.All(
                 channel.TestNotNull(
@@ -740,7 +780,7 @@ public class MessageBrokerChannelTests : TestsBase
             c =>
             {
                 c.SendLinkChannelRequest( "c" );
-                c.Read( Protocol.PacketHeader.Length + Protocol.ChannelLinkedResponse.Payload );
+                c.ReadChannelLinkedResponse();
             } );
 
         using var client2 = new ClientMock();
@@ -749,7 +789,7 @@ public class MessageBrokerChannelTests : TestsBase
             c =>
             {
                 c.SendLinkChannelRequest( "c" );
-                c.Read( Protocol.PacketHeader.Length + Protocol.ChannelLinkedResponse.Payload );
+                c.ReadChannelLinkedResponse();
             } );
 
         var remoteClient1 = server.Clients.TryGetById( 1 );
@@ -760,7 +800,7 @@ public class MessageBrokerChannelTests : TestsBase
             c =>
             {
                 c.SendUnlinkChannelRequest( 1 );
-                c.Read( Protocol.PacketHeader.Length + Protocol.ChannelUnlinkedResponse.Payload );
+                c.ReadChannelUnlinkedResponse();
             } );
 
         await endSource.Task;
@@ -822,6 +862,88 @@ public class MessageBrokerChannelTests : TestsBase
     }
 
     [Fact]
+    public async Task Unlink_ShouldUnlinkLastClientFromChannelWithSubscriptionAndNotRemoveIt()
+    {
+        var endSource = new SafeTaskCompletionSource();
+        var logs = new EventLogger();
+        await using var server = new MessageBrokerServer(
+            () => new TimestampProvider(),
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetClientEventHandlerFactory(
+                    _ => e =>
+                    {
+                        logs.Add( e );
+                        if ( e.Type == MessageBrokerRemoteClientEventType.MessageSent
+                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.ChannelUnlinkedResponse )
+                            endSource.Complete();
+                    } )
+                .SetChannelEventHandlerFactory( _ => logs.Add ) );
+
+        await server.StartAsync();
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server );
+        await client.GetTask(
+            c =>
+            {
+                c.SendLinkChannelRequest( "c" );
+                c.ReadChannelLinkedResponse();
+                c.SendSubscribeRequest( "c", createChannelIfNotExists: false );
+                c.ReadSubscribedResponse();
+            } );
+
+        var remoteClient = server.Clients.TryGetById( 1 );
+        var channel = server.Channels.TryGetByName( "c" );
+        var subscription = channel?.Subscriptions.TryGetByClientId( 1 );
+        await client.GetTask(
+            c =>
+            {
+                c.SendUnlinkChannelRequest( 1 );
+                c.ReadChannelUnlinkedResponse();
+            } );
+
+        await endSource.Task;
+
+        Assertion.All(
+                channel.TestNotNull(
+                    c => Assertion.All(
+                        "channel",
+                        c.State.TestEquals( MessageBrokerChannelState.Running ),
+                        c.LinkedClients.Count.TestEquals( 0 ),
+                        c.LinkedClients.GetAll().TestEmpty(),
+                        c.Subscriptions.Count.TestEquals( 1 ),
+                        c.Subscriptions.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( subscription ) ] ) ) ),
+                remoteClient.TestNotNull(
+                    c => Assertion.All(
+                        "client",
+                        c.LinkedChannels.Count.TestEquals( 0 ),
+                        c.LinkedChannels.GetAll().TestEmpty(),
+                        c.Subscriptions.Count.TestEquals( 1 ),
+                        c.Subscriptions.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( subscription ) ] ) ) ),
+                subscription.TestNotNull( s => s.State.TestEquals( MessageBrokerSubscriptionState.Running ) ),
+                server.Channels.Count.TestEquals( 1 ),
+                logs.GetAllClient()
+                    .TestContainsSequence(
+                    [
+                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 9] UnlinkChannelRequest",
+                        "[1::'test'::3] [MessageReceived] [PacketLength: 9] Begin handling UnlinkChannelRequest",
+                        "[1::'test'::3] [MessageAccepted] [PacketLength: 9] UnlinkChannelRequest",
+                        "[1::'test'::3] [SendingMessage] [PacketLength: 6] ChannelUnlinkedResponse",
+                        "[1::'test'::3] [MessageSent] [PacketLength: 6] ChannelUnlinkedResponse"
+                    ] ),
+                logs.GetAllChannel()
+                    .TestSequence(
+                    [
+                        "[1::'c'::1] [Created] by client [1::'test']",
+                        "[1::'c'::1] [Linked] to client [1::'test']",
+                        "[1::'c'::3] [Unlinked] from client [1::'test']"
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
     public async Task Unlink_ShouldDisposeClient_WhenClientSendsInvalidPayload()
     {
         var endSource = new SafeTaskCompletionSource();
@@ -848,7 +970,7 @@ public class MessageBrokerChannelTests : TestsBase
             c =>
             {
                 c.SendLinkChannelRequest( "c" );
-                c.Read( Protocol.PacketHeader.Length + Protocol.ChannelLinkedResponse.Payload );
+                c.ReadChannelLinkedResponse();
             } );
 
         var remoteClient = server.Clients.TryGetById( 1 );
@@ -890,6 +1012,7 @@ public class MessageBrokerChannelTests : TestsBase
     public async Task Unlink_ShouldBeRejected_WhenChannelDoesNotExist()
     {
         Exception? exception = null;
+        var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
         await using var server = new MessageBrokerServer(
             () => new TimestampProvider(),
@@ -903,6 +1026,10 @@ public class MessageBrokerChannelTests : TestsBase
                         if ( e.Type == MessageBrokerRemoteClientEventType.MessageRejected
                             && e.GetServerEndpoint() == MessageBrokerServerEndpoint.UnlinkChannelRequest )
                             exception = e.Exception;
+
+                        if ( e.Type == MessageBrokerRemoteClientEventType.MessageSent
+                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.UnlinkChannelFailureResponse )
+                            endSource.Complete();
                     } ) );
 
         await server.StartAsync();
@@ -915,8 +1042,10 @@ public class MessageBrokerChannelTests : TestsBase
             c =>
             {
                 c.SendUnlinkChannelRequest( 1 );
-                c.Read( Protocol.PacketHeader.Length + Protocol.UnlinkChannelFailureResponse.Payload );
+                c.ReadUnlinkChannelFailureResponse();
             } );
+
+        await endSource.Task;
 
         Assertion.All(
                 exception.TestType()
@@ -944,6 +1073,7 @@ public class MessageBrokerChannelTests : TestsBase
     public async Task Unlink_ShouldBeRejected_WhenClientIsNotLinkedToChannel()
     {
         Exception? exception = null;
+        var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
         await using var server = new MessageBrokerServer(
             () => new TimestampProvider(),
@@ -957,6 +1087,10 @@ public class MessageBrokerChannelTests : TestsBase
                         if ( e.Type == MessageBrokerRemoteClientEventType.MessageRejected
                             && e.GetServerEndpoint() == MessageBrokerServerEndpoint.UnlinkChannelRequest )
                             exception = e.Exception;
+
+                        if ( e.Type == MessageBrokerRemoteClientEventType.MessageSent
+                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.UnlinkChannelFailureResponse )
+                            endSource.Complete();
                     } )
                 .SetChannelEventHandlerFactory( _ => logs.Add ) );
 
@@ -968,7 +1102,7 @@ public class MessageBrokerChannelTests : TestsBase
             c =>
             {
                 c.SendLinkChannelRequest( "c" );
-                c.Read( Protocol.PacketHeader.Length + Protocol.UnlinkChannelFailureResponse.Payload );
+                c.ReadUnlinkChannelFailureResponse();
             } );
 
         using var client2 = new ClientMock();
@@ -977,8 +1111,10 @@ public class MessageBrokerChannelTests : TestsBase
             c =>
             {
                 c.SendUnlinkChannelRequest( 1 );
-                c.Read( Protocol.PacketHeader.Length + Protocol.UnlinkChannelFailureResponse.Payload );
+                c.ReadUnlinkChannelFailureResponse();
             } );
+
+        await endSource.Task;
 
         var channel = server.Channels.TryGetByName( "c" );
         var remoteClient1 = server.Clients.TryGetById( 1 );

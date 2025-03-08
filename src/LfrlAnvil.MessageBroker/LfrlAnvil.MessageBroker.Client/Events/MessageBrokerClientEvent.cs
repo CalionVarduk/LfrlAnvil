@@ -207,9 +207,16 @@ public readonly struct MessageBrokerClientEvent
                             .Append( Client.PingInterval )
                             .Append( ')' );
                     }
-                    else if ( GetClientEndpoint() == MessageBrokerClientEndpoint.ChannelLinkedResponse
-                        && Data is MessageBrokerLinkedChannel channel )
-                        builder.Append( " (Id = " ).Append( channel.Id ).Append( ')' );
+                    else if ( GetClientEndpoint() == MessageBrokerClientEndpoint.ChannelLinkedResponse )
+                    {
+                        if ( Data is MessageBrokerLinkedChannel channel )
+                            builder.Append( " (Id = " ).Append( channel.Id ).Append( ')' );
+                    }
+                    else if ( GetClientEndpoint() == MessageBrokerClientEndpoint.SubscribedResponse )
+                    {
+                        if ( Data is MessageBrokerListener subscription )
+                            builder.Append( " (ChannelId = " ).Append( subscription.ChannelId ).Append( ')' );
+                    }
 
                     break;
 
@@ -229,6 +236,11 @@ public readonly struct MessageBrokerClientEvent
                                 .Append( ", ChannelName = '" )
                                 .Append( channel.Name )
                                 .Append( "')" );
+                    }
+                    else if ( GetServerEndpoint() == MessageBrokerServerEndpoint.SubscribeRequest )
+                    {
+                        if ( Data is string channelName )
+                            builder.Append( " (ChannelName = '" ).Append( channelName ).Append( "')" );
                     }
 
                     break;

@@ -281,10 +281,10 @@ internal static class Protocol
         internal readonly byte Flags;
         internal readonly EncodeableText ChannelName;
 
-        internal LinkChannelRequest(string name)
+        internal LinkChannelRequest(string channelName)
         {
             Flags = 0;
-            ChannelName = TextEncoding.Prepare( name ).GetValueOrThrow();
+            ChannelName = TextEncoding.Prepare( channelName ).GetValueOrThrow();
             Header = PacketHeader.Create(
                 MessageBrokerServerEndpoint.LinkChannelRequest,
                 sizeof( byte ) + ( uint )ChannelName.ByteCount );
@@ -360,7 +360,7 @@ internal static class Protocol
         }
 
         internal bool ClientAlreadyLinkedToChannel => (Flags & 1) != 0;
-        internal bool LinkCancelled => (Flags & 2) != 0;
+        internal bool LinkingCancelled => (Flags & 2) != 0;
 
         [Pure]
         public override string ToString()
@@ -387,8 +387,8 @@ internal static class Protocol
             if ( ClientAlreadyLinkedToChannel )
                 result = result.Extend( Resources.ClientAlreadyLinkedToChannel( channelName ) );
 
-            if ( LinkCancelled )
-                result = result.Extend( Resources.ClientChannelLinkCancelled( channelName ) );
+            if ( LinkingCancelled )
+                result = result.Extend( Resources.ClientChannelLinkingCancelled( channelName ) );
 
             return result;
         }
@@ -494,6 +494,127 @@ internal static class Protocol
         internal Chain<string> StringifyErrors(MessageBrokerLinkedChannel channel)
         {
             return ClientNotLinked ? Chain.Create( Resources.ClientIsNotLinkedToChannel( channel.Id, channel.Name ) ) : Chain<string>.Empty;
+        }
+    }
+
+    internal readonly struct SubscribeRequest
+    {
+        internal readonly PacketHeader Header;
+        internal readonly byte Flags;
+        internal readonly EncodeableText ChannelName;
+
+        internal SubscribeRequest(string channelName, bool createChannelIfNotExists)
+        {
+            Flags = ( byte )(createChannelIfNotExists ? 1 : 0);
+            ChannelName = TextEncoding.Prepare( channelName ).GetValueOrThrow();
+            Header = PacketHeader.Create( MessageBrokerServerEndpoint.SubscribeRequest, sizeof( byte ) + ( uint )ChannelName.ByteCount );
+        }
+
+        internal int Length => PacketHeader.Length + unchecked( ( int )Header.Payload );
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"[{Header}] Flags = {Flags}, ChannelName = ({ChannelName})";
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal void Serialize(Memory<byte> target, bool reverseEndianness)
+        {
+            Assume.Equals( target.Length, Length );
+            var writer = new BinaryContractWriter( target.Span );
+            writer.MoveWrite( Header.EndpointCode );
+            writer.MoveWrite( reverseEndianness ? BinaryPrimitives.ReverseEndianness( Header.Payload ) : Header.Payload );
+            writer.MoveWrite( Flags );
+            ChannelName.Encode( writer.GetSpan( ChannelName.ByteCount ) ).ThrowIfError();
+        }
+    }
+
+    internal readonly struct SubscribedResponse
+    {
+        internal const int Length = sizeof( byte ) + sizeof( uint );
+        internal readonly byte Flags;
+        internal readonly int ChannelId;
+
+        private SubscribedResponse(byte flags, int channelId)
+        {
+            Flags = flags;
+            ChannelId = channelId;
+        }
+
+        internal bool ChannelCreated => (Flags & 1) != 0;
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"Flags = {Flags}, ChannelId = {ChannelId}";
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static SubscribedResponse Parse(ReadOnlyMemory<byte> source, bool reverseEndianness)
+        {
+            Assume.Equals( source.Length, Length );
+            var reader = new BinaryContractReader( source.Span );
+            var flags = reader.MoveReadInt8();
+            var id = unchecked( ( int )reader.ReadInt32() );
+            return new SubscribedResponse( flags, reverseEndianness ? BinaryPrimitives.ReverseEndianness( id ) : id );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal Chain<string> StringifyErrors()
+        {
+            return ChannelId > 0 ? Chain<string>.Empty : Chain.Create( Resources.ChannelIdIsNotPositive( ChannelId ) );
+        }
+    }
+
+    internal readonly struct SubscribeFailureResponse
+    {
+        internal const int Length = sizeof( byte );
+        internal readonly byte Flags;
+
+        private SubscribeFailureResponse(byte flags)
+        {
+            Flags = flags;
+        }
+
+        internal bool ChannelDoesNotExist => (Flags & 1) != 0;
+        internal bool ClientAlreadySubscribedToChannel => (Flags & 2) != 0;
+        internal bool SubscribingCancelled => (Flags & 4) != 0;
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"Flags = {Flags}";
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static SubscribeFailureResponse Parse(ReadOnlyMemory<byte> source)
+        {
+            Assume.Equals( source.Length, Length );
+            var reader = new BinaryContractReader( source.Span );
+            var flags = reader.ReadInt8();
+            return new SubscribeFailureResponse( flags );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal Chain<string> StringifyErrors(string channelName)
+        {
+            var result = Chain<string>.Empty;
+
+            if ( ChannelDoesNotExist )
+                result = result.Extend( Resources.ChannelDoesNotExist( channelName ) );
+
+            if ( ClientAlreadySubscribedToChannel )
+                result = result.Extend( Resources.ClientAlreadySubscribedToChannel( channelName ) );
+
+            if ( SubscribingCancelled )
+                result = result.Extend( Resources.ClientSubscribingCancelled( channelName ) );
+
+            return result;
         }
     }
 

@@ -14,8 +14,7 @@ public partial class MessageBrokerClientTests
         [Fact]
         public async Task PingScheduler_ShouldSendPingAndReceivePingFromServerOnSchedule()
         {
-            var pingResponseCount = 0;
-            var endSource = new SafeTaskCompletionSource();
+            var endSource = new SafeTaskCompletionSource( completionCount: 2 );
             var logs = new EventLogger();
             using var server = new ServerMock();
             var remoteEndPoint = server.Start();
@@ -32,8 +31,7 @@ public partial class MessageBrokerClientTests
                         {
                             logs.Add( e );
                             if ( e.Type == MessageBrokerClientEventType.MessageAccepted
-                                && e.GetClientEndpoint() == MessageBrokerClientEndpoint.PingResponse
-                                && ++pingResponseCount == 2 )
+                                && e.GetClientEndpoint() == MessageBrokerClientEndpoint.PingResponse )
                                 endSource.Complete();
                         } ) );
 
@@ -42,10 +40,10 @@ public partial class MessageBrokerClientTests
                 s =>
                 {
                     Thread.Sleep( 150 );
-                    s.Read( Protocol.PacketHeader.Length );
+                    s.ReadPingRequest();
                     s.SendPing();
                     Thread.Sleep( 150 );
-                    s.Read( Protocol.PacketHeader.Length );
+                    s.ReadPingRequest();
                     s.SendPing();
                 } );
 
@@ -110,7 +108,7 @@ public partial class MessageBrokerClientTests
                 s =>
                 {
                     Thread.Sleep( 150 );
-                    s.Read( Protocol.PacketHeader.Length );
+                    s.ReadPingRequest();
                 } );
 
             await serverTask;
@@ -166,7 +164,7 @@ public partial class MessageBrokerClientTests
                 s =>
                 {
                     Thread.Sleep( 150 );
-                    s.Read( Protocol.PacketHeader.Length );
+                    s.ReadPingRequest();
                 } );
 
             await serverTask;
@@ -220,7 +218,7 @@ public partial class MessageBrokerClientTests
                 s =>
                 {
                     Thread.Sleep( 150 );
-                    s.Read( Protocol.PacketHeader.Length );
+                    s.ReadPingRequest();
                     s.Send( [ 0, 0, 0, 0, 0 ] );
                 } );
 
@@ -276,7 +274,7 @@ public partial class MessageBrokerClientTests
                 s =>
                 {
                     Thread.Sleep( 150 );
-                    s.Read( Protocol.PacketHeader.Length );
+                    s.ReadPingRequest();
                     s.SendPing( endiannessPayload: 1 );
                 } );
 

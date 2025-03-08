@@ -43,6 +43,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     internal MessageContextQueue MessageContextQueue;
     internal PingScheduler PingScheduler;
     internal LinkedChannelCollection LinkedChannelCollection;
+    internal ListenerCollection ListenerCollection;
 
     private readonly MessageBrokerClientEventHandler? _eventHandler;
     private readonly ITimestampProvider _timestamps;
@@ -91,6 +92,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         MessageContextQueue = MessageContextQueue.Create();
         PingScheduler = PingScheduler.Create();
         LinkedChannelCollection = LinkedChannelCollection.Create();
+        ListenerCollection = ListenerCollection.Create();
     }
 
     /// <summary>
@@ -171,6 +173,11 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     /// </summary>
     public MessageBrokerLinkedChannelCollection Channels => new MessageBrokerLinkedChannelCollection( this );
 
+    /// <summary>
+    /// Collection of <see cref="MessageBrokerListener"/> instances.
+    /// </summary>
+    public MessageBrokerListenerCollection Listeners => new MessageBrokerListenerCollection( this );
+
     internal bool ShouldCancel => _state >= MessageBrokerClientState.Disposing;
 
     /// <inheritdoc />
@@ -200,6 +207,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         using ( AcquireLock() )
         {
             LinkedChannelCollection.Clear();
+            ListenerCollection.Clear();
             synchronousSchedulerTask = SynchronousScheduler.DiscardUnderlyingTask();
             pingSchedulerTask = PingScheduler.DiscardUnderlyingTask();
             messageListenerTask = MessageListener.DiscardUnderlyingTask();

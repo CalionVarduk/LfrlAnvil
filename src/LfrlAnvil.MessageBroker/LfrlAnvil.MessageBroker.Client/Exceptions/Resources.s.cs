@@ -82,6 +82,13 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string SubscriberIdIsNotPositive(int received)
+    {
+        return $"Expected subscriber ID to be greater than 0 but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string ClientAlreadyLinkedToChannel(string channelName)
     {
         return $"Client is already linked to channel '{channelName}'.";
@@ -89,9 +96,30 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string ClientChannelLinkCancelled(string channelName)
+    internal static string ClientChannelLinkingCancelled(string channelName)
     {
         return $"Linking client to channel '{channelName}' has been cancelled by the server.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string ChannelDoesNotExist(string channelName)
+    {
+        return $"Channel '{channelName}' does not exist.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string ClientAlreadySubscribedToChannel(string channelName)
+    {
+        return $"Client is already subscribed to channel '{channelName}'.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string ClientSubscribingCancelled(string channelName)
+    {
+        return $"Subscribing client to channel '{channelName}' has been cancelled by the server.";
     }
 
     [Pure]

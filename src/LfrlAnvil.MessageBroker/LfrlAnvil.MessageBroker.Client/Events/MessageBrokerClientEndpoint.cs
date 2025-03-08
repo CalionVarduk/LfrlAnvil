@@ -52,5 +52,15 @@ public enum MessageBrokerClientEndpoint : byte
     /// <summary>
     /// Represents server's response to client's invalid unlink channel request.
     /// </summary>
-    UnlinkChannelFailureResponse = 14
+    UnlinkChannelFailureResponse = 14,
+
+    /// <summary>
+    /// Represents server's response to client's valid subscription request.
+    /// </summary>
+    SubscribedResponse = 16,
+
+    /// <summary>
+    /// Represents server's response to client's invalid subscription request.
+    /// </summary>
+    SubscribeFailureResponse = 18
 }

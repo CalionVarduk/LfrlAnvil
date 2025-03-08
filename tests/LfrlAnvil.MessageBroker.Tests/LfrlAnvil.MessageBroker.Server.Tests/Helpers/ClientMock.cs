@@ -39,6 +39,51 @@ internal sealed class ClientMock : IDisposable
         }
     }
 
+    internal byte[] ReadHandshakeAcceptedResponse()
+    {
+        return Read( Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload );
+    }
+
+    internal byte[] ReadHandshakeRejectedResponse()
+    {
+        return Read( Protocol.PacketHeader.Length + Protocol.HandshakeRejectedResponse.Payload );
+    }
+
+    internal byte[] ReadPingResponse()
+    {
+        return Read( Protocol.PacketHeader.Length );
+    }
+
+    internal byte[] ReadChannelLinkedResponse()
+    {
+        return Read( Protocol.PacketHeader.Length + Protocol.ChannelLinkedResponse.Payload );
+    }
+
+    internal byte[] ReadLinkChannelFailureResponse()
+    {
+        return Read( Protocol.PacketHeader.Length + Protocol.LinkChannelFailureResponse.Payload );
+    }
+
+    internal byte[] ReadChannelUnlinkedResponse()
+    {
+        return Read( Protocol.PacketHeader.Length + Protocol.ChannelUnlinkedResponse.Payload );
+    }
+
+    internal byte[] ReadUnlinkChannelFailureResponse()
+    {
+        return Read( Protocol.PacketHeader.Length + Protocol.UnlinkChannelFailureResponse.Payload );
+    }
+
+    internal byte[] ReadSubscribedResponse()
+    {
+        return Read( Protocol.PacketHeader.Length + Protocol.SubscribedResponse.Payload );
+    }
+
+    internal byte[] ReadSubscribeFailureResponse()
+    {
+        return Read( Protocol.PacketHeader.Length + Protocol.SubscribeFailureResponse.Payload );
+    }
+
     internal byte[] Read(int length)
     {
         lock ( _client )
@@ -115,6 +160,18 @@ internal sealed class ClientMock : IDisposable
         Send( buffer );
     }
 
+    internal void SendSubscribeRequest(string channelName, bool createChannelIfNotExists, uint? payload = null)
+    {
+        var preparedName = EncodeableText.Create( TextEncoding.Instance, channelName ).GetValueOrThrow();
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.SubscribeRequestHeader.Length + preparedName.ByteCount];
+        var writer = new BinaryContractWriter( buffer );
+        writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.SubscribeRequest );
+        writer.MoveWrite( payload ?? ( uint )(Protocol.SubscribeRequestHeader.Length + preparedName.ByteCount) );
+        writer.MoveWrite( ( byte )(createChannelIfNotExists ? 1 : 0) );
+        preparedName.Encode( writer.GetSpan( preparedName.ByteCount ) ).ThrowIfError();
+        Send( buffer );
+    }
+
     internal void Send(byte[] data)
     {
         lock ( _client )
@@ -134,7 +191,7 @@ internal sealed class ClientMock : IDisposable
             {
                 Connect( server.LocalEndPoint );
                 SendHandshake( name ?? "test", messageTimeout ?? Duration.FromSeconds( 1 ), pingInterval ?? Duration.FromSeconds( 10 ) );
-                Read( Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload );
+                ReadHandshakeAcceptedResponse();
                 SendConfirmHandshakeResponse();
             } );
     }

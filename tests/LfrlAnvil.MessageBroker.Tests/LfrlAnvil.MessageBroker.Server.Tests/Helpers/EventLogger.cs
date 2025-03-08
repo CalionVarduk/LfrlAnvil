@@ -9,6 +9,7 @@ public sealed class EventLogger
     private readonly List<string> _serverEvents = new List<string>();
     private readonly List<string> _clientEvents = new List<string>();
     private readonly List<string> _channelEvents = new List<string>();
+    private readonly List<string> _subscriptionEvents = new List<string>();
 
     public void Add(MessageBrokerServerEvent e)
     {
@@ -26,6 +27,12 @@ public sealed class EventLogger
     {
         lock ( _channelEvents )
             _channelEvents.Add( e.ToString() );
+    }
+
+    public void Add(MessageBrokerSubscriptionEvent e)
+    {
+        lock ( _subscriptionEvents )
+            _subscriptionEvents.Add( e.ToString() );
     }
 
     [Pure]
@@ -47,5 +54,12 @@ public sealed class EventLogger
     {
         lock ( _channelEvents )
             return _channelEvents.ToArray();
+    }
+
+    [Pure]
+    public string[] GetAllSubscription()
+    {
+        lock ( _subscriptionEvents )
+            return _subscriptionEvents.ToArray();
     }
 }

@@ -147,4 +147,26 @@ internal static class Resources
     {
         return $"Message broker client [{clientId}] '{clientName}' could not be unlinked from non-existing channel with ID {channelId}.";
     }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string FailedToCreateSubscription(
+        int clientId,
+        string clientName,
+        int? channelId,
+        string channelName,
+        Protocol.SubscribeFailureResponse.Reasons reason)
+    {
+        Assume.NotEquals( reason, Protocol.SubscribeFailureResponse.Reasons.None );
+        var reasonText = reason switch
+        {
+            Protocol.SubscribeFailureResponse.Reasons.ChannelDoesNotExist => "channel does not exist",
+            Protocol.SubscribeFailureResponse.Reasons.AlreadySubscribed => "it is already subscribed to the channel",
+            _ => "the subscription process was cancelled"
+        };
+
+        var channelIdText = channelId is null ? string.Empty : $"[{channelId.Value}] ";
+        return
+            $"Message broker client [{clientId}] '{clientName}' failed to create a subscription to channel {channelIdText}'{channelName}' because {reasonText}.";
+    }
 }

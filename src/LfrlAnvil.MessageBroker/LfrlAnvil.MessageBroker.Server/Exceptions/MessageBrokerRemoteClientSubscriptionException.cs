@@ -1,0 +1,57 @@
+﻿// Copyright 2025 Łukasz Furlepa
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+using System;
+
+namespace LfrlAnvil.MessageBroker.Server.Exceptions;
+
+/// <summary>
+/// Represents an error related to a message broker subscription.
+/// </summary>
+public sealed class MessageBrokerRemoteClientSubscriptionException : InvalidOperationException
+{
+    /// <summary>
+    /// Creates a new <see cref="MessageBrokerRemoteClientSubscriptionException"/> instance.
+    /// </summary>
+    /// <param name="client"><see cref="MessageBrokerServer"/> instance that encountered this error.</param>
+    /// <param name="channel">Optional <see cref="MessageBrokerChannel"/> instance that encountered this error.</param>
+    /// <param name="subscription">Optional <see cref="MessageBrokerSubscription"/> instance that encountered this error.</param>
+    /// <param name="message">Underlying error message.</param>
+    public MessageBrokerRemoteClientSubscriptionException(
+        MessageBrokerRemoteClient client,
+        MessageBrokerChannel? channel,
+        MessageBrokerSubscription? subscription,
+        string message)
+        : base( message )
+    {
+        Client = client;
+        Channel = channel;
+        Subscription = subscription;
+    }
+
+    /// <summary>
+    /// <see cref="MessageBrokerServer"/> instance that encountered this error.
+    /// </summary>
+    public MessageBrokerRemoteClient Client { get; }
+
+    /// <summary>
+    /// Optional <see cref="MessageBrokerChannel"/> instance that encountered this error.
+    /// </summary>
+    public MessageBrokerChannel? Channel { get; }
+
+    /// <summary>
+    /// Optional <see cref="MessageBrokerSubscription"/> instance that encountered this error.
+    /// </summary>
+    public MessageBrokerSubscription? Subscription { get; }
+}

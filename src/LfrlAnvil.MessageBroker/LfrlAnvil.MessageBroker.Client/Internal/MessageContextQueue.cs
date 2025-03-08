@@ -154,8 +154,7 @@ internal struct MessageContextQueue
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal PendingResponseSource GetNextPendingResponse()
     {
-        ref var result = ref _pendingResponses.First();
-        return Unsafe.IsNullRef( ref result ) ? default : result;
+        return _pendingResponses.IsEmpty ? default : _pendingResponses.First();
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

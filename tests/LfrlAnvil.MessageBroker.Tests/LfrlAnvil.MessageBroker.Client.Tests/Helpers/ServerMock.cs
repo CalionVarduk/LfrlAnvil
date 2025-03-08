@@ -49,6 +49,21 @@ internal sealed class ServerMock : IDisposable
         }
     }
 
+    internal byte[] ReadConfirmHandshakeResponse()
+    {
+        return Read( Protocol.PacketHeader.Length );
+    }
+
+    internal byte[] ReadPingRequest()
+    {
+        return Read( Protocol.PacketHeader.Length );
+    }
+
+    internal byte[] ReadUnlinkChannelRequest()
+    {
+        return Read( Protocol.UnlinkChannelRequest.Length );
+    }
+
     internal byte[] Read(int length)
     {
         lock ( _listener )
@@ -134,6 +149,33 @@ internal sealed class ServerMock : IDisposable
         Send( buffer );
     }
 
+    internal void SendSubscribedResponse(bool channelCreated, int channelId, uint? payload = null)
+    {
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.SubscribedResponse.Length];
+        var writer = new BinaryContractWriter( buffer );
+        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.SubscribedResponse );
+        writer.MoveWrite( payload ?? Protocol.SubscribedResponse.Length );
+        writer.MoveWrite( ( byte )(channelCreated ? 1 : 0) );
+        writer.Write( ( uint )channelId );
+        Send( buffer );
+    }
+
+    internal void SendSubscribeFailureResponse(
+        bool channelDoesNotExist,
+        bool clientAlreadySubscribedToChannel,
+        bool subscribingCancelled,
+        uint? payload = null)
+    {
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.SubscribeFailureResponse.Length];
+        var writer = new BinaryContractWriter( buffer );
+        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.SubscribeFailureResponse );
+        writer.MoveWrite( payload ?? Protocol.SubscribeFailureResponse.Length );
+        writer.Write(
+            ( byte )((channelDoesNotExist ? 1 : 0) | (clientAlreadySubscribedToChannel ? 2 : 0) | (subscribingCancelled ? 4 : 0)) );
+
+        Send( buffer );
+    }
+
     internal void Send(byte[] data)
     {
         lock ( _listener )
@@ -156,7 +198,7 @@ internal sealed class ServerMock : IDisposable
                 WaitForClient();
                 Read( handshakeRequest.Length );
                 SendHandshakeAccepted( id ?? 1, messageTimeout ?? Duration.FromSeconds( 1 ), pingInterval ?? Duration.FromSeconds( 10 ) );
-                Read( Protocol.PacketHeader.Length );
+                ReadConfirmHandshakeResponse();
             } );
 
         await client.StartAsync();

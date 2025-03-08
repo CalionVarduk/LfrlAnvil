@@ -3,7 +3,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.MessageBroker.Server.Events;
-using LfrlAnvil.MessageBroker.Server.Internal;
 using LfrlAnvil.MessageBroker.Server.Tests.Helpers;
 
 namespace LfrlAnvil.MessageBroker.Server.Tests;
@@ -15,8 +14,7 @@ public partial class MessageBrokerRemoteClientTests
         [Fact]
         public async Task MessageListener_ShouldReceivePingAndSendPingFromClientOnSchedule()
         {
-            var pingResponseCount = 0;
-            var endSource = new SafeTaskCompletionSource();
+            var endSource = new SafeTaskCompletionSource( completionCount: 2 );
             var logs = new EventLogger();
             var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
@@ -29,8 +27,8 @@ public partial class MessageBrokerRemoteClientTests
                         {
                             logs.Add( e );
                             if ( e.Type == MessageBrokerRemoteClientEventType.MessageSent
-                                && e.GetClientEndpoint() == MessageBrokerClientEndpoint.PingResponse
-                                && ++pingResponseCount == 2 ) endSource.Complete();
+                                && e.GetClientEndpoint() == MessageBrokerClientEndpoint.PingResponse )
+                                endSource.Complete();
                         } ) );
 
             await server.StartAsync();
@@ -42,10 +40,10 @@ public partial class MessageBrokerRemoteClientTests
                 {
                     Thread.Sleep( 150 );
                     c.SendPing();
-                    c.Read( Protocol.PacketHeader.Length );
+                    c.ReadPingResponse();
                     Thread.Sleep( 150 );
                     c.SendPing();
-                    c.Read( Protocol.PacketHeader.Length );
+                    c.ReadPingResponse();
                 } );
 
             var remoteClient = server.Clients.TryGetByName( "test" );

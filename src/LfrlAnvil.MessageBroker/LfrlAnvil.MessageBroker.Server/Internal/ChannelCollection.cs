@@ -81,39 +81,54 @@ internal struct ChannelCollection
     internal readonly record struct RegistrationResult(MessageBrokerChannel Channel, bool Exists);
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static Result<RegistrationResult> Register(MessageBrokerServer server, string name)
+    internal static RegistrationResult Register(MessageBrokerServer server, string name)
     {
-        try
+        ref var channel = ref CollectionsMarshal.GetValueRefOrAddDefault( server.ChannelCollection._byName, name, out var exists )!;
+        if ( ! exists )
         {
-            using ( server.AcquireLock() )
+            ref var byId = ref server.ChannelCollection._byId.AddDefault( out var index );
+            try
             {
-                if ( server.ShouldCancel )
-                    return server.DisposedException();
-
-                ref var channel = ref CollectionsMarshal.GetValueRefOrAddDefault( server.ChannelCollection._byName, name, out var exists )!;
-                if ( ! exists )
-                {
-                    ref var byId = ref server.ChannelCollection._byId.AddDefault( out var index );
-                    try
-                    {
-                        channel = new MessageBrokerChannel( server, index + 1, name );
-                        byId = channel;
-                    }
-                    catch
-                    {
-                        server.ChannelCollection._byId.Remove( index );
-                        server.ChannelCollection._byName.Remove( name );
-                        throw;
-                    }
-                }
-
-                return new RegistrationResult( channel, exists );
+                channel = new MessageBrokerChannel( server, index + 1, name );
+                byId = channel;
+            }
+            catch
+            {
+                server.ChannelCollection._byId.Remove( index );
+                server.ChannelCollection._byName.Remove( name );
+                throw;
             }
         }
-        catch ( Exception exc )
+
+        return new RegistrationResult( channel, exists );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static RegistrationResult? TryRegister(MessageBrokerServer server, string name, bool createIfNotExists)
+    {
+        ref var channel = ref CollectionsMarshal.GetValueRefOrAddDefault( server.ChannelCollection._byName, name, out var exists );
+        if ( exists )
+            return new RegistrationResult( channel!, exists );
+
+        if ( createIfNotExists )
         {
-            return exc;
+            ref var byId = ref server.ChannelCollection._byId.AddDefault( out var index );
+            try
+            {
+                channel = new MessageBrokerChannel( server, index + 1, name );
+                byId = channel;
+            }
+            catch
+            {
+                server.ChannelCollection._byId.Remove( index );
+                server.ChannelCollection._byName.Remove( name );
+                throw;
+            }
+
+            return new RegistrationResult( channel, exists );
         }
+
+        return null;
     }
 
     internal static Result Remove(MessageBrokerChannel channel)

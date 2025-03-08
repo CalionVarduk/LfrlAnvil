@@ -588,7 +588,7 @@ public partial class MessageBrokerClientTests
                 {
                     s.Read( linkRequest.Length );
                     s.SendChannelLinkedResponse( true, channelId );
-                    s.Read( Protocol.UnlinkChannelRequest.Length );
+                    s.ReadUnlinkChannelRequest();
                     s.SendChannelUnlinkedResponse( channelRemoved );
                 } );
 
@@ -649,7 +649,7 @@ public partial class MessageBrokerClientTests
                 {
                     s.Read( linkRequest.Length );
                     s.SendChannelLinkedResponse( true, 1 );
-                    s.Read( Protocol.UnlinkChannelRequest.Length );
+                    s.ReadUnlinkChannelRequest();
                     s.SendChannelUnlinkedResponse( true );
                 } );
 
@@ -830,7 +830,7 @@ public partial class MessageBrokerClientTests
                     var request = new Protocol.LinkChannelRequest( "foo" );
                     s.Read( request.Length );
                     s.SendChannelLinkedResponse( true, 1 );
-                    s.Read( Protocol.UnlinkChannelRequest.Length );
+                    s.ReadUnlinkChannelRequest();
                     s.SendChannelUnlinkedResponse( true, payload: 0 );
                 } );
 
@@ -888,7 +888,7 @@ public partial class MessageBrokerClientTests
                     var request = new Protocol.LinkChannelRequest( "foo" );
                     s.Read( request.Length );
                     s.SendChannelLinkedResponse( true, 1 );
-                    s.Read( Protocol.UnlinkChannelRequest.Length );
+                    s.ReadUnlinkChannelRequest();
                     s.SendUnlinkChannelFailureResponse( true );
                 } );
 
@@ -947,7 +947,7 @@ public partial class MessageBrokerClientTests
                     var request = new Protocol.LinkChannelRequest( "foo" );
                     s.Read( request.Length );
                     s.SendChannelLinkedResponse( true, 1 );
-                    s.Read( Protocol.UnlinkChannelRequest.Length );
+                    s.ReadUnlinkChannelRequest();
                     s.SendUnlinkChannelFailureResponse( true, payload: 0 );
                 } );
 
@@ -1005,7 +1005,7 @@ public partial class MessageBrokerClientTests
                     var request = new Protocol.LinkChannelRequest( "foo" );
                     s.Read( request.Length );
                     s.SendChannelLinkedResponse( true, 1 );
-                    s.Read( Protocol.UnlinkChannelRequest.Length );
+                    s.ReadUnlinkChannelRequest();
                     s.Send( [ 0, 0, 0, 0, 0 ] );
                 } );
 

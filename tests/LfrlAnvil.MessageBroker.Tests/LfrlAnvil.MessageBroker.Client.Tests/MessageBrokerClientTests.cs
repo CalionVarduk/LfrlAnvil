@@ -95,6 +95,7 @@ public partial class MessageBrokerClientTests : TestsBase
     [Fact]
     public async Task StartAsync_ShouldConnectToServerAndEstablishHandshake()
     {
+        var endSource = new SafeTaskCompletionSource( completionCount: 2 );
         var logs = new EventLogger();
         using var server = new ServerMock();
         var remoteEndPoint = server.Start();
@@ -106,22 +107,27 @@ public partial class MessageBrokerClientTests : TestsBase
             MessageBrokerClientOptions.Default
                 .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
                 .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
-                .SetEventHandler( logs.Add ) );
+                .SetEventHandler(
+                    e =>
+                    {
+                        logs.Add( e );
+                        if ( e.Type == MessageBrokerClientEventType.WaitingForMessage )
+                            endSource.Complete();
+                    } ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = Task.Factory.StartNew(
-            o =>
+        var serverTask = server.GetTask(
+            s =>
             {
-                var s = ( ServerMock )o!;
                 s.WaitForClient();
                 s.Read( handshakeRequest.Length );
                 s.SendHandshakeAccepted( 1, Duration.FromSeconds( 2 ), Duration.FromSeconds( 10 ) );
-                s.Read( Protocol.PacketHeader.Length );
-            },
-            server );
+                s.ReadConfirmHandshakeResponse();
+            } );
 
         var result = await client.StartAsync();
         await serverTask;
+        await endSource.Task;
 
         var serverData = server.GetAllReceived();
         var localEndPoint = client.LocalEndPoint;
@@ -141,11 +147,13 @@ public partial class MessageBrokerClientTests : TestsBase
                 [
                     $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}", $"['test'::<ROOT>] [Connected] From {localEndPoint}",
                     "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest",
-                    "['test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeRequest", "['test'::<ROOT>] [WaitingForMessage]",
+                    "['test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeRequest",
+                    "['test'::<ROOT>] [WaitingForMessage]",
                     "['test'::<ROOT>] [MessageReceived] [PacketLength: 18] Begin handling HandshakeAcceptedResponse",
                     "['test'::<ROOT>] [MessageAccepted] [PacketLength: 18] HandshakeAcceptedResponse (Id = 1, IsServerLittleEndian = True, MessageTimeout = 2 second(s), PingInterval = 10 second(s))",
                     "['test'::<ROOT>] [SendingMessage] [PacketLength: 5] ConfirmHandshakeResponse",
-                    "['test'::<ROOT>] [MessageSent] [PacketLength: 5] ConfirmHandshakeResponse", "['test'::<ROOT>] [WaitingForMessage]"
+                    "['test'::<ROOT>] [MessageSent] [PacketLength: 5] ConfirmHandshakeResponse",
+                    "['test'::<ROOT>] [WaitingForMessage]"
                 ] ) )
             .Go();
     }
@@ -153,6 +161,7 @@ public partial class MessageBrokerClientTests : TestsBase
     [Fact]
     public async Task StartAsync_ShouldConnectToServerAndEstablishHandshake_WithStreamDecoratorAndThrowingEventHandler()
     {
+        var endSource = new SafeTaskCompletionSource( completionCount: 2 );
         NetworkStream? stream = null;
         var logs = new EventLogger();
         using var server = new ServerMock();
@@ -169,6 +178,9 @@ public partial class MessageBrokerClientTests : TestsBase
                     e =>
                     {
                         logs.Add( e );
+                        if ( e.Type == MessageBrokerClientEventType.WaitingForMessage )
+                            endSource.Complete();
+
                         throw new Exception( "ignored" );
                     } )
                 .SetStreamDecorator(
@@ -179,19 +191,18 @@ public partial class MessageBrokerClientTests : TestsBase
                     } ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = Task.Factory.StartNew(
-            o =>
+        var serverTask = server.GetTask(
+            s =>
             {
-                var s = ( ServerMock )o!;
                 s.WaitForClient();
                 s.Read( handshakeRequest.Length );
                 s.SendHandshakeAccepted( 2, Duration.FromSeconds( 1.5 ), Duration.FromSeconds( 15 ) );
-                s.Read( Protocol.PacketHeader.Length );
-            },
-            server );
+                s.ReadConfirmHandshakeResponse();
+            } );
 
         var result = await client.StartAsync();
         await serverTask;
+        await endSource.Task;
 
         var serverData = server.GetAllReceived();
         var localEndPoint = client.LocalEndPoint;
@@ -261,16 +272,14 @@ public partial class MessageBrokerClientTests : TestsBase
                 .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = Task.Factory.StartNew(
-            o =>
+        var serverTask = server.GetTask(
+            s =>
             {
-                var s = ( ServerMock )o!;
                 s.WaitForClient();
                 s.Read( handshakeRequest.Length );
                 s.SendHandshakeAccepted( 1, Duration.FromSeconds( 2 ), Duration.FromSeconds( 10 ) );
-                s.Read( Protocol.PacketHeader.Length );
-            },
-            server );
+                s.ReadConfirmHandshakeResponse();
+            } );
 
         await client.StartAsync();
         await serverTask;
@@ -304,14 +313,7 @@ public partial class MessageBrokerClientTests : TestsBase
                 .SetEventHandler( logs.Add )
                 .SetStreamDecorator( (_, _, _) => ValueTask.FromException<Stream>( exception ) ) );
 
-        var serverTask = Task.Factory.StartNew(
-            o =>
-            {
-                var s = ( ServerMock )o!;
-                s.WaitForClient();
-            },
-            server );
-
+        var serverTask = server.GetTask( s => s.WaitForClient() );
         var result = await client.StartAsync();
         await serverTask;
 
@@ -354,14 +356,7 @@ public partial class MessageBrokerClientTests : TestsBase
                         return ValueTask.FromResult<Stream>( ns );
                     } ) );
 
-        var serverTask = Task.Factory.StartNew(
-            o =>
-            {
-                var s = ( ServerMock )o!;
-                s.WaitForClient();
-            },
-            server );
-
+        var serverTask = server.GetTask( s => s.WaitForClient() );
         var result = await client.StartAsync();
         await serverTask;
 
@@ -411,14 +406,7 @@ public partial class MessageBrokerClientTests : TestsBase
                         return ValueTask.FromResult<Stream>( ns );
                     } ) );
 
-        var serverTask = Task.Factory.StartNew(
-            o =>
-            {
-                var s = ( ServerMock )o!;
-                s.WaitForClient();
-            },
-            server );
-
+        var serverTask = server.GetTask( s => s.WaitForClient() );
         var result = await client.StartAsync();
         await serverTask;
 
@@ -466,15 +454,13 @@ public partial class MessageBrokerClientTests : TestsBase
                     } ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = Task.Factory.StartNew(
-            o =>
+        var serverTask = server.GetTask(
+            s =>
             {
-                var s = ( ServerMock )o!;
                 s.WaitForClient();
                 s.Read( handshakeRequest.Length );
                 s.Dispose();
-            },
-            server );
+            } );
 
         var result = await client.StartAsync();
         await serverTask;
@@ -525,15 +511,13 @@ public partial class MessageBrokerClientTests : TestsBase
                     } ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = Task.Factory.StartNew(
-            o =>
+        var serverTask = server.GetTask(
+            s =>
             {
-                var s = ( ServerMock )o!;
                 s.WaitForClient();
                 s.Read( handshakeRequest.Length );
                 s.SendHandshakeRejected( true, true, true );
-            },
-            server );
+            } );
 
         var result = await client.StartAsync();
         await serverTask;
@@ -591,15 +575,13 @@ public partial class MessageBrokerClientTests : TestsBase
                     } ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = Task.Factory.StartNew(
-            o =>
+        var serverTask = server.GetTask(
+            s =>
             {
-                var s = ( ServerMock )o!;
                 s.WaitForClient();
                 s.Read( handshakeRequest.Length );
                 s.SendHandshakeRejected( true, true, true, payload: 2 );
-            },
-            server );
+            } );
 
         var result = await client.StartAsync();
         await serverTask;
@@ -655,15 +637,13 @@ public partial class MessageBrokerClientTests : TestsBase
                     } ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = Task.Factory.StartNew(
-            o =>
+        var serverTask = server.GetTask(
+            s =>
             {
-                var s = ( ServerMock )o!;
                 s.WaitForClient();
                 s.Read( handshakeRequest.Length );
                 s.SendHandshakeAccepted( 0, Duration.Zero, Duration.Zero );
-            },
-            server );
+            } );
 
         var result = await client.StartAsync();
         await serverTask;
@@ -721,15 +701,13 @@ public partial class MessageBrokerClientTests : TestsBase
                     } ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = Task.Factory.StartNew(
-            o =>
+        var serverTask = server.GetTask(
+            s =>
             {
-                var s = ( ServerMock )o!;
                 s.WaitForClient();
                 s.Read( handshakeRequest.Length );
                 s.SendHandshakeAccepted( 1, Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ), payload: 12 );
-            },
-            server );
+            } );
 
         var result = await client.StartAsync();
         await serverTask;
@@ -785,15 +763,13 @@ public partial class MessageBrokerClientTests : TestsBase
                     } ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = Task.Factory.StartNew(
-            o =>
+        var serverTask = server.GetTask(
+            s =>
             {
-                var s = ( ServerMock )o!;
                 s.WaitForClient();
                 s.Read( handshakeRequest.Length );
                 s.Send( [ 0, 0, 0, 0, 0 ] );
-            },
-            server );
+            } );
 
         var result = await client.StartAsync();
         await serverTask;
@@ -887,14 +863,7 @@ public partial class MessageBrokerClientTests : TestsBase
                         }
                     } ) );
 
-        var serverTask = Task.Factory.StartNew(
-            o =>
-            {
-                var s = ( ServerMock )o!;
-                s.WaitForClient();
-            },
-            server );
-
+        var serverTask = server.GetTask( s => s.WaitForClient() );
         var result = await client.StartAsync();
         await serverTask;
 
@@ -937,14 +906,7 @@ public partial class MessageBrokerClientTests : TestsBase
                         }
                     } ) );
 
-        var serverTask = Task.Factory.StartNew(
-            o =>
-            {
-                var s = ( ServerMock )o!;
-                s.WaitForClient();
-            },
-            server );
-
+        var serverTask = server.GetTask( s => s.WaitForClient() );
         var result = await client.StartAsync();
         await serverTask;
 
@@ -990,14 +952,7 @@ public partial class MessageBrokerClientTests : TestsBase
                         }
                     } ) );
 
-        var serverTask = Task.Factory.StartNew(
-            o =>
-            {
-                var s = ( ServerMock )o!;
-                s.WaitForClient();
-            },
-            server );
-
+        var serverTask = server.GetTask( s => s.WaitForClient() );
         var result = await client.StartAsync();
         await serverTask;
 
@@ -1073,14 +1028,7 @@ public partial class MessageBrokerClientTests : TestsBase
                             localEndPoint = e.Client.LocalEndPoint;
                     } ) );
 
-        var serverTask = Task.Factory.StartNew(
-            o =>
-            {
-                var s = ( ServerMock )o!;
-                s.WaitForClient();
-            },
-            server );
-
+        var serverTask = server.GetTask( s => s.WaitForClient() );
         var result = await client.StartAsync();
         await serverTask;
 
@@ -1128,15 +1076,13 @@ public partial class MessageBrokerClientTests : TestsBase
                     } ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = Task.Factory.StartNew(
-            o =>
+        var serverTask = server.GetTask(
+            s =>
             {
-                var s = ( ServerMock )o!;
                 s.WaitForClient();
                 s.Read( handshakeRequest.Length );
                 s.SendHandshakeAccepted( 1, Duration.FromSeconds( 2 ), Duration.FromSeconds( 10 ) );
-            },
-            server );
+            } );
 
         var result = await client.StartAsync();
         await serverTask;
@@ -1195,15 +1141,13 @@ public partial class MessageBrokerClientTests : TestsBase
                     } ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = Task.Factory.StartNew(
-            o =>
+        var serverTask = server.GetTask(
+            s =>
             {
-                var s = ( ServerMock )o!;
                 s.WaitForClient();
                 s.Read( handshakeRequest.Length );
                 s.SendHandshakeRejected( true, true, true );
-            },
-            server );
+            } );
 
         var result = await client.StartAsync();
         await serverTask;
@@ -1264,15 +1208,13 @@ public partial class MessageBrokerClientTests : TestsBase
                     } ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = Task.Factory.StartNew(
-            o =>
+        var serverTask = server.GetTask(
+            s =>
             {
-                var s = ( ServerMock )o!;
                 s.WaitForClient();
                 s.Read( handshakeRequest.Length );
                 s.SendHandshakeAccepted( 1, Duration.FromSeconds( 2 ), Duration.FromSeconds( 10 ) );
-            },
-            server );
+            } );
 
         var result = await client.StartAsync();
         await serverTask;
@@ -1324,18 +1266,16 @@ public partial class MessageBrokerClientTests : TestsBase
                     } ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = Task.Factory.StartNew(
-            o =>
+        var serverTask = server.GetTask(
+            s =>
             {
-                var s = ( ServerMock )o!;
                 s.WaitForClient();
                 s.Read( handshakeRequest.Length );
                 s.SendHandshakeAccepted( 1, Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ) );
-                s.Read( Protocol.PacketHeader.Length );
+                s.ReadConfirmHandshakeResponse();
                 Thread.Sleep( 50 );
                 s.SendPing( endiannessPayload: 0 );
-            },
-            server );
+            } );
 
         var result = await client.StartAsync();
         await serverTask;
@@ -1406,14 +1346,7 @@ public partial class MessageBrokerClientTests : TestsBase
                             cancellationSource.Cancel();
                     } ) );
 
-        var serverTask = Task.Factory.StartNew(
-            o =>
-            {
-                var s = ( ServerMock )o!;
-                s.WaitForClient();
-            },
-            server );
-
+        var serverTask = server.GetTask( s => s.WaitForClient() );
         var action = Lambda.Of( async () => await client.StartAsync( cancellationSource.Token ) );
         var assertion = action.Test(
                 exc => Assertion.All(
@@ -1449,14 +1382,7 @@ public partial class MessageBrokerClientTests : TestsBase
                             cancellationSource.Cancel();
                     } ) );
 
-        var serverTask = Task.Factory.StartNew(
-            o =>
-            {
-                var s = ( ServerMock )o!;
-                s.WaitForClient();
-            },
-            server );
-
+        var serverTask = server.GetTask( s => s.WaitForClient() );
         var action = Lambda.Of( async () => await client.StartAsync( cancellationSource.Token ) );
         var assertion = action.Test(
                 exc => Assertion.All(
@@ -1493,15 +1419,13 @@ public partial class MessageBrokerClientTests : TestsBase
                     } ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = Task.Factory.StartNew(
-            o =>
+        var serverTask = server.GetTask(
+            s =>
             {
-                var s = ( ServerMock )o!;
                 s.WaitForClient();
                 s.Read( handshakeRequest.Length );
                 s.SendHandshakeAccepted( 1, Duration.FromSeconds( 2 ), Duration.FromSeconds( 10 ) );
-            },
-            server );
+            } );
 
         var action = Lambda.Of( async () => await client.StartAsync( cancellationSource.Token ) );
         var assertion = action.Test(
@@ -1540,15 +1464,13 @@ public partial class MessageBrokerClientTests : TestsBase
                     } ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = Task.Factory.StartNew(
-            o =>
+        var serverTask = server.GetTask(
+            s =>
             {
-                var s = ( ServerMock )o!;
                 s.WaitForClient();
                 s.Read( handshakeRequest.Length );
                 s.SendHandshakeAccepted( 1, Duration.FromSeconds( 2 ), Duration.FromSeconds( 10 ) );
-            },
-            server );
+            } );
 
         var action = Lambda.Of( async () => await client.StartAsync( cancellationSource.Token ) );
         var assertion = action.Test(

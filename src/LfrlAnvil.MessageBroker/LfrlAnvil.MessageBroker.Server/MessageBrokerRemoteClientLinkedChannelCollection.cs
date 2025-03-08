@@ -55,8 +55,8 @@ public readonly struct MessageBrokerRemoteClientLinkedChannelCollection
 
             var i = 0;
             var result = new MessageBrokerChannel[_client.LinkedChannelsById.Count];
-            foreach ( var client in _client.LinkedChannelsById.Values )
-                result[i++] = client;
+            foreach ( var channel in _client.LinkedChannelsById.Values )
+                result[i++] = channel;
 
             return result;
         }

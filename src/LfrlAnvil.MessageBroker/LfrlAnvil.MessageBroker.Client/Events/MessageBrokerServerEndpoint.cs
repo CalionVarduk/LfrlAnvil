@@ -42,5 +42,10 @@ public enum MessageBrokerServerEndpoint : byte
     /// <summary>
     /// Represents unlink channel request sent by client.
     /// </summary>
-    UnlinkChannelRequest = 7
+    UnlinkChannelRequest = 7,
+
+    /// <summary>
+    /// Represents subscription request sent by client.
+    /// </summary>
+    SubscribeRequest = 9
 }

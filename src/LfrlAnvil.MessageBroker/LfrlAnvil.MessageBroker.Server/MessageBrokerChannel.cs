@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Async;
@@ -26,6 +27,7 @@ namespace LfrlAnvil.MessageBroker.Server;
 public sealed class MessageBrokerChannel
 {
     internal readonly Dictionary<int, MessageBrokerRemoteClient> LinkedClientsById;
+    internal readonly Dictionary<int, MessageBrokerSubscription> SubscriptionsByClientId;
     private readonly MessageBrokerChannelEventHandler? _eventHandler;
     private MessageBrokerChannelState _state;
 
@@ -36,11 +38,12 @@ public sealed class MessageBrokerChannel
         Name = name;
         _state = MessageBrokerChannelState.Running;
         LinkedClientsById = new Dictionary<int, MessageBrokerRemoteClient>();
+        SubscriptionsByClientId = new Dictionary<int, MessageBrokerSubscription>();
         _eventHandler = Server.ChannelEventHandlerFactory?.Invoke( this );
     }
 
     /// <summary>
-    /// <see cref="MessageBrokerServer"/> instance to which this channel belongs to.
+    /// <see cref="MessageBrokerServer"/> instance that owns this channel.
     /// </summary>
     public MessageBrokerServer Server { get; }
 
@@ -72,6 +75,11 @@ public sealed class MessageBrokerChannel
     /// </summary>
     public MessageBrokerChannelLinkedClientCollection LinkedClients => new MessageBrokerChannelLinkedClientCollection( this );
 
+    /// <summary>
+    /// Collection of <see cref="MessageBrokerSubscription"/> instances attached to this channel, identified by client ids.
+    /// </summary>
+    public MessageBrokerChannelSubscriptionCollection Subscriptions => new MessageBrokerChannelSubscriptionCollection( this );
+
     internal bool ShouldCancel => _state >= MessageBrokerChannelState.Disposing;
 
     internal enum UnlinkResult : byte
@@ -87,7 +95,7 @@ public sealed class MessageBrokerChannel
             return UnlinkResult.NoChanges;
 
         UnlinkResult result;
-        if ( LinkedClientsById.Count == 0 )
+        if ( LinkedClientsById.Count == 0 && SubscriptionsByClientId.Count == 0 )
         {
             result = UnlinkResult.Disposing;
             _state = MessageBrokerChannelState.Disposing;
@@ -101,6 +109,7 @@ public sealed class MessageBrokerChannel
     internal void DisposeDueToLackOfReferences()
     {
         Assume.IsEmpty( LinkedClientsById );
+        Assume.IsEmpty( SubscriptionsByClientId );
         Assume.Equals( State, MessageBrokerChannelState.Disposing );
 
         Emit( MessageBrokerChannelEvent.Disposing( this ) );
@@ -115,17 +124,42 @@ public sealed class MessageBrokerChannel
         Emit( MessageBrokerChannelEvent.Disposed( this ) );
     }
 
-    internal void OnClientDisconnected(MessageBrokerRemoteClient client)
+    internal void OnLinkDisposing(MessageBrokerRemoteClient client)
     {
-        UnlinkResult result;
+        var dispose = false;
         using ( AcquireLock() )
-            result = BeginUnlink( client );
+        {
+            if ( ShouldCancel || ! LinkedClientsById.Remove( client.Id ) )
+                return;
 
-        if ( result == UnlinkResult.NoChanges )
-            return;
+            if ( LinkedClientsById.Count == 0 && SubscriptionsByClientId.Count == 0 )
+            {
+                dispose = true;
+                _state = MessageBrokerChannelState.Disposing;
+            }
+        }
 
         Emit( MessageBrokerChannelEvent.Unlinked( this, client ) );
-        if ( result == UnlinkResult.Disposing )
+        if ( dispose )
+            DisposeDueToLackOfReferences();
+    }
+
+    internal void OnSubscriptionDisposing(MessageBrokerRemoteClient client)
+    {
+        var dispose = false;
+        using ( AcquireLock() )
+        {
+            if ( ShouldCancel )
+                return;
+
+            if ( SubscriptionsByClientId.Remove( client.Id ) && LinkedClientsById.Count == 0 && SubscriptionsByClientId.Count == 0 )
+            {
+                dispose = true;
+                _state = MessageBrokerChannelState.Disposing;
+            }
+        }
+
+        if ( dispose )
             DisposeDueToLackOfReferences();
     }
 
@@ -141,11 +175,25 @@ public sealed class MessageBrokerChannel
 
         Emit( MessageBrokerChannelEvent.Disposing( this ) );
 
+        var subscriptions = Array.Empty<MessageBrokerSubscription>();
         using ( AcquireLock() )
         {
             LinkedClientsById.Clear();
+            if ( SubscriptionsByClientId.Count > 0 )
+            {
+                var i = 0;
+                subscriptions = new MessageBrokerSubscription[SubscriptionsByClientId.Count];
+                foreach ( var subscription in SubscriptionsByClientId.Values )
+                    subscriptions[i++] = subscription;
+
+                SubscriptionsByClientId.Clear();
+            }
+
             _state = MessageBrokerChannelState.Disposed;
         }
+
+        foreach ( var subscription in subscriptions )
+            subscription.OnServerDisposed();
 
         Emit( MessageBrokerChannelEvent.Disposed( this ) );
     }
