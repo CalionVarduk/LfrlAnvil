@@ -47,5 +47,10 @@ public enum MessageBrokerServerEndpoint : byte
     /// <summary>
     /// Represents subscription request sent by client.
     /// </summary>
-    SubscribeRequest = 9
+    SubscribeRequest = 9,
+
+    /// <summary>
+    /// Represents unsubscribe request sent by client.
+    /// </summary>
+    UnsubscribeRequest = 11
 }

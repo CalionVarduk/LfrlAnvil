@@ -92,6 +92,11 @@ public sealed class MessageBrokerSubscription
         }
     }
 
+    internal void BeginUnsubscribing()
+    {
+        _state = MessageBrokerSubscriptionState.Disposing;
+    }
+
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void Dispose(bool notifyChannel)
     {
@@ -108,6 +113,11 @@ public sealed class MessageBrokerSubscription
         if ( notifyChannel )
             Channel.OnSubscriptionDisposing( Client );
 
+        EndDisposing();
+    }
+
+    internal void EndDisposing()
+    {
         using ( AcquireLock() )
             _state = MessageBrokerSubscriptionState.Disposed;
 

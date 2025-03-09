@@ -104,11 +104,14 @@ internal struct ChannelCollection
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static RegistrationResult? TryRegister(MessageBrokerServer server, string name, bool createIfNotExists)
+    internal static MessageBrokerChannel? TryRegister(MessageBrokerServer server, string name, bool createIfNotExists, out bool created)
     {
         ref var channel = ref CollectionsMarshal.GetValueRefOrAddDefault( server.ChannelCollection._byName, name, out var exists );
         if ( exists )
-            return new RegistrationResult( channel!, exists );
+        {
+            created = false;
+            return channel!;
+        }
 
         if ( createIfNotExists )
         {
@@ -125,9 +128,11 @@ internal struct ChannelCollection
                 throw;
             }
 
-            return new RegistrationResult( channel, exists );
+            created = true;
+            return channel;
         }
 
+        created = false;
         return null;
     }
 

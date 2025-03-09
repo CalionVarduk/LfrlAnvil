@@ -150,6 +150,22 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string FailedToUnsubscribeClientFromChannel(int clientId, string clientName, int channelId, string channelName)
+    {
+        return
+            $"Message broker client [{clientId}] '{clientName}' could not be unsubscribed from channel [{channelId}] '{channelName}' because it is not subscribed to it.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string FailedToUnsubscribeClientFromNonExistingChannel(int clientId, string clientName, int channelId)
+    {
+        return
+            $"Message broker client [{clientId}] '{clientName}' could not be unsubscribed from non-existing channel with ID {channelId}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string FailedToCreateSubscription(
         int clientId,
         string clientName,

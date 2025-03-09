@@ -3,6 +3,7 @@ using System.Diagnostics.Contracts;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Extensions;
@@ -62,6 +63,11 @@ internal sealed class ServerMock : IDisposable
     internal byte[] ReadUnlinkChannelRequest()
     {
         return Read( Protocol.UnlinkChannelRequest.Length );
+    }
+
+    internal byte[] ReadUnsubscribeRequest()
+    {
+        return Read( Protocol.UnsubscribeRequest.Length );
     }
 
     internal byte[] Read(int length)
@@ -176,11 +182,32 @@ internal sealed class ServerMock : IDisposable
         Send( buffer );
     }
 
+    internal void SendUnsubscribedResponse(bool channelRemoved, uint? payload = null)
+    {
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.UnsubscribedResponse.Length];
+        var writer = new BinaryContractWriter( buffer );
+        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.UnsubscribedResponse );
+        writer.MoveWrite( payload ?? Protocol.UnsubscribedResponse.Length );
+        writer.Write( ( byte )(channelRemoved ? 1 : 0) );
+        Send( buffer );
+    }
+
+    internal void SendUnsubscribeFailureResponse(bool clientNotSubscribed, uint? payload = null)
+    {
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.UnsubscribeFailureResponse.Length];
+        var writer = new BinaryContractWriter( buffer );
+        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.UnsubscribeFailureResponse );
+        writer.MoveWrite( payload ?? Protocol.UnsubscribeFailureResponse.Length );
+        writer.Write( ( byte )(clientNotSubscribed ? 1 : 0) );
+        Send( buffer );
+    }
+
     internal void Send(byte[] data)
     {
         lock ( _listener )
         {
             Assume.IsNotNull( _client );
+            Thread.Sleep( 15 );
             _client.GetStream().Write( data );
         }
     }

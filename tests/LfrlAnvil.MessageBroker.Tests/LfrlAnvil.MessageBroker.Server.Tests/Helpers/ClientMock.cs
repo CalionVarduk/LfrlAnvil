@@ -84,6 +84,16 @@ internal sealed class ClientMock : IDisposable
         return Read( Protocol.PacketHeader.Length + Protocol.SubscribeFailureResponse.Payload );
     }
 
+    internal byte[] ReadUnsubscribedResponse()
+    {
+        return Read( Protocol.PacketHeader.Length + Protocol.UnsubscribedResponse.Payload );
+    }
+
+    internal byte[] ReadUnsubscribeFailureResponse()
+    {
+        return Read( Protocol.PacketHeader.Length + Protocol.UnsubscribeFailureResponse.Payload );
+    }
+
     internal byte[] Read(int length)
     {
         lock ( _client )
@@ -169,6 +179,16 @@ internal sealed class ClientMock : IDisposable
         writer.MoveWrite( payload ?? ( uint )(Protocol.SubscribeRequestHeader.Length + preparedName.ByteCount) );
         writer.MoveWrite( ( byte )(createChannelIfNotExists ? 1 : 0) );
         preparedName.Encode( writer.GetSpan( preparedName.ByteCount ) ).ThrowIfError();
+        Send( buffer );
+    }
+
+    internal void SendUnsubscribeRequest(int channelId, uint? payload = null)
+    {
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.UnsubscribeRequest.Length];
+        var writer = new BinaryContractWriter( buffer );
+        writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.UnsubscribeRequest );
+        writer.MoveWrite( payload ?? Protocol.UnsubscribeRequest.Length );
+        writer.Write( ( uint )channelId );
         Send( buffer );
     }
 

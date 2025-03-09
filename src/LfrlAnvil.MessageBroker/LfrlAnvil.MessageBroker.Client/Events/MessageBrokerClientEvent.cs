@@ -242,6 +242,18 @@ public readonly struct MessageBrokerClientEvent
                         if ( Data is string channelName )
                             builder.Append( " (ChannelName = '" ).Append( channelName ).Append( "')" );
                     }
+                    else if ( GetServerEndpoint() == MessageBrokerServerEndpoint.UnsubscribeRequest )
+                    {
+                        if ( Data is MessageBrokerListener listener )
+                        {
+                            builder
+                                .Append( " (ChannelId = " )
+                                .Append( listener.ChannelId.ToString( CultureInfo.InvariantCulture ) )
+                                .Append( ", ChannelName = '" )
+                                .Append( listener.ChannelName )
+                                .Append( "')" );
+                        }
+                    }
 
                     break;
                 case MessageBrokerClientEventType.MessageSent:

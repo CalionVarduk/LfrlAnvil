@@ -130,6 +130,8 @@ internal struct RequestHandler
                             .ConfigureAwait( false ),
                         MessageBrokerServerEndpoint.SubscribeRequest => await HandleSubscribeRequestAsync( client, contextId, request )
                             .ConfigureAwait( false ),
+                        MessageBrokerServerEndpoint.UnsubscribeRequest => await HandleUnsubscribeRequestAsync( client, contextId, request )
+                            .ConfigureAwait( false ),
                         MessageBrokerServerEndpoint.PingRequest => await HandlePingRequestAsync(
                                 client,
                                 contextId,
@@ -359,7 +361,7 @@ internal struct RequestHandler
         var parsedRequest = Protocol.UnlinkChannelRequest.Parse( data );
         var channel = ChannelCollection.TryGetById( client.Server, parsedRequest.ChannelId );
 
-        var unlinkResult = MessageBrokerChannel.UnlinkResult.NoChanges;
+        var unlinkResult = MessageBrokerChannel.DereferenceResult.NoChanges;
         var rejectionReasons = Protocol.UnlinkChannelFailureResponse.Reasons.None;
         ManualResetValueTaskSource<bool> writerSource;
 
@@ -375,7 +377,7 @@ internal struct RequestHandler
                 using ( channel.AcquireLock() )
                 {
                     unlinkResult = channel.BeginUnlink( client );
-                    if ( unlinkResult == MessageBrokerChannel.UnlinkResult.NoChanges )
+                    if ( unlinkResult == MessageBrokerChannel.DereferenceResult.NoChanges )
                         rejectionReasons = Protocol.UnlinkChannelFailureResponse.Reasons.ClientNotLinked;
                     else
                         client.LinkedChannelsById.Remove( parsedRequest.ChannelId );
@@ -418,16 +420,16 @@ internal struct RequestHandler
         else
         {
             Assume.IsNotNull( channel );
-            Assume.NotEquals( unlinkResult, MessageBrokerChannel.UnlinkResult.NoChanges );
+            Assume.NotEquals( unlinkResult, MessageBrokerChannel.DereferenceResult.NoChanges );
 
             channel.Emit( MessageBrokerChannelEvent.Unlinked( channel, client, contextId ) );
-            if ( unlinkResult == MessageBrokerChannel.UnlinkResult.Disposing )
+            if ( unlinkResult == MessageBrokerChannel.DereferenceResult.Disposing )
                 channel.DisposeDueToLackOfReferences();
 
             client.Emit( MessageBrokerRemoteClientEvent.MessageAccepted( client, request.Header, contextId ) );
 
             var responseLength = Protocol.PacketHeader.Length + Protocol.ChannelUnlinkedResponse.Payload;
-            var response = new Protocol.ChannelUnlinkedResponse( unlinkResult == MessageBrokerChannel.UnlinkResult.Disposing );
+            var response = new Protocol.ChannelUnlinkedResponse( unlinkResult == MessageBrokerChannel.DereferenceResult.Disposing );
             if ( data.Length < responseLength )
                 data = bufferToken.SetLength( responseLength );
 
@@ -496,18 +498,24 @@ internal struct RequestHandler
             return HandleRequestResult.Error();
         }
 
-        ManualResetValueTaskSource<bool> writerSource;
+        bool channelCreated;
+        MessageBrokerChannel? channel;
         MessageBrokerSubscription? subscription = null;
         var rejectionReasons = Protocol.SubscribeFailureResponse.Reasons.None;
-        ChannelCollection.RegistrationResult? result;
+        ManualResetValueTaskSource<bool> writerSource;
 
         using ( client.Server.AcquireLock() )
         {
             if ( client.Server.ShouldCancel )
                 return HandleRequestResult.OwnerDisposed();
 
-            result = ChannelCollection.TryRegister( client.Server, channelName.Value, parsedRequest.CreateChannelIfNotExists );
-            if ( result is null )
+            channel = ChannelCollection.TryRegister(
+                client.Server,
+                channelName.Value,
+                parsedRequest.CreateChannelIfNotExists,
+                out channelCreated );
+
+            if ( channel is null )
             {
                 rejectionReasons = Protocol.SubscribeFailureResponse.Reasons.ChannelDoesNotExist;
                 using ( client.AcquireLock() )
@@ -520,7 +528,6 @@ internal struct RequestHandler
             }
             else
             {
-                var channel = result.Value.Channel;
                 using ( client.AcquireLock() )
                 {
                     if ( client.ShouldCancel )
@@ -550,12 +557,12 @@ internal struct RequestHandler
                     request.Header,
                     new MessageBrokerRemoteClientSubscriptionException(
                         client,
-                        result?.Channel,
+                        channel,
                         subscription,
                         Resources.FailedToCreateSubscription(
                             client.Id,
                             client.Name,
-                            result?.Channel.Id,
+                            channel?.Id,
                             channelName.Value,
                             rejectionReasons ) ),
                     contextId ) );
@@ -571,23 +578,145 @@ internal struct RequestHandler
         }
         else
         {
-            Assume.IsNotNull( result );
+            Assume.IsNotNull( channel );
             Assume.IsNotNull( subscription );
 
-            if ( ! result.Value.Exists )
-                result.Value.Channel.Emit( MessageBrokerChannelEvent.Created( result.Value.Channel, client, contextId ) );
+            if ( channelCreated )
+                channel.Emit( MessageBrokerChannelEvent.Created( channel, client, contextId ) );
 
             subscription.Emit( MessageBrokerSubscriptionEvent.Created( subscription, contextId ) );
             client.Emit( MessageBrokerRemoteClientEvent.MessageAccepted( client, request.Header, contextId ) );
 
             var responseLength = Protocol.PacketHeader.Length + Protocol.SubscribedResponse.Payload;
-            var response = new Protocol.SubscribedResponse( ! result.Value.Exists, result.Value.Channel.Id );
+            var response = new Protocol.SubscribedResponse( channelCreated, channel.Id );
             if ( data.Length < responseLength )
                 data = bufferToken.SetLength( responseLength );
 
             responseHeader = response.Header;
             responseData = data.Slice( 0, responseLength );
             response.Serialize( responseData );
+        }
+
+        if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
+            return HandleRequestResult.OwnerDisposed();
+
+        var writeResult = await client.WriteAsync( responseHeader, responseData, contextId ).ConfigureAwait( false );
+        if ( writeResult.Exception is not null )
+            return HandleRequestResult.Error();
+
+        using ( client.AcquireLock() )
+        {
+            if ( client.ShouldCancel )
+                return HandleRequestResult.OwnerDisposed();
+
+            client.MessageContextQueue.ResetOutgoingWriter( client, writerSource );
+            return HandleRequestResult.Ok( client.MessageContextQueue.ContainsEnqueuedRequests() );
+        }
+    }
+
+    private static async ValueTask<HandleRequestResult> HandleUnsubscribeRequestAsync(
+        MessageBrokerRemoteClient client,
+        ulong contextId,
+        IncomingPacketToken request)
+    {
+        var bufferToken = request.BufferToken;
+        var data = request.Data;
+
+        client.Emit( MessageBrokerRemoteClientEvent.MessageReceived( client, request.Header, contextId ) );
+
+        var exc = Protocol.AssertPayload( client, request.Header, Protocol.UnsubscribeRequest.Length );
+        if ( exc is not null )
+        {
+            client.Emit( MessageBrokerRemoteClientEvent.MessageRejected( client, request.Header, exc, contextId ) );
+            return HandleRequestResult.Error();
+        }
+
+        var parsedRequest = Protocol.UnsubscribeRequest.Parse( data );
+
+        var disposingChannel = false;
+        MessageBrokerSubscription? subscription = null;
+        var rejectionReasons = Protocol.UnsubscribeFailureResponse.Reasons.None;
+
+        var channel = ChannelCollection.TryGetById( client.Server, parsedRequest.ChannelId );
+        if ( channel is null )
+            rejectionReasons = Protocol.UnsubscribeFailureResponse.Reasons.ClientNotSubscribed;
+        else
+        {
+            using ( client.AcquireLock() )
+            {
+                if ( client.ShouldCancel )
+                    return HandleRequestResult.OwnerDisposed();
+
+                using ( channel.AcquireLock() )
+                {
+                    subscription = channel.BeginUnsubscribing( client, out disposingChannel );
+                    if ( subscription is null )
+                        rejectionReasons = Protocol.UnsubscribeFailureResponse.Reasons.ClientNotSubscribed;
+                }
+            }
+        }
+
+        Protocol.PacketHeader responseHeader;
+        Memory<byte> responseData;
+
+        if ( rejectionReasons != Protocol.UnsubscribeFailureResponse.Reasons.None )
+        {
+            client.Emit(
+                MessageBrokerRemoteClientEvent.MessageRejected(
+                    client,
+                    request.Header,
+                    new MessageBrokerRemoteClientSubscriptionException(
+                        client,
+                        channel,
+                        subscription,
+                        channel is null
+                            ? Resources.FailedToUnsubscribeClientFromNonExistingChannel( client.Id, client.Name, parsedRequest.ChannelId )
+                            : Resources.FailedToUnsubscribeClientFromChannel(
+                                client.Id,
+                                client.Name,
+                                channel.Id,
+                                channel.Name ) ),
+                    contextId ) );
+
+            var responseLength = Protocol.PacketHeader.Length + Protocol.UnsubscribeFailureResponse.Payload;
+            var response = new Protocol.UnsubscribeFailureResponse( rejectionReasons );
+            if ( data.Length < responseLength )
+                data = bufferToken.SetLength( responseLength );
+
+            responseHeader = response.Header;
+            responseData = data.Slice( 0, responseLength );
+            response.Serialize( responseData );
+        }
+        else
+        {
+            Assume.IsNotNull( channel );
+            Assume.IsNotNull( subscription );
+
+            subscription.Emit( MessageBrokerSubscriptionEvent.Disposing( subscription, contextId ) );
+            if ( disposingChannel )
+                channel.DisposeDueToLackOfReferences();
+
+            subscription.EndDisposing();
+
+            client.Emit( MessageBrokerRemoteClientEvent.MessageAccepted( client, request.Header, contextId ) );
+
+            var responseLength = Protocol.PacketHeader.Length + Protocol.UnsubscribedResponse.Payload;
+            var response = new Protocol.UnsubscribedResponse( disposingChannel );
+            if ( data.Length < responseLength )
+                data = bufferToken.SetLength( responseLength );
+
+            responseHeader = response.Header;
+            responseData = data.Slice( 0, responseLength );
+            response.Serialize( responseData );
+        }
+
+        ManualResetValueTaskSource<bool> writerSource;
+        using ( client.AcquireLock() )
+        {
+            if ( client.ShouldCancel )
+                return HandleRequestResult.OwnerDisposed();
+
+            writerSource = client.MessageContextQueue.AcquireWriterSource();
         }
 
         if ( ! await writerSource.GetTask().ConfigureAwait( false ) )

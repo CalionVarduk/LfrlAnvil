@@ -82,26 +82,51 @@ public sealed class MessageBrokerChannel
 
     internal bool ShouldCancel => _state >= MessageBrokerChannelState.Disposing;
 
-    internal enum UnlinkResult : byte
+    internal enum DereferenceResult : byte
     {
         NoChanges = 0,
-        Unlinked = 1,
+        Removed = 1,
         Disposing = 2
     }
 
-    internal UnlinkResult BeginUnlink(MessageBrokerRemoteClient client)
+    internal MessageBrokerSubscription? BeginUnsubscribing(MessageBrokerRemoteClient client, out bool disposing)
+    {
+        disposing = false;
+        if ( ShouldCancel || ! SubscriptionsByClientId.TryGetValue( client.Id, out var subscription ) )
+            return null;
+
+        using ( subscription.AcquireLock() )
+        {
+            if ( subscription.ShouldCancel )
+                return null;
+
+            subscription.BeginUnsubscribing();
+            SubscriptionsByClientId.Remove( client.Id );
+            client.SubscriptionsByChannelId.Remove( Id );
+
+            if ( SubscriptionsByClientId.Count == 0 && LinkedClientsById.Count == 0 )
+            {
+                _state = MessageBrokerChannelState.Disposing;
+                disposing = true;
+            }
+
+            return subscription;
+        }
+    }
+
+    internal DereferenceResult BeginUnlink(MessageBrokerRemoteClient client)
     {
         if ( ShouldCancel || ! LinkedClientsById.Remove( client.Id ) )
-            return UnlinkResult.NoChanges;
+            return DereferenceResult.NoChanges;
 
-        UnlinkResult result;
+        DereferenceResult result;
         if ( LinkedClientsById.Count == 0 && SubscriptionsByClientId.Count == 0 )
         {
-            result = UnlinkResult.Disposing;
+            result = DereferenceResult.Disposing;
             _state = MessageBrokerChannelState.Disposing;
         }
         else
-            result = UnlinkResult.Unlinked;
+            result = DereferenceResult.Removed;
 
         return result;
     }

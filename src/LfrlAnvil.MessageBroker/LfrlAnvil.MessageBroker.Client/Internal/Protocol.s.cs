@@ -618,6 +618,111 @@ internal static class Protocol
         }
     }
 
+    internal readonly struct UnsubscribeRequest
+    {
+        internal const int Length = PacketHeader.Length + sizeof( uint );
+        internal readonly PacketHeader Header;
+        internal readonly int ChannelId;
+
+        internal UnsubscribeRequest(int channelId)
+        {
+            ChannelId = channelId;
+            Header = PacketHeader.Create( MessageBrokerServerEndpoint.UnsubscribeRequest, sizeof( uint ) );
+        }
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"[{Header}] ChannelId = {ChannelId}";
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal void Serialize(Memory<byte> target, bool reverseEndianness)
+        {
+            Assume.Equals( target.Length, Length );
+
+            var payload = Header.Payload;
+            var channelId = unchecked( ( uint )ChannelId );
+            if ( reverseEndianness )
+            {
+                payload = BinaryPrimitives.ReverseEndianness( payload );
+                channelId = BinaryPrimitives.ReverseEndianness( channelId );
+            }
+
+            var writer = new BinaryContractWriter( target.Span );
+            writer.MoveWrite( Header.EndpointCode );
+            writer.MoveWrite( payload );
+            writer.Write( channelId );
+        }
+    }
+
+    internal readonly struct UnsubscribedResponse
+    {
+        internal const int Length = sizeof( byte );
+        internal readonly byte Flags;
+
+        private UnsubscribedResponse(byte flags)
+        {
+            Flags = flags;
+        }
+
+        internal bool ChannelRemoved => (Flags & 1) != 0;
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"Flags = {Flags}";
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static UnsubscribedResponse Parse(ReadOnlyMemory<byte> source)
+        {
+            Assume.Equals( source.Length, Length );
+            var reader = new BinaryContractReader( source.Span );
+            var flags = reader.ReadInt8();
+            return new UnsubscribedResponse( flags );
+        }
+    }
+
+    internal readonly struct UnsubscribeFailureResponse
+    {
+        internal const int Length = sizeof( byte );
+        internal readonly byte Flags;
+
+        private UnsubscribeFailureResponse(byte flags)
+        {
+            Flags = flags;
+        }
+
+        internal bool ClientNotSubscribed => (Flags & 1) != 0;
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"Flags = {Flags}";
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static UnsubscribeFailureResponse Parse(ReadOnlyMemory<byte> source)
+        {
+            Assume.Equals( source.Length, Length );
+            var reader = new BinaryContractReader( source.Span );
+            var flags = reader.ReadInt8();
+            return new UnsubscribeFailureResponse( flags );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal Chain<string> StringifyErrors(MessageBrokerListener listener)
+        {
+            return ClientNotSubscribed
+                ? Chain.Create( Resources.ClientIsNotSubscribedToChannel( listener.ChannelId, listener.ChannelName ) )
+                : Chain<string>.Empty;
+        }
+    }
+
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerClientRequestException RequestException(

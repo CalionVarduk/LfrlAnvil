@@ -517,6 +517,96 @@ internal static class Protocol
         }
     }
 
+    internal readonly struct UnsubscribeRequest
+    {
+        internal const int Length = sizeof( uint );
+        internal readonly int ChannelId;
+
+        private UnsubscribeRequest(int channelId)
+        {
+            ChannelId = channelId;
+        }
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"ChannelId = {ChannelId}";
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static UnsubscribeRequest Parse(ReadOnlyMemory<byte> source)
+        {
+            Assume.Equals( source.Length, Length );
+            var reader = new BinaryContractReader( source.Span );
+            var channelId = unchecked( ( int )reader.ReadInt32() );
+            return new UnsubscribeRequest( channelId );
+        }
+    }
+
+    internal readonly struct UnsubscribedResponse
+    {
+        internal const int Payload = sizeof( byte );
+        internal readonly PacketHeader Header;
+        internal readonly byte Flags;
+
+        internal UnsubscribedResponse(bool channelRemoved)
+        {
+            Header = PacketHeader.Create( MessageBrokerClientEndpoint.UnsubscribedResponse, Payload );
+            Flags = ( byte )(channelRemoved ? 1 : 0);
+        }
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"[{Header}] Flags = {Flags}";
+        }
+
+        internal void Serialize(Memory<byte> target)
+        {
+            Assume.Equals( target.Length, PacketHeader.Length + Payload );
+            var writer = new BinaryContractWriter( target.Span );
+            writer.MoveWrite( Header.EndpointCode );
+            writer.MoveWrite( Header.Payload );
+            writer.Write( Flags );
+        }
+    }
+
+    internal readonly struct UnsubscribeFailureResponse
+    {
+        [Flags]
+        internal enum Reasons : byte
+        {
+            None = 0,
+            ClientNotSubscribed = 1
+        }
+
+        internal const int Payload = sizeof( byte );
+        internal readonly PacketHeader Header;
+        internal readonly byte Flags;
+
+        internal UnsubscribeFailureResponse(Reasons reasons)
+        {
+            Header = PacketHeader.Create( MessageBrokerClientEndpoint.UnsubscribeFailureResponse, Payload );
+            Flags = ( byte )reasons;
+        }
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"[{Header}] Flags = {Flags}";
+        }
+
+        internal void Serialize(Memory<byte> target)
+        {
+            Assume.Equals( target.Length, PacketHeader.Length + Payload );
+            var writer = new BinaryContractWriter( target.Span );
+            writer.MoveWrite( Header.EndpointCode );
+            writer.MoveWrite( Header.Payload );
+            writer.Write( Flags );
+        }
+    }
+
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerServerProtocolException ProtocolException(

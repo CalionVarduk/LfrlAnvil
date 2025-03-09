@@ -62,5 +62,15 @@ public enum MessageBrokerClientEndpoint : byte
     /// <summary>
     /// Represents server's response to client's invalid subscription request.
     /// </summary>
-    SubscribeFailureResponse = 18
+    SubscribeFailureResponse = 18,
+
+    /// <summary>
+    /// Represents server's response to client's valid unsubscribe request.
+    /// </summary>
+    UnsubscribedResponse = 20,
+
+    /// <summary>
+    /// Represents server's response to client's invalid unsubscribe request.
+    /// </summary>
+    UnsubscribeFailureResponse = 22
 }

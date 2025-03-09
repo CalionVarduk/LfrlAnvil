@@ -236,4 +236,58 @@ public class ChannelTests : TestsBase
                         c.LinkedClients.TryGetById( 1 ).TestRefEquals( remoteClient1 ) ) ) )
             .Go();
     }
+
+    [Fact]
+    public async Task Server_ShouldUnlinkChannelAndNotRemoveIt_WhenLastClientUnlinksButThereAreActiveSubscriptions()
+    {
+        await using var server = new MessageBrokerServer(
+            () => new TimestampProvider(),
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) ) );
+
+        await server.StartAsync();
+
+        await using var client = new MessageBrokerClient(
+            new TimestampProvider(),
+            server.LocalEndPoint,
+            "test",
+            MessageBrokerClientOptions.Default
+                .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) ) );
+
+        await client.StartAsync();
+
+        await client.Channels.LinkAsync( "foo" );
+        await client.Listeners.SubscribeAsync( "foo" );
+        var linkedChannel = client.Channels.TryGetById( 1 );
+        var remoteClient = server.Clients.TryGetById( 1 );
+        var channel = server.Channels.TryGetById( 1 );
+        var subscription = channel?.Subscriptions.TryGetByClientId( 1 );
+
+        var result = Result.Create( MessageBrokerChannelUnlinkResult.NotLinked );
+        if ( linkedChannel is not null )
+            result = await linkedChannel.UnlinkAsync();
+
+        Assertion.All(
+                linkedChannel.TestNotNull( c => c.State.TestEquals( MessageBrokerLinkedChannelState.Unlinked ) ),
+                client.Channels.Count.TestEquals( 0 ),
+                client.Listeners.Count.TestEquals( 1 ),
+                result.Exception.TestNull(),
+                result.Value.TestEquals( MessageBrokerChannelUnlinkResult.Unlinked ),
+                remoteClient.TestNotNull(
+                    c => Assertion.All(
+                        "remoteClient",
+                        c.LinkedChannels.Count.TestEquals( 0 ),
+                        c.Subscriptions.Count.TestEquals( 1 ),
+                        c.Subscriptions.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( subscription ) ] ) ) ),
+                channel.TestNotNull(
+                    c => Assertion.All(
+                        "channel",
+                        c.State.TestEquals( MessageBrokerChannelState.Running ),
+                        c.LinkedClients.Count.TestEquals( 0 ),
+                        c.Subscriptions.Count.TestEquals( 1 ),
+                        c.Subscriptions.TryGetByClientId( 1 ).TestRefEquals( subscription ) ) ) )
+            .Go();
+    }
 }

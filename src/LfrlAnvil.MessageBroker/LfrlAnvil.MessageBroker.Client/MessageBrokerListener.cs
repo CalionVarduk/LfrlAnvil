@@ -13,7 +13,10 @@
 // limitations under the License.
 
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using LfrlAnvil.Async;
+using LfrlAnvil.MessageBroker.Client.Exceptions;
+using LfrlAnvil.MessageBroker.Client.Internal;
 
 namespace LfrlAnvil.MessageBroker.Client;
 
@@ -61,6 +64,24 @@ public sealed class MessageBrokerListener
         }
     }
 
+    /// <summary>
+    /// Attempts to unsubscribe this listener from the channel.
+    /// </summary>
+    /// <returns>
+    /// A task that represents the operation, which returns a <see cref="Result{T}"/> instance,
+    /// with underlying <see cref="MessageBrokerChannelUnsubscribeResult"/> instance.
+    /// </returns>
+    /// <exception cref="MessageBrokerClientDisposedException">When client has already been disposed.</exception>
+    /// <remarks>
+    /// Unexpected errors encountered during unsubscribing will cause the client to be automatically disposed.
+    /// Returned <see cref="Result{T}"/> will only be valid when either the client has been successfully unsubscribed from the channel
+    /// on the server side, or the listener is already locally unsubscribed from the channel, which will cancel the request to the server.
+    /// </remarks>
+    public ValueTask<Result<MessageBrokerChannelUnsubscribeResult>> UnsubscribeAsync()
+    {
+        return ListenerCollection.UnsubscribeAsync( this );
+    }
+
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ExclusiveLock AcquireLock()
     {
@@ -72,5 +93,19 @@ public sealed class MessageBrokerListener
     {
         using ( AcquireLock() )
             _state = MessageBrokerListenerState.Disposed;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool Dispose()
+    {
+        using ( AcquireLock() )
+        {
+            if ( _state == MessageBrokerListenerState.Disposed )
+                return false;
+
+            _state = MessageBrokerListenerState.Disposed;
+        }
+
+        return true;
     }
 }
