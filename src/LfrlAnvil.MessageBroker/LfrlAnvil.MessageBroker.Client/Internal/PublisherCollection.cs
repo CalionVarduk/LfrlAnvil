@@ -16,7 +16,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.Exceptions;
@@ -26,22 +25,22 @@ using LfrlAnvil.MessageBroker.Client.Exceptions;
 
 namespace LfrlAnvil.MessageBroker.Client.Internal;
 
-internal readonly struct LinkedChannelCollection
+internal readonly struct PublisherCollection
 {
-    private readonly Dictionary<int, MessageBrokerLinkedChannel> _byId;
-    private readonly Dictionary<string, MessageBrokerLinkedChannel> _byName;
+    private readonly Dictionary<int, MessageBrokerPublisher> _byChannelId;
+    private readonly Dictionary<string, MessageBrokerPublisher> _byChannelName;
 
-    private LinkedChannelCollection(StringComparer nameComparer)
+    private PublisherCollection(StringComparer nameComparer)
     {
-        _byId = new Dictionary<int, MessageBrokerLinkedChannel>();
-        _byName = new Dictionary<string, MessageBrokerLinkedChannel>( nameComparer );
+        _byChannelId = new Dictionary<int, MessageBrokerPublisher>();
+        _byChannelName = new Dictionary<string, MessageBrokerPublisher>( nameComparer );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static LinkedChannelCollection Create()
+    internal static PublisherCollection Create()
     {
-        return new LinkedChannelCollection( StringComparer.OrdinalIgnoreCase );
+        return new PublisherCollection( StringComparer.OrdinalIgnoreCase );
     }
 
     [Pure]
@@ -49,22 +48,22 @@ internal readonly struct LinkedChannelCollection
     internal static int GetCount(MessageBrokerClient client)
     {
         using ( client.AcquireLock() )
-            return client.LinkedChannelCollection._byId.Count;
+            return client.PublisherCollection._byChannelId.Count;
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerLinkedChannel[] GetAll(MessageBrokerClient client)
+    internal static MessageBrokerPublisher[] GetAll(MessageBrokerClient client)
     {
         using ( client.AcquireLock() )
         {
-            if ( client.LinkedChannelCollection._byId.Count == 0 )
-                return Array.Empty<MessageBrokerLinkedChannel>();
+            if ( client.PublisherCollection._byChannelId.Count == 0 )
+                return Array.Empty<MessageBrokerPublisher>();
 
             var i = 0;
-            var result = new MessageBrokerLinkedChannel[client.LinkedChannelCollection._byId.Count];
-            foreach ( var channel in client.LinkedChannelCollection._byId.Values )
-                result[i++] = channel;
+            var result = new MessageBrokerPublisher[client.PublisherCollection._byChannelId.Count];
+            foreach ( var publisher in client.PublisherCollection._byChannelId.Values )
+                result[i++] = publisher;
 
             return result;
         }
@@ -72,28 +71,23 @@ internal readonly struct LinkedChannelCollection
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerLinkedChannel? TryGetById(MessageBrokerClient client, int id)
+    internal static MessageBrokerPublisher? TryGetByChannelId(MessageBrokerClient client, int channelId)
     {
         using ( client.AcquireLock() )
-            return client.LinkedChannelCollection._byId.TryGetValue( id, out var result ) ? result : null;
+            return client.PublisherCollection._byChannelId.TryGetValue( channelId, out var result ) ? result : null;
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerLinkedChannel? TryGetByName(MessageBrokerClient client, string name)
+    internal static MessageBrokerPublisher? TryGetByChannelName(MessageBrokerClient client, string channelName)
     {
         using ( client.AcquireLock() )
-            return client.LinkedChannelCollection._byName.TryGetValue( name, out var result ) ? result : null;
+            return client.PublisherCollection._byChannelName.TryGetValue( channelName, out var result ) ? result : null;
     }
 
-    internal static async ValueTask<Result<MessageBrokerChannelLinkResult?>> LinkAsync(
-        MessageBrokerClient client,
-        string name,
-        CancellationToken cancellationToken)
+    internal static async ValueTask<Result<MessageBrokerBindResult?>> BindAsync(MessageBrokerClient client, string name)
     {
         Ensure.IsInRange( name.Length, Defaults.NameLengthBounds.Min, Defaults.NameLengthBounds.Max );
-
-        cancellationToken.ThrowIfCancellationRequested();
 
         bool reverseEndianness;
         using ( client.AcquireLock() )
@@ -102,20 +96,20 @@ internal readonly struct LinkedChannelCollection
                 ExceptionThrower.Throw( client.DisposedException() );
 
             client.AssertState( MessageBrokerClientState.Running );
-            if ( client.LinkedChannelCollection._byName.TryGetValue( name, out var channel ) )
-                return MessageBrokerChannelLinkResult.AlreadyLinked( channel );
+            if ( client.PublisherCollection._byChannelName.TryGetValue( name, out var publisher ) )
+                return MessageBrokerBindResult.CreateAlreadyBound( publisher );
 
             reverseEndianness = BitConverter.IsLittleEndian != client.IsServerLittleEndian;
         }
 
         ManualResetValueTaskSource<IncomingPacketToken> responseSource;
-        Protocol.LinkChannelRequest request;
+        Protocol.BindRequest request;
         ulong contextId;
 
         var bufferToken = default( BinaryBufferToken );
         try
         {
-            request = new Protocol.LinkChannelRequest( name );
+            request = new Protocol.BindRequest( name );
             bufferToken = client.RentBuffer( request.Length, out var buffer ).EnableClearing();
             request.Serialize( buffer, reverseEndianness );
 
@@ -177,11 +171,7 @@ internal readonly struct LinkedChannelCollection
                 if ( response.Type == IncomingPacketToken.Result.Disposed )
                     return client.DisposedException();
 
-                var error = new MessageBrokerClientResponseTimeoutException(
-                    client,
-                    request.Header.GetServerEndpoint(),
-                    MessageBrokerClientEndpoint.ChannelLinkedResponse );
-
+                var error = new MessageBrokerClientResponseTimeoutException( client, request.Header.GetServerEndpoint() );
                 client.Emit( MessageBrokerClientEvent.WaitingForMessage( client, error ) );
                 await client.DisposeAsync().ConfigureAwait( false );
                 return error;
@@ -197,11 +187,11 @@ internal readonly struct LinkedChannelCollection
 
             switch ( response.Header.GetClientEndpoint() )
             {
-                case MessageBrokerClientEndpoint.ChannelLinkedResponse:
+                case MessageBrokerClientEndpoint.BoundResponse:
                 {
                     client.Emit( MessageBrokerClientEvent.MessageReceived( client, response.Header, contextId ) );
 
-                    var exc = Protocol.AssertPayload( client, response.Header, Protocol.ChannelLinkedResponse.Length );
+                    var exc = Protocol.AssertPayload( client, response.Header, Protocol.BoundResponse.Length );
                     if ( exc is not null )
                     {
                         client.Emit( MessageBrokerClientEvent.MessageRejected( client, response.Header, exc, contextId ) );
@@ -209,7 +199,7 @@ internal readonly struct LinkedChannelCollection
                         return exc;
                     }
 
-                    var parsedResponse = Protocol.ChannelLinkedResponse.Parse( response.Data, reverseEndianness );
+                    var parsedResponse = Protocol.BoundResponse.Parse( response.Data, reverseEndianness );
                     var errors = parsedResponse.StringifyErrors();
 
                     if ( errors.Count > 0 )
@@ -226,19 +216,16 @@ internal readonly struct LinkedChannelCollection
                     }
 
                     bool cancel;
-                    MessageBrokerChannelLinkResult linkResult = default;
+                    MessageBrokerBindResult bindResult = default;
                     using ( client.AcquireLock() )
                     {
                         cancel = client.ShouldCancel;
                         if ( ! cancel )
                         {
-                            var channel = new MessageBrokerLinkedChannel( client, parsedResponse.Id, name );
-                            client.LinkedChannelCollection._byId.Add( parsedResponse.Id, channel );
-                            client.LinkedChannelCollection._byName.Add( name, channel );
-
-                            linkResult = parsedResponse.Created
-                                ? MessageBrokerChannelLinkResult.CreatedAndLinked( channel )
-                                : MessageBrokerChannelLinkResult.Linked( channel );
+                            var publisher = new MessageBrokerPublisher( client, parsedResponse.ChannelId, name );
+                            client.PublisherCollection._byChannelId.Add( parsedResponse.ChannelId, publisher );
+                            client.PublisherCollection._byChannelName.Add( name, publisher );
+                            bindResult = MessageBrokerBindResult.Create( publisher, parsedResponse.ChannelCreated );
                         }
                     }
 
@@ -246,14 +233,14 @@ internal readonly struct LinkedChannelCollection
                         return client.EmitError(
                             MessageBrokerClientEvent.MessageReceived( client, response.Header, contextId, client.DisposedException() ) );
 
-                    client.Emit( MessageBrokerClientEvent.MessageAccepted( client, response.Header, contextId, linkResult.Channel ) );
-                    return linkResult;
+                    client.Emit( MessageBrokerClientEvent.MessageAccepted( client, response.Header, contextId, bindResult.Publisher ) );
+                    return bindResult;
                 }
-                case MessageBrokerClientEndpoint.LinkChannelFailureResponse:
+                case MessageBrokerClientEndpoint.BindFailureResponse:
                 {
                     client.Emit( MessageBrokerClientEvent.MessageReceived( client, response.Header, contextId ) );
 
-                    var exc = Protocol.AssertPayload( client, response.Header, Protocol.LinkChannelFailureResponse.Length );
+                    var exc = Protocol.AssertPayload( client, response.Header, Protocol.BindFailureResponse.Length );
                     if ( exc is not null )
                     {
                         client.Emit( MessageBrokerClientEvent.MessageRejected( client, response.Header, exc, contextId ) );
@@ -261,7 +248,7 @@ internal readonly struct LinkedChannelCollection
                         return exc;
                     }
 
-                    var parsedResponse = Protocol.LinkChannelFailureResponse.Parse( response.Data );
+                    var parsedResponse = Protocol.BindFailureResponse.Parse( response.Data );
                     return client.EmitError(
                         MessageBrokerClientEvent.MessageReceived(
                             client,
@@ -289,34 +276,30 @@ internal readonly struct LinkedChannelCollection
         }
     }
 
-    internal static async ValueTask<Result<MessageBrokerChannelUnlinkResult>> UnlinkAsync(
-        MessageBrokerLinkedChannel channel,
-        CancellationToken cancellationToken)
+    internal static async ValueTask<Result<MessageBrokerUnbindResult>> UnbindAsync(MessageBrokerPublisher publisher)
     {
-        cancellationToken.ThrowIfCancellationRequested();
-
         bool reverseEndianness;
-        var client = channel.Client;
+        var client = publisher.Client;
         using ( client.AcquireLock() )
         {
             if ( client.ShouldCancel )
                 ExceptionThrower.Throw( client.DisposedException() );
 
-            if ( ! channel.Unlink() )
-                return MessageBrokerChannelUnlinkResult.NotLinked;
+            if ( ! publisher.Dispose() )
+                return MessageBrokerUnbindResult.CreateNotBound();
 
             reverseEndianness = BitConverter.IsLittleEndian != client.IsServerLittleEndian;
         }
 
         ManualResetValueTaskSource<IncomingPacketToken> responseSource;
-        Protocol.UnlinkChannelRequest request;
+        Protocol.UnbindRequest request;
         ulong contextId;
 
         var bufferToken = default( BinaryBufferToken );
         try
         {
-            request = new Protocol.UnlinkChannelRequest( channel.Id );
-            bufferToken = client.RentBuffer( Protocol.UnlinkChannelRequest.Length, out var buffer ).EnableClearing();
+            request = new Protocol.UnbindRequest( publisher.ChannelId );
+            bufferToken = client.RentBuffer( Protocol.UnbindRequest.Length, out var buffer ).EnableClearing();
             request.Serialize( buffer, reverseEndianness );
 
             ManualResetValueTaskSource<bool> writerSource;
@@ -341,7 +324,7 @@ internal readonly struct LinkedChannelCollection
                 responseSource = client.MessageContextQueue.AcquirePendingResponseSource( contextId, request.Header.GetServerEndpoint() );
             }
 
-            var result = await client.WriteAsync( request.Header, buffer, contextId, channel ).ConfigureAwait( false );
+            var result = await client.WriteAsync( request.Header, buffer, contextId, publisher ).ConfigureAwait( false );
             if ( result.Exception is not null )
             {
                 await client.DisposeAsync().ConfigureAwait( false );
@@ -377,11 +360,7 @@ internal readonly struct LinkedChannelCollection
                 if ( response.Type == IncomingPacketToken.Result.Disposed )
                     return client.DisposedException();
 
-                var error = new MessageBrokerClientResponseTimeoutException(
-                    client,
-                    request.Header.GetServerEndpoint(),
-                    MessageBrokerClientEndpoint.ChannelUnlinkedResponse );
-
+                var error = new MessageBrokerClientResponseTimeoutException( client, request.Header.GetServerEndpoint() );
                 client.Emit( MessageBrokerClientEvent.WaitingForMessage( client, error ) );
                 await client.DisposeAsync().ConfigureAwait( false );
                 return error;
@@ -397,11 +376,11 @@ internal readonly struct LinkedChannelCollection
 
             switch ( response.Header.GetClientEndpoint() )
             {
-                case MessageBrokerClientEndpoint.ChannelUnlinkedResponse:
+                case MessageBrokerClientEndpoint.UnboundResponse:
                 {
                     client.Emit( MessageBrokerClientEvent.MessageReceived( client, response.Header, contextId ) );
 
-                    var exc = Protocol.AssertPayload( client, response.Header, Protocol.ChannelUnlinkedResponse.Length );
+                    var exc = Protocol.AssertPayload( client, response.Header, Protocol.UnboundResponse.Length );
                     if ( exc is not null )
                     {
                         client.Emit( MessageBrokerClientEvent.MessageRejected( client, response.Header, exc, contextId ) );
@@ -409,7 +388,7 @@ internal readonly struct LinkedChannelCollection
                         return exc;
                     }
 
-                    var parsedResponse = Protocol.ChannelUnlinkedResponse.Parse( response.Data );
+                    var parsedResponse = Protocol.UnboundResponse.Parse( response.Data );
 
                     bool cancel;
                     using ( client.AcquireLock() )
@@ -417,8 +396,8 @@ internal readonly struct LinkedChannelCollection
                         cancel = client.ShouldCancel;
                         if ( ! cancel )
                         {
-                            client.LinkedChannelCollection._byId.Remove( channel.Id );
-                            client.LinkedChannelCollection._byName.Remove( channel.Name );
+                            client.PublisherCollection._byChannelId.Remove( publisher.ChannelId );
+                            client.PublisherCollection._byChannelName.Remove( publisher.ChannelName );
                         }
                     }
 
@@ -427,15 +406,13 @@ internal readonly struct LinkedChannelCollection
                             MessageBrokerClientEvent.MessageReceived( client, response.Header, contextId, client.DisposedException() ) );
 
                     client.Emit( MessageBrokerClientEvent.MessageAccepted( client, response.Header, contextId ) );
-                    return parsedResponse.ChannelRemoved
-                        ? MessageBrokerChannelUnlinkResult.UnlinkedAndChannelRemoved
-                        : MessageBrokerChannelUnlinkResult.Unlinked;
+                    return MessageBrokerUnbindResult.Create( parsedResponse.ChannelRemoved );
                 }
-                case MessageBrokerClientEndpoint.UnlinkChannelFailureResponse:
+                case MessageBrokerClientEndpoint.UnbindFailureResponse:
                 {
                     client.Emit( MessageBrokerClientEvent.MessageReceived( client, response.Header, contextId ) );
 
-                    var exc = Protocol.AssertPayload( client, response.Header, Protocol.UnlinkChannelFailureResponse.Length );
+                    var exc = Protocol.AssertPayload( client, response.Header, Protocol.UnbindFailureResponse.Length );
                     if ( exc is not null )
                     {
                         client.Emit( MessageBrokerClientEvent.MessageRejected( client, response.Header, exc, contextId ) );
@@ -443,13 +420,13 @@ internal readonly struct LinkedChannelCollection
                         return exc;
                     }
 
-                    var parsedResponse = Protocol.UnlinkChannelFailureResponse.Parse( response.Data );
+                    var parsedResponse = Protocol.UnbindFailureResponse.Parse( response.Data );
                     return client.EmitError(
                         MessageBrokerClientEvent.MessageReceived(
                             client,
                             response.Header,
                             contextId,
-                            Protocol.RequestException( client, request.Header, parsedResponse.StringifyErrors( channel ) ) ) );
+                            Protocol.RequestException( client, request.Header, parsedResponse.StringifyErrors( publisher ) ) ) );
                 }
                 default:
                 {
@@ -473,10 +450,10 @@ internal readonly struct LinkedChannelCollection
 
     internal void Clear()
     {
-        foreach ( var channel in _byId.Values )
-            channel.OnClientDisposed();
+        foreach ( var publisher in _byChannelId.Values )
+            publisher.OnClientDisposed();
 
-        _byId.Clear();
-        _byName.Clear();
+        _byChannelId.Clear();
+        _byChannelName.Clear();
     }
 }

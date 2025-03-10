@@ -22,41 +22,41 @@ using LfrlAnvil.MessageBroker.Client.Internal;
 namespace LfrlAnvil.MessageBroker.Client;
 
 /// <summary>
-/// Represents a message broker listener, which allows the client to react to messages published to the related channel.
+/// Represents a message broker listener, which allows the client to publish messages to the related channel.
 /// </summary>
-public sealed class MessageBrokerListener
+public sealed class MessageBrokerPublisher
 {
     private readonly object _sync = new object();
-    private MessageBrokerListenerState _state;
+    private MessageBrokerPublisherState _state;
 
-    internal MessageBrokerListener(MessageBrokerClient client, int channelId, string channelName)
+    internal MessageBrokerPublisher(MessageBrokerClient client, int channelId, string channelName)
     {
         Client = client;
         ChannelId = channelId;
         ChannelName = channelName;
-        _state = MessageBrokerListenerState.Subscribed;
+        _state = MessageBrokerPublisherState.Bound;
     }
 
     /// <summary>
-    /// <see cref="MessageBrokerClient"/> instance that owns this listener.
+    /// <see cref="MessageBrokerClient"/> instance that owns this publisher.
     /// </summary>
     public MessageBrokerClient Client { get; }
 
     /// <summary>
-    /// Unique id of the channel to which this listener is related.
+    /// Unique id of the channel to which this publisher is related.
     /// </summary>
     public int ChannelId { get; }
 
     /// <summary>
-    /// Unique name of the channel to which this listener is related.
+    /// Unique name of the channel to which this publisher is related.
     /// </summary>
     public string ChannelName { get; }
 
     /// <summary>
-    /// Current listener's state.
+    /// Current publisher's state.
     /// </summary>
-    /// <remarks>See <see cref="MessageBrokerListenerState"/> for more information.</remarks>
-    public MessageBrokerListenerState State
+    /// <remarks>See <see cref="MessageBrokerPublisherState"/> for more information.</remarks>
+    public MessageBrokerPublisherState State
     {
         get
         {
@@ -66,31 +66,31 @@ public sealed class MessageBrokerListener
     }
 
     /// <summary>
-    /// Returns a string representation of this <see cref="MessageBrokerListener"/> instance.
+    /// Returns a string representation of this <see cref="MessageBrokerPublisher"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
-        return $"[{ChannelId}] '{ChannelName}' listener ({State})";
+        return $"[{ChannelId}] '{ChannelName}' publisher ({State})";
     }
 
     /// <summary>
-    /// Attempts to unsubscribe this listener from the channel.
+    /// Attempts to unbind this publisher from the channel.
     /// </summary>
     /// <returns>
     /// A task that represents the operation, which returns a <see cref="Result{T}"/> instance,
-    /// with underlying <see cref="MessageBrokerUnsubscribeResult"/> instance.
+    /// with underlying <see cref="MessageBrokerUnbindResult"/> instance.
     /// </returns>
     /// <exception cref="MessageBrokerClientDisposedException">When client has already been disposed.</exception>
     /// <remarks>
-    /// Unexpected errors encountered during unsubscribing will cause the client to be automatically disposed.
-    /// Returned <see cref="Result{T}"/> will only be valid when either the client has been successfully unsubscribed from the channel
-    /// on the server side, or the listener is already locally unsubscribed from the channel, which will cancel the request to the server.
+    /// Unexpected errors encountered during unbinding will cause the client to be automatically disposed.
+    /// Returned <see cref="Result{T}"/> will only be valid when either the client has been successfully unbound from the channel
+    /// on the server side, or the publisher is already locally unbound from the channel, which will cancel the request to the server.
     /// </remarks>
-    public ValueTask<Result<MessageBrokerUnsubscribeResult>> UnsubscribeAsync()
+    public ValueTask<Result<MessageBrokerUnbindResult>> UnbindAsync()
     {
-        return ListenerCollection.UnsubscribeAsync( this );
+        return PublisherCollection.UnbindAsync( this );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -98,10 +98,10 @@ public sealed class MessageBrokerListener
     {
         using ( AcquireLock() )
         {
-            if ( _state == MessageBrokerListenerState.Disposed )
+            if ( _state == MessageBrokerPublisherState.Disposed )
                 return false;
 
-            _state = MessageBrokerListenerState.Disposed;
+            _state = MessageBrokerPublisherState.Disposed;
         }
 
         return true;
@@ -111,7 +111,7 @@ public sealed class MessageBrokerListener
     internal void OnClientDisposed()
     {
         using ( AcquireLock() )
-            _state = MessageBrokerListenerState.Disposed;
+            _state = MessageBrokerPublisherState.Disposed;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

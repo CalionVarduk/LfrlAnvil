@@ -35,32 +35,32 @@ public enum MessageBrokerClientEndpoint : byte
     HandshakeAcceptedResponse = 6,
 
     /// <summary>
-    /// Represents server's response to client's valid link channel request.
+    /// Represents server's response to client's valid bind request.
     /// </summary>
-    ChannelLinkedResponse = 8,
+    BoundResponse = 8,
 
     /// <summary>
-    /// Represents server's response to client's invalid link channel request.
+    /// Represents server's response to client's invalid bind request.
     /// </summary>
-    LinkChannelFailureResponse = 10,
+    BindFailureResponse = 10,
 
     /// <summary>
-    /// Represents server's response to client's valid unlink channel request.
+    /// Represents server's response to client's valid unbind request.
     /// </summary>
-    ChannelUnlinkedResponse = 12,
+    UnboundResponse = 12,
 
     /// <summary>
-    /// Represents server's response to client's invalid unlink channel request.
+    /// Represents server's response to client's invalid unbind request.
     /// </summary>
-    UnlinkChannelFailureResponse = 14,
+    UnbindFailureResponse = 14,
 
     /// <summary>
-    /// Represents server's response to client's valid subscription request.
+    /// Represents server's response to client's valid subscribe request.
     /// </summary>
     SubscribedResponse = 16,
 
     /// <summary>
-    /// Represents server's response to client's invalid subscription request.
+    /// Represents server's response to client's invalid subscribe request.
     /// </summary>
     SubscribeFailureResponse = 18,
 

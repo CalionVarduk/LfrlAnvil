@@ -19,16 +19,16 @@ namespace LfrlAnvil.MessageBroker.Server.Exceptions;
 /// <summary>
 /// Represents an error related to a message broker subscription.
 /// </summary>
-public sealed class MessageBrokerRemoteClientSubscriptionException : InvalidOperationException
+public sealed class MessageBrokerSubscriptionException : InvalidOperationException
 {
     /// <summary>
-    /// Creates a new <see cref="MessageBrokerRemoteClientSubscriptionException"/> instance.
+    /// Creates a new <see cref="MessageBrokerSubscriptionException"/> instance.
     /// </summary>
     /// <param name="client"><see cref="MessageBrokerServer"/> instance that encountered this error.</param>
     /// <param name="channel">Optional <see cref="MessageBrokerChannel"/> instance that encountered this error.</param>
     /// <param name="subscription">Optional <see cref="MessageBrokerSubscription"/> instance that encountered this error.</param>
     /// <param name="message">Underlying error message.</param>
-    public MessageBrokerRemoteClientSubscriptionException(
+    public MessageBrokerSubscriptionException(
         MessageBrokerRemoteClient client,
         MessageBrokerChannel? channel,
         MessageBrokerSubscription? subscription,

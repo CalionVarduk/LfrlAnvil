@@ -1,11 +1,11 @@
 ﻿// Copyright 2025 Łukasz Furlepa
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,22 +15,17 @@
 namespace LfrlAnvil.MessageBroker.Client;
 
 /// <summary>
-/// Represents the result of <see cref="MessageBrokerLinkedChannel"/> unlink operation.
+/// Defines possible <see cref="MessageBrokerPublisher"/> states.
 /// </summary>
-public enum MessageBrokerChannelUnlinkResult : byte
+public enum MessageBrokerPublisherState : byte
 {
     /// <summary>
-    /// Specifies that the client was not linked to the channel.
+    /// Specifies that the publisher is bound to the channel and allows to publish messages.
     /// </summary>
-    NotLinked = 0,
+    Bound = 0,
 
     /// <summary>
-    /// Specifies that the client has been successfully unlinked from the channel.
+    /// Specifies that the publisher has been disposed.
     /// </summary>
-    Unlinked = 1,
-
-    /// <summary>
-    /// Specifies that the client has been successfully unlinked from the channel and that channel has been removed by the server.
-    /// </summary>
-    UnlinkedAndChannelRemoved = 2
+    Disposed = 1
 }

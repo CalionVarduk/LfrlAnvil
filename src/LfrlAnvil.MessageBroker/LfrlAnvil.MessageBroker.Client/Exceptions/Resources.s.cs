@@ -82,23 +82,16 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string SubscriberIdIsNotPositive(int received)
+    internal static string AlreadyBound(string channelName)
     {
-        return $"Expected subscriber ID to be greater than 0 but found {received}.";
+        return $"Client is already bound to channel '{channelName}'.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string ClientAlreadyLinkedToChannel(string channelName)
+    internal static string BindCancelled(string channelName)
     {
-        return $"Client is already linked to channel '{channelName}'.";
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string ClientChannelLinkingCancelled(string channelName)
-    {
-        return $"Linking client to channel '{channelName}' has been cancelled by the server.";
+        return $"Binding client to channel '{channelName}' has been cancelled by the server.";
     }
 
     [Pure]
@@ -110,28 +103,28 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string ClientAlreadySubscribedToChannel(string channelName)
+    internal static string AlreadySubscribed(string channelName)
     {
         return $"Client is already subscribed to channel '{channelName}'.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string ClientSubscribingCancelled(string channelName)
+    internal static string SubscribeCancelled(string channelName)
     {
         return $"Subscribing client to channel '{channelName}' has been cancelled by the server.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string ClientIsNotLinkedToChannel(int channelId, string channelName)
+    internal static string NotBound(int channelId, string channelName)
     {
-        return $"Client is not linked to channel [{channelId}] '{channelName}'.";
+        return $"Client is not bound to channel [{channelId}] '{channelName}'.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string ClientIsNotSubscribedToChannel(int channelId, string channelName)
+    internal static string NotSubscribed(int channelId, string channelName)
     {
         return $"Client is not subscribed to channel [{channelId}] '{channelName}'.";
     }
@@ -152,14 +145,10 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string ResponseTimeout(
-        string clientName,
-        Duration timeout,
-        MessageBrokerServerEndpoint requestEndpoint,
-        MessageBrokerClientEndpoint responseEndpoint)
+    internal static string ResponseTimeout(string clientName, Duration timeout, MessageBrokerServerEndpoint requestEndpoint)
     {
         return
-            $"Message broker server failed to respond with {responseEndpoint} packet to '{clientName}' client's {requestEndpoint} request in the specified amount of time ({timeout.FullMilliseconds} milliseconds).";
+            $"Message broker server failed to respond to '{clientName}' client's {requestEndpoint} request in the specified amount of time ({timeout.FullMilliseconds} milliseconds).";
     }
 
     [Pure]

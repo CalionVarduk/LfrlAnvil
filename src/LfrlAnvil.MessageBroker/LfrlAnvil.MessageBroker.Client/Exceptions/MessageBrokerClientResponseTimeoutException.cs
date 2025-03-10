@@ -28,18 +28,13 @@ public class MessageBrokerClientResponseTimeoutException : OperationCanceledExce
     /// </summary>
     /// <param name="client"><see cref="MessageBrokerClient"/> that encountered response timeout.</param>
     /// <param name="requestEndpoint">Request endpoint.</param>
-    /// <param name="responseEndpoint">Expected response endpoint.</param>
-    public MessageBrokerClientResponseTimeoutException(
-        MessageBrokerClient client,
-        MessageBrokerServerEndpoint requestEndpoint,
-        MessageBrokerClientEndpoint responseEndpoint)
+    public MessageBrokerClientResponseTimeoutException(MessageBrokerClient client, MessageBrokerServerEndpoint requestEndpoint)
         : base(
-            Resources.ResponseTimeout( client.Name, client.MessageTimeout, requestEndpoint, responseEndpoint ),
+            Resources.ResponseTimeout( client.Name, client.MessageTimeout, requestEndpoint ),
             new CancellationToken( canceled: true ) )
     {
         Client = client;
         RequestEndpoint = requestEndpoint;
-        ResponseEndpoint = responseEndpoint;
     }
 
     /// <summary>
@@ -51,9 +46,4 @@ public class MessageBrokerClientResponseTimeoutException : OperationCanceledExce
     /// Request endpoint.
     /// </summary>
     public MessageBrokerServerEndpoint RequestEndpoint { get; }
-
-    /// <summary>
-    /// Expected response endpoint.
-    /// </summary>
-    public MessageBrokerClientEndpoint ResponseEndpoint { get; }
 }

@@ -174,10 +174,7 @@ internal struct PingScheduler
                 client.Emit(
                     MessageBrokerClientEvent.WaitingForMessage(
                         client,
-                        new MessageBrokerClientResponseTimeoutException(
-                            client,
-                            request.GetServerEndpoint(),
-                            MessageBrokerClientEndpoint.PingResponse ) ) );
+                        new MessageBrokerClientResponseTimeoutException( client, request.GetServerEndpoint() ) ) );
 
                 return TaskStopReason.Error;
             }

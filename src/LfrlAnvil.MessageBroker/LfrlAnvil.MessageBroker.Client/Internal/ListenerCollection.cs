@@ -85,7 +85,7 @@ internal readonly struct ListenerCollection
             return client.ListenerCollection._byChannelName.TryGetValue( channelName, out var result ) ? result : null;
     }
 
-    internal static async ValueTask<Result<MessageBrokerSubscriptionResult?>> SubscribeAsync(
+    internal static async ValueTask<Result<MessageBrokerSubscribeResult?>> SubscribeAsync(
         MessageBrokerClient client,
         string channelName,
         bool createChannelIfNotExists)
@@ -100,7 +100,7 @@ internal readonly struct ListenerCollection
 
             client.AssertState( MessageBrokerClientState.Running );
             if ( client.ListenerCollection._byChannelName.TryGetValue( channelName, out var listener ) )
-                return MessageBrokerSubscriptionResult.AlreadySubscribed( listener );
+                return MessageBrokerSubscribeResult.CreateAlreadySubscribed( listener );
 
             reverseEndianness = BitConverter.IsLittleEndian != client.IsServerLittleEndian;
         }
@@ -174,11 +174,7 @@ internal readonly struct ListenerCollection
                 if ( response.Type == IncomingPacketToken.Result.Disposed )
                     return client.DisposedException();
 
-                var error = new MessageBrokerClientResponseTimeoutException(
-                    client,
-                    request.Header.GetServerEndpoint(),
-                    MessageBrokerClientEndpoint.SubscribedResponse );
-
+                var error = new MessageBrokerClientResponseTimeoutException( client, request.Header.GetServerEndpoint() );
                 client.Emit( MessageBrokerClientEvent.WaitingForMessage( client, error ) );
                 await client.DisposeAsync().ConfigureAwait( false );
                 return error;
@@ -223,7 +219,7 @@ internal readonly struct ListenerCollection
                     }
 
                     bool cancel;
-                    MessageBrokerSubscriptionResult subscriptionResult = default;
+                    MessageBrokerSubscribeResult subscribeResult = default;
                     using ( client.AcquireLock() )
                     {
                         cancel = client.ShouldCancel;
@@ -232,10 +228,7 @@ internal readonly struct ListenerCollection
                             var listener = new MessageBrokerListener( client, parsedResponse.ChannelId, channelName );
                             client.ListenerCollection._byChannelId.Add( parsedResponse.ChannelId, listener );
                             client.ListenerCollection._byChannelName.Add( channelName, listener );
-
-                            subscriptionResult = parsedResponse.ChannelCreated
-                                ? MessageBrokerSubscriptionResult.SubscribedAndChannelCreated( listener )
-                                : MessageBrokerSubscriptionResult.Subscribed( listener );
+                            subscribeResult = MessageBrokerSubscribeResult.Create( listener, parsedResponse.ChannelCreated );
                         }
                     }
 
@@ -243,10 +236,8 @@ internal readonly struct ListenerCollection
                         return client.EmitError(
                             MessageBrokerClientEvent.MessageReceived( client, response.Header, contextId, client.DisposedException() ) );
 
-                    client.Emit(
-                        MessageBrokerClientEvent.MessageAccepted( client, response.Header, contextId, subscriptionResult.Listener ) );
-
-                    return subscriptionResult;
+                    client.Emit( MessageBrokerClientEvent.MessageAccepted( client, response.Header, contextId, subscribeResult.Listener ) );
+                    return subscribeResult;
                 }
                 case MessageBrokerClientEndpoint.SubscribeFailureResponse:
                 {
@@ -288,7 +279,7 @@ internal readonly struct ListenerCollection
         }
     }
 
-    internal static async ValueTask<Result<MessageBrokerChannelUnsubscribeResult>> UnsubscribeAsync(MessageBrokerListener listener)
+    internal static async ValueTask<Result<MessageBrokerUnsubscribeResult>> UnsubscribeAsync(MessageBrokerListener listener)
     {
         bool reverseEndianness;
         var client = listener.Client;
@@ -298,7 +289,7 @@ internal readonly struct ListenerCollection
                 ExceptionThrower.Throw( client.DisposedException() );
 
             if ( ! listener.Dispose() )
-                return MessageBrokerChannelUnsubscribeResult.NotSubscribed;
+                return MessageBrokerUnsubscribeResult.CreateNotSubscribed();
 
             reverseEndianness = BitConverter.IsLittleEndian != client.IsServerLittleEndian;
         }
@@ -372,11 +363,7 @@ internal readonly struct ListenerCollection
                 if ( response.Type == IncomingPacketToken.Result.Disposed )
                     return client.DisposedException();
 
-                var error = new MessageBrokerClientResponseTimeoutException(
-                    client,
-                    request.Header.GetServerEndpoint(),
-                    MessageBrokerClientEndpoint.UnsubscribedResponse );
-
+                var error = new MessageBrokerClientResponseTimeoutException( client, request.Header.GetServerEndpoint() );
                 client.Emit( MessageBrokerClientEvent.WaitingForMessage( client, error ) );
                 await client.DisposeAsync().ConfigureAwait( false );
                 return error;
@@ -422,9 +409,7 @@ internal readonly struct ListenerCollection
                             MessageBrokerClientEvent.MessageReceived( client, response.Header, contextId, client.DisposedException() ) );
 
                     client.Emit( MessageBrokerClientEvent.MessageAccepted( client, response.Header, contextId ) );
-                    return parsedResponse.ChannelRemoved
-                        ? MessageBrokerChannelUnsubscribeResult.UnsubscribedAndChannelRemoved
-                        : MessageBrokerChannelUnsubscribeResult.Unsubscribed;
+                    return MessageBrokerUnsubscribeResult.Create( parsedResponse.ChannelRemoved );
                 }
                 case MessageBrokerClientEndpoint.UnsubscribeFailureResponse:
                 {

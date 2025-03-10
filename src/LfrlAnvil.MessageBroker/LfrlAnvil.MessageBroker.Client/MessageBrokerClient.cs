@@ -42,7 +42,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     internal MessageListener MessageListener;
     internal MessageContextQueue MessageContextQueue;
     internal PingScheduler PingScheduler;
-    internal LinkedChannelCollection LinkedChannelCollection;
+    internal PublisherCollection PublisherCollection;
     internal ListenerCollection ListenerCollection;
 
     private readonly MessageBrokerClientEventHandler? _eventHandler;
@@ -91,7 +91,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         MessageListener = MessageListener.Create();
         MessageContextQueue = MessageContextQueue.Create();
         PingScheduler = PingScheduler.Create();
-        LinkedChannelCollection = LinkedChannelCollection.Create();
+        PublisherCollection = PublisherCollection.Create();
         ListenerCollection = ListenerCollection.Create();
     }
 
@@ -169,9 +169,9 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     }
 
     /// <summary>
-    /// Collection of <see cref="MessageBrokerLinkedChannel"/> instances.
+    /// Collection of <see cref="MessageBrokerPublisher"/> instances.
     /// </summary>
-    public MessageBrokerLinkedChannelCollection Channels => new MessageBrokerLinkedChannelCollection( this );
+    public MessageBrokerPublisherCollection Publishers => new MessageBrokerPublisherCollection( this );
 
     /// <summary>
     /// Collection of <see cref="MessageBrokerListener"/> instances.
@@ -206,7 +206,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         Exception? exception;
         using ( AcquireLock() )
         {
-            LinkedChannelCollection.Clear();
+            PublisherCollection.Clear();
             ListenerCollection.Clear();
             synchronousSchedulerTask = SynchronousScheduler.DiscardUnderlyingTask();
             pingSchedulerTask = PingScheduler.DiscardUnderlyingTask();
@@ -247,6 +247,16 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         }
 
         Emit( MessageBrokerClientEvent.Disposed( this ) );
+    }
+
+    /// <summary>
+    /// Returns a string representation of this <see cref="MessageBrokerClient"/> instance.
+    /// </summary>
+    /// <returns>String representation.</returns>
+    [Pure]
+    public override string ToString()
+    {
+        return $"[{Id}] '{Name}' ({State})";
     }
 
     /// <summary>

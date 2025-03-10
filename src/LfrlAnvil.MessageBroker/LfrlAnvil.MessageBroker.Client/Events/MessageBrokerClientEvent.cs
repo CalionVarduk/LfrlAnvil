@@ -207,10 +207,10 @@ public readonly struct MessageBrokerClientEvent
                             .Append( Client.PingInterval )
                             .Append( ')' );
                     }
-                    else if ( GetClientEndpoint() == MessageBrokerClientEndpoint.ChannelLinkedResponse )
+                    else if ( GetClientEndpoint() == MessageBrokerClientEndpoint.BoundResponse )
                     {
-                        if ( Data is MessageBrokerLinkedChannel channel )
-                            builder.Append( " (Id = " ).Append( channel.Id ).Append( ')' );
+                        if ( Data is MessageBrokerPublisher publisher )
+                            builder.Append( " (Id = " ).Append( publisher.ChannelId ).Append( ')' );
                     }
                     else if ( GetClientEndpoint() == MessageBrokerClientEndpoint.SubscribedResponse )
                     {
@@ -222,19 +222,19 @@ public readonly struct MessageBrokerClientEvent
 
                 case MessageBrokerClientEventType.SendingMessage:
                     builder.AppendSpace().Append( GetServerEndpoint().ToString() );
-                    if ( GetServerEndpoint() == MessageBrokerServerEndpoint.LinkChannelRequest )
+                    if ( GetServerEndpoint() == MessageBrokerServerEndpoint.BindRequest )
                     {
                         if ( Data is string channelName )
                             builder.Append( " (ChannelName = '" ).Append( channelName ).Append( "')" );
                     }
-                    else if ( GetServerEndpoint() == MessageBrokerServerEndpoint.UnlinkChannelRequest )
+                    else if ( GetServerEndpoint() == MessageBrokerServerEndpoint.UnbindRequest )
                     {
-                        if ( Data is MessageBrokerLinkedChannel channel )
+                        if ( Data is MessageBrokerPublisher publisher )
                             builder
                                 .Append( " (ChannelId = " )
-                                .Append( channel.Id.ToString( CultureInfo.InvariantCulture ) )
+                                .Append( publisher.ChannelId.ToString( CultureInfo.InvariantCulture ) )
                                 .Append( ", ChannelName = '" )
-                                .Append( channel.Name )
+                                .Append( publisher.ChannelName )
                                 .Append( "')" );
                     }
                     else if ( GetServerEndpoint() == MessageBrokerServerEndpoint.SubscribeRequest )

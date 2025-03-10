@@ -233,12 +233,12 @@ internal static class Protocol
         }
     }
 
-    internal readonly struct LinkChannelRequestHeader
+    internal readonly struct BindRequestHeader
     {
         internal const int Length = sizeof( byte );
         internal readonly byte Flags;
 
-        private LinkChannelRequestHeader(byte flags)
+        private BindRequestHeader(byte flags)
         {
             Flags = flags;
         }
@@ -251,7 +251,7 @@ internal static class Protocol
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal static LinkChannelRequestHeader Parse(ReadOnlyMemory<byte> source)
+        internal static BindRequestHeader Parse(ReadOnlyMemory<byte> source)
         {
             Assume.Equals( source.Length, Length );
 
@@ -259,28 +259,28 @@ internal static class Protocol
             var flags = reader.ReadInt8();
             Assume.Equals( flags, 0 );
 
-            return new LinkChannelRequestHeader( flags );
+            return new BindRequestHeader( flags );
         }
     }
 
-    internal readonly struct ChannelLinkedResponse
+    internal readonly struct BoundResponse
     {
         internal const int Payload = sizeof( byte ) + sizeof( uint );
         internal readonly PacketHeader Header;
         internal readonly byte Flags;
-        internal readonly int Id;
+        internal readonly int ChannelId;
 
-        internal ChannelLinkedResponse(MessageBrokerChannel channel, bool created)
+        internal BoundResponse(bool channelCreated, int channelId)
         {
-            Header = PacketHeader.Create( MessageBrokerClientEndpoint.ChannelLinkedResponse, Payload );
-            Flags = ( byte )(created ? 1 : 0);
-            Id = channel.Id;
+            Header = PacketHeader.Create( MessageBrokerClientEndpoint.BoundResponse, Payload );
+            Flags = ( byte )(channelCreated ? 1 : 0);
+            ChannelId = channelId;
         }
 
         [Pure]
         public override string ToString()
         {
-            return $"[{Header}] Flags = {Flags}, Id = {Id}";
+            return $"[{Header}] Flags = {Flags}, ChannelId = {ChannelId}";
         }
 
         internal void Serialize(Memory<byte> target)
@@ -290,27 +290,27 @@ internal static class Protocol
             writer.MoveWrite( Header.EndpointCode );
             writer.MoveWrite( Header.Payload );
             writer.MoveWrite( Flags );
-            writer.Write( unchecked( ( uint )Id ) );
+            writer.Write( unchecked( ( uint )ChannelId ) );
         }
     }
 
-    internal readonly struct LinkChannelFailureResponse
+    internal readonly struct BindFailureResponse
     {
         [Flags]
         internal enum Reasons : byte
         {
             None = 0,
-            AlreadyLinked = 1,
-            LinkingCancelled = 2
+            AlreadyBound = 1,
+            Cancelled = 2
         }
 
         internal const int Payload = sizeof( byte );
         internal readonly PacketHeader Header;
         internal readonly byte Flags;
 
-        internal LinkChannelFailureResponse(Reasons reasons)
+        internal BindFailureResponse(Reasons reasons)
         {
-            Header = PacketHeader.Create( MessageBrokerClientEndpoint.LinkChannelFailureResponse, Payload );
+            Header = PacketHeader.Create( MessageBrokerClientEndpoint.BindFailureResponse, Payload );
             Flags = ( byte )reasons;
         }
 
@@ -330,12 +330,12 @@ internal static class Protocol
         }
     }
 
-    internal readonly struct UnlinkChannelRequest
+    internal readonly struct UnbindRequest
     {
         internal const int Length = sizeof( uint );
         internal readonly int ChannelId;
 
-        private UnlinkChannelRequest(int channelId)
+        private UnbindRequest(int channelId)
         {
             ChannelId = channelId;
         }
@@ -348,24 +348,24 @@ internal static class Protocol
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal static UnlinkChannelRequest Parse(ReadOnlyMemory<byte> source)
+        internal static UnbindRequest Parse(ReadOnlyMemory<byte> source)
         {
             Assume.Equals( source.Length, Length );
             var reader = new BinaryContractReader( source.Span );
             var channelId = unchecked( ( int )reader.ReadInt32() );
-            return new UnlinkChannelRequest( channelId );
+            return new UnbindRequest( channelId );
         }
     }
 
-    internal readonly struct ChannelUnlinkedResponse
+    internal readonly struct UnboundResponse
     {
         internal const int Payload = sizeof( byte );
         internal readonly PacketHeader Header;
         internal readonly byte Flags;
 
-        internal ChannelUnlinkedResponse(bool channelRemoved)
+        internal UnboundResponse(bool channelRemoved)
         {
-            Header = PacketHeader.Create( MessageBrokerClientEndpoint.ChannelUnlinkedResponse, Payload );
+            Header = PacketHeader.Create( MessageBrokerClientEndpoint.UnboundResponse, Payload );
             Flags = ( byte )(channelRemoved ? 1 : 0);
         }
 
@@ -385,22 +385,22 @@ internal static class Protocol
         }
     }
 
-    internal readonly struct UnlinkChannelFailureResponse
+    internal readonly struct UnbindFailureResponse
     {
         [Flags]
         internal enum Reasons : byte
         {
             None = 0,
-            ClientNotLinked = 1
+            NotBound = 1
         }
 
         internal const int Payload = sizeof( byte );
         internal readonly PacketHeader Header;
         internal readonly byte Flags;
 
-        internal UnlinkChannelFailureResponse(Reasons reasons)
+        internal UnbindFailureResponse(Reasons reasons)
         {
-            Header = PacketHeader.Create( MessageBrokerClientEndpoint.UnlinkChannelFailureResponse, Payload );
+            Header = PacketHeader.Create( MessageBrokerClientEndpoint.UnbindFailureResponse, Payload );
             Flags = ( byte )reasons;
         }
 
@@ -488,7 +488,7 @@ internal static class Protocol
             None = 0,
             ChannelDoesNotExist = 1,
             AlreadySubscribed = 2,
-            SubscribingCancelled = 4
+            Cancelled = 4
         }
 
         internal const int Payload = sizeof( byte );
@@ -578,7 +578,7 @@ internal static class Protocol
         internal enum Reasons : byte
         {
             None = 0,
-            ClientNotSubscribed = 1
+            NotSubscribed = 1
         }
 
         internal const int Payload = sizeof( byte );

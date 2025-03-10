@@ -121,12 +121,9 @@ internal struct RequestHandler
                 {
                     var result = request.Header.GetServerEndpoint() switch
                     {
-                        MessageBrokerServerEndpoint.LinkChannelRequest => await HandleLinkChannelRequestAsync( client, contextId, request )
+                        MessageBrokerServerEndpoint.BindRequest => await HandleBindRequestAsync( client, contextId, request )
                             .ConfigureAwait( false ),
-                        MessageBrokerServerEndpoint.UnlinkChannelRequest => await HandleUnlinkChannelRequestAsync(
-                                client,
-                                contextId,
-                                request )
+                        MessageBrokerServerEndpoint.UnbindRequest => await HandleUnbindRequestAsync( client, contextId, request )
                             .ConfigureAwait( false ),
                         MessageBrokerServerEndpoint.SubscribeRequest => await HandleSubscribeRequestAsync( client, contextId, request )
                             .ConfigureAwait( false ),
@@ -166,8 +163,7 @@ internal struct RequestHandler
         }
     }
 
-    // TODO: rename Link to Bind
-    private static async ValueTask<HandleRequestResult> HandleLinkChannelRequestAsync(
+    private static async ValueTask<HandleRequestResult> HandleBindRequestAsync(
         MessageBrokerRemoteClient client,
         ulong contextId,
         IncomingPacketToken request)
@@ -177,7 +173,7 @@ internal struct RequestHandler
 
         client.Emit( MessageBrokerRemoteClientEvent.MessageReceived( client, request.Header, contextId ) );
 
-        if ( request.Data.Length < Protocol.LinkChannelRequestHeader.Length )
+        if ( request.Data.Length < Protocol.BindRequestHeader.Length )
         {
             client.Emit(
                 MessageBrokerRemoteClientEvent.MessageRejected(
@@ -189,8 +185,8 @@ internal struct RequestHandler
             return HandleRequestResult.Error();
         }
 
-        _ = Protocol.LinkChannelRequestHeader.Parse( data.Slice( 0, Protocol.LinkChannelRequestHeader.Length ) );
-        var name = TextEncoding.Parse( data.Slice( Protocol.LinkChannelRequestHeader.Length ) );
+        _ = Protocol.BindRequestHeader.Parse( data.Slice( 0, Protocol.BindRequestHeader.Length ) );
+        var name = TextEncoding.Parse( data.Slice( Protocol.BindRequestHeader.Length ) );
         if ( name.Exception is not null )
         {
             client.Emit( MessageBrokerRemoteClientEvent.MessageRejected( client, request.Header, name.Exception, contextId ) );
@@ -224,7 +220,7 @@ internal struct RequestHandler
             channel.Emit( MessageBrokerChannelEvent.Created( channel, client, contextId ) );
 
         ManualResetValueTaskSource<bool> writerSource;
-        var rejectionReasons = Protocol.LinkChannelFailureResponse.Reasons.None;
+        var rejectionReasons = Protocol.BindFailureResponse.Reasons.None;
 
         using ( client.AcquireLock() )
         {
@@ -234,9 +230,9 @@ internal struct RequestHandler
             using ( channel.AcquireLock() )
             {
                 if ( channel.ShouldCancel )
-                    rejectionReasons = Protocol.LinkChannelFailureResponse.Reasons.LinkingCancelled;
+                    rejectionReasons = Protocol.BindFailureResponse.Reasons.Cancelled;
                 else if ( ! client.LinkedChannelsById.TryAdd( channel.Id, channel ) )
-                    rejectionReasons = Protocol.LinkChannelFailureResponse.Reasons.AlreadyLinked;
+                    rejectionReasons = Protocol.BindFailureResponse.Reasons.AlreadyBound;
                 else
                     channel.LinkedClientsById.Add( client.Id, client );
             }
@@ -283,16 +279,16 @@ internal struct RequestHandler
         Protocol.PacketHeader responseHeader;
         Memory<byte> responseData;
 
-        if ( rejectionReasons != Protocol.LinkChannelFailureResponse.Reasons.None )
+        if ( rejectionReasons != Protocol.BindFailureResponse.Reasons.None )
         {
             client.Emit(
                 MessageBrokerRemoteClientEvent.MessageRejected(
                     client,
                     request.Header,
-                    new MessageBrokerRemoteClientChannelLinkException(
+                    new MessageBrokerChannelBindingException(
                         client,
                         channel,
-                        Resources.FailedToCreateClientChannelLink(
+                        Resources.FailedToCreateChannelBinding(
                             client.Id,
                             client.Name,
                             channel.Id,
@@ -300,8 +296,8 @@ internal struct RequestHandler
                             rejectionReasons ) ),
                     contextId ) );
 
-            var responseLength = Protocol.PacketHeader.Length + Protocol.LinkChannelFailureResponse.Payload;
-            var response = new Protocol.LinkChannelFailureResponse( rejectionReasons );
+            var responseLength = Protocol.PacketHeader.Length + Protocol.BindFailureResponse.Payload;
+            var response = new Protocol.BindFailureResponse( rejectionReasons );
             if ( data.Length < responseLength )
                 data = bufferToken.SetLength( responseLength );
 
@@ -314,8 +310,8 @@ internal struct RequestHandler
             channel.Emit( MessageBrokerChannelEvent.Linked( channel, client, contextId ) );
             client.Emit( MessageBrokerRemoteClientEvent.MessageAccepted( client, request.Header, contextId ) );
 
-            var responseLength = Protocol.PacketHeader.Length + Protocol.ChannelLinkedResponse.Payload;
-            var response = new Protocol.ChannelLinkedResponse( channel, ! result.Exists );
+            var responseLength = Protocol.PacketHeader.Length + Protocol.BoundResponse.Payload;
+            var response = new Protocol.BoundResponse( ! result.Exists, channel.Id );
             if ( data.Length < responseLength )
                 data = bufferToken.SetLength( responseLength );
 
@@ -341,7 +337,7 @@ internal struct RequestHandler
         }
     }
 
-    private static async ValueTask<HandleRequestResult> HandleUnlinkChannelRequestAsync(
+    private static async ValueTask<HandleRequestResult> HandleUnbindRequestAsync(
         MessageBrokerRemoteClient client,
         ulong contextId,
         IncomingPacketToken request)
@@ -351,18 +347,18 @@ internal struct RequestHandler
 
         client.Emit( MessageBrokerRemoteClientEvent.MessageReceived( client, request.Header, contextId ) );
 
-        var exc = Protocol.AssertPayload( client, request.Header, Protocol.UnlinkChannelRequest.Length );
+        var exc = Protocol.AssertPayload( client, request.Header, Protocol.UnbindRequest.Length );
         if ( exc is not null )
         {
             client.Emit( MessageBrokerRemoteClientEvent.MessageRejected( client, request.Header, exc, contextId ) );
             return HandleRequestResult.Error();
         }
 
-        var parsedRequest = Protocol.UnlinkChannelRequest.Parse( data );
+        var parsedRequest = Protocol.UnbindRequest.Parse( data );
         var channel = ChannelCollection.TryGetById( client.Server, parsedRequest.ChannelId );
 
         var unlinkResult = MessageBrokerChannel.DereferenceResult.NoChanges;
-        var rejectionReasons = Protocol.UnlinkChannelFailureResponse.Reasons.None;
+        var rejectionReasons = Protocol.UnbindFailureResponse.Reasons.None;
         ManualResetValueTaskSource<bool> writerSource;
 
         using ( client.AcquireLock() )
@@ -371,14 +367,14 @@ internal struct RequestHandler
                 return HandleRequestResult.OwnerDisposed();
 
             if ( channel is null )
-                rejectionReasons = Protocol.UnlinkChannelFailureResponse.Reasons.ClientNotLinked;
+                rejectionReasons = Protocol.UnbindFailureResponse.Reasons.NotBound;
             else
             {
                 using ( channel.AcquireLock() )
                 {
                     unlinkResult = channel.BeginUnlink( client );
                     if ( unlinkResult == MessageBrokerChannel.DereferenceResult.NoChanges )
-                        rejectionReasons = Protocol.UnlinkChannelFailureResponse.Reasons.ClientNotLinked;
+                        rejectionReasons = Protocol.UnbindFailureResponse.Reasons.NotBound;
                     else
                         client.LinkedChannelsById.Remove( parsedRequest.ChannelId );
                 }
@@ -390,26 +386,26 @@ internal struct RequestHandler
         Protocol.PacketHeader responseHeader;
         Memory<byte> responseData;
 
-        if ( rejectionReasons != Protocol.UnlinkChannelFailureResponse.Reasons.None )
+        if ( rejectionReasons != Protocol.UnbindFailureResponse.Reasons.None )
         {
             client.Emit(
                 MessageBrokerRemoteClientEvent.MessageRejected(
                     client,
                     request.Header,
-                    new MessageBrokerRemoteClientChannelLinkException(
+                    new MessageBrokerChannelBindingException(
                         client,
                         channel,
                         channel is null
-                            ? Resources.FailedToUnlinkClientFromNonExistingChannel( client.Id, client.Name, parsedRequest.ChannelId )
-                            : Resources.FailedToUnlinkClientFromChannel(
+                            ? Resources.FailedToUnbindFromNonExistingChannel( client.Id, client.Name, parsedRequest.ChannelId )
+                            : Resources.FailedToUnbindFromChannel(
                                 client.Id,
                                 client.Name,
                                 channel.Id,
                                 channel.Name ) ),
                     contextId ) );
 
-            var responseLength = Protocol.PacketHeader.Length + Protocol.UnlinkChannelFailureResponse.Payload;
-            var response = new Protocol.UnlinkChannelFailureResponse( rejectionReasons );
+            var responseLength = Protocol.PacketHeader.Length + Protocol.UnbindFailureResponse.Payload;
+            var response = new Protocol.UnbindFailureResponse( rejectionReasons );
             if ( data.Length < responseLength )
                 data = bufferToken.SetLength( responseLength );
 
@@ -428,8 +424,8 @@ internal struct RequestHandler
 
             client.Emit( MessageBrokerRemoteClientEvent.MessageAccepted( client, request.Header, contextId ) );
 
-            var responseLength = Protocol.PacketHeader.Length + Protocol.ChannelUnlinkedResponse.Payload;
-            var response = new Protocol.ChannelUnlinkedResponse( unlinkResult == MessageBrokerChannel.DereferenceResult.Disposing );
+            var responseLength = Protocol.PacketHeader.Length + Protocol.UnboundResponse.Payload;
+            var response = new Protocol.UnboundResponse( unlinkResult == MessageBrokerChannel.DereferenceResult.Disposing );
             if ( data.Length < responseLength )
                 data = bufferToken.SetLength( responseLength );
 
@@ -536,7 +532,7 @@ internal struct RequestHandler
                     using ( channel.AcquireLock() )
                     {
                         if ( channel.ShouldCancel )
-                            rejectionReasons = Protocol.SubscribeFailureResponse.Reasons.SubscribingCancelled;
+                            rejectionReasons = Protocol.SubscribeFailureResponse.Reasons.Cancelled;
                         else if ( ! client.SubscribeTo( channel, out subscription ) )
                             rejectionReasons = Protocol.SubscribeFailureResponse.Reasons.AlreadySubscribed;
                     }
@@ -555,7 +551,7 @@ internal struct RequestHandler
                 MessageBrokerRemoteClientEvent.MessageRejected(
                     client,
                     request.Header,
-                    new MessageBrokerRemoteClientSubscriptionException(
+                    new MessageBrokerSubscriptionException(
                         client,
                         channel,
                         subscription,
@@ -639,7 +635,7 @@ internal struct RequestHandler
 
         var channel = ChannelCollection.TryGetById( client.Server, parsedRequest.ChannelId );
         if ( channel is null )
-            rejectionReasons = Protocol.UnsubscribeFailureResponse.Reasons.ClientNotSubscribed;
+            rejectionReasons = Protocol.UnsubscribeFailureResponse.Reasons.NotSubscribed;
         else
         {
             using ( client.AcquireLock() )
@@ -651,7 +647,7 @@ internal struct RequestHandler
                 {
                     subscription = channel.BeginUnsubscribing( client, out disposingChannel );
                     if ( subscription is null )
-                        rejectionReasons = Protocol.UnsubscribeFailureResponse.Reasons.ClientNotSubscribed;
+                        rejectionReasons = Protocol.UnsubscribeFailureResponse.Reasons.NotSubscribed;
                 }
             }
         }
@@ -665,13 +661,13 @@ internal struct RequestHandler
                 MessageBrokerRemoteClientEvent.MessageRejected(
                     client,
                     request.Header,
-                    new MessageBrokerRemoteClientSubscriptionException(
+                    new MessageBrokerSubscriptionException(
                         client,
                         channel,
                         subscription,
                         channel is null
-                            ? Resources.FailedToUnsubscribeClientFromNonExistingChannel( client.Id, client.Name, parsedRequest.ChannelId )
-                            : Resources.FailedToUnsubscribeClientFromChannel(
+                            ? Resources.FailedToUnsubscribeFromNonExistingChannel( client.Id, client.Name, parsedRequest.ChannelId )
+                            : Resources.FailedToUnsubscribeFromChannel(
                                 client.Id,
                                 client.Name,
                                 channel.Id,

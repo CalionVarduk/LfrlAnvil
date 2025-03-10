@@ -35,17 +35,17 @@ public enum MessageBrokerServerEndpoint : byte
     HandshakeRequest = 3,
 
     /// <summary>
-    /// Represents link channel request sent by client.
+    /// Represents bind request sent by client.
     /// </summary>
-    LinkChannelRequest = 5,
+    BindRequest = 5,
 
     /// <summary>
-    /// Represents unlink channel request sent by client.
+    /// Represents unbind request sent by client.
     /// </summary>
-    UnlinkChannelRequest = 7,
+    UnbindRequest = 7,
 
     /// <summary>
-    /// Represents subscription request sent by client.
+    /// Represents subscribe request sent by client.
     /// </summary>
     SubscribeRequest = 9,
 

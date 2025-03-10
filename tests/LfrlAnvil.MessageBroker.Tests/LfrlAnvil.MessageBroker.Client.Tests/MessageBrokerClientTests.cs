@@ -31,8 +31,9 @@ public partial class MessageBrokerClientTests : TestsBase
                 sut.PingInterval.TestEquals( Duration.FromSeconds( 15 ) ),
                 sut.LocalEndPoint.TestNull(),
                 sut.State.TestEquals( MessageBrokerClientState.Created ),
-                sut.Channels.Count.TestEquals( 0 ),
-                sut.Channels.GetAll().TestEmpty() )
+                sut.Publishers.Count.TestEquals( 0 ),
+                sut.Publishers.GetAll().TestEmpty(),
+                sut.ToString().TestEquals( "[0] 'test' (Created)" ) )
             .Go();
     }
 
@@ -68,8 +69,8 @@ public partial class MessageBrokerClientTests : TestsBase
                 sut.PingInterval.TestEquals( Duration.FromMilliseconds( expectedPingIntervalMs ) ),
                 sut.LocalEndPoint.TestNull(),
                 sut.State.TestEquals( MessageBrokerClientState.Created ),
-                sut.Channels.Count.TestEquals( 0 ),
-                sut.Channels.GetAll().TestEmpty() )
+                sut.Publishers.Count.TestEquals( 0 ),
+                sut.Publishers.GetAll().TestEmpty() )
             .Go();
     }
 

@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Exceptions;
-using LfrlAnvil.MessageBroker.Server.Internal;
 using LfrlAnvil.MessageBroker.Server.Tests.Helpers;
 
 namespace LfrlAnvil.MessageBroker.Server.Tests;
@@ -119,8 +118,8 @@ public class MessageBrokerSubscriptionTests : TestsBase
         await client.GetTask(
             c =>
             {
-                c.SendLinkChannelRequest( "c" );
-                c.Read( Protocol.PacketHeader.Length + Protocol.ChannelLinkedResponse.Payload );
+                c.SendBindRequest( "c" );
+                c.ReadBoundResponse();
                 c.SendSubscribeRequest( "c", createChannelIfNotExists: false );
                 c.ReadSubscribedResponse();
             } );
@@ -455,7 +454,7 @@ public class MessageBrokerSubscriptionTests : TestsBase
 
         Assertion.All(
                 exception.TestType()
-                    .Exact<MessageBrokerRemoteClientSubscriptionException>(
+                    .Exact<MessageBrokerSubscriptionException>(
                         exc => Assertion.All(
                             exc.Client.TestRefEquals( remoteClient ),
                             exc.Channel.TestRefEquals( channel ),
@@ -485,7 +484,7 @@ public class MessageBrokerSubscriptionTests : TestsBase
                         "[1::'test'::2] [MessageReceived] [PacketLength: 7] Begin handling SubscribeRequest",
                         """
                         [1::'test'::2] [MessageRejected] [PacketLength: 7] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientSubscriptionException: Message broker client [1] 'test' failed to create a subscription to channel [1] 'c' because it is already subscribed to the channel.
+                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerSubscriptionException: Message broker client [1] 'test' failed to create a subscription to channel [1] 'c' because it is already subscribed to it.
                         """,
                         "[1::'test'::2] [SendingMessage] [PacketLength: 6] SubscribeFailureResponse",
                         "[1::'test'::2] [MessageSent] [PacketLength: 6] SubscribeFailureResponse"
@@ -532,7 +531,7 @@ public class MessageBrokerSubscriptionTests : TestsBase
 
         Assertion.All(
                 exception.TestType()
-                    .Exact<MessageBrokerRemoteClientSubscriptionException>(
+                    .Exact<MessageBrokerSubscriptionException>(
                         exc => Assertion.All(
                             exc.Client.TestRefEquals( remoteClient ),
                             exc.Channel.TestNull(),
@@ -552,7 +551,7 @@ public class MessageBrokerSubscriptionTests : TestsBase
                         "[1::'test'::1] [MessageReceived] [PacketLength: 7] Begin handling SubscribeRequest",
                         """
                         [1::'test'::1] [MessageRejected] [PacketLength: 7] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientSubscriptionException: Message broker client [1] 'test' failed to create a subscription to channel 'c' because channel does not exist.
+                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerSubscriptionException: Message broker client [1] 'test' failed to create a subscription to channel 'c' because channel does not exist.
                         """,
                         "[1::'test'::1] [SendingMessage] [PacketLength: 6] SubscribeFailureResponse",
                         "[1::'test'::1] [MessageSent] [PacketLength: 6] SubscribeFailureResponse"
@@ -695,8 +694,8 @@ public class MessageBrokerSubscriptionTests : TestsBase
         await client.GetTask(
             c =>
             {
-                c.SendLinkChannelRequest( "c" );
-                c.Read( Protocol.PacketHeader.Length + Protocol.ChannelLinkedResponse.Payload );
+                c.SendBindRequest( "c" );
+                c.ReadBoundResponse();
                 c.SendSubscribeRequest( "c", createChannelIfNotExists: false );
                 c.ReadSubscribedResponse();
             } );
@@ -763,8 +762,8 @@ public class MessageBrokerSubscriptionTests : TestsBase
         await client1.GetTask(
             c =>
             {
-                c.SendLinkChannelRequest( "c" );
-                c.Read( Protocol.PacketHeader.Length + Protocol.ChannelLinkedResponse.Payload );
+                c.SendBindRequest( "c" );
+                c.ReadBoundResponse();
             } );
 
         using var client2 = new ClientMock();
@@ -988,7 +987,7 @@ public class MessageBrokerSubscriptionTests : TestsBase
             c =>
             {
                 c.SendSubscribeRequest( "c", createChannelIfNotExists: true );
-                c.ReadChannelLinkedResponse();
+                c.ReadBoundResponse();
             } );
 
         var remoteClient = server.Clients.TryGetById( 1 );
@@ -1188,8 +1187,8 @@ public class MessageBrokerSubscriptionTests : TestsBase
         await client.GetTask(
             c =>
             {
-                c.SendLinkChannelRequest( "c" );
-                c.ReadChannelLinkedResponse();
+                c.SendBindRequest( "c" );
+                c.ReadBoundResponse();
                 c.SendSubscribeRequest( "c", createChannelIfNotExists: false );
                 c.ReadSubscribedResponse();
             } );
@@ -1363,7 +1362,7 @@ public class MessageBrokerSubscriptionTests : TestsBase
 
         Assertion.All(
                 exception.TestType()
-                    .Exact<MessageBrokerRemoteClientSubscriptionException>(
+                    .Exact<MessageBrokerSubscriptionException>(
                         exc => Assertion.All(
                             exc.Client.TestRefEquals( remoteClient ),
                             exc.Channel.TestNull(),
@@ -1378,7 +1377,7 @@ public class MessageBrokerSubscriptionTests : TestsBase
                         "[1::'test'::1] [MessageReceived] [PacketLength: 9] Begin handling UnsubscribeRequest",
                         """
                         [1::'test'::1] [MessageRejected] [PacketLength: 9] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientSubscriptionException: Message broker client [1] 'test' could not be unsubscribed from non-existing channel with ID 1.
+                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerSubscriptionException: Message broker client [1] 'test' could not be unsubscribed from non-existing channel with ID 1.
                         """,
                         "[1::'test'::1] [SendingMessage] [PacketLength: 6] UnsubscribeFailureResponse",
                         "[1::'test'::1] [MessageSent] [PacketLength: 6] UnsubscribeFailureResponse"
@@ -1439,7 +1438,7 @@ public class MessageBrokerSubscriptionTests : TestsBase
 
         Assertion.All(
                 exception.TestType()
-                    .Exact<MessageBrokerRemoteClientSubscriptionException>(
+                    .Exact<MessageBrokerSubscriptionException>(
                         exc => Assertion.All(
                             exc.Client.TestRefEquals( remoteClient2 ),
                             exc.Channel.TestRefEquals( channel ),
@@ -1462,7 +1461,7 @@ public class MessageBrokerSubscriptionTests : TestsBase
                         "[2::'test2'::1] [MessageReceived] [PacketLength: 9] Begin handling UnsubscribeRequest",
                         """
                         [2::'test2'::1] [MessageRejected] [PacketLength: 9] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientSubscriptionException: Message broker client [2] 'test2' could not be unsubscribed from channel [1] 'c' because it is not subscribed to it.
+                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerSubscriptionException: Message broker client [2] 'test2' could not be unsubscribed from channel [1] 'c' because it is not subscribed to it.
                         """,
                         "[2::'test2'::1] [SendingMessage] [PacketLength: 6] UnsubscribeFailureResponse",
                         "[2::'test2'::1] [MessageSent] [PacketLength: 6] UnsubscribeFailureResponse"

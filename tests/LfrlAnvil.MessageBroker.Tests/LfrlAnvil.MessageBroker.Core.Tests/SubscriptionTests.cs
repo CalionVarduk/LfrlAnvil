@@ -40,11 +40,12 @@ public class SubscriptionTests : TestsBase
                 result.Value.TestNotNull(
                     v => Assertion.All(
                         "result.Value",
-                        v.Type.TestEquals( MessageBrokerSubscriptionResult.ResultType.SubscribedAndChannelCreated ),
+                        v.AlreadySubscribed.TestFalse(),
+                        v.ChannelCreated.TestTrue(),
                         v.Listener.ChannelId.TestEquals( 1 ),
                         v.Listener.ChannelName.TestEquals( "foo" ),
                         v.Listener.TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ),
-                        v.Listener.State.TestEquals( MessageBrokerListenerState.Listening ) ) ),
+                        v.Listener.State.TestEquals( MessageBrokerListenerState.Subscribed ) ) ),
                 remoteClient.TestNotNull(
                     c => Assertion.All(
                         "remoteClient",
@@ -114,11 +115,12 @@ public class SubscriptionTests : TestsBase
                 result.Value.TestNotNull(
                     v => Assertion.All(
                         "result.Value",
-                        v.Type.TestEquals( MessageBrokerSubscriptionResult.ResultType.Subscribed ),
+                        v.AlreadySubscribed.TestFalse(),
+                        v.ChannelCreated.TestFalse(),
                         v.Listener.ChannelId.TestEquals( 1 ),
                         v.Listener.ChannelName.TestEquals( "foo" ),
                         v.Listener.TestRefEquals( client2.Listeners.TryGetByChannelId( 1 ) ),
-                        v.Listener.State.TestEquals( MessageBrokerListenerState.Listening ) ) ),
+                        v.Listener.State.TestEquals( MessageBrokerListenerState.Subscribed ) ) ),
                 remoteClient1.TestNotNull(
                     c => Assertion.All(
                         "remoteClient1",
@@ -168,15 +170,16 @@ public class SubscriptionTests : TestsBase
         var channel = server.Channels.TryGetById( 1 );
         var subscription = channel?.Subscriptions.TryGetByClientId( 1 );
 
-        var result = Result.Create( MessageBrokerChannelUnsubscribeResult.NotSubscribed );
+        var result = Result.Create( default( MessageBrokerUnsubscribeResult ) );
         if ( listener is not null )
             result = await listener.UnsubscribeAsync();
 
         Assertion.All(
                 listener.TestNotNull( c => c.State.TestEquals( MessageBrokerListenerState.Disposed ) ),
-                client.Channels.Count.TestEquals( 0 ),
+                client.Publishers.Count.TestEquals( 0 ),
                 result.Exception.TestNull(),
-                result.Value.TestEquals( MessageBrokerChannelUnsubscribeResult.UnsubscribedAndChannelRemoved ),
+                result.Value.NotSubscribed.TestFalse(),
+                result.Value.ChannelRemoved.TestTrue(),
                 remoteClient.TestNotNull( c => c.Subscriptions.Count.TestEquals( 0 ) ),
                 channel.TestNotNull( c => c.State.TestEquals( MessageBrokerChannelState.Disposed ) ),
                 subscription.TestNotNull( s => s.State.TestEquals( MessageBrokerSubscriptionState.Disposed ) ) )
@@ -225,17 +228,18 @@ public class SubscriptionTests : TestsBase
         var subscription1 = channel?.Subscriptions.TryGetByClientId( 1 );
         var subscription2 = channel?.Subscriptions.TryGetByClientId( 2 );
 
-        var result = Result.Create( MessageBrokerChannelUnsubscribeResult.NotSubscribed );
+        var result = Result.Create( default( MessageBrokerUnsubscribeResult ) );
         if ( listener2 is not null )
             result = await listener2.UnsubscribeAsync();
 
         Assertion.All(
-                listener1.TestNotNull( c => c.State.TestEquals( MessageBrokerListenerState.Listening ) ),
+                listener1.TestNotNull( c => c.State.TestEquals( MessageBrokerListenerState.Subscribed ) ),
                 listener2.TestNotNull( c => c.State.TestEquals( MessageBrokerListenerState.Disposed ) ),
                 client1.Listeners.Count.TestEquals( 1 ),
                 client2.Listeners.Count.TestEquals( 0 ),
                 result.Exception.TestNull(),
-                result.Value.TestEquals( MessageBrokerChannelUnsubscribeResult.Unsubscribed ),
+                result.Value.NotSubscribed.TestFalse(),
+                result.Value.ChannelRemoved.TestFalse(),
                 remoteClient1.TestNotNull(
                     c => Assertion.All(
                         "remoteClient1",
@@ -254,7 +258,7 @@ public class SubscriptionTests : TestsBase
     }
 
     [Fact]
-    public async Task Server_ShouldUnsubscribeFromChannelAndNotRemoveIt_WhenLastClientUnsubscribesButThereAreActiveLinks()
+    public async Task Server_ShouldUnsubscribeFromChannelAndNotRemoveIt_WhenLastClientUnsubscribesButThereAreBoundClients()
     {
         await using var server = new MessageBrokerServer(
             () => new TimestampProvider(),
@@ -275,22 +279,23 @@ public class SubscriptionTests : TestsBase
         await client.StartAsync();
 
         await client.Listeners.SubscribeAsync( "foo" );
-        await client.Channels.LinkAsync( "foo" );
+        await client.Publishers.BindAsync( "foo" );
         var listener = client.Listeners.TryGetByChannelId( 1 );
         var remoteClient = server.Clients.TryGetById( 1 );
         var channel = server.Channels.TryGetById( 1 );
         var subscription = channel?.Subscriptions.TryGetByClientId( 1 );
 
-        var result = Result.Create( MessageBrokerChannelUnsubscribeResult.NotSubscribed );
+        var result = Result.Create( default( MessageBrokerUnsubscribeResult ) );
         if ( listener is not null )
             result = await listener.UnsubscribeAsync();
 
         Assertion.All(
                 listener.TestNotNull( c => c.State.TestEquals( MessageBrokerListenerState.Disposed ) ),
-                client.Channels.Count.TestEquals( 1 ),
+                client.Publishers.Count.TestEquals( 1 ),
                 client.Listeners.Count.TestEquals( 0 ),
                 result.Exception.TestNull(),
-                result.Value.TestEquals( MessageBrokerChannelUnsubscribeResult.Unsubscribed ),
+                result.Value.NotSubscribed.TestFalse(),
+                result.Value.ChannelRemoved.TestFalse(),
                 remoteClient.TestNotNull(
                     c => Assertion.All(
                         "remoteClient",

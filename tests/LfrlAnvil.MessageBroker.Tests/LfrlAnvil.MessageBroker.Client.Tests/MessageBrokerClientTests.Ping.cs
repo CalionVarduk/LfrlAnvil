@@ -179,7 +179,7 @@ public partial class MessageBrokerClientTests
                         [
                             """
                             ['test'::<ROOT>] [WaitingForMessage] Encountered an error:
-                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Message broker server failed to respond with PingResponse packet to 'test' client's PingRequest request in the specified amount of time (200 milliseconds).
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Message broker server failed to respond to 'test' client's PingRequest request in the specified amount of time (200 milliseconds).
                             """
                         ] ),
                     AssertServerData(

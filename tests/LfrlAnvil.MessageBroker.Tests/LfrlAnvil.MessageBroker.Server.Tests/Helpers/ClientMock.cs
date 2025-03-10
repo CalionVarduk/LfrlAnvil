@@ -54,24 +54,24 @@ internal sealed class ClientMock : IDisposable
         return Read( Protocol.PacketHeader.Length );
     }
 
-    internal byte[] ReadChannelLinkedResponse()
+    internal byte[] ReadBoundResponse()
     {
-        return Read( Protocol.PacketHeader.Length + Protocol.ChannelLinkedResponse.Payload );
+        return Read( Protocol.PacketHeader.Length + Protocol.BoundResponse.Payload );
     }
 
-    internal byte[] ReadLinkChannelFailureResponse()
+    internal byte[] ReadBindFailureResponse()
     {
-        return Read( Protocol.PacketHeader.Length + Protocol.LinkChannelFailureResponse.Payload );
+        return Read( Protocol.PacketHeader.Length + Protocol.BindFailureResponse.Payload );
     }
 
-    internal byte[] ReadChannelUnlinkedResponse()
+    internal byte[] ReadUnboundResponse()
     {
-        return Read( Protocol.PacketHeader.Length + Protocol.ChannelUnlinkedResponse.Payload );
+        return Read( Protocol.PacketHeader.Length + Protocol.UnboundResponse.Payload );
     }
 
-    internal byte[] ReadUnlinkChannelFailureResponse()
+    internal byte[] ReadUnbindFailureResponse()
     {
-        return Read( Protocol.PacketHeader.Length + Protocol.UnlinkChannelFailureResponse.Payload );
+        return Read( Protocol.PacketHeader.Length + Protocol.UnbindFailureResponse.Payload );
     }
 
     internal byte[] ReadSubscribedResponse()
@@ -148,25 +148,25 @@ internal sealed class ClientMock : IDisposable
         Send( buffer );
     }
 
-    internal void SendLinkChannelRequest(string name, uint? payload = null)
+    internal void SendBindRequest(string channelName, uint? payload = null)
     {
-        var preparedName = EncodeableText.Create( TextEncoding.Instance, name ).GetValueOrThrow();
-        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.LinkChannelRequestHeader.Length + preparedName.ByteCount];
+        var preparedName = EncodeableText.Create( TextEncoding.Instance, channelName ).GetValueOrThrow();
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.BindRequestHeader.Length + preparedName.ByteCount];
         var writer = new BinaryContractWriter( buffer );
-        writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.LinkChannelRequest );
-        writer.MoveWrite( payload ?? ( uint )(Protocol.LinkChannelRequestHeader.Length + preparedName.ByteCount) );
+        writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.BindRequest );
+        writer.MoveWrite( payload ?? ( uint )(Protocol.BindRequestHeader.Length + preparedName.ByteCount) );
         writer.MoveWrite( 0 );
         preparedName.Encode( writer.GetSpan( preparedName.ByteCount ) ).ThrowIfError();
         Send( buffer );
     }
 
-    internal void SendUnlinkChannelRequest(int id, uint? payload = null)
+    internal void SendUnbindRequest(int channelId, uint? payload = null)
     {
-        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.UnlinkChannelRequest.Length];
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.UnbindRequest.Length];
         var writer = new BinaryContractWriter( buffer );
-        writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.UnlinkChannelRequest );
-        writer.MoveWrite( payload ?? Protocol.UnlinkChannelRequest.Length );
-        writer.Write( ( uint )id );
+        writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.UnbindRequest );
+        writer.MoveWrite( payload ?? Protocol.UnbindRequest.Length );
+        writer.Write( ( uint )channelId );
         Send( buffer );
     }
 

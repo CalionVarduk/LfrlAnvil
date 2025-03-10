@@ -75,7 +75,7 @@ public readonly struct MessageBrokerListenerCollection
     }
 
     /// <summary>
-    /// Attempts to subscribe the client to a channel.
+    /// Attempts to subscribe the client to a channel and to create a message listener.
     /// </summary>
     /// <param name="channelName">Unique name of the channel to subscribe to.</param>
     /// <param name="createChannelIfNotExists">
@@ -83,7 +83,7 @@ public readonly struct MessageBrokerListenerCollection
     /// </param>
     /// <returns>
     /// A task that represents the operation, which returns a <see cref="Result{T}"/> instance,
-    /// with underlying <see cref="MessageBrokerSubscriptionResult"/> instance.
+    /// with underlying <see cref="MessageBrokerSubscribeResult"/> instance.
     /// </returns>
     /// <exception cref="MessageBrokerClientDisposedException">When client has already been disposed.</exception>
     /// <exception cref="MessageBrokerClientStateException">
@@ -94,7 +94,7 @@ public readonly struct MessageBrokerListenerCollection
     /// Returned <see cref="Result{T}"/> will only be valid when either the client has successfully subscribed to the channel
     /// on the server side, or the client is already locally subscribed to the channel, which will cancel the request to the server.
     /// </remarks>
-    public ValueTask<Result<MessageBrokerSubscriptionResult?>> SubscribeAsync(string channelName, bool createChannelIfNotExists = true)
+    public ValueTask<Result<MessageBrokerSubscribeResult?>> SubscribeAsync(string channelName, bool createChannelIfNotExists = true)
     {
         return ListenerCollection.SubscribeAsync( _client, channelName, createChannelIfNotExists );
     }

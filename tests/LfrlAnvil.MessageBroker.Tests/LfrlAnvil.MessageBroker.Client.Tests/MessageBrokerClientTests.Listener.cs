@@ -34,15 +34,11 @@ public partial class MessageBrokerClientTests
             var handshakeRequest = await server.EstablishHandshake( client );
 
             var channelName = "foo";
-            var expectedResultType = channelCreated
-                ? MessageBrokerSubscriptionResult.ResultType.SubscribedAndChannelCreated
-                : MessageBrokerSubscriptionResult.ResultType.Subscribed;
-
-            var linkRequest = new Protocol.SubscribeRequest( channelName, createChannelIfNotExists: true );
+            var subscribeRequest = new Protocol.SubscribeRequest( channelName, createChannelIfNotExists: true );
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( linkRequest.Length );
+                    s.Read( subscribeRequest.Length );
                     s.SendSubscribedResponse( channelCreated, 1 );
                 } );
 
@@ -54,8 +50,14 @@ public partial class MessageBrokerClientTests
                     result.Value.TestNotNull(
                         r => Assertion.All(
                             "result.Value",
-                            r.Type.TestEquals( expectedResultType ),
-                            r.Listener.TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ) ) ),
+                            r.AlreadySubscribed.TestFalse(),
+                            r.ChannelCreated.TestEquals( channelCreated ),
+                            r.Listener.TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ),
+                            r.ToString()
+                                .TestEquals(
+                                    channelCreated
+                                        ? $"[1] '{channelName}' listener (Subscribed) (channel created)"
+                                        : $"[1] '{channelName}' listener (Subscribed)" ) ) ),
                     client.Listeners.Count.TestEquals( 1 ),
                     client.Listeners.GetAll().TestSequence( [ (c, _) => c.TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ) ] ),
                     client.Listeners.TryGetByChannelName( channelName ).TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ),
@@ -66,7 +68,8 @@ public partial class MessageBrokerClientTests
                                 listener.Client.TestRefEquals( client ),
                                 listener.ChannelId.TestEquals( 1 ),
                                 listener.ChannelName.TestEquals( channelName ),
-                                listener.State.TestEquals( MessageBrokerListenerState.Listening ) ) ),
+                                listener.State.TestEquals( MessageBrokerListenerState.Subscribed ),
+                                listener.ToString().TestEquals( $"[1] '{channelName}' listener (Subscribed)" ) ) ),
                     logs.GetAll()
                         .TestContainsSequence(
                         [
@@ -80,7 +83,7 @@ public partial class MessageBrokerClientTests
                         server.GetAllReceived(),
                         (handshakeRequest.Length, MessageBrokerServerEndpoint.HandshakeRequest),
                         (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.ConfirmHandshakeResponse),
-                        (linkRequest.Length, MessageBrokerServerEndpoint.SubscribeRequest) ) )
+                        (subscribeRequest.Length, MessageBrokerServerEndpoint.SubscribeRequest) ) )
                 .Go();
         }
 
@@ -101,11 +104,11 @@ public partial class MessageBrokerClientTests
             await server.EstablishHandshake( client );
 
             var channelName = "foo";
-            var linkRequest = new Protocol.SubscribeRequest( channelName, createChannelIfNotExists: true );
+            var subscribeRequest = new Protocol.SubscribeRequest( channelName, createChannelIfNotExists: true );
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( linkRequest.Length );
+                    s.Read( subscribeRequest.Length );
                     s.SendSubscribedResponse( true, 1 );
                 } );
 
@@ -119,8 +122,10 @@ public partial class MessageBrokerClientTests
                     result.Value.TestNotNull(
                         r => Assertion.All(
                             "result.Value",
-                            r.Type.TestEquals( MessageBrokerSubscriptionResult.ResultType.AlreadySubscribed ),
-                            r.Listener.TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ) ) ),
+                            r.AlreadySubscribed.TestTrue(),
+                            r.ChannelCreated.TestFalse(),
+                            r.Listener.TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ),
+                            r.ToString().TestEquals( $"[1] '{channelName}' listener (Subscribed) (already subscribed)" ) ) ),
                     client.Listeners.Count.TestEquals( 1 ) )
                 .Go();
         }
@@ -142,11 +147,11 @@ public partial class MessageBrokerClientTests
             await server.EstablishHandshake( client );
 
             var channelName = "foo";
-            var linkRequest = new Protocol.SubscribeRequest( channelName, createChannelIfNotExists: true );
+            var subscribeRequest = new Protocol.SubscribeRequest( channelName, createChannelIfNotExists: true );
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( linkRequest.Length );
+                    s.Read( subscribeRequest.Length );
                     s.SendSubscribedResponse( true, 1 );
                 } );
 
@@ -240,8 +245,7 @@ public partial class MessageBrokerClientTests
                         .Exact<MessageBrokerClientResponseTimeoutException>(
                             exc => Assertion.All(
                                 exc.Client.TestRefEquals( client ),
-                                exc.RequestEndpoint.TestEquals( MessageBrokerServerEndpoint.SubscribeRequest ),
-                                exc.ResponseEndpoint.TestEquals( MessageBrokerClientEndpoint.SubscribedResponse ) ) ),
+                                exc.RequestEndpoint.TestEquals( MessageBrokerServerEndpoint.SubscribeRequest ) ) ),
                     logs.GetAll()
                         .TestContainsSequence(
                         [
@@ -249,7 +253,7 @@ public partial class MessageBrokerClientTests
                             "['test'::1] [MessageSent] [PacketLength: 9] SubscribeRequest",
                             """
                             ['test'::<ROOT>] [WaitingForMessage] Encountered an error:
-                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Message broker server failed to respond with SubscribedResponse packet to 'test' client's SubscribeRequest request in the specified amount of time (1000 milliseconds).
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Message broker server failed to respond to 'test' client's SubscribeRequest request in the specified amount of time (1000 milliseconds).
                             """
                         ] ) )
                 .Go();
@@ -306,11 +310,11 @@ public partial class MessageBrokerClientTests
 
             await server.EstablishHandshake( client );
 
-            var linkRequest = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true );
+            var subscribeRequest = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true );
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( linkRequest.Length );
+                    s.Read( subscribeRequest.Length );
                     s.SendSubscribedResponse( true, channelId: 0 );
                 } );
 
@@ -358,11 +362,11 @@ public partial class MessageBrokerClientTests
 
             await server.EstablishHandshake( client );
 
-            var linkRequest = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true );
+            var subscribeRequest = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true );
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( linkRequest.Length );
+                    s.Read( subscribeRequest.Length );
                     s.SendSubscribedResponse( true, 1, payload: 4 );
                 } );
 
@@ -410,11 +414,11 @@ public partial class MessageBrokerClientTests
 
             await server.EstablishHandshake( client );
 
-            var linkRequest = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true );
+            var subscribeRequest = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true );
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( linkRequest.Length );
+                    s.Read( subscribeRequest.Length );
                     s.SendSubscribeFailureResponse( true, true, true );
                 } );
 
@@ -429,7 +433,7 @@ public partial class MessageBrokerClientTests
                             exc => Assertion.All(
                                 exc.Client.TestRefEquals( client ),
                                 exc.Endpoint.TestEquals( MessageBrokerServerEndpoint.SubscribeRequest ),
-                                exc.Payload.TestEquals( linkRequest.Header.Payload ) ) ),
+                                exc.Payload.TestEquals( subscribeRequest.Header.Payload ) ) ),
                     logs.GetAll()
                         .TestContainsSequence(
                         [
@@ -465,11 +469,11 @@ public partial class MessageBrokerClientTests
 
             await server.EstablishHandshake( client );
 
-            var linkRequest = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true );
+            var subscribeRequest = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true );
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( linkRequest.Length );
+                    s.Read( subscribeRequest.Length );
                     s.SendSubscribeFailureResponse( true, true, true, payload: 0 );
                 } );
 
@@ -517,11 +521,11 @@ public partial class MessageBrokerClientTests
 
             await server.EstablishHandshake( client );
 
-            var linkRequest = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true );
+            var subscribeRequest = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true );
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( linkRequest.Length );
+                    s.Read( subscribeRequest.Length );
                     s.Send( [ 0, 0, 0, 0, 0 ] );
                 } );
 
@@ -571,21 +575,17 @@ public partial class MessageBrokerClientTests
             var channelId = 1;
             var channelName = "foo";
             var handshakeRequest = await server.EstablishHandshake( client );
-            var linkRequest = new Protocol.SubscribeRequest( channelName, createChannelIfNotExists: true );
-            var expectedResult = channelRemoved
-                ? MessageBrokerChannelUnsubscribeResult.UnsubscribedAndChannelRemoved
-                : MessageBrokerChannelUnsubscribeResult.Unsubscribed;
-
+            var subscribeRequest = new Protocol.SubscribeRequest( channelName, createChannelIfNotExists: true );
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( linkRequest.Length );
+                    s.Read( subscribeRequest.Length );
                     s.SendSubscribedResponse( true, channelId );
                     s.ReadUnsubscribeRequest();
                     s.SendUnsubscribedResponse( channelRemoved );
                 } );
 
-            var result = Result.Create( MessageBrokerChannelUnsubscribeResult.NotSubscribed );
+            var result = Result.Create( default( MessageBrokerUnsubscribeResult ) );
             await client.Listeners.SubscribeAsync( channelName );
             var listener = client.Listeners.TryGetByChannelId( channelId );
             if ( listener is not null )
@@ -595,7 +595,9 @@ public partial class MessageBrokerClientTests
 
             Assertion.All(
                     result.Exception.TestNull(),
-                    result.Value.TestEquals( expectedResult ),
+                    result.Value.NotSubscribed.TestFalse(),
+                    result.Value.ChannelRemoved.TestEquals( channelRemoved ),
+                    result.Value.ToString().TestEquals( channelRemoved ? "Success (channel removed)" : "Success" ),
                     listener.TestNotNull( c => c.State.TestEquals( MessageBrokerListenerState.Disposed ) ),
                     client.Listeners.Count.TestEquals( 0 ),
                     client.Listeners.GetAll().TestEmpty(),
@@ -614,7 +616,7 @@ public partial class MessageBrokerClientTests
                         server.GetAllReceived(),
                         (handshakeRequest.Length, MessageBrokerServerEndpoint.HandshakeRequest),
                         (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.ConfirmHandshakeResponse),
-                        (linkRequest.Length, MessageBrokerServerEndpoint.SubscribeRequest),
+                        (subscribeRequest.Length, MessageBrokerServerEndpoint.SubscribeRequest),
                         (Protocol.UnsubscribeRequest.Length, MessageBrokerServerEndpoint.UnsubscribeRequest) ) )
                 .Go();
         }
@@ -636,17 +638,17 @@ public partial class MessageBrokerClientTests
             await server.EstablishHandshake( client );
 
             var channelName = "foo";
-            var linkRequest = new Protocol.SubscribeRequest( channelName, createChannelIfNotExists: true );
+            var subscribeRequest = new Protocol.SubscribeRequest( channelName, createChannelIfNotExists: true );
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( linkRequest.Length );
+                    s.Read( subscribeRequest.Length );
                     s.SendSubscribedResponse( true, 1 );
                     s.ReadUnsubscribeRequest();
                     s.SendUnsubscribedResponse( true );
                 } );
 
-            var result = Result.Create( MessageBrokerChannelUnsubscribeResult.Unsubscribed );
+            var result = Result.Create( default( MessageBrokerUnsubscribeResult ) );
             await client.Listeners.SubscribeAsync( channelName );
             var listener = client.Listeners.TryGetByChannelId( 1 );
             if ( listener is not null )
@@ -659,7 +661,9 @@ public partial class MessageBrokerClientTests
 
             Assertion.All(
                     result.Exception.TestNull(),
-                    result.Value.TestEquals( MessageBrokerChannelUnsubscribeResult.NotSubscribed ) )
+                    result.Value.NotSubscribed.TestTrue(),
+                    result.Value.ChannelRemoved.TestFalse(),
+                    result.Value.ToString().TestEquals( "Not subscribed" ) )
                 .Go();
         }
 
@@ -711,7 +715,7 @@ public partial class MessageBrokerClientTests
             await client.Listeners.SubscribeAsync( "foo" );
             await serverTask;
 
-            var result = Result.Create( MessageBrokerChannelUnsubscribeResult.NotSubscribed );
+            var result = Result.Create( default( MessageBrokerUnsubscribeResult ) );
             var listener = client.Listeners.TryGetByChannelId( 1 );
             if ( listener is not null )
                 result = await listener.UnsubscribeAsync();
@@ -722,8 +726,7 @@ public partial class MessageBrokerClientTests
                         .Exact<MessageBrokerClientResponseTimeoutException>(
                             exc => Assertion.All(
                                 exc.Client.TestRefEquals( client ),
-                                exc.RequestEndpoint.TestEquals( MessageBrokerServerEndpoint.UnsubscribeRequest ),
-                                exc.ResponseEndpoint.TestEquals( MessageBrokerClientEndpoint.UnsubscribedResponse ) ) ),
+                                exc.RequestEndpoint.TestEquals( MessageBrokerServerEndpoint.UnsubscribeRequest ) ) ),
                     logs.GetAll()
                         .TestContainsSequence(
                         [
@@ -731,7 +734,7 @@ public partial class MessageBrokerClientTests
                             "['test'::2] [MessageSent] [PacketLength: 9] UnsubscribeRequest",
                             """
                             ['test'::<ROOT>] [WaitingForMessage] Encountered an error:
-                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Message broker server failed to respond with UnsubscribedResponse packet to 'test' client's UnsubscribeRequest request in the specified amount of time (1000 milliseconds).
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Message broker server failed to respond to 'test' client's UnsubscribeRequest request in the specified amount of time (1000 milliseconds).
                             """
                         ] ) )
                 .Go();
@@ -780,7 +783,7 @@ public partial class MessageBrokerClientTests
             lock ( listenerSubscribed )
                 listenerSubscribed.Value = true;
 
-            var result = Result.Create( MessageBrokerChannelUnsubscribeResult.Unsubscribed );
+            var result = Result.Create( default( MessageBrokerUnsubscribeResult ) );
             if ( listener is not null )
                 result = await listener.UnsubscribeAsync();
 
@@ -819,7 +822,7 @@ public partial class MessageBrokerClientTests
             await client.Listeners.SubscribeAsync( "foo" );
             var listener = client.Listeners.TryGetByChannelId( 1 );
 
-            var result = Result.Create( MessageBrokerChannelUnsubscribeResult.Unsubscribed );
+            var result = Result.Create( default( MessageBrokerUnsubscribeResult ) );
             if ( listener is not null )
                 result = await listener.UnsubscribeAsync();
 
@@ -877,7 +880,7 @@ public partial class MessageBrokerClientTests
             await client.Listeners.SubscribeAsync( "foo" );
             var listener = client.Listeners.TryGetByChannelId( 1 );
 
-            var result = Result.Create( MessageBrokerChannelUnsubscribeResult.Unsubscribed );
+            var result = Result.Create( default( MessageBrokerUnsubscribeResult ) );
             if ( listener is not null )
                 result = await listener.UnsubscribeAsync();
 
@@ -936,7 +939,7 @@ public partial class MessageBrokerClientTests
             await client.Listeners.SubscribeAsync( "foo" );
             var listener = client.Listeners.TryGetByChannelId( 1 );
 
-            var result = Result.Create( MessageBrokerChannelUnsubscribeResult.Unsubscribed );
+            var result = Result.Create( default( MessageBrokerUnsubscribeResult ) );
             if ( listener is not null )
                 result = await listener.UnsubscribeAsync();
 
@@ -994,7 +997,7 @@ public partial class MessageBrokerClientTests
             await client.Listeners.SubscribeAsync( "foo" );
             var listener = client.Listeners.TryGetByChannelId( 1 );
 
-            var result = Result.Create( MessageBrokerChannelUnsubscribeResult.Unsubscribed );
+            var result = Result.Create( default( MessageBrokerUnsubscribeResult ) );
             if ( listener is not null )
                 result = await listener.UnsubscribeAsync();
 

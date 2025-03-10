@@ -10,7 +10,7 @@ namespace LfrlAnvil.MessageBroker.Server.Tests;
 public class MessageBrokerChannelTests : TestsBase
 {
     [Fact]
-    public async Task Creation_ShouldCreateChannelAndClientLinkCorrectly()
+    public async Task Creation_ShouldCreateChannelAndClientBindingCorrectly()
     {
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
@@ -24,7 +24,7 @@ public class MessageBrokerChannelTests : TestsBase
                     {
                         logs.Add( e );
                         if ( e.Type == MessageBrokerRemoteClientEventType.MessageSent
-                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.ChannelLinkedResponse )
+                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.BoundResponse )
                             endSource.Complete();
                     } )
                 .SetChannelEventHandlerFactory( _ => logs.Add ) );
@@ -36,8 +36,8 @@ public class MessageBrokerChannelTests : TestsBase
         await client.GetTask(
             c =>
             {
-                c.SendLinkChannelRequest( "c" );
-                c.ReadChannelLinkedResponse();
+                c.SendBindRequest( "c" );
+                c.ReadBoundResponse();
             } );
 
         await endSource.Task;
@@ -70,11 +70,11 @@ public class MessageBrokerChannelTests : TestsBase
                 logs.GetAllClient()
                     .TestContainsSequence(
                     [
-                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 7] LinkChannelRequest",
-                        "[1::'test'::1] [MessageReceived] [PacketLength: 7] Begin handling LinkChannelRequest",
-                        "[1::'test'::1] [MessageAccepted] [PacketLength: 7] LinkChannelRequest",
-                        "[1::'test'::1] [SendingMessage] [PacketLength: 10] ChannelLinkedResponse",
-                        "[1::'test'::1] [MessageSent] [PacketLength: 10] ChannelLinkedResponse"
+                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 7] BindRequest",
+                        "[1::'test'::1] [MessageReceived] [PacketLength: 7] Begin handling BindRequest",
+                        "[1::'test'::1] [MessageAccepted] [PacketLength: 7] BindRequest",
+                        "[1::'test'::1] [SendingMessage] [PacketLength: 10] BoundResponse",
+                        "[1::'test'::1] [MessageSent] [PacketLength: 10] BoundResponse"
                     ] ),
                 logs.GetAllChannel()
                     .TestSequence(
@@ -86,7 +86,7 @@ public class MessageBrokerChannelTests : TestsBase
     }
 
     [Fact]
-    public async Task Creation_ShouldCreateClientLinkForExistingChannelCorrectly()
+    public async Task Creation_ShouldCreateClientBindingForExistingChannelCorrectly()
     {
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
@@ -101,7 +101,7 @@ public class MessageBrokerChannelTests : TestsBase
                         logs.Add( e );
                         if ( e.Client.Id == 2
                             && e.Type == MessageBrokerRemoteClientEventType.MessageSent
-                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.ChannelLinkedResponse )
+                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.BoundResponse )
                             endSource.Complete();
                     } )
                 .SetChannelEventHandlerFactory( _ => logs.Add ) );
@@ -113,8 +113,8 @@ public class MessageBrokerChannelTests : TestsBase
         await client1.GetTask(
             c =>
             {
-                c.SendLinkChannelRequest( "c" );
-                c.ReadChannelLinkedResponse();
+                c.SendBindRequest( "c" );
+                c.ReadBoundResponse();
             } );
 
         using var client2 = new ClientMock();
@@ -122,8 +122,8 @@ public class MessageBrokerChannelTests : TestsBase
         await client2.GetTask(
             c =>
             {
-                c.SendLinkChannelRequest( "c" );
-                c.ReadChannelLinkedResponse();
+                c.SendBindRequest( "c" );
+                c.ReadBoundResponse();
             } );
 
         var remoteClient1 = server.Clients.TryGetById( 1 );
@@ -163,16 +163,16 @@ public class MessageBrokerChannelTests : TestsBase
                 logs.GetAllClient()
                     .TestContainsSequence(
                     [
-                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 7] LinkChannelRequest",
-                        "[1::'test'::1] [MessageReceived] [PacketLength: 7] Begin handling LinkChannelRequest",
-                        "[1::'test'::1] [MessageAccepted] [PacketLength: 7] LinkChannelRequest",
-                        "[1::'test'::1] [SendingMessage] [PacketLength: 10] ChannelLinkedResponse",
-                        "[1::'test'::1] [MessageSent] [PacketLength: 10] ChannelLinkedResponse",
-                        "[2::'test2'::<ROOT>] [MessageReceived] [PacketLength: 7] LinkChannelRequest",
-                        "[2::'test2'::1] [MessageReceived] [PacketLength: 7] Begin handling LinkChannelRequest",
-                        "[2::'test2'::1] [MessageAccepted] [PacketLength: 7] LinkChannelRequest",
-                        "[2::'test2'::1] [SendingMessage] [PacketLength: 10] ChannelLinkedResponse",
-                        "[2::'test2'::1] [MessageSent] [PacketLength: 10] ChannelLinkedResponse"
+                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 7] BindRequest",
+                        "[1::'test'::1] [MessageReceived] [PacketLength: 7] Begin handling BindRequest",
+                        "[1::'test'::1] [MessageAccepted] [PacketLength: 7] BindRequest",
+                        "[1::'test'::1] [SendingMessage] [PacketLength: 10] BoundResponse",
+                        "[1::'test'::1] [MessageSent] [PacketLength: 10] BoundResponse",
+                        "[2::'test2'::<ROOT>] [MessageReceived] [PacketLength: 7] BindRequest",
+                        "[2::'test2'::1] [MessageReceived] [PacketLength: 7] Begin handling BindRequest",
+                        "[2::'test2'::1] [MessageAccepted] [PacketLength: 7] BindRequest",
+                        "[2::'test2'::1] [SendingMessage] [PacketLength: 10] BoundResponse",
+                        "[2::'test2'::1] [MessageSent] [PacketLength: 10] BoundResponse"
                     ] ),
                 logs.GetAllChannel()
                     .TestSequence(
@@ -210,7 +210,7 @@ public class MessageBrokerChannelTests : TestsBase
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
         var remoteClient = server.Clients.TryGetById( 1 );
-        await client.GetTask( c => c.SendLinkChannelRequest( "c" ) );
+        await client.GetTask( c => c.SendBindRequest( "c" ) );
         await endSource.Task;
 
         Assertion.All(
@@ -220,8 +220,8 @@ public class MessageBrokerChannelTests : TestsBase
                 logs.GetAllClient()
                     .TestContainsSequence(
                     [
-                        (m, _) => m.TestEquals( "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 7] LinkChannelRequest" ),
-                        (m, _) => m.TestEquals( "[1::'test'::1] [MessageReceived] [PacketLength: 7] Begin handling LinkChannelRequest" ),
+                        (m, _) => m.TestEquals( "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 7] BindRequest" ),
+                        (m, _) => m.TestEquals( "[1::'test'::1] [MessageReceived] [PacketLength: 7] Begin handling BindRequest" ),
                         (m, _) => m.TestStartsWith(
                             """
                             [1::'test'::<ROOT>] [Unexpected] Encountered an error:
@@ -257,7 +257,7 @@ public class MessageBrokerChannelTests : TestsBase
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
         var remoteClient = server.Clients.TryGetById( 1 );
-        await client.GetTask( c => c.SendLinkChannelRequest( "c", payload: 0 ) );
+        await client.GetTask( c => c.SendBindRequest( "c", payload: 0 ) );
         await endSource.Task;
 
         Assertion.All(
@@ -267,11 +267,11 @@ public class MessageBrokerChannelTests : TestsBase
                 logs.GetAllClient()
                     .TestContainsSequence(
                     [
-                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 5] LinkChannelRequest",
-                        "[1::'test'::1] [MessageReceived] [PacketLength: 5] Begin handling LinkChannelRequest",
+                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 5] BindRequest",
+                        "[1::'test'::1] [MessageReceived] [PacketLength: 5] Begin handling BindRequest",
                         """
                         [1::'test'::1] [MessageRejected] [PacketLength: 5] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid LinkChannelRequest with payload 0 from client [1] 'test'. Encountered 1 error(s):
+                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid BindRequest with payload 0 from client [1] 'test'. Encountered 1 error(s):
                         1. Packet length is invalid.
                         """,
                         "[1::'test'::<ROOT>] [Disposing]",
@@ -304,7 +304,7 @@ public class MessageBrokerChannelTests : TestsBase
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
         var remoteClient = server.Clients.TryGetById( 1 );
-        await client.GetTask( c => c.SendLinkChannelRequest( string.Empty ) );
+        await client.GetTask( c => c.SendBindRequest( string.Empty ) );
         await endSource.Task;
 
         Assertion.All(
@@ -314,11 +314,11 @@ public class MessageBrokerChannelTests : TestsBase
                 logs.GetAllClient()
                     .TestContainsSequence(
                     [
-                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 6] LinkChannelRequest",
-                        "[1::'test'::1] [MessageReceived] [PacketLength: 6] Begin handling LinkChannelRequest",
+                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 6] BindRequest",
+                        "[1::'test'::1] [MessageReceived] [PacketLength: 6] Begin handling BindRequest",
                         """
                         [1::'test'::1] [MessageRejected] [PacketLength: 6] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid LinkChannelRequest with payload 1 from client [1] 'test'. Encountered 1 error(s):
+                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid BindRequest with payload 1 from client [1] 'test'. Encountered 1 error(s):
                         1. Expected name length to be in [1, 512] range but found 0.
                         """,
                         "[1::'test'::<ROOT>] [Disposing]",
@@ -351,7 +351,7 @@ public class MessageBrokerChannelTests : TestsBase
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
         var remoteClient = server.Clients.TryGetById( 1 );
-        await client.GetTask( c => c.SendLinkChannelRequest( new string( 'x', 513 ) ) );
+        await client.GetTask( c => c.SendBindRequest( new string( 'x', 513 ) ) );
         await endSource.Task;
 
         Assertion.All(
@@ -361,11 +361,11 @@ public class MessageBrokerChannelTests : TestsBase
                 logs.GetAllClient()
                     .TestContainsSequence(
                     [
-                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 519] LinkChannelRequest",
-                        "[1::'test'::1] [MessageReceived] [PacketLength: 519] Begin handling LinkChannelRequest",
+                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 519] BindRequest",
+                        "[1::'test'::1] [MessageReceived] [PacketLength: 519] Begin handling BindRequest",
                         """
                         [1::'test'::1] [MessageRejected] [PacketLength: 519] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid LinkChannelRequest with payload 514 from client [1] 'test'. Encountered 1 error(s):
+                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid BindRequest with payload 514 from client [1] 'test'. Encountered 1 error(s):
                         1. Expected name length to be in [1, 512] range but found 513.
                         """,
                         "[1::'test'::<ROOT>] [Disposing]",
@@ -375,7 +375,7 @@ public class MessageBrokerChannelTests : TestsBase
     }
 
     [Fact]
-    public async Task LinkRequest_ShouldBeRejected_WhenClientIsAlreadyLinkedToChannel()
+    public async Task BindRequest_ShouldBeRejected_WhenClientIsAlreadyBoundToChannel()
     {
         Exception? exception = null;
         var endSource = new SafeTaskCompletionSource();
@@ -393,7 +393,7 @@ public class MessageBrokerChannelTests : TestsBase
                             exception = e.Exception;
 
                         if ( e.Type == MessageBrokerRemoteClientEventType.MessageSent
-                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.LinkChannelFailureResponse )
+                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.BindFailureResponse )
                             endSource.Complete();
                     } ) );
 
@@ -405,10 +405,10 @@ public class MessageBrokerChannelTests : TestsBase
         await client.GetTask(
             c =>
             {
-                c.SendLinkChannelRequest( "c" );
-                c.ReadChannelLinkedResponse();
-                c.SendLinkChannelRequest( "c" );
-                c.ReadLinkChannelFailureResponse();
+                c.SendBindRequest( "c" );
+                c.ReadBoundResponse();
+                c.SendBindRequest( "c" );
+                c.ReadBindFailureResponse();
             } );
 
         await endSource.Task;
@@ -417,7 +417,7 @@ public class MessageBrokerChannelTests : TestsBase
 
         Assertion.All(
                 exception.TestType()
-                    .Exact<MessageBrokerRemoteClientChannelLinkException>(
+                    .Exact<MessageBrokerChannelBindingException>(
                         exc => Assertion.All( exc.Client.TestRefEquals( remoteClient ), exc.Channel.TestRefEquals( channel ) ) ),
                 remoteClient.TestNotNull(
                     c => Assertion.All(
@@ -435,19 +435,19 @@ public class MessageBrokerChannelTests : TestsBase
                 logs.GetAllClient()
                     .TestContainsSequence(
                     [
-                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 7] LinkChannelRequest",
-                        "[1::'test'::1] [MessageReceived] [PacketLength: 7] Begin handling LinkChannelRequest",
-                        "[1::'test'::1] [MessageAccepted] [PacketLength: 7] LinkChannelRequest",
-                        "[1::'test'::1] [SendingMessage] [PacketLength: 10] ChannelLinkedResponse",
-                        "[1::'test'::1] [MessageSent] [PacketLength: 10] ChannelLinkedResponse",
-                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 7] LinkChannelRequest",
-                        "[1::'test'::2] [MessageReceived] [PacketLength: 7] Begin handling LinkChannelRequest",
+                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 7] BindRequest",
+                        "[1::'test'::1] [MessageReceived] [PacketLength: 7] Begin handling BindRequest",
+                        "[1::'test'::1] [MessageAccepted] [PacketLength: 7] BindRequest",
+                        "[1::'test'::1] [SendingMessage] [PacketLength: 10] BoundResponse",
+                        "[1::'test'::1] [MessageSent] [PacketLength: 10] BoundResponse",
+                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 7] BindRequest",
+                        "[1::'test'::2] [MessageReceived] [PacketLength: 7] Begin handling BindRequest",
                         """
                         [1::'test'::2] [MessageRejected] [PacketLength: 7] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientChannelLinkException: Message broker client [1] 'test' could not be linked to channel [1] 'c' because it is already linked to the channel.
+                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerChannelBindingException: Message broker client [1] 'test' could not be bound to channel [1] 'c' because it is already bound to it.
                         """,
-                        "[1::'test'::2] [SendingMessage] [PacketLength: 6] LinkChannelFailureResponse",
-                        "[1::'test'::2] [MessageSent] [PacketLength: 6] LinkChannelFailureResponse"
+                        "[1::'test'::2] [SendingMessage] [PacketLength: 6] BindFailureResponse",
+                        "[1::'test'::2] [MessageSent] [PacketLength: 6] BindFailureResponse"
                     ] ) )
             .Go();
     }
@@ -467,7 +467,7 @@ public class MessageBrokerChannelTests : TestsBase
                     {
                         logs.Add( e );
                         if ( e.Type == MessageBrokerRemoteClientEventType.MessageSent
-                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.ChannelLinkedResponse )
+                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.BoundResponse )
                             endSource.Complete();
                     } )
                 .SetChannelEventHandlerFactory( _ => _ => throw new Exception( "foo" ) ) );
@@ -480,8 +480,8 @@ public class MessageBrokerChannelTests : TestsBase
         await client.GetTask(
             c =>
             {
-                c.SendLinkChannelRequest( "c" );
-                c.ReadChannelLinkedResponse();
+                c.SendBindRequest( "c" );
+                c.ReadBoundResponse();
             } );
 
         await endSource.Task;
@@ -505,17 +505,17 @@ public class MessageBrokerChannelTests : TestsBase
                 logs.GetAllClient()
                     .TestContainsSequence(
                     [
-                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 7] LinkChannelRequest",
-                        "[1::'test'::1] [MessageReceived] [PacketLength: 7] Begin handling LinkChannelRequest",
-                        "[1::'test'::1] [MessageAccepted] [PacketLength: 7] LinkChannelRequest",
-                        "[1::'test'::1] [SendingMessage] [PacketLength: 10] ChannelLinkedResponse",
-                        "[1::'test'::1] [MessageSent] [PacketLength: 10] ChannelLinkedResponse"
+                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 7] BindRequest",
+                        "[1::'test'::1] [MessageReceived] [PacketLength: 7] Begin handling BindRequest",
+                        "[1::'test'::1] [MessageAccepted] [PacketLength: 7] BindRequest",
+                        "[1::'test'::1] [SendingMessage] [PacketLength: 10] BoundResponse",
+                        "[1::'test'::1] [MessageSent] [PacketLength: 10] BoundResponse"
                     ] ) )
             .Go();
     }
 
     [Fact]
-    public async Task ServerDispose_ShouldDisposeChannel()
+    public async Task ServerDispose_ShouldDisposeChannelBinding()
     {
         var logs = new EventLogger();
         var server = new MessageBrokerServer(
@@ -532,8 +532,8 @@ public class MessageBrokerChannelTests : TestsBase
         await client.GetTask(
             c =>
             {
-                c.SendLinkChannelRequest( "c" );
-                c.ReadChannelLinkedResponse();
+                c.SendBindRequest( "c" );
+                c.ReadBoundResponse();
             } );
 
         var remoteClient = server.Clients.TryGetById( 1 );
@@ -562,7 +562,7 @@ public class MessageBrokerChannelTests : TestsBase
     }
 
     [Fact]
-    public async Task ClientDisconnect_ShouldDisposeChannel_WhenChannelIsOnlyLinkedToDisconnectedClient()
+    public async Task ClientDisconnect_ShouldDisposeChannelBinding_WhenChannelIsOnlyBoundToDisconnectedClient()
     {
         var logs = new EventLogger();
         await using var server = new MessageBrokerServer(
@@ -579,8 +579,8 @@ public class MessageBrokerChannelTests : TestsBase
         await client.GetTask(
             c =>
             {
-                c.SendLinkChannelRequest( "c" );
-                c.ReadChannelLinkedResponse();
+                c.SendBindRequest( "c" );
+                c.ReadBoundResponse();
             } );
 
         var remoteClient = server.Clients.TryGetById( 1 );
@@ -611,7 +611,7 @@ public class MessageBrokerChannelTests : TestsBase
     }
 
     [Fact]
-    public async Task ClientDisconnect_ShouldRemoveChannelLink_WhenChannelIsAlsoLinkedToOtherClient()
+    public async Task ClientDisconnect_ShouldRemoveChannelBinding_WhenChannelIsAlsoBoundToOtherClient()
     {
         var logs = new EventLogger();
         await using var server = new MessageBrokerServer(
@@ -628,8 +628,8 @@ public class MessageBrokerChannelTests : TestsBase
         await client1.GetTask(
             c =>
             {
-                c.SendLinkChannelRequest( "c" );
-                c.ReadChannelLinkedResponse();
+                c.SendBindRequest( "c" );
+                c.ReadBoundResponse();
             } );
 
         using var client2 = new ClientMock();
@@ -637,8 +637,8 @@ public class MessageBrokerChannelTests : TestsBase
         await client2.GetTask(
             c =>
             {
-                c.SendLinkChannelRequest( "c" );
-                c.ReadChannelLinkedResponse();
+                c.SendBindRequest( "c" );
+                c.ReadBoundResponse();
             } );
 
         var remoteClient1 = server.Clients.TryGetById( 1 );
@@ -675,7 +675,7 @@ public class MessageBrokerChannelTests : TestsBase
     }
 
     [Fact]
-    public async Task Unlink_ShouldUnlinkLastClientFromChannelAndRemoveIt()
+    public async Task Unbind_ShouldUnbindLastClientFromChannelAndRemoveIt()
     {
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
@@ -689,7 +689,7 @@ public class MessageBrokerChannelTests : TestsBase
                     {
                         logs.Add( e );
                         if ( e.Type == MessageBrokerRemoteClientEventType.MessageSent
-                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.ChannelUnlinkedResponse )
+                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.UnboundResponse )
                             endSource.Complete();
                     } )
                 .SetChannelEventHandlerFactory( _ => logs.Add ) );
@@ -701,8 +701,8 @@ public class MessageBrokerChannelTests : TestsBase
         await client.GetTask(
             c =>
             {
-                c.SendLinkChannelRequest( "c" );
-                c.ReadChannelLinkedResponse();
+                c.SendBindRequest( "c" );
+                c.ReadBoundResponse();
             } );
 
         var remoteClient = server.Clients.TryGetById( 1 );
@@ -710,8 +710,8 @@ public class MessageBrokerChannelTests : TestsBase
         await client.GetTask(
             c =>
             {
-                c.SendUnlinkChannelRequest( 1 );
-                c.ReadChannelUnlinkedResponse();
+                c.SendUnbindRequest( 1 );
+                c.ReadUnboundResponse();
             } );
 
         await endSource.Task;
@@ -733,11 +733,11 @@ public class MessageBrokerChannelTests : TestsBase
                 logs.GetAllClient()
                     .TestContainsSequence(
                     [
-                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 9] UnlinkChannelRequest",
-                        "[1::'test'::2] [MessageReceived] [PacketLength: 9] Begin handling UnlinkChannelRequest",
-                        "[1::'test'::2] [MessageAccepted] [PacketLength: 9] UnlinkChannelRequest",
-                        "[1::'test'::2] [SendingMessage] [PacketLength: 6] ChannelUnlinkedResponse",
-                        "[1::'test'::2] [MessageSent] [PacketLength: 6] ChannelUnlinkedResponse"
+                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 9] UnbindRequest",
+                        "[1::'test'::2] [MessageReceived] [PacketLength: 9] Begin handling UnbindRequest",
+                        "[1::'test'::2] [MessageAccepted] [PacketLength: 9] UnbindRequest",
+                        "[1::'test'::2] [SendingMessage] [PacketLength: 6] UnboundResponse",
+                        "[1::'test'::2] [MessageSent] [PacketLength: 6] UnboundResponse"
                     ] ),
                 logs.GetAllChannel()
                     .TestSequence(
@@ -752,7 +752,7 @@ public class MessageBrokerChannelTests : TestsBase
     }
 
     [Fact]
-    public async Task Unlink_ShouldUnlinkNonLastClientFromChannelWithoutRemovingIt()
+    public async Task Unbind_ShouldUnbindNonLastClientFromChannelWithoutRemovingIt()
     {
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
@@ -767,7 +767,7 @@ public class MessageBrokerChannelTests : TestsBase
                         logs.Add( e );
                         if ( e.Client.Id == 2
                             && e.Type == MessageBrokerRemoteClientEventType.MessageSent
-                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.ChannelUnlinkedResponse )
+                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.UnboundResponse )
                             endSource.Complete();
                     } )
                 .SetChannelEventHandlerFactory( _ => logs.Add ) );
@@ -779,8 +779,8 @@ public class MessageBrokerChannelTests : TestsBase
         await client1.GetTask(
             c =>
             {
-                c.SendLinkChannelRequest( "c" );
-                c.ReadChannelLinkedResponse();
+                c.SendBindRequest( "c" );
+                c.ReadBoundResponse();
             } );
 
         using var client2 = new ClientMock();
@@ -788,8 +788,8 @@ public class MessageBrokerChannelTests : TestsBase
         await client2.GetTask(
             c =>
             {
-                c.SendLinkChannelRequest( "c" );
-                c.ReadChannelLinkedResponse();
+                c.SendBindRequest( "c" );
+                c.ReadBoundResponse();
             } );
 
         var remoteClient1 = server.Clients.TryGetById( 1 );
@@ -799,8 +799,8 @@ public class MessageBrokerChannelTests : TestsBase
         await client2.GetTask(
             c =>
             {
-                c.SendUnlinkChannelRequest( 1 );
-                c.ReadChannelUnlinkedResponse();
+                c.SendUnbindRequest( 1 );
+                c.ReadUnboundResponse();
             } );
 
         await endSource.Task;
@@ -834,21 +834,21 @@ public class MessageBrokerChannelTests : TestsBase
                 logs.GetAllClient()
                     .TestContainsSequence(
                     [
-                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 7] LinkChannelRequest",
-                        "[1::'test'::1] [MessageReceived] [PacketLength: 7] Begin handling LinkChannelRequest",
-                        "[1::'test'::1] [MessageAccepted] [PacketLength: 7] LinkChannelRequest",
-                        "[1::'test'::1] [SendingMessage] [PacketLength: 10] ChannelLinkedResponse",
-                        "[1::'test'::1] [MessageSent] [PacketLength: 10] ChannelLinkedResponse",
-                        "[2::'test2'::<ROOT>] [MessageReceived] [PacketLength: 7] LinkChannelRequest",
-                        "[2::'test2'::1] [MessageReceived] [PacketLength: 7] Begin handling LinkChannelRequest",
-                        "[2::'test2'::1] [MessageAccepted] [PacketLength: 7] LinkChannelRequest",
-                        "[2::'test2'::1] [SendingMessage] [PacketLength: 10] ChannelLinkedResponse",
-                        "[2::'test2'::1] [MessageSent] [PacketLength: 10] ChannelLinkedResponse",
-                        "[2::'test2'::<ROOT>] [MessageReceived] [PacketLength: 9] UnlinkChannelRequest",
-                        "[2::'test2'::2] [MessageReceived] [PacketLength: 9] Begin handling UnlinkChannelRequest",
-                        "[2::'test2'::2] [MessageAccepted] [PacketLength: 9] UnlinkChannelRequest",
-                        "[2::'test2'::2] [SendingMessage] [PacketLength: 6] ChannelUnlinkedResponse",
-                        "[2::'test2'::2] [MessageSent] [PacketLength: 6] ChannelUnlinkedResponse"
+                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 7] BindRequest",
+                        "[1::'test'::1] [MessageReceived] [PacketLength: 7] Begin handling BindRequest",
+                        "[1::'test'::1] [MessageAccepted] [PacketLength: 7] BindRequest",
+                        "[1::'test'::1] [SendingMessage] [PacketLength: 10] BoundResponse",
+                        "[1::'test'::1] [MessageSent] [PacketLength: 10] BoundResponse",
+                        "[2::'test2'::<ROOT>] [MessageReceived] [PacketLength: 7] BindRequest",
+                        "[2::'test2'::1] [MessageReceived] [PacketLength: 7] Begin handling BindRequest",
+                        "[2::'test2'::1] [MessageAccepted] [PacketLength: 7] BindRequest",
+                        "[2::'test2'::1] [SendingMessage] [PacketLength: 10] BoundResponse",
+                        "[2::'test2'::1] [MessageSent] [PacketLength: 10] BoundResponse",
+                        "[2::'test2'::<ROOT>] [MessageReceived] [PacketLength: 9] UnbindRequest",
+                        "[2::'test2'::2] [MessageReceived] [PacketLength: 9] Begin handling UnbindRequest",
+                        "[2::'test2'::2] [MessageAccepted] [PacketLength: 9] UnbindRequest",
+                        "[2::'test2'::2] [SendingMessage] [PacketLength: 6] UnboundResponse",
+                        "[2::'test2'::2] [MessageSent] [PacketLength: 6] UnboundResponse"
                     ] ),
                 logs.GetAllChannel()
                     .TestSequence(
@@ -862,7 +862,7 @@ public class MessageBrokerChannelTests : TestsBase
     }
 
     [Fact]
-    public async Task Unlink_ShouldUnlinkLastClientFromChannelWithSubscriptionAndNotRemoveIt()
+    public async Task Unbind_ShouldUnbindLastClientFromChannelWithSubscriptionAndNotRemoveIt()
     {
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
@@ -876,7 +876,7 @@ public class MessageBrokerChannelTests : TestsBase
                     {
                         logs.Add( e );
                         if ( e.Type == MessageBrokerRemoteClientEventType.MessageSent
-                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.ChannelUnlinkedResponse )
+                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.UnboundResponse )
                             endSource.Complete();
                     } )
                 .SetChannelEventHandlerFactory( _ => logs.Add ) );
@@ -888,8 +888,8 @@ public class MessageBrokerChannelTests : TestsBase
         await client.GetTask(
             c =>
             {
-                c.SendLinkChannelRequest( "c" );
-                c.ReadChannelLinkedResponse();
+                c.SendBindRequest( "c" );
+                c.ReadBoundResponse();
                 c.SendSubscribeRequest( "c", createChannelIfNotExists: false );
                 c.ReadSubscribedResponse();
             } );
@@ -900,8 +900,8 @@ public class MessageBrokerChannelTests : TestsBase
         await client.GetTask(
             c =>
             {
-                c.SendUnlinkChannelRequest( 1 );
-                c.ReadChannelUnlinkedResponse();
+                c.SendUnbindRequest( 1 );
+                c.ReadUnboundResponse();
             } );
 
         await endSource.Task;
@@ -927,11 +927,11 @@ public class MessageBrokerChannelTests : TestsBase
                 logs.GetAllClient()
                     .TestContainsSequence(
                     [
-                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 9] UnlinkChannelRequest",
-                        "[1::'test'::3] [MessageReceived] [PacketLength: 9] Begin handling UnlinkChannelRequest",
-                        "[1::'test'::3] [MessageAccepted] [PacketLength: 9] UnlinkChannelRequest",
-                        "[1::'test'::3] [SendingMessage] [PacketLength: 6] ChannelUnlinkedResponse",
-                        "[1::'test'::3] [MessageSent] [PacketLength: 6] ChannelUnlinkedResponse"
+                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 9] UnbindRequest",
+                        "[1::'test'::3] [MessageReceived] [PacketLength: 9] Begin handling UnbindRequest",
+                        "[1::'test'::3] [MessageAccepted] [PacketLength: 9] UnbindRequest",
+                        "[1::'test'::3] [SendingMessage] [PacketLength: 6] UnboundResponse",
+                        "[1::'test'::3] [MessageSent] [PacketLength: 6] UnboundResponse"
                     ] ),
                 logs.GetAllChannel()
                     .TestSequence(
@@ -944,7 +944,7 @@ public class MessageBrokerChannelTests : TestsBase
     }
 
     [Fact]
-    public async Task Unlink_ShouldDisposeClient_WhenClientSendsInvalidPayload()
+    public async Task Unbind_ShouldDisposeClient_WhenClientSendsInvalidPayload()
     {
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
@@ -969,13 +969,13 @@ public class MessageBrokerChannelTests : TestsBase
         await client.GetTask(
             c =>
             {
-                c.SendLinkChannelRequest( "c" );
-                c.ReadChannelLinkedResponse();
+                c.SendBindRequest( "c" );
+                c.ReadBoundResponse();
             } );
 
         var remoteClient = server.Clients.TryGetById( 1 );
         var channel = server.Channels.TryGetByName( "c" );
-        await client.GetTask( c => c.SendUnlinkChannelRequest( 1, payload: 3 ) );
+        await client.GetTask( c => c.SendUnbindRequest( 1, payload: 3 ) );
         await endSource.Task;
 
         Assertion.All(
@@ -988,11 +988,11 @@ public class MessageBrokerChannelTests : TestsBase
                 logs.GetAllClient()
                     .TestContainsSequence(
                     [
-                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 8] UnlinkChannelRequest",
-                        "[1::'test'::2] [MessageReceived] [PacketLength: 8] Begin handling UnlinkChannelRequest",
+                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 8] UnbindRequest",
+                        "[1::'test'::2] [MessageReceived] [PacketLength: 8] Begin handling UnbindRequest",
                         """
                         [1::'test'::2] [MessageRejected] [PacketLength: 8] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid UnlinkChannelRequest with payload 3 from client [1] 'test'. Encountered 1 error(s):
+                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid UnbindRequest with payload 3 from client [1] 'test'. Encountered 1 error(s):
                         1. Expected header payload to be 4.
                         """
                     ] ),
@@ -1009,7 +1009,7 @@ public class MessageBrokerChannelTests : TestsBase
     }
 
     [Fact]
-    public async Task Unlink_ShouldBeRejected_WhenChannelDoesNotExist()
+    public async Task Unbind_ShouldBeRejected_WhenChannelDoesNotExist()
     {
         Exception? exception = null;
         var endSource = new SafeTaskCompletionSource();
@@ -1024,11 +1024,11 @@ public class MessageBrokerChannelTests : TestsBase
                     {
                         logs.Add( e );
                         if ( e.Type == MessageBrokerRemoteClientEventType.MessageRejected
-                            && e.GetServerEndpoint() == MessageBrokerServerEndpoint.UnlinkChannelRequest )
+                            && e.GetServerEndpoint() == MessageBrokerServerEndpoint.UnbindRequest )
                             exception = e.Exception;
 
                         if ( e.Type == MessageBrokerRemoteClientEventType.MessageSent
-                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.UnlinkChannelFailureResponse )
+                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.UnbindFailureResponse )
                             endSource.Complete();
                     } ) );
 
@@ -1041,15 +1041,15 @@ public class MessageBrokerChannelTests : TestsBase
         await client.GetTask(
             c =>
             {
-                c.SendUnlinkChannelRequest( 1 );
-                c.ReadUnlinkChannelFailureResponse();
+                c.SendUnbindRequest( 1 );
+                c.ReadUnbindFailureResponse();
             } );
 
         await endSource.Task;
 
         Assertion.All(
                 exception.TestType()
-                    .Exact<MessageBrokerRemoteClientChannelLinkException>(
+                    .Exact<MessageBrokerChannelBindingException>(
                         exc => Assertion.All( exc.Client.TestRefEquals( remoteClient ), exc.Channel.TestNull() ) ),
                 remoteClient.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Running ) ),
                 server.Clients.Count.TestEquals( 1 ),
@@ -1057,20 +1057,20 @@ public class MessageBrokerChannelTests : TestsBase
                 logs.GetAllClient()
                     .TestContainsSequence(
                     [
-                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 9] UnlinkChannelRequest",
-                        "[1::'test'::1] [MessageReceived] [PacketLength: 9] Begin handling UnlinkChannelRequest",
+                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 9] UnbindRequest",
+                        "[1::'test'::1] [MessageReceived] [PacketLength: 9] Begin handling UnbindRequest",
                         """
                         [1::'test'::1] [MessageRejected] [PacketLength: 9] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientChannelLinkException: Message broker client [1] 'test' could not be unlinked from non-existing channel with ID 1.
+                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerChannelBindingException: Message broker client [1] 'test' could not be unbound from non-existing channel with ID 1.
                         """,
-                        "[1::'test'::1] [SendingMessage] [PacketLength: 6] UnlinkChannelFailureResponse",
-                        "[1::'test'::1] [MessageSent] [PacketLength: 6] UnlinkChannelFailureResponse"
+                        "[1::'test'::1] [SendingMessage] [PacketLength: 6] UnbindFailureResponse",
+                        "[1::'test'::1] [MessageSent] [PacketLength: 6] UnbindFailureResponse"
                     ] ) )
             .Go();
     }
 
     [Fact]
-    public async Task Unlink_ShouldBeRejected_WhenClientIsNotLinkedToChannel()
+    public async Task Unbind_ShouldBeRejected_WhenClientIsNotBoundToChannel()
     {
         Exception? exception = null;
         var endSource = new SafeTaskCompletionSource();
@@ -1085,11 +1085,11 @@ public class MessageBrokerChannelTests : TestsBase
                     {
                         logs.Add( e );
                         if ( e.Type == MessageBrokerRemoteClientEventType.MessageRejected
-                            && e.GetServerEndpoint() == MessageBrokerServerEndpoint.UnlinkChannelRequest )
+                            && e.GetServerEndpoint() == MessageBrokerServerEndpoint.UnbindRequest )
                             exception = e.Exception;
 
                         if ( e.Type == MessageBrokerRemoteClientEventType.MessageSent
-                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.UnlinkChannelFailureResponse )
+                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.UnbindFailureResponse )
                             endSource.Complete();
                     } )
                 .SetChannelEventHandlerFactory( _ => logs.Add ) );
@@ -1101,8 +1101,8 @@ public class MessageBrokerChannelTests : TestsBase
         await client1.GetTask(
             c =>
             {
-                c.SendLinkChannelRequest( "c" );
-                c.ReadUnlinkChannelFailureResponse();
+                c.SendBindRequest( "c" );
+                c.ReadUnbindFailureResponse();
             } );
 
         using var client2 = new ClientMock();
@@ -1110,8 +1110,8 @@ public class MessageBrokerChannelTests : TestsBase
         await client2.GetTask(
             c =>
             {
-                c.SendUnlinkChannelRequest( 1 );
-                c.ReadUnlinkChannelFailureResponse();
+                c.SendUnbindRequest( 1 );
+                c.ReadUnbindFailureResponse();
             } );
 
         await endSource.Task;
@@ -1122,7 +1122,7 @@ public class MessageBrokerChannelTests : TestsBase
 
         Assertion.All(
                 exception.TestType()
-                    .Exact<MessageBrokerRemoteClientChannelLinkException>(
+                    .Exact<MessageBrokerChannelBindingException>(
                         exc => Assertion.All( exc.Client.TestRefEquals( remoteClient2 ), exc.Channel.TestRefEquals( channel ) ) ),
                 remoteClient1.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Running ) ),
                 remoteClient2.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Running ) ),
@@ -1138,14 +1138,14 @@ public class MessageBrokerChannelTests : TestsBase
                 logs.GetAllClient()
                     .TestContainsSequence(
                     [
-                        "[2::'test2'::<ROOT>] [MessageReceived] [PacketLength: 9] UnlinkChannelRequest",
-                        "[2::'test2'::1] [MessageReceived] [PacketLength: 9] Begin handling UnlinkChannelRequest",
+                        "[2::'test2'::<ROOT>] [MessageReceived] [PacketLength: 9] UnbindRequest",
+                        "[2::'test2'::1] [MessageReceived] [PacketLength: 9] Begin handling UnbindRequest",
                         """
                         [2::'test2'::1] [MessageRejected] [PacketLength: 9] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientChannelLinkException: Message broker client [2] 'test2' could not be unlinked from channel [1] 'c' because they are not linked to begin with.
+                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerChannelBindingException: Message broker client [2] 'test2' could not be unbound from channel [1] 'c' because it is not bound to it.
                         """,
-                        "[2::'test2'::1] [SendingMessage] [PacketLength: 6] UnlinkChannelFailureResponse",
-                        "[2::'test2'::1] [MessageSent] [PacketLength: 6] UnlinkChannelFailureResponse"
+                        "[2::'test2'::1] [SendingMessage] [PacketLength: 6] UnbindFailureResponse",
+                        "[2::'test2'::1] [MessageSent] [PacketLength: 6] UnbindFailureResponse"
                     ] ),
                 logs.GetAllChannel()
                     .TestContainsSequence(

@@ -117,40 +117,40 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string FailedToCreateClientChannelLink(
+    internal static string FailedToCreateChannelBinding(
         int clientId,
         string clientName,
         int channelId,
         string channelName,
-        Protocol.LinkChannelFailureResponse.Reasons reason)
+        Protocol.BindFailureResponse.Reasons reason)
     {
-        Assume.NotEquals( reason, Protocol.LinkChannelFailureResponse.Reasons.None );
-        var reasonText = reason == Protocol.LinkChannelFailureResponse.Reasons.AlreadyLinked
-            ? "it is already linked to the channel"
-            : "the linking process was cancelled";
+        Assume.NotEquals( reason, Protocol.BindFailureResponse.Reasons.None );
+        var reasonText = reason == Protocol.BindFailureResponse.Reasons.AlreadyBound
+            ? "it is already bound to it"
+            : "the binding process was cancelled";
 
         return
-            $"Message broker client [{clientId}] '{clientName}' could not be linked to channel [{channelId}] '{channelName}' because {reasonText}.";
+            $"Message broker client [{clientId}] '{clientName}' could not be bound to channel [{channelId}] '{channelName}' because {reasonText}.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string FailedToUnlinkClientFromChannel(int clientId, string clientName, int channelId, string channelName)
+    internal static string FailedToUnbindFromChannel(int clientId, string clientName, int channelId, string channelName)
     {
         return
-            $"Message broker client [{clientId}] '{clientName}' could not be unlinked from channel [{channelId}] '{channelName}' because they are not linked to begin with.";
+            $"Message broker client [{clientId}] '{clientName}' could not be unbound from channel [{channelId}] '{channelName}' because it is not bound to it.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string FailedToUnlinkClientFromNonExistingChannel(int clientId, string clientName, int channelId)
+    internal static string FailedToUnbindFromNonExistingChannel(int clientId, string clientName, int channelId)
     {
-        return $"Message broker client [{clientId}] '{clientName}' could not be unlinked from non-existing channel with ID {channelId}.";
+        return $"Message broker client [{clientId}] '{clientName}' could not be unbound from non-existing channel with ID {channelId}.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string FailedToUnsubscribeClientFromChannel(int clientId, string clientName, int channelId, string channelName)
+    internal static string FailedToUnsubscribeFromChannel(int clientId, string clientName, int channelId, string channelName)
     {
         return
             $"Message broker client [{clientId}] '{clientName}' could not be unsubscribed from channel [{channelId}] '{channelName}' because it is not subscribed to it.";
@@ -158,7 +158,7 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string FailedToUnsubscribeClientFromNonExistingChannel(int clientId, string clientName, int channelId)
+    internal static string FailedToUnsubscribeFromNonExistingChannel(int clientId, string clientName, int channelId)
     {
         return
             $"Message broker client [{clientId}] '{clientName}' could not be unsubscribed from non-existing channel with ID {channelId}.";
@@ -177,7 +177,7 @@ internal static class Resources
         var reasonText = reason switch
         {
             Protocol.SubscribeFailureResponse.Reasons.ChannelDoesNotExist => "channel does not exist",
-            Protocol.SubscribeFailureResponse.Reasons.AlreadySubscribed => "it is already subscribed to the channel",
+            Protocol.SubscribeFailureResponse.Reasons.AlreadySubscribed => "it is already subscribed to it",
             _ => "the subscription process was cancelled"
         };
 

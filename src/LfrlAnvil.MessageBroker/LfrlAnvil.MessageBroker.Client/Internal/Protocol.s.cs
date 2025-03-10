@@ -275,19 +275,17 @@ internal static class Protocol
         }
     }
 
-    internal readonly struct LinkChannelRequest
+    internal readonly struct BindRequest
     {
         internal readonly PacketHeader Header;
         internal readonly byte Flags;
         internal readonly EncodeableText ChannelName;
 
-        internal LinkChannelRequest(string channelName)
+        internal BindRequest(string channelName)
         {
             Flags = 0;
             ChannelName = TextEncoding.Prepare( channelName ).GetValueOrThrow();
-            Header = PacketHeader.Create(
-                MessageBrokerServerEndpoint.LinkChannelRequest,
-                sizeof( byte ) + ( uint )ChannelName.ByteCount );
+            Header = PacketHeader.Create( MessageBrokerServerEndpoint.BindRequest, sizeof( byte ) + ( uint )ChannelName.ByteCount );
         }
 
         internal int Length => PacketHeader.Length + unchecked( ( int )Header.Payload );
@@ -310,57 +308,57 @@ internal static class Protocol
         }
     }
 
-    internal readonly struct ChannelLinkedResponse
+    internal readonly struct BoundResponse
     {
         internal const int Length = sizeof( byte ) + sizeof( uint );
         internal readonly byte Flags;
-        internal readonly int Id;
+        internal readonly int ChannelId;
 
-        private ChannelLinkedResponse(byte flags, int id)
+        private BoundResponse(byte flags, int channelId)
         {
             Flags = flags;
-            Id = id;
+            ChannelId = channelId;
         }
 
-        internal bool Created => (Flags & 1) != 0;
+        internal bool ChannelCreated => (Flags & 1) != 0;
 
         [Pure]
         public override string ToString()
         {
-            return $"Flags = {Flags}, Id = {Id}";
+            return $"Flags = {Flags}, Id = {ChannelId}";
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal static ChannelLinkedResponse Parse(ReadOnlyMemory<byte> source, bool reverseEndianness)
+        internal static BoundResponse Parse(ReadOnlyMemory<byte> source, bool reverseEndianness)
         {
             Assume.Equals( source.Length, Length );
             var reader = new BinaryContractReader( source.Span );
             var flags = reader.MoveReadInt8();
-            var id = unchecked( ( int )reader.ReadInt32() );
-            return new ChannelLinkedResponse( flags, reverseEndianness ? BinaryPrimitives.ReverseEndianness( id ) : id );
+            var channelId = unchecked( ( int )reader.ReadInt32() );
+            return new BoundResponse( flags, reverseEndianness ? BinaryPrimitives.ReverseEndianness( channelId ) : channelId );
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal Chain<string> StringifyErrors()
         {
-            return Id > 0 ? Chain<string>.Empty : Chain.Create( Resources.ChannelIdIsNotPositive( Id ) );
+            return ChannelId > 0 ? Chain<string>.Empty : Chain.Create( Resources.ChannelIdIsNotPositive( ChannelId ) );
         }
     }
 
-    internal readonly struct LinkChannelFailureResponse
+    internal readonly struct BindFailureResponse
     {
         internal const int Length = sizeof( byte );
         internal readonly byte Flags;
 
-        private LinkChannelFailureResponse(byte flags)
+        private BindFailureResponse(byte flags)
         {
             Flags = flags;
         }
 
-        internal bool ClientAlreadyLinkedToChannel => (Flags & 1) != 0;
-        internal bool LinkingCancelled => (Flags & 2) != 0;
+        internal bool AlreadyBound => (Flags & 1) != 0;
+        internal bool Cancelled => (Flags & 2) != 0;
 
         [Pure]
         public override string ToString()
@@ -370,12 +368,12 @@ internal static class Protocol
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal static LinkChannelFailureResponse Parse(ReadOnlyMemory<byte> source)
+        internal static BindFailureResponse Parse(ReadOnlyMemory<byte> source)
         {
             Assume.Equals( source.Length, Length );
             var reader = new BinaryContractReader( source.Span );
             var flags = reader.ReadInt8();
-            return new LinkChannelFailureResponse( flags );
+            return new BindFailureResponse( flags );
         }
 
         [Pure]
@@ -384,26 +382,26 @@ internal static class Protocol
         {
             var result = Chain<string>.Empty;
 
-            if ( ClientAlreadyLinkedToChannel )
-                result = result.Extend( Resources.ClientAlreadyLinkedToChannel( channelName ) );
+            if ( AlreadyBound )
+                result = result.Extend( Resources.AlreadyBound( channelName ) );
 
-            if ( LinkingCancelled )
-                result = result.Extend( Resources.ClientChannelLinkingCancelled( channelName ) );
+            if ( Cancelled )
+                result = result.Extend( Resources.BindCancelled( channelName ) );
 
             return result;
         }
     }
 
-    internal readonly struct UnlinkChannelRequest
+    internal readonly struct UnbindRequest
     {
         internal const int Length = PacketHeader.Length + sizeof( uint );
         internal readonly PacketHeader Header;
         internal readonly int ChannelId;
 
-        internal UnlinkChannelRequest(int channelId)
+        internal UnbindRequest(int channelId)
         {
             ChannelId = channelId;
-            Header = PacketHeader.Create( MessageBrokerServerEndpoint.UnlinkChannelRequest, sizeof( uint ) );
+            Header = PacketHeader.Create( MessageBrokerServerEndpoint.UnbindRequest, sizeof( uint ) );
         }
 
         [Pure]
@@ -432,12 +430,12 @@ internal static class Protocol
         }
     }
 
-    internal readonly struct ChannelUnlinkedResponse
+    internal readonly struct UnboundResponse
     {
         internal const int Length = sizeof( byte );
         internal readonly byte Flags;
 
-        private ChannelUnlinkedResponse(byte flags)
+        private UnboundResponse(byte flags)
         {
             Flags = flags;
         }
@@ -452,26 +450,26 @@ internal static class Protocol
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal static ChannelUnlinkedResponse Parse(ReadOnlyMemory<byte> source)
+        internal static UnboundResponse Parse(ReadOnlyMemory<byte> source)
         {
             Assume.Equals( source.Length, Length );
             var reader = new BinaryContractReader( source.Span );
             var flags = reader.ReadInt8();
-            return new ChannelUnlinkedResponse( flags );
+            return new UnboundResponse( flags );
         }
     }
 
-    internal readonly struct UnlinkChannelFailureResponse
+    internal readonly struct UnbindFailureResponse
     {
         internal const int Length = sizeof( byte );
         internal readonly byte Flags;
 
-        private UnlinkChannelFailureResponse(byte flags)
+        private UnbindFailureResponse(byte flags)
         {
             Flags = flags;
         }
 
-        internal bool ClientNotLinked => (Flags & 1) != 0;
+        internal bool NotBound => (Flags & 1) != 0;
 
         [Pure]
         public override string ToString()
@@ -481,19 +479,19 @@ internal static class Protocol
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal static UnlinkChannelFailureResponse Parse(ReadOnlyMemory<byte> source)
+        internal static UnbindFailureResponse Parse(ReadOnlyMemory<byte> source)
         {
             Assume.Equals( source.Length, Length );
             var reader = new BinaryContractReader( source.Span );
             var flags = reader.ReadInt8();
-            return new UnlinkChannelFailureResponse( flags );
+            return new UnbindFailureResponse( flags );
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal Chain<string> StringifyErrors(MessageBrokerLinkedChannel channel)
+        internal Chain<string> StringifyErrors(MessageBrokerPublisher channel)
         {
-            return ClientNotLinked ? Chain.Create( Resources.ClientIsNotLinkedToChannel( channel.Id, channel.Name ) ) : Chain<string>.Empty;
+            return NotBound ? Chain.Create( Resources.NotBound( channel.ChannelId, channel.ChannelName ) ) : Chain<string>.Empty;
         }
     }
 
@@ -557,8 +555,8 @@ internal static class Protocol
             Assume.Equals( source.Length, Length );
             var reader = new BinaryContractReader( source.Span );
             var flags = reader.MoveReadInt8();
-            var id = unchecked( ( int )reader.ReadInt32() );
-            return new SubscribedResponse( flags, reverseEndianness ? BinaryPrimitives.ReverseEndianness( id ) : id );
+            var channelId = unchecked( ( int )reader.ReadInt32() );
+            return new SubscribedResponse( flags, reverseEndianness ? BinaryPrimitives.ReverseEndianness( channelId ) : channelId );
         }
 
         [Pure]
@@ -580,8 +578,8 @@ internal static class Protocol
         }
 
         internal bool ChannelDoesNotExist => (Flags & 1) != 0;
-        internal bool ClientAlreadySubscribedToChannel => (Flags & 2) != 0;
-        internal bool SubscribingCancelled => (Flags & 4) != 0;
+        internal bool AlreadySubscribed => (Flags & 2) != 0;
+        internal bool Cancelled => (Flags & 4) != 0;
 
         [Pure]
         public override string ToString()
@@ -608,11 +606,11 @@ internal static class Protocol
             if ( ChannelDoesNotExist )
                 result = result.Extend( Resources.ChannelDoesNotExist( channelName ) );
 
-            if ( ClientAlreadySubscribedToChannel )
-                result = result.Extend( Resources.ClientAlreadySubscribedToChannel( channelName ) );
+            if ( AlreadySubscribed )
+                result = result.Extend( Resources.AlreadySubscribed( channelName ) );
 
-            if ( SubscribingCancelled )
-                result = result.Extend( Resources.ClientSubscribingCancelled( channelName ) );
+            if ( Cancelled )
+                result = result.Extend( Resources.SubscribeCancelled( channelName ) );
 
             return result;
         }
@@ -695,7 +693,7 @@ internal static class Protocol
             Flags = flags;
         }
 
-        internal bool ClientNotSubscribed => (Flags & 1) != 0;
+        internal bool NotSubscribed => (Flags & 1) != 0;
 
         [Pure]
         public override string ToString()
@@ -717,8 +715,8 @@ internal static class Protocol
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal Chain<string> StringifyErrors(MessageBrokerListener listener)
         {
-            return ClientNotSubscribed
-                ? Chain.Create( Resources.ClientIsNotSubscribedToChannel( listener.ChannelId, listener.ChannelName ) )
+            return NotSubscribed
+                ? Chain.Create( Resources.NotSubscribed( listener.ChannelId, listener.ChannelName ) )
                 : Chain<string>.Empty;
         }
     }
