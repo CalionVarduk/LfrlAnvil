@@ -37,6 +37,9 @@ Task("UpdateLicenseHeaders")
 {
     foreach (var file in foundFiles)
     {
+        if (!System.IO.File.Exists(file))
+            continue;
+
         var encoding = GetFileEncoding(file);
         var lines = System.IO.File.ReadAllLines(file);
         if (lines.Length == 0)
