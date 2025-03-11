@@ -26,12 +26,18 @@ public class MessageBrokerChannelBindingException : InvalidOperationException
     /// </summary>
     /// <param name="client"><see cref="MessageBrokerServer"/> instance that encountered this error.</param>
     /// <param name="channel">Optional <see cref="MessageBrokerChannel"/> instance that encountered this error.</param>
+    /// <param name="binding">Optional <see cref="MessageBrokerChannelBinding"/> instance that encountered this error.</param>
     /// <param name="message">Underlying error message.</param>
-    public MessageBrokerChannelBindingException(MessageBrokerRemoteClient client, MessageBrokerChannel? channel, string message)
+    public MessageBrokerChannelBindingException(
+        MessageBrokerRemoteClient client,
+        MessageBrokerChannel? channel,
+        MessageBrokerChannelBinding? binding,
+        string message)
         : base( message )
     {
         Client = client;
         Channel = channel;
+        Binding = binding;
     }
 
     /// <summary>
@@ -43,4 +49,9 @@ public class MessageBrokerChannelBindingException : InvalidOperationException
     /// Optional <see cref="MessageBrokerChannel"/> instance that encountered this error.
     /// </summary>
     public MessageBrokerChannel? Channel { get; }
+
+    /// <summary>
+    /// Optional <see cref="MessageBrokerChannelBinding"/> instance that encountered this error.
+    /// </summary>
+    public MessageBrokerChannelBinding? Binding { get; }
 }

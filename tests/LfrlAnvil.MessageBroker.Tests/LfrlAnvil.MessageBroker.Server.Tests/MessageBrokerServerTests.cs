@@ -25,6 +25,7 @@ public class MessageBrokerServerTests : TestsBase
                     Bounds.Create( Duration.FromMilliseconds( 1 ), Duration.FromMilliseconds( int.MaxValue ) ) ),
                 sut.AcceptablePingInterval.TestEquals( Bounds.Create( Duration.FromMilliseconds( 1 ), Duration.FromHours( 24 ) ) ),
                 sut.State.TestEquals( MessageBrokerServerState.Created ),
+                sut.ToString().TestEquals( $"{localEndPoint} server (Created)" ),
                 sut.Clients.Count.TestEquals( 0 ),
                 sut.Clients.GetAll().TestEmpty(),
                 sut.Channels.Count.TestEquals( 0 ),
@@ -98,6 +99,7 @@ public class MessageBrokerServerTests : TestsBase
                 server.LocalEndPoint.Address.TestEquals( IPAddress.Loopback ),
                 server.LocalEndPoint.Port.TestNotEquals( 0 ),
                 server.State.TestEquals( MessageBrokerServerState.Running ),
+                server.ToString().TestEquals( $"{localEndPoint} server (Running)" ),
                 events.TestSequence(
                 [
                     $"[Starting] At {originalEndPoint} (HandshakeTimeout = 15 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",

@@ -72,7 +72,7 @@ public sealed class MessageBrokerPublisher
     [Pure]
     public override string ToString()
     {
-        return $"[{ChannelId}] '{ChannelName}' publisher ({State})";
+        return $"[{Client.Id}] '{Client.Name}' => [{ChannelId}] '{ChannelName}' publisher ({State})";
     }
 
     /// <summary>

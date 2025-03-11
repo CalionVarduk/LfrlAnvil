@@ -55,15 +55,15 @@ public class MessageBrokerSubscriptionTests : TestsBase
                         c.Id.TestEquals( 1 ),
                         c.Name.TestEquals( "c" ),
                         c.State.TestEquals( MessageBrokerChannelState.Running ),
-                        c.LinkedClients.Count.TestEquals( 0 ),
-                        c.LinkedClients.GetAll().TestEmpty(),
+                        c.Bindings.Count.TestEquals( 0 ),
+                        c.Bindings.GetAll().TestEmpty(),
                         c.Subscriptions.Count.TestEquals( 1 ),
                         c.Subscriptions.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( subscription ) ] ) ) ),
                 remoteClient.TestNotNull(
                     c => Assertion.All(
                         "client",
-                        c.LinkedChannels.Count.TestEquals( 0 ),
-                        c.LinkedChannels.GetAll().TestEmpty(),
+                        c.Bindings.Count.TestEquals( 0 ),
+                        c.Bindings.GetAll().TestEmpty(),
                         c.Subscriptions.Count.TestEquals( 1 ),
                         c.Subscriptions.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( subscription ) ] ),
                         c.Subscriptions.TryGetByChannelId( 1 ).TestRefEquals( subscription ) ) ),
@@ -72,7 +72,8 @@ public class MessageBrokerSubscriptionTests : TestsBase
                         "subscription",
                         s.Channel.TestRefEquals( channel ),
                         s.Client.TestRefEquals( remoteClient ),
-                        s.State.TestEquals( MessageBrokerSubscriptionState.Running ) ) ),
+                        s.State.TestEquals( MessageBrokerSubscriptionState.Running ),
+                        s.ToString().TestEquals( "[1] 'test' => [1] 'c' subscription (Running)" ) ) ),
                 server.Channels.Count.TestEquals( 1 ),
                 server.Channels.GetAll().TestSequence( [ (ch, _) => ch.TestRefEquals( channel ) ] ),
                 server.Channels.TryGetById( 1 ).TestRefEquals( channel ),
@@ -164,12 +165,7 @@ public class MessageBrokerSubscriptionTests : TestsBase
                         "[1::'test'::2] [SendingMessage] [PacketLength: 10] SubscribedResponse",
                         "[1::'test'::2] [MessageSent] [PacketLength: 10] SubscribedResponse"
                     ] ),
-                logs.GetAllChannel()
-                    .TestSequence(
-                    [
-                        "[1::'c'::1] [Created] by client [1::'test']",
-                        "[1::'c'::1] [Linked] to client [1::'test']"
-                    ] ),
+                logs.GetAllChannel().TestSequence( [ "[1::'c'::1] [Created] by client [1::'test']" ] ),
                 logs.GetAllSubscription().TestSequence( [ "[1::'test'=>1::'c'::2] [Created]" ] ) )
             .Go();
     }
@@ -703,6 +699,7 @@ public class MessageBrokerSubscriptionTests : TestsBase
         var remoteClient = server.Clients.TryGetById( 1 );
         var channel = server.Channels.TryGetById( 1 );
         var subscription = channel?.Subscriptions.TryGetByClientId( 1 );
+        var binding = channel?.Bindings.TryGetByClientId( 1 );
         if ( remoteClient is not null )
             await remoteClient.DisconnectAsync();
 
@@ -711,25 +708,24 @@ public class MessageBrokerSubscriptionTests : TestsBase
                 remoteClient.TestNotNull(
                     c => Assertion.All(
                         "client",
-                        c.LinkedChannels.Count.TestEquals( 0 ),
-                        c.LinkedChannels.GetAll().TestEmpty(),
+                        c.Bindings.Count.TestEquals( 0 ),
+                        c.Bindings.GetAll().TestEmpty(),
                         c.Subscriptions.Count.TestEquals( 0 ),
                         c.Subscriptions.GetAll().TestEmpty() ) ),
                 channel.TestNotNull(
                     c => Assertion.All(
                         "channel",
                         c.State.TestEquals( MessageBrokerChannelState.Disposed ),
-                        c.LinkedClients.Count.TestEquals( 0 ),
-                        c.LinkedClients.GetAll().TestEmpty(),
+                        c.Bindings.Count.TestEquals( 0 ),
+                        c.Bindings.GetAll().TestEmpty(),
                         c.Subscriptions.Count.TestEquals( 0 ),
                         c.Subscriptions.GetAll().TestEmpty() ) ),
                 subscription.TestNotNull( s => s.State.TestEquals( MessageBrokerSubscriptionState.Disposed ) ),
+                binding.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelBindingState.Disposed ) ),
                 logs.GetAllChannel()
                     .TestSequence(
                     [
                         "[1::'c'::1] [Created] by client [1::'test']",
-                        "[1::'c'::1] [Linked] to client [1::'test']",
-                        "[1::'c'::<ROOT>] [Unlinked] from client [1::'test']",
                         "[1::'c'::<ROOT>] [Disposing]",
                         "[1::'c'::<ROOT>] [Disposed]"
                     ] ),
@@ -778,6 +774,7 @@ public class MessageBrokerSubscriptionTests : TestsBase
         var remoteClient1 = server.Clients.TryGetById( 1 );
         var remoteClient2 = server.Clients.TryGetById( 2 );
         var channel = server.Channels.TryGetById( 1 );
+        var binding = channel?.Bindings.TryGetByClientId( 1 );
         var subscription = channel?.Subscriptions.TryGetByClientId( 2 );
         if ( remoteClient2 is not null )
             await remoteClient2.DisconnectAsync();
@@ -787,8 +784,8 @@ public class MessageBrokerSubscriptionTests : TestsBase
                 remoteClient1.TestNotNull(
                     c => Assertion.All(
                         "client1",
-                        c.LinkedChannels.Count.TestEquals( 1 ),
-                        c.LinkedChannels.GetAll().TestSequence( [ (ch, _) => ch.TestRefEquals( channel ) ] ) ) ),
+                        c.Bindings.Count.TestEquals( 1 ),
+                        c.Bindings.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding ) ] ) ) ),
                 remoteClient2.TestNotNull(
                     c => Assertion.All(
                         "client2",
@@ -798,17 +795,12 @@ public class MessageBrokerSubscriptionTests : TestsBase
                     c => Assertion.All(
                         "channel",
                         c.State.TestEquals( MessageBrokerChannelState.Running ),
-                        c.LinkedClients.Count.TestEquals( 1 ),
-                        c.LinkedClients.GetAll().TestSequence( [ (cl, _) => cl.TestRefEquals( remoteClient1 ) ] ),
+                        c.Bindings.Count.TestEquals( 1 ),
+                        c.Bindings.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding ) ] ),
                         c.Subscriptions.Count.TestEquals( 0 ),
                         c.Subscriptions.GetAll().TestEmpty() ) ),
                 subscription.TestNotNull( s => s.State.TestEquals( MessageBrokerSubscriptionState.Disposed ) ),
-                logs.GetAllChannel()
-                    .TestSequence(
-                    [
-                        "[1::'c'::1] [Created] by client [1::'test']",
-                        "[1::'c'::1] [Linked] to client [1::'test']"
-                    ] ),
+                logs.GetAllChannel().TestSequence( [ "[1::'c'::1] [Created] by client [1::'test']" ] ),
                 logs.GetAllSubscription()
                     .TestSequence(
                     [
@@ -854,16 +846,16 @@ public class MessageBrokerSubscriptionTests : TestsBase
                 remoteClient.TestNotNull(
                     c => Assertion.All(
                         "client",
-                        c.LinkedChannels.Count.TestEquals( 0 ),
-                        c.LinkedChannels.GetAll().TestEmpty(),
+                        c.Bindings.Count.TestEquals( 0 ),
+                        c.Bindings.GetAll().TestEmpty(),
                         c.Subscriptions.Count.TestEquals( 0 ),
                         c.Subscriptions.GetAll().TestEmpty() ) ),
                 channel.TestNotNull(
                     c => Assertion.All(
                         "channel",
                         c.State.TestEquals( MessageBrokerChannelState.Disposed ),
-                        c.LinkedClients.Count.TestEquals( 0 ),
-                        c.LinkedClients.GetAll().TestEmpty(),
+                        c.Bindings.Count.TestEquals( 0 ),
+                        c.Bindings.GetAll().TestEmpty(),
                         c.Subscriptions.Count.TestEquals( 0 ),
                         c.Subscriptions.GetAll().TestEmpty() ) ),
                 subscription.TestNotNull( s => s.State.TestEquals( MessageBrokerSubscriptionState.Disposed ) ),
@@ -1195,6 +1187,7 @@ public class MessageBrokerSubscriptionTests : TestsBase
 
         var remoteClient = server.Clients.TryGetById( 1 );
         var channel = server.Channels.TryGetByName( "c" );
+        var binding = channel?.Bindings.TryGetByClientId( 1 );
         var subscription = channel?.Subscriptions.TryGetByClientId( 1 );
         await client.GetTask(
             c =>
@@ -1210,18 +1203,19 @@ public class MessageBrokerSubscriptionTests : TestsBase
                     c => Assertion.All(
                         "channel",
                         c.State.TestEquals( MessageBrokerChannelState.Running ),
-                        c.LinkedClients.Count.TestEquals( 1 ),
-                        c.LinkedClients.GetAll().TestSequence( [ (cl, _) => cl.TestRefEquals( remoteClient ) ] ),
+                        c.Bindings.Count.TestEquals( 1 ),
+                        c.Bindings.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding ) ] ),
                         c.Subscriptions.Count.TestEquals( 0 ),
                         c.Subscriptions.GetAll().TestEmpty() ) ),
                 remoteClient.TestNotNull(
                     c => Assertion.All(
                         "client",
-                        c.LinkedChannels.Count.TestEquals( 1 ),
-                        c.LinkedChannels.GetAll().TestSequence( [ (ch, _) => ch.TestRefEquals( channel ) ] ),
+                        c.Bindings.Count.TestEquals( 1 ),
+                        c.Bindings.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding ) ] ),
                         c.Subscriptions.Count.TestEquals( 0 ),
                         c.Subscriptions.GetAll().TestEmpty() ) ),
                 subscription.TestNotNull( s => s.State.TestEquals( MessageBrokerSubscriptionState.Disposed ) ),
+                binding.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelBindingState.Running ) ),
                 server.Channels.Count.TestEquals( 1 ),
                 logs.GetAllClient()
                     .TestContainsSequence(
@@ -1232,12 +1226,7 @@ public class MessageBrokerSubscriptionTests : TestsBase
                         "[1::'test'::3] [SendingMessage] [PacketLength: 6] UnsubscribedResponse",
                         "[1::'test'::3] [MessageSent] [PacketLength: 6] UnsubscribedResponse"
                     ] ),
-                logs.GetAllChannel()
-                    .TestSequence(
-                    [
-                        "[1::'c'::1] [Created] by client [1::'test']",
-                        "[1::'c'::1] [Linked] to client [1::'test']"
-                    ] ),
+                logs.GetAllChannel().TestSequence( [ "[1::'c'::1] [Created] by client [1::'test']" ] ),
                 logs.GetAllSubscription()
                     .TestSequence(
                     [

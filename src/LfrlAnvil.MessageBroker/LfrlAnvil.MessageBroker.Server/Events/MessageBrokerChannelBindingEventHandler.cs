@@ -1,11 +1,11 @@
 ﻿// Copyright 2025 Łukasz Furlepa
-//
+// 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-//
+// 
 //     http://www.apache.org/licenses/LICENSE-2.0
-//
+// 
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,27 +15,7 @@
 namespace LfrlAnvil.MessageBroker.Server.Events;
 
 /// <summary>
-/// Defines available <see cref="MessageBrokerChannelEvent"/> types.
+/// Represents a callback to <see cref="MessageBrokerChannelBindingEvent"/> instances emitted by <see cref="MessageBrokerChannelBinding"/>.
+/// <param name="e">Emitted event.</param>
 /// </summary>
-public enum MessageBrokerChannelEventType : byte
-{
-    /// <summary>
-    /// Specifies that the channel has encountered an unexpected error.
-    /// </summary>
-    Unexpected,
-
-    /// <summary>
-    /// Specifies that the channel instance has been created.
-    /// </summary>
-    Created,
-
-    /// <summary>
-    /// Specifies that the channel is about to be disposed.
-    /// </summary>
-    Disposing,
-
-    /// <summary>
-    /// Specifies that the channel has been disposed.
-    /// </summary>
-    Disposed
-}
+public delegate void MessageBrokerChannelBindingEventHandler(MessageBrokerChannelBindingEvent e);

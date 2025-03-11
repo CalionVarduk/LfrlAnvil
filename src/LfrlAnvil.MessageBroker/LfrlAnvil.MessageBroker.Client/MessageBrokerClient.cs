@@ -256,7 +256,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     [Pure]
     public override string ToString()
     {
-        return $"[{Id}] '{Name}' ({State})";
+        return $"[{Id}] '{Name}' client ({State})";
     }
 
     /// <summary>

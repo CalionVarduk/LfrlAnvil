@@ -33,7 +33,7 @@ public partial class MessageBrokerClientTests : TestsBase
                 sut.State.TestEquals( MessageBrokerClientState.Created ),
                 sut.Publishers.Count.TestEquals( 0 ),
                 sut.Publishers.GetAll().TestEmpty(),
-                sut.ToString().TestEquals( "[0] 'test' (Created)" ) )
+                sut.ToString().TestEquals( "[0] 'test' client (Created)" ) )
             .Go();
     }
 
@@ -140,6 +140,7 @@ public partial class MessageBrokerClientTests : TestsBase
                 client.IsServerLittleEndian.TestTrue(),
                 client.MessageTimeout.TestEquals( Duration.FromSeconds( 2 ) ),
                 client.PingInterval.TestEquals( Duration.FromSeconds( 10 ) ),
+                client.ToString().TestEquals( "[1] 'test' client (Running)" ),
                 AssertServerData(
                     serverData,
                     (handshakeRequest.Length, MessageBrokerServerEndpoint.HandshakeRequest),

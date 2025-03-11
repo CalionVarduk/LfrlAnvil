@@ -39,6 +39,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     internal ChannelCollection ChannelCollection;
     internal readonly Func<MessageBrokerRemoteClient, MessageBrokerRemoteClientEventHandler?>? RemoteClientEventHandlerFactory;
     internal readonly Func<MessageBrokerChannel, MessageBrokerChannelEventHandler?>? ChannelEventHandlerFactory;
+    internal readonly Func<MessageBrokerChannelBinding, MessageBrokerChannelBindingEventHandler?>? ChannelBindingEventHandlerFactory;
     internal readonly Func<MessageBrokerSubscription, MessageBrokerSubscriptionEventHandler?>? SubscriptionEventHandlerFactory;
     internal readonly MessageBrokerRemoteClientStreamDecorator? StreamDecorator;
     internal readonly Func<ITimestampProvider> TimestampsFactory;
@@ -68,6 +69,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         _eventHandler = options.EventHandler;
         RemoteClientEventHandlerFactory = options.ClientEventHandlerFactory;
         ChannelEventHandlerFactory = options.ChannelEventHandlerFactory;
+        ChannelBindingEventHandlerFactory = options.ChannelBindingEventHandlerFactory;
         SubscriptionEventHandlerFactory = options.SubscriptionEventHandlerFactory;
         StreamDecorator = options.StreamDecorator;
         _state = MessageBrokerServerState.Created;
@@ -149,8 +151,8 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         Task? clientListenerTask;
         using ( AcquireLock() )
         {
-            channels = ChannelCollection.Dispose();
-            clients = RemoteClientCollection.Dispose();
+            channels = ChannelCollection.DisposeUnsafe();
+            clients = RemoteClientCollection.DisposeUnsafe();
             clientListenerTask = ClientListener.DiscardUnderlyingTask();
             ClientListener.Dispose();
 
@@ -180,6 +182,16 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
             _state = MessageBrokerServerState.Disposed;
 
         Emit( MessageBrokerServerEvent.Disposed( this ) );
+    }
+
+    /// <summary>
+    /// Returns a string representation of this <see cref="MessageBrokerServer"/> instance.
+    /// </summary>
+    /// <returns>String representation.</returns>
+    [Pure]
+    public override string ToString()
+    {
+        return $"{LocalEndPoint} server ({State})";
     }
 
     /// <summary>
@@ -263,18 +275,11 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         return Result.Valid;
     }
 
+    [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private async ValueTask DisposeAndThrowIfCancellationRequested(CancellationToken cancellationToken)
+    internal MessageBrokerServerDisposedException DisposedException()
     {
-        try
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-        }
-        catch
-        {
-            await DisposeAsync().ConfigureAwait( false );
-            throw;
-        }
+        return new MessageBrokerServerDisposedException( this );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -299,18 +304,25 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         }
     }
 
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private async ValueTask DisposeAndThrowIfCancellationRequested(CancellationToken cancellationToken)
+    {
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+        catch
+        {
+            await DisposeAsync().ConfigureAwait( false );
+            throw;
+        }
+    }
+
     [StackTraceHidden]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void AssertState(MessageBrokerServerState expected)
     {
         if ( _state != expected )
             ExceptionThrower.Throw( new MessageBrokerServerStateException( this, _state, expected ) );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal MessageBrokerServerDisposedException DisposedException()
-    {
-        return new MessageBrokerServerDisposedException( this );
     }
 }

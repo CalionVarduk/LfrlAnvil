@@ -78,14 +78,36 @@ internal struct ChannelCollection
             return server.ChannelCollection._byName.TryGetValue( name, out var client ) ? client : null;
     }
 
-    internal readonly record struct RegistrationResult(MessageBrokerChannel Channel, bool Exists);
+    internal static Result Remove(MessageBrokerChannel channel)
+    {
+        try
+        {
+            using ( channel.Server.AcquireLock() )
+            {
+                if ( ! channel.Server.ShouldCancel )
+                {
+                    channel.Server.ChannelCollection._byId.Remove( channel.Id - 1 );
+                    channel.Server.ChannelCollection._byName.Remove( channel.Name );
+                }
+            }
+        }
+        catch ( Exception exc )
+        {
+            return exc;
+        }
+
+        return Result.Valid;
+    }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static RegistrationResult Register(MessageBrokerServer server, string name)
+    internal static MessageBrokerChannel RegisterUnsafe(MessageBrokerServer server, string name, out bool created)
     {
         ref var channel = ref CollectionsMarshal.GetValueRefOrAddDefault( server.ChannelCollection._byName, name, out var exists )!;
-        if ( ! exists )
+        if ( exists )
+            created = false;
+        else
         {
+            created = true;
             ref var byId = ref server.ChannelCollection._byId.AddDefault( out var index );
             try
             {
@@ -100,11 +122,15 @@ internal struct ChannelCollection
             }
         }
 
-        return new RegistrationResult( channel, exists );
+        return channel;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerChannel? TryRegister(MessageBrokerServer server, string name, bool createIfNotExists, out bool created)
+    internal static MessageBrokerChannel? TryRegisterUnsafe(
+        MessageBrokerServer server,
+        string name,
+        bool createIfNotExists,
+        out bool created)
     {
         ref var channel = ref CollectionsMarshal.GetValueRefOrAddDefault( server.ChannelCollection._byName, name, out var exists );
         if ( exists )
@@ -136,28 +162,7 @@ internal struct ChannelCollection
         return null;
     }
 
-    internal static Result Remove(MessageBrokerChannel channel)
-    {
-        try
-        {
-            using ( channel.Server.AcquireLock() )
-            {
-                if ( ! channel.Server.ShouldCancel )
-                {
-                    channel.Server.ChannelCollection._byId.Remove( channel.Id - 1 );
-                    channel.Server.ChannelCollection._byName.Remove( channel.Name );
-                }
-            }
-        }
-        catch ( Exception exc )
-        {
-            return exc;
-        }
-
-        return Result.Valid;
-    }
-
-    internal MessageBrokerChannel[] Dispose()
+    internal MessageBrokerChannel[] DisposeUnsafe()
     {
         if ( _byId.IsEmpty )
             return Array.Empty<MessageBrokerChannel>();

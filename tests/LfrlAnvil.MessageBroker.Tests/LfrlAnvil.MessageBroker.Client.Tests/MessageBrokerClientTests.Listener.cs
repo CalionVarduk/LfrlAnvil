@@ -56,8 +56,8 @@ public partial class MessageBrokerClientTests
                             r.ToString()
                                 .TestEquals(
                                     channelCreated
-                                        ? $"[1] '{channelName}' listener (Subscribed) (channel created)"
-                                        : $"[1] '{channelName}' listener (Subscribed)" ) ) ),
+                                        ? $"[1] 'test' => [1] '{channelName}' listener (Subscribed) (channel created)"
+                                        : $"[1] 'test' => [1] '{channelName}' listener (Subscribed)" ) ) ),
                     client.Listeners.Count.TestEquals( 1 ),
                     client.Listeners.GetAll().TestSequence( [ (c, _) => c.TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ) ] ),
                     client.Listeners.TryGetByChannelName( channelName ).TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ),
@@ -69,7 +69,7 @@ public partial class MessageBrokerClientTests
                                 listener.ChannelId.TestEquals( 1 ),
                                 listener.ChannelName.TestEquals( channelName ),
                                 listener.State.TestEquals( MessageBrokerListenerState.Subscribed ),
-                                listener.ToString().TestEquals( $"[1] '{channelName}' listener (Subscribed)" ) ) ),
+                                listener.ToString().TestEquals( $"[1] 'test' => [1] '{channelName}' listener (Subscribed)" ) ) ),
                     logs.GetAll()
                         .TestContainsSequence(
                         [
@@ -125,7 +125,7 @@ public partial class MessageBrokerClientTests
                             r.AlreadySubscribed.TestTrue(),
                             r.ChannelCreated.TestFalse(),
                             r.Listener.TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ),
-                            r.ToString().TestEquals( $"[1] '{channelName}' listener (Subscribed) (already subscribed)" ) ) ),
+                            r.ToString().TestEquals( $"[1] 'test' => [1] '{channelName}' listener (Subscribed) (already subscribed)" ) ) ),
                     client.Listeners.Count.TestEquals( 1 ) )
                 .Go();
         }

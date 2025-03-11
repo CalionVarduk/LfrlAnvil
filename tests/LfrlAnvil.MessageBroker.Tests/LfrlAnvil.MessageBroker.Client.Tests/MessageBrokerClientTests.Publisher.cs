@@ -56,8 +56,8 @@ public partial class MessageBrokerClientTests
                             r.ToString()
                                 .TestEquals(
                                     channelCreated
-                                        ? $"[1] '{channelName}' publisher (Bound) (channel created)"
-                                        : $"[1] '{channelName}' publisher (Bound)" ) ) ),
+                                        ? $"[1] 'test' => [1] '{channelName}' publisher (Bound) (channel created)"
+                                        : $"[1] 'test' => [1] '{channelName}' publisher (Bound)" ) ) ),
                     client.Publishers.Count.TestEquals( 1 ),
                     client.Publishers.GetAll().TestSequence( [ (c, _) => c.TestRefEquals( client.Publishers.TryGetByChannelId( 1 ) ) ] ),
                     client.Publishers.TryGetByChannelName( channelName ).TestRefEquals( client.Publishers.TryGetByChannelId( 1 ) ),
@@ -69,7 +69,7 @@ public partial class MessageBrokerClientTests
                                 publisher.ChannelId.TestEquals( 1 ),
                                 publisher.ChannelName.TestEquals( channelName ),
                                 publisher.State.TestEquals( MessageBrokerPublisherState.Bound ),
-                                publisher.ToString().TestEquals( $"[1] '{channelName}' publisher (Bound)" ) ) ),
+                                publisher.ToString().TestEquals( $"[1] 'test' => [1] '{channelName}' publisher (Bound)" ) ) ),
                     logs.GetAll()
                         .TestContainsSequence(
                         [
@@ -125,7 +125,7 @@ public partial class MessageBrokerClientTests
                             r.AlreadyBound.TestTrue(),
                             r.ChannelCreated.TestFalse(),
                             r.Publisher.TestRefEquals( client.Publishers.TryGetByChannelId( 1 ) ),
-                            r.ToString().TestEquals( $"[1] '{channelName}' publisher (Bound) (already bound)" ) ) ),
+                            r.ToString().TestEquals( $"[1] 'test' => [1] '{channelName}' publisher (Bound) (already bound)" ) ) ),
                     client.Publishers.Count.TestEquals( 1 ) )
                 .Go();
         }

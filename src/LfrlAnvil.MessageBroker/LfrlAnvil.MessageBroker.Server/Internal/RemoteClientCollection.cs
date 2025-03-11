@@ -47,21 +47,6 @@ internal struct RemoteClientCollection
         return new RemoteClientCollection( options, minMemoryPoolSegmentLength );
     }
 
-    internal MessageBrokerRemoteClient[] Dispose()
-    {
-        _byName.Clear();
-        if ( _byId.Count == 0 )
-            return Array.Empty<MessageBrokerRemoteClient>();
-
-        var i = 0;
-        var result = new MessageBrokerRemoteClient[_byId.Count];
-        foreach ( var (_, client) in _byId )
-            result[i++] = client;
-
-        _byId.Clear();
-        return result;
-    }
-
     [Pure]
     internal static int GetCount(MessageBrokerServer server)
     {
@@ -196,5 +181,20 @@ internal struct RemoteClientCollection
         }
 
         return Result.Valid;
+    }
+
+    internal MessageBrokerRemoteClient[] DisposeUnsafe()
+    {
+        _byName.Clear();
+        if ( _byId.Count == 0 )
+            return Array.Empty<MessageBrokerRemoteClient>();
+
+        var i = 0;
+        var result = new MessageBrokerRemoteClient[_byId.Count];
+        foreach ( var (_, client) in _byId )
+            result[i++] = client;
+
+        _byId.Clear();
+        return result;
     }
 }

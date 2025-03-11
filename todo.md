@@ -2,8 +2,7 @@
 
 |       Project       |              Title               |                        Details                         |                    Requirements                    |
 |:-------------------:|:--------------------------------:|:------------------------------------------------------:|:--------------------------------------------------:|
-|   MessageBroker.*   |      Channels & Subscribers      |      [link](#messagebroker-channels--subscribers)      |                         -                          |
-|   MessageBroker.*   |             Messages             |            [link](#messagebroker-messages)             |    [link](#messagebroker-channels--subscribers)    |
+|   MessageBroker.*   |             Messages             |            [link](#messagebroker-messages)             |                                                    |
 |   MessageBroker.*   |   Max Packet Length & Batching   |   [link](#messagebroker-max-packet-length--batching)   |          [link](#messagebroker-messages)           |
 |   MessageBroker.*   |            Permanence            |           [link](#messagebroker-permanence)            | [link](#messagebroker-max-packet-length--batching) |
 |   MessageBroker.*   |      Request-Reply Channel       |      [link](#messagebroker-request-reply-channel)      |         [link](#messagebroker-permanence)          |
@@ -46,19 +45,6 @@ project idea:
 - write colored fore/back-ground (with temp IDisposable swapper)
 - write table
 - prompt, switch etc. for user interaction
-
-### MessageBroker: Channels & Subscribers
-
-- Add possibility to register a channel
-    - channels can be related to multiple clients, which will be treated as publishers
-    - channels have a name & server-side generated id
-- Add possibility to subscribe to a channel
-    - channels can have multiple subscribers
-    - subscriber key is a (channel-id, client-id) tuple
-    - creating subscriber allows to set a flag to create channel if it does not exist (disabled by default)
-- channels & subscribers can be queried by clients
-    - by name
-    - by id
 
 ### MessageBroker: Messages
 

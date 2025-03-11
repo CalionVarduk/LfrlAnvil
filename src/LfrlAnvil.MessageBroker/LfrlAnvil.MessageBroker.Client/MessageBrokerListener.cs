@@ -72,7 +72,7 @@ public sealed class MessageBrokerListener
     [Pure]
     public override string ToString()
     {
-        return $"[{ChannelId}] '{ChannelName}' listener ({State})";
+        return $"[{Client.Id}] '{Client.Name}' => [{ChannelId}] '{ChannelName}' listener ({State})";
     }
 
     /// <summary>
