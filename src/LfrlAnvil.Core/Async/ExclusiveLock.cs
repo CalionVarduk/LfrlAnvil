@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2025 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -39,6 +39,35 @@ public readonly struct ExclusiveLock : IDisposable
     public static ExclusiveLock Enter(object sync)
     {
         Monitor.Enter( sync );
+        return new ExclusiveLock( sync );
+    }
+
+    /// <summary>
+    /// Acquires an exclusive lock and creates a new <see cref="ExclusiveLock"/> by leveraging <see cref="SpinWait"/>, if necessary.
+    /// </summary>
+    /// <param name="sync">An object on which to acquire the monitor lock.</param>
+    /// <param name="spinWaitMultiplier">Optional <see cref="SpinWait"/> iteration count multiplier. Equal to <b>1</b> by default.</param>
+    /// <returns>A disposable <see cref="ExclusiveLock"/> instance.</returns>
+    /// <remarks>
+    /// Base <see cref="SpinWait"/> iteration count is equal to <b>1</b>,
+    /// when <see cref="Environment.ProcessorCount"/> is equal to <b>1</b>, otherwise it is equal to <b>35</b>.
+    /// </remarks>
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static ExclusiveLock SpinWaitEnter(object sync, int spinWaitMultiplier = 1)
+    {
+        var spinner = new SpinWait();
+        var iterations = (Environment.ProcessorCount == 1 ? 1 : 35) * spinWaitMultiplier;
+
+        while ( ! Monitor.TryEnter( sync ) )
+        {
+            spinner.SpinOnce( sleep1Threshold: -1 );
+            if ( spinner.Count >= iterations )
+            {
+                Monitor.Enter( sync );
+                break;
+            }
+        }
+
         return new ExclusiveLock( sync );
     }
 

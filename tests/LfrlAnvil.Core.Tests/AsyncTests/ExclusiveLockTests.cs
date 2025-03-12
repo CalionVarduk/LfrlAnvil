@@ -1,4 +1,5 @@
 ﻿using System.Threading;
+using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.Functional;
 
@@ -58,5 +59,36 @@ public class ExclusiveLockTests : TestsBase
                 hasLockAfterFirstDisposal.TestTrue(),
                 hasLockAfterSecondDisposal.TestFalse() )
             .Go();
+    }
+
+    [Fact]
+    public void SpinWaitEnter_ShouldAcquireLockOnTheParameter()
+    {
+        var sync = new object();
+        _ = ExclusiveLock.SpinWaitEnter( sync );
+
+        var hasLock = Monitor.IsEntered( sync );
+
+        hasLock.TestTrue().Go();
+    }
+
+    [Fact]
+    public async Task SpinWaitEnter_ShouldAcquireLockOnTheParameter_AfterCurrentLockOwnerReleasesIt()
+    {
+        var endSource = new SafeTaskCompletionSource();
+        var sync = new object();
+        var first = ExclusiveLock.Enter( sync );
+
+        _ = Task.Factory.StartNew(
+            () =>
+            {
+                var second = ExclusiveLock.SpinWaitEnter( sync );
+                second.Dispose();
+                endSource.Complete();
+            } );
+
+        Thread.Sleep( 15 );
+        first.Dispose();
+        await endSource.Task;
     }
 }
