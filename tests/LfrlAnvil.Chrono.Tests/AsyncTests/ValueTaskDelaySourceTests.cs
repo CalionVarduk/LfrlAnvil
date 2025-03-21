@@ -16,32 +16,10 @@ public class ValueTaskDelaySourceTests : TestsBase
         await using var sut = ValueTaskDelaySource.Start( timestamps );
         var delay = Duration.FromMilliseconds( 15 );
         var minTimestamp = timestamps.GetNow() + delay;
-        var task = sut.Schedule( delay );
 
-        var result = await task;
-
-        Assertion.All(
-                task.Owner.TestRefEquals( sut ),
-                timestamps.GetNow().TestGreaterThanOrEqualTo( minTimestamp ),
-                result.TestEquals( ValueTaskDelayResult.Completed ) )
-            .Go();
-    }
-
-    [Theory]
-    [InlineData( false )]
-    [InlineData( true )]
-    public async Task Schedule_ShouldReturnTaskWhichCompletesAccordingToScheduledDelay_WithConfigureAwait(bool continueOnCapturedContext)
-    {
-        var timestamps = new TimestampProvider();
-        await using var sut = ValueTaskDelaySource.Start( timestamps );
-        var delay = Duration.FromMilliseconds( 15 );
-        var minTimestamp = timestamps.GetNow() + delay;
-        var task = sut.Schedule( delay );
-
-        var result = await task.ConfigureAwait( continueOnCapturedContext );
+        var result = await sut.Schedule( delay );
 
         Assertion.All(
-                task.Owner.TestRefEquals( sut ),
                 timestamps.GetNow().TestGreaterThanOrEqualTo( minTimestamp ),
                 result.TestEquals( ValueTaskDelayResult.Completed ) )
             .Go();
@@ -50,7 +28,7 @@ public class ValueTaskDelaySourceTests : TestsBase
     [Fact]
     public async Task Schedule_ShouldReturnTaskWhichCompletesWithCancelledResult_WhenCancellationTokenIsImmediatelyCancelled()
     {
-        await using var sut = ValueTaskDelaySource.Start( new TimestampProvider() );
+        await using var sut = ValueTaskDelaySource.Start();
         var result = await sut.Schedule( Duration.FromSeconds( 1 ), new CancellationToken( canceled: true ) );
         result.TestEquals( ValueTaskDelayResult.Cancelled ).Go();
     }
@@ -58,7 +36,7 @@ public class ValueTaskDelaySourceTests : TestsBase
     [Fact]
     public async Task Schedule_ShouldReturnTaskWhichCompletesWithCancelledResult_WhenCancellationTokenIsCancelledBeforeDelayCompletion()
     {
-        await using var sut = ValueTaskDelaySource.Start( new TimestampProvider() );
+        await using var sut = ValueTaskDelaySource.Start();
         var cancellationSource = new CancellationTokenSource();
         cancellationSource.CancelAfter( TimeSpan.FromMilliseconds( 15 ) );
 
@@ -72,7 +50,7 @@ public class ValueTaskDelaySourceTests : TestsBase
         Schedule_ShouldReturnTaskWhichCompletesAccordingToScheduledDelay_WhenCancellationTokenIsCancelledAfterDelayCompletion()
     {
         var completion = new TaskCompletionSource();
-        await using var sut = ValueTaskDelaySource.Start( new TimestampProvider() );
+        await using var sut = ValueTaskDelaySource.Start();
         var cancellationSource = new CancellationTokenSource();
         cancellationSource.Token.Register( () => completion.SetResult() );
         cancellationSource.CancelAfter( TimeSpan.FromMilliseconds( 50 ) );
@@ -88,7 +66,7 @@ public class ValueTaskDelaySourceTests : TestsBase
     [InlineData( 0 )]
     public async Task Schedule_ShouldReturnTaskWhichCompletesImmediately_WhenDelayIsLessThanOrEqualToZero(int delayTicks)
     {
-        await using var sut = ValueTaskDelaySource.Start( new TimestampProvider() );
+        await using var sut = ValueTaskDelaySource.Start();
         var result = await sut.Schedule( Duration.FromTicks( delayTicks ) );
         result.TestEquals( ValueTaskDelayResult.Completed ).Go();
     }
@@ -100,7 +78,7 @@ public class ValueTaskDelaySourceTests : TestsBase
         Schedule_ShouldReturnTaskWhichCompletesWithCancelledResult_WhenDelayIsLessThanOrEqualToZeroAndCancellationTokenIsImmediatelyCancelled(
             int delayTicks)
     {
-        await using var sut = ValueTaskDelaySource.Start( new TimestampProvider() );
+        await using var sut = ValueTaskDelaySource.Start();
         var result = await sut.Schedule( Duration.FromTicks( delayTicks ), new CancellationToken( canceled: true ) );
         result.TestEquals( ValueTaskDelayResult.Cancelled ).Go();
     }
@@ -113,7 +91,7 @@ public class ValueTaskDelaySourceTests : TestsBase
             int delayTicks)
     {
         var completion = new TaskCompletionSource();
-        await using var sut = ValueTaskDelaySource.Start( new TimestampProvider() );
+        await using var sut = ValueTaskDelaySource.Start();
         var cancellationSource = new CancellationTokenSource();
         cancellationSource.Token.Register( () => completion.SetResult() );
         cancellationSource.CancelAfter( TimeSpan.FromMilliseconds( 15 ) );
@@ -128,7 +106,7 @@ public class ValueTaskDelaySourceTests : TestsBase
     public async Task Schedule_ShouldHandleMultipleDifferentDelaysCorrectly()
     {
         var completionOrder = new CompletionOrder();
-        await using var sut = ValueTaskDelaySource.Start( new TimestampProvider() );
+        await using var sut = ValueTaskDelaySource.Start();
 
         var delay1 = sut.Schedule( Duration.FromMilliseconds( 90 ) );
         var delay2 = sut.Schedule( Duration.FromMilliseconds( 30 ) );
@@ -155,7 +133,7 @@ public class ValueTaskDelaySourceTests : TestsBase
     public async Task Schedule_ShouldHandleMultipleDifferentDelaysCorrectly_WithCancellations()
     {
         var completionOrder = new CompletionOrder();
-        await using var sut = ValueTaskDelaySource.Start( new TimestampProvider() );
+        await using var sut = ValueTaskDelaySource.Start();
         var cancellationSource1 = new CancellationTokenSource();
         var cancellationSource2 = new CancellationTokenSource();
         cancellationSource1.CancelAfter( TimeSpan.FromMilliseconds( 30 ) );
@@ -198,7 +176,7 @@ public class ValueTaskDelaySourceTests : TestsBase
     [Fact]
     public async Task Schedule_ShouldReturnTaskWhichCompletesWithDisposedResult_WhenSourceIsDisposed()
     {
-        var sut = ValueTaskDelaySource.Start( new TimestampProvider() );
+        var sut = ValueTaskDelaySource.Start();
         await sut.DisposeAsync();
 
         var result = await sut.Schedule( Duration.Zero );
@@ -218,9 +196,9 @@ public class ValueTaskDelaySourceTests : TestsBase
     }
 
     [Fact]
-    public async Task Dispose_ShouldCompleteAllPendingDelaysWithDisposesResult()
+    public async Task Dispose_ShouldCompleteAllPendingDelaysWithDisposedResult()
     {
-        var sut = ValueTaskDelaySource.Start( new TimestampProvider() );
+        var sut = ValueTaskDelaySource.Start();
 
         var task1 = Task.Factory.StartNew( async () => await sut.Schedule( Duration.FromSeconds( 1 ) ) );
         var task2 = Task.Factory.StartNew( async () => await sut.Schedule( Duration.FromSeconds( 1 ) ) );
@@ -236,7 +214,7 @@ public class ValueTaskDelaySourceTests : TestsBase
     [Fact]
     public void Dispose_ShouldNotThrow_WhenAlreadyDisposes()
     {
-        var sut = ValueTaskDelaySource.Start( new TimestampProvider() );
+        var sut = ValueTaskDelaySource.Start();
         sut.Dispose();
 
         var action = Lambda.Of( () => sut.Dispose() );
@@ -249,16 +227,6 @@ public class ValueTaskDelaySourceTests : TestsBase
         public override Timestamp GetNow()
         {
             throw new Exception( "foo" );
-        }
-    }
-
-    private sealed class CompletionOrder
-    {
-        private int _current;
-
-        public int Next()
-        {
-            return Interlocked.Increment( ref _current );
         }
     }
 }

@@ -15,22 +15,27 @@
 namespace LfrlAnvil.Chrono.Async;
 
 /// <summary>
-/// Represents possible values returned by <see cref="ValueTaskDelaySource"/> tasks.
+/// Represents possible values returned by <see cref="AsyncManualResetEvent"/> tasks.
 /// </summary>
-public enum ValueTaskDelayResult : byte
+public enum AsyncManualResetEventResult : byte
 {
     /// <summary>
-    /// Specifies that the delay task's owner has been disposed.
+    /// Specifies that the manual reset event or its owner has been disposed.
     /// </summary>
     Disposed = 0,
 
     /// <summary>
-    /// Specifies that the delay task has completed successfully.
+    /// Specifies that the manual reset event task has completed due to timeout.
     /// </summary>
-    Completed = 1,
+    TimedOut = 1,
 
     /// <summary>
-    /// Specifies that the delay task has been cancelled.
+    /// Specifies that the manual reset event task has been cancelled due to the event being in the signaled state.
     /// </summary>
-    Cancelled = 2
+    Signaled = 2,
+
+    /// <summary>
+    /// Specifies that the manual reset event task creation has been cancelled due to the event already being awaited.
+    /// </summary>
+    AlreadyAwaited = 3
 }
