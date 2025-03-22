@@ -23,7 +23,6 @@ public partial class MessageBrokerClientTests
             var remoteEndPoint = server.Start();
 
             await using var client = new MessageBrokerClient(
-                new TimestampProvider(),
                 remoteEndPoint,
                 "test",
                 MessageBrokerClientOptions.Default
@@ -94,7 +93,6 @@ public partial class MessageBrokerClientTests
             var remoteEndPoint = server.Start();
 
             await using var client = new MessageBrokerClient(
-                new TimestampProvider(),
                 remoteEndPoint,
                 "test",
                 MessageBrokerClientOptions.Default
@@ -137,7 +135,6 @@ public partial class MessageBrokerClientTests
             var remoteEndPoint = server.Start();
 
             var client = new MessageBrokerClient(
-                new TimestampProvider(),
                 remoteEndPoint,
                 "test",
                 MessageBrokerClientOptions.Default
@@ -170,7 +167,7 @@ public partial class MessageBrokerClientTests
         [Fact]
         public void BindAsync_ShouldThrowArgumentOutOfRangeException_WhenNameIsEmpty()
         {
-            using var client = new MessageBrokerClient( new TimestampProvider(), new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
+            using var client = new MessageBrokerClient( new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
             var action = Lambda.Of( () => client.Publishers.BindAsync( string.Empty ) );
             action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
         }
@@ -179,7 +176,7 @@ public partial class MessageBrokerClientTests
         public void BindAsync_ShouldThrowArgumentOutOfRangeException_WhenNameIsTooLong()
         {
             var name = new string( 'x', 513 );
-            using var client = new MessageBrokerClient( new TimestampProvider(), new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
+            using var client = new MessageBrokerClient( new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
             var action = Lambda.Of( () => client.Publishers.BindAsync( name ) );
             action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
         }
@@ -187,7 +184,7 @@ public partial class MessageBrokerClientTests
         [Fact]
         public void BindAsync_ShouldThrowMessageBrokerClientStateException_WhenClientIsNotRunning()
         {
-            using var client = new MessageBrokerClient( new TimestampProvider(), new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
+            using var client = new MessageBrokerClient( new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
             var action = Lambda.Of( () => client.Publishers.BindAsync( "foo" ) );
             action.Test(
                     exc => exc.TestType()
@@ -202,7 +199,7 @@ public partial class MessageBrokerClientTests
         [Fact]
         public async Task BindAsync_ShouldThrowMessageBrokerClientDisposedException_WhenClientIsDisposed()
         {
-            var client = new MessageBrokerClient( new TimestampProvider(), new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
+            var client = new MessageBrokerClient( new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
             await client.DisposeAsync();
 
             Exception? exception = null;
@@ -226,7 +223,6 @@ public partial class MessageBrokerClientTests
             var remoteEndPoint = server.Start();
 
             await using var client = new MessageBrokerClient(
-                new TimestampProvider(),
                 remoteEndPoint,
                 "test",
                 MessageBrokerClientOptions.Default
@@ -267,7 +263,6 @@ public partial class MessageBrokerClientTests
             var remoteEndPoint = server.Start();
 
             await using var client = new MessageBrokerClient(
-                new TimestampProvider(),
                 remoteEndPoint,
                 "test",
                 MessageBrokerClientOptions.Default
@@ -300,7 +295,6 @@ public partial class MessageBrokerClientTests
             var remoteEndPoint = server.Start();
 
             await using var client = new MessageBrokerClient(
-                new TimestampProvider(),
                 remoteEndPoint,
                 "test",
                 MessageBrokerClientOptions.Default
@@ -352,7 +346,6 @@ public partial class MessageBrokerClientTests
             var remoteEndPoint = server.Start();
 
             await using var client = new MessageBrokerClient(
-                new TimestampProvider(),
                 remoteEndPoint,
                 "test",
                 MessageBrokerClientOptions.Default
@@ -404,7 +397,6 @@ public partial class MessageBrokerClientTests
             var remoteEndPoint = server.Start();
 
             await using var client = new MessageBrokerClient(
-                new TimestampProvider(),
                 remoteEndPoint,
                 "test",
                 MessageBrokerClientOptions.Default
@@ -457,7 +449,6 @@ public partial class MessageBrokerClientTests
             var remoteEndPoint = server.Start();
 
             await using var client = new MessageBrokerClient(
-                new TimestampProvider(),
                 remoteEndPoint,
                 "test",
                 MessageBrokerClientOptions.Default
@@ -509,7 +500,6 @@ public partial class MessageBrokerClientTests
             var remoteEndPoint = server.Start();
 
             await using var client = new MessageBrokerClient(
-                new TimestampProvider(),
                 remoteEndPoint,
                 "test",
                 MessageBrokerClientOptions.Default
@@ -562,7 +552,6 @@ public partial class MessageBrokerClientTests
             var remoteEndPoint = server.Start();
 
             await using var client = new MessageBrokerClient(
-                new TimestampProvider(),
                 remoteEndPoint,
                 "test",
                 MessageBrokerClientOptions.Default
@@ -627,7 +616,6 @@ public partial class MessageBrokerClientTests
             var remoteEndPoint = server.Start();
 
             await using var client = new MessageBrokerClient(
-                new TimestampProvider(),
                 remoteEndPoint,
                 "test",
                 MessageBrokerClientOptions.Default
@@ -669,7 +657,7 @@ public partial class MessageBrokerClientTests
         [Fact]
         public async Task UnbindAsync_ShouldThrowMessageBrokerClientDisposedException_WhenClientIsDisposed()
         {
-            var client = new MessageBrokerClient( new TimestampProvider(), new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
+            var client = new MessageBrokerClient( new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
             var publisher = new MessageBrokerPublisher( client, 1, "foo" );
             await client.DisposeAsync();
 
@@ -694,7 +682,6 @@ public partial class MessageBrokerClientTests
             var remoteEndPoint = server.Start();
 
             await using var client = new MessageBrokerClient(
-                new TimestampProvider(),
                 remoteEndPoint,
                 "test",
                 MessageBrokerClientOptions.Default
@@ -748,7 +735,6 @@ public partial class MessageBrokerClientTests
             var remoteEndPoint = server.Start();
 
             await using var client = new MessageBrokerClient(
-                new TimestampProvider(),
                 remoteEndPoint,
                 "test",
                 MessageBrokerClientOptions.Default
@@ -799,7 +785,6 @@ public partial class MessageBrokerClientTests
             var remoteEndPoint = server.Start();
 
             await using var client = new MessageBrokerClient(
-                new TimestampProvider(),
                 remoteEndPoint,
                 "test",
                 MessageBrokerClientOptions.Default
@@ -857,7 +842,6 @@ public partial class MessageBrokerClientTests
             var remoteEndPoint = server.Start();
 
             await using var client = new MessageBrokerClient(
-                new TimestampProvider(),
                 remoteEndPoint,
                 "test",
                 MessageBrokerClientOptions.Default
@@ -916,7 +900,6 @@ public partial class MessageBrokerClientTests
             var remoteEndPoint = server.Start();
 
             await using var client = new MessageBrokerClient(
-                new TimestampProvider(),
                 remoteEndPoint,
                 "test",
                 MessageBrokerClientOptions.Default
@@ -974,7 +957,6 @@ public partial class MessageBrokerClientTests
             var remoteEndPoint = server.Start();
 
             await using var client = new MessageBrokerClient(
-                new TimestampProvider(),
                 remoteEndPoint,
                 "test",
                 MessageBrokerClientOptions.Default

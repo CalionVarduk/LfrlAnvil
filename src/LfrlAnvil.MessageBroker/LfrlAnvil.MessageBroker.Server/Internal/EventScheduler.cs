@@ -18,68 +18,66 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.MessageBroker.Server.Events;
 
 namespace LfrlAnvil.MessageBroker.Server.Internal;
 
-internal struct SynchronousScheduler
+internal struct EventScheduler
 {
-    private readonly ManualResetEventSlim _reset;
+    private AsyncManualResetEvent _reset;
     private TimeoutEntry _writerCancellation;
     private TimeoutEntry _readerCancellation;
     private Timestamp _nextEventTimestamp;
     private Task? _task;
 
-    private SynchronousScheduler(ManualResetEventSlim reset)
+    private EventScheduler(TimeoutEntry cancellation)
     {
-        _reset = reset;
-        _writerCancellation = TimeoutEntry.Empty();
+        _reset = default;
+        _writerCancellation = cancellation;
         _readerCancellation = _writerCancellation;
         _nextEventTimestamp = _writerCancellation.Timestamp;
         _task = null;
     }
 
     [Pure]
-    internal static SynchronousScheduler Create()
+    internal static EventScheduler Create()
     {
-        return new SynchronousScheduler( new ManualResetEventSlim( false ) );
+        return new EventScheduler( TimeoutEntry.Empty() );
     }
 
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static Task StartUnderlyingTask(MessageBrokerRemoteClient client)
+    [MethodImpl( MethodImplOptions.NoInlining )]
+    internal static async Task StartUnderlyingTask(MessageBrokerRemoteClient client)
     {
-        return Task.Factory.StartNew(
-            static state =>
-            {
-                Assume.IsNotNull( state );
-                RunSynchronousScheduler( ReinterpretCast.To<MessageBrokerRemoteClient>( state ) );
-            },
-            client,
-            TaskCreationOptions.LongRunning );
-    }
-
-    internal Exception? BeginDispose()
-    {
-        Exception? exception = null;
+        bool dispose;
         try
         {
-            _reset.Set();
+            await RunCore( client ).ConfigureAwait( false );
+            using ( client.AcquireLock() )
+                dispose = ! client.ShouldCancel;
         }
         catch ( Exception exc )
         {
-            exception = exc;
+            client.Emit( MessageBrokerRemoteClientEvent.Unexpected( client, exc ) );
+            dispose = true;
         }
 
-        _writerCancellation = _writerCancellation.Cancel();
-        _readerCancellation = _readerCancellation.Cancel();
-        return exception;
+        if ( ! dispose )
+            return;
+
+        using ( client.AcquireLock() )
+            client.EventScheduler._task = null;
+
+        await client.DisconnectAsync().ConfigureAwait( false );
     }
 
-    internal Exception? EndDispose()
+    internal void Dispose()
     {
+        _reset.Dispose();
+        _writerCancellation = _writerCancellation.Cancel();
+        _readerCancellation = _readerCancellation.Cancel();
         _nextEventTimestamp = _writerCancellation.Timestamp;
-        return _reset.TryDispose().Exception;
     }
 
     internal void SetUnderlyingTask(Task task)
@@ -93,6 +91,12 @@ internal struct SynchronousScheduler
         var result = _task;
         _task = null;
         return result;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void InitializeResetEvent(ValueTaskDelaySource source)
+    {
+        _reset = source.GetResetEvent();
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -132,26 +136,8 @@ internal struct SynchronousScheduler
         return ScheduleReadTimeout( client, client.MaxReadTimeout );
     }
 
-    [MethodImpl( MethodImplOptions.NoInlining )]
-    private static void RunSynchronousScheduler(MessageBrokerRemoteClient client)
-    {
-        try
-        {
-            client.SynchronousScheduler.RunCore( client );
-        }
-        catch ( Exception exc )
-        {
-            client.Emit( MessageBrokerRemoteClientEvent.Unexpected( client, exc ) );
-
-            using ( client.AcquireLock() )
-                client.SynchronousScheduler._task = null;
-
-            client.DisconnectAsync().AsTask().Wait();
-        }
-    }
-
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void RunCore(MessageBrokerRemoteClient client)
+    private static async ValueTask RunCore(MessageBrokerRemoteClient client)
     {
         Duration delay;
         using ( client.AcquireLock() )
@@ -159,35 +145,30 @@ internal struct SynchronousScheduler
             if ( client.ShouldCancel )
                 return;
 
-            delay = UpdateNextEventTimestamp( client.GetTimestamp() );
+            delay = client.EventScheduler.UpdateNextEventTimestamp( client.GetTimestamp() );
         }
 
         while ( true )
         {
-            try
-            {
-                _reset.Wait( delay );
-            }
-            catch ( ObjectDisposedException )
-            {
+            var waitResult = await client.EventScheduler._reset.WaitAsync( delay ).ConfigureAwait( false );
+            if ( waitResult == AsyncManualResetEventResult.Disposed )
                 return;
-            }
 
             using ( client.AcquireLock() )
             {
                 if ( client.ShouldCancel )
                     return;
 
-                _reset.Reset();
+                client.EventScheduler._reset.Reset();
                 var now = client.GetTimestamp();
 
-                if ( _writerCancellation.IsOverdue( now ) )
-                    _writerCancellation = _writerCancellation.Cancel();
+                if ( client.EventScheduler._writerCancellation.IsOverdue( now ) )
+                    client.EventScheduler.InvokeWriterCancellation();
 
-                if ( _readerCancellation.IsOverdue( now ) )
-                    _readerCancellation = _readerCancellation.Cancel().Prepare( TimeoutEntry.MaxTimestamp );
+                if ( client.EventScheduler._readerCancellation.IsOverdue( now ) )
+                    client.EventScheduler.InvokeReaderCancellation();
 
-                delay = UpdateNextEventTimestamp( now );
+                delay = client.EventScheduler.UpdateNextEventTimestamp( now );
             }
         }
     }
@@ -215,5 +196,17 @@ internal struct SynchronousScheduler
             _reset.Set();
 
         return token;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private void InvokeWriterCancellation()
+    {
+        _writerCancellation = _writerCancellation.Cancel();
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private void InvokeReaderCancellation()
+    {
+        _readerCancellation = _readerCancellation.Cancel().Prepare( TimeoutEntry.MaxTimestamp );
     }
 }

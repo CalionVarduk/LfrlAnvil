@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.Diagnostics;
 using LfrlAnvil.MessageBroker.Server.Events;
 
@@ -18,6 +19,8 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 sut.HandshakeTimeout.TestNull(),
                 sut.AcceptableMessageTimeout.TestNull(),
                 sut.AcceptablePingInterval.TestNull(),
+                sut.TimestampsFactory.TestNull(),
+                sut.DelaySourceFactory.TestNull(),
                 sut.EventHandler.TestNull(),
                 sut.ClientEventHandlerFactory.TestNull(),
                 sut.ChannelEventHandlerFactory.TestNull(),
@@ -41,6 +44,8 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
+                result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
+                result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
@@ -64,6 +69,8 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
+                result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
+                result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
@@ -87,6 +94,8 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.HandshakeTimeout.TestEquals( value ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
+                result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
+                result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
@@ -110,6 +119,8 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( value ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
+                result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
+                result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
@@ -133,6 +144,58 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( value ),
+                result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
+                result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
+                result.EventHandler.TestEquals( sut.EventHandler ),
+                result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
+                result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
+                result.ChannelBindingEventHandlerFactory.TestEquals( sut.ChannelBindingEventHandlerFactory ),
+                result.SubscriptionEventHandlerFactory.TestEquals( sut.SubscriptionEventHandlerFactory ),
+                result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetTimestampsFactory_ShouldChangeValue()
+    {
+        Func<MessageBrokerRemoteClient, ITimestampProvider> value = _ => new TimestampProvider();
+        var sut = MessageBrokerServerOptions.Default;
+
+        var result = sut.SetTimestampsFactory( value );
+
+        Assertion.All(
+                result.Tcp.TestEquals( sut.Tcp ),
+                result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
+                result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
+                result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
+                result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
+                result.TimestampsFactory.TestEquals( value ),
+                result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
+                result.EventHandler.TestEquals( sut.EventHandler ),
+                result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
+                result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
+                result.ChannelBindingEventHandlerFactory.TestEquals( sut.ChannelBindingEventHandlerFactory ),
+                result.SubscriptionEventHandlerFactory.TestEquals( sut.SubscriptionEventHandlerFactory ),
+                result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetDelaySourceFactory_ShouldChangeValue()
+    {
+        Func<MessageBrokerRemoteClient, ValueTaskDelaySource> value = _ => ValueTaskDelaySource.Start();
+        var sut = MessageBrokerServerOptions.Default;
+
+        var result = sut.SetDelaySourceFactory( value );
+
+        Assertion.All(
+                result.Tcp.TestEquals( sut.Tcp ),
+                result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
+                result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
+                result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
+                result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
+                result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
+                result.DelaySourceFactory.TestEquals( value ),
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
@@ -156,6 +219,8 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
+                result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
+                result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.EventHandler.TestEquals( value ),
                 result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
@@ -179,6 +244,8 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
+                result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
+                result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.ClientEventHandlerFactory.TestEquals( value ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
@@ -202,6 +269,8 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
+                result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
+                result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( value ),
@@ -225,6 +294,8 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
+                result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
+                result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
@@ -248,6 +319,8 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
+                result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
+                result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
@@ -271,6 +344,8 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
+                result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
+                result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),

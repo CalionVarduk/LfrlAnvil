@@ -110,8 +110,8 @@ public sealed partial class MessageBrokerClient
                 if ( ! cancel )
                 {
                     stream = _stream;
-                    SynchronousScheduler.ResetWriteTimeout();
-                    timeoutToken = SynchronousScheduler.ScheduleReadTimeout( this );
+                    EventScheduler.ResetWriteTimeout();
+                    timeoutToken = EventScheduler.ScheduleReadTimeout( this );
                 }
             }
 
@@ -169,7 +169,7 @@ public sealed partial class MessageBrokerClient
                 cancel = ShouldCancel;
                 if ( ! cancel )
                 {
-                    SynchronousScheduler.ResetReadTimeout();
+                    EventScheduler.ResetReadTimeout();
                     Id = response.Id;
                     MessageTimeout = response.MessageTimeout;
                     PingInterval = response.PingInterval;

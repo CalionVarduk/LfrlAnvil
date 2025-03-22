@@ -88,7 +88,7 @@ internal struct MessageContextQueue
         source.Reset();
         _writerTokenSourceCache.Push( source );
 
-        client.SynchronousScheduler.ResetWriteTimeout();
+        client.EventScheduler.ResetWriteTimeout();
         if ( _pendingOutgoingWriters.IsEmpty )
             return;
 

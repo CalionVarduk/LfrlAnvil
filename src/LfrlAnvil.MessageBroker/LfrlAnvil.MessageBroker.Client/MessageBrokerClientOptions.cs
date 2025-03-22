@@ -15,6 +15,7 @@
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.Diagnostics;
 using LfrlAnvil.Memory;
 using LfrlAnvil.MessageBroker.Client.Events;
@@ -36,6 +37,8 @@ namespace LfrlAnvil.MessageBroker.Client;
 /// <param name="DesiredPingInterval">
 /// Desired send ping interval. Equal to <b>15 seconds</b> by default. Actual interval will be negotiated with the server during handshake.
 /// </param>
+/// <param name="Timestamps"><see cref="Timestamp"/> provider.</param>
+/// <param name="DelaySource"><see cref="ValueTaskDelaySource"/> instance used for scheduling future events.</param>
 /// <param name="EventHandler"><see cref="MessageBrokerClientEvent"/> callback.</param>
 /// <param name="StreamDecorator"><see cref="MessageBrokerClientStreamDecorator"/> callback.</param>
 public readonly record struct MessageBrokerClientOptions(
@@ -44,6 +47,8 @@ public readonly record struct MessageBrokerClientOptions(
     Duration? ConnectionTimeout,
     Duration? DesiredMessageTimeout,
     Duration? DesiredPingInterval,
+    ITimestampProvider? Timestamps,
+    ValueTaskDelaySource? DelaySource,
     MessageBrokerClientEventHandler? EventHandler,
     MessageBrokerClientStreamDecorator? StreamDecorator
 )
@@ -68,6 +73,8 @@ public readonly record struct MessageBrokerClientOptions(
             ConnectionTimeout,
             DesiredMessageTimeout,
             DesiredPingInterval,
+            Timestamps,
+            DelaySource,
             EventHandler,
             StreamDecorator );
     }
@@ -87,6 +94,8 @@ public readonly record struct MessageBrokerClientOptions(
             ConnectionTimeout,
             DesiredMessageTimeout,
             DesiredPingInterval,
+            Timestamps,
+            DelaySource,
             EventHandler,
             StreamDecorator );
     }
@@ -106,6 +115,8 @@ public readonly record struct MessageBrokerClientOptions(
             value,
             DesiredMessageTimeout,
             DesiredPingInterval,
+            Timestamps,
+            DelaySource,
             EventHandler,
             StreamDecorator );
     }
@@ -125,6 +136,8 @@ public readonly record struct MessageBrokerClientOptions(
             ConnectionTimeout,
             value,
             DesiredPingInterval,
+            Timestamps,
+            DelaySource,
             EventHandler,
             StreamDecorator );
     }
@@ -143,6 +156,50 @@ public readonly record struct MessageBrokerClientOptions(
             MinMemoryPoolSegmentLength,
             ConnectionTimeout,
             DesiredMessageTimeout,
+            value,
+            Timestamps,
+            DelaySource,
+            EventHandler,
+            StreamDecorator );
+    }
+
+    /// <summary>
+    /// Allows to change <see cref="Timestamps"/>.
+    /// </summary>
+    /// <param name="value">New value.</param>
+    /// <returns>New <see cref="MessageBrokerClientOptions"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public MessageBrokerClientOptions SetTimestamps(ITimestampProvider? value)
+    {
+        return new MessageBrokerClientOptions(
+            Tcp,
+            MinMemoryPoolSegmentLength,
+            ConnectionTimeout,
+            DesiredMessageTimeout,
+            DesiredPingInterval,
+            value,
+            DelaySource,
+            EventHandler,
+            StreamDecorator );
+    }
+
+    /// <summary>
+    /// Allows to change <see cref="DelaySource"/>.
+    /// </summary>
+    /// <param name="value">New value.</param>
+    /// <returns>New <see cref="MessageBrokerClientOptions"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public MessageBrokerClientOptions SetDelaySource(ValueTaskDelaySource? value)
+    {
+        return new MessageBrokerClientOptions(
+            Tcp,
+            MinMemoryPoolSegmentLength,
+            ConnectionTimeout,
+            DesiredMessageTimeout,
+            DesiredPingInterval,
+            Timestamps,
             value,
             EventHandler,
             StreamDecorator );
@@ -163,6 +220,8 @@ public readonly record struct MessageBrokerClientOptions(
             ConnectionTimeout,
             DesiredMessageTimeout,
             DesiredPingInterval,
+            Timestamps,
+            DelaySource,
             value,
             StreamDecorator );
     }
@@ -182,6 +241,8 @@ public readonly record struct MessageBrokerClientOptions(
             ConnectionTimeout,
             DesiredMessageTimeout,
             DesiredPingInterval,
+            Timestamps,
+            DelaySource,
             EventHandler,
             value );
     }

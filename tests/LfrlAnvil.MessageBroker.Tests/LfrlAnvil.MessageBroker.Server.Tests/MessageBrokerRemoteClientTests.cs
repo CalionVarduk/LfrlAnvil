@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Internal;
 using LfrlAnvil.MessageBroker.Server.Tests.Helpers;
@@ -22,7 +23,6 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             originalEndPoint,
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
@@ -109,7 +109,6 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             originalEndPoint,
             MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetEventHandler( logs.Add )
@@ -204,7 +203,6 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             originalEndPoint,
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
@@ -343,7 +341,6 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             originalEndPoint,
             MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetEventHandler( logs.Add )
@@ -395,7 +392,6 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             originalEndPoint,
             MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetEventHandler( logs.Add )
@@ -438,7 +434,6 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         Stream? stream = null;
 
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             originalEndPoint,
             MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetEventHandler( logs.Add )
@@ -511,7 +506,6 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             originalEndPoint,
             MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetEventHandler( logs.Add )
@@ -569,7 +563,6 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             originalEndPoint,
             MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetEventHandler( logs.Add )
@@ -638,7 +631,6 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             originalEndPoint,
             MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetEventHandler( logs.Add )
@@ -702,7 +694,6 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             originalEndPoint,
             MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetEventHandler( logs.Add )
@@ -766,7 +757,6 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             originalEndPoint,
             MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetEventHandler( logs.Add )
@@ -842,7 +832,6 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             originalEndPoint,
             MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetEventHandler( logs.Add )
@@ -920,7 +909,6 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             originalEndPoint,
             MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetEventHandler( serverLogs.Add )
@@ -1016,7 +1004,6 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             originalEndPoint,
             MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetEventHandler( logs.Add )
@@ -1087,7 +1074,6 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             originalEndPoint,
             MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetEventHandler( logs.Add )
@@ -1158,7 +1144,6 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             originalEndPoint,
             MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromTicks( 1 ) )
                 .SetClientEventHandlerFactory(
@@ -1198,7 +1183,6 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             originalEndPoint,
             MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetClientEventHandlerFactory(
@@ -1246,6 +1230,79 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
                         "[1::'test'::<ROOT>] [Disposed]"
                     ] ) )
             .Go();
+    }
+
+    [Fact]
+    public async Task DisconnectAsync_ShouldNotDisposeExternalDelaySource()
+    {
+        await using var delaySource = ValueTaskDelaySource.Start();
+        var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
+
+        await using var server = new MessageBrokerServer(
+            originalEndPoint,
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => delaySource ) );
+
+        await server.StartAsync();
+        var endPoint = server.LocalEndPoint;
+
+        using var client = new ClientMock();
+        await client.GetTask(
+            s =>
+            {
+                s.Connect( endPoint );
+                s.SendHandshake( "test", Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ) );
+                s.ReadHandshakeAcceptedResponse();
+                s.SendConfirmHandshakeResponse();
+            } );
+
+        var remoteClient = server.Clients.TryGetById( 1 );
+        if ( remoteClient is not null )
+            await remoteClient.DisconnectAsync();
+
+        var result = await delaySource.Schedule( Duration.FromMilliseconds( 1 ) );
+
+        result.TestEquals( ValueTaskDelayResult.Completed ).Go();
+    }
+
+    [Fact]
+    public async Task DisposingExternalDelaySource_ShouldDisconnectClient()
+    {
+        var endSource = new SafeTaskCompletionSource();
+        var delaySource = ValueTaskDelaySource.Start();
+        var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
+
+        await using var server = new MessageBrokerServer(
+            originalEndPoint,
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => delaySource )
+                .SetClientEventHandlerFactory(
+                    _ => e =>
+                    {
+                        if ( e.Type == MessageBrokerRemoteClientEventType.Disposed )
+                            endSource.Complete();
+                    } ) );
+
+        await server.StartAsync();
+        var endPoint = server.LocalEndPoint;
+
+        using var client = new ClientMock();
+        await client.GetTask(
+            s =>
+            {
+                s.Connect( endPoint );
+                s.SendHandshake( "test", Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ) );
+                s.ReadHandshakeAcceptedResponse();
+                s.SendConfirmHandshakeResponse();
+            } );
+
+        var remoteClient = server.Clients.TryGetById( 1 );
+        await delaySource.DisposeAsync();
+        await endSource.Task;
+
+        remoteClient.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Disposed ) ).Go();
     }
 
     [Pure]

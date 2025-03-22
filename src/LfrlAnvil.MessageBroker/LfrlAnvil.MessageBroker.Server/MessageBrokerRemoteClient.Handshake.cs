@@ -188,7 +188,7 @@ public sealed partial class MessageBrokerRemoteClient
                 if ( ShouldCancel )
                     return DisposedException();
 
-                timeoutToken = SynchronousScheduler.ScheduleReadTimeout( this );
+                timeoutToken = EventScheduler.ScheduleReadTimeout( this );
             }
 
             var data = buffer.Slice( 0, Protocol.PacketHeader.Length );
@@ -257,7 +257,7 @@ public sealed partial class MessageBrokerRemoteClient
                 if ( ShouldCancel )
                     return DisposedException();
 
-                SynchronousScheduler.ResetReadTimeout();
+                EventScheduler.ResetReadTimeout();
                 Name = name.Value;
                 IsLittleEndian = isClientLittleEndian;
                 MessageTimeout = Server.AcceptableMessageTimeout.Clamp( handshakeHeader.MessageTimeout );
@@ -352,8 +352,8 @@ public sealed partial class MessageBrokerRemoteClient
                 if ( ShouldCancel )
                     return EmitError( MessageBrokerRemoteClientEvent.WaitingForMessage( this, DisposedException() ) );
 
-                SynchronousScheduler.ResetWriteTimeout();
-                timeoutToken = SynchronousScheduler.ScheduleReadTimeout( this );
+                EventScheduler.ResetWriteTimeout();
+                timeoutToken = EventScheduler.ScheduleReadTimeout( this );
             }
 
             var data = buffer.Slice( 0, Protocol.PacketHeader.Length );

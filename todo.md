@@ -29,14 +29,6 @@ Sql:
 - IncludedColumns for IXs? simple blocking link to SqlColumnBuilder (low priority)
     - from implemented dialects only postgresql supports this
 
-message broker:
-
-- server-side, remote clients' sync schedulers need rethinking
-- each scheduler spawns a new thread, which isn't good...
-- server needs a single scheduler that asynchronously handles remote clients' schedule invocations
-- this way only one thread needs to be created, by the server
-- remote clients will fully use async/await, which should work well with thread pool
-
 ### Terminal
 
 project idea:

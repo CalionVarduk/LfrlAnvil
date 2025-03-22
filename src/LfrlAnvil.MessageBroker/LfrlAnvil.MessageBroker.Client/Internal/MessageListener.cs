@@ -100,7 +100,7 @@ internal struct MessageListener
                     if ( client.ShouldCancel )
                         return TaskStopReason.OwnerDisposed;
 
-                    timeoutToken = client.SynchronousScheduler.GetReadTimeoutToken();
+                    timeoutToken = client.EventScheduler.GetReadTimeoutToken();
                 }
 
                 await stream.ReadExactlyAsync( buffer, timeoutToken ).ConfigureAwait( false );

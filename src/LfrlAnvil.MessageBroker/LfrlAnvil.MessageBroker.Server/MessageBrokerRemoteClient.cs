@@ -25,6 +25,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Memory;
 using LfrlAnvil.MessageBroker.Server.Buffering;
@@ -41,7 +42,7 @@ public sealed partial class MessageBrokerRemoteClient
 {
     internal readonly Dictionary<int, MessageBrokerChannelBinding> BindingsByChannelId;
     internal readonly Dictionary<int, MessageBrokerSubscription> SubscriptionsByChannelId;
-    internal SynchronousScheduler SynchronousScheduler;
+    internal EventScheduler EventScheduler;
     internal MessageListener MessageListener;
     internal RequestHandler RequestHandler;
     internal MessageContextQueue MessageContextQueue;
@@ -50,6 +51,7 @@ public sealed partial class MessageBrokerRemoteClient
     private readonly TcpClient _tcp;
     private readonly MemoryPool<byte> _memoryPool;
     private readonly MessageBrokerRemoteClientEventHandler? _eventHandler;
+    private DelaySource _delaySource;
     private Stream _stream;
     private MessageBrokerRemoteClientState _state;
 
@@ -59,7 +61,6 @@ public sealed partial class MessageBrokerRemoteClient
         _stream = _tcp.GetStream();
         _memoryPool = new MemoryPool<byte>( minMemoryPoolSegmentLength );
         Server = server;
-        _timestamps = Server.TimestampsFactory();
         Id = id;
         Name = string.Empty;
         IsLittleEndian = false;
@@ -70,11 +71,15 @@ public sealed partial class MessageBrokerRemoteClient
 
         BindingsByChannelId = new Dictionary<int, MessageBrokerChannelBinding>();
         SubscriptionsByChannelId = new Dictionary<int, MessageBrokerSubscription>();
-        SynchronousScheduler = SynchronousScheduler.Create();
+        EventScheduler = EventScheduler.Create();
         MessageListener = MessageListener.Create();
         RequestHandler = RequestHandler.Create();
         MessageContextQueue = MessageContextQueue.Create();
+
         _eventHandler = Server.RemoteClientEventHandlerFactory?.Invoke( this );
+        _timestamps = Server.TimestampsFactory( this );
+        var delaySource = Server.DelaySourceFactory?.Invoke( this );
+        _delaySource = delaySource is not null ? DelaySource.External( delaySource ) : DelaySource.Owned();
     }
 
     /// <summary>
@@ -246,13 +251,21 @@ public sealed partial class MessageBrokerRemoteClient
 
         try
         {
-            var synchronousSchedulerTask = SynchronousScheduler.StartUnderlyingTask( this );
             using ( AcquireLock() )
             {
                 if ( ShouldCancel )
                     return;
 
-                SynchronousScheduler.SetUnderlyingTask( synchronousSchedulerTask );
+                EventScheduler.InitializeResetEvent( _delaySource.GetSource() );
+            }
+
+            var eventSchedulerTask = EventScheduler.StartUnderlyingTask( this );
+            using ( AcquireLock() )
+            {
+                if ( ShouldCancel )
+                    return;
+
+                EventScheduler.SetUnderlyingTask( eventSchedulerTask );
             }
 
             var task = StartHandshakeTask();
@@ -334,7 +347,7 @@ public sealed partial class MessageBrokerRemoteClient
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ExclusiveLock AcquireLock()
     {
-        return ExclusiveLock.Enter( _tcp );
+        return ExclusiveLock.SpinWaitEnter( _tcp, spinWaitMultiplier: 4 );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -389,7 +402,7 @@ public sealed partial class MessageBrokerRemoteClient
             {
                 cancel = ShouldCancel;
                 if ( ! cancel )
-                    timeoutToken = SynchronousScheduler.ScheduleWriteTimeout( this );
+                    timeoutToken = EventScheduler.ScheduleWriteTimeout( this );
             }
 
             if ( cancel )
@@ -442,15 +455,16 @@ public sealed partial class MessageBrokerRemoteClient
     {
         Emit( MessageBrokerRemoteClientEvent.Disposing( this ) );
 
-        Task? synchronousSchedulerTask;
+        Task? eventSchedulerTask;
         Task? requestHandlerTask;
         Task? messageReceiverTask;
+        ValueTaskDelaySource? ownedDelaySource;
 
-        Exception? exception;
         var bindings = Array.Empty<MessageBrokerChannelBinding>();
         var subscriptions = Array.Empty<MessageBrokerSubscription>();
         using ( AcquireLock() )
         {
+            ownedDelaySource = _delaySource.DiscardOwnedSource();
             if ( extractChildren )
             {
                 if ( BindingsByChannelId.Count > 0 )
@@ -472,19 +486,16 @@ public sealed partial class MessageBrokerRemoteClient
 
             BindingsByChannelId.Clear();
             SubscriptionsByChannelId.Clear();
-            synchronousSchedulerTask = SynchronousScheduler.DiscardUnderlyingTask();
+            eventSchedulerTask = EventScheduler.DiscardUnderlyingTask();
             requestHandlerTask = RequestHandler.DiscardUnderlyingTask();
             messageReceiverTask = MessageListener.DiscardUnderlyingTask();
             MessageContextQueue.Dispose();
             RequestHandler.Dispose();
-            exception = SynchronousScheduler.BeginDispose();
+            EventScheduler.Dispose();
         }
 
-        if ( exception is not null )
-            Emit( MessageBrokerRemoteClientEvent.Unexpected( this, exception ) );
-
-        if ( synchronousSchedulerTask is not null )
-            await synchronousSchedulerTask.ConfigureAwait( false );
+        if ( eventSchedulerTask is not null )
+            await eventSchedulerTask.ConfigureAwait( false );
 
         if ( requestHandlerTask is not null )
             await requestHandlerTask.ConfigureAwait( false );
@@ -492,17 +503,15 @@ public sealed partial class MessageBrokerRemoteClient
         if ( messageReceiverTask is not null )
             await messageReceiverTask.ConfigureAwait( false );
 
-        using ( AcquireLock() )
-            exception = SynchronousScheduler.EndDispose();
-
-        if ( exception is not null )
-            Emit( MessageBrokerRemoteClientEvent.Unexpected( this, exception ) );
-
+        Exception? exception;
         using ( AcquireLock() )
             exception = _tcp.TryDispose().Exception;
 
         if ( exception is not null )
             Emit( MessageBrokerRemoteClientEvent.Unexpected( this, exception ) );
+
+        if ( ownedDelaySource is not null )
+            await ownedDelaySource.TryDisposeAsync();
 
         return (bindings, subscriptions);
     }

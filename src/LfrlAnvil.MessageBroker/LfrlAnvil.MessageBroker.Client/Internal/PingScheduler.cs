@@ -104,7 +104,7 @@ internal struct PingScheduler
                 return TaskStopReason.OwnerDisposed;
 
             request.Serialize( buffer, client.IsServerLittleEndian != BitConverter.IsLittleEndian );
-            client.SynchronousScheduler.SchedulePing( client );
+            client.EventScheduler.SchedulePing( client );
         }
 
         while ( true )
@@ -121,7 +121,7 @@ internal struct PingScheduler
                 if ( client.ShouldCancel )
                     return TaskStopReason.OwnerDisposed;
 
-                var delay = client.SynchronousScheduler.GetPingDelay( client );
+                var delay = client.EventScheduler.GetPingDelay( client );
                 if ( delay > Duration.Zero )
                 {
                     client.PingScheduler._continuation.Reset();
@@ -141,7 +141,7 @@ internal struct PingScheduler
                 if ( client.ShouldCancel )
                     return TaskStopReason.OwnerDisposed;
 
-                var delay = client.SynchronousScheduler.GetPingDelay( client );
+                var delay = client.EventScheduler.GetPingDelay( client );
                 if ( delay > Duration.Zero )
                 {
                     client.PingScheduler._continuation.Reset();
@@ -215,7 +215,7 @@ internal struct PingScheduler
                     return TaskStopReason.OwnerDisposed;
 
                 client.PingScheduler._continuation.Reset();
-                client.SynchronousScheduler.SchedulePing( client );
+                client.EventScheduler.SchedulePing( client );
             }
         }
 

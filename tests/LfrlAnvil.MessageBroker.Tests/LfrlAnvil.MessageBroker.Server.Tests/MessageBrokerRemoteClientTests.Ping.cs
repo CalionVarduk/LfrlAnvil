@@ -19,7 +19,6 @@ public partial class MessageBrokerRemoteClientTests
             var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
             await using var server = new MessageBrokerServer(
-                () => new TimestampProvider(),
                 originalEndPoint,
                 MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetClientEventHandlerFactory(
@@ -75,7 +74,6 @@ public partial class MessageBrokerRemoteClientTests
             var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
             await using var server = new MessageBrokerServer(
-                () => new TimestampProvider(),
                 originalEndPoint,
                 MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetClientEventHandlerFactory(
@@ -114,7 +112,6 @@ public partial class MessageBrokerRemoteClientTests
             var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
             await using var server = new MessageBrokerServer(
-                () => new TimestampProvider(),
                 originalEndPoint,
                 MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetClientEventHandlerFactory(
@@ -159,7 +156,6 @@ public partial class MessageBrokerRemoteClientTests
             var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
             await using var server = new MessageBrokerServer(
-                () => new TimestampProvider(),
                 originalEndPoint,
                 MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetClientEventHandlerFactory(

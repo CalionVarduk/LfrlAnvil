@@ -109,7 +109,7 @@ internal struct MessageContextQueue
         ref var token = ref _pendingResponses[_activePendingResponses++];
         Assume.Equals( source, token.Source );
         Assume.Equals( token.Timeout, TimeoutEntry.MaxTimestamp );
-        token.Timeout = client.SynchronousScheduler.GetPendingResponseTimeout( client );
+        token.Timeout = client.EventScheduler.GetPendingResponseTimeout( client );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -121,7 +121,7 @@ internal struct MessageContextQueue
         source.Reset();
         _writerTokenSourceCache.Push( source );
 
-        client.SynchronousScheduler.ResetWriteTimeout();
+        client.EventScheduler.ResetWriteTimeout();
         if ( _pendingOutgoingWriters.IsEmpty )
             return;
 

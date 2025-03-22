@@ -12,14 +12,12 @@ public class ChannelBindingTests : TestsBase
     public async Task Server_ShouldCreateChannel_WhenClientBindsToNonExistingOne()
     {
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) ) );
 
         await server.StartAsync();
 
         await using var client = new MessageBrokerClient(
-            new TimestampProvider(),
             server.LocalEndPoint,
             "test",
             MessageBrokerClientOptions.Default
@@ -73,14 +71,12 @@ public class ChannelBindingTests : TestsBase
     public async Task Server_ShouldNotCreateChannel_WhenClientBindsToExistingOne()
     {
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) ) );
 
         await server.StartAsync();
 
         await using var client1 = new MessageBrokerClient(
-            new TimestampProvider(),
             server.LocalEndPoint,
             "test",
             MessageBrokerClientOptions.Default
@@ -91,7 +87,6 @@ public class ChannelBindingTests : TestsBase
         await client1.StartAsync();
 
         await using var client2 = new MessageBrokerClient(
-            new TimestampProvider(),
             server.LocalEndPoint,
             "test2",
             MessageBrokerClientOptions.Default
@@ -147,14 +142,12 @@ public class ChannelBindingTests : TestsBase
     public async Task Server_ShouldUnbindChannelAndRemoveIt_WhenLastClientUnbinds()
     {
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) ) );
 
         await server.StartAsync();
 
         await using var client = new MessageBrokerClient(
-            new TimestampProvider(),
             server.LocalEndPoint,
             "test",
             MessageBrokerClientOptions.Default
@@ -190,14 +183,12 @@ public class ChannelBindingTests : TestsBase
     public async Task Server_ShouldUnbindChannelAndNotRemoveIt_WhenNonLastClientUnbinds()
     {
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) ) );
 
         await server.StartAsync();
 
         await using var client1 = new MessageBrokerClient(
-            new TimestampProvider(),
             server.LocalEndPoint,
             "test",
             MessageBrokerClientOptions.Default
@@ -208,7 +199,6 @@ public class ChannelBindingTests : TestsBase
         await client1.StartAsync();
 
         await using var client2 = new MessageBrokerClient(
-            new TimestampProvider(),
             server.LocalEndPoint,
             "test2",
             MessageBrokerClientOptions.Default
@@ -261,14 +251,12 @@ public class ChannelBindingTests : TestsBase
     public async Task Server_ShouldUnbindChannelAndNotRemoveIt_WhenLastClientUnbindsButThereAreActiveSubscriptions()
     {
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) ) );
 
         await server.StartAsync();
 
         await using var client = new MessageBrokerClient(
-            new TimestampProvider(),
             server.LocalEndPoint,
             "test",
             MessageBrokerClientOptions.Default

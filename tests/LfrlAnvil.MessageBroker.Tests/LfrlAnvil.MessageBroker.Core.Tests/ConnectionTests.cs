@@ -19,14 +19,12 @@ public class ConnectionTests : TestsBase
         var endSource = new SafeTaskCompletionSource();
 
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) ) );
 
         await server.StartAsync();
 
         await using var client = new MessageBrokerClient(
-            new TimestampProvider(),
             server.LocalEndPoint,
             "test",
             MessageBrokerClientOptions.Default
@@ -60,14 +58,12 @@ public class ConnectionTests : TestsBase
     public async Task Server_ShouldRejectClientHandshake_WhenNameAlreadyExists()
     {
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) ) );
 
         await server.StartAsync();
 
         await using var client1 = new MessageBrokerClient(
-            new TimestampProvider(),
             server.LocalEndPoint,
             "test",
             MessageBrokerClientOptions.Default
@@ -78,7 +74,6 @@ public class ConnectionTests : TestsBase
         await client1.StartAsync();
 
         await using var client2 = new MessageBrokerClient(
-            new TimestampProvider(),
             server.LocalEndPoint,
             "test",
             MessageBrokerClientOptions.Default
@@ -99,7 +94,6 @@ public class ConnectionTests : TestsBase
     {
         var endSource = new SafeTaskCompletionSource();
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
@@ -113,7 +107,6 @@ public class ConnectionTests : TestsBase
         await server.StartAsync();
 
         var client = new MessageBrokerClient(
-            new TimestampProvider(),
             server.LocalEndPoint,
             "test",
             MessageBrokerClientOptions.Default
@@ -137,14 +130,12 @@ public class ConnectionTests : TestsBase
     {
         var endSource = new SafeTaskCompletionSource();
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) ) );
 
         await server.StartAsync();
 
         await using var client = new MessageBrokerClient(
-            new TimestampProvider(),
             server.LocalEndPoint,
             "test",
             MessageBrokerClientOptions.Default

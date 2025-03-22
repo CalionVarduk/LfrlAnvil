@@ -118,7 +118,7 @@ public sealed class MessageBrokerChannelBinding
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ExclusiveLock AcquireLock()
     {
-        return ExclusiveLock.Enter( _sync );
+        return ExclusiveLock.SpinWaitEnter( _sync, spinWaitMultiplier: 4 );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

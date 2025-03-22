@@ -22,6 +22,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.Exceptions;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Exceptions;
@@ -42,7 +43,8 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     internal readonly Func<MessageBrokerChannelBinding, MessageBrokerChannelBindingEventHandler?>? ChannelBindingEventHandlerFactory;
     internal readonly Func<MessageBrokerSubscription, MessageBrokerSubscriptionEventHandler?>? SubscriptionEventHandlerFactory;
     internal readonly MessageBrokerRemoteClientStreamDecorator? StreamDecorator;
-    internal readonly Func<ITimestampProvider> TimestampsFactory;
+    internal readonly Func<MessageBrokerRemoteClient, ITimestampProvider> TimestampsFactory;
+    internal readonly Func<MessageBrokerRemoteClient, ValueTaskDelaySource>? DelaySourceFactory;
 
     private readonly TcpListener _listener;
     private readonly MessageBrokerServerEventHandler? _eventHandler;
@@ -51,16 +53,11 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     /// <summary>
     /// Creates a new <see cref="MessageBrokerServer"/> instance.
     /// </summary>
-    /// <param name="timestampsFactory">Factory of <see cref="Timestamp"/> providers.</param>
     /// <param name="localEndPoint">The <see cref="IPEndPoint"/> of this server's listener socket.</param>
     /// <param name="options">Optional creation options.</param>
-    public MessageBrokerServer(
-        Func<ITimestampProvider> timestampsFactory,
-        IPEndPoint localEndPoint,
-        MessageBrokerServerOptions options = default)
+    public MessageBrokerServer(IPEndPoint localEndPoint, MessageBrokerServerOptions options = default)
     {
         _listener = new TcpListener( localEndPoint );
-        TimestampsFactory = timestampsFactory;
         LocalEndPoint = localEndPoint;
 
         HandshakeTimeout = Defaults.Temporal.GetActualTimeout( options.HandshakeTimeout );
@@ -71,6 +68,9 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         ChannelEventHandlerFactory = options.ChannelEventHandlerFactory;
         ChannelBindingEventHandlerFactory = options.ChannelBindingEventHandlerFactory;
         SubscriptionEventHandlerFactory = options.SubscriptionEventHandlerFactory;
+        TimestampsFactory = options.TimestampsFactory ?? (static _ => new TimestampProvider());
+        DelaySourceFactory = options.DelaySourceFactory;
+
         StreamDecorator = options.StreamDecorator;
         _state = MessageBrokerServerState.Created;
 
@@ -285,7 +285,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ExclusiveLock AcquireLock()
     {
-        return ExclusiveLock.Enter( _listener );
+        return ExclusiveLock.SpinWaitEnter( _listener, spinWaitMultiplier: 4 );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

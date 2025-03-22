@@ -15,7 +15,6 @@ public class MessageBrokerChannelBindingTests : TestsBase
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
@@ -97,7 +96,6 @@ public class MessageBrokerChannelBindingTests : TestsBase
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
@@ -213,7 +211,6 @@ public class MessageBrokerChannelBindingTests : TestsBase
         var logs = new EventLogger();
 
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
@@ -262,7 +259,6 @@ public class MessageBrokerChannelBindingTests : TestsBase
         var logs = new EventLogger();
 
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
@@ -310,7 +306,6 @@ public class MessageBrokerChannelBindingTests : TestsBase
         var logs = new EventLogger();
 
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
@@ -357,7 +352,6 @@ public class MessageBrokerChannelBindingTests : TestsBase
         var logs = new EventLogger();
 
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
@@ -404,7 +398,6 @@ public class MessageBrokerChannelBindingTests : TestsBase
         var logs = new EventLogger();
 
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
@@ -451,7 +444,6 @@ public class MessageBrokerChannelBindingTests : TestsBase
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
@@ -532,7 +524,6 @@ public class MessageBrokerChannelBindingTests : TestsBase
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
@@ -600,7 +591,6 @@ public class MessageBrokerChannelBindingTests : TestsBase
     {
         var logs = new EventLogger();
         var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
@@ -656,7 +646,6 @@ public class MessageBrokerChannelBindingTests : TestsBase
     {
         var logs = new EventLogger();
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
@@ -713,7 +702,6 @@ public class MessageBrokerChannelBindingTests : TestsBase
     {
         var logs = new EventLogger();
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
@@ -783,7 +771,6 @@ public class MessageBrokerChannelBindingTests : TestsBase
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
@@ -868,7 +855,6 @@ public class MessageBrokerChannelBindingTests : TestsBase
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
@@ -984,7 +970,6 @@ public class MessageBrokerChannelBindingTests : TestsBase
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
@@ -1070,7 +1055,6 @@ public class MessageBrokerChannelBindingTests : TestsBase
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
@@ -1144,7 +1128,6 @@ public class MessageBrokerChannelBindingTests : TestsBase
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
@@ -1205,7 +1188,6 @@ public class MessageBrokerChannelBindingTests : TestsBase
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )

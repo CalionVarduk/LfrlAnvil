@@ -23,6 +23,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.Exceptions;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Memory;
@@ -38,7 +39,7 @@ namespace LfrlAnvil.MessageBroker.Client;
 /// </summary>
 public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
 {
-    internal SynchronousScheduler SynchronousScheduler;
+    internal EventScheduler EventScheduler;
     internal MessageListener MessageListener;
     internal MessageContextQueue MessageContextQueue;
     internal PingScheduler PingScheduler;
@@ -49,6 +50,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     private readonly ITimestampProvider _timestamps;
     private readonly MemoryPool<byte> _memoryPool;
     private readonly TcpClient _tcp;
+    private DelaySource _delaySource;
     private MessageBrokerClientStreamDecorator? _streamDecorator;
     private Stream? _stream;
     private MessageBrokerClientState _state;
@@ -56,18 +58,13 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     /// <summary>
     /// Creates a new <see cref="MessageBrokerClient"/> instance.
     /// </summary>
-    /// <param name="timestamps"><see cref="Timestamp"/> provider.</param>
     /// <param name="remoteEndPoint">The <see cref="IPEndPoint"/> of the server to which this client will connect to.</param>
     /// <param name="name">Client's unique name.</param>
     /// <param name="options">Optional creation options.</param>
     /// <exception cref="ArgumentOutOfRangeException">
     /// When <paramref name="name"/>'s length is less than <b>1</b> or greater than <b>512</b>.
     /// </exception>
-    public MessageBrokerClient(
-        ITimestampProvider timestamps,
-        IPEndPoint remoteEndPoint,
-        string name,
-        MessageBrokerClientOptions options = default)
+    public MessageBrokerClient(IPEndPoint remoteEndPoint, string name, MessageBrokerClientOptions options = default)
     {
         Ensure.IsInRange( name.Length, Defaults.NameLengthBounds.Min, Defaults.NameLengthBounds.Max );
 
@@ -78,7 +75,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         PingInterval = Defaults.Temporal.GetActualPingInterval( options.DesiredPingInterval );
         _streamDecorator = options.StreamDecorator;
         _eventHandler = options.EventHandler;
-        _timestamps = timestamps;
+        _timestamps = options.Timestamps ?? new TimestampProvider();
 
         _stream = null;
         _state = MessageBrokerClientState.Created;
@@ -87,7 +84,8 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         RemoteEndPoint = remoteEndPoint;
         IsServerLittleEndian = false;
 
-        SynchronousScheduler = SynchronousScheduler.Create();
+        _delaySource = options.DelaySource is not null ? DelaySource.External( options.DelaySource ) : DelaySource.Owned();
+        EventScheduler = EventScheduler.Create();
         MessageListener = MessageListener.Create();
         MessageContextQueue = MessageContextQueue.Create();
         PingScheduler = PingScheduler.Create();
@@ -199,28 +197,26 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
 
         Emit( MessageBrokerClientEvent.Disposing( this ) );
 
-        Task? synchronousSchedulerTask;
+        Task? eventSchedulerTask;
         Task? pingSchedulerTask;
         Task? messageListenerTask;
+        ValueTaskDelaySource? ownedDelaySource;
 
-        Exception? exception;
         using ( AcquireLock() )
         {
+            ownedDelaySource = _delaySource.DiscardOwnedSource();
             PublisherCollection.Clear();
             ListenerCollection.Clear();
-            synchronousSchedulerTask = SynchronousScheduler.DiscardUnderlyingTask();
+            eventSchedulerTask = EventScheduler.DiscardUnderlyingTask();
             pingSchedulerTask = PingScheduler.DiscardUnderlyingTask();
             messageListenerTask = MessageListener.DiscardUnderlyingTask();
             MessageContextQueue.Dispose();
             PingScheduler.Dispose();
-            exception = SynchronousScheduler.BeginDispose();
+            EventScheduler.Dispose();
         }
 
-        if ( exception is not null )
-            Emit( MessageBrokerClientEvent.Unexpected( this, exception ) );
-
-        if ( synchronousSchedulerTask is not null )
-            await synchronousSchedulerTask.ConfigureAwait( false );
+        if ( eventSchedulerTask is not null )
+            await eventSchedulerTask.ConfigureAwait( false );
 
         if ( pingSchedulerTask is not null )
             await pingSchedulerTask.ConfigureAwait( false );
@@ -228,12 +224,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         if ( messageListenerTask is not null )
             await messageListenerTask.ConfigureAwait( false );
 
-        using ( AcquireLock() )
-            exception = SynchronousScheduler.EndDispose();
-
-        if ( exception is not null )
-            Emit( MessageBrokerClientEvent.Unexpected( this, exception ) );
-
+        Exception? exception;
         using ( AcquireLock() )
             exception = _tcp.TryDispose().Exception;
 
@@ -245,6 +236,9 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
             _stream = null;
             _state = MessageBrokerClientState.Disposed;
         }
+
+        if ( ownedDelaySource is not null )
+            await ownedDelaySource.TryDisposeAsync();
 
         Emit( MessageBrokerClientEvent.Disposed( this ) );
     }
@@ -285,17 +279,18 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
 
             AssertState( MessageBrokerClientState.Created );
             _state = MessageBrokerClientState.Connecting;
+            EventScheduler.InitializeResetEvent( _delaySource.GetSource() );
         }
 
         try
         {
-            var synchronousSchedulerTask = SynchronousScheduler.StartUnderlyingTask( this );
+            var eventSchedulerTask = EventScheduler.StartUnderlyingTask( this );
             using ( AcquireLock() )
             {
                 if ( ShouldCancel )
                     return DisposedException();
 
-                SynchronousScheduler.SetUnderlyingTask( synchronousSchedulerTask );
+                EventScheduler.SetUnderlyingTask( eventSchedulerTask );
             }
         }
         catch ( Exception exc )
@@ -335,7 +330,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
                 if ( ShouldCancel )
                     return DisposedException();
 
-                SynchronousScheduler.ResetWriteTimeout();
+                EventScheduler.ResetWriteTimeout();
                 _state = MessageBrokerClientState.Running;
                 stream = _stream;
             }
@@ -367,7 +362,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ExclusiveLock AcquireLock()
     {
-        return ExclusiveLock.Enter( _tcp );
+        return ExclusiveLock.SpinWaitEnter( _tcp, spinWaitMultiplier: 4 );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -437,7 +432,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
                 if ( ! cancel )
                 {
                     stream = _stream;
-                    timeoutToken = SynchronousScheduler.ScheduleWriteTimeout( this );
+                    timeoutToken = EventScheduler.ScheduleWriteTimeout( this );
                 }
             }
 
@@ -475,7 +470,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
             {
                 cancel = ShouldCancel;
                 if ( ! cancel )
-                    timeoutToken = SynchronousScheduler.ScheduleConnectTimeout( this );
+                    timeoutToken = EventScheduler.ScheduleConnectTimeout( this );
             }
 
             if ( cancel )

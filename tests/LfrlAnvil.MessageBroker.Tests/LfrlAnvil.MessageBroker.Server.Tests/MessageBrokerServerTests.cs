@@ -17,7 +17,7 @@ public class MessageBrokerServerTests : TestsBase
     public void Ctor_WithDefaultOptions_ShouldCreateCorrectServer()
     {
         var localEndPoint = new IPEndPoint( IPAddress.Loopback, 12345 );
-        var sut = new MessageBrokerServer( () => new TimestampProvider(), localEndPoint );
+        var sut = new MessageBrokerServer( localEndPoint );
         Assertion.All(
                 sut.LocalEndPoint.TestRefEquals( localEndPoint ),
                 sut.HandshakeTimeout.TestEquals( Duration.FromSeconds( 15 ) ),
@@ -51,7 +51,6 @@ public class MessageBrokerServerTests : TestsBase
     {
         var localEndPoint = new IPEndPoint( IPAddress.Loopback, 12345 );
         var sut = new MessageBrokerServer(
-            () => new TimestampProvider(),
             localEndPoint,
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromTicks( handshakeTimeoutTicks ) )
@@ -86,7 +85,6 @@ public class MessageBrokerServerTests : TestsBase
         var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             originalEndPoint,
             MessageBrokerServerOptions.Default.SetEventHandler( logs.Add ) );
 
@@ -116,7 +114,6 @@ public class MessageBrokerServerTests : TestsBase
         var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             originalEndPoint,
             MessageBrokerServerOptions.Default.SetEventHandler(
                 e =>
@@ -146,7 +143,7 @@ public class MessageBrokerServerTests : TestsBase
     [Fact]
     public async Task StartAsync_ShouldThrowMessageBrokerServerDisposedException_WhenServerIsDisposed()
     {
-        var sut = new MessageBrokerServer( () => new TimestampProvider(), new IPEndPoint( IPAddress.Loopback, 12345 ) );
+        var sut = new MessageBrokerServer( new IPEndPoint( IPAddress.Loopback, 12345 ) );
         sut.Dispose();
 
         Exception? exception = null;
@@ -169,7 +166,6 @@ public class MessageBrokerServerTests : TestsBase
     public async Task StartAsync_ShouldThrowMessageBrokerServerStateException_WhenServerHasAlreadyBeenStarted()
     {
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) ) );
 
@@ -194,7 +190,6 @@ public class MessageBrokerServerTests : TestsBase
         var localEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             localEndPoint,
             MessageBrokerServerOptions.Default.SetEventHandler(
                 e =>
@@ -225,7 +220,6 @@ public class MessageBrokerServerTests : TestsBase
         var localEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
         await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
             localEndPoint,
             MessageBrokerServerOptions.Default.SetEventHandler(
                 e =>
@@ -266,14 +260,11 @@ public class MessageBrokerServerTests : TestsBase
     {
         var logs = new EventLogger();
 
-        await using var server = new MessageBrokerServer(
-            () => new TimestampProvider(),
-            new IPEndPoint( IPAddress.Loopback, 0 ) );
+        await using var server = new MessageBrokerServer( new IPEndPoint( IPAddress.Loopback, 0 ) );
 
         await server.StartAsync();
 
         await using var other = new MessageBrokerServer(
-            () => new TimestampProvider(),
             server.LocalEndPoint,
             MessageBrokerServerOptions.Default.SetEventHandler( logs.Add ) );
 
@@ -303,7 +294,7 @@ public class MessageBrokerServerTests : TestsBase
     public void StartAsync_ShouldThrowOperationCanceledException_WhenCancellationTokenIsCancelled()
     {
         var token = new CancellationToken( canceled: true );
-        var sut = new MessageBrokerServer( () => new TimestampProvider(), new IPEndPoint( IPAddress.Loopback, 0 ) );
+        var sut = new MessageBrokerServer( new IPEndPoint( IPAddress.Loopback, 0 ) );
 
         var action = Lambda.Of( async () => await sut.StartAsync( token ) );
 
@@ -322,7 +313,6 @@ public class MessageBrokerServerTests : TestsBase
         var logs = new EventLogger();
         var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
         await using var sut = new MessageBrokerServer(
-            () => throw exception,
             originalEndPoint,
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
@@ -332,7 +322,8 @@ public class MessageBrokerServerTests : TestsBase
                         logs.Add( e );
                         if ( e.Type == MessageBrokerServerEventType.ClientRejected )
                             endSource.Complete();
-                    } ) );
+                    } )
+                .SetClientEventHandlerFactory( _ => throw exception ) );
 
         await sut.StartAsync();
         var endPoint = sut.LocalEndPoint;

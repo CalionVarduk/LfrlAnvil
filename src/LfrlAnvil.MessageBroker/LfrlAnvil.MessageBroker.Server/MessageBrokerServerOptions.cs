@@ -16,6 +16,7 @@ using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.Diagnostics;
 using LfrlAnvil.MessageBroker.Server.Events;
 
@@ -35,6 +36,8 @@ namespace LfrlAnvil.MessageBroker.Server;
 /// <param name="AcceptablePingInterval">
 /// Range of acceptable send ping interval values. Equal to [<b>1 ms</b>, <b>24 hours</b>] by default.
 /// </param>
+/// <param name="TimestampsFactory">Factory of <see cref="Timestamp"/> providers.</param>
+/// <param name="DelaySourceFactory">Factory of <see cref="ValueTaskDelaySource"/> instances used for scheduling future events.</param>
 /// <param name="EventHandler"><see cref="MessageBrokerServerEvent"/> callback.</param>
 /// <param name="ClientEventHandlerFactory">Factory of <see cref="MessageBrokerRemoteClientEventHandler"/> callbacks.</param>
 /// <param name="ChannelEventHandlerFactory">Factory of <see cref="MessageBrokerChannelEventHandler"/> callbacks.</param>
@@ -47,6 +50,8 @@ public readonly record struct MessageBrokerServerOptions(
     Duration? HandshakeTimeout,
     Bounds<Duration>? AcceptableMessageTimeout,
     Bounds<Duration>? AcceptablePingInterval,
+    Func<MessageBrokerRemoteClient, ITimestampProvider>? TimestampsFactory,
+    Func<MessageBrokerRemoteClient, ValueTaskDelaySource>? DelaySourceFactory,
     MessageBrokerServerEventHandler? EventHandler,
     Func<MessageBrokerRemoteClient, MessageBrokerRemoteClientEventHandler?>? ClientEventHandlerFactory,
     Func<MessageBrokerChannel, MessageBrokerChannelEventHandler?>? ChannelEventHandlerFactory,
@@ -75,6 +80,8 @@ public readonly record struct MessageBrokerServerOptions(
             HandshakeTimeout,
             AcceptableMessageTimeout,
             AcceptablePingInterval,
+            TimestampsFactory,
+            DelaySourceFactory,
             EventHandler,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,
@@ -98,6 +105,8 @@ public readonly record struct MessageBrokerServerOptions(
             HandshakeTimeout,
             AcceptableMessageTimeout,
             AcceptablePingInterval,
+            TimestampsFactory,
+            DelaySourceFactory,
             EventHandler,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,
@@ -121,6 +130,8 @@ public readonly record struct MessageBrokerServerOptions(
             value,
             AcceptableMessageTimeout,
             AcceptablePingInterval,
+            TimestampsFactory,
+            DelaySourceFactory,
             EventHandler,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,
@@ -144,6 +155,8 @@ public readonly record struct MessageBrokerServerOptions(
             HandshakeTimeout,
             value,
             AcceptablePingInterval,
+            TimestampsFactory,
+            DelaySourceFactory,
             EventHandler,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,
@@ -166,6 +179,58 @@ public readonly record struct MessageBrokerServerOptions(
             MinMemoryPoolSegmentLength,
             HandshakeTimeout,
             AcceptableMessageTimeout,
+            value,
+            TimestampsFactory,
+            DelaySourceFactory,
+            EventHandler,
+            ClientEventHandlerFactory,
+            ChannelEventHandlerFactory,
+            ChannelBindingEventHandlerFactory,
+            SubscriptionEventHandlerFactory,
+            StreamDecorator );
+    }
+
+    /// <summary>
+    /// Allows to change <see cref="TimestampsFactory"/>.
+    /// </summary>
+    /// <param name="value">New value.</param>
+    /// <returns>New <see cref="MessageBrokerServerOptions"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public MessageBrokerServerOptions SetTimestampsFactory(Func<MessageBrokerRemoteClient, ITimestampProvider>? value)
+    {
+        return new MessageBrokerServerOptions(
+            Tcp,
+            MinMemoryPoolSegmentLength,
+            HandshakeTimeout,
+            AcceptableMessageTimeout,
+            AcceptablePingInterval,
+            value,
+            DelaySourceFactory,
+            EventHandler,
+            ClientEventHandlerFactory,
+            ChannelEventHandlerFactory,
+            ChannelBindingEventHandlerFactory,
+            SubscriptionEventHandlerFactory,
+            StreamDecorator );
+    }
+
+    /// <summary>
+    /// Allows to change <see cref="DelaySourceFactory"/>.
+    /// </summary>
+    /// <param name="value">New value.</param>
+    /// <returns>New <see cref="MessageBrokerServerOptions"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public MessageBrokerServerOptions SetDelaySourceFactory(Func<MessageBrokerRemoteClient, ValueTaskDelaySource>? value)
+    {
+        return new MessageBrokerServerOptions(
+            Tcp,
+            MinMemoryPoolSegmentLength,
+            HandshakeTimeout,
+            AcceptableMessageTimeout,
+            AcceptablePingInterval,
+            TimestampsFactory,
             value,
             EventHandler,
             ClientEventHandlerFactory,
@@ -190,6 +255,8 @@ public readonly record struct MessageBrokerServerOptions(
             HandshakeTimeout,
             AcceptableMessageTimeout,
             AcceptablePingInterval,
+            TimestampsFactory,
+            DelaySourceFactory,
             value,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,
@@ -214,6 +281,8 @@ public readonly record struct MessageBrokerServerOptions(
             HandshakeTimeout,
             AcceptableMessageTimeout,
             AcceptablePingInterval,
+            TimestampsFactory,
+            DelaySourceFactory,
             EventHandler,
             value,
             ChannelEventHandlerFactory,
@@ -237,6 +306,8 @@ public readonly record struct MessageBrokerServerOptions(
             HandshakeTimeout,
             AcceptableMessageTimeout,
             AcceptablePingInterval,
+            TimestampsFactory,
+            DelaySourceFactory,
             EventHandler,
             ClientEventHandlerFactory,
             value,
@@ -261,6 +332,8 @@ public readonly record struct MessageBrokerServerOptions(
             HandshakeTimeout,
             AcceptableMessageTimeout,
             AcceptablePingInterval,
+            TimestampsFactory,
+            DelaySourceFactory,
             EventHandler,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,
@@ -285,6 +358,8 @@ public readonly record struct MessageBrokerServerOptions(
             HandshakeTimeout,
             AcceptableMessageTimeout,
             AcceptablePingInterval,
+            TimestampsFactory,
+            DelaySourceFactory,
             EventHandler,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,
@@ -308,6 +383,8 @@ public readonly record struct MessageBrokerServerOptions(
             HandshakeTimeout,
             AcceptableMessageTimeout,
             AcceptablePingInterval,
+            TimestampsFactory,
+            DelaySourceFactory,
             EventHandler,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,

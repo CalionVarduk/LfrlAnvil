@@ -134,7 +134,7 @@ internal readonly struct ListenerCollection
                 if ( client.ShouldCancel )
                     return client.DisposedException();
 
-                client.SynchronousScheduler.PausePing();
+                client.EventScheduler.PausePing();
                 responseSource = client.MessageContextQueue.AcquirePendingResponseSource( contextId, request.Header.GetServerEndpoint() );
             }
 
@@ -152,7 +152,7 @@ internal readonly struct ListenerCollection
 
                 client.MessageContextQueue.ResetOutgoingWriter( client, writerSource );
                 client.MessageContextQueue.ActivatePendingResponseSource( client, responseSource );
-                client.SynchronousScheduler.SchedulePing( client );
+                client.EventScheduler.SchedulePing( client );
             }
         }
         catch ( Exception exc )
@@ -323,7 +323,7 @@ internal readonly struct ListenerCollection
                 if ( client.ShouldCancel )
                     return client.DisposedException();
 
-                client.SynchronousScheduler.PausePing();
+                client.EventScheduler.PausePing();
                 responseSource = client.MessageContextQueue.AcquirePendingResponseSource( contextId, request.Header.GetServerEndpoint() );
             }
 
@@ -341,7 +341,7 @@ internal readonly struct ListenerCollection
 
                 client.MessageContextQueue.ResetOutgoingWriter( client, writerSource );
                 client.MessageContextQueue.ActivatePendingResponseSource( client, responseSource );
-                client.SynchronousScheduler.SchedulePing( client );
+                client.EventScheduler.SchedulePing( client );
             }
         }
         catch ( Exception exc )

@@ -20,7 +20,6 @@ public partial class MessageBrokerClientTests
             var remoteEndPoint = server.Start();
 
             await using var client = new MessageBrokerClient(
-                new TimestampProvider(),
                 remoteEndPoint,
                 "test",
                 MessageBrokerClientOptions.Default
@@ -84,7 +83,6 @@ public partial class MessageBrokerClientTests
             var remoteEndPoint = server.Start();
 
             await using var client = new MessageBrokerClient(
-                new TimestampProvider(),
                 remoteEndPoint,
                 "test",
                 MessageBrokerClientOptions.Default
@@ -141,7 +139,6 @@ public partial class MessageBrokerClientTests
             var remoteEndPoint = server.Start();
 
             await using var client = new MessageBrokerClient(
-                new TimestampProvider(),
                 remoteEndPoint,
                 "test",
                 MessageBrokerClientOptions.Default
@@ -199,7 +196,6 @@ public partial class MessageBrokerClientTests
             var remoteEndPoint = server.Start();
 
             await using var client = new MessageBrokerClient(
-                new TimestampProvider(),
                 remoteEndPoint,
                 "test",
                 MessageBrokerClientOptions.Default
@@ -255,7 +251,6 @@ public partial class MessageBrokerClientTests
             var remoteEndPoint = server.Start();
 
             await using var client = new MessageBrokerClient(
-                new TimestampProvider(),
                 remoteEndPoint,
                 "test",
                 MessageBrokerClientOptions.Default

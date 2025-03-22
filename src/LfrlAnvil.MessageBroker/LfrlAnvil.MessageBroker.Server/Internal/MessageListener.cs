@@ -90,7 +90,7 @@ internal struct MessageListener
                     if ( client.ShouldCancel )
                         return TaskStopReason.OwnerDisposed;
 
-                    timeoutToken = client.SynchronousScheduler.ScheduleMaxReadTimeout( client );
+                    timeoutToken = client.EventScheduler.ScheduleMaxReadTimeout( client );
                 }
 
                 await stream.ReadExactlyAsync( buffer, timeoutToken ).ConfigureAwait( false );
@@ -139,7 +139,7 @@ internal struct MessageListener
                     return TaskStopReason.OwnerDisposed;
                 }
 
-                client.SynchronousScheduler.ResetReadTimeout();
+                client.EventScheduler.ResetReadTimeout();
                 client.MessageContextQueue.EnqueueRequest( header, packetBufferToken, packetBuffer );
                 client.RequestHandler.SignalContinuation();
             }

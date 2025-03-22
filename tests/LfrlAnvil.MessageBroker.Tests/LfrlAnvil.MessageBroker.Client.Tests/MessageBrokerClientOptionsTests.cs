@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.Diagnostics;
 using LfrlAnvil.MessageBroker.Client.Events;
 
@@ -18,6 +19,8 @@ public class MessageBrokerClientOptionsTests : TestsBase
                 sut.ConnectionTimeout.TestNull(),
                 sut.DesiredMessageTimeout.TestNull(),
                 sut.DesiredPingInterval.TestNull(),
+                sut.Timestamps.TestNull(),
+                sut.DelaySource.TestNull(),
                 sut.EventHandler.TestNull(),
                 sut.StreamDecorator.TestNull() )
             .Go();
@@ -37,6 +40,8 @@ public class MessageBrokerClientOptionsTests : TestsBase
                 result.ConnectionTimeout.TestEquals( sut.ConnectionTimeout ),
                 result.DesiredMessageTimeout.TestEquals( sut.DesiredMessageTimeout ),
                 result.DesiredPingInterval.TestEquals( sut.DesiredPingInterval ),
+                result.Timestamps.TestEquals( sut.Timestamps ),
+                result.DelaySource.TestEquals( sut.DelaySource ),
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
@@ -56,6 +61,8 @@ public class MessageBrokerClientOptionsTests : TestsBase
                 result.ConnectionTimeout.TestEquals( sut.ConnectionTimeout ),
                 result.DesiredMessageTimeout.TestEquals( sut.DesiredMessageTimeout ),
                 result.DesiredPingInterval.TestEquals( sut.DesiredPingInterval ),
+                result.Timestamps.TestEquals( sut.Timestamps ),
+                result.DelaySource.TestEquals( sut.DelaySource ),
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
@@ -75,6 +82,8 @@ public class MessageBrokerClientOptionsTests : TestsBase
                 result.ConnectionTimeout.TestEquals( value ),
                 result.DesiredMessageTimeout.TestEquals( sut.DesiredMessageTimeout ),
                 result.DesiredPingInterval.TestEquals( sut.DesiredPingInterval ),
+                result.Timestamps.TestEquals( sut.Timestamps ),
+                result.DelaySource.TestEquals( sut.DelaySource ),
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
@@ -94,6 +103,8 @@ public class MessageBrokerClientOptionsTests : TestsBase
                 result.ConnectionTimeout.TestEquals( sut.ConnectionTimeout ),
                 result.DesiredMessageTimeout.TestEquals( value ),
                 result.DesiredPingInterval.TestEquals( sut.DesiredPingInterval ),
+                result.Timestamps.TestEquals( sut.Timestamps ),
+                result.DelaySource.TestEquals( sut.DelaySource ),
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
@@ -113,7 +124,51 @@ public class MessageBrokerClientOptionsTests : TestsBase
                 result.ConnectionTimeout.TestEquals( sut.ConnectionTimeout ),
                 result.DesiredMessageTimeout.TestEquals( sut.DesiredMessageTimeout ),
                 result.DesiredPingInterval.TestEquals( value ),
+                result.Timestamps.TestEquals( sut.Timestamps ),
+                result.DelaySource.TestEquals( sut.DelaySource ),
                 result.EventHandler.TestEquals( sut.EventHandler ),
+                result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetTimestamps_ShouldChangeValue()
+    {
+        var value = new TimestampProvider();
+        var sut = MessageBrokerClientOptions.Default;
+
+        var result = sut.SetTimestamps( value );
+
+        Assertion.All(
+                result.Tcp.TestEquals( sut.Tcp ),
+                result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
+                result.ConnectionTimeout.TestEquals( sut.ConnectionTimeout ),
+                result.DesiredMessageTimeout.TestEquals( sut.DesiredMessageTimeout ),
+                result.DesiredPingInterval.TestEquals( sut.DesiredPingInterval ),
+                result.Timestamps.TestEquals( value ),
+                result.DelaySource.TestEquals( sut.DelaySource ),
+                result.EventHandler.TestRefEquals( sut.EventHandler ),
+                result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetDelaySource_ShouldChangeValue()
+    {
+        using var value = ValueTaskDelaySource.Start();
+        var sut = MessageBrokerClientOptions.Default;
+
+        var result = sut.SetDelaySource( value );
+
+        Assertion.All(
+                result.Tcp.TestEquals( sut.Tcp ),
+                result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
+                result.ConnectionTimeout.TestEquals( sut.ConnectionTimeout ),
+                result.DesiredMessageTimeout.TestEquals( sut.DesiredMessageTimeout ),
+                result.DesiredPingInterval.TestEquals( sut.DesiredPingInterval ),
+                result.Timestamps.TestEquals( sut.Timestamps ),
+                result.DelaySource.TestEquals( value ),
+                result.EventHandler.TestRefEquals( sut.EventHandler ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -132,6 +187,8 @@ public class MessageBrokerClientOptionsTests : TestsBase
                 result.ConnectionTimeout.TestEquals( sut.ConnectionTimeout ),
                 result.DesiredMessageTimeout.TestEquals( sut.DesiredMessageTimeout ),
                 result.DesiredPingInterval.TestEquals( sut.DesiredPingInterval ),
+                result.Timestamps.TestEquals( sut.Timestamps ),
+                result.DelaySource.TestEquals( sut.DelaySource ),
                 result.EventHandler.TestRefEquals( value ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
@@ -151,6 +208,8 @@ public class MessageBrokerClientOptionsTests : TestsBase
                 result.ConnectionTimeout.TestEquals( sut.ConnectionTimeout ),
                 result.DesiredMessageTimeout.TestEquals( sut.DesiredMessageTimeout ),
                 result.DesiredPingInterval.TestEquals( sut.DesiredPingInterval ),
+                result.Timestamps.TestEquals( sut.Timestamps ),
+                result.DelaySource.TestEquals( sut.DelaySource ),
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.StreamDecorator.TestRefEquals( value ) )
             .Go();
