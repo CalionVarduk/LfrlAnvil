@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 namespace LfrlAnvil.Extensions;
 
@@ -346,6 +347,28 @@ public static class ObjectExtensions
         try
         {
             obj.Dispose();
+            return Result.Valid;
+        }
+        catch ( Exception exc )
+        {
+            return Result.Error( exc );
+        }
+    }
+
+    /// <summary>
+    /// Attempts to asynchronously dispose the provided object.
+    /// </summary>
+    /// <param name="obj">Object to dispose.</param>
+    /// <returns>
+    /// <see cref="ValueTask{TResult}"/> with underlying <see cref="Result"/> instance
+    /// that specifies whether or not the disposal operation was successful.
+    /// </returns>
+    public static async ValueTask<Result> TryDisposeAsync<T>(this T obj)
+        where T : IAsyncDisposable
+    {
+        try
+        {
+            await obj.DisposeAsync();
             return Result.Valid;
         }
         catch ( Exception exc )
