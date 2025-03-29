@@ -28,10 +28,11 @@ public sealed class MessageBrokerChannelBinding
     private readonly MessageBrokerChannelBindingEventHandler? _eventHandler;
     private MessageBrokerChannelBindingState _state;
 
-    internal MessageBrokerChannelBinding(MessageBrokerRemoteClient client, MessageBrokerChannel channel)
+    internal MessageBrokerChannelBinding(MessageBrokerRemoteClient client, MessageBrokerChannel channel, MessageBrokerQueue queue)
     {
         Client = client;
         Channel = channel;
+        Queue = queue;
         _state = MessageBrokerChannelBindingState.Running;
         _eventHandler = client.Server.ChannelBindingEventHandlerFactory?.Invoke( this );
     }
@@ -45,6 +46,11 @@ public sealed class MessageBrokerChannelBinding
     /// <see cref="MessageBrokerChannel"/> instance to which the <see cref="Client"/> is bound to.
     /// </summary>
     public MessageBrokerChannel Channel { get; }
+
+    /// <summary>
+    /// <see cref="MessageBrokerQueue"/> instance to which this binding will push messages.
+    /// </summary>
+    public MessageBrokerQueue Queue { get; }
 
     /// <summary>
     /// Current binding's state.
@@ -68,17 +74,18 @@ public sealed class MessageBrokerChannelBinding
     [Pure]
     public override string ToString()
     {
-        return $"[{Client.Id}] '{Client.Name}' => [{Channel.Id}] '{Channel.Name}' binding ({State})";
+        return
+            $"[{Client.Id}] '{Client.Name}' => [{Channel.Id}] '{Channel.Name}' binding (using [{Queue.Id}] '{Queue.Name}' queue) ({State})";
     }
 
     internal void OnServerDisposed()
     {
-        Dispose( notifyChannel: false );
+        Dispose( notifyReferences: false );
     }
 
     internal void OnClientDisconnected()
     {
-        Dispose( notifyChannel: true );
+        Dispose( notifyReferences: true );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -122,7 +129,7 @@ public sealed class MessageBrokerChannelBinding
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void Dispose(bool notifyChannel)
+    private void Dispose(bool notifyReferences)
     {
         using ( AcquireLock() )
         {
@@ -134,7 +141,10 @@ public sealed class MessageBrokerChannelBinding
 
         Emit( MessageBrokerChannelBindingEvent.Disposing( this ) );
 
-        if ( notifyChannel )
+        if ( notifyReferences )
+            Queue.OnBindingDisposing( Client, Channel );
+
+        if ( notifyReferences )
             Channel.OnBindingDisposing( Client );
 
         EndDisposing();

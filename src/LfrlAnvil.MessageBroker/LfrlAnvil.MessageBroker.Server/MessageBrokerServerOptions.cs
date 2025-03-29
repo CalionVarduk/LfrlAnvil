@@ -41,6 +41,7 @@ namespace LfrlAnvil.MessageBroker.Server;
 /// <param name="EventHandler"><see cref="MessageBrokerServerEvent"/> callback.</param>
 /// <param name="ClientEventHandlerFactory">Factory of <see cref="MessageBrokerRemoteClientEventHandler"/> callbacks.</param>
 /// <param name="ChannelEventHandlerFactory">Factory of <see cref="MessageBrokerChannelEventHandler"/> callbacks.</param>
+/// <param name="ChannelEventHandlerFactory">Factory of <see cref="MessageBrokerQueueEventHandler"/> callbacks.</param>
 /// <param name="ChannelBindingEventHandlerFactory">Factory of <see cref="MessageBrokerChannelBindingEventHandler"/> callbacks.</param>
 /// <param name="SubscriptionEventHandlerFactory">Factory of <see cref="MessageBrokerSubscriptionEventHandler"/> callbacks.</param>
 /// <param name="StreamDecorator"><see cref="MessageBrokerRemoteClientStreamDecorator"/> callback.</param>
@@ -55,6 +56,7 @@ public readonly record struct MessageBrokerServerOptions(
     MessageBrokerServerEventHandler? EventHandler,
     Func<MessageBrokerRemoteClient, MessageBrokerRemoteClientEventHandler?>? ClientEventHandlerFactory,
     Func<MessageBrokerChannel, MessageBrokerChannelEventHandler?>? ChannelEventHandlerFactory,
+    Func<MessageBrokerQueue, MessageBrokerQueueEventHandler?>? QueueEventHandlerFactory,
     Func<MessageBrokerChannelBinding, MessageBrokerChannelBindingEventHandler?>? ChannelBindingEventHandlerFactory,
     Func<MessageBrokerSubscription, MessageBrokerSubscriptionEventHandler?>? SubscriptionEventHandlerFactory,
     MessageBrokerRemoteClientStreamDecorator? StreamDecorator
@@ -85,6 +87,7 @@ public readonly record struct MessageBrokerServerOptions(
             EventHandler,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,
+            QueueEventHandlerFactory,
             ChannelBindingEventHandlerFactory,
             SubscriptionEventHandlerFactory,
             StreamDecorator );
@@ -110,6 +113,7 @@ public readonly record struct MessageBrokerServerOptions(
             EventHandler,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,
+            QueueEventHandlerFactory,
             ChannelBindingEventHandlerFactory,
             SubscriptionEventHandlerFactory,
             StreamDecorator );
@@ -135,6 +139,7 @@ public readonly record struct MessageBrokerServerOptions(
             EventHandler,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,
+            QueueEventHandlerFactory,
             ChannelBindingEventHandlerFactory,
             SubscriptionEventHandlerFactory,
             StreamDecorator );
@@ -160,6 +165,7 @@ public readonly record struct MessageBrokerServerOptions(
             EventHandler,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,
+            QueueEventHandlerFactory,
             ChannelBindingEventHandlerFactory,
             SubscriptionEventHandlerFactory,
             StreamDecorator );
@@ -185,6 +191,7 @@ public readonly record struct MessageBrokerServerOptions(
             EventHandler,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,
+            QueueEventHandlerFactory,
             ChannelBindingEventHandlerFactory,
             SubscriptionEventHandlerFactory,
             StreamDecorator );
@@ -210,6 +217,7 @@ public readonly record struct MessageBrokerServerOptions(
             EventHandler,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,
+            QueueEventHandlerFactory,
             ChannelBindingEventHandlerFactory,
             SubscriptionEventHandlerFactory,
             StreamDecorator );
@@ -235,6 +243,7 @@ public readonly record struct MessageBrokerServerOptions(
             EventHandler,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,
+            QueueEventHandlerFactory,
             ChannelBindingEventHandlerFactory,
             SubscriptionEventHandlerFactory,
             StreamDecorator );
@@ -260,6 +269,7 @@ public readonly record struct MessageBrokerServerOptions(
             value,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,
+            QueueEventHandlerFactory,
             ChannelBindingEventHandlerFactory,
             SubscriptionEventHandlerFactory,
             StreamDecorator );
@@ -286,6 +296,7 @@ public readonly record struct MessageBrokerServerOptions(
             EventHandler,
             value,
             ChannelEventHandlerFactory,
+            QueueEventHandlerFactory,
             ChannelBindingEventHandlerFactory,
             SubscriptionEventHandlerFactory,
             StreamDecorator );
@@ -310,6 +321,33 @@ public readonly record struct MessageBrokerServerOptions(
             DelaySourceFactory,
             EventHandler,
             ClientEventHandlerFactory,
+            value,
+            QueueEventHandlerFactory,
+            ChannelBindingEventHandlerFactory,
+            SubscriptionEventHandlerFactory,
+            StreamDecorator );
+    }
+
+    /// <summary>
+    /// Allows to change <see cref="QueueEventHandlerFactory"/>.
+    /// </summary>
+    /// <param name="value">New value.</param>
+    /// <returns>New <see cref="MessageBrokerServerOptions"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public MessageBrokerServerOptions SetQueueEventHandlerFactory(Func<MessageBrokerQueue, MessageBrokerQueueEventHandler?>? value)
+    {
+        return new MessageBrokerServerOptions(
+            Tcp,
+            MinMemoryPoolSegmentLength,
+            HandshakeTimeout,
+            AcceptableMessageTimeout,
+            AcceptablePingInterval,
+            TimestampsFactory,
+            DelaySourceFactory,
+            EventHandler,
+            ClientEventHandlerFactory,
+            ChannelEventHandlerFactory,
             value,
             ChannelBindingEventHandlerFactory,
             SubscriptionEventHandlerFactory,
@@ -337,6 +375,7 @@ public readonly record struct MessageBrokerServerOptions(
             EventHandler,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,
+            QueueEventHandlerFactory,
             value,
             SubscriptionEventHandlerFactory,
             StreamDecorator );
@@ -363,6 +402,7 @@ public readonly record struct MessageBrokerServerOptions(
             EventHandler,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,
+            QueueEventHandlerFactory,
             ChannelBindingEventHandlerFactory,
             value,
             StreamDecorator );
@@ -388,6 +428,7 @@ public readonly record struct MessageBrokerServerOptions(
             EventHandler,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,
+            QueueEventHandlerFactory,
             ChannelBindingEventHandlerFactory,
             SubscriptionEventHandlerFactory,
             value );

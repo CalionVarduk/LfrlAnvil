@@ -44,7 +44,12 @@ public readonly struct MessageBrokerBindResult
     /// <summary>
     /// Specifies whether or not a new channel has been created by the server.
     /// </summary>
-    public bool ChannelCreated => _state == 2;
+    public bool ChannelCreated => (_state & 2) != 0;
+
+    /// <summary>
+    /// Specifies whether or not a new queue has been created by the server.
+    /// </summary>
+    public bool QueueCreated => (_state & 4) != 0;
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerBindResult"/> instance.
@@ -53,19 +58,19 @@ public readonly struct MessageBrokerBindResult
     [Pure]
     public override string ToString()
     {
-        return _state switch
-        {
-            1 => $"{Publisher} (already bound)",
-            2 => $"{Publisher} (channel created)",
-            _ => Publisher.ToString()
-        };
+        if ( _state == 1 )
+            return $"{Publisher} (already bound)";
+
+        var channelCreated = ChannelCreated ? " (channel created)" : string.Empty;
+        var queueCreated = QueueCreated ? " (queue created)" : string.Empty;
+        return $"{Publisher}{channelCreated}{queueCreated}";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerBindResult Create(MessageBrokerPublisher publisher, bool channelCreated)
+    internal static MessageBrokerBindResult Create(MessageBrokerPublisher publisher, bool channelCreated, bool queueCreated)
     {
-        return new MessageBrokerBindResult( publisher, ( byte )(channelCreated ? 2 : 0) );
+        return new MessageBrokerBindResult( publisher, ( byte )((channelCreated ? 2 : 0) | (queueCreated ? 4 : 0)) );
     }
 
     [Pure]

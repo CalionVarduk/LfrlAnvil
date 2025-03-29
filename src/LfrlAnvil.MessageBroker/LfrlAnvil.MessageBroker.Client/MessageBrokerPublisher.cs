@@ -29,11 +29,13 @@ public sealed class MessageBrokerPublisher
     private readonly object _sync = new object();
     private MessageBrokerPublisherState _state;
 
-    internal MessageBrokerPublisher(MessageBrokerClient client, int channelId, string channelName)
+    internal MessageBrokerPublisher(MessageBrokerClient client, int channelId, string channelName, int queueId, string queueName)
     {
         Client = client;
         ChannelId = channelId;
         ChannelName = channelName;
+        QueueId = queueId;
+        QueueName = queueName;
         _state = MessageBrokerPublisherState.Bound;
     }
 
@@ -51,6 +53,16 @@ public sealed class MessageBrokerPublisher
     /// Unique name of the channel to which this publisher is related.
     /// </summary>
     public string ChannelName { get; }
+
+    /// <summary>
+    /// Unique id of the queue to which this publisher is pushing messages.
+    /// </summary>
+    public int QueueId { get; }
+
+    /// <summary>
+    /// Unique name of the queue to which this publisher is pushing messages.
+    /// </summary>
+    public string QueueName { get; }
 
     /// <summary>
     /// Current publisher's state.
@@ -72,7 +84,8 @@ public sealed class MessageBrokerPublisher
     [Pure]
     public override string ToString()
     {
-        return $"[{Client.Id}] '{Client.Name}' => [{ChannelId}] '{ChannelName}' publisher ({State})";
+        return
+            $"[{Client.Id}] '{Client.Name}' => [{ChannelId}] '{ChannelName}' publisher (using [{QueueId}] '{QueueName}' queue) ({State})";
     }
 
     /// <summary>
@@ -117,6 +130,6 @@ public sealed class MessageBrokerPublisher
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private ExclusiveLock AcquireLock()
     {
-        return ExclusiveLock.Enter( _sync );
+        return ExclusiveLock.SpinWaitEnter( _sync, spinWaitMultiplier: 4 );
     }
 }

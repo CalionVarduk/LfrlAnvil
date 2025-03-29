@@ -103,6 +103,29 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string InvalidChannelNameLength(int length)
+    {
+        return
+            $"Expected channel name length to be in [{Defaults.NameLengthBounds.Min}, {Defaults.NameLengthBounds.Max}] range but found {length}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string InvalidQueueNameLength(int length)
+    {
+        return
+            $"Expected queue name length to be in [{Defaults.NameLengthBounds.Min}, {Defaults.NameLengthBounds.Max}] range but found {length}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string InvalidBinaryChannelNameLength(int length, int maxLength)
+    {
+        return $"Expected binary channel name length to be in [0, {maxLength}] range but found {length}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string DuplicateClientName(string name)
     {
         return $"Client with name '{name}' already exists.";

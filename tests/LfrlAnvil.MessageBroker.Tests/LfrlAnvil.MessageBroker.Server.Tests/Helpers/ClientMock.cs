@@ -148,15 +148,26 @@ internal sealed class ClientMock : IDisposable
         Send( buffer );
     }
 
-    internal void SendBindRequest(string channelName, uint? payload = null)
+    internal void SendBindRequest(string channelName, string? queueName = null, int? channelNameLength = null, uint? payload = null)
     {
-        var preparedName = EncodeableText.Create( TextEncoding.Instance, channelName ).GetValueOrThrow();
-        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.BindRequestHeader.Length + preparedName.ByteCount];
+        var preparedChannelName = EncodeableText.Create( TextEncoding.Instance, channelName ).GetValueOrThrow();
+        var preparedQueueName = EncodeableText.Create( TextEncoding.Instance, queueName ?? string.Empty ).GetValueOrThrow();
+        var buffer = new byte[Protocol.PacketHeader.Length
+            + Protocol.BindRequestHeader.Length
+            + preparedChannelName.ByteCount
+            + preparedQueueName.ByteCount];
+
         var writer = new BinaryContractWriter( buffer );
         writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.BindRequest );
-        writer.MoveWrite( payload ?? ( uint )(Protocol.BindRequestHeader.Length + preparedName.ByteCount) );
+        writer.MoveWrite(
+            payload ?? ( uint )(Protocol.BindRequestHeader.Length + preparedChannelName.ByteCount + preparedQueueName.ByteCount) );
+
         writer.MoveWrite( 0 );
-        preparedName.Encode( writer.GetSpan( preparedName.ByteCount ) ).ThrowIfError();
+        writer.MoveWrite( unchecked( ( uint )(channelNameLength ?? preparedChannelName.ByteCount) ) );
+        preparedChannelName.Encode( writer.GetSpan( preparedChannelName.ByteCount ) ).ThrowIfError();
+        writer.Move( preparedChannelName.ByteCount );
+        preparedQueueName.Encode( writer.GetSpan( preparedQueueName.ByteCount ) ).ThrowIfError();
+
         Send( buffer );
     }
 

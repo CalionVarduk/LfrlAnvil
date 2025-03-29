@@ -57,6 +57,6 @@ internal readonly struct BinaryBufferToken : IDisposable
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private ExclusiveLock AcquireLock()
     {
-        return _token.Owner is not null ? ExclusiveLock.Enter( _token.Owner ) : default;
+        return _token.Owner is not null ? ExclusiveLock.SpinWaitEnter( _token.Owner, spinWaitMultiplier: 4 ) : default;
     }
 }

@@ -116,6 +116,7 @@ internal struct RequestHandler
                     request = client.MessageContextQueue.DequeueRequest();
                 }
 
+                var disposeBuffer = true;
                 var bufferToken = request.BufferToken;
                 try
                 {
@@ -139,6 +140,10 @@ internal struct RequestHandler
                         _ => HandleUnexpectedRequest( client, request.Header )
                     };
 
+                    // TODO:
+                    // ugh, either move token disposal to each handle method (<= preferred, I think... less spaghet)
+                    // or maybe return token-to-dispose in the 'result'
+                    disposeBuffer = result.DisposeBuffer;
                     if ( result.StopReason is not null )
                         return result.StopReason.Value;
 
@@ -146,7 +151,8 @@ internal struct RequestHandler
                 }
                 finally
                 {
-                    client.DisposeBufferToken( bufferToken );
+                    if ( disposeBuffer )
+                        client.DisposeBufferToken( bufferToken );
                 }
             }
             while ( containsEnqueuedRequests );
@@ -185,8 +191,26 @@ internal struct RequestHandler
             return HandleRequestResult.Error();
         }
 
-        _ = Protocol.BindRequestHeader.Parse( data.Slice( 0, Protocol.BindRequestHeader.Length ) );
-        var channelName = TextEncoding.Parse( data.Slice( Protocol.BindRequestHeader.Length ) );
+        var parsedRequestHeader = Protocol.BindRequestHeader.Parse( data.Slice( 0, Protocol.BindRequestHeader.Length ) );
+        var maxChannelNameLength = data.Length - Protocol.BindRequestHeader.Length;
+
+        if ( parsedRequestHeader.ChannelNameLength < 0 || parsedRequestHeader.ChannelNameLength > maxChannelNameLength )
+        {
+            client.Emit(
+                MessageBrokerRemoteClientEvent.MessageRejected(
+                    client,
+                    request.Header,
+                    Protocol.InvalidBinaryChannelNameLengthException(
+                        client,
+                        request.Header,
+                        parsedRequestHeader.ChannelNameLength,
+                        maxChannelNameLength ),
+                    contextId ) );
+
+            return HandleRequestResult.Error();
+        }
+
+        var channelName = TextEncoding.Parse( data.Slice( Protocol.BindRequestHeader.Length, parsedRequestHeader.ChannelNameLength ) );
         if ( channelName.Exception is not null )
         {
             client.Emit( MessageBrokerRemoteClientEvent.MessageRejected( client, request.Header, channelName.Exception, contextId ) );
@@ -200,16 +224,41 @@ internal struct RequestHandler
                 MessageBrokerRemoteClientEvent.MessageRejected(
                     client,
                     request.Header,
-                    Protocol.InvalidNameLengthException( client, request.Header, channelName.Value.Length ),
+                    Protocol.InvalidChannelNameLengthException( client, request.Header, channelName.Value.Length ),
                     contextId ) );
 
             return HandleRequestResult.Error();
         }
 
+        var queueName = TextEncoding.Parse( data.Slice( Protocol.BindRequestHeader.Length + parsedRequestHeader.ChannelNameLength ) );
+        if ( queueName.Exception is not null )
+        {
+            client.Emit( MessageBrokerRemoteClientEvent.MessageRejected( client, request.Header, queueName.Exception, contextId ) );
+            return HandleRequestResult.Error();
+        }
+
+        Assume.IsNotNull( queueName.Value );
+        if ( queueName.Value.Length > Defaults.NameLengthBounds.Max )
+        {
+            client.Emit(
+                MessageBrokerRemoteClientEvent.MessageRejected(
+                    client,
+                    request.Header,
+                    Protocol.InvalidQueueNameLengthException( client, request.Header, queueName.Value.Length ),
+                    contextId ) );
+
+            return HandleRequestResult.Error();
+        }
+
+        if ( queueName.Value.Length == 0 )
+            queueName = channelName;
+
         bool channelCreated;
+        var queueCreated = false;
         MessageBrokerChannel? channel;
+        MessageBrokerQueue? queue = null;
         MessageBrokerChannelBinding? binding = null;
-        var rejectionReasons = Protocol.BindFailureResponse.Reasons.None;
+        Protocol.BindFailureResponse.Reasons rejectionReasons;
         ManualResetValueTaskSource<bool> writerSource;
 
         using ( client.Server.AcquireLock() )
@@ -217,18 +266,29 @@ internal struct RequestHandler
             if ( client.Server.ShouldCancel )
                 return HandleRequestResult.OwnerDisposed();
 
-            channel = ChannelCollection.RegisterUnsafe( client.Server, channelName.Value, out channelCreated );
             using ( client.AcquireLock() )
             {
                 if ( client.ShouldCancel )
                     return HandleRequestResult.OwnerDisposed();
 
-                using ( channel.AcquireLock() )
+                channel = ChannelCollection.RegisterUnsafe( client.Server, channelName.Value, out channelCreated );
+                try
                 {
-                    if ( channel.ShouldCancel )
-                        rejectionReasons = Protocol.BindFailureResponse.Reasons.Cancelled;
-                    else if ( ! client.BindUnsafe( channel, out binding ) )
-                        rejectionReasons = Protocol.BindFailureResponse.Reasons.AlreadyBound;
+                    rejectionReasons = client.BindUnsafe(
+                        channel,
+                        channelCreated,
+                        queueName.Value,
+                        ref binding,
+                        ref queue,
+                        ref queueCreated );
+                }
+                catch
+                {
+                    // TODO: do that too when subscribing fails
+                    if ( channelCreated )
+                        ChannelCollection.RemoveUnsafe( channel );
+
+                    throw;
                 }
 
                 // TODO:
@@ -260,8 +320,7 @@ internal struct RequestHandler
 
             var responseLength = Protocol.PacketHeader.Length + Protocol.BindFailureResponse.Payload;
             var response = new Protocol.BindFailureResponse( rejectionReasons );
-            if ( data.Length < responseLength )
-                data = bufferToken.SetLength( responseLength );
+            Assume.IsGreaterThanOrEqualTo( data.Length, responseLength );
 
             responseHeader = response.Header;
             responseData = data.Slice( 0, responseLength );
@@ -270,16 +329,20 @@ internal struct RequestHandler
         else
         {
             Assume.IsNotNull( channel );
+            Assume.IsNotNull( queue );
             Assume.IsNotNull( binding );
 
             if ( channelCreated )
                 channel.Emit( MessageBrokerChannelEvent.Created( channel, client, contextId ) );
 
+            if ( queueCreated )
+                queue.Emit( MessageBrokerQueueEvent.Created( queue, binding, contextId ) );
+
             binding.Emit( MessageBrokerChannelBindingEvent.Created( binding, contextId ) );
             client.Emit( MessageBrokerRemoteClientEvent.MessageAccepted( client, request.Header, contextId ) );
 
             var responseLength = Protocol.PacketHeader.Length + Protocol.BoundResponse.Payload;
-            var response = new Protocol.BoundResponse( channelCreated, channel.Id );
+            var response = new Protocol.BoundResponse( channelCreated, queueCreated, channel.Id, queue.Id );
             if ( data.Length < responseLength )
                 data = bufferToken.SetLength( responseLength );
 
@@ -325,8 +388,10 @@ internal struct RequestHandler
         var parsedRequest = Protocol.UnbindRequest.Parse( data );
 
         var disposingChannel = false;
+        var disposingQueue = false;
         MessageBrokerChannelBinding? binding = null;
-        var rejectionReasons = Protocol.UnbindFailureResponse.Reasons.None;
+        MessageBrokerQueue? queue = null;
+        Protocol.UnbindFailureResponse.Reasons rejectionReasons;
 
         var channel = ChannelCollection.TryGetById( client.Server, parsedRequest.ChannelId );
         if ( channel is null )
@@ -338,12 +403,7 @@ internal struct RequestHandler
                 if ( client.ShouldCancel )
                     return HandleRequestResult.OwnerDisposed();
 
-                using ( channel.AcquireLock() )
-                {
-                    binding = channel.BeginUnbindingUnsafe( client, out disposingChannel );
-                    if ( binding is null )
-                        rejectionReasons = Protocol.UnbindFailureResponse.Reasons.NotBound;
-                }
+                rejectionReasons = client.BeginUnbindUnsafe( channel, ref binding, ref queue, ref disposingChannel, ref disposingQueue );
             }
         }
 
@@ -381,18 +441,21 @@ internal struct RequestHandler
         else
         {
             Assume.IsNotNull( channel );
+            Assume.IsNotNull( queue );
             Assume.IsNotNull( binding );
 
             binding.Emit( MessageBrokerChannelBindingEvent.Disposing( binding, contextId ) );
+            if ( disposingQueue )
+                queue.DisposeDueToLackOfReferences();
+
             if ( disposingChannel )
                 channel.DisposeDueToLackOfReferences();
 
             binding.EndDisposing();
-
             client.Emit( MessageBrokerRemoteClientEvent.MessageAccepted( client, request.Header, contextId ) );
 
             var responseLength = Protocol.PacketHeader.Length + Protocol.UnboundResponse.Payload;
-            var response = new Protocol.UnboundResponse( disposingChannel );
+            var response = new Protocol.UnboundResponse( disposingChannel, disposingQueue );
             if ( data.Length < responseLength )
                 data = bufferToken.SetLength( responseLength );
 
@@ -470,7 +533,7 @@ internal struct RequestHandler
             return HandleRequestResult.Error();
         }
 
-        bool channelCreated;
+        var channelCreated = false;
         MessageBrokerChannel? channel;
         MessageBrokerSubscription? subscription = null;
         var rejectionReasons = Protocol.SubscribeFailureResponse.Reasons.None;
@@ -481,11 +544,14 @@ internal struct RequestHandler
             if ( client.Server.ShouldCancel )
                 return HandleRequestResult.OwnerDisposed();
 
+            // TODO: move inside client lock
+            // creating a channel without it may allow client to be disconnected at the same time
+            // which would leave newly created channel without any bindings/subscriptions
             channel = ChannelCollection.TryRegisterUnsafe(
                 client.Server,
                 channelName.Value,
                 parsedRequest.CreateChannelIfNotExists,
-                out channelCreated );
+                ref channelCreated );
 
             if ( channel is null )
             {
@@ -505,6 +571,7 @@ internal struct RequestHandler
                     if ( client.ShouldCancel )
                         return HandleRequestResult.OwnerDisposed();
 
+                    // TODO: modify SubscribeUnsafe to be similar to BindUnsafe
                     using ( channel.AcquireLock() )
                     {
                         if ( channel.ShouldCancel )
@@ -619,6 +686,7 @@ internal struct RequestHandler
                 if ( client.ShouldCancel )
                     return HandleRequestResult.OwnerDisposed();
 
+                // TODO: move to client.BeginUnsubscribeUnsafe
                 using ( channel.AcquireLock() )
                 {
                     subscription = channel.BeginUnsubscribingUnsafe( client, out disposingChannel );
@@ -763,27 +831,27 @@ internal struct RequestHandler
         return HandleRequestResult.Error();
     }
 
-    private readonly record struct HandleRequestResult(TaskStopReason? StopReason, bool ContainsEnqueuedRequests)
+    private readonly record struct HandleRequestResult(TaskStopReason? StopReason, bool ContainsEnqueuedRequests, bool DisposeBuffer)
     {
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal static HandleRequestResult Error()
         {
-            return new HandleRequestResult( TaskStopReason.Error, false );
+            return new HandleRequestResult( TaskStopReason.Error, false, true );
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal static HandleRequestResult OwnerDisposed()
         {
-            return new HandleRequestResult( TaskStopReason.OwnerDisposed, false );
+            return new HandleRequestResult( TaskStopReason.OwnerDisposed, false, true );
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal static HandleRequestResult Ok(bool containsEnqueuedRequests)
+        internal static HandleRequestResult Ok(bool containsEnqueuedRequests, bool disposeBuffer = true)
         {
-            return new HandleRequestResult( null, containsEnqueuedRequests );
+            return new HandleRequestResult( null, containsEnqueuedRequests, disposeBuffer );
         }
     }
 }

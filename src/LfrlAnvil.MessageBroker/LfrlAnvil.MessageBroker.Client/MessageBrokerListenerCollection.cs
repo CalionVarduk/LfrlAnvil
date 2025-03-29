@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using System.Diagnostics.Contracts;
 using System.Threading.Tasks;
 using LfrlAnvil.MessageBroker.Client.Exceptions;
@@ -85,6 +86,9 @@ public readonly struct MessageBrokerListenerCollection
     /// A task that represents the operation, which returns a <see cref="Result{T}"/> instance,
     /// with underlying <see cref="MessageBrokerSubscribeResult"/> instance.
     /// </returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// When <paramref name="channelName"/> length is less than <b>1</b> or greater than <b>512</b>.
+    /// </exception>
     /// <exception cref="MessageBrokerClientDisposedException">When client has already been disposed.</exception>
     /// <exception cref="MessageBrokerClientStateException">
     /// When client is not disposed and not in <see cref="MessageBrokerClientState.Running"/> state.

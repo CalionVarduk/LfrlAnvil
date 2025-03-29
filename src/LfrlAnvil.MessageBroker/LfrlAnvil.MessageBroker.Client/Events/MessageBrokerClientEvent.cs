@@ -198,7 +198,7 @@ public readonly struct MessageBrokerClientEvent
                     {
                         builder
                             .Append( " (Id = " )
-                            .Append( Client.Id )
+                            .Append( Client.Id.ToString( CultureInfo.InvariantCulture ) )
                             .Append( ", IsServerLittleEndian = " )
                             .Append( Client.IsServerLittleEndian )
                             .Append( ", MessageTimeout = " )
@@ -210,24 +210,31 @@ public readonly struct MessageBrokerClientEvent
                     else if ( GetClientEndpoint() == MessageBrokerClientEndpoint.BoundResponse )
                     {
                         if ( Data is MessageBrokerPublisher publisher )
-                            builder.Append( " (Id = " ).Append( publisher.ChannelId ).Append( ')' );
+                        {
+                            builder
+                                .Append( " (ChannelId = " )
+                                .Append( publisher.ChannelId.ToString( CultureInfo.InvariantCulture ) )
+                                .Append( ", QueueId = " )
+                                .Append( publisher.QueueId.ToString( CultureInfo.InvariantCulture ) )
+                                .Append( ')' );
+                        }
                     }
                     else if ( GetClientEndpoint() == MessageBrokerClientEndpoint.SubscribedResponse )
                     {
                         if ( Data is MessageBrokerListener subscription )
-                            builder.Append( " (ChannelId = " ).Append( subscription.ChannelId ).Append( ')' );
+                        {
+                            builder
+                                .Append( " (ChannelId = " )
+                                .Append( subscription.ChannelId.ToString( CultureInfo.InvariantCulture ) )
+                                .Append( ')' );
+                        }
                     }
 
                     break;
 
                 case MessageBrokerClientEventType.SendingMessage:
                     builder.AppendSpace().Append( GetServerEndpoint().ToString() );
-                    if ( GetServerEndpoint() == MessageBrokerServerEndpoint.BindRequest )
-                    {
-                        if ( Data is string channelName )
-                            builder.Append( " (ChannelName = '" ).Append( channelName ).Append( "')" );
-                    }
-                    else if ( GetServerEndpoint() == MessageBrokerServerEndpoint.UnbindRequest )
+                    if ( GetServerEndpoint() == MessageBrokerServerEndpoint.UnbindRequest )
                     {
                         if ( Data is MessageBrokerPublisher publisher )
                             builder
@@ -235,12 +242,11 @@ public readonly struct MessageBrokerClientEvent
                                 .Append( publisher.ChannelId.ToString( CultureInfo.InvariantCulture ) )
                                 .Append( ", ChannelName = '" )
                                 .Append( publisher.ChannelName )
+                                .Append( "', QueueId = " )
+                                .Append( publisher.QueueId.ToString( CultureInfo.InvariantCulture ) )
+                                .Append( ", QueueName = '" )
+                                .Append( publisher.QueueName )
                                 .Append( "')" );
-                    }
-                    else if ( GetServerEndpoint() == MessageBrokerServerEndpoint.SubscribeRequest )
-                    {
-                        if ( Data is string channelName )
-                            builder.Append( " (ChannelName = '" ).Append( channelName ).Append( "')" );
                     }
                     else if ( GetServerEndpoint() == MessageBrokerServerEndpoint.UnsubscribeRequest )
                     {

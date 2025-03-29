@@ -72,7 +72,7 @@ public partial class MessageBrokerClientTests
                     logs.GetAll()
                         .TestContainsSequence(
                         [
-                            "['test'::1] [SendingMessage] [PacketLength: 9] SubscribeRequest (ChannelName = 'foo')",
+                            "['test'::1] [SendingMessage] [PacketLength: 9] SubscribeRequest",
                             "['test'::1] [MessageSent] [PacketLength: 9] SubscribeRequest",
                             "['test'::<ROOT>] [MessageReceived] [PacketLength: 10] SubscribedResponse",
                             "['test'::1] [MessageReceived] [PacketLength: 10] Begin handling SubscribedResponse",
@@ -245,7 +245,7 @@ public partial class MessageBrokerClientTests
                     logs.GetAll()
                         .TestContainsSequence(
                         [
-                            "['test'::1] [SendingMessage] [PacketLength: 9] SubscribeRequest (ChannelName = 'foo')",
+                            "['test'::1] [SendingMessage] [PacketLength: 9] SubscribeRequest",
                             "['test'::1] [MessageSent] [PacketLength: 9] SubscribeRequest",
                             """
                             ['test'::<ROOT>] [WaitingForMessage] Encountered an error:

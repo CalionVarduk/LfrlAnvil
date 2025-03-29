@@ -280,12 +280,16 @@ internal static class Protocol
         internal readonly PacketHeader Header;
         internal readonly byte Flags;
         internal readonly EncodeableText ChannelName;
+        internal readonly EncodeableText QueueName;
 
-        internal BindRequest(string channelName)
+        internal BindRequest(string channelName, string? queueName)
         {
             Flags = 0;
             ChannelName = TextEncoding.Prepare( channelName ).GetValueOrThrow();
-            Header = PacketHeader.Create( MessageBrokerServerEndpoint.BindRequest, sizeof( byte ) + ( uint )ChannelName.ByteCount );
+            QueueName = TextEncoding.Prepare( queueName ?? string.Empty ).GetValueOrThrow();
+            Header = PacketHeader.Create(
+                MessageBrokerServerEndpoint.BindRequest,
+                sizeof( byte ) + sizeof( uint ) + ( uint )ChannelName.ByteCount + ( uint )QueueName.ByteCount );
         }
 
         internal int Length => PacketHeader.Length + unchecked( ( int )Header.Payload );
@@ -293,39 +297,54 @@ internal static class Protocol
         [Pure]
         public override string ToString()
         {
-            return $"[{Header}] Flags = {Flags}, ChannelName = ({ChannelName})";
+            return $"[{Header}] Flags = {Flags}, ChannelName = ({ChannelName}), QueueName = ({QueueName})";
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void Serialize(Memory<byte> target, bool reverseEndianness)
         {
             Assume.Equals( target.Length, Length );
+
+            var payload = Header.Payload;
+            var channelNameLength = unchecked( ( uint )ChannelName.ByteCount );
+            if ( reverseEndianness )
+            {
+                payload = BinaryPrimitives.ReverseEndianness( payload );
+                channelNameLength = BinaryPrimitives.ReverseEndianness( channelNameLength );
+            }
+
             var writer = new BinaryContractWriter( target.Span );
             writer.MoveWrite( Header.EndpointCode );
-            writer.MoveWrite( reverseEndianness ? BinaryPrimitives.ReverseEndianness( Header.Payload ) : Header.Payload );
+            writer.MoveWrite( payload );
             writer.MoveWrite( Flags );
+            writer.MoveWrite( channelNameLength );
             ChannelName.Encode( writer.GetSpan( ChannelName.ByteCount ) ).ThrowIfError();
+            writer.Move( ChannelName.ByteCount );
+            QueueName.Encode( writer.GetSpan( QueueName.ByteCount ) ).ThrowIfError();
         }
     }
 
     internal readonly struct BoundResponse
     {
-        internal const int Length = sizeof( byte ) + sizeof( uint );
+        internal const int Length = sizeof( byte ) + sizeof( uint ) * 2;
         internal readonly byte Flags;
         internal readonly int ChannelId;
+        internal readonly int QueueId;
 
-        private BoundResponse(byte flags, int channelId)
+        private BoundResponse(byte flags, int channelId, int queueId)
         {
             Flags = flags;
             ChannelId = channelId;
+            QueueId = queueId;
         }
 
         internal bool ChannelCreated => (Flags & 1) != 0;
+        internal bool QueueCreated => (Flags & 2) != 0;
 
         [Pure]
         public override string ToString()
         {
-            return $"Flags = {Flags}, Id = {ChannelId}";
+            return $"Flags = {Flags}, ChannelId = {ChannelId}, QueueId = {QueueId}";
         }
 
         [Pure]
@@ -335,15 +354,29 @@ internal static class Protocol
             Assume.Equals( source.Length, Length );
             var reader = new BinaryContractReader( source.Span );
             var flags = reader.MoveReadInt8();
-            var channelId = unchecked( ( int )reader.ReadInt32() );
-            return new BoundResponse( flags, reverseEndianness ? BinaryPrimitives.ReverseEndianness( channelId ) : channelId );
+            var channelId = unchecked( ( int )reader.MoveReadInt32() );
+            var queueId = unchecked( ( int )reader.ReadInt32() );
+            if ( reverseEndianness )
+            {
+                channelId = BinaryPrimitives.ReverseEndianness( channelId );
+                queueId = BinaryPrimitives.ReverseEndianness( queueId );
+            }
+
+            return new BoundResponse( flags, channelId, queueId );
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal Chain<string> StringifyErrors()
         {
-            return ChannelId > 0 ? Chain<string>.Empty : Chain.Create( Resources.ChannelIdIsNotPositive( ChannelId ) );
+            var result = Chain<string>.Empty;
+            if ( ChannelId <= 0 )
+                result = result.Extend( Resources.ChannelIdIsNotPositive( ChannelId ) );
+
+            if ( QueueId <= 0 )
+                result = result.Extend( Resources.QueueIdIsNotPositive( QueueId ) );
+
+            return result;
         }
     }
 
@@ -441,6 +474,7 @@ internal static class Protocol
         }
 
         internal bool ChannelRemoved => (Flags & 1) != 0;
+        internal bool QueueRemoved => (Flags & 2) != 0;
 
         [Pure]
         public override string ToString()

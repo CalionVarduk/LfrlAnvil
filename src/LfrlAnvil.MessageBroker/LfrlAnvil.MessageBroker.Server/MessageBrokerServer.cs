@@ -38,8 +38,10 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     internal ClientListener ClientListener;
     internal RemoteClientCollection RemoteClientCollection;
     internal ChannelCollection ChannelCollection;
+    internal QueueCollection QueueCollection;
     internal readonly Func<MessageBrokerRemoteClient, MessageBrokerRemoteClientEventHandler?>? RemoteClientEventHandlerFactory;
     internal readonly Func<MessageBrokerChannel, MessageBrokerChannelEventHandler?>? ChannelEventHandlerFactory;
+    internal readonly Func<MessageBrokerQueue, MessageBrokerQueueEventHandler?>? QueueEventHandlerFactory;
     internal readonly Func<MessageBrokerChannelBinding, MessageBrokerChannelBindingEventHandler?>? ChannelBindingEventHandlerFactory;
     internal readonly Func<MessageBrokerSubscription, MessageBrokerSubscriptionEventHandler?>? SubscriptionEventHandlerFactory;
     internal readonly MessageBrokerRemoteClientStreamDecorator? StreamDecorator;
@@ -66,6 +68,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         _eventHandler = options.EventHandler;
         RemoteClientEventHandlerFactory = options.ClientEventHandlerFactory;
         ChannelEventHandlerFactory = options.ChannelEventHandlerFactory;
+        QueueEventHandlerFactory = options.QueueEventHandlerFactory;
         ChannelBindingEventHandlerFactory = options.ChannelBindingEventHandlerFactory;
         SubscriptionEventHandlerFactory = options.SubscriptionEventHandlerFactory;
         TimestampsFactory = options.TimestampsFactory ?? (static _ => new TimestampProvider());
@@ -77,6 +80,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         ClientListener = ClientListener.Create();
         RemoteClientCollection = RemoteClientCollection.Create( options.Tcp, options.MinMemoryPoolSegmentLength );
         ChannelCollection = ChannelCollection.Create();
+        QueueCollection = QueueCollection.Create();
     }
 
     /// <summary>
@@ -124,6 +128,11 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     /// </summary>
     public MessageBrokerChannelCollection Channels => new MessageBrokerChannelCollection( this );
 
+    /// <summary>
+    /// Collection of attached <see cref="MessageBrokerQueue"/> instances.
+    /// </summary>
+    public MessageBrokerQueueCollection Queues => new MessageBrokerQueueCollection( this );
+
     internal bool ShouldCancel => _state >= MessageBrokerServerState.Disposing;
 
     /// <inheritdoc />
@@ -147,11 +156,13 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
 
         Exception? exception = null;
         MessageBrokerRemoteClient[] clients;
+        MessageBrokerQueue[] queues;
         MessageBrokerChannel[] channels;
         Task? clientListenerTask;
         using ( AcquireLock() )
         {
             channels = ChannelCollection.DisposeUnsafe();
+            queues = QueueCollection.DisposeUnsafe();
             clients = RemoteClientCollection.DisposeUnsafe();
             clientListenerTask = ClientListener.DiscardUnderlyingTask();
             ClientListener.Dispose();
@@ -169,6 +180,9 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
 
         if ( exception is not null )
             Emit( MessageBrokerServerEvent.Unexpected( this, exception ) );
+
+        foreach ( var queue in queues )
+            queue.OnServerDisposed();
 
         foreach ( var channel in channels )
             channel.OnServerDisposed();

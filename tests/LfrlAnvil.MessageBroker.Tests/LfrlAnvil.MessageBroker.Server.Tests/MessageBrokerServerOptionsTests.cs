@@ -24,6 +24,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 sut.EventHandler.TestNull(),
                 sut.ClientEventHandlerFactory.TestNull(),
                 sut.ChannelEventHandlerFactory.TestNull(),
+                sut.QueueEventHandlerFactory.TestNull(),
                 sut.ChannelBindingEventHandlerFactory.TestNull(),
                 sut.SubscriptionEventHandlerFactory.TestNull(),
                 sut.StreamDecorator.TestNull() )
@@ -49,6 +50,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
+                result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
                 result.ChannelBindingEventHandlerFactory.TestEquals( sut.ChannelBindingEventHandlerFactory ),
                 result.SubscriptionEventHandlerFactory.TestEquals( sut.SubscriptionEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
@@ -74,6 +76,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
+                result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
                 result.ChannelBindingEventHandlerFactory.TestEquals( sut.ChannelBindingEventHandlerFactory ),
                 result.SubscriptionEventHandlerFactory.TestEquals( sut.SubscriptionEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
@@ -99,6 +102,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
+                result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
                 result.ChannelBindingEventHandlerFactory.TestEquals( sut.ChannelBindingEventHandlerFactory ),
                 result.SubscriptionEventHandlerFactory.TestEquals( sut.SubscriptionEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
@@ -124,6 +128,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
+                result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
                 result.ChannelBindingEventHandlerFactory.TestEquals( sut.ChannelBindingEventHandlerFactory ),
                 result.SubscriptionEventHandlerFactory.TestEquals( sut.SubscriptionEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
@@ -149,6 +154,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
+                result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
                 result.ChannelBindingEventHandlerFactory.TestEquals( sut.ChannelBindingEventHandlerFactory ),
                 result.SubscriptionEventHandlerFactory.TestEquals( sut.SubscriptionEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
@@ -174,6 +180,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
+                result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
                 result.ChannelBindingEventHandlerFactory.TestEquals( sut.ChannelBindingEventHandlerFactory ),
                 result.SubscriptionEventHandlerFactory.TestEquals( sut.SubscriptionEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
@@ -199,6 +206,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
+                result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
                 result.ChannelBindingEventHandlerFactory.TestEquals( sut.ChannelBindingEventHandlerFactory ),
                 result.SubscriptionEventHandlerFactory.TestEquals( sut.SubscriptionEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
@@ -224,6 +232,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.EventHandler.TestEquals( value ),
                 result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
+                result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
                 result.ChannelBindingEventHandlerFactory.TestEquals( sut.ChannelBindingEventHandlerFactory ),
                 result.SubscriptionEventHandlerFactory.TestEquals( sut.SubscriptionEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
@@ -249,6 +258,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.ClientEventHandlerFactory.TestEquals( value ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
+                result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
                 result.ChannelBindingEventHandlerFactory.TestEquals( sut.ChannelBindingEventHandlerFactory ),
                 result.SubscriptionEventHandlerFactory.TestEquals( sut.SubscriptionEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
@@ -274,6 +284,33 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( value ),
+                result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
+                result.ChannelBindingEventHandlerFactory.TestEquals( sut.ChannelBindingEventHandlerFactory ),
+                result.SubscriptionEventHandlerFactory.TestEquals( sut.SubscriptionEventHandlerFactory ),
+                result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetQueueEventHandlerFactory_ShouldChangeValue()
+    {
+        Func<MessageBrokerQueue, MessageBrokerQueueEventHandler?> value = _ => _ => { };
+        var sut = MessageBrokerServerOptions.Default;
+
+        var result = sut.SetQueueEventHandlerFactory( value );
+
+        Assertion.All(
+                result.Tcp.TestEquals( sut.Tcp ),
+                result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
+                result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
+                result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
+                result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
+                result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
+                result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
+                result.EventHandler.TestEquals( sut.EventHandler ),
+                result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
+                result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
+                result.QueueEventHandlerFactory.TestEquals( value ),
                 result.ChannelBindingEventHandlerFactory.TestEquals( sut.ChannelBindingEventHandlerFactory ),
                 result.SubscriptionEventHandlerFactory.TestEquals( sut.SubscriptionEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
@@ -299,6 +336,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
+                result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
                 result.ChannelBindingEventHandlerFactory.TestEquals( value ),
                 result.SubscriptionEventHandlerFactory.TestEquals( sut.SubscriptionEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
@@ -324,6 +362,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
+                result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
                 result.ChannelBindingEventHandlerFactory.TestEquals( sut.ChannelBindingEventHandlerFactory ),
                 result.SubscriptionEventHandlerFactory.TestEquals( value ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
@@ -349,6 +388,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.EventHandler.TestEquals( sut.EventHandler ),
                 result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
+                result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
                 result.ChannelBindingEventHandlerFactory.TestEquals( sut.ChannelBindingEventHandlerFactory ),
                 result.SubscriptionEventHandlerFactory.TestEquals( sut.SubscriptionEventHandlerFactory ),
                 result.StreamDecorator.TestRefEquals( value ) )

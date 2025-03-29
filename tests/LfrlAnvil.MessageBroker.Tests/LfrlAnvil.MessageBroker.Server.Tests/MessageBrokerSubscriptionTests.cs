@@ -963,7 +963,7 @@ public class MessageBrokerSubscriptionTests : TestsBase
             c =>
             {
                 c.SendSubscribeRequest( "c", createChannelIfNotExists: true );
-                c.ReadBoundResponse();
+                c.ReadSubscribedResponse();
             } );
 
         var remoteClient = server.Clients.TryGetById( 1 );

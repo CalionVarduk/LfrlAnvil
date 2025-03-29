@@ -93,29 +93,15 @@ public sealed class MessageBrokerChannel
         return $"[{Id}] '{Name}' channel ({State})";
     }
 
-    internal MessageBrokerChannelBinding? BeginUnbindingUnsafe(MessageBrokerRemoteClient client, out bool disposing)
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool TryDisposeByRemovingBindingUnsafe(int clientId)
     {
-        disposing = false;
-        if ( ShouldCancel || ! BindingsByClientId.TryGetValue( client.Id, out var binding ) )
-            return null;
+        BindingsByClientId.Remove( clientId );
+        if ( SubscriptionsByClientId.Count > 0 || BindingsByClientId.Count > 0 )
+            return false;
 
-        using ( binding.AcquireLock() )
-        {
-            if ( binding.ShouldCancel )
-                return null;
-
-            binding.BeginDisposingUnsafe();
-            BindingsByClientId.Remove( client.Id );
-            client.BindingsByChannelId.Remove( Id );
-
-            if ( SubscriptionsByClientId.Count == 0 && BindingsByClientId.Count == 0 )
-            {
-                _state = MessageBrokerChannelState.Disposing;
-                disposing = true;
-            }
-
-            return binding;
-        }
+        _state = MessageBrokerChannelState.Disposing;
+        return true;
     }
 
     internal MessageBrokerSubscription? BeginUnsubscribingUnsafe(MessageBrokerRemoteClient client, out bool disposing)

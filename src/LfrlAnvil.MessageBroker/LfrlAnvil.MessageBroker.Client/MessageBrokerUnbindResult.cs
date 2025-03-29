@@ -38,7 +38,12 @@ public readonly struct MessageBrokerUnbindResult
     /// <summary>
     /// Specifies whether or not the channel has been removed by the server.
     /// </summary>
-    public bool ChannelRemoved => _state == 2;
+    public bool ChannelRemoved => (_state & 2) != 0;
+
+    /// <summary>
+    /// Specifies whether or not the queue has been removed by the server.
+    /// </summary>
+    public bool QueueRemoved => (_state & 4) != 0;
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerUnbindResult"/> instance.
@@ -47,19 +52,19 @@ public readonly struct MessageBrokerUnbindResult
     [Pure]
     public override string ToString()
     {
-        return _state switch
-        {
-            1 => "Not bound",
-            2 => "Success (channel removed)",
-            _ => "Success"
-        };
+        if ( _state == 1 )
+            return "Not bound";
+
+        var channelRemoved = ChannelRemoved ? " (channel removed)" : string.Empty;
+        var queueRemoved = QueueRemoved ? " (queue removed)" : string.Empty;
+        return $"Success{channelRemoved}{queueRemoved}";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerUnbindResult Create(bool channelRemoved)
+    internal static MessageBrokerUnbindResult Create(bool channelRemoved, bool queueRemoved)
     {
-        return new MessageBrokerUnbindResult( ( byte )(channelRemoved ? 2 : 0) );
+        return new MessageBrokerUnbindResult( ( byte )((channelRemoved ? 2 : 0) | (queueRemoved ? 4 : 0)) );
     }
 
     [Pure]

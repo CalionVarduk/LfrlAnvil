@@ -82,6 +82,13 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string QueueIdIsNotPositive(int received)
+    {
+        return $"Expected queue ID to be greater than 0 but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string AlreadyBound(string channelName)
     {
         return $"Client is already bound to channel '{channelName}'.";

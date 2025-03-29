@@ -29,7 +29,9 @@ public class MessageBrokerServerTests : TestsBase
                 sut.Clients.Count.TestEquals( 0 ),
                 sut.Clients.GetAll().TestEmpty(),
                 sut.Channels.Count.TestEquals( 0 ),
-                sut.Channels.GetAll().TestEmpty() )
+                sut.Channels.GetAll().TestEmpty(),
+                sut.Queues.Count.TestEquals( 0 ),
+                sut.Queues.GetAll().TestEmpty() )
             .Go();
     }
 
@@ -74,7 +76,9 @@ public class MessageBrokerServerTests : TestsBase
                 sut.Clients.Count.TestEquals( 0 ),
                 sut.Clients.GetAll().TestEmpty(),
                 sut.Channels.Count.TestEquals( 0 ),
-                sut.Channels.GetAll().TestEmpty() )
+                sut.Channels.GetAll().TestEmpty(),
+                sut.Queues.Count.TestEquals( 0 ),
+                sut.Queues.GetAll().TestEmpty() )
             .Go();
     }
 

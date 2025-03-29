@@ -34,7 +34,7 @@ internal ref struct BinaryContractWriter
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void Move(int offset)
     {
-        Assume.IsGreaterThan( offset, 0 );
+        Assume.IsGreaterThanOrEqualTo( offset, 0 );
         _first = ref Unsafe.Add( ref _first, offset );
     }
 

@@ -85,9 +85,11 @@ internal readonly struct PublisherCollection
             return client.PublisherCollection._byChannelName.TryGetValue( channelName, out var result ) ? result : null;
     }
 
-    internal static async ValueTask<Result<MessageBrokerBindResult?>> BindAsync(MessageBrokerClient client, string name)
+    internal static async ValueTask<Result<MessageBrokerBindResult?>> BindAsync(MessageBrokerClient client, string name, string? queueName)
     {
         Ensure.IsInRange( name.Length, Defaults.NameLengthBounds.Min, Defaults.NameLengthBounds.Max );
+        if ( queueName is not null )
+            Ensure.IsInRange( queueName.Length, Defaults.NameLengthBounds.Min, Defaults.NameLengthBounds.Max );
 
         bool reverseEndianness;
         using ( client.AcquireLock() )
@@ -109,7 +111,7 @@ internal readonly struct PublisherCollection
         var bufferToken = default( BinaryBufferToken );
         try
         {
-            request = new Protocol.BindRequest( name );
+            request = new Protocol.BindRequest( name, queueName ?? string.Empty );
             bufferToken = client.RentBuffer( request.Length, out var buffer ).EnableClearing();
             request.Serialize( buffer, reverseEndianness );
 
@@ -135,7 +137,7 @@ internal readonly struct PublisherCollection
                 responseSource = client.MessageContextQueue.AcquirePendingResponseSource( contextId, request.Header.GetServerEndpoint() );
             }
 
-            var result = await client.WriteAsync( request.Header, buffer, contextId, name ).ConfigureAwait( false );
+            var result = await client.WriteAsync( request.Header, buffer, contextId ).ConfigureAwait( false );
             if ( result.Exception is not null )
             {
                 await client.DisposeAsync().ConfigureAwait( false );
@@ -222,10 +224,19 @@ internal readonly struct PublisherCollection
                         cancel = client.ShouldCancel;
                         if ( ! cancel )
                         {
-                            var publisher = new MessageBrokerPublisher( client, parsedResponse.ChannelId, name );
+                            var publisher = new MessageBrokerPublisher(
+                                client,
+                                parsedResponse.ChannelId,
+                                name,
+                                parsedResponse.QueueId,
+                                queueName ?? name );
+
                             client.PublisherCollection._byChannelId.Add( parsedResponse.ChannelId, publisher );
                             client.PublisherCollection._byChannelName.Add( name, publisher );
-                            bindResult = MessageBrokerBindResult.Create( publisher, parsedResponse.ChannelCreated );
+                            bindResult = MessageBrokerBindResult.Create(
+                                publisher,
+                                parsedResponse.ChannelCreated,
+                                parsedResponse.QueueCreated );
                         }
                     }
 
@@ -406,7 +417,7 @@ internal readonly struct PublisherCollection
                             MessageBrokerClientEvent.MessageReceived( client, response.Header, contextId, client.DisposedException() ) );
 
                     client.Emit( MessageBrokerClientEvent.MessageAccepted( client, response.Header, contextId ) );
-                    return MessageBrokerUnbindResult.Create( parsedResponse.ChannelRemoved );
+                    return MessageBrokerUnbindResult.Create( parsedResponse.ChannelRemoved, parsedResponse.QueueRemoved );
                 }
                 case MessageBrokerClientEndpoint.UnbindFailureResponse:
                 {

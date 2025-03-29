@@ -235,18 +235,20 @@ internal static class Protocol
 
     internal readonly struct BindRequestHeader
     {
-        internal const int Length = sizeof( byte );
+        internal const int Length = sizeof( byte ) + sizeof( uint );
         internal readonly byte Flags;
+        internal readonly int ChannelNameLength;
 
-        private BindRequestHeader(byte flags)
+        private BindRequestHeader(byte flags, int channelNameLength)
         {
             Flags = flags;
+            ChannelNameLength = channelNameLength;
         }
 
         [Pure]
         public override string ToString()
         {
-            return $"Flags = {Flags}";
+            return $"Flags = {Flags}, ChannelNameLength = {ChannelNameLength}";
         }
 
         [Pure]
@@ -256,31 +258,34 @@ internal static class Protocol
             Assume.Equals( source.Length, Length );
 
             var reader = new BinaryContractReader( source.Span );
-            var flags = reader.ReadInt8();
+            var flags = reader.MoveReadInt8();
             Assume.Equals( flags, 0 );
+            var channelNameLength = unchecked( ( int )reader.ReadInt32() );
 
-            return new BindRequestHeader( flags );
+            return new BindRequestHeader( flags, channelNameLength );
         }
     }
 
     internal readonly struct BoundResponse
     {
-        internal const int Payload = sizeof( byte ) + sizeof( uint );
+        internal const int Payload = sizeof( byte ) + sizeof( uint ) * 2;
         internal readonly PacketHeader Header;
         internal readonly byte Flags;
         internal readonly int ChannelId;
+        internal readonly int QueueId;
 
-        internal BoundResponse(bool channelCreated, int channelId)
+        internal BoundResponse(bool channelCreated, bool queueCreated, int channelId, int queueId)
         {
             Header = PacketHeader.Create( MessageBrokerClientEndpoint.BoundResponse, Payload );
-            Flags = ( byte )(channelCreated ? 1 : 0);
+            Flags = ( byte )((channelCreated ? 1 : 0) | (queueCreated ? 2 : 0));
             ChannelId = channelId;
+            QueueId = queueId;
         }
 
         [Pure]
         public override string ToString()
         {
-            return $"[{Header}] Flags = {Flags}, ChannelId = {ChannelId}";
+            return $"[{Header}] Flags = {Flags}, ChannelId = {ChannelId}, QueueId = {QueueId}";
         }
 
         internal void Serialize(Memory<byte> target)
@@ -290,7 +295,8 @@ internal static class Protocol
             writer.MoveWrite( Header.EndpointCode );
             writer.MoveWrite( Header.Payload );
             writer.MoveWrite( Flags );
-            writer.Write( unchecked( ( uint )ChannelId ) );
+            writer.MoveWrite( unchecked( ( uint )ChannelId ) );
+            writer.Write( unchecked( ( uint )QueueId ) );
         }
     }
 
@@ -363,10 +369,10 @@ internal static class Protocol
         internal readonly PacketHeader Header;
         internal readonly byte Flags;
 
-        internal UnboundResponse(bool channelRemoved)
+        internal UnboundResponse(bool channelRemoved, bool queueRemoved)
         {
             Header = PacketHeader.Create( MessageBrokerClientEndpoint.UnboundResponse, Payload );
-            Flags = ( byte )(channelRemoved ? 1 : 0);
+            Flags = ( byte )((channelRemoved ? 1 : 0) | (queueRemoved ? 2 : 0));
         }
 
         [Pure]
@@ -648,6 +654,37 @@ internal static class Protocol
         int length)
     {
         return ProtocolException( client, header, Chain.Create( Resources.InvalidNameLength( length ) ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerServerProtocolException InvalidChannelNameLengthException(
+        MessageBrokerRemoteClient client,
+        PacketHeader header,
+        int length)
+    {
+        return ProtocolException( client, header, Chain.Create( Resources.InvalidChannelNameLength( length ) ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerServerProtocolException InvalidQueueNameLengthException(
+        MessageBrokerRemoteClient client,
+        PacketHeader header,
+        int length)
+    {
+        return ProtocolException( client, header, Chain.Create( Resources.InvalidQueueNameLength( length ) ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerServerProtocolException InvalidBinaryChannelNameLengthException(
+        MessageBrokerRemoteClient client,
+        PacketHeader header,
+        int length,
+        int maxLength)
+    {
+        return ProtocolException( client, header, Chain.Create( Resources.InvalidBinaryChannelNameLength( length, maxLength ) ) );
     }
 
     [Pure]

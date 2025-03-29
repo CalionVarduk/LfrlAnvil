@@ -114,14 +114,15 @@ internal sealed class ServerMock : IDisposable
         Send( buffer );
     }
 
-    internal void SendBoundResponse(bool channelCreated, int channelId, uint? payload = null)
+    internal void SendBoundResponse(bool channelCreated, bool queueCreated, int channelId, int queueId, uint? payload = null)
     {
         var buffer = new byte[Protocol.PacketHeader.Length + Protocol.BoundResponse.Length];
         var writer = new BinaryContractWriter( buffer );
         writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.BoundResponse );
         writer.MoveWrite( payload ?? Protocol.BoundResponse.Length );
-        writer.MoveWrite( ( byte )(channelCreated ? 1 : 0) );
-        writer.Write( ( uint )channelId );
+        writer.MoveWrite( ( byte )((channelCreated ? 1 : 0) | (queueCreated ? 2 : 0)) );
+        writer.MoveWrite( ( uint )channelId );
+        writer.Write( ( uint )queueId );
         Send( buffer );
     }
 
@@ -135,13 +136,13 @@ internal sealed class ServerMock : IDisposable
         Send( buffer );
     }
 
-    internal void SendUnboundResponse(bool channelRemoved, uint? payload = null)
+    internal void SendUnboundResponse(bool channelRemoved, bool queueRemoved, uint? payload = null)
     {
         var buffer = new byte[Protocol.PacketHeader.Length + Protocol.UnboundResponse.Length];
         var writer = new BinaryContractWriter( buffer );
         writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.UnboundResponse );
         writer.MoveWrite( payload ?? Protocol.UnboundResponse.Length );
-        writer.Write( ( byte )(channelRemoved ? 1 : 0) );
+        writer.Write( ( byte )((channelRemoved ? 1 : 0) | (queueRemoved ? 2 : 0)) );
         Send( buffer );
     }
 

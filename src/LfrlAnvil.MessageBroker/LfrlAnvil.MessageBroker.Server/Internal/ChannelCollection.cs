@@ -54,8 +54,8 @@ internal struct ChannelCollection
 
             var i = 0;
             var result = new MessageBrokerChannel[server.ChannelCollection._byId.Count];
-            foreach ( var (_, client) in server.ChannelCollection._byId )
-                result[i++] = client;
+            foreach ( var (_, channel) in server.ChannelCollection._byId )
+                result[i++] = channel;
 
             return result;
         }
@@ -75,7 +75,7 @@ internal struct ChannelCollection
     internal static MessageBrokerChannel? TryGetByName(MessageBrokerServer server, string name)
     {
         using ( server.AcquireLock() )
-            return server.ChannelCollection._byName.TryGetValue( name, out var client ) ? client : null;
+            return server.ChannelCollection._byName.TryGetValue( name, out var channel ) ? channel : null;
     }
 
     internal static Result Remove(MessageBrokerChannel channel)
@@ -97,6 +97,13 @@ internal struct ChannelCollection
         }
 
         return Result.Valid;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static void RemoveUnsafe(MessageBrokerChannel channel)
+    {
+        channel.Server.ChannelCollection._byId.Remove( channel.Id - 1 );
+        channel.Server.ChannelCollection._byName.Remove( channel.Name );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -130,14 +137,11 @@ internal struct ChannelCollection
         MessageBrokerServer server,
         string name,
         bool createIfNotExists,
-        out bool created)
+        ref bool created)
     {
         ref var channel = ref CollectionsMarshal.GetValueRefOrAddDefault( server.ChannelCollection._byName, name, out var exists );
         if ( exists )
-        {
-            created = false;
             return channel!;
-        }
 
         if ( createIfNotExists )
         {
@@ -158,7 +162,6 @@ internal struct ChannelCollection
             return channel;
         }
 
-        created = false;
         return null;
     }
 

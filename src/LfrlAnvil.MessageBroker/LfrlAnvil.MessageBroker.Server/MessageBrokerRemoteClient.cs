@@ -282,28 +282,93 @@ public sealed partial class MessageBrokerRemoteClient
         }
     }
 
-    internal bool BindUnsafe(MessageBrokerChannel channel, [MaybeNullWhen( false )] out MessageBrokerChannelBinding result)
+    internal Protocol.BindFailureResponse.Reasons BindUnsafe(
+        MessageBrokerChannel channel,
+        bool channelCreated,
+        string queueName,
+        ref MessageBrokerChannelBinding? binding,
+        ref MessageBrokerQueue? queue,
+        ref bool queueCreated)
     {
-        ref var binding = ref CollectionsMarshal.GetValueRefOrAddDefault( channel.BindingsByClientId, Id, out var exists )!;
-        if ( exists )
+        using ( channel.AcquireLock() )
         {
-            result = binding;
-            return false;
+            if ( channel.ShouldCancel )
+                return Protocol.BindFailureResponse.Reasons.Cancelled;
+
+            ref var bindingRef = ref CollectionsMarshal.GetValueRefOrAddDefault( channel.BindingsByClientId, Id, out var exists )!;
+            if ( exists )
+            {
+                binding = bindingRef;
+                queue = binding.Queue;
+                return Protocol.BindFailureResponse.Reasons.AlreadyBound;
+            }
+
+            queue = QueueCollection.RegisterUnsafe( Server, queueName, out queueCreated );
+            using ( queue.AcquireLock() )
+            {
+                if ( queue.ShouldCancel )
+                {
+                    channel.BindingsByClientId.Remove( Id );
+                    if ( channelCreated )
+                        ChannelCollection.RemoveUnsafe( channel );
+
+                    return Protocol.BindFailureResponse.Reasons.Cancelled;
+                }
+
+                try
+                {
+                    binding = new MessageBrokerChannelBinding( this, channel, queue );
+                    bindingRef = binding;
+                }
+                catch
+                {
+                    channel.BindingsByClientId.Remove( Id );
+                    if ( queueCreated )
+                        QueueCollection.RemoveUnsafe( queue );
+
+                    throw;
+                }
+
+                BindingsByChannelId.Add( channel.Id, binding );
+                queue.BindingsByKey.Add( new QueueBindingKey( Id, channel.Id ), binding );
+            }
         }
 
-        try
+        return Protocol.BindFailureResponse.Reasons.None;
+    }
+
+    internal Protocol.UnbindFailureResponse.Reasons BeginUnbindUnsafe(
+        MessageBrokerChannel channel,
+        ref MessageBrokerChannelBinding? binding,
+        ref MessageBrokerQueue? queue,
+        ref bool disposingChannel,
+        ref bool disposingQueue)
+    {
+        using ( channel.AcquireLock() )
         {
-            binding = new MessageBrokerChannelBinding( this, channel );
-        }
-        catch
-        {
-            channel.BindingsByClientId.Remove( Id );
-            throw;
+            if ( channel.ShouldCancel || ! BindingsByChannelId.TryGetValue( channel.Id, out binding ) )
+                return Protocol.UnbindFailureResponse.Reasons.NotBound;
+
+            queue = binding.Queue;
+            using ( queue.AcquireLock() )
+            {
+                if ( queue.ShouldCancel )
+                    return Protocol.UnbindFailureResponse.Reasons.NotBound;
+
+                using ( binding.AcquireLock() )
+                {
+                    if ( binding.ShouldCancel )
+                        return Protocol.UnbindFailureResponse.Reasons.NotBound;
+
+                    binding.BeginDisposingUnsafe();
+                    BindingsByChannelId.Remove( channel.Id );
+                    disposingChannel = channel.TryDisposeByRemovingBindingUnsafe( Id );
+                    disposingQueue = queue.TryDisposeByRemovingBindingUnsafe( new QueueBindingKey( Id, channel.Id ) );
+                }
+            }
         }
 
-        BindingsByChannelId.Add( channel.Id, binding );
-        result = binding;
-        return true;
+        return Protocol.UnbindFailureResponse.Reasons.None;
     }
 
     internal bool SubscribeUnsafe(MessageBrokerChannel channel, [MaybeNullWhen( false )] out MessageBrokerSubscription result)
