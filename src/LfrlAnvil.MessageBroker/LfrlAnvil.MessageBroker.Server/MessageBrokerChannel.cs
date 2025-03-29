@@ -104,29 +104,15 @@ public sealed class MessageBrokerChannel
         return true;
     }
 
-    internal MessageBrokerSubscription? BeginUnsubscribingUnsafe(MessageBrokerRemoteClient client, out bool disposing)
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool TryDisposeByRemovingSubscriptionUnsafe(int clientId)
     {
-        disposing = false;
-        if ( ShouldCancel || ! SubscriptionsByClientId.TryGetValue( client.Id, out var subscription ) )
-            return null;
+        SubscriptionsByClientId.Remove( clientId );
+        if ( SubscriptionsByClientId.Count > 0 || BindingsByClientId.Count > 0 )
+            return false;
 
-        using ( subscription.AcquireLock() )
-        {
-            if ( subscription.ShouldCancel )
-                return null;
-
-            subscription.BeginDisposingUnsafe();
-            SubscriptionsByClientId.Remove( client.Id );
-            client.SubscriptionsByChannelId.Remove( Id );
-
-            if ( SubscriptionsByClientId.Count == 0 && BindingsByClientId.Count == 0 )
-            {
-                _state = MessageBrokerChannelState.Disposing;
-                disposing = true;
-            }
-
-            return subscription;
-        }
+        _state = MessageBrokerChannelState.Disposing;
+        return true;
     }
 
     internal void OnBindingDisposing(MessageBrokerRemoteClient client)

@@ -284,7 +284,6 @@ internal struct RequestHandler
                 }
                 catch
                 {
-                    // TODO: do that too when subscribing fails
                     if ( channelCreated )
                         ChannelCollection.RemoveUnsafe( channel );
 
@@ -527,7 +526,7 @@ internal struct RequestHandler
                 MessageBrokerRemoteClientEvent.MessageRejected(
                     client,
                     request.Header,
-                    Protocol.InvalidNameLengthException( client, request.Header, channelName.Value.Length ),
+                    Protocol.InvalidChannelNameLengthException( client, request.Header, channelName.Value.Length ),
                     contextId ) );
 
             return HandleRequestResult.Error();
@@ -536,7 +535,7 @@ internal struct RequestHandler
         var channelCreated = false;
         MessageBrokerChannel? channel;
         MessageBrokerSubscription? subscription = null;
-        var rejectionReasons = Protocol.SubscribeFailureResponse.Reasons.None;
+        Protocol.SubscribeFailureResponse.Reasons rejectionReasons;
         ManualResetValueTaskSource<bool> writerSource;
 
         using ( client.Server.AcquireLock() )
@@ -544,44 +543,35 @@ internal struct RequestHandler
             if ( client.Server.ShouldCancel )
                 return HandleRequestResult.OwnerDisposed();
 
-            // TODO: move inside client lock
-            // creating a channel without it may allow client to be disconnected at the same time
-            // which would leave newly created channel without any bindings/subscriptions
-            channel = ChannelCollection.TryRegisterUnsafe(
-                client.Server,
-                channelName.Value,
-                parsedRequest.CreateChannelIfNotExists,
-                ref channelCreated );
-
-            if ( channel is null )
+            using ( client.AcquireLock() )
             {
-                rejectionReasons = Protocol.SubscribeFailureResponse.Reasons.ChannelDoesNotExist;
-                using ( client.AcquireLock() )
-                {
-                    if ( client.ShouldCancel )
-                        return HandleRequestResult.OwnerDisposed();
+                if ( client.ShouldCancel )
+                    return HandleRequestResult.OwnerDisposed();
 
-                    writerSource = client.MessageContextQueue.AcquireWriterSource();
-                }
-            }
-            else
-            {
-                using ( client.AcquireLock() )
-                {
-                    if ( client.ShouldCancel )
-                        return HandleRequestResult.OwnerDisposed();
+                channel = ChannelCollection.TryRegisterUnsafe(
+                    client.Server,
+                    channelName.Value,
+                    parsedRequest.CreateChannelIfNotExists,
+                    ref channelCreated );
 
-                    // TODO: modify SubscribeUnsafe to be similar to BindUnsafe
-                    using ( channel.AcquireLock() )
+                if ( channel is null )
+                    rejectionReasons = Protocol.SubscribeFailureResponse.Reasons.ChannelDoesNotExist;
+                else
+                {
+                    try
                     {
-                        if ( channel.ShouldCancel )
-                            rejectionReasons = Protocol.SubscribeFailureResponse.Reasons.Cancelled;
-                        else if ( ! client.SubscribeUnsafe( channel, out subscription ) )
-                            rejectionReasons = Protocol.SubscribeFailureResponse.Reasons.AlreadySubscribed;
+                        rejectionReasons = client.SubscribeUnsafe( channel, ref subscription );
                     }
+                    catch
+                    {
+                        if ( channelCreated )
+                            ChannelCollection.RemoveUnsafe( channel );
 
-                    writerSource = client.MessageContextQueue.AcquireWriterSource();
+                        throw;
+                    }
                 }
+
+                writerSource = client.MessageContextQueue.AcquireWriterSource();
             }
         }
 
@@ -674,7 +664,7 @@ internal struct RequestHandler
 
         var disposingChannel = false;
         MessageBrokerSubscription? subscription = null;
-        var rejectionReasons = Protocol.UnsubscribeFailureResponse.Reasons.None;
+        Protocol.UnsubscribeFailureResponse.Reasons rejectionReasons;
 
         var channel = ChannelCollection.TryGetById( client.Server, parsedRequest.ChannelId );
         if ( channel is null )
@@ -686,13 +676,7 @@ internal struct RequestHandler
                 if ( client.ShouldCancel )
                     return HandleRequestResult.OwnerDisposed();
 
-                // TODO: move to client.BeginUnsubscribeUnsafe
-                using ( channel.AcquireLock() )
-                {
-                    subscription = channel.BeginUnsubscribingUnsafe( client, out disposingChannel );
-                    if ( subscription is null )
-                        rejectionReasons = Protocol.UnsubscribeFailureResponse.Reasons.NotSubscribed;
-                }
+                rejectionReasons = client.BeginUnsubscribeUnsafe( channel, ref subscription, ref disposingChannel );
             }
         }
 
@@ -737,7 +721,6 @@ internal struct RequestHandler
                 channel.DisposeDueToLackOfReferences();
 
             subscription.EndDisposing();
-
             client.Emit( MessageBrokerRemoteClientEvent.MessageAccepted( client, request.Header, contextId ) );
 
             var responseLength = Protocol.PacketHeader.Length + Protocol.UnsubscribedResponse.Payload;

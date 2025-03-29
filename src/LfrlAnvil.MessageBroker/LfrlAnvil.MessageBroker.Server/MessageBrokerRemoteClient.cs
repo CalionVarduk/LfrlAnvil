@@ -14,7 +14,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Net;
@@ -371,28 +370,63 @@ public sealed partial class MessageBrokerRemoteClient
         return Protocol.UnbindFailureResponse.Reasons.None;
     }
 
-    internal bool SubscribeUnsafe(MessageBrokerChannel channel, [MaybeNullWhen( false )] out MessageBrokerSubscription result)
+    internal Protocol.SubscribeFailureResponse.Reasons SubscribeUnsafe(
+        MessageBrokerChannel channel,
+        ref MessageBrokerSubscription? subscription)
     {
-        ref var subscription = ref CollectionsMarshal.GetValueRefOrAddDefault( channel.SubscriptionsByClientId, Id, out var exists )!;
-        if ( exists )
+        using ( channel.AcquireLock() )
         {
-            result = subscription;
-            return false;
+            if ( channel.ShouldCancel )
+                return Protocol.SubscribeFailureResponse.Reasons.Cancelled;
+
+            ref var subscriptionRef
+                = ref CollectionsMarshal.GetValueRefOrAddDefault( channel.SubscriptionsByClientId, Id, out var exists )!;
+
+            if ( exists )
+            {
+                subscription = subscriptionRef;
+                return Protocol.SubscribeFailureResponse.Reasons.AlreadySubscribed;
+            }
+
+            try
+            {
+                subscriptionRef = new MessageBrokerSubscription( this, channel );
+                subscription = subscriptionRef;
+            }
+            catch
+            {
+                channel.SubscriptionsByClientId.Remove( Id );
+                throw;
+            }
+
+            SubscriptionsByChannelId.Add( channel.Id, subscription );
         }
 
-        try
+        return Protocol.SubscribeFailureResponse.Reasons.None;
+    }
+
+    internal Protocol.UnsubscribeFailureResponse.Reasons BeginUnsubscribeUnsafe(
+        MessageBrokerChannel channel,
+        ref MessageBrokerSubscription? subscription,
+        ref bool disposingChannel)
+    {
+        using ( channel.AcquireLock() )
         {
-            subscription = new MessageBrokerSubscription( this, channel );
-        }
-        catch
-        {
-            channel.SubscriptionsByClientId.Remove( Id );
-            throw;
+            if ( channel.ShouldCancel || ! SubscriptionsByChannelId.TryGetValue( channel.Id, out subscription ) )
+                return Protocol.UnsubscribeFailureResponse.Reasons.NotSubscribed;
+
+            using ( subscription.AcquireLock() )
+            {
+                if ( subscription.ShouldCancel )
+                    return Protocol.UnsubscribeFailureResponse.Reasons.NotSubscribed;
+
+                subscription.BeginDisposingUnsafe();
+                SubscriptionsByChannelId.Remove( channel.Id );
+                disposingChannel = channel.TryDisposeByRemovingSubscriptionUnsafe( Id );
+            }
         }
 
-        SubscriptionsByChannelId.Add( channel.Id, subscription );
-        result = subscription;
-        return true;
+        return Protocol.UnsubscribeFailureResponse.Reasons.None;
     }
 
     [Pure]

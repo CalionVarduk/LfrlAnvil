@@ -199,7 +199,7 @@ public class MessageBrokerSubscriptionTests : TestsBase
         Assertion.All(
                 remoteClient.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Disposed ) ),
                 server.Clients.Count.TestEquals( 0 ),
-                server.Channels.Count.TestEquals( 1 ),
+                server.Channels.Count.TestEquals( 0 ),
                 logs.GetAllClient()
                     .TestContainsSequence(
                     [
@@ -346,7 +346,7 @@ public class MessageBrokerSubscriptionTests : TestsBase
                         """
                         [1::'test'::1] [MessageRejected] [PacketLength: 6] Encountered an error:
                         LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid SubscribeRequest with payload 1 from client [1] 'test'. Encountered 1 error(s):
-                        1. Expected name length to be in [1, 512] range but found 0.
+                        1. Expected channel name length to be in [1, 512] range but found 0.
                         """,
                         "[1::'test'::<ROOT>] [Disposing]",
                         "[1::'test'::<ROOT>] [Disposed]"
@@ -391,7 +391,7 @@ public class MessageBrokerSubscriptionTests : TestsBase
                         """
                         [1::'test'::1] [MessageRejected] [PacketLength: 519] Encountered an error:
                         LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid SubscribeRequest with payload 514 from client [1] 'test'. Encountered 1 error(s):
-                        1. Expected name length to be in [1, 512] range but found 513.
+                        1. Expected channel name length to be in [1, 512] range but found 513.
                         """,
                         "[1::'test'::<ROOT>] [Disposing]",
                         "[1::'test'::<ROOT>] [Disposed]"
