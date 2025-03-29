@@ -1,4 +1,6 @@
 var target = Argument("target", "UpdateLicenseHeaders");
+var commitHash = Argument("commit", string.Empty);
+
 var rootDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(Environment.CurrentDirectory, ".."));
 var currentYear = DateTime.UtcNow.Year.ToString(System.Globalization.CultureInfo.InvariantCulture);
 var copyrightLines = new[]
@@ -23,8 +25,15 @@ var foundFiles = new List<string>();
 Task("FindEligibleFiles")
     .Does(() =>
 {
-    foundFiles.AddRange(FindGitFiles("diff --name-only --cached"));
-    foundFiles.AddRange(FindGitFiles("diff --name-only"));
+    if (commitHash.Length == 0)
+    {
+        foundFiles.AddRange(FindGitFiles("diff --name-only --cached"));
+        foundFiles.AddRange(FindGitFiles("diff --name-only"));
+    }
+    else
+    {
+        foundFiles.AddRange(FindGitFiles($"diff --name-only --diff-filter=d {commitHash}^ {commitHash}"));
+    }
 
     Information("Found {0} file(s):", foundFiles.Count);
     foreach (var (file, pos) in foundFiles.Select(static (f, i) => (File: f, Position: i + 1)))
