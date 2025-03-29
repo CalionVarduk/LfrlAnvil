@@ -75,7 +75,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsAtLeastData ) )]
     public void ContainsAtLeast_ShouldReturnCorrectResult(int sourceCount, int minCount, bool expected)
     {
-        var sut = Fixture.CreateMany<T>( sourceCount );
+        var sut = Fixture.CreateMany<T>( sourceCount ).Where( _ => true );
         var result = sut.ContainsAtLeast( minCount );
         result.TestEquals( expected ).Go();
     }
@@ -93,7 +93,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsAtMostData ) )]
     public void ContainsAtMost_ShouldReturnCorrectResult(int sourceCount, int maxCount, bool expected)
     {
-        var sut = Fixture.CreateMany<T>( sourceCount );
+        var sut = Fixture.CreateMany<T>( sourceCount ).Where( _ => true );
         var result = sut.ContainsAtMost( maxCount );
         result.TestEquals( expected ).Go();
     }
@@ -112,7 +112,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     public void ContainsInRange_ShouldReturnFalse_WhenMaxCountIsLessThanMinCount(int count)
     {
         var (max, min) = Fixture.CreateManyDistinctSorted<int>( count: 2 );
-        var sut = Fixture.CreateMany<T>( count );
+        var sut = Fixture.CreateMany<T>( count ).Where( _ => true );
 
         var result = sut.ContainsInRange( min, max );
 
@@ -135,7 +135,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForZeroMinCountData ) )]
     public void ContainsInRange_ShouldReturnCorrectResult_WhenMinCountIsZero(int count, int maxCount, bool expected)
     {
-        var sut = Fixture.CreateMany<T>( count );
+        var sut = Fixture.CreateMany<T>( count ).Where( _ => true );
         var result = sut.ContainsInRange( 0, maxCount );
         result.TestEquals( expected ).Go();
     }
@@ -154,7 +154,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     public void ContainsInRange_ShouldReturnCorrectResult_WhenMinCountIsNegative(int count, int maxCount, bool expected)
     {
         var minCount = -Fixture.Create<int>( x => x > 0 );
-        var sut = Fixture.CreateMany<T>( count );
+        var sut = Fixture.CreateMany<T>( count ).Where( _ => true );
 
         var result = sut.ContainsInRange( minCount, maxCount );
 
@@ -180,7 +180,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForCountLessThanMinCountData ) )]
     public void ContainsInRange_ShouldReturnFalse_WhenSourceCountIsLessThanMinCount(int count, int minCount)
     {
-        var sut = Fixture.CreateMany<T>( count );
+        var sut = Fixture.CreateMany<T>( count ).Where( _ => true );
         var result = sut.ContainsInRange( minCount, minCount + 1 );
         result.TestFalse().Go();
     }
@@ -198,7 +198,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForCountGreaterThanMaxCountData ) )]
     public void ContainsInRange_ShouldReturnFalse_WhenSourceCountIsGreaterThanMaxCount(int count, int maxCount)
     {
-        var sut = Fixture.CreateMany<T>( count );
+        var sut = Fixture.CreateMany<T>( count ).Where( _ => true );
         var result = sut.ContainsInRange( maxCount - 1, maxCount );
         result.TestFalse().Go();
     }
@@ -216,7 +216,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForCountBetweenMinAndMaxData ) )]
     public void ContainsInRange_ShouldReturnTrue_WhenSourceCountIsBetweenMinAndMaxCount(int sourceCount, int minCount, int maxCount)
     {
-        var sut = Fixture.CreateMany<T>( sourceCount );
+        var sut = Fixture.CreateMany<T>( sourceCount ).Where( _ => true );
         var result = sut.ContainsInRange( minCount, maxCount );
         result.TestTrue().Go();
     }
@@ -238,7 +238,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     public void ContainsExactly_ShouldReturnFalse_WhenCountIsNegative(int sourceCount)
     {
         var count = -Fixture.Create<int>( x => x > 0 );
-        var sut = Fixture.CreateMany<T>( sourceCount );
+        var sut = Fixture.CreateMany<T>( sourceCount ).Where( _ => true );
 
         var result = sut.ContainsExactly( count );
 
@@ -261,7 +261,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsExactlyForNonNegativeCountData ) )]
     public void ContainsExactly_ShouldReturnCorrectResult_WhenCountIsNotNegative(int sourceCount, int count, bool expected)
     {
-        var sut = Fixture.CreateMany<T>( sourceCount );
+        var sut = Fixture.CreateMany<T>( sourceCount ).Where( _ => true );
         var result = sut.ContainsExactly( count );
         result.TestEquals( expected ).Go();
     }
@@ -1029,6 +1029,97 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
                 result.FailedItems.Count().TestEquals( expectedFailed.Length ),
                 result.FailedItems.TestSetEqual( expectedFailed ),
                 result.FailedItemsSpan.TestSequence( result.FailedItems ) )
+            .Go();
+    }
+
+    [Fact]
+    public void BufferUntil_ShouldReturnEmptyResult_WhenSourceIsEmpty()
+    {
+        var sut = Array.Empty<T>();
+        var result = sut.BufferUntil( (_, _) => true );
+        result.TestEmpty().Go();
+    }
+
+    [Theory]
+    [InlineData( true )]
+    [InlineData( false )]
+    public void BufferUntil_ShouldReturnSingleResult_WhenSourceContainsOneElement(bool predicateResult)
+    {
+        var sut = Fixture.CreateManyDistinct<T>( count: 1 ).ToList();
+        var result = sut.BufferUntil( (_, _) => predicateResult ).Select( b => b.ToArray() );
+        result.TestSequence( [ (b, _) => b.TestSequence( sut ) ] ).Go();
+    }
+
+    [Fact]
+    public void BufferUntil_ShouldReturnSingleResult_WhenSourceContainsElementsThatAllPass()
+    {
+        var sut = Fixture.CreateManyDistinct<T>( count: 3 ).ToList();
+        var result = sut.BufferUntil( (_, _) => true ).Select( b => b.ToArray() );
+        result.TestSequence( [ (b, _) => b.TestSequence( sut ) ] ).Go();
+    }
+
+    [Fact]
+    public void BufferUntil_ShouldReturnManyResults_WhenSourceContainsElementsThatAllFail()
+    {
+        var sut = Fixture.CreateManyDistinct<T>( count: 3 ).ToList();
+        var result = sut.BufferUntil( (_, _) => false ).Select( b => b.ToArray() );
+        result.TestAll( (b, i) => b.TestSequence( [ sut[i] ] ) ).Go();
+    }
+
+    [Fact]
+    public void BufferUntil_ShouldReturnManyResults_WhenSourceContainsElementsThatConditionallyPass()
+    {
+        var items = Fixture.CreateManyDistinctSorted<T>( count: 11 ).ToList();
+        var expected = new[]
+        {
+            new[] { items[8], items[9], items[10] },
+            new[] { items[7] },
+            new[] { items[2], items[3], items[4], items[5], items[6] },
+            new[] { items[0], items[1] }
+        };
+
+        var sut = expected.SelectMany( x => x ).ToList();
+
+        var result = sut.BufferUntil( (a, b) => Comparer<T>.Default.Compare( a, b ) <= 0 ).Select( b => b.ToArray() );
+        result.TestAll( (b, i) => b.TestSequence( expected[i] ) ).Go();
+    }
+
+    [Fact]
+    public void TemporaryBuffer_ShouldBeCorrect_WhenEmpty()
+    {
+        var sut = default( TemporaryBuffer<T> );
+
+        var result = new List<T>();
+        foreach ( var e in sut )
+            result.Add( e );
+
+        Assertion.All(
+                result.TestEmpty(),
+                sut.Length.TestEquals( 0 ),
+                sut.ToArray().TestEmpty(),
+                sut.AsMemory().TestEmpty(),
+                sut.AsSpan().TestEmpty(),
+                sut.AsEnumerable().TestEmpty() )
+            .Go();
+    }
+
+    [Fact]
+    public void TemporaryBuffer_ShouldBeCorrect_WhenNotEmpty()
+    {
+        var source = Fixture.CreateManyDistinct<T>( count: 3 ).ToList();
+        var sut = source.BufferUntil( (_, _) => true ).First();
+
+        var result = new List<T>();
+        foreach ( var e in sut )
+            result.Add( e );
+
+        Assertion.All(
+                result.TestSequence( source ),
+                sut.Length.TestEquals( source.Count ),
+                sut.ToArray().TestSequence( source ),
+                sut.AsMemory().TestSequence( source ),
+                sut.AsSpan().TestSequence( source ),
+                sut.AsEnumerable().TestSequence( source ) )
             .Go();
     }
 

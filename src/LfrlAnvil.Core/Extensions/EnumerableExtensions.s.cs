@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2025 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -1290,6 +1290,57 @@ public static class EnumerableExtensions
         while ( enumerator.MoveNext() );
 
         return new PartitionResult<T>( items, passedCount );
+    }
+
+    /// <summary>
+    /// Buffers elements of the provided <paramref name="source"/>
+    /// as long as the last and the current element pass the specified <paramref name="predicate"/>.
+    /// When a given element pair does not pass the <paramref name="predicate"/>, then the buffer is yielded and cleared.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="predicate">Predicate to use for element buffering.</param>
+    /// <param name="initialCapacity">Optional initial capacity of the underlying buffer. Equal to <b>0</b> by default.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns>New enumerable of <see cref="TemporaryBuffer{T}"/> instances.</returns>
+    /// <remarks>
+    /// There exists only a single underlying buffer instance.
+    /// If buffered result needs to be used later, then consider materializing it into a separate collection.
+    /// </remarks>
+    [Pure]
+    public static IEnumerable<TemporaryBuffer<T>> BufferUntil<T>(
+        this IEnumerable<T> source,
+        Func<T, T, bool> predicate,
+        int initialCapacity = 0)
+    {
+        using var enumerator = source.GetEnumerator();
+        if ( ! enumerator.MoveNext() )
+            yield break;
+
+        var length = 1;
+        var buffer = new T[Buffers.GetCapacity( initialCapacity )];
+        buffer[0] = enumerator.Current;
+
+        while ( enumerator.MoveNext() )
+        {
+            var current = enumerator.Current;
+            if ( predicate( buffer[length - 1], current ) )
+            {
+                if ( length == buffer.Length )
+                    Array.Resize( ref buffer, Buffers.GetCapacity( length + 1 ) );
+
+                buffer[length++] = current;
+            }
+            else
+            {
+                yield return new TemporaryBuffer<T>( buffer, length );
+
+                Array.Clear( buffer, 1, length - 1 );
+                buffer[0] = current;
+                length = 1;
+            }
+        }
+
+        yield return new TemporaryBuffer<T>( buffer, length );
     }
 
     /// <summary>
