@@ -299,8 +299,8 @@ public class MessageBrokerSubscriptionTests : TestsBase
                         "[1::'test'::1] [MessageReceived] [PacketLength: 5] Begin handling SubscribeRequest",
                         """
                         [1::'test'::1] [MessageRejected] [PacketLength: 5] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid SubscribeRequest with payload 0 from client [1] 'test'. Encountered 1 error(s):
-                        1. Packet length is invalid.
+                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid SubscribeRequest from client [1] 'test'. Encountered 1 error(s):
+                        1. Expected header payload to be at least 1 but found 0.
                         """,
                         "[1::'test'::<ROOT>] [Disposing]",
                         "[1::'test'::<ROOT>] [Disposed]"
@@ -345,7 +345,7 @@ public class MessageBrokerSubscriptionTests : TestsBase
                         "[1::'test'::1] [MessageReceived] [PacketLength: 6] Begin handling SubscribeRequest",
                         """
                         [1::'test'::1] [MessageRejected] [PacketLength: 6] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid SubscribeRequest with payload 1 from client [1] 'test'. Encountered 1 error(s):
+                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid SubscribeRequest from client [1] 'test'. Encountered 1 error(s):
                         1. Expected channel name length to be in [1, 512] range but found 0.
                         """,
                         "[1::'test'::<ROOT>] [Disposing]",
@@ -390,7 +390,7 @@ public class MessageBrokerSubscriptionTests : TestsBase
                         "[1::'test'::1] [MessageReceived] [PacketLength: 519] Begin handling SubscribeRequest",
                         """
                         [1::'test'::1] [MessageRejected] [PacketLength: 519] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid SubscribeRequest with payload 514 from client [1] 'test'. Encountered 1 error(s):
+                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid SubscribeRequest from client [1] 'test'. Encountered 1 error(s):
                         1. Expected channel name length to be in [1, 512] range but found 513.
                         """,
                         "[1::'test'::<ROOT>] [Disposing]",
@@ -1270,8 +1270,8 @@ public class MessageBrokerSubscriptionTests : TestsBase
                         "[1::'test'::2] [MessageReceived] [PacketLength: 8] Begin handling UnsubscribeRequest",
                         """
                         [1::'test'::2] [MessageRejected] [PacketLength: 8] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid UnsubscribeRequest with payload 3 from client [1] 'test'. Encountered 1 error(s):
-                        1. Expected header payload to be 4.
+                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid UnsubscribeRequest from client [1] 'test'. Encountered 1 error(s):
+                        1. Expected header payload to be 4 but found 3.
                         """
                     ] ),
                 logs.GetAllChannel()

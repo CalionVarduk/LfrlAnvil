@@ -567,8 +567,8 @@ public class MessageBrokerChannelBindingTests : TestsBase
                         "[1::'test'::1] [MessageReceived] [PacketLength: 5] Begin handling BindRequest",
                         """
                         [1::'test'::1] [MessageRejected] [PacketLength: 5] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid BindRequest with payload 0 from client [1] 'test'. Encountered 1 error(s):
-                        1. Packet length is invalid.
+                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid BindRequest from client [1] 'test'. Encountered 1 error(s):
+                        1. Expected header payload to be at least 5 but found 0.
                         """,
                         "[1::'test'::<ROOT>] [Disposing]",
                         "[1::'test'::<ROOT>] [Disposed]"
@@ -613,7 +613,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
                         "[1::'test'::1] [MessageReceived] [PacketLength: 11] Begin handling BindRequest",
                         """
                         [1::'test'::1] [MessageRejected] [PacketLength: 11] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid BindRequest with payload 6 from client [1] 'test'. Encountered 1 error(s):
+                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid BindRequest from client [1] 'test'. Encountered 1 error(s):
                         1. Expected binary channel name length to be in [0, 1] range but found -1.
                         """,
                         "[1::'test'::<ROOT>] [Disposing]",
@@ -659,7 +659,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
                         "[1::'test'::1] [MessageReceived] [PacketLength: 13] Begin handling BindRequest",
                         """
                         [1::'test'::1] [MessageRejected] [PacketLength: 13] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid BindRequest with payload 8 from client [1] 'test'. Encountered 1 error(s):
+                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid BindRequest from client [1] 'test'. Encountered 1 error(s):
                         1. Expected binary channel name length to be in [0, 3] range but found 4.
                         """,
                         "[1::'test'::<ROOT>] [Disposing]",
@@ -706,7 +706,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
                         "[1::'test'::1] [MessageReceived] [PacketLength: 10] Begin handling BindRequest",
                         """
                         [1::'test'::1] [MessageRejected] [PacketLength: 10] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid BindRequest with payload 5 from client [1] 'test'. Encountered 1 error(s):
+                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid BindRequest from client [1] 'test'. Encountered 1 error(s):
                         1. Expected channel name length to be in [1, 512] range but found 0.
                         """,
                         "[1::'test'::<ROOT>] [Disposing]",
@@ -752,7 +752,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
                         "[1::'test'::1] [MessageReceived] [PacketLength: 523] Begin handling BindRequest",
                         """
                         [1::'test'::1] [MessageRejected] [PacketLength: 523] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid BindRequest with payload 518 from client [1] 'test'. Encountered 1 error(s):
+                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid BindRequest from client [1] 'test'. Encountered 1 error(s):
                         1. Expected channel name length to be in [1, 512] range but found 513.
                         """,
                         "[1::'test'::<ROOT>] [Disposing]",
@@ -798,7 +798,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
                         "[1::'test'::1] [MessageReceived] [PacketLength: 524] Begin handling BindRequest",
                         """
                         [1::'test'::1] [MessageRejected] [PacketLength: 524] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid BindRequest with payload 519 from client [1] 'test'. Encountered 1 error(s):
+                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid BindRequest from client [1] 'test'. Encountered 1 error(s):
                         1. Expected queue name length to be in [1, 512] range but found 513.
                         """,
                         "[1::'test'::<ROOT>] [Disposing]",
@@ -1551,8 +1551,8 @@ public class MessageBrokerChannelBindingTests : TestsBase
                         "[1::'test'::2] [MessageReceived] [PacketLength: 8] Begin handling UnbindRequest",
                         """
                         [1::'test'::2] [MessageRejected] [PacketLength: 8] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid UnbindRequest with payload 3 from client [1] 'test'. Encountered 1 error(s):
-                        1. Expected header payload to be 4.
+                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid UnbindRequest from client [1] 'test'. Encountered 1 error(s):
+                        1. Expected header payload to be 4 but found 3.
                         """
                     ] ),
                 logs.GetAllChannel()
@@ -1664,7 +1664,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
             c =>
             {
                 c.SendBindRequest( "c" );
-                c.ReadUnbindFailureResponse();
+                c.ReadBoundResponse();
             } );
 
         using var client2 = new ClientMock();

@@ -25,7 +25,6 @@ internal static class Resources
 {
     internal const string ServerDisposed = "Operation has been cancelled because server is disposed.";
     internal const string UnexpectedServerEndpoint = "Received unexpected server endpoint.";
-    internal const string InvalidPacketLength = "Packet length is invalid.";
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -50,9 +49,16 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string InvalidHeaderPayload(uint payload)
+    internal static string InvalidHeaderPayload(uint actual, uint expected)
     {
-        return $"Expected header payload to be {payload}.";
+        return $"Expected header payload to be {expected} but found {actual}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string TooShortHeaderPayload(uint actual, uint expectedMin)
+    {
+        return $"Expected header payload to be at least {expectedMin} but found {actual}.";
     }
 
     [Pure]
@@ -61,11 +67,10 @@ internal static class Resources
         int clientId,
         string clientName,
         MessageBrokerClientEndpoint endpoint,
-        uint payload,
         Chain<string> errors)
     {
         var header
-            = $"Message broker client rejected an invalid {endpoint} with payload {payload} sent by server's remote client [{clientId}] '{clientName}'.";
+            = $"Message broker client rejected an invalid {GetEndpoint( endpoint )} sent by server's remote client [{clientId}] '{clientName}'.";
 
         if ( errors.Count == 0 )
             return header;
@@ -80,12 +85,9 @@ internal static class Resources
         int clientId,
         string clientName,
         MessageBrokerServerEndpoint endpoint,
-        uint payload,
         Chain<string> errors)
     {
-        var header
-            = $"Message broker server received an invalid {endpoint} with payload {payload} from client [{clientId}] '{clientName}'.";
-
+        var header = $"Message broker server received an invalid {GetEndpoint( endpoint )} from client [{clientId}] '{clientName}'.";
         if ( errors.Count == 0 )
             return header;
 
@@ -189,6 +191,14 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string FailedToAddMessageToUnboundChannel(int clientId, string clientName, int channelId)
+    {
+        return
+            $"Message broker client [{clientId}] '{clientName}' could not add message to channel with ID {channelId} because it is not bound to it.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string FailedToCreateSubscription(
         int clientId,
         string clientName,
@@ -207,5 +217,13 @@ internal static class Resources
         var channelIdText = channelId is null ? string.Empty : $"[{channelId.Value}] ";
         return
             $"Message broker client [{clientId}] '{clientName}' failed to create a subscription to channel {channelIdText}'{channelName}' because {reasonText}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string GetEndpoint<T>(T value)
+        where T : struct, Enum
+    {
+        return Enum.IsDefined( value ) ? value.ToString() : $"<unrecognized-endpoint-{value}>";
     }
 }

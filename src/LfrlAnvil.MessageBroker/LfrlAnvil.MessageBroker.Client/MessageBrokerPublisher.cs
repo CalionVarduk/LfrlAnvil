@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
+using LfrlAnvil.Diagnostics;
 using LfrlAnvil.MessageBroker.Client.Exceptions;
 using LfrlAnvil.MessageBroker.Client.Internal;
 
@@ -104,6 +106,46 @@ public sealed class MessageBrokerPublisher
     public ValueTask<Result<MessageBrokerUnbindResult>> UnbindAsync()
     {
         return PublisherCollection.UnbindAsync( this );
+    }
+
+    /// <summary>
+    /// Sends a message to the bound channel.
+    /// </summary>
+    /// <param name="data">Message to send.</param>
+    /// <param name="clearBufferOnDispose">
+    /// Specifies whether or not to clear the internal memory buffer when it's returned to the pool. Equal to <b>false</b> by default.
+    /// </param>
+    /// <returns>
+    /// A task that represents the operation, which returns a <see cref="Result{T}"/> instance,
+    /// with underlying <see cref="MesageBrokerSendResult"/> instance.
+    /// </returns>
+    /// <exception cref="MessageBrokerClientDisposedException">When client has already been disposed.</exception>
+    /// <remarks>
+    /// Unexpected errors encountered during sending will cause the client to be automatically disposed.
+    /// Returned <see cref="Result{T}"/> will only be valid when either the message has been successfully enqueued on the server side,
+    /// or the publisher is already locally unbound from the channel, which will cancel the request to the server.
+    /// </remarks>
+    public async ValueTask<Result<MesageBrokerSendResult>> SendAsync(ReadOnlyMemory<byte> data, bool clearBufferOnDispose = false)
+    {
+        using var context = GetSendContext( MemorySize.FromBytes( data.Length ), clearBufferOnDispose );
+        return await context.Append( data.Span ).SendAsync().ConfigureAwait( false );
+    }
+
+    /// <summary>
+    /// Acquires a <see cref="MessageBrokerSendContext"/> instance which gives access to the internal memory pool
+    /// and allows to send a message to the bound channel.
+    /// </summary>
+    /// <param name="minCapacity">
+    /// Specifies minimum initial capacity of the allocated memory buffer.
+    /// Equal to <b>null</b> by default, which will cause the minimum of <b>1KB</b> to be used.
+    /// </param>
+    /// <param name="clearBufferOnDispose">
+    /// Specifies whether or not to clear the internal memory buffer when it's returned to the pool. Equal to <b>false</b> by default.
+    /// </param>
+    /// <returns>Pooled <see cref="MessageBrokerSendContext"/> instance.</returns>
+    public MessageBrokerSendContext GetSendContext(MemorySize? minCapacity = null, bool clearBufferOnDispose = false)
+    {
+        return Client.RentMessageContext( this, minCapacity ?? MemorySize.Zero, clearBufferOnDispose );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

@@ -27,18 +27,12 @@ public class MessageBrokerClientProtocolException : InvalidOperationException
     /// </summary>
     /// <param name="client"><see cref="MessageBrokerClient"/> that encountered network protocol violation.</param>
     /// <param name="endpoint">Client endpoint associated with network protocol violation.</param>
-    /// <param name="payload">Packet payload received by the client.</param>
     /// <param name="errors">Collection of network protocol errors.</param>
-    public MessageBrokerClientProtocolException(
-        MessageBrokerClient client,
-        MessageBrokerClientEndpoint endpoint,
-        uint payload,
-        Chain<string> errors)
-        : base( Resources.InvalidPayloadFromServer( client.Name, endpoint, payload, errors ) )
+    public MessageBrokerClientProtocolException(MessageBrokerClient client, MessageBrokerClientEndpoint endpoint, Chain<string> errors)
+        : base( Resources.InvalidPayloadFromServer( client.Name, endpoint, errors ) )
     {
         Client = client;
         Endpoint = endpoint;
-        Payload = payload;
     }
 
     /// <summary>
@@ -50,9 +44,4 @@ public class MessageBrokerClientProtocolException : InvalidOperationException
     /// Client endpoint associated with network protocol violation.
     /// </summary>
     public MessageBrokerClientEndpoint Endpoint { get; }
-
-    /// <summary>
-    /// Packet payload received by the client.
-    /// </summary>
-    public uint Payload { get; }
 }

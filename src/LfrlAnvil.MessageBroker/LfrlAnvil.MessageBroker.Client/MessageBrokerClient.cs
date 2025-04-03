@@ -24,10 +24,10 @@ using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Async;
+using LfrlAnvil.Diagnostics;
 using LfrlAnvil.Exceptions;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Memory;
-using LfrlAnvil.MessageBroker.Client.Buffering;
 using LfrlAnvil.MessageBroker.Client.Events;
 using LfrlAnvil.MessageBroker.Client.Exceptions;
 using LfrlAnvil.MessageBroker.Client.Internal;
@@ -45,11 +45,12 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     internal PingScheduler PingScheduler;
     internal PublisherCollection PublisherCollection;
     internal ListenerCollection ListenerCollection;
+    internal readonly MemoryPool<byte> MemoryPool;
 
     private readonly MessageBrokerClientEventHandler? _eventHandler;
     private readonly ITimestampProvider _timestamps;
-    private readonly MemoryPool<byte> _memoryPool;
     private readonly TcpClient _tcp;
+    private StackSlim<MessageBrokerSendContext> _messageContextPool;
     private DelaySource _delaySource;
     private MessageBrokerClientStreamDecorator? _streamDecorator;
     private Stream? _stream;
@@ -69,13 +70,14 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         Ensure.IsInRange( name.Length, Defaults.NameLengthBounds.Min, Defaults.NameLengthBounds.Max );
 
         _tcp = Defaults.Tcp.CreateClient( options.Tcp );
-        _memoryPool = Defaults.Memory.CreatePool( options.MinMemoryPoolSegmentLength );
+        MemoryPool = Defaults.Memory.CreatePool( options.MinMemoryPoolSegmentLength );
         ConnectionTimeout = Defaults.Temporal.GetActualTimeout( options.ConnectionTimeout );
         MessageTimeout = Defaults.Temporal.GetActualTimeout( options.DesiredMessageTimeout );
         PingInterval = Defaults.Temporal.GetActualPingInterval( options.DesiredPingInterval );
         _streamDecorator = options.StreamDecorator;
         _eventHandler = options.EventHandler;
         _timestamps = options.Timestamps ?? new TimestampProvider();
+        _messageContextPool = StackSlim<MessageBrokerSendContext>.Create();
 
         _stream = null;
         _state = MessageBrokerClientState.Created;
@@ -205,6 +207,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         using ( AcquireLock() )
         {
             ownedDelaySource = _delaySource.DiscardOwnedSource();
+            _messageContextPool.Clear();
             PublisherCollection.Clear();
             ListenerCollection.Clear();
             eventSchedulerTask = EventScheduler.DiscardUnderlyingTask();
@@ -366,13 +369,32 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal BinaryBufferToken RentBuffer(int length, out Memory<byte> memory)
+    internal MessageBrokerSendContext RentMessageContext(
+        MessageBrokerPublisher publisher,
+        MemorySize minCapacity,
+        bool clearBufferOnDispose)
     {
-        using ( ExclusiveLock.Enter( _memoryPool ) )
+        MessageBrokerSendContext? result;
+        using ( AcquireLock() )
         {
-            var token = _memoryPool.Rent( length );
-            memory = token.AsMemory();
-            return new BinaryBufferToken( token );
+            if ( ShouldCancel )
+                ExceptionThrower.Throw( DisposedException() );
+
+            if ( ! _messageContextPool.TryPop( out result ) )
+                result = new MessageBrokerSendContext( MemoryPool );
+        }
+
+        result.Initialize( publisher, minCapacity, clearBufferOnDispose );
+        return result;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void ReturnMessageContext(MessageBrokerSendContext context)
+    {
+        using ( AcquireLock() )
+        {
+            if ( ! ShouldCancel )
+                _messageContextPool.Push( context );
         }
     }
 
@@ -381,13 +403,6 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     internal Timestamp GetTimestamp()
     {
         return _timestamps.GetNow();
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal Timestamp GetFutureTimestamp(Duration delay)
-    {
-        return GetTimestamp() + delay;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -547,13 +562,5 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         Assume.IsNotNull( e.Exception );
         Emit( e );
         return e.Exception;
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void DisposeBufferToken(BinaryBufferToken token)
-    {
-        var exc = token.TryDispose().Exception;
-        if ( exc is not null )
-            Emit( MessageBrokerClientEvent.Unexpected( this, exc ) );
     }
 }

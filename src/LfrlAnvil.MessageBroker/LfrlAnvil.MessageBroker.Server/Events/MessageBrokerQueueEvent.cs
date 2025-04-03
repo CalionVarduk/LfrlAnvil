@@ -29,11 +29,13 @@ public readonly struct MessageBrokerQueueEvent
         MessageBrokerQueue queue,
         MessageBrokerChannelBinding? binding,
         MessageBrokerQueueEventType type,
+        ulong? messageId = null,
         ulong contextId = MessageBrokerRemoteClientEvent.RootContextId,
         Exception? exception = null)
     {
         Queue = queue;
         Binding = binding;
+        MessageId = messageId;
         ContextId = contextId;
         Type = type;
         Exception = exception;
@@ -48,6 +50,11 @@ public readonly struct MessageBrokerQueueEvent
     /// <see cref="MessageBrokerChannelBinding"/> related to this event.
     /// </summary>
     public MessageBrokerChannelBinding? Binding { get; }
+
+    /// <summary>
+    /// Id of a message related to this event.
+    /// </summary>
+    public ulong? MessageId { get; }
 
     /// <summary>
     /// Id of an internal context with which this event is associated.
@@ -126,6 +133,46 @@ public readonly struct MessageBrokerQueueEvent
                     break;
                 }
 
+                case MessageBrokerQueueEventType.MessageEnqueued:
+                {
+                    if ( MessageId is not null )
+                        builder.Append( " MessageId = " ).Append( MessageId.Value.ToString( CultureInfo.InvariantCulture ) );
+
+                    if ( Binding is not null )
+                        builder
+                            .Append( " by binding [" )
+                            .Append( Binding.Client.Id.ToString( CultureInfo.InvariantCulture ) )
+                            .Append( "::'" )
+                            .Append( Binding.Client.Name )
+                            .Append( "'] => [" )
+                            .Append( Binding.Channel.Id.ToString( CultureInfo.InvariantCulture ) )
+                            .Append( "::'" )
+                            .Append( Binding.Channel.Name )
+                            .Append( "']" );
+
+                    break;
+                }
+
+                case MessageBrokerQueueEventType.MessageDequeued:
+                {
+                    if ( MessageId is not null )
+                        builder.Append( " MessageId = " ).Append( MessageId.Value.ToString( CultureInfo.InvariantCulture ) );
+
+                    if ( Binding is not null )
+                        builder
+                            .Append( " by binding [" )
+                            .Append( Binding.Client.Id.ToString( CultureInfo.InvariantCulture ) )
+                            .Append( "::'" )
+                            .Append( Binding.Client.Name )
+                            .Append( "'] => [" )
+                            .Append( Binding.Channel.Id.ToString( CultureInfo.InvariantCulture ) )
+                            .Append( "::'" )
+                            .Append( Binding.Channel.Name )
+                            .Append( "']" );
+
+                    break;
+                }
+
                 case MessageBrokerQueueEventType.Unexpected:
                 case MessageBrokerQueueEventType.Disposing:
                 case MessageBrokerQueueEventType.Disposed:
@@ -142,10 +189,28 @@ public readonly struct MessageBrokerQueueEvent
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerQueueEvent Created(
         MessageBrokerQueue queue,
-        MessageBrokerChannelBinding? binding,
+        MessageBrokerChannelBinding binding,
         ulong contextId = MessageBrokerRemoteClientEvent.RootContextId)
     {
-        return new MessageBrokerQueueEvent( queue, binding, MessageBrokerQueueEventType.Created, contextId );
+        return new MessageBrokerQueueEvent( queue, binding, MessageBrokerQueueEventType.Created, contextId: contextId );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerQueueEvent MessageEnqueued(
+        MessageBrokerQueue queue,
+        MessageBrokerChannelBinding binding,
+        ulong messageId,
+        ulong contextId)
+    {
+        return new MessageBrokerQueueEvent( queue, binding, MessageBrokerQueueEventType.MessageEnqueued, messageId, contextId );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerQueueEvent MessageDequeued(MessageBrokerQueue queue, MessageBrokerChannelBinding binding, ulong messageId)
+    {
+        return new MessageBrokerQueueEvent( queue, binding, MessageBrokerQueueEventType.MessageDequeued, messageId );
     }
 
     [Pure]

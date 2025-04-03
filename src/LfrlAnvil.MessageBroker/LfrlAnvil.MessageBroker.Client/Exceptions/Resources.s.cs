@@ -47,9 +47,16 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string InvalidHeaderPayload(uint payload)
+    internal static string InvalidHeaderPayload(uint actual, uint expected)
     {
-        return $"Expected header payload to be {payload}.";
+        return $"Expected header payload to be {expected} but found {actual}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string TooShortHeaderPayload(uint actual, uint expectedMin)
+    {
+        return $"Expected header payload to be at least {expectedMin} but found {actual}.";
     }
 
     [Pure]
@@ -138,6 +145,13 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string MessageCancelled(int queueId, string queueName)
+    {
+        return $"Message enqueue to queue [{queueId}] '{queueName}' has been cancelled by the server.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string MessageTimeoutIsOutOfBounds(Duration timeout)
     {
         return $"Expected received message timeout to be in {GetBounds( Defaults.Temporal.TimeoutBounds )} range but found {timeout}.";
@@ -160,13 +174,9 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string ClientPayloadRejected(
-        string clientName,
-        MessageBrokerServerEndpoint endpoint,
-        uint payload,
-        Chain<string> errors)
+    internal static string ClientPayloadRejected(string clientName, MessageBrokerServerEndpoint endpoint, Chain<string> errors)
     {
-        var header = $"Message broker server rejected an invalid {endpoint} with payload {payload} sent by client '{clientName}'.";
+        var header = $"Message broker server rejected an invalid {GetEndpoint( endpoint )} sent by client '{clientName}'.";
         if ( errors.Count == 0 )
             return header;
 
@@ -176,18 +186,22 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string InvalidPayloadFromServer(
-        string clientName,
-        MessageBrokerClientEndpoint endpoint,
-        uint payload,
-        Chain<string> errors)
+    internal static string InvalidPayloadFromServer(string clientName, MessageBrokerClientEndpoint endpoint, Chain<string> errors)
     {
-        var header = $"Message broker client '{clientName}' received an invalid {endpoint} with payload {payload} from the server.";
+        var header = $"Message broker client '{clientName}' received an invalid {GetEndpoint( endpoint )} from the server.";
         if ( errors.Count == 0 )
             return header;
 
         var reasons = string.Join( Environment.NewLine, errors.Select( static (e, i) => $"{i + 1}. {e}" ) );
         return $"{header} Encountered {errors.Count} error(s):{Environment.NewLine}{reasons}";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string GetEndpoint<T>(T value)
+        where T : struct, Enum
+    {
+        return Enum.IsDefined( value ) ? value.ToString() : $"<unrecognized-endpoint-{value}>";
     }
 
     [Pure]

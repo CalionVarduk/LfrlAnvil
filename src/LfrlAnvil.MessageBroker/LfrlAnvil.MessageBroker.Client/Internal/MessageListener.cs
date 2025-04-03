@@ -18,7 +18,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using LfrlAnvil.MessageBroker.Client.Buffering;
+using LfrlAnvil.Memory;
 using LfrlAnvil.MessageBroker.Client.Events;
 
 namespace LfrlAnvil.MessageBroker.Client.Internal;
@@ -129,7 +129,7 @@ internal struct MessageListener
                 break;
             }
 
-            BinaryBufferToken packetBufferToken = default;
+            var packetPoolToken = default( MemoryPoolToken<byte> );
             var packetBuffer = Memory<byte>.Empty;
             if ( target.ServerEndpoint != MessageBrokerServerEndpoint.PingRequest )
             {
@@ -142,7 +142,7 @@ internal struct MessageListener
 
                 if ( packetLength.Value > 0 )
                 {
-                    packetBufferToken = client.RentBuffer( packetLength.Value, out packetBuffer ).EnableClearing();
+                    packetPoolToken = client.MemoryPool.Rent( packetLength.Value, out packetBuffer ).EnableClearing();
                     try
                     {
                         await stream.ReadExactlyAsync( packetBuffer, timeoutToken ).ConfigureAwait( false );
@@ -150,7 +150,7 @@ internal struct MessageListener
                     catch ( Exception exc )
                     {
                         client.Emit( MessageBrokerClientEvent.WaitingForMessage( client, exc ) );
-                        client.DisposeBufferToken( packetBufferToken );
+                        packetPoolToken.Return( client );
                         break;
                     }
                 }
@@ -160,13 +160,13 @@ internal struct MessageListener
             {
                 if ( client.ShouldCancel )
                 {
-                    client.DisposeBufferToken( packetBufferToken );
+                    packetPoolToken.Return( client );
                     return TaskStopReason.OwnerDisposed;
                 }
 
                 client.MessageContextQueue.NotifyPendingResponseSource(
                     target.Source,
-                    IncomingPacketToken.Ok( header, packetBufferToken, packetBuffer ) );
+                    IncomingPacketToken.Ok( header, packetPoolToken, packetBuffer ) );
             }
         }
 

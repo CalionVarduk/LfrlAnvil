@@ -67,4 +67,11 @@ internal ref struct BinaryContractReader
         Move( sizeof( uint ) );
         return result;
     }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal ulong ReadInt64()
+    {
+        return Unsafe.ReadUnaligned<ulong>( ref _first );
+    }
 }

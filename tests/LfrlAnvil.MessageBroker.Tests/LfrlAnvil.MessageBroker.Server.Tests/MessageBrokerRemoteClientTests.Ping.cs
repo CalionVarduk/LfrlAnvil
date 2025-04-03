@@ -98,7 +98,7 @@ public partial class MessageBrokerRemoteClientTests
                             (x, _) => x.TestStartsWith(
                                 """
                                 [1::'test'::<ROOT>] [MessageRejected] [PacketLength: 5] Encountered an error:
-                                LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid ConfirmHandshakeResponse with payload 0 from client [1] 'test'. Encountered 1 error(s):
+                                LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid ConfirmHandshakeResponse from client [1] 'test'. Encountered 1 error(s):
                                 1. Received unexpected server endpoint.
                                 """ ) ) )
                 .Go();
@@ -142,7 +142,7 @@ public partial class MessageBrokerRemoteClientTests
                             (x, _) => x.TestStartsWith(
                                 """
                                 [1::'test'::1] [MessageRejected] [PacketLength: 5] Encountered an error:
-                                LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid PingRequest with payload 1 from client [1] 'test'. Encountered 1 error(s):
+                                LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid PingRequest from client [1] 'test'. Encountered 1 error(s):
                                 1. Expected endianness verification payload to be 0102fdfe but found 00000001.
                                 """ ) ) )
                 .Go();

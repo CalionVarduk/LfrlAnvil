@@ -679,7 +679,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
                                 .TestStartsWith(
                                     """
                                     [1::<ROOT>] [MessageRejected] [PacketLength: 5] Encountered an error:
-                                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid ConfirmHandshakeResponse with payload 4277993985 from client [1] ''. Encountered 1 error(s):
+                                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid ConfirmHandshakeResponse from client [1] ''. Encountered 1 error(s):
                                     1. Received unexpected server endpoint.
                                     """ ),
                             l.Skip( 3 ).TestSequence( [ "[1::<ROOT>] [Disposing]", "[1::<ROOT>] [Disposed]" ] ) ) ) )
@@ -742,8 +742,8 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
                                 .TestStartsWith(
                                     """
                                     [1::<ROOT>] [MessageRejected] [PacketLength: 13] Encountered an error:
-                                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid HandshakeRequest with payload 8 from client [1] ''. Encountered 1 error(s):
-                                    1. Packet length is invalid.
+                                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid HandshakeRequest from client [1] ''. Encountered 1 error(s):
+                                    1. Expected header payload to be at least 9 but found 8.
                                     """ ),
                             l.Skip( 3 ).TestSequence( [ "[1::<ROOT>] [Disposing]", "[1::<ROOT>] [Disposed]" ] ) ) ) )
             .Go();
@@ -810,7 +810,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
                                 .TestStartsWith(
                                     """
                                     [1::<ROOT>] [MessageRejected] [PacketLength: 527] Encountered an error:
-                                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid HandshakeRequest with payload 522 from client [1] ''. Encountered 1 error(s):
+                                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid HandshakeRequest from client [1] ''. Encountered 1 error(s):
                                     1. Expected name length to be in [1, 512] range but found 513.
                                     """ ),
                             l.Skip( 3 )
@@ -885,7 +885,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
                                 .TestStartsWith(
                                     """
                                     [1::<ROOT>] [MessageRejected] [PacketLength: 14] Encountered an error:
-                                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid HandshakeRequest with payload 9 from client [1] ''. Encountered 1 error(s):
+                                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid HandshakeRequest from client [1] ''. Encountered 1 error(s):
                                     1. Expected name length to be in [1, 512] range but found 0.
                                     """ ),
                             l.Skip( 3 )
@@ -1059,7 +1059,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
                                 .TestStartsWith(
                                     """
                                     [1::'test'::<ROOT>] [MessageRejected] [PacketLength: 218103813] Encountered an error:
-                                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid HandshakeRequest with payload 218103808 from client [1] 'test'. Encountered 1 error(s):
+                                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid HandshakeRequest from client [1] 'test'. Encountered 1 error(s):
                                     1. Received unexpected server endpoint.
                                     """ ),
                             l.Skip( 8 ).TestSequence( [ "[1::'test'::<ROOT>] [Disposing]", "[1::'test'::<ROOT>] [Disposed]" ] ) ) ) )
@@ -1129,7 +1129,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
                                 .TestStartsWith(
                                     """
                                     [1::'test'::<ROOT>] [MessageRejected] [PacketLength: 5] Encountered an error:
-                                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid ConfirmHandshakeResponse with payload 1 from client [1] 'test'. Encountered 1 error(s):
+                                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid ConfirmHandshakeResponse from client [1] 'test'. Encountered 1 error(s):
                                     1. Expected endianness verification payload to be 0102fdfe but found 00000001.
                                     """ ),
                             l.Skip( 8 ).TestSequence( [ "[1::'test'::<ROOT>] [Disposing]", "[1::'test'::<ROOT>] [Disposed]" ] ) ) ) )

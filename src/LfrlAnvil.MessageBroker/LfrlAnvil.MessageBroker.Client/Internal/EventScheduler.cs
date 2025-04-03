@@ -124,7 +124,7 @@ internal struct EventScheduler
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal CancellationToken ScheduleReadTimeout(MessageBrokerClient client)
     {
-        var timestamp = client.GetFutureTimestamp( client.MessageTimeout );
+        var timestamp = client.GetTimestamp() + client.MessageTimeout;
         _readerCancellation = _readerCancellation.Prepare( timestamp );
         var token = _readerCancellation.GetPreparedToken();
 
@@ -149,7 +149,7 @@ internal struct EventScheduler
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal Timestamp GetPendingResponseTimeout(MessageBrokerClient client)
     {
-        var result = client.GetFutureTimestamp( client.MessageTimeout );
+        var result = client.GetTimestamp() + client.MessageTimeout;
         if ( _nextEventTimestamp > result )
             _reset.Set();
 
@@ -159,7 +159,7 @@ internal struct EventScheduler
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void SchedulePing(MessageBrokerClient client)
     {
-        _nextSendPingTimestamp = client.GetFutureTimestamp( client.PingInterval );
+        _nextSendPingTimestamp = client.GetTimestamp() + client.PingInterval;
         if ( _nextEventTimestamp > _nextSendPingTimestamp )
             _reset.Set();
     }
@@ -241,7 +241,7 @@ internal struct EventScheduler
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private CancellationToken ScheduleWriteTimeout(MessageBrokerClient client, Duration delay)
     {
-        var timestamp = client.GetFutureTimestamp( delay );
+        var timestamp = client.GetTimestamp() + delay;
         _writerCancellation = _writerCancellation.Prepare( timestamp );
         var token = _writerCancellation.GetPreparedToken();
 

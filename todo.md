@@ -29,6 +29,36 @@ Sql:
 - IncludedColumns for IXs? simple blocking link to SqlColumnBuilder (low priority)
     - from implemented dialects only postgresql supports this
 
+MessageBroker:
+- redo logging
+- dedicated IMessageBroker*Logger interfaces (?)
+- dedicated methods for each possible event (?)
+  - skip interface maybe, allow to define multiple callbacks
+  - however, there can't be too many of them...
+  - define some event groups, that could be handled by the same callback
+  - for example: network events, obj creation/removal events, message processing events
+  - it should be possible to link chain of events together via context-id, if necessary
+  - some events may have to be emitted under active locks
+    - misuse of handlers may lead to deadlocks - make sure to warn about it
+    - this mostly concerns obj removal (queue/channel) from within the handler on the server side
+    - with new events (like creating-publisher etc.) the order of events and some overlap/swapping may not matter that much
+    - since the actual order may be verified by checking timestamp-of-first-event-in-context
+    - so event emitting under active lock might be possible to be kept to bare minimum
+- refactor packet read/write & payload error emitting? there's a lot of copy-pasta (wait for packet batching)
+- change endpoint values to be as sequential as possible (minor switch optimization)
+- separate synchronous enqueue-write operation from asynchronous write-and-wait-for-response operation
+  - consumption example: client.Enqueue(...).WaitForResponseAsync()
+  - make sure that Enqueue already starts the underlying process
+  - so that fire-and-forget misuse won't cause the whole write queue to be blocked
+  - or, explain that this is a low-level API, and any issues caused by misuse are on the consumer
+  - in that case, there may have to exist some sort of TryEnqueue method
+  - since all operations at first validate e.g. client state and may throw
+  - or Enqueue itself returns a Result<EnqueuedOperation>, which would allow the consumer to easily react to such a scenario
+- add some basic memory pool tracking & possibility to trim excess
+
+Reactive:
+- timer & scheduler might require DelayValueTaskSource usage, with async MRE
+
 ### Terminal
 
 project idea:

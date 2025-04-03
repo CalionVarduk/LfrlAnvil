@@ -14,10 +14,12 @@
 
 using System.Diagnostics.Contracts;
 using System.Net.Sockets;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Diagnostics;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.Memory;
 
 namespace LfrlAnvil.MessageBroker.Client.Internal;
@@ -96,6 +98,23 @@ internal static class Defaults
                 : PoolSegmentLengthBounds.Min;
 
             return new MemoryPool<byte>( unchecked( ( int )actualMinSegmentLength.Bytes ) );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static int GetInitialBufferCapacity(long minCapacity)
+        {
+            var actualMinCapacity = minCapacity.Clamp( MemorySize.BytesPerKilobyte, int.MaxValue );
+            return GetBufferCapacity( unchecked( ( int )actualMinCapacity ) );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static int GetBufferCapacity(int minCapacity)
+        {
+            Assume.IsGreaterThanOrEqualTo( minCapacity, MemorySize.BytesPerKilobyte );
+            var result = BitOperations.RoundUpToPowerOf2( unchecked( ( uint )minCapacity ) );
+            return result > int.MaxValue ? int.MaxValue : unchecked( ( int )result );
         }
     }
 }

@@ -186,14 +186,14 @@ public readonly struct MessageBrokerClientEvent
 
                 case MessageBrokerClientEventType.MessageReceived:
                     if ( IsRootContext && GetClientEndpoint() != MessageBrokerClientEndpoint.HandshakeAcceptedResponse )
-                        builder.AppendSpace().Append( GetClientEndpoint().ToString() );
+                        builder.AppendSpace().Append( Resources.GetEndpoint( GetClientEndpoint() ) );
                     else
-                        builder.AppendSpace().Append( "Begin handling " ).Append( GetClientEndpoint().ToString() );
+                        builder.AppendSpace().Append( "Begin handling " ).Append( Resources.GetEndpoint( GetClientEndpoint() ) );
 
                     break;
 
                 case MessageBrokerClientEventType.MessageAccepted:
-                    builder.AppendSpace().Append( GetClientEndpoint().ToString() );
+                    builder.AppendSpace().Append( Resources.GetEndpoint( GetClientEndpoint() ) );
                     if ( GetClientEndpoint() == MessageBrokerClientEndpoint.HandshakeAcceptedResponse )
                     {
                         builder
@@ -233,7 +233,7 @@ public readonly struct MessageBrokerClientEvent
                     break;
 
                 case MessageBrokerClientEventType.SendingMessage:
-                    builder.AppendSpace().Append( GetServerEndpoint().ToString() );
+                    builder.AppendSpace().Append( Resources.GetEndpoint( GetServerEndpoint() ) );
                     if ( GetServerEndpoint() == MessageBrokerServerEndpoint.UnbindRequest )
                     {
                         if ( Data is MessageBrokerPublisher publisher )
@@ -260,10 +260,26 @@ public readonly struct MessageBrokerClientEvent
                                 .Append( "')" );
                         }
                     }
+                    else if ( GetServerEndpoint() == MessageBrokerServerEndpoint.MessageRequest )
+                    {
+                        if ( Data is MessageBrokerPublisher publisher )
+                        {
+                            builder
+                                .Append( " (ChannelId = " )
+                                .Append( publisher.ChannelId.ToString( CultureInfo.InvariantCulture ) )
+                                .Append( ", ChannelName = '" )
+                                .Append( publisher.ChannelName )
+                                .Append( "', QueueId = " )
+                                .Append( publisher.QueueId.ToString( CultureInfo.InvariantCulture ) )
+                                .Append( ", QueueName = '" )
+                                .Append( publisher.QueueName )
+                                .Append( "')" );
+                        }
+                    }
 
                     break;
                 case MessageBrokerClientEventType.MessageSent:
-                    builder.AppendSpace().Append( GetServerEndpoint().ToString() );
+                    builder.AppendSpace().Append( Resources.GetEndpoint( GetServerEndpoint() ) );
                     break;
 
                 case MessageBrokerClientEventType.Unexpected:

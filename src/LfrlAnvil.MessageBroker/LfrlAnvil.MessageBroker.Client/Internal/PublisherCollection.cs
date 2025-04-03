@@ -19,7 +19,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.Exceptions;
-using LfrlAnvil.MessageBroker.Client.Buffering;
+using LfrlAnvil.Memory;
 using LfrlAnvil.MessageBroker.Client.Events;
 using LfrlAnvil.MessageBroker.Client.Exceptions;
 
@@ -108,11 +108,11 @@ internal readonly struct PublisherCollection
         Protocol.BindRequest request;
         ulong contextId;
 
-        var bufferToken = default( BinaryBufferToken );
+        var poolToken = default( MemoryPoolToken<byte> );
         try
         {
-            request = new Protocol.BindRequest( name, queueName ?? string.Empty );
-            bufferToken = client.RentBuffer( request.Length, out var buffer ).EnableClearing();
+            request = new Protocol.BindRequest( name, queueName );
+            poolToken = client.MemoryPool.Rent( request.Length, out var buffer ).EnableClearing();
             request.Serialize( buffer, reverseEndianness );
 
             ManualResetValueTaskSource<bool> writerSource;
@@ -162,7 +162,7 @@ internal readonly struct PublisherCollection
         }
         finally
         {
-            client.DisposeBufferToken( bufferToken );
+            poolToken.Return( client );
         }
 
         var response = await responseSource.GetTask().ConfigureAwait( false );
@@ -233,6 +233,7 @@ internal readonly struct PublisherCollection
 
                             client.PublisherCollection._byChannelId.Add( parsedResponse.ChannelId, publisher );
                             client.PublisherCollection._byChannelName.Add( name, publisher );
+
                             bindResult = MessageBrokerBindResult.Create(
                                 publisher,
                                 parsedResponse.ChannelCreated,
@@ -283,7 +284,7 @@ internal readonly struct PublisherCollection
         }
         finally
         {
-            client.DisposeBufferToken( response.BufferToken );
+            response.PoolToken.Return( client );
         }
     }
 
@@ -306,11 +307,11 @@ internal readonly struct PublisherCollection
         Protocol.UnbindRequest request;
         ulong contextId;
 
-        var bufferToken = default( BinaryBufferToken );
+        var poolToken = default( MemoryPoolToken<byte> );
         try
         {
             request = new Protocol.UnbindRequest( publisher.ChannelId );
-            bufferToken = client.RentBuffer( Protocol.UnbindRequest.Length, out var buffer ).EnableClearing();
+            poolToken = client.MemoryPool.Rent( Protocol.UnbindRequest.Length, out var buffer ).EnableClearing();
             request.Serialize( buffer, reverseEndianness );
 
             ManualResetValueTaskSource<bool> writerSource;
@@ -360,7 +361,7 @@ internal readonly struct PublisherCollection
         }
         finally
         {
-            client.DisposeBufferToken( bufferToken );
+            poolToken.Return( client );
         }
 
         var response = await responseSource.GetTask().ConfigureAwait( false );
@@ -455,7 +456,161 @@ internal readonly struct PublisherCollection
         }
         finally
         {
-            client.DisposeBufferToken( response.BufferToken );
+            response.PoolToken.Return( client );
+        }
+    }
+
+    internal static async ValueTask<Result<MesageBrokerSendResult>> SendAsync(MessageBrokerSendContext context)
+    {
+        bool reverseEndianness;
+        var client = context.Publisher.Client;
+        using ( client.AcquireLock() )
+        {
+            if ( client.ShouldCancel )
+                ExceptionThrower.Throw( client.DisposedException() );
+
+            if ( context.Publisher.State != MessageBrokerPublisherState.Bound )
+                return MesageBrokerSendResult.CreateNotBound();
+
+            reverseEndianness = BitConverter.IsLittleEndian != client.IsServerLittleEndian;
+        }
+
+        ManualResetValueTaskSource<IncomingPacketToken> responseSource;
+        Protocol.MessageRequestHeader request;
+        ulong contextId;
+
+        try
+        {
+            var buffer = context.Data;
+            request = new Protocol.MessageRequestHeader(
+                context.Publisher.ChannelId,
+                unchecked( buffer.Length - Protocol.MessageRequestHeader.Length ) );
+
+            request.Serialize( buffer.Slice( 0, Protocol.MessageRequestHeader.Length ), reverseEndianness );
+
+            ManualResetValueTaskSource<bool> writerSource;
+            using ( client.AcquireLock() )
+            {
+                if ( client.ShouldCancel )
+                    return client.DisposedException();
+
+                contextId = client.MessageContextQueue.AcquireContextId();
+                writerSource = client.MessageContextQueue.AcquireWriterSource();
+            }
+
+            if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
+                return client.DisposedException();
+
+            using ( client.AcquireLock() )
+            {
+                if ( client.ShouldCancel )
+                    return client.DisposedException();
+
+                client.EventScheduler.PausePing();
+                responseSource = client.MessageContextQueue.AcquirePendingResponseSource( contextId, request.Header.GetServerEndpoint() );
+            }
+
+            var result = await client.WriteAsync( request.Header, buffer, contextId, context.Publisher ).ConfigureAwait( false );
+            if ( result.Exception is not null )
+            {
+                await client.DisposeAsync().ConfigureAwait( false );
+                return result.Exception;
+            }
+
+            using ( client.AcquireLock() )
+            {
+                if ( client.ShouldCancel )
+                    return client.DisposedException();
+
+                client.MessageContextQueue.ResetOutgoingWriter( client, writerSource );
+                client.MessageContextQueue.ActivatePendingResponseSource( client, responseSource );
+                client.EventScheduler.SchedulePing( client );
+            }
+        }
+        catch ( Exception exc )
+        {
+            client.Emit( MessageBrokerClientEvent.Unexpected( client, exc ) );
+            await client.DisposeAsync().ConfigureAwait( false );
+            return exc;
+        }
+
+        var response = await responseSource.GetTask().ConfigureAwait( false );
+        try
+        {
+            if ( response.Type != IncomingPacketToken.Result.Ok )
+            {
+                if ( response.Type == IncomingPacketToken.Result.Disposed )
+                    return client.DisposedException();
+
+                var error = new MessageBrokerClientResponseTimeoutException( client, request.Header.GetServerEndpoint() );
+                client.Emit( MessageBrokerClientEvent.WaitingForMessage( client, error ) );
+                await client.DisposeAsync().ConfigureAwait( false );
+                return error;
+            }
+
+            using ( client.AcquireLock() )
+            {
+                if ( client.ShouldCancel )
+                    return client.DisposedException();
+
+                client.MessageContextQueue.ResetPendingResponseSource( responseSource );
+            }
+
+            switch ( response.Header.GetClientEndpoint() )
+            {
+                case MessageBrokerClientEndpoint.MessageAcceptedResponse:
+                {
+                    client.Emit( MessageBrokerClientEvent.MessageReceived( client, response.Header, contextId ) );
+
+                    var exc = Protocol.AssertPayload( client, response.Header, Protocol.MessageAcceptedResponse.Length );
+                    if ( exc is not null )
+                    {
+                        client.Emit( MessageBrokerClientEvent.MessageRejected( client, response.Header, exc, contextId ) );
+                        await client.DisposeAsync().ConfigureAwait( false );
+                        return exc;
+                    }
+
+                    var parsedResponse = Protocol.MessageAcceptedResponse.Parse( response.Data, reverseEndianness );
+                    client.Emit( MessageBrokerClientEvent.MessageAccepted( client, response.Header, contextId ) );
+                    return MesageBrokerSendResult.Create( parsedResponse.Id );
+                }
+                case MessageBrokerClientEndpoint.MessageRejectedResponse:
+                {
+                    client.Emit( MessageBrokerClientEvent.MessageReceived( client, response.Header, contextId ) );
+
+                    var exc = Protocol.AssertPayload( client, response.Header, Protocol.MessageRejectedResponse.Length );
+                    if ( exc is not null )
+                    {
+                        client.Emit( MessageBrokerClientEvent.MessageRejected( client, response.Header, exc, contextId ) );
+                        await client.DisposeAsync().ConfigureAwait( false );
+                        return exc;
+                    }
+
+                    var parsedResponse = Protocol.MessageRejectedResponse.Parse( response.Data );
+                    return client.EmitError(
+                        MessageBrokerClientEvent.MessageReceived(
+                            client,
+                            response.Header,
+                            contextId,
+                            Protocol.RequestException( client, request.Header, parsedResponse.StringifyErrors( context.Publisher ) ) ) );
+                }
+                default:
+                {
+                    var error = client.HandleUnexpectedEndpoint( response.Header, contextId );
+                    await client.DisposeAsync().ConfigureAwait( false );
+                    return error;
+                }
+            }
+        }
+        catch ( Exception exc )
+        {
+            client.Emit( MessageBrokerClientEvent.Unexpected( client, exc ) );
+            await client.DisposeAsync().ConfigureAwait( false );
+            return exc;
+        }
+        finally
+        {
+            response.PoolToken.Return( client );
         }
     }
 

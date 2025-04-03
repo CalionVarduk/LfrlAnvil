@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.Contracts;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -118,7 +117,7 @@ public partial class MessageBrokerClientTests : TestsBase
             s =>
             {
                 s.WaitForClient();
-                s.Read( handshakeRequest.Length );
+                s.Read( handshakeRequest );
                 s.SendHandshakeAccepted( 1, Duration.FromSeconds( 2 ), Duration.FromSeconds( 10 ) );
                 s.ReadConfirmHandshakeResponse();
             } );
@@ -127,7 +126,6 @@ public partial class MessageBrokerClientTests : TestsBase
         await serverTask;
         await endSource.Task;
 
-        var serverData = server.GetAllReceived();
         var localEndPoint = client.LocalEndPoint;
         var events = logs.GetAll();
 
@@ -138,10 +136,6 @@ public partial class MessageBrokerClientTests : TestsBase
                 client.MessageTimeout.TestEquals( Duration.FromSeconds( 2 ) ),
                 client.PingInterval.TestEquals( Duration.FromSeconds( 10 ) ),
                 client.ToString().TestEquals( "[1] 'test' client (Running)" ),
-                AssertServerData(
-                    serverData,
-                    (handshakeRequest.Length, MessageBrokerServerEndpoint.HandshakeRequest),
-                    (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.ConfirmHandshakeResponse) ),
                 events.TestSequence(
                 [
                     $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}", $"['test'::<ROOT>] [Connected] From {localEndPoint}",
@@ -193,7 +187,7 @@ public partial class MessageBrokerClientTests : TestsBase
             s =>
             {
                 s.WaitForClient();
-                s.Read( handshakeRequest.Length );
+                s.Read( handshakeRequest );
                 s.SendHandshakeAccepted( 2, Duration.FromSeconds( 1.5 ), Duration.FromSeconds( 15 ) );
                 s.ReadConfirmHandshakeResponse();
             } );
@@ -202,7 +196,6 @@ public partial class MessageBrokerClientTests : TestsBase
         await serverTask;
         await endSource.Task;
 
-        var serverData = server.GetAllReceived();
         var localEndPoint = client.LocalEndPoint;
         var events = logs.GetAll();
 
@@ -213,10 +206,6 @@ public partial class MessageBrokerClientTests : TestsBase
                 client.IsServerLittleEndian.TestTrue(),
                 client.MessageTimeout.TestEquals( Duration.FromSeconds( 1.5 ) ),
                 client.PingInterval.TestEquals( Duration.FromSeconds( 15 ) ),
-                AssertServerData(
-                    serverData,
-                    (handshakeRequest.Length, MessageBrokerServerEndpoint.HandshakeRequest),
-                    (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.ConfirmHandshakeResponse) ),
                 events.TestSequence(
                 [
                     $"['foo'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
@@ -273,7 +262,7 @@ public partial class MessageBrokerClientTests : TestsBase
             s =>
             {
                 s.WaitForClient();
-                s.Read( handshakeRequest.Length );
+                s.Read( handshakeRequest );
                 s.SendHandshakeAccepted( 1, Duration.FromSeconds( 2 ), Duration.FromSeconds( 10 ) );
                 s.ReadConfirmHandshakeResponse();
             } );
@@ -451,7 +440,7 @@ public partial class MessageBrokerClientTests : TestsBase
             s =>
             {
                 s.WaitForClient();
-                s.Read( handshakeRequest.Length );
+                s.Read( handshakeRequest );
                 s.Dispose();
             } );
 
@@ -507,7 +496,7 @@ public partial class MessageBrokerClientTests : TestsBase
             s =>
             {
                 s.WaitForClient();
-                s.Read( handshakeRequest.Length );
+                s.Read( handshakeRequest );
                 s.SendHandshakeRejected( true, true, true );
             } );
 
@@ -519,7 +508,6 @@ public partial class MessageBrokerClientTests : TestsBase
                     .Exact<MessageBrokerClientRequestException>(
                         e => Assertion.All(
                             e.Client.TestRefEquals( client ),
-                            e.Payload.TestEquals( handshakeRequest.Header.Payload ),
                             e.Endpoint.TestEquals( handshakeRequest.Header.GetServerEndpoint() ) ) ),
                 logs.GetAll()
                     .TestSequence(
@@ -532,7 +520,7 @@ public partial class MessageBrokerClientTests : TestsBase
                         "['test'::<ROOT>] [MessageReceived] [PacketLength: 6] HandshakeRejectedResponse",
                         """
                         ['test'::<ROOT>] [MessageReceived] [PacketLength: 6] Encountered an error:
-                        LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientRequestException: Message broker server rejected an invalid HandshakeRequest with payload 13 sent by client 'test'. Encountered 3 error(s):
+                        LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientRequestException: Message broker server rejected an invalid HandshakeRequest sent by client 'test'. Encountered 3 error(s):
                         1. Server found client's name length to be out of bounds.
                         2. Server failed to decode client's name using Unicode (UTF-8) encoding.
                         3. Client name already exists.
@@ -570,7 +558,7 @@ public partial class MessageBrokerClientTests : TestsBase
             s =>
             {
                 s.WaitForClient();
-                s.Read( handshakeRequest.Length );
+                s.Read( handshakeRequest );
                 s.SendHandshakeRejected( true, true, true, payload: 2 );
             } );
 
@@ -582,7 +570,6 @@ public partial class MessageBrokerClientTests : TestsBase
                     .Exact<MessageBrokerClientProtocolException>(
                         e => Assertion.All(
                             e.Client.TestRefEquals( client ),
-                            e.Payload.TestEquals( 2U ),
                             e.Endpoint.TestEquals( MessageBrokerClientEndpoint.HandshakeRejectedResponse ) ) ),
                 logs.GetAll()
                     .TestSequence(
@@ -595,8 +582,8 @@ public partial class MessageBrokerClientTests : TestsBase
                         "['test'::<ROOT>] [MessageReceived] [PacketLength: 7] HandshakeRejectedResponse",
                         """
                         ['test'::<ROOT>] [MessageRejected] [PacketLength: 7] Encountered an error:
-                        LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid HandshakeRejectedResponse with payload 2 from the server. Encountered 1 error(s):
-                        1. Expected header payload to be 1.
+                        LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid HandshakeRejectedResponse from the server. Encountered 1 error(s):
+                        1. Expected header payload to be 1 but found 2.
                         """,
                         "['test'::<ROOT>] [Disposing]",
                         "['test'::<ROOT>] [Disposed]"
@@ -631,7 +618,7 @@ public partial class MessageBrokerClientTests : TestsBase
             s =>
             {
                 s.WaitForClient();
-                s.Read( handshakeRequest.Length );
+                s.Read( handshakeRequest );
                 s.SendHandshakeAccepted( 0, Duration.Zero, Duration.Zero );
             } );
 
@@ -643,7 +630,6 @@ public partial class MessageBrokerClientTests : TestsBase
                     .Exact<MessageBrokerClientProtocolException>(
                         e => Assertion.All(
                             e.Client.TestRefEquals( client ),
-                            e.Payload.TestEquals( ( uint )Protocol.HandshakeAcceptedResponse.Length ),
                             e.Endpoint.TestEquals( MessageBrokerClientEndpoint.HandshakeAcceptedResponse ) ) ),
                 logs.GetAll()
                     .TestSequence(
@@ -656,7 +642,7 @@ public partial class MessageBrokerClientTests : TestsBase
                         "['test'::<ROOT>] [MessageReceived] [PacketLength: 18] Begin handling HandshakeAcceptedResponse",
                         """
                         ['test'::<ROOT>] [MessageRejected] [PacketLength: 18] Encountered an error:
-                        LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid HandshakeAcceptedResponse with payload 13 from the server. Encountered 3 error(s):
+                        LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid HandshakeAcceptedResponse from the server. Encountered 3 error(s):
                         1. Expected client ID to be greater than 0 but found 0.
                         2. Expected received message timeout to be in [0.001 second(s), 2147483.647 second(s)] range but found 0 second(s).
                         3. Expected received ping interval to be in [0.001 second(s), 86400 second(s)] range but found 0 second(s).
@@ -694,7 +680,7 @@ public partial class MessageBrokerClientTests : TestsBase
             s =>
             {
                 s.WaitForClient();
-                s.Read( handshakeRequest.Length );
+                s.Read( handshakeRequest );
                 s.SendHandshakeAccepted( 1, Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ), payload: 12 );
             } );
 
@@ -706,7 +692,6 @@ public partial class MessageBrokerClientTests : TestsBase
                     .Exact<MessageBrokerClientProtocolException>(
                         e => Assertion.All(
                             e.Client.TestRefEquals( client ),
-                            e.Payload.TestEquals( 12U ),
                             e.Endpoint.TestEquals( MessageBrokerClientEndpoint.HandshakeAcceptedResponse ) ) ),
                 logs.GetAll()
                     .TestSequence(
@@ -719,8 +704,8 @@ public partial class MessageBrokerClientTests : TestsBase
                         "['test'::<ROOT>] [MessageReceived] [PacketLength: 17] Begin handling HandshakeAcceptedResponse",
                         """
                         ['test'::<ROOT>] [MessageRejected] [PacketLength: 17] Encountered an error:
-                        LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid HandshakeAcceptedResponse with payload 12 from the server. Encountered 1 error(s):
-                        1. Expected header payload to be 13.
+                        LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid HandshakeAcceptedResponse from the server. Encountered 1 error(s):
+                        1. Expected header payload to be 13 but found 12.
                         """,
                         "['test'::<ROOT>] [Disposing]",
                         "['test'::<ROOT>] [Disposed]"
@@ -755,7 +740,7 @@ public partial class MessageBrokerClientTests : TestsBase
             s =>
             {
                 s.WaitForClient();
-                s.Read( handshakeRequest.Length );
+                s.Read( handshakeRequest );
                 s.Send( [ 0, 0, 0, 0, 0 ] );
             } );
 
@@ -767,7 +752,6 @@ public partial class MessageBrokerClientTests : TestsBase
                     .Exact<MessageBrokerClientProtocolException>(
                         e => Assertion.All(
                             e.Client.TestRefEquals( client ),
-                            e.Payload.TestEquals( 0U ),
                             e.Endpoint.TestEquals( ( MessageBrokerClientEndpoint )0 ) ) ),
                 logs.GetAll()
                     .TestSequence(
@@ -777,10 +761,10 @@ public partial class MessageBrokerClientTests : TestsBase
                         "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest",
                         "['test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeRequest",
                         "['test'::<ROOT>] [WaitingForMessage]",
-                        "['test'::<ROOT>] [MessageReceived] [PacketLength: 5] 0",
+                        "['test'::<ROOT>] [MessageReceived] [PacketLength: 5] <unrecognized-endpoint-0>",
                         """
                         ['test'::<ROOT>] [MessageRejected] [PacketLength: 5] Encountered an error:
-                        LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid 0 with payload 0 from the server. Encountered 1 error(s):
+                        LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid <unrecognized-endpoint-0> from the server. Encountered 1 error(s):
                         1. Received unexpected client endpoint.
                         """,
                         "['test'::<ROOT>] [Disposing]",
@@ -1061,7 +1045,7 @@ public partial class MessageBrokerClientTests : TestsBase
             s =>
             {
                 s.WaitForClient();
-                s.Read( handshakeRequest.Length );
+                s.Read( handshakeRequest );
                 s.SendHandshakeAccepted( 1, Duration.FromSeconds( 2 ), Duration.FromSeconds( 10 ) );
             } );
 
@@ -1125,7 +1109,7 @@ public partial class MessageBrokerClientTests : TestsBase
             s =>
             {
                 s.WaitForClient();
-                s.Read( handshakeRequest.Length );
+                s.Read( handshakeRequest );
                 s.SendHandshakeRejected( true, true, true );
             } );
 
@@ -1191,7 +1175,7 @@ public partial class MessageBrokerClientTests : TestsBase
             s =>
             {
                 s.WaitForClient();
-                s.Read( handshakeRequest.Length );
+                s.Read( handshakeRequest );
                 s.SendHandshakeAccepted( 1, Duration.FromSeconds( 2 ), Duration.FromSeconds( 10 ) );
             } );
 
@@ -1248,7 +1232,7 @@ public partial class MessageBrokerClientTests : TestsBase
             s =>
             {
                 s.WaitForClient();
-                s.Read( handshakeRequest.Length );
+                s.Read( handshakeRequest );
                 s.SendHandshakeAccepted( 1, Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ) );
                 s.ReadConfirmHandshakeResponse();
                 Thread.Sleep( 50 );
@@ -1277,7 +1261,7 @@ public partial class MessageBrokerClientTests : TestsBase
                         "['test'::<ROOT>] [MessageReceived] [PacketLength: 5] PingResponse",
                         """
                         ['test'::<ROOT>] [MessageRejected] [PacketLength: 5] Encountered an error:
-                        LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid PingResponse with payload 0 from the server. Encountered 1 error(s):
+                        LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid PingResponse from the server. Encountered 1 error(s):
                         1. Received unexpected client endpoint.
                         """,
                         "['test'::<ROOT>] [Disposing]",
@@ -1398,7 +1382,7 @@ public partial class MessageBrokerClientTests : TestsBase
             s =>
             {
                 s.WaitForClient();
-                s.Read( handshakeRequest.Length );
+                s.Read( handshakeRequest );
                 s.SendHandshakeAccepted( 1, Duration.FromSeconds( 2 ), Duration.FromSeconds( 10 ) );
             } );
 
@@ -1442,7 +1426,7 @@ public partial class MessageBrokerClientTests : TestsBase
             s =>
             {
                 s.WaitForClient();
-                s.Read( handshakeRequest.Length );
+                s.Read( handshakeRequest );
                 s.SendHandshakeAccepted( 1, Duration.FromSeconds( 2 ), Duration.FromSeconds( 10 ) );
             } );
 
@@ -1479,7 +1463,7 @@ public partial class MessageBrokerClientTests : TestsBase
             s =>
             {
                 s.WaitForClient();
-                s.Read( handshakeRequest.Length );
+                s.Read( handshakeRequest );
                 s.SendHandshakeAccepted( 1, Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ) );
             } );
 
@@ -1519,7 +1503,7 @@ public partial class MessageBrokerClientTests : TestsBase
             s =>
             {
                 s.WaitForClient();
-                s.Read( handshakeRequest.Length );
+                s.Read( handshakeRequest );
                 s.SendHandshakeAccepted( 1, Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ) );
             } );
 
@@ -1530,17 +1514,5 @@ public partial class MessageBrokerClientTests : TestsBase
         await endSource.Task;
 
         client.State.TestEquals( MessageBrokerClientState.Disposed ).Go();
-    }
-
-    [Pure]
-    private static Assertion AssertServerData(byte[][] received, params (int Length, MessageBrokerServerEndpoint Endpoint)[] expected)
-    {
-        return received.TestCount( count => count.TestEquals( expected.Length ) )
-            .Then(
-                r => r.TestAll(
-                    (e, i) => Assertion.All(
-                        "element",
-                        e.Length.TestEquals( expected[i].Length ),
-                        e.ElementAtOrDefault( 0 ).TestEquals( ( byte )expected[i].Endpoint ) ) ) );
     }
 }

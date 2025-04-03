@@ -18,7 +18,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Extensions;
-using LfrlAnvil.MessageBroker.Client.Buffering;
+using LfrlAnvil.Memory;
 using LfrlAnvil.MessageBroker.Client.Events;
 using LfrlAnvil.MessageBroker.Client.Internal;
 
@@ -28,7 +28,7 @@ public sealed partial class MessageBrokerClient
 {
     private async ValueTask<Result> EstablishHandshakeAsync(CancellationToken cancellationToken)
     {
-        var bufferToken = default( BinaryBufferToken );
+        var poolToken = default( MemoryPoolToken<byte> );
         try
         {
             Memory<byte> buffer;
@@ -40,7 +40,7 @@ public sealed partial class MessageBrokerClient
                     .Max( Protocol.HandshakeRejectedResponse.Length );
 
                 handshake = new Protocol.HandshakeRequest( this );
-                bufferToken = RentBuffer( handshake.Length.Max( minPacketLength ), out buffer ).EnableClearing();
+                poolToken = MemoryPool.Rent( handshake.Length.Max( minPacketLength ), out buffer ).EnableClearing();
             }
             catch ( Exception exc )
             {
@@ -63,7 +63,7 @@ public sealed partial class MessageBrokerClient
         }
         finally
         {
-            DisposeBufferToken( bufferToken );
+            poolToken.Return( this );
         }
     }
 

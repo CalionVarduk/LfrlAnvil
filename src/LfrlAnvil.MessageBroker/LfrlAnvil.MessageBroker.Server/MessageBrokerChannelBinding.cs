@@ -14,6 +14,7 @@
 
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.MessageBroker.Server.Events;
 
@@ -78,14 +79,19 @@ public sealed class MessageBrokerChannelBinding
             $"[{Client.Id}] '{Client.Name}' => [{Channel.Id}] '{Channel.Name}' binding (using [{Queue.Id}] '{Queue.Name}' queue) ({State})";
     }
 
-    internal void OnServerDisposed()
+    internal ValueTask OnServerDisposedAsync()
     {
-        Dispose( notifyReferences: false );
+        return DisposeAsync( notifyChannel: false, notifyQueue: false );
     }
 
-    internal void OnClientDisconnected()
+    internal ValueTask OnClientDisconnectedAsync()
     {
-        Dispose( notifyReferences: true );
+        return DisposeAsync( notifyChannel: true, notifyQueue: true );
+    }
+
+    internal ValueTask OnQueueDisposedAsync()
+    {
+        return DisposeAsync( notifyChannel: true, notifyQueue: false );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -129,7 +135,7 @@ public sealed class MessageBrokerChannelBinding
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void Dispose(bool notifyReferences)
+    private async ValueTask DisposeAsync(bool notifyChannel, bool notifyQueue)
     {
         using ( AcquireLock() )
         {
@@ -141,10 +147,10 @@ public sealed class MessageBrokerChannelBinding
 
         Emit( MessageBrokerChannelBindingEvent.Disposing( this ) );
 
-        if ( notifyReferences )
-            Queue.OnBindingDisposing( Client, Channel );
+        if ( notifyQueue )
+            await Queue.OnBindingDisposingAsync( Client, Channel ).ConfigureAwait( false );
 
-        if ( notifyReferences )
+        if ( notifyChannel )
             Channel.OnBindingDisposing( Client );
 
         EndDisposing();

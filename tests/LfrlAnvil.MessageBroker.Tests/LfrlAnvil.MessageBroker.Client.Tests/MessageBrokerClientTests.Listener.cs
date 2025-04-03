@@ -30,14 +30,14 @@ public partial class MessageBrokerClientTests
                     .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
                     .SetEventHandler( logs.Add ) );
 
-            var handshakeRequest = await server.EstablishHandshake( client );
+            await server.EstablishHandshake( client );
 
             var channelName = "foo";
             var subscribeRequest = new Protocol.SubscribeRequest( channelName, createChannelIfNotExists: true );
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( subscribeRequest.Length );
+                    s.Read( subscribeRequest );
                     s.SendSubscribedResponse( channelCreated, 1 );
                 } );
 
@@ -77,12 +77,7 @@ public partial class MessageBrokerClientTests
                             "['test'::<ROOT>] [MessageReceived] [PacketLength: 10] SubscribedResponse",
                             "['test'::1] [MessageReceived] [PacketLength: 10] Begin handling SubscribedResponse",
                             "['test'::1] [MessageAccepted] [PacketLength: 10] SubscribedResponse (ChannelId = 1)"
-                        ] ),
-                    AssertServerData(
-                        server.GetAllReceived(),
-                        (handshakeRequest.Length, MessageBrokerServerEndpoint.HandshakeRequest),
-                        (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.ConfirmHandshakeResponse),
-                        (subscribeRequest.Length, MessageBrokerServerEndpoint.SubscribeRequest) ) )
+                        ] ) )
                 .Go();
         }
 
@@ -106,7 +101,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( subscribeRequest.Length );
+                    s.Read( subscribeRequest );
                     s.SendSubscribedResponse( true, 1 );
                 } );
 
@@ -148,7 +143,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( subscribeRequest.Length );
+                    s.Read( subscribeRequest );
                     s.SendSubscribedResponse( true, 1 );
                 } );
 
@@ -308,7 +303,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( subscribeRequest.Length );
+                    s.Read( subscribeRequest );
                     s.SendSubscribedResponse( true, channelId: 0 );
                 } );
 
@@ -322,8 +317,7 @@ public partial class MessageBrokerClientTests
                         .Exact<MessageBrokerClientProtocolException>(
                             exc => Assertion.All(
                                 exc.Client.TestRefEquals( client ),
-                                exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.SubscribedResponse ),
-                                exc.Payload.TestEquals( ( uint )Protocol.SubscribedResponse.Length ) ) ),
+                                exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.SubscribedResponse ) ) ),
                     logs.GetAll()
                         .TestContainsSequence(
                         [
@@ -331,7 +325,7 @@ public partial class MessageBrokerClientTests
                             "['test'::1] [MessageReceived] [PacketLength: 10] Begin handling SubscribedResponse",
                             """
                             ['test'::1] [MessageRejected] [PacketLength: 10] Encountered an error:
-                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid SubscribedResponse with payload 5 from the server. Encountered 1 error(s):
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid SubscribedResponse from the server. Encountered 1 error(s):
                             1. Expected channel ID to be greater than 0 but found 0.
                             """
                         ] ) )
@@ -359,7 +353,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( subscribeRequest.Length );
+                    s.Read( subscribeRequest );
                     s.SendSubscribedResponse( true, 1, payload: 4 );
                 } );
 
@@ -373,8 +367,7 @@ public partial class MessageBrokerClientTests
                         .Exact<MessageBrokerClientProtocolException>(
                             exc => Assertion.All(
                                 exc.Client.TestRefEquals( client ),
-                                exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.SubscribedResponse ),
-                                exc.Payload.TestEquals( 4U ) ) ),
+                                exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.SubscribedResponse ) ) ),
                     logs.GetAll()
                         .TestContainsSequence(
                         [
@@ -382,8 +375,8 @@ public partial class MessageBrokerClientTests
                             "['test'::1] [MessageReceived] [PacketLength: 9] Begin handling SubscribedResponse",
                             """
                             ['test'::1] [MessageRejected] [PacketLength: 9] Encountered an error:
-                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid SubscribedResponse with payload 4 from the server. Encountered 1 error(s):
-                            1. Expected header payload to be 5.
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid SubscribedResponse from the server. Encountered 1 error(s):
+                            1. Expected header payload to be 5 but found 4.
                             """
                         ] ) )
                 .Go();
@@ -410,7 +403,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( subscribeRequest.Length );
+                    s.Read( subscribeRequest );
                     s.SendSubscribeFailureResponse( true, true, true );
                 } );
 
@@ -424,8 +417,7 @@ public partial class MessageBrokerClientTests
                         .Exact<MessageBrokerClientRequestException>(
                             exc => Assertion.All(
                                 exc.Client.TestRefEquals( client ),
-                                exc.Endpoint.TestEquals( MessageBrokerServerEndpoint.SubscribeRequest ),
-                                exc.Payload.TestEquals( subscribeRequest.Header.Payload ) ) ),
+                                exc.Endpoint.TestEquals( MessageBrokerServerEndpoint.SubscribeRequest ) ) ),
                     logs.GetAll()
                         .TestContainsSequence(
                         [
@@ -433,7 +425,7 @@ public partial class MessageBrokerClientTests
                             "['test'::1] [MessageReceived] [PacketLength: 6] Begin handling SubscribeFailureResponse",
                             """
                             ['test'::1] [MessageReceived] [PacketLength: 6] Encountered an error:
-                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientRequestException: Message broker server rejected an invalid SubscribeRequest with payload 4 sent by client 'test'. Encountered 3 error(s):
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientRequestException: Message broker server rejected an invalid SubscribeRequest sent by client 'test'. Encountered 3 error(s):
                             1. Channel 'foo' does not exist.
                             2. Client is already subscribed to channel 'foo'.
                             3. Subscribing client to channel 'foo' has been cancelled by the server.
@@ -464,7 +456,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( subscribeRequest.Length );
+                    s.Read( subscribeRequest );
                     s.SendSubscribeFailureResponse( true, true, true, payload: 0 );
                 } );
 
@@ -478,8 +470,7 @@ public partial class MessageBrokerClientTests
                         .Exact<MessageBrokerClientProtocolException>(
                             exc => Assertion.All(
                                 exc.Client.TestRefEquals( client ),
-                                exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.SubscribeFailureResponse ),
-                                exc.Payload.TestEquals( 0U ) ) ),
+                                exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.SubscribeFailureResponse ) ) ),
                     logs.GetAll()
                         .TestContainsSequence(
                         [
@@ -487,8 +478,8 @@ public partial class MessageBrokerClientTests
                             "['test'::1] [MessageReceived] [PacketLength: 5] Begin handling SubscribeFailureResponse",
                             """
                             ['test'::1] [MessageRejected] [PacketLength: 5] Encountered an error:
-                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid SubscribeFailureResponse with payload 0 from the server. Encountered 1 error(s):
-                            1. Expected header payload to be 1.
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid SubscribeFailureResponse from the server. Encountered 1 error(s):
+                            1. Expected header payload to be 1 but found 0.
                             """
                         ] ) )
                 .Go();
@@ -515,7 +506,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( subscribeRequest.Length );
+                    s.Read( subscribeRequest );
                     s.Send( [ 0, 0, 0, 0, 0 ] );
                 } );
 
@@ -529,15 +520,14 @@ public partial class MessageBrokerClientTests
                         .Exact<MessageBrokerClientProtocolException>(
                             exc => Assertion.All(
                                 exc.Client.TestRefEquals( client ),
-                                exc.Endpoint.TestEquals( ( MessageBrokerClientEndpoint )0 ),
-                                exc.Payload.TestEquals( 0U ) ) ),
+                                exc.Endpoint.TestEquals( ( MessageBrokerClientEndpoint )0 ) ) ),
                     logs.GetAll()
                         .TestContainsSequence(
                         [
-                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 5] 0",
+                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 5] <unrecognized-endpoint-0>",
                             """
                             ['test'::1] [MessageRejected] [PacketLength: 5] Encountered an error:
-                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid 0 with payload 0 from the server. Encountered 1 error(s):
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid <unrecognized-endpoint-0> from the server. Encountered 1 error(s):
                             1. Received unexpected client endpoint.
                             """
                         ] ) )
@@ -563,12 +553,12 @@ public partial class MessageBrokerClientTests
 
             var channelId = 1;
             var channelName = "foo";
-            var handshakeRequest = await server.EstablishHandshake( client );
+            await server.EstablishHandshake( client );
             var subscribeRequest = new Protocol.SubscribeRequest( channelName, createChannelIfNotExists: true );
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( subscribeRequest.Length );
+                    s.Read( subscribeRequest );
                     s.SendSubscribedResponse( true, channelId );
                     s.ReadUnsubscribeRequest();
                     s.SendUnsubscribedResponse( channelRemoved );
@@ -600,13 +590,7 @@ public partial class MessageBrokerClientTests
                             "['test'::<ROOT>] [MessageReceived] [PacketLength: 6] UnsubscribedResponse",
                             "['test'::2] [MessageReceived] [PacketLength: 6] Begin handling UnsubscribedResponse",
                             "['test'::2] [MessageAccepted] [PacketLength: 6] UnsubscribedResponse"
-                        ] ),
-                    AssertServerData(
-                        server.GetAllReceived(),
-                        (handshakeRequest.Length, MessageBrokerServerEndpoint.HandshakeRequest),
-                        (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.ConfirmHandshakeResponse),
-                        (subscribeRequest.Length, MessageBrokerServerEndpoint.SubscribeRequest),
-                        (Protocol.UnsubscribeRequest.Length, MessageBrokerServerEndpoint.UnsubscribeRequest) ) )
+                        ] ) )
                 .Go();
         }
 
@@ -630,7 +614,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( subscribeRequest.Length );
+                    s.Read( subscribeRequest );
                     s.SendSubscribedResponse( true, 1 );
                     s.ReadUnsubscribeRequest();
                     s.SendUnsubscribedResponse( true );
@@ -695,7 +679,7 @@ public partial class MessageBrokerClientTests
                 s =>
                 {
                     var request = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true );
-                    s.Read( request.Length );
+                    s.Read( request );
                     s.SendSubscribedResponse( true, 1 );
                 } );
 
@@ -759,7 +743,7 @@ public partial class MessageBrokerClientTests
                 s =>
                 {
                     var request = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true );
-                    s.Read( request.Length );
+                    s.Read( request );
                     s.SendSubscribedResponse( true, 1 );
                 } );
 
@@ -798,7 +782,7 @@ public partial class MessageBrokerClientTests
                 s =>
                 {
                     var request = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true );
-                    s.Read( request.Length );
+                    s.Read( request );
                     s.SendSubscribedResponse( true, 1 );
                     s.ReadUnsubscribeRequest();
                     s.SendUnsubscribedResponse( true, payload: 0 );
@@ -819,8 +803,7 @@ public partial class MessageBrokerClientTests
                         .Exact<MessageBrokerClientProtocolException>(
                             exc => Assertion.All(
                                 exc.Client.TestRefEquals( client ),
-                                exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.UnsubscribedResponse ),
-                                exc.Payload.TestEquals( 0U ) ) ),
+                                exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.UnsubscribedResponse ) ) ),
                     logs.GetAll()
                         .TestContainsSequence(
                         [
@@ -828,8 +811,8 @@ public partial class MessageBrokerClientTests
                             "['test'::2] [MessageReceived] [PacketLength: 5] Begin handling UnsubscribedResponse",
                             """
                             ['test'::2] [MessageRejected] [PacketLength: 5] Encountered an error:
-                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid UnsubscribedResponse with payload 0 from the server. Encountered 1 error(s):
-                            1. Expected header payload to be 1.
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid UnsubscribedResponse from the server. Encountered 1 error(s):
+                            1. Expected header payload to be 1 but found 0.
                             """
                         ] ) )
                 .Go();
@@ -855,7 +838,7 @@ public partial class MessageBrokerClientTests
                 s =>
                 {
                     var request = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true );
-                    s.Read( request.Length );
+                    s.Read( request );
                     s.SendSubscribedResponse( true, 1 );
                     s.ReadUnsubscribeRequest();
                     s.SendUnsubscribeFailureResponse( true );
@@ -876,8 +859,7 @@ public partial class MessageBrokerClientTests
                         .Exact<MessageBrokerClientRequestException>(
                             exc => Assertion.All(
                                 exc.Client.TestRefEquals( client ),
-                                exc.Endpoint.TestEquals( MessageBrokerServerEndpoint.UnsubscribeRequest ),
-                                exc.Payload.TestEquals( ( uint )sizeof( uint ) ) ) ),
+                                exc.Endpoint.TestEquals( MessageBrokerServerEndpoint.UnsubscribeRequest ) ) ),
                     logs.GetAll()
                         .TestContainsSequence(
                         [
@@ -885,7 +867,7 @@ public partial class MessageBrokerClientTests
                             "['test'::2] [MessageReceived] [PacketLength: 6] Begin handling UnsubscribeFailureResponse",
                             """
                             ['test'::2] [MessageReceived] [PacketLength: 6] Encountered an error:
-                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientRequestException: Message broker server rejected an invalid UnsubscribeRequest with payload 4 sent by client 'test'. Encountered 1 error(s):
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientRequestException: Message broker server rejected an invalid UnsubscribeRequest sent by client 'test'. Encountered 1 error(s):
                             1. Client is not subscribed to channel [1] 'foo'.
                             """
                         ] ) )
@@ -913,7 +895,7 @@ public partial class MessageBrokerClientTests
                 s =>
                 {
                     var request = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true );
-                    s.Read( request.Length );
+                    s.Read( request );
                     s.SendSubscribedResponse( true, 1 );
                     s.ReadUnsubscribeRequest();
                     s.SendUnsubscribeFailureResponse( true, payload: 0 );
@@ -934,8 +916,7 @@ public partial class MessageBrokerClientTests
                         .Exact<MessageBrokerClientProtocolException>(
                             exc => Assertion.All(
                                 exc.Client.TestRefEquals( client ),
-                                exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.UnsubscribeFailureResponse ),
-                                exc.Payload.TestEquals( 0U ) ) ),
+                                exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.UnsubscribeFailureResponse ) ) ),
                     logs.GetAll()
                         .TestContainsSequence(
                         [
@@ -943,8 +924,8 @@ public partial class MessageBrokerClientTests
                             "['test'::2] [MessageReceived] [PacketLength: 5] Begin handling UnsubscribeFailureResponse",
                             """
                             ['test'::2] [MessageRejected] [PacketLength: 5] Encountered an error:
-                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid UnsubscribeFailureResponse with payload 0 from the server. Encountered 1 error(s):
-                            1. Expected header payload to be 1.
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid UnsubscribeFailureResponse from the server. Encountered 1 error(s):
+                            1. Expected header payload to be 1 but found 0.
                             """
                         ] ) )
                 .Go();
@@ -970,7 +951,7 @@ public partial class MessageBrokerClientTests
                 s =>
                 {
                     var request = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true );
-                    s.Read( request.Length );
+                    s.Read( request );
                     s.SendSubscribedResponse( true, 1 );
                     s.ReadUnsubscribeRequest();
                     s.Send( [ 0, 0, 0, 0, 0 ] );
@@ -991,15 +972,14 @@ public partial class MessageBrokerClientTests
                         .Exact<MessageBrokerClientProtocolException>(
                             exc => Assertion.All(
                                 exc.Client.TestRefEquals( client ),
-                                exc.Endpoint.TestEquals( ( MessageBrokerClientEndpoint )0 ),
-                                exc.Payload.TestEquals( 0U ) ) ),
+                                exc.Endpoint.TestEquals( ( MessageBrokerClientEndpoint )0 ) ) ),
                     logs.GetAll()
                         .TestContainsSequence(
                         [
-                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 5] 0",
+                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 5] <unrecognized-endpoint-0>",
                             """
                             ['test'::2] [MessageRejected] [PacketLength: 5] Encountered an error:
-                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid 0 with payload 0 from the server. Encountered 1 error(s):
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid <unrecognized-endpoint-0> from the server. Encountered 1 error(s):
                             1. Received unexpected client endpoint.
                             """
                         ] ) )

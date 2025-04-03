@@ -52,22 +52,49 @@ internal sealed class ServerMock : IDisposable
 
     internal byte[] ReadConfirmHandshakeResponse()
     {
-        return Read( Protocol.PacketHeader.Length );
+        return AssertEndpoint( Read( Protocol.PacketHeader.Length ), MessageBrokerServerEndpoint.ConfirmHandshakeResponse );
     }
 
     internal byte[] ReadPingRequest()
     {
-        return Read( Protocol.PacketHeader.Length );
+        return AssertEndpoint( Read( Protocol.PacketHeader.Length ), MessageBrokerServerEndpoint.PingRequest );
     }
 
     internal byte[] ReadUnbindRequest()
     {
-        return Read( Protocol.UnbindRequest.Length );
+        return AssertEndpoint( Read( Protocol.UnbindRequest.Length ), MessageBrokerServerEndpoint.UnbindRequest );
     }
 
     internal byte[] ReadUnsubscribeRequest()
     {
-        return Read( Protocol.UnsubscribeRequest.Length );
+        return AssertEndpoint( Read( Protocol.UnsubscribeRequest.Length ), MessageBrokerServerEndpoint.UnsubscribeRequest );
+    }
+
+    internal byte[] ReadMessageRequest(int length)
+    {
+        return AssertEndpoint( Read( Protocol.MessageRequestHeader.Length + length ), MessageBrokerServerEndpoint.MessageRequest );
+    }
+
+    internal byte[] Read(Protocol.HandshakeRequest request)
+    {
+        return AssertEndpoint( Read( request.Length ), MessageBrokerServerEndpoint.HandshakeRequest );
+    }
+
+    internal byte[] Read(Protocol.BindRequest request)
+    {
+        return AssertEndpoint( Read( request.Length ), MessageBrokerServerEndpoint.BindRequest );
+    }
+
+    internal byte[] Read(Protocol.SubscribeRequest request)
+    {
+        return AssertEndpoint( Read( request.Length ), MessageBrokerServerEndpoint.SubscribeRequest );
+    }
+
+    internal byte[] Read(Protocol.MessageRequestHeader request)
+    {
+        return AssertEndpoint(
+            Read( Protocol.PacketHeader.Length + ( int )request.Header.Payload ),
+            MessageBrokerServerEndpoint.MessageRequest );
     }
 
     internal byte[] Read(int length)
@@ -202,6 +229,26 @@ internal sealed class ServerMock : IDisposable
         Send( buffer );
     }
 
+    internal void SendMessageAcceptedResponse(ulong messageId, uint? payload = null)
+    {
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.MessageAcceptedResponse.Length];
+        var writer = new BinaryContractWriter( buffer );
+        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.MessageAcceptedResponse );
+        writer.MoveWrite( payload ?? Protocol.MessageAcceptedResponse.Length );
+        writer.Write( messageId );
+        Send( buffer );
+    }
+
+    internal void SendMessageRejectedResponse(bool notBound, bool cancelled, uint? payload = null)
+    {
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.MessageRejectedResponse.Length];
+        var writer = new BinaryContractWriter( buffer );
+        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.MessageRejectedResponse );
+        writer.MoveWrite( payload ?? Protocol.MessageRejectedResponse.Length );
+        writer.Write( ( byte )((notBound ? 1 : 0) | (cancelled ? 2 : 0)) );
+        Send( buffer );
+    }
+
     internal void Send(byte[] data)
     {
         lock ( _listener )
@@ -223,7 +270,7 @@ internal sealed class ServerMock : IDisposable
             () =>
             {
                 WaitForClient();
-                Read( handshakeRequest.Length );
+                Read( handshakeRequest );
                 SendHandshakeAccepted( id ?? 1, messageTimeout ?? Duration.FromSeconds( 1 ), pingInterval ?? Duration.FromSeconds( 10 ) );
                 ReadConfirmHandshakeResponse();
             } );
@@ -243,5 +290,11 @@ internal sealed class ServerMock : IDisposable
     {
         lock ( _listener )
             return _received.ToArray();
+    }
+
+    private static byte[] AssertEndpoint(byte[] data, MessageBrokerServerEndpoint endpoint)
+    {
+        (( MessageBrokerServerEndpoint )data[0]).TestEquals( endpoint ).Go();
+        return data;
     }
 }

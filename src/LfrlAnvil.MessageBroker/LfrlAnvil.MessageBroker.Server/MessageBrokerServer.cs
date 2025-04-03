@@ -181,12 +181,8 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         if ( exception is not null )
             Emit( MessageBrokerServerEvent.Unexpected( this, exception ) );
 
-        foreach ( var queue in queues )
-            queue.OnServerDisposed();
-
-        foreach ( var channel in channels )
-            channel.OnServerDisposed();
-
+        await Parallel.ForEachAsync( queues, static (q, _) => q.OnServerDisposedAsync() ).ConfigureAwait( false );
+        await Parallel.ForEachAsync( channels, static (c, _) => c.OnServerDisposedAsync() ).ConfigureAwait( false );
         await Parallel.ForEachAsync( clients, static (c, _) => c.OnServerDisposedAsync() ).ConfigureAwait( false );
 
         if ( clientListenerTask is not null )

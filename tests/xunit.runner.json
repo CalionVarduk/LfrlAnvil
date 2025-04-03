@@ -3,5 +3,6 @@
   "parallelizeTestCollections": false,
   "diagnosticMessages": true,
   "preEnumerateTheories": false,
-  "longRunningTestSeconds": 10
+  "longRunningTestSeconds": 10,
+  "maxParallelThreads": "unlimited"
 }

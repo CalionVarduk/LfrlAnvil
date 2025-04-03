@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Internal;
@@ -153,7 +154,7 @@ public sealed class MessageBrokerChannel
             DisposeDueToLackOfReferences();
     }
 
-    internal void OnServerDisposed()
+    internal async ValueTask OnServerDisposedAsync()
     {
         using ( AcquireLock() )
         {
@@ -192,8 +193,7 @@ public sealed class MessageBrokerChannel
             _state = MessageBrokerChannelState.Disposed;
         }
 
-        foreach ( var binding in bindings )
-            binding.OnServerDisposed();
+        await Parallel.ForEachAsync( bindings, static (b, _) => b.OnServerDisposedAsync() ).ConfigureAwait( false );
 
         foreach ( var subscription in subscriptions )
             subscription.OnServerDisposed();

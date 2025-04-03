@@ -18,7 +18,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks.Sources;
 using LfrlAnvil.Async;
 using LfrlAnvil.Extensions;
-using LfrlAnvil.MessageBroker.Server.Buffering;
+using LfrlAnvil.Memory;
 
 namespace LfrlAnvil.MessageBroker.Server.Internal;
 
@@ -52,7 +52,7 @@ internal struct MessageContextQueue
         }
 
         foreach ( var request in _incomingRequests )
-            request.BufferToken.TryDispose();
+            request.PoolToken.TryDispose();
 
         _incomingRequests = QueueSlim<IncomingPacketToken>.Create();
         _pendingOutgoingWriters = QueueSlim<ManualResetValueTaskSource<bool>>.Create();
@@ -97,9 +97,9 @@ internal struct MessageContextQueue
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void EnqueueRequest(Protocol.PacketHeader header, BinaryBufferToken bufferToken, Memory<byte> data)
+    internal void EnqueueRequest(Protocol.PacketHeader header, MemoryPoolToken<byte> poolToken, Memory<byte> data)
     {
-        _incomingRequests.Enqueue( IncomingPacketToken.Ok( header, bufferToken, data ) );
+        _incomingRequests.Enqueue( IncomingPacketToken.Ok( header, poolToken, data ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

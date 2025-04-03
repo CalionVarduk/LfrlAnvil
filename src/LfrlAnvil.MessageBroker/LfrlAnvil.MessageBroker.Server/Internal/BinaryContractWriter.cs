@@ -64,6 +64,12 @@ internal ref struct BinaryContractWriter
         Move( sizeof( uint ) );
     }
 
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void Write(ulong value)
+    {
+        Unsafe.WriteUnaligned( ref _first, value );
+    }
+
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal Span<byte> GetSpan(int length)

@@ -114,7 +114,7 @@ internal struct EventScheduler
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal CancellationToken ScheduleWriteTimeout(MessageBrokerRemoteClient client)
     {
-        var timestamp = client.GetFutureTimestamp( client.MessageTimeout );
+        var timestamp = client.GetTimestamp() + client.MessageTimeout;
         _writerCancellation = _writerCancellation.Prepare( timestamp );
         var token = _writerCancellation.GetPreparedToken();
 
@@ -188,7 +188,7 @@ internal struct EventScheduler
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private CancellationToken ScheduleReadTimeout(MessageBrokerRemoteClient client, Duration delay)
     {
-        var timestamp = client.GetFutureTimestamp( delay );
+        var timestamp = client.GetTimestamp() + delay;
         _readerCancellation = _readerCancellation.Prepare( timestamp );
         var token = _readerCancellation.GetPreparedToken();
 

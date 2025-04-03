@@ -27,18 +27,12 @@ public class MessageBrokerServerRequestException : InvalidOperationException
     /// </summary>
     /// <param name="client"><see cref="MessageBrokerRemoteClient"/> that sent an invalid request.</param>
     /// <param name="endpoint">Client endpoint associated with sent request.</param>
-    /// <param name="payload">Packet payload sent by the server.</param>
     /// <param name="errors">Collection of invalid request errors.</param>
-    public MessageBrokerServerRequestException(
-        MessageBrokerRemoteClient client,
-        MessageBrokerClientEndpoint endpoint,
-        uint payload,
-        Chain<string> errors)
-        : base( Resources.ServerPayloadRejected( client.Id, client.Name, endpoint, payload, errors ) )
+    public MessageBrokerServerRequestException(MessageBrokerRemoteClient client, MessageBrokerClientEndpoint endpoint, Chain<string> errors)
+        : base( Resources.ServerPayloadRejected( client.Id, client.Name, endpoint, errors ) )
     {
         Client = client;
         Endpoint = endpoint;
-        Payload = payload;
     }
 
     /// <summary>
@@ -50,9 +44,4 @@ public class MessageBrokerServerRequestException : InvalidOperationException
     /// Client endpoint associated with sent request.
     /// </summary>
     public MessageBrokerClientEndpoint Endpoint { get; }
-
-    /// <summary>
-    /// Packet payload sent by the server.
-    /// </summary>
-    public uint Payload { get; }
 }

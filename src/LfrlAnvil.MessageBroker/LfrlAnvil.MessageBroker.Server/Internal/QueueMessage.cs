@@ -14,28 +14,36 @@
 
 using System;
 using System.Diagnostics.Contracts;
-using LfrlAnvil.MessageBroker.Server.Buffering;
+using LfrlAnvil.Chrono;
+using LfrlAnvil.Memory;
 
 namespace LfrlAnvil.MessageBroker.Server.Internal;
 
-internal readonly struct EnqueuedMessage
+internal readonly struct QueueMessage
 {
-    internal EnqueuedMessage(ulong id, MessageBrokerChannelBinding binding, BinaryBufferToken bufferToken, ReadOnlyMemory<byte> data)
+    internal QueueMessage(
+        ulong id,
+        Timestamp timestamp,
+        MessageBrokerChannelBinding binding,
+        MemoryPoolToken<byte> poolToken,
+        ReadOnlyMemory<byte> data)
     {
         Id = id;
+        Timestamp = timestamp;
         Binding = binding;
-        BufferToken = bufferToken;
+        PoolToken = poolToken;
         Data = data;
     }
 
     internal readonly ulong Id;
+    internal readonly Timestamp Timestamp;
     internal readonly MessageBrokerChannelBinding Binding;
-    internal readonly BinaryBufferToken BufferToken;
+    internal readonly MemoryPoolToken<byte> PoolToken;
     internal readonly ReadOnlyMemory<byte> Data;
 
     [Pure]
     public override string ToString()
     {
-        return $"Id = {Id}, Length = {Data.Length}, Binding = ({Binding})";
+        return $"Id = {Id}, Timestamp = {Timestamp}, Length = {Data.Length}, Binding = ({Binding})";
     }
 }

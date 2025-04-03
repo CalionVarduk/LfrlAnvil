@@ -19,7 +19,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.Exceptions;
-using LfrlAnvil.MessageBroker.Client.Buffering;
+using LfrlAnvil.Memory;
 using LfrlAnvil.MessageBroker.Client.Events;
 using LfrlAnvil.MessageBroker.Client.Exceptions;
 
@@ -109,11 +109,11 @@ internal readonly struct ListenerCollection
         Protocol.SubscribeRequest request;
         ulong contextId;
 
-        var bufferToken = default( BinaryBufferToken );
+        var poolToken = default( MemoryPoolToken<byte> );
         try
         {
             request = new Protocol.SubscribeRequest( channelName, createChannelIfNotExists );
-            bufferToken = client.RentBuffer( request.Length, out var buffer ).EnableClearing();
+            poolToken = client.MemoryPool.Rent( request.Length, out var buffer ).EnableClearing();
             request.Serialize( buffer, reverseEndianness );
 
             ManualResetValueTaskSource<bool> writerSource;
@@ -163,7 +163,7 @@ internal readonly struct ListenerCollection
         }
         finally
         {
-            client.DisposeBufferToken( bufferToken );
+            poolToken.Return( client );
         }
 
         var response = await responseSource.GetTask().ConfigureAwait( false );
@@ -275,7 +275,7 @@ internal readonly struct ListenerCollection
         }
         finally
         {
-            client.DisposeBufferToken( response.BufferToken );
+            response.PoolToken.Return( client );
         }
     }
 
@@ -298,11 +298,11 @@ internal readonly struct ListenerCollection
         Protocol.UnsubscribeRequest request;
         ulong contextId;
 
-        var bufferToken = default( BinaryBufferToken );
+        var poolToken = default( MemoryPoolToken<byte> );
         try
         {
             request = new Protocol.UnsubscribeRequest( listener.ChannelId );
-            bufferToken = client.RentBuffer( Protocol.UnsubscribeRequest.Length, out var buffer ).EnableClearing();
+            poolToken = client.MemoryPool.Rent( Protocol.UnsubscribeRequest.Length, out var buffer ).EnableClearing();
             request.Serialize( buffer, reverseEndianness );
 
             ManualResetValueTaskSource<bool> writerSource;
@@ -352,7 +352,7 @@ internal readonly struct ListenerCollection
         }
         finally
         {
-            client.DisposeBufferToken( bufferToken );
+            poolToken.Return( client );
         }
 
         var response = await responseSource.GetTask().ConfigureAwait( false );
@@ -447,7 +447,7 @@ internal readonly struct ListenerCollection
         }
         finally
         {
-            client.DisposeBufferToken( response.BufferToken );
+            response.PoolToken.Return( client );
         }
     }
 

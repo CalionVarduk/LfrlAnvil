@@ -30,6 +30,16 @@ public enum MessageBrokerQueueEventType : byte
     Created,
 
     /// <summary>
+    /// Specifies that a message has been enqueued in the queue.
+    /// </summary>
+    MessageEnqueued,
+
+    /// <summary>
+    /// Specifies that a message has been dequeued from the queue.
+    /// </summary>
+    MessageDequeued,
+
+    /// <summary>
     /// Specifies that the queue is about to be disposed.
     /// </summary>
     Disposing,

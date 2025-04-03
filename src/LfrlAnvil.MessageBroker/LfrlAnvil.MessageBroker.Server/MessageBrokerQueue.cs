@@ -16,9 +16,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using LfrlAnvil.Async;
-using LfrlAnvil.Extensions;
-using LfrlAnvil.MessageBroker.Server.Buffering;
+using LfrlAnvil.Memory;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Internal;
 
@@ -31,8 +31,10 @@ namespace LfrlAnvil.MessageBroker.Server;
 public sealed class MessageBrokerQueue
 {
     internal readonly Dictionary<QueueBindingKey, MessageBrokerChannelBinding> BindingsByKey;
+    internal QueueProcessor QueueProcessor;
+
     private readonly MessageBrokerQueueEventHandler? _eventHandler;
-    private QueueSlim<EnqueuedMessage> _messages;
+    private QueueSlim<QueueMessage> _messages;
     private ulong _nextMessageId;
     private MessageBrokerQueueState _state;
 
@@ -43,9 +45,11 @@ public sealed class MessageBrokerQueue
         Name = name;
         _nextMessageId = 0;
         _state = MessageBrokerQueueState.Running;
-        _messages = QueueSlim<EnqueuedMessage>.Create();
+        _messages = QueueSlim<QueueMessage>.Create();
         BindingsByKey = new Dictionary<QueueBindingKey, MessageBrokerChannelBinding>();
+        QueueProcessor = QueueProcessor.Create();
         _eventHandler = Server.QueueEventHandlerFactory?.Invoke( this );
+        QueueProcessor.SetUnderlyingTask( QueueProcessor.StartUnderlyingTask( this ) );
     }
 
     /// <summary>
@@ -94,20 +98,87 @@ public sealed class MessageBrokerQueue
         return $"[{Id}] '{Name}' queue ({State})";
     }
 
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ulong? Enqueue(MessageBrokerChannelBinding binding, BinaryBufferToken token, ReadOnlyMemory<byte> data)
+    /// <summary>
+    /// Removes this queue from the server.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous removal operation.</returns>
+    public async ValueTask RemoveAsync()
     {
         using ( AcquireLock() )
         {
             if ( ShouldCancel )
-                return null;
+                return;
+
+            _state = MessageBrokerQueueState.Disposing;
+        }
+
+        Emit( MessageBrokerQueueEvent.Disposing( this ) );
+
+        Task? processorTask;
+        var bindings = Array.Empty<MessageBrokerChannelBinding>();
+        using ( AcquireLock() )
+        {
+            if ( BindingsByKey.Count > 0 )
+            {
+                var i = 0;
+                bindings = new MessageBrokerChannelBinding[BindingsByKey.Count];
+                foreach ( var binding in BindingsByKey.Values )
+                    bindings[i++] = binding;
+
+                BindingsByKey.Clear();
+            }
+
+            ClearMessages();
+            processorTask = QueueProcessor.DiscardUnderlyingTask();
+            QueueProcessor.Dispose();
+        }
+
+        await Parallel.ForEachAsync( bindings, static (b, _) => b.OnQueueDisposedAsync() ).ConfigureAwait( false );
+        if ( processorTask is not null )
+            await processorTask.ConfigureAwait( false );
+
+        var exc = QueueCollection.Remove( this ).Exception;
+        if ( exc is not null )
+            Emit( MessageBrokerQueueEvent.Unexpected( this, exc ) );
+
+        using ( AcquireLock() )
+            _state = MessageBrokerQueueState.Disposed;
+
+        Emit( MessageBrokerQueueEvent.Disposed( this ) );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal Protocol.MessageRejectedResponse.Reasons Enqueue(
+        MessageBrokerChannelBinding binding,
+        MemoryPoolToken<byte> token,
+        ReadOnlyMemory<byte> data,
+        ulong contextId,
+        ref ulong? messageId)
+    {
+        using ( AcquireLock() )
+        {
+            if ( ShouldCancel )
+                return Protocol.MessageRejectedResponse.Reasons.Cancelled;
+
+            // TODO:
+            // this may require binding lock later (e.g. when permanence is implemented)
+            // right now it doesn't really matter, even though binding in disposing state will be allowed to enqueue messages
 
             var id = unchecked( _nextMessageId++ );
-            _messages.Enqueue( new EnqueuedMessage( id, binding, token, data ) );
-            // TODO:
-            // signal underlying task loop that there are messages to process (propagate to subscribers)
-            return id;
+            _messages.Enqueue( new QueueMessage( id, binding.Client.GetTimestamp(), binding, token, data ) );
+            messageId = id;
+
+            Emit( MessageBrokerQueueEvent.MessageEnqueued( this, binding, id, contextId ) );
+            QueueProcessor.SignalContinuation();
         }
+
+        return Protocol.MessageRejectedResponse.Reasons.None;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool TryDequeueUnsafe(out QueueMessage message)
+    {
+        return _messages.TryDequeue( out message );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -121,7 +192,18 @@ public sealed class MessageBrokerQueue
         return true;
     }
 
-    internal void OnBindingDisposing(MessageBrokerRemoteClient client, MessageBrokerChannel channel)
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool TryDisposeDueToEmptyQueueUnsafe()
+    {
+        Assume.True( _messages.IsEmpty );
+        if ( BindingsByKey.Count > 0 )
+            return false;
+
+        _state = MessageBrokerQueueState.Disposing;
+        return true;
+    }
+
+    internal async ValueTask OnBindingDisposingAsync(MessageBrokerRemoteClient client, MessageBrokerChannel channel)
     {
         var dispose = false;
         using ( AcquireLock() )
@@ -139,10 +221,10 @@ public sealed class MessageBrokerQueue
         }
 
         if ( dispose )
-            DisposeDueToLackOfReferences();
+            await DisposeDueToLackOfReferencesAsync( ignoreProcessorTask: false ).ConfigureAwait( false );
     }
 
-    internal void OnServerDisposed()
+    internal async ValueTask OnServerDisposedAsync()
     {
         using ( AcquireLock() )
         {
@@ -154,26 +236,44 @@ public sealed class MessageBrokerQueue
 
         Emit( MessageBrokerQueueEvent.Disposing( this ) );
 
+        Task? processorTask;
         using ( AcquireLock() )
         {
             BindingsByKey.Clear();
-            foreach ( var message in _messages )
-                message.BufferToken.TryDispose();
-
-            _messages.Clear();
-            _state = MessageBrokerQueueState.Disposed;
+            ClearMessages();
+            processorTask = QueueProcessor.DiscardUnderlyingTask();
+            QueueProcessor.Dispose();
         }
+
+        if ( processorTask is not null )
+            await processorTask.ConfigureAwait( false );
+
+        using ( AcquireLock() )
+            _state = MessageBrokerQueueState.Disposed;
 
         Emit( MessageBrokerQueueEvent.Disposed( this ) );
     }
 
-    internal void DisposeDueToLackOfReferences()
+    internal async ValueTask DisposeDueToLackOfReferencesAsync(bool ignoreProcessorTask)
     {
         Assume.IsEmpty( BindingsByKey );
         Assume.True( _messages.IsEmpty );
         Assume.Equals( State, MessageBrokerQueueState.Disposing );
 
         Emit( MessageBrokerQueueEvent.Disposing( this ) );
+
+        Task? processorTask;
+        using ( AcquireLock() )
+        {
+            processorTask = QueueProcessor.DiscardUnderlyingTask();
+            if ( ignoreProcessorTask )
+                processorTask = null;
+
+            QueueProcessor.Dispose();
+        }
+
+        if ( processorTask is not null )
+            await processorTask.ConfigureAwait( false );
 
         var exc = QueueCollection.Remove( this ).Exception;
         if ( exc is not null )
@@ -205,5 +305,14 @@ public sealed class MessageBrokerQueue
         {
             // NOTE: do nothing
         }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private void ClearMessages()
+    {
+        foreach ( var message in _messages )
+            message.PoolToken.Return( message.Binding.Client );
+
+        _messages = QueueSlim<QueueMessage>.Create();
     }
 }

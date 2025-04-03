@@ -41,57 +41,91 @@ internal sealed class ClientMock : IDisposable
 
     internal byte[] ReadHandshakeAcceptedResponse()
     {
-        return Read( Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload );
+        return AssertEndpoint(
+            Read( Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload ),
+            MessageBrokerClientEndpoint.HandshakeAcceptedResponse );
     }
 
     internal byte[] ReadHandshakeRejectedResponse()
     {
-        return Read( Protocol.PacketHeader.Length + Protocol.HandshakeRejectedResponse.Payload );
+        return AssertEndpoint(
+            Read( Protocol.PacketHeader.Length + Protocol.HandshakeRejectedResponse.Payload ),
+            MessageBrokerClientEndpoint.HandshakeRejectedResponse );
     }
 
     internal byte[] ReadPingResponse()
     {
-        return Read( Protocol.PacketHeader.Length );
+        return AssertEndpoint( Read( Protocol.PacketHeader.Length ), MessageBrokerClientEndpoint.PingResponse );
     }
 
     internal byte[] ReadBoundResponse()
     {
-        return Read( Protocol.PacketHeader.Length + Protocol.BoundResponse.Payload );
+        return AssertEndpoint(
+            Read( Protocol.PacketHeader.Length + Protocol.BoundResponse.Payload ),
+            MessageBrokerClientEndpoint.BoundResponse );
     }
 
     internal byte[] ReadBindFailureResponse()
     {
-        return Read( Protocol.PacketHeader.Length + Protocol.BindFailureResponse.Payload );
+        return AssertEndpoint(
+            Read( Protocol.PacketHeader.Length + Protocol.BindFailureResponse.Payload ),
+            MessageBrokerClientEndpoint.BindFailureResponse );
     }
 
     internal byte[] ReadUnboundResponse()
     {
-        return Read( Protocol.PacketHeader.Length + Protocol.UnboundResponse.Payload );
+        return AssertEndpoint(
+            Read( Protocol.PacketHeader.Length + Protocol.UnboundResponse.Payload ),
+            MessageBrokerClientEndpoint.UnboundResponse );
     }
 
     internal byte[] ReadUnbindFailureResponse()
     {
-        return Read( Protocol.PacketHeader.Length + Protocol.UnbindFailureResponse.Payload );
+        return AssertEndpoint(
+            Read( Protocol.PacketHeader.Length + Protocol.UnbindFailureResponse.Payload ),
+            MessageBrokerClientEndpoint.UnbindFailureResponse );
     }
 
     internal byte[] ReadSubscribedResponse()
     {
-        return Read( Protocol.PacketHeader.Length + Protocol.SubscribedResponse.Payload );
+        return AssertEndpoint(
+            Read( Protocol.PacketHeader.Length + Protocol.SubscribedResponse.Payload ),
+            MessageBrokerClientEndpoint.SubscribedResponse );
     }
 
     internal byte[] ReadSubscribeFailureResponse()
     {
-        return Read( Protocol.PacketHeader.Length + Protocol.SubscribeFailureResponse.Payload );
+        return AssertEndpoint(
+            Read( Protocol.PacketHeader.Length + Protocol.SubscribeFailureResponse.Payload ),
+            MessageBrokerClientEndpoint.SubscribeFailureResponse );
     }
 
     internal byte[] ReadUnsubscribedResponse()
     {
-        return Read( Protocol.PacketHeader.Length + Protocol.UnsubscribedResponse.Payload );
+        return AssertEndpoint(
+            Read( Protocol.PacketHeader.Length + Protocol.UnsubscribedResponse.Payload ),
+            MessageBrokerClientEndpoint.UnsubscribedResponse );
     }
 
     internal byte[] ReadUnsubscribeFailureResponse()
     {
-        return Read( Protocol.PacketHeader.Length + Protocol.UnsubscribeFailureResponse.Payload );
+        return AssertEndpoint(
+            Read( Protocol.PacketHeader.Length + Protocol.UnsubscribeFailureResponse.Payload ),
+            MessageBrokerClientEndpoint.UnsubscribeFailureResponse );
+    }
+
+    internal byte[] ReadMessageAcceptedResponse()
+    {
+        return AssertEndpoint(
+            Read( Protocol.PacketHeader.Length + Protocol.MessageAcceptedResponse.Payload ),
+            MessageBrokerClientEndpoint.MessageAcceptedResponse );
+    }
+
+    internal byte[] ReadMessageRejectedResponse()
+    {
+        return AssertEndpoint(
+            Read( Protocol.PacketHeader.Length + Protocol.MessageRejectedResponse.Payload ),
+            MessageBrokerClientEndpoint.MessageRejectedResponse );
     }
 
     internal byte[] Read(int length)
@@ -203,6 +237,17 @@ internal sealed class ClientMock : IDisposable
         Send( buffer );
     }
 
+    internal void SendMessageRequest(int channelId, byte[] data, uint? payload = null)
+    {
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.MessageRequestHeader.Length + data.Length];
+        var writer = new BinaryContractWriter( buffer );
+        writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.MessageRequest );
+        writer.MoveWrite( payload ?? ( uint )(Protocol.MessageRequestHeader.Length + data.Length) );
+        writer.MoveWrite( ( uint )channelId );
+        data.AsSpan().CopyTo( writer.GetSpan( data.Length ) );
+        Send( buffer );
+    }
+
     internal void Send(byte[] data)
     {
         lock ( _client )
@@ -237,5 +282,11 @@ internal sealed class ClientMock : IDisposable
     {
         lock ( _client )
             return _received.ToArray();
+    }
+
+    private static byte[] AssertEndpoint(byte[] data, MessageBrokerClientEndpoint endpoint)
+    {
+        (( MessageBrokerClientEndpoint )data[0]).TestEquals( endpoint ).Go();
+        return data;
     }
 }

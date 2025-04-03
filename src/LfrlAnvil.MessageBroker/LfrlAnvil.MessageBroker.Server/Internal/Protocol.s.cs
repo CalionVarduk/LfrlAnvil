@@ -613,6 +613,97 @@ internal static class Protocol
         }
     }
 
+    internal readonly struct MessageRequestHeader
+    {
+        internal const int Length = sizeof( uint );
+        internal readonly int ChannelId;
+
+        private MessageRequestHeader(int channelId)
+        {
+            ChannelId = channelId;
+        }
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"ChannelId = {ChannelId}";
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static MessageRequestHeader Parse(ReadOnlyMemory<byte> source)
+        {
+            Assume.Equals( source.Length, Length );
+            var reader = new BinaryContractReader( source.Span );
+            var channelId = unchecked( ( int )reader.ReadInt32() );
+            return new MessageRequestHeader( channelId );
+        }
+    }
+
+    internal readonly struct MessageAcceptedResponse
+    {
+        internal const int Payload = sizeof( ulong );
+        internal readonly PacketHeader Header;
+        internal readonly ulong Id;
+
+        internal MessageAcceptedResponse(ulong id)
+        {
+            Header = PacketHeader.Create( MessageBrokerClientEndpoint.MessageAcceptedResponse, Payload );
+            Id = id;
+        }
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"[{Header}] Id = {Id}";
+        }
+
+        internal void Serialize(Memory<byte> target)
+        {
+            Assume.Equals( target.Length, PacketHeader.Length + Payload );
+            var writer = new BinaryContractWriter( target.Span );
+            writer.MoveWrite( Header.EndpointCode );
+            writer.MoveWrite( Header.Payload );
+            writer.Write( Id );
+        }
+    }
+
+    internal readonly struct MessageRejectedResponse
+    {
+        [Flags]
+        internal enum Reasons : byte
+        {
+            None = 0,
+            NotBound = 1,
+            Cancelled = 2
+        }
+
+        internal const int Payload = sizeof( byte );
+        internal readonly PacketHeader Header;
+        internal readonly byte Flags;
+
+        internal MessageRejectedResponse(Reasons reasons)
+        {
+            Header = PacketHeader.Create( MessageBrokerClientEndpoint.MessageRejectedResponse, Payload );
+            Flags = ( byte )reasons;
+        }
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"[{Header}] Flags = {Flags}";
+        }
+
+        internal void Serialize(Memory<byte> target)
+        {
+            Assume.Equals( target.Length, PacketHeader.Length + Payload );
+            var writer = new BinaryContractWriter( target.Span );
+            writer.MoveWrite( Header.EndpointCode );
+            writer.MoveWrite( Header.Payload );
+            writer.Write( Flags );
+        }
+    }
+
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerServerProtocolException ProtocolException(
@@ -620,7 +711,7 @@ internal static class Protocol
         PacketHeader header,
         Chain<string> errors)
     {
-        return new MessageBrokerServerProtocolException( client, header.GetServerEndpoint(), header.Payload, errors );
+        return new MessageBrokerServerProtocolException( client, header.GetServerEndpoint(), errors );
     }
 
     [Pure]
@@ -637,13 +728,6 @@ internal static class Protocol
     internal static MessageBrokerServerProtocolException EndiannessPayloadException(MessageBrokerRemoteClient client, PacketHeader header)
     {
         return ProtocolException( client, header, Chain.Create( Resources.InvalidEndiannessPayload( header.Payload ) ) );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerServerProtocolException InvalidPacketLengthException(MessageBrokerRemoteClient client, PacketHeader header)
-    {
-        return ProtocolException( client, header, Chain.Create( Resources.InvalidPacketLength ) );
     }
 
     [Pure]
@@ -689,13 +773,25 @@ internal static class Protocol
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerServerProtocolException? AssertMinPayload(
+        MessageBrokerRemoteClient client,
+        PacketHeader header,
+        uint expectedMin)
+    {
+        return header.Payload < expectedMin
+            ? ProtocolException( client, header, Chain.Create( Resources.TooShortHeaderPayload( header.Payload, expectedMin ) ) )
+            : null;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerServerProtocolException? AssertPayload(
         MessageBrokerRemoteClient client,
         PacketHeader header,
         uint expected)
     {
         return header.Payload != expected
-            ? ProtocolException( client, header, Chain.Create( Resources.InvalidHeaderPayload( expected ) ) )
+            ? ProtocolException( client, header, Chain.Create( Resources.InvalidHeaderPayload( header.Payload, expected ) ) )
             : null;
     }
 

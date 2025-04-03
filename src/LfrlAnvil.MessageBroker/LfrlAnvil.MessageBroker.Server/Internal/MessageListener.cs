@@ -18,7 +18,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using LfrlAnvil.MessageBroker.Server.Buffering;
+using LfrlAnvil.Memory;
 using LfrlAnvil.MessageBroker.Server.Events;
 
 namespace LfrlAnvil.MessageBroker.Server.Internal;
@@ -104,7 +104,7 @@ internal struct MessageListener
 
             client.Emit( MessageBrokerRemoteClientEvent.MessageReceived( client, header ) );
 
-            BinaryBufferToken packetBufferToken = default;
+            var packetPoolToken = default( MemoryPoolToken<byte> );
             var packetBuffer = Memory<byte>.Empty;
             if ( header.GetServerEndpoint() != MessageBrokerServerEndpoint.PingRequest )
             {
@@ -117,7 +117,7 @@ internal struct MessageListener
 
                 if ( packetLength.Value > 0 )
                 {
-                    packetBufferToken = client.RentBuffer( packetLength.Value, out packetBuffer ).EnableClearing();
+                    packetPoolToken = client.MemoryPool.Rent( packetLength.Value, out packetBuffer ).EnableClearing();
                     try
                     {
                         await stream.ReadExactlyAsync( packetBuffer, timeoutToken ).ConfigureAwait( false );
@@ -125,7 +125,7 @@ internal struct MessageListener
                     catch ( Exception exc )
                     {
                         client.Emit( MessageBrokerRemoteClientEvent.WaitingForMessage( client, exc ) );
-                        client.DisposeBufferToken( packetBufferToken );
+                        packetPoolToken.Return( client );
                         break;
                     }
                 }
@@ -135,12 +135,12 @@ internal struct MessageListener
             {
                 if ( client.ShouldCancel )
                 {
-                    client.DisposeBufferToken( packetBufferToken );
+                    packetPoolToken.Return( client );
                     return TaskStopReason.OwnerDisposed;
                 }
 
                 client.EventScheduler.ResetReadTimeout();
-                client.MessageContextQueue.EnqueueRequest( header, packetBufferToken, packetBuffer );
+                client.MessageContextQueue.EnqueueRequest( header, packetPoolToken, packetBuffer );
                 client.RequestHandler.SignalContinuation();
             }
         }

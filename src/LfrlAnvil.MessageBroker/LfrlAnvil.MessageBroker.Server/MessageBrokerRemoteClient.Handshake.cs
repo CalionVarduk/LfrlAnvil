@@ -18,7 +18,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Extensions;
-using LfrlAnvil.MessageBroker.Server.Buffering;
+using LfrlAnvil.Memory;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Exceptions;
 using LfrlAnvil.MessageBroker.Server.Internal;
@@ -112,7 +112,7 @@ public sealed partial class MessageBrokerRemoteClient
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private async ValueTask<Result> EstablishHandshakeAsync()
     {
-        var bufferToken = default( BinaryBufferToken );
+        var poolToken = default( MemoryPoolToken<byte> );
         try
         {
             using ( AcquireLock() )
@@ -132,14 +132,14 @@ public sealed partial class MessageBrokerRemoteClient
                     .Max( Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload )
                     .Max( Protocol.PacketHeader.Length + Protocol.HandshakeRejectedResponse.Payload );
 
-                bufferToken = RentBuffer( minPacketLength, out buffer ).EnableClearing();
+                poolToken = MemoryPool.Rent( minPacketLength, out buffer ).EnableClearing();
             }
             catch ( Exception exc )
             {
                 return EmitError<bool>( MessageBrokerRemoteClientEvent.Unexpected( this, exc ) );
             }
 
-            var (readResult, exception) = await ReadHandshakeRequestAsync( bufferToken, buffer ).ConfigureAwait( false );
+            var (readResult, exception) = await ReadHandshakeRequestAsync( poolToken, buffer ).ConfigureAwait( false );
             buffer = readResult.Buffer;
 
             if ( readResult.RejectedResponse is not null )
@@ -172,12 +172,12 @@ public sealed partial class MessageBrokerRemoteClient
         }
         finally
         {
-            DisposeBufferToken( bufferToken );
+            poolToken.Return( this );
         }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private async ValueTask<Result<ReadHandshakeResult>> ReadHandshakeRequestAsync(BinaryBufferToken bufferToken, Memory<byte> buffer)
+    private async ValueTask<Result<ReadHandshakeResult>> ReadHandshakeRequestAsync(MemoryPoolToken<byte> poolToken, Memory<byte> buffer)
     {
         Protocol.PacketHeader header;
         CancellationToken timeoutToken;
@@ -211,18 +211,18 @@ public sealed partial class MessageBrokerRemoteClient
                     header,
                     Protocol.UnexpectedServerEndpointException( this, header ) ) );
 
-        var packetLength = unchecked( ( int )header.Payload );
-        if ( packetLength < Protocol.HandshakeRequestHeader.Length )
-            return EmitError<ReadHandshakeResult>(
-                MessageBrokerRemoteClientEvent.MessageRejected( this, header, Protocol.InvalidPacketLengthException( this, header ) ) );
+        var exception = Protocol.AssertMinPayload( this, header, Protocol.HandshakeRequestHeader.Length );
+        if ( exception is not null )
+            return EmitError<ReadHandshakeResult>( MessageBrokerRemoteClientEvent.MessageRejected( this, header, exception ) );
 
+        var packetLength = unchecked( ( int )header.Payload );
         Protocol.HandshakeAcceptedResponse acceptedResponse;
         bool isClientLittleEndian;
         Result<string> name;
         try
         {
             if ( packetLength > buffer.Length )
-                buffer = bufferToken.SetLength( packetLength );
+                poolToken.SetLength( packetLength, out buffer );
 
             var data = buffer.Slice( 0, packetLength );
             await _stream.ReadExactlyAsync( data, timeoutToken ).ConfigureAwait( false );

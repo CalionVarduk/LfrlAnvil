@@ -27,7 +27,6 @@ using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Memory;
-using LfrlAnvil.MessageBroker.Server.Buffering;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Exceptions;
 using LfrlAnvil.MessageBroker.Server.Internal;
@@ -41,6 +40,7 @@ public sealed partial class MessageBrokerRemoteClient
 {
     internal readonly Dictionary<int, MessageBrokerChannelBinding> BindingsByChannelId;
     internal readonly Dictionary<int, MessageBrokerSubscription> SubscriptionsByChannelId;
+    internal readonly MemoryPool<byte> MemoryPool;
     internal EventScheduler EventScheduler;
     internal MessageListener MessageListener;
     internal RequestHandler RequestHandler;
@@ -48,7 +48,6 @@ public sealed partial class MessageBrokerRemoteClient
 
     private readonly ITimestampProvider _timestamps;
     private readonly TcpClient _tcp;
-    private readonly MemoryPool<byte> _memoryPool;
     private readonly MessageBrokerRemoteClientEventHandler? _eventHandler;
     private DelaySource _delaySource;
     private Stream _stream;
@@ -58,7 +57,7 @@ public sealed partial class MessageBrokerRemoteClient
     {
         _tcp = tcp;
         _stream = _tcp.GetStream();
-        _memoryPool = new MemoryPool<byte>( minMemoryPoolSegmentLength );
+        MemoryPool = new MemoryPool<byte>( minMemoryPoolSegmentLength );
         Server = server;
         Id = id;
         Name = string.Empty;
@@ -211,9 +210,7 @@ public sealed partial class MessageBrokerRemoteClient
         }
 
         var (bindings, subscriptions) = await DisposeAsync( extractChildren: true ).ConfigureAwait( false );
-        foreach ( var binding in bindings )
-            binding.OnClientDisconnected();
-
+        await Parallel.ForEachAsync( bindings, static (b, _) => b.OnClientDisconnectedAsync() ).ConfigureAwait( false );
         foreach ( var subscription in subscriptions )
             subscription.OnClientDisconnected();
 
@@ -436,13 +433,6 @@ public sealed partial class MessageBrokerRemoteClient
         return _timestamps.GetNow();
     }
 
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal Timestamp GetFutureTimestamp(Duration delay)
-    {
-        return GetTimestamp() + delay;
-    }
-
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ExclusiveLock AcquireLock()
     {
@@ -462,17 +452,6 @@ public sealed partial class MessageBrokerRemoteClient
         catch
         {
             // NOTE: do nothing
-        }
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal BinaryBufferToken RentBuffer(int length, out Memory<byte> memory)
-    {
-        using ( ExclusiveLock.Enter( _memoryPool ) )
-        {
-            var token = _memoryPool.Rent( length );
-            memory = token.AsMemory();
-            return new BinaryBufferToken( token );
         }
     }
 
@@ -516,14 +495,6 @@ public sealed partial class MessageBrokerRemoteClient
 
         Emit( MessageBrokerRemoteClientEvent.MessageSent( this, header, contextId ) );
         return Result.Valid;
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void DisposeBufferToken(BinaryBufferToken token)
-    {
-        var exc = token.TryDispose().Exception;
-        if ( exc is not null )
-            Emit( MessageBrokerRemoteClientEvent.Unexpected( this, exc ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

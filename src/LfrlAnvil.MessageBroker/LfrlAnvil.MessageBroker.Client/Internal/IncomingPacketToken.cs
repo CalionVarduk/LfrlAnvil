@@ -15,7 +15,7 @@
 using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.MessageBroker.Client.Buffering;
+using LfrlAnvil.Memory;
 
 namespace LfrlAnvil.MessageBroker.Client.Internal;
 
@@ -28,16 +28,16 @@ internal readonly struct IncomingPacketToken
         Ok = 2
     }
 
-    private IncomingPacketToken(Protocol.PacketHeader header, BinaryBufferToken bufferToken, Memory<byte> data, Result type)
+    private IncomingPacketToken(Protocol.PacketHeader header, MemoryPoolToken<byte> poolToken, Memory<byte> data, Result type)
     {
         Header = header;
-        BufferToken = bufferToken;
+        PoolToken = poolToken;
         Data = data;
         Type = type;
     }
 
     internal readonly Protocol.PacketHeader Header;
-    internal readonly BinaryBufferToken BufferToken;
+    internal readonly MemoryPoolToken<byte> PoolToken;
     internal readonly Memory<byte> Data;
     internal readonly Result Type;
 
@@ -50,7 +50,7 @@ internal readonly struct IncomingPacketToken
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static IncomingPacketToken Ok(Protocol.PacketHeader header, BinaryBufferToken bufferToken, Memory<byte> data)
+    internal static IncomingPacketToken Ok(Protocol.PacketHeader header, MemoryPoolToken<byte> bufferToken, Memory<byte> data)
     {
         return new IncomingPacketToken( header, bufferToken, data, Result.Ok );
     }
