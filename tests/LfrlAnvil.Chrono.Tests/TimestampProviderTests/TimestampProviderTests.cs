@@ -5,7 +5,7 @@ public class TimestampProviderTests : TestsBase
     [Fact]
     public void GetNow_ShouldReturnCorrectResult()
     {
-        var sut = new TimestampProvider();
+        var sut = TimestampProvider.Shared;
 
         var expectedMin = DateTime.UtcNow;
         var result = sut.GetNow();

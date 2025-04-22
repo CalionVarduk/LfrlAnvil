@@ -6,21 +6,43 @@ namespace LfrlAnvil.TestExtensions;
 public sealed class SafeTaskCompletionSource
 {
     private readonly TaskCompletionSource _base;
+    private readonly CancellationTokenSource _cancellationSource;
     private readonly CancellationTokenRegistration _registration;
+    private readonly TimeSpan _cancellationTimeout;
     private readonly int _completionCount;
+    private int _isCancellationActive;
     private int _currentCompletionCount;
 
     public SafeTaskCompletionSource(int completionCount = 1, TimeSpan? timeout = null)
     {
+        _isCancellationActive = 0;
         _currentCompletionCount = 0;
         _completionCount = Math.Max( completionCount, 1 );
         _base = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
-        var cancellation = new CancellationTokenSource();
-        _registration = cancellation.Token.Register( (_, ct) => _base.SetException( new OperationCanceledException( ct ) ), null );
-        cancellation.CancelAfter( timeout ?? TimeSpan.FromSeconds( 5 ) );
+        _cancellationSource = new CancellationTokenSource();
+        _cancellationTimeout = timeout ?? TimeSpan.FromSeconds( 5 );
+        _registration = _cancellationSource.Token.Register( (_, ct) => _base.SetException( new OperationCanceledException( ct ) ), null );
     }
 
-    public Task Task => _base.Task;
+    public Task Task
+    {
+        get
+        {
+            if ( Interlocked.Exchange( ref _isCancellationActive, 1 ) == 0 )
+            {
+                try
+                {
+                    _cancellationSource.CancelAfter( _cancellationTimeout );
+                }
+                catch ( ObjectDisposedException )
+                {
+                    // NOTE: do nothing
+                }
+            }
+
+            return _base.Task;
+        }
+    }
 
     public bool Complete()
     {
@@ -28,6 +50,7 @@ public sealed class SafeTaskCompletionSource
             return false;
 
         _registration.Dispose();
+        _cancellationSource.Dispose();
         _base.SetResult();
         return true;
     }
@@ -36,8 +59,11 @@ public sealed class SafeTaskCompletionSource
 public sealed class SafeTaskCompletionSource<T>
 {
     private readonly TaskCompletionSource<T> _base;
+    private readonly CancellationTokenSource _cancellationSource;
     private readonly CancellationTokenRegistration _registration;
+    private readonly TimeSpan _cancellationTimeout;
     private readonly int _completionCount;
+    private int _isCancellationActive;
     private int _currentCompletionCount;
 
     public SafeTaskCompletionSource(int completionCount = 1, TimeSpan? timeout = null)
@@ -45,12 +71,30 @@ public sealed class SafeTaskCompletionSource<T>
         _currentCompletionCount = 0;
         _completionCount = Math.Max( completionCount, 1 );
         _base = new TaskCompletionSource<T>( TaskCreationOptions.RunContinuationsAsynchronously );
-        var cancellation = new CancellationTokenSource();
-        _registration = cancellation.Token.Register( (_, ct) => _base.SetException( new OperationCanceledException( ct ) ), null );
-        cancellation.CancelAfter( timeout ?? TimeSpan.FromSeconds( 5 ) );
+        _cancellationSource = new CancellationTokenSource();
+        _cancellationTimeout = timeout ?? TimeSpan.FromSeconds( 5 );
+        _registration = _cancellationSource.Token.Register( (_, ct) => _base.SetException( new OperationCanceledException( ct ) ), null );
     }
 
-    public Task<T> Task => _base.Task;
+    public Task<T> Task
+    {
+        get
+        {
+            if ( Interlocked.Exchange( ref _isCancellationActive, 1 ) == 0 )
+            {
+                try
+                {
+                    _cancellationSource.CancelAfter( _cancellationTimeout );
+                }
+                catch ( ObjectDisposedException )
+                {
+                    // NOTE: do nothing
+                }
+            }
+
+            return _base.Task;
+        }
+    }
 
     public bool Complete(T result)
     {
@@ -58,6 +102,7 @@ public sealed class SafeTaskCompletionSource<T>
             return false;
 
         _registration.Dispose();
+        _cancellationSource.Dispose();
         _base.SetResult( result );
         return true;
     }

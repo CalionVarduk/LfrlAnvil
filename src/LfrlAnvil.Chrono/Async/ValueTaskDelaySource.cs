@@ -68,7 +68,7 @@ public sealed class ValueTaskDelaySource : IDisposable, IAsyncDisposable
     [Pure]
     public static ValueTaskDelaySource Start(TaskFactory taskFactory, ITimestampProvider? timestamps = null)
     {
-        var result = new ValueTaskDelaySource( timestamps ?? new TimestampProvider() );
+        var result = new ValueTaskDelaySource( timestamps ?? TimestampProvider.Shared );
         var task = taskFactory.StartNew(
             static o =>
             {

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2025 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@ public static class DateTimeProvider
     /// <summary>
     /// <see cref="IDateTimeProvider"/> instance that returns <see cref="DateTime"/> instances of <see cref="DateTimeKind.Utc"/> kind.
     /// </summary>
-    public static readonly IDateTimeProvider Utc = new UtcDateTimeProvider();
+    public static readonly UtcDateTimeProvider Utc = new UtcDateTimeProvider();
 
     /// <summary>
     /// <see cref="IDateTimeProvider"/> instance that returns <see cref="DateTime"/> instances of <see cref="DateTimeKind.Local"/> kind.
     /// </summary>
-    public static readonly IDateTimeProvider Local = new LocalDateTimeProvider();
+    public static readonly LocalDateTimeProvider Local = new LocalDateTimeProvider();
 }

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2025 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,6 +22,11 @@ namespace LfrlAnvil.Chrono;
 /// <inheritdoc cref="TimestampProviderBase" />
 public sealed class TimestampProvider : TimestampProviderBase
 {
+    /// <summary>
+    /// Shared <see cref="TimestampProvider"/> instance.
+    /// </summary>
+    public static readonly TimestampProvider Shared = new TimestampProvider();
+
     /// <inheritdoc />
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
