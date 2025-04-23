@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2025 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,6 +30,22 @@ namespace LfrlAnvil.Extensions;
 /// </summary>
 public static class ExpressionExtensions
 {
+    private static readonly Func<Expression, string>? DebugView = typeof( Expression )
+        .GetProperty( "DebugView", BindingFlags.Instance | BindingFlags.NonPublic )
+        ?.GetGetMethod( nonPublic: true )
+        ?.CreateDelegate<Func<Expression, string>>();
+
+    /// <summary>
+    /// Creates a string representation of the provided <paramref name="expression"/>.
+    /// </summary>
+    /// <param name="expression">Source expression.</param>
+    /// <returns>String representation of the provided <paramref name="expression"/>.</returns>
+    [Pure]
+    public static string GetDebugString(this Expression expression)
+    {
+        return DebugView?.Invoke( expression ) ?? string.Empty;
+    }
+
     /// <summary>
     /// Extracts member's name from the provided lambda expression.
     /// </summary>
@@ -39,7 +55,7 @@ public static class ExpressionExtensions
     /// <returns>Name of the source's type member extracted from the provided lambda expression.</returns>
     /// <exception cref="ArgumentException">
     /// When <paramref name="source"/> <see cref="LambdaExpression.Body"/> is not an instance of <see cref="MemberExpression"/> type
-    /// or when body's <see cref="MemberExpression.Expression"/> does not equal to the lambda expression's parameter.
+    /// or when body's <see cref="MemberExpression.Expression"/> is not equal to the lambda expression's parameter.
     /// </exception>
     [Pure]
     public static string GetMemberName<T, TMember>(this Expression<Func<T, TMember>> source)

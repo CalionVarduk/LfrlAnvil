@@ -8,6 +8,21 @@ namespace LfrlAnvil.Tests.ExtensionsTests.ExpressionTests;
 public class ExpressionExtensionsTests : TestsBase
 {
     [Fact]
+    public void GetDebugString_ShouldReturnCorrectResult()
+    {
+        Expression<Func<TestClass, string?>> sut = t => t.Field;
+        var result = sut.GetDebugString();
+        result.TestEquals(
+                """
+                .Lambda #Lambda1<System.Func`2[LfrlAnvil.Tests.ExtensionsTests.ExpressionTests.ExpressionExtensionsTests+TestClass,System.String]>(LfrlAnvil.Tests.ExtensionsTests.ExpressionTests.ExpressionExtensionsTests+TestClass $t)
+                {
+                    $t.Field
+                }
+                """ )
+            .Go();
+    }
+
+    [Fact]
     public void GetMemberName_ShouldReturnCorrectResult_WhenMemberIsField()
     {
         Expression<Func<TestClass, string?>> sut = t => t.Field;
