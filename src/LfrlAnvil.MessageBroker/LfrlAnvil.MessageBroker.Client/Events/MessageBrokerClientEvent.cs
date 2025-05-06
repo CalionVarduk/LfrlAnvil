@@ -214,8 +214,8 @@ public readonly struct MessageBrokerClientEvent
                             builder
                                 .Append( " (ChannelId = " )
                                 .Append( publisher.ChannelId.ToString( CultureInfo.InvariantCulture ) )
-                                .Append( ", QueueId = " )
-                                .Append( publisher.QueueId.ToString( CultureInfo.InvariantCulture ) )
+                                .Append( ", StreamId = " )
+                                .Append( publisher.StreamId.ToString( CultureInfo.InvariantCulture ) )
                                 .Append( ')' );
                         }
                     }
@@ -226,6 +226,8 @@ public readonly struct MessageBrokerClientEvent
                             builder
                                 .Append( " (ChannelId = " )
                                 .Append( subscription.ChannelId.ToString( CultureInfo.InvariantCulture ) )
+                                .Append( ", QueueId = " )
+                                .Append( subscription.QueueId.ToString( CultureInfo.InvariantCulture ) )
                                 .Append( ')' );
                         }
                     }
@@ -242,10 +244,10 @@ public readonly struct MessageBrokerClientEvent
                                 .Append( publisher.ChannelId.ToString( CultureInfo.InvariantCulture ) )
                                 .Append( ", ChannelName = '" )
                                 .Append( publisher.ChannelName )
-                                .Append( "', QueueId = " )
-                                .Append( publisher.QueueId.ToString( CultureInfo.InvariantCulture ) )
-                                .Append( ", QueueName = '" )
-                                .Append( publisher.QueueName )
+                                .Append( "', StreamId = " )
+                                .Append( publisher.StreamId.ToString( CultureInfo.InvariantCulture ) )
+                                .Append( ", StreamName = '" )
+                                .Append( publisher.StreamName )
                                 .Append( "')" );
                     }
                     else if ( GetServerEndpoint() == MessageBrokerServerEndpoint.UnsubscribeRequest )
@@ -269,10 +271,10 @@ public readonly struct MessageBrokerClientEvent
                                 .Append( publisher.ChannelId.ToString( CultureInfo.InvariantCulture ) )
                                 .Append( ", ChannelName = '" )
                                 .Append( publisher.ChannelName )
-                                .Append( "', QueueId = " )
-                                .Append( publisher.QueueId.ToString( CultureInfo.InvariantCulture ) )
-                                .Append( ", QueueName = '" )
-                                .Append( publisher.QueueName )
+                                .Append( "', StreamId = " )
+                                .Append( publisher.StreamId.ToString( CultureInfo.InvariantCulture ) )
+                                .Append( ", StreamName = '" )
+                                .Append( publisher.StreamName )
                                 .Append( "')" );
                         }
                     }

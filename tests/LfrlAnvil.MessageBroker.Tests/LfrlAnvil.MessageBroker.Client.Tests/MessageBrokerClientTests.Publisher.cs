@@ -18,7 +18,7 @@ public partial class MessageBrokerClientTests
         [InlineData( false, true )]
         [InlineData( true, false )]
         [InlineData( false, false )]
-        public async Task BindAsync_ShouldBindPublisherCorrectly(bool channelCreated, bool queueCreated)
+        public async Task BindAsync_ShouldBindPublisherCorrectly(bool channelCreated, bool streamCreated)
         {
             var logs = new EventLogger();
             using var server = new ServerMock();
@@ -35,16 +35,16 @@ public partial class MessageBrokerClientTests
             await server.EstablishHandshake( client );
 
             var channelName = "foo";
-            var queueName = "bar";
-            var bindRequest = new Protocol.BindRequest( channelName, queueName );
+            var streamName = "bar";
+            var bindRequest = new Protocol.BindRequest( channelName, streamName );
             var serverTask = server.GetTask(
                 s =>
                 {
                     s.Read( bindRequest );
-                    s.SendBoundResponse( channelCreated, queueCreated, 1, 2 );
+                    s.SendBoundResponse( channelCreated, streamCreated, 1, 2 );
                 } );
 
-            var result = await client.Publishers.BindAsync( channelName, queueName );
+            var result = await client.Publishers.BindAsync( channelName, streamName );
             await serverTask;
 
             Assertion.All(
@@ -54,17 +54,17 @@ public partial class MessageBrokerClientTests
                             "result.Value",
                             r.AlreadyBound.TestFalse(),
                             r.ChannelCreated.TestEquals( channelCreated ),
-                            r.QueueCreated.TestEquals( queueCreated ),
+                            r.StreamCreated.TestEquals( streamCreated ),
                             r.Publisher.TestRefEquals( client.Publishers.TryGetByChannelId( 1 ) ),
                             r.ToString()
                                 .TestEquals(
                                     channelCreated
-                                        ? queueCreated
-                                            ? $"[1] 'test' => [1] '{channelName}' publisher (using [2] '{queueName}' queue) (Bound) (channel created) (queue created)"
-                                            : $"[1] 'test' => [1] '{channelName}' publisher (using [2] '{queueName}' queue) (Bound) (channel created)"
-                                        : queueCreated
-                                            ? $"[1] 'test' => [1] '{channelName}' publisher (using [2] '{queueName}' queue) (Bound) (queue created)"
-                                            : $"[1] 'test' => [1] '{channelName}' publisher (using [2] '{queueName}' queue) (Bound)" ) ) ),
+                                        ? streamCreated
+                                            ? $"[1] 'test' => [1] '{channelName}' publisher (using [2] '{streamName}' stream) (Bound) (channel created) (stream created)"
+                                            : $"[1] 'test' => [1] '{channelName}' publisher (using [2] '{streamName}' stream) (Bound) (channel created)"
+                                        : streamCreated
+                                            ? $"[1] 'test' => [1] '{channelName}' publisher (using [2] '{streamName}' stream) (Bound) (stream created)"
+                                            : $"[1] 'test' => [1] '{channelName}' publisher (using [2] '{streamName}' stream) (Bound)" ) ) ),
                     client.Publishers.Count.TestEquals( 1 ),
                     client.Publishers.GetAll().TestSequence( [ (c, _) => c.TestRefEquals( client.Publishers.TryGetByChannelId( 1 ) ) ] ),
                     client.Publishers.TryGetByChannelName( channelName ).TestRefEquals( client.Publishers.TryGetByChannelId( 1 ) ),
@@ -75,12 +75,12 @@ public partial class MessageBrokerClientTests
                                 publisher.Client.TestRefEquals( client ),
                                 publisher.ChannelId.TestEquals( 1 ),
                                 publisher.ChannelName.TestEquals( channelName ),
-                                publisher.QueueId.TestEquals( 2 ),
-                                publisher.QueueName.TestEquals( queueName ),
+                                publisher.StreamId.TestEquals( 2 ),
+                                publisher.StreamName.TestEquals( streamName ),
                                 publisher.State.TestEquals( MessageBrokerPublisherState.Bound ),
                                 publisher.ToString()
                                     .TestEquals(
-                                        $"[1] 'test' => [1] '{channelName}' publisher (using [2] '{queueName}' queue) (Bound)" ) ) ),
+                                        $"[1] 'test' => [1] '{channelName}' publisher (using [2] '{streamName}' stream) (Bound)" ) ) ),
                     logs.GetAll()
                         .TestContainsSequence(
                         [
@@ -88,7 +88,7 @@ public partial class MessageBrokerClientTests
                             "['test'::1] [MessageSent] [PacketLength: 16] BindRequest",
                             "['test'::<ROOT>] [MessageReceived] [PacketLength: 14] BoundResponse",
                             "['test'::1] [MessageReceived] [PacketLength: 14] Begin handling BoundResponse",
-                            "['test'::1] [MessageAccepted] [PacketLength: 14] BoundResponse (ChannelId = 1, QueueId = 2)"
+                            "['test'::1] [MessageAccepted] [PacketLength: 14] BoundResponse (ChannelId = 1, StreamId = 2)"
                         ] ) )
                 .Go();
         }
@@ -129,11 +129,11 @@ public partial class MessageBrokerClientTests
                             "result.Value",
                             r.AlreadyBound.TestTrue(),
                             r.ChannelCreated.TestFalse(),
-                            r.QueueCreated.TestFalse(),
+                            r.StreamCreated.TestFalse(),
                             r.Publisher.TestRefEquals( client.Publishers.TryGetByChannelId( 1 ) ),
                             r.ToString()
                                 .TestEquals(
-                                    $"[1] 'test' => [1] '{channelName}' publisher (using [1] 'foo' queue) (Bound) (already bound)" ) ) ),
+                                    $"[1] 'test' => [1] '{channelName}' publisher (using [1] 'foo' stream) (Bound) (already bound)" ) ) ),
                     client.Publishers.Count.TestEquals( 1 ) )
                 .Go();
         }
@@ -183,7 +183,7 @@ public partial class MessageBrokerClientTests
         }
 
         [Fact]
-        public void BindAsync_ShouldThrowArgumentOutOfRangeException_WhenQueueNameIsNotNullAndEmpty()
+        public void BindAsync_ShouldThrowArgumentOutOfRangeException_WhenStreamNameIsNotNullAndEmpty()
         {
             using var client = new MessageBrokerClient( new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
             var action = Lambda.Of( () => client.Publishers.BindAsync( "foo", string.Empty ) );
@@ -191,11 +191,20 @@ public partial class MessageBrokerClientTests
         }
 
         [Fact]
-        public void BindAsync_ShouldThrowArgumentOutOfRangeException_WhenNameIsTooLong()
+        public void BindAsync_ShouldThrowArgumentOutOfRangeException_WhenChannelNameIsTooLong()
         {
             var name = new string( 'x', 513 );
             using var client = new MessageBrokerClient( new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
             var action = Lambda.Of( () => client.Publishers.BindAsync( name ) );
+            action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
+        }
+
+        [Fact]
+        public void BindAsync_ShouldThrowArgumentOutOfRangeException_WhenStreamNameIsNotNullAndTooLong()
+        {
+            var name = new string( 'x', 513 );
+            using var client = new MessageBrokerClient( new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
+            var action = Lambda.Of( () => client.Publishers.BindAsync( "foo", name ) );
             action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
         }
 
@@ -306,7 +315,7 @@ public partial class MessageBrokerClientTests
         }
 
         [Fact]
-        public async Task BindAsync_ShouldReturnErrorAndDisposeClient_WhenServerRespondsWithBoundResponseWithInvalidChannelId()
+        public async Task BindAsync_ShouldReturnErrorAndDisposeClient_WhenServerRespondsWithBoundResponseWithInvalidValues()
         {
             var logs = new EventLogger();
             using var server = new ServerMock();
@@ -327,7 +336,7 @@ public partial class MessageBrokerClientTests
                 s =>
                 {
                     s.Read( bindRequest );
-                    s.SendBoundResponse( true, true, channelId: 0, queueId: 1 );
+                    s.SendBoundResponse( true, true, channelId: 0, streamId: -1 );
                 } );
 
             var result = await client.Publishers.BindAsync( "foo" );
@@ -348,58 +357,9 @@ public partial class MessageBrokerClientTests
                             "['test'::1] [MessageReceived] [PacketLength: 14] Begin handling BoundResponse",
                             """
                             ['test'::1] [MessageRejected] [PacketLength: 14] Encountered an error:
-                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid BoundResponse from the server. Encountered 1 error(s):
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid BoundResponse from the server. Encountered 2 error(s):
                             1. Expected channel ID to be greater than 0 but found 0.
-                            """
-                        ] ) )
-                .Go();
-        }
-
-        [Fact]
-        public async Task BindAsync_ShouldReturnErrorAndDisposeClient_WhenServerRespondsWithBoundResponseWithInvalidQueueId()
-        {
-            var logs = new EventLogger();
-            using var server = new ServerMock();
-            var remoteEndPoint = server.Start();
-
-            await using var client = new MessageBrokerClient(
-                remoteEndPoint,
-                "test",
-                MessageBrokerClientOptions.Default
-                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
-                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
-                    .SetEventHandler( logs.Add ) );
-
-            await server.EstablishHandshake( client );
-
-            var bindRequest = new Protocol.BindRequest( "foo", null );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( bindRequest );
-                    s.SendBoundResponse( true, true, channelId: 1, queueId: 0 );
-                } );
-
-            var result = await client.Publishers.BindAsync( "foo" );
-            await serverTask;
-
-            Assertion.All(
-                    client.State.TestEquals( MessageBrokerClientState.Disposed ),
-                    result.Value.TestNull(),
-                    result.Exception.TestType()
-                        .Exact<MessageBrokerClientProtocolException>(
-                            exc => Assertion.All(
-                                exc.Client.TestRefEquals( client ),
-                                exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.BoundResponse ) ) ),
-                    logs.GetAll()
-                        .TestContainsSequence(
-                        [
-                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 14] BoundResponse",
-                            "['test'::1] [MessageReceived] [PacketLength: 14] Begin handling BoundResponse",
-                            """
-                            ['test'::1] [MessageRejected] [PacketLength: 14] Encountered an error:
-                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid BoundResponse from the server. Encountered 1 error(s):
-                            1. Expected queue ID to be greater than 0 but found 0.
+                            2. Expected stream ID to be greater than 0 but found -1.
                             """
                         ] ) )
                 .Go();
@@ -610,7 +570,7 @@ public partial class MessageBrokerClientTests
         [InlineData( false, true )]
         [InlineData( true, false )]
         [InlineData( false, false )]
-        public async Task UnbindAsync_ShouldUnbindPublisherCorrectly(bool channelRemoved, bool queueRemoved)
+        public async Task UnbindAsync_ShouldUnbindPublisherCorrectly(bool channelRemoved, bool streamRemoved)
         {
             var logs = new EventLogger();
             using var server = new ServerMock();
@@ -635,7 +595,7 @@ public partial class MessageBrokerClientTests
                     s.Read( bindRequest );
                     s.SendBoundResponse( true, true, channelId, 2 );
                     s.ReadUnbindRequest();
-                    s.SendUnboundResponse( channelRemoved, queueRemoved );
+                    s.SendUnboundResponse( channelRemoved, streamRemoved );
                 } );
 
             var result = Result.Create( default( MessageBrokerUnbindResult ) );
@@ -650,13 +610,13 @@ public partial class MessageBrokerClientTests
                     result.Exception.TestNull(),
                     result.Value.NotBound.TestFalse(),
                     result.Value.ChannelRemoved.TestEquals( channelRemoved ),
-                    result.Value.QueueRemoved.TestEquals( queueRemoved ),
+                    result.Value.StreamRemoved.TestEquals( streamRemoved ),
                     result.Value.ToString()
                         .TestEquals(
                             channelRemoved
-                                ? queueRemoved ? "Success (channel removed) (queue removed)" : "Success (channel removed)"
-                                : queueRemoved
-                                    ? "Success (queue removed)"
+                                ? streamRemoved ? "Success (channel removed) (stream removed)" : "Success (channel removed)"
+                                : streamRemoved
+                                    ? "Success (stream removed)"
                                     : "Success" ),
                     publisher.TestNotNull( c => c.State.TestEquals( MessageBrokerPublisherState.Disposed ) ),
                     client.Publishers.Count.TestEquals( 0 ),
@@ -666,7 +626,7 @@ public partial class MessageBrokerClientTests
                     logs.GetAll()
                         .TestContainsSequence(
                         [
-                            "['test'::2] [SendingMessage] [PacketLength: 9] UnbindRequest (ChannelId = 1, ChannelName = 'foo', QueueId = 2, QueueName = 'foo')",
+                            "['test'::2] [SendingMessage] [PacketLength: 9] UnbindRequest (ChannelId = 1, ChannelName = 'foo', StreamId = 2, StreamName = 'foo')",
                             "['test'::2] [MessageSent] [PacketLength: 9] UnbindRequest",
                             "['test'::<ROOT>] [MessageReceived] [PacketLength: 6] UnboundResponse",
                             "['test'::2] [MessageReceived] [PacketLength: 6] Begin handling UnboundResponse",
@@ -782,7 +742,7 @@ public partial class MessageBrokerClientTests
                     logs.GetAll()
                         .TestContainsSequence(
                         [
-                            "['test'::2] [SendingMessage] [PacketLength: 9] UnbindRequest (ChannelId = 1, ChannelName = 'foo', QueueId = 1, QueueName = 'foo')",
+                            "['test'::2] [SendingMessage] [PacketLength: 9] UnbindRequest (ChannelId = 1, ChannelName = 'foo', StreamId = 1, StreamName = 'foo')",
                             "['test'::2] [MessageSent] [PacketLength: 9] UnbindRequest",
                             """
                             ['test'::<ROOT>] [WaitingForMessage] Encountered an error:
@@ -1118,7 +1078,7 @@ public partial class MessageBrokerClientTests
                     logs.GetAll()
                         .TestContainsSequence(
                         [
-                            "['test'::2] [SendingMessage] [PacketLength: 14] MessageRequest (ChannelId = 1, ChannelName = 'foo', QueueId = 1, QueueName = 'foo')",
+                            "['test'::2] [SendingMessage] [PacketLength: 14] MessageRequest (ChannelId = 1, ChannelName = 'foo', StreamId = 1, StreamName = 'foo')",
                             "['test'::2] [MessageSent] [PacketLength: 14] MessageRequest",
                             "['test'::<ROOT>] [MessageReceived] [PacketLength: 13] MessageAcceptedResponse",
                             "['test'::2] [MessageReceived] [PacketLength: 13] Begin handling MessageAcceptedResponse",
@@ -1182,7 +1142,7 @@ public partial class MessageBrokerClientTests
                     logs.GetAll()
                         .TestContainsSequence(
                         [
-                            "['test'::2] [SendingMessage] [PacketLength: 14] MessageRequest (ChannelId = 1, ChannelName = 'foo', QueueId = 1, QueueName = 'foo')",
+                            "['test'::2] [SendingMessage] [PacketLength: 14] MessageRequest (ChannelId = 1, ChannelName = 'foo', StreamId = 1, StreamName = 'foo')",
                             "['test'::2] [MessageSent] [PacketLength: 14] MessageRequest",
                             "['test'::<ROOT>] [MessageReceived] [PacketLength: 13] MessageAcceptedResponse",
                             "['test'::2] [MessageReceived] [PacketLength: 13] Begin handling MessageAcceptedResponse",
@@ -1242,7 +1202,7 @@ public partial class MessageBrokerClientTests
                     logs.GetAll()
                         .TestContainsSequence(
                         [
-                            "['test'::2] [SendingMessage] [PacketLength: 2057] MessageRequest (ChannelId = 1, ChannelName = 'foo', QueueId = 1, QueueName = 'foo')",
+                            "['test'::2] [SendingMessage] [PacketLength: 2057] MessageRequest (ChannelId = 1, ChannelName = 'foo', StreamId = 1, StreamName = 'foo')",
                             "['test'::2] [MessageSent] [PacketLength: 2057] MessageRequest",
                             "['test'::<ROOT>] [MessageReceived] [PacketLength: 13] MessageAcceptedResponse",
                             "['test'::2] [MessageReceived] [PacketLength: 13] Begin handling MessageAcceptedResponse",
@@ -1384,7 +1344,7 @@ public partial class MessageBrokerClientTests
                     logs.GetAll()
                         .TestContainsSequence(
                         [
-                            "['test'::2] [SendingMessage] [PacketLength: 17] MessageRequest (ChannelId = 1, ChannelName = 'foo', QueueId = 1, QueueName = 'foo')",
+                            "['test'::2] [SendingMessage] [PacketLength: 17] MessageRequest (ChannelId = 1, ChannelName = 'foo', StreamId = 1, StreamName = 'foo')",
                             "['test'::2] [MessageSent] [PacketLength: 17] MessageRequest",
                             "['test'::<ROOT>] [MessageReceived] [PacketLength: 13] MessageAcceptedResponse",
                             "['test'::2] [MessageReceived] [PacketLength: 13] Begin handling MessageAcceptedResponse",
@@ -1496,7 +1456,7 @@ public partial class MessageBrokerClientTests
                     logs.GetAll()
                         .TestContainsSequence(
                         [
-                            "['test'::2] [SendingMessage] [PacketLength: 12] MessageRequest (ChannelId = 1, ChannelName = 'foo', QueueId = 1, QueueName = 'foo')",
+                            "['test'::2] [SendingMessage] [PacketLength: 12] MessageRequest (ChannelId = 1, ChannelName = 'foo', StreamId = 1, StreamName = 'foo')",
                             "['test'::2] [MessageSent] [PacketLength: 12] MessageRequest",
                             """
                             ['test'::<ROOT>] [WaitingForMessage] Encountered an error:
@@ -1666,7 +1626,7 @@ public partial class MessageBrokerClientTests
                             ['test'::2] [MessageReceived] [PacketLength: 6] Encountered an error:
                             LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientRequestException: Message broker server rejected an invalid MessageRequest sent by client 'test'. Encountered 2 error(s):
                             1. Client is not bound to channel [1] 'foo'.
-                            2. Message enqueue to queue [1] 'foo' has been cancelled by the server.
+                            2. Message push to stream [1] 'foo' has been cancelled by the server.
                             """
                         ] ) )
                 .Go();

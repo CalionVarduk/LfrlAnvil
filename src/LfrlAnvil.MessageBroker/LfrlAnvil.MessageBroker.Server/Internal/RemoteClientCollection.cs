@@ -13,7 +13,6 @@
 // limitations under the License.
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
@@ -26,16 +25,14 @@ namespace LfrlAnvil.MessageBroker.Server.Internal;
 
 internal struct RemoteClientCollection
 {
-    private SparseListSlim<MessageBrokerRemoteClient> _byId;
-    private readonly Dictionary<string, MessageBrokerRemoteClient> _byName;
+    private ObjectStore<MessageBrokerRemoteClient> _store;
     private readonly int _tcpSocketBufferSize;
     private readonly bool _tcpNoDelay;
     private readonly int _minMemoryPoolSegmentLength;
 
     private RemoteClientCollection(MessageBrokerTcpServerOptions options, MemorySize? minMemoryPoolSegmentLength)
     {
-        _byId = SparseListSlim<MessageBrokerRemoteClient>.Create();
-        _byName = new Dictionary<string, MessageBrokerRemoteClient>( StringComparer.OrdinalIgnoreCase );
+        _store = ObjectStore<MessageBrokerRemoteClient>.Create( StringComparer.OrdinalIgnoreCase );
         _tcpSocketBufferSize = Defaults.Tcp.GetActualSocketBufferSize( options.SocketBufferSize );
         _tcpNoDelay = options.NoDelay ?? Defaults.Tcp.NoDelay;
         _minMemoryPoolSegmentLength = Defaults.Memory.GetActualMinSegmentLength( minMemoryPoolSegmentLength );
@@ -51,41 +48,28 @@ internal struct RemoteClientCollection
     internal static int GetCount(MessageBrokerServer server)
     {
         using ( server.AcquireLock() )
-            return server.RemoteClientCollection._byId.Count;
+            return server.RemoteClientCollection._store.Count;
     }
 
     [Pure]
-    internal static MessageBrokerRemoteClient[] GetAll(MessageBrokerServer server)
+    internal static ReadOnlyArray<MessageBrokerRemoteClient> GetAll(MessageBrokerServer server)
     {
         using ( server.AcquireLock() )
-        {
-            if ( server.RemoteClientCollection._byId.IsEmpty )
-                return Array.Empty<MessageBrokerRemoteClient>();
-
-            var i = 0;
-            var result = new MessageBrokerRemoteClient[server.RemoteClientCollection._byId.Count];
-            foreach ( var (_, client) in server.RemoteClientCollection._byId )
-                result[i++] = client;
-
-            return result;
-        }
+            return server.RemoteClientCollection._store.GetAll();
     }
 
     [Pure]
     internal static MessageBrokerRemoteClient? TryGetById(MessageBrokerServer server, int id)
     {
         using ( server.AcquireLock() )
-        {
-            ref var result = ref server.RemoteClientCollection._byId[id - 1];
-            return Unsafe.IsNullRef( ref result ) ? null : result;
-        }
+            return server.RemoteClientCollection._store.TryGetById( id );
     }
 
     [Pure]
     internal static MessageBrokerRemoteClient? TryGetByName(MessageBrokerServer server, string name)
     {
         using ( server.AcquireLock() )
-            return server.RemoteClientCollection._byName.TryGetValue( name, out var client ) ? client : null;
+            return server.RemoteClientCollection._store.TryGetByName( name );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -105,20 +89,20 @@ internal struct RemoteClientCollection
                 if ( server.ShouldCancel )
                     return server.DisposedException();
 
-                ref var client = ref server.RemoteClientCollection._byId.AddDefault( out var index );
+                var token = server.RemoteClientCollection._store.RegisterNull();
                 try
                 {
-                    client = new MessageBrokerRemoteClient(
-                        index + 1,
-                        server,
-                        tcp,
-                        server.RemoteClientCollection._minMemoryPoolSegmentLength );
-
-                    return client;
+                    return token.SetObject(
+                        ref server.RemoteClientCollection._store,
+                        new MessageBrokerRemoteClient(
+                            token.Id,
+                            server,
+                            tcp,
+                            server.RemoteClientCollection._minMemoryPoolSegmentLength ) );
                 }
                 catch
                 {
-                    server.RemoteClientCollection._byId.Remove( index );
+                    token.Revert( ref server.RemoteClientCollection._store );
                     throw;
                 }
             }
@@ -144,15 +128,7 @@ internal struct RemoteClientCollection
                 if ( client.Server.ShouldCancel )
                     return client.Server.DisposedException();
 
-                ref var entry = ref CollectionsMarshal.GetValueRefOrAddDefault(
-                    client.Server.RemoteClientCollection._byName,
-                    name,
-                    out var exists );
-
-                if ( ! exists )
-                    entry = client;
-
-                return ! exists;
+                return client.Server.RemoteClientCollection._store.TrySetName( client, name );
             }
         }
         catch ( Exception exc )
@@ -169,10 +145,7 @@ internal struct RemoteClientCollection
             using ( client.Server.AcquireLock() )
             {
                 if ( ! client.Server.ShouldCancel )
-                {
-                    client.Server.RemoteClientCollection._byId.Remove( client.Id - 1 );
-                    client.Server.RemoteClientCollection._byName.Remove( client.Name );
-                }
+                    client.Server.RemoteClientCollection._store.Remove( client.Id, client.Name );
             }
         }
         catch ( Exception exc )
@@ -185,16 +158,6 @@ internal struct RemoteClientCollection
 
     internal MessageBrokerRemoteClient[] DisposeUnsafe()
     {
-        _byName.Clear();
-        if ( _byId.Count == 0 )
-            return Array.Empty<MessageBrokerRemoteClient>();
-
-        var i = 0;
-        var result = new MessageBrokerRemoteClient[_byId.Count];
-        foreach ( var (_, client) in _byId )
-            result[i++] = client;
-
-        _byId.Clear();
-        return result;
+        return _store.Clear();
     }
 }

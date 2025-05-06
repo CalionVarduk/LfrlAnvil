@@ -89,9 +89,51 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string StreamIdIsNotPositive(int received)
+    {
+        return $"Expected stream ID to be greater than 0 but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string QueueIdIsNotPositive(int received)
     {
         return $"Expected queue ID to be greater than 0 but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string SenderIdIsNegative(int received)
+    {
+        return $"Expected sender ID to not be negative but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string StreamIdIsNegative(int received)
+    {
+        return $"Expected stream ID to not be negative but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string RetryAttemptIsNegative(int received)
+    {
+        return $"Expected retry attempt to not be negative but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string RedeliveryAttemptIsNegative(int received)
+    {
+        return $"Expected redelivery attempt to not be negative but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string ListenerDoesNotExist(int channelId)
+    {
+        return $"Listener for channel with ID {channelId} does not exist.";
     }
 
     [Pure]
@@ -145,9 +187,9 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string MessageCancelled(int queueId, string queueName)
+    internal static string MessageCancelled(int streamId, string streamName)
     {
-        return $"Message enqueue to queue [{queueId}] '{queueName}' has been cancelled by the server.";
+        return $"Message push to stream [{streamId}] '{streamName}' has been cancelled by the server.";
     }
 
     [Pure]

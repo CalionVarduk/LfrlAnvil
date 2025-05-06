@@ -12,10 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
+using LfrlAnvil.Extensions;
+using LfrlAnvil.MessageBroker.Client.Events;
 using LfrlAnvil.MessageBroker.Client.Exceptions;
 using LfrlAnvil.MessageBroker.Client.Internal;
 
@@ -26,15 +30,30 @@ namespace LfrlAnvil.MessageBroker.Client;
 /// </summary>
 public sealed class MessageBrokerListener
 {
-    private readonly object _sync = new object();
+    internal readonly CancellationTokenSource CancellationSource;
+    internal MessageEmitter MessageEmitter;
     private MessageBrokerListenerState _state;
 
-    internal MessageBrokerListener(MessageBrokerClient client, int channelId, string channelName)
+    internal MessageBrokerListener(
+        MessageBrokerClient client,
+        int channelId,
+        string channelName,
+        int queueId,
+        string queueName,
+        int prefetchHint,
+        MessageBrokerListenerCallback callback)
     {
         Client = client;
         ChannelId = channelId;
         ChannelName = channelName;
+        QueueId = queueId;
+        QueueName = queueName;
+        PrefetchHint = prefetchHint;
+        Callback = callback;
         _state = MessageBrokerListenerState.Subscribed;
+        CancellationSource = new CancellationTokenSource();
+        MessageEmitter = MessageEmitter.Create();
+        MessageEmitter.SetUnderlyingTask( MessageEmitter.StartUnderlyingTask( this ) );
     }
 
     /// <summary>
@@ -53,6 +72,26 @@ public sealed class MessageBrokerListener
     public string ChannelName { get; }
 
     /// <summary>
+    /// Unique id of the queue to which this listener is related.
+    /// </summary>
+    public int QueueId { get; }
+
+    /// <summary>
+    /// Unique name of the queue to which this listener is related.
+    /// </summary>
+    public string QueueName { get; }
+
+    /// <summary>
+    /// Specifies how many messages intended for this listener can be sent by the server to the <see cref="Client"/> at the same time.
+    /// </summary>
+    public int PrefetchHint { get; }
+
+    /// <summary>
+    /// Callback invoked when this listener receives a message from the server.
+    /// </summary>
+    public MessageBrokerListenerCallback Callback { get; }
+
+    /// <summary>
     /// Current listener's state.
     /// </summary>
     /// <remarks>See <see cref="MessageBrokerListenerState"/> for more information.</remarks>
@@ -65,6 +104,8 @@ public sealed class MessageBrokerListener
         }
     }
 
+    internal bool ShouldCancel => _state >= MessageBrokerListenerState.Disposing;
+
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerListener"/> instance.
     /// </summary>
@@ -72,7 +113,7 @@ public sealed class MessageBrokerListener
     [Pure]
     public override string ToString()
     {
-        return $"[{Client.Id}] '{Client.Name}' => [{ChannelId}] '{ChannelName}' listener ({State})";
+        return $"[{Client.Id}] '{Client.Name}' => [{ChannelId}] '{ChannelName}' listener (using [{QueueId}] '{QueueName}' queue) ({State})";
     }
 
     /// <summary>
@@ -84,6 +125,7 @@ public sealed class MessageBrokerListener
     /// </returns>
     /// <exception cref="MessageBrokerClientDisposedException">When client has already been disposed.</exception>
     /// <remarks>
+    /// This operation will cause all pending messages for this listener to be discarded.
     /// Unexpected errors encountered during unsubscribing will cause the client to be automatically disposed.
     /// Returned <see cref="Result{T}"/> will only be valid when either the client has been successfully unsubscribed from the channel
     /// on the server side, or the listener is already locally unsubscribed from the channel, which will cancel the request to the server.
@@ -94,29 +136,74 @@ public sealed class MessageBrokerListener
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool Dispose()
+    internal bool BeginDispose()
     {
         using ( AcquireLock() )
         {
-            if ( _state == MessageBrokerListenerState.Disposed )
+            if ( ShouldCancel )
                 return false;
 
-            _state = MessageBrokerListenerState.Disposed;
+            _state = MessageBrokerListenerState.Disposing;
         }
 
         return true;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void OnClientDisposed()
+    internal ValueTask EndDisposingAsync()
     {
-        using ( AcquireLock() )
-            _state = MessageBrokerListenerState.Disposed;
+        return DisposeAsync( MessageBrokerListenerState.Disposing );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private ExclusiveLock AcquireLock()
+    internal ValueTask OnClientDisposedAsync()
     {
-        return ExclusiveLock.SpinWaitEnter( _sync, spinWaitMultiplier: 4 );
+        return DisposeAsync( MessageBrokerListenerState.Subscribed );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal ExclusiveLock AcquireLock()
+    {
+        return ExclusiveLock.SpinWaitEnter( CancellationSource, spinWaitMultiplier: 4 );
+    }
+
+    private async ValueTask DisposeAsync(MessageBrokerListenerState expectedState)
+    {
+        Task? messageEmitterTask;
+        using ( AcquireLock() )
+        {
+            if ( _state != expectedState )
+                return;
+
+            _state = MessageBrokerListenerState.Disposing;
+            messageEmitterTask = MessageEmitter.DiscardUnderlyingTask();
+            MessageEmitter.Dispose( Client );
+        }
+
+        try
+        {
+            await CancellationSource.CancelAsync().ConfigureAwait( false );
+        }
+        catch ( Exception exc )
+        {
+            Client.Emit( MessageBrokerClientEvent.Unexpected( Client, exc ) );
+        }
+
+        CancellationSource.TryDispose();
+
+        if ( messageEmitterTask is not null )
+        {
+            try
+            {
+                await messageEmitterTask.WaitAsync( Client.ListenerDisposalTimeout ).ConfigureAwait( false );
+            }
+            catch ( Exception exc )
+            {
+                Client.Emit( MessageBrokerClientEvent.Unexpected( Client, exc ) );
+            }
+        }
+
+        using ( AcquireLock() )
+            _state = MessageBrokerListenerState.Disposed;
     }
 }

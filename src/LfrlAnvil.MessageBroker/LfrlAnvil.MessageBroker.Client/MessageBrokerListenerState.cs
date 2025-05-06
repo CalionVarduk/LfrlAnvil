@@ -25,7 +25,12 @@ public enum MessageBrokerListenerState : byte
     Subscribed = 0,
 
     /// <summary>
+    /// Specifies the the listener is currently being disposed.
+    /// </summary>
+    Disposing = 1,
+
+    /// <summary>
     /// Specifies that the listener has been disposed.
     /// </summary>
-    Disposed = 1
+    Disposed = 2
 }

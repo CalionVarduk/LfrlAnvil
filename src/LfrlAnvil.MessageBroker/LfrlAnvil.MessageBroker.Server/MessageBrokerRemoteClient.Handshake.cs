@@ -52,6 +52,7 @@ public sealed partial class MessageBrokerRemoteClient
 
                             var messageReceiverTask = MessageListener.StartUnderlyingTask( this, _stream );
                             var requestHandlerTask = RequestHandler.StartUnderlyingTask( this );
+                            var messageNotificationsTask = MessageNotifications.StartUnderlyingTask( this );
                             using ( AcquireLock() )
                             {
                                 if ( ShouldCancel )
@@ -59,6 +60,7 @@ public sealed partial class MessageBrokerRemoteClient
 
                                 MessageListener.SetUnderlyingTask( messageReceiverTask );
                                 RequestHandler.SetUnderlyingTask( requestHandlerTask );
+                                MessageNotifications.SetUnderlyingTask( messageNotificationsTask );
                             }
                         }
                         catch ( Exception exc )

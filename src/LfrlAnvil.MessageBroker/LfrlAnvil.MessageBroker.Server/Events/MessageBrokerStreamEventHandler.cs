@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-namespace LfrlAnvil.MessageBroker.Server.Internal;
+namespace LfrlAnvil.MessageBroker.Server.Events;
 
-internal readonly record struct QueueBindingKey(int ClientId, int ChannelId);
+/// <summary>
+/// Represents a callback to <see cref="MessageBrokerStreamEvent"/> instances emitted by <see cref="MessageBrokerStream"/>.
+/// <param name="e">Emitted event.</param>
+/// </summary>
+public delegate void MessageBrokerStreamEventHandler(MessageBrokerStreamEvent e);

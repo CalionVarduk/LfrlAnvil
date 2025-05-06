@@ -20,6 +20,11 @@ namespace LfrlAnvil.MessageBroker.Server.Events;
 public enum MessageBrokerClientEndpoint : byte
 {
     /// <summary>
+    /// Represents message notification sent by server.
+    /// </summary>
+    MessageNotification = 1,
+
+    /// <summary>
     /// Represents server's response to client's ping request.
     /// </summary>
     PingResponse = 2,

@@ -22,6 +22,24 @@
 
 ### Scribbles:
 
+Other:
+
+- SparseSet/SparseDictionary?
+  - probably not, SparseListSlim already sort of works like that
+- SegmentedSparseListSlim?
+  - segments of constant 2^n length
+  - segmentIndex = index >> n
+  - elementIndex = index & (n-1)
+  - segments are created on-demand
+  - may require cache of segments
+- BitArraySlim (changing bit at index N ensures length of at least N+1)
+- InlineLinkedList
+  - linked list struct optimized for 0 or 1 elements (no-alloc)
+- MemoryPool:
+  - add Split method to token, which splits node in two & returns a new token with elements belonging to the first part
+  - add trimSide parameter to token's SetLength method, which allows to specify which part (start or end)
+    - of the buffer should be returned to the pool when length is decreased, equal to 'end' by default (current behavior)
+
 Sql:
 
 - source generators for queries/statements?
@@ -30,34 +48,69 @@ Sql:
     - from implemented dialects only postgresql supports this
 
 MessageBroker:
+
 - redo logging
 - dedicated IMessageBroker*Logger interfaces (?)
 - dedicated methods for each possible event (?)
-  - skip interface maybe, allow to define multiple callbacks
-  - however, there can't be too many of them...
-  - define some event groups, that could be handled by the same callback
-  - for example: network events, obj creation/removal events, message processing events
-  - it should be possible to link chain of events together via context-id, if necessary
-  - some events may have to be emitted under active locks
-    - misuse of handlers may lead to deadlocks - make sure to warn about it
-    - this mostly concerns obj removal (queue/channel) from within the handler on the server side
-    - with new events (like creating-publisher etc.) the order of events and some overlap/swapping may not matter that much
-    - since the actual order may be verified by checking timestamp-of-first-event-in-context
-    - so event emitting under active lock might be possible to be kept to bare minimum
+    - skip interface maybe, allow to define multiple callbacks
+    - however, there can't be too many of them...
+    - define some event groups, that could be handled by the same callback
+    - for example: network events, obj creation/removal events, message processing events
+    - it should be possible to link chain of events together via context-id, if necessary
+    - some events may have to be emitted under active locks
+        - misuse of handlers may lead to deadlocks - make sure to warn about it
+        - this mostly concerns obj removal (queue/channel) from within the handler on the server side
+        - with new events (like creating-publisher etc.) the order of events and some overlap/swapping may not matter that much
+        - since the actual order may be verified by checking timestamp-of-first-event-in-context
+        - so event emitting under active lock might be possible to be kept to bare minimum
 - refactor packet read/write & payload error emitting? there's a lot of copy-pasta (wait for packet batching)
 - change endpoint values to be as sequential as possible (minor switch optimization)
 - separate synchronous enqueue-write operation from asynchronous write-and-wait-for-response operation
-  - consumption example: client.Enqueue(...).WaitForResponseAsync()
-  - make sure that Enqueue already starts the underlying process
-  - so that fire-and-forget misuse won't cause the whole write queue to be blocked
-  - or, explain that this is a low-level API, and any issues caused by misuse are on the consumer
-  - in that case, there may have to exist some sort of TryEnqueue method
-  - since all operations at first validate e.g. client state and may throw
-  - or Enqueue itself returns a Result<EnqueuedOperation>, which would allow the consumer to easily react to such a scenario
+    - consumption example: client.Enqueue(...).WaitForResponseAsync()
+    - make sure that Enqueue already starts the underlying process
+    - so that fire-and-forget misuse won't cause the whole write queue to be blocked
+    - or, explain that this is a low-level API, and any issues caused by misuse are on the consumer
+    - in that case, there may have to exist some sort of TryEnqueue method
+    - since all operations at first validate e.g. client state and may throw
+    - or Enqueue itself returns a Result<EnqueuedOperation>, which would allow the consumer to easily react to such a scenario
 - add some basic memory pool tracking & possibility to trim excess
+- rename channel binding to MessageBrokerChannelPublisherBinding
+- rename subscription to MessageBrokerChannelListenerBinding
+- apply renaming to collections, requests, responses etc. (Publishers/Listeners will suffice)
+  - e.g. BindPublisher/BindListener
+- refactor MessageContextQueue on both client and server side
+  - they outlived their usefulness, and are in need of some refactoring/splitting into different structs
+  - since now I have a better grasp on how they're used
+- add message's sender/stream name synchronization via notifications to the client
+  - probably requires 64bit GlobalId for each such object
+  - GlobalId must be sent with each relevant packet header (what about channels?)
+  - each remote-client on server side will cache sent names
+  - if name has not been sent, then send it in separate notification, before the actual message
+  - but make writer source acquisition is part of the same client lock
+  - so that nothing else can interject itself in between, or that the name can't be sent twice
+  - cache will be a segmented sparse list slim of inline linked lists
+    - cache key is object's id
+    - actual obj will then be found in the linked list by its global id
+    - cache may either have limited number of entries or entry lifetime, or both
+    - this will simplify element removal, since there won't be any need for listening to some additional events
+    - especially since sender clients can be disposed before messages are sent to receiver clients
+- message ack/nack, followed by redelivery (with config via listener), followed by retry (with config via listener)
+- custom (network) stream interface, that is capable of leveraging Socket's send method with multiple buffer segments
+  - server-side only, for now
+  - must support: read to single buffer, write single buffer, write two buffers
+  - custom decorators can be defined to extend the behavior
+  - add some sort of system.io.stream compatibility adapter, but this will force using 'write single buffer' method
+    - by copying two buffers into one
+  - this is to combat message copying from stream to subscribers
+    - since this may cause impractically large memory usage for large messages + lots of subscribers
 
 Reactive:
-- timer & scheduler might require DelayValueTaskSource usage, with async MRE
+
+- scheduler requires DelayValueTaskSource usage, with async MRE
+  - also, add task container pooling
+- timer: remove async start methods
+  - simplifies interface
+  - signals to the consumer that the underlying mechanism is not async & requires dedicated thread
 
 ### Terminal
 
@@ -110,10 +163,10 @@ project idea:
             - it's more important to NOT LOSE messages rather than making sure they are unique
 - server should be allowed to send messages to any channel or subscriber
 - \[stage 4\] channel synchronization groups (queues):
-  - each client-channel link can define a custom synchronization group key (string)
-  - each such group acts as a separate synced queue of messages that were received from the client
-  - and are yet to be propagated to subscribers
-  - each channel by default uses a queue with the same name
+    - each client-channel link can define a custom synchronization group key (string)
+    - each such group acts as a separate synced queue of messages that were received from the client
+    - and are yet to be propagated to subscribers
+    - each channel by default uses a queue with the same name
 
 ### MessageBroker: Max Packet Length & Batching
 
@@ -138,20 +191,21 @@ project idea:
 - packets queued up for sending will be batched together, as long as batch's length does not exceed packed size limit
     - max messages-in-single-batch-count can be configured (unlimited by default) or even disabled, send only, reading does not care
     - message readers must be prepared to handle batch packets (preserve message order)
-      - listeners will hold batch packet data in a single large buffer
-      - each msg in batch could have its own new buffer made and data could be copied from the large buffer
-      - however, that's not optimal, due to more memory usage & copying
-      - one easy solution would be to allow memory-pool to 'split' a buffer token in two, at the specified position
-      - this way, the large buffer could be split as many times as necessary
-      - no copying would be done and no additional mem-alloc would happen
-      - and each smaller split buffer would be returned to the pool when it's done
-      - which avoids the issue of ref-counting in order to return the whole large buffer
+        - listeners will hold batch packet data in a single large buffer
+        - each msg in batch could have its own new buffer made and data could be copied from the large buffer
+        - however, that's not optimal, due to more memory usage & copying
+        - one easy solution would be to allow memory-pool to 'split' a buffer token in two, at the specified position
+        - this way, the large buffer could be split as many times as necessary
+        - no copying would be done and no additional mem-alloc would happen
+        - and each smaller split buffer would be returned to the pool when it's done
+        - which avoids the issue of ref-counting in order to return the whole large buffer
 - server's handshake request handling must verify incoming packet length
     - the same applies to create channel, subscriber etc. requests
 
 ### MessageBroker: Permanence
 
 - Clients, channels & subscribers can be configured as permanent
+  - or, more like they can be configured as transient, false by default
 - uses sqlite under the hood (no other option, for now)
 - Permanent subscribers:
     - preserve id
@@ -235,6 +289,7 @@ project idea:
     - server discards msg, since client is no longer linked to that channel
         - this should not drop server-client connection
         - server should simply nack msg sent by client
+- memory pool usage, access to internal queues etc., statistics and clean-up
 
 ### Dependencies: Generic dependency types
 

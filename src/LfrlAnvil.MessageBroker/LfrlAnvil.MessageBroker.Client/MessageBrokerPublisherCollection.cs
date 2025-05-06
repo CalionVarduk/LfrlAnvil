@@ -42,7 +42,7 @@ public readonly struct MessageBrokerPublisherCollection
     /// </summary>
     /// <returns>All publishers.</returns>
     [Pure]
-    public MessageBrokerPublisher[] GetAll()
+    public ReadOnlyArray<MessageBrokerPublisher> GetAll()
     {
         return PublisherCollection.GetAll( _client );
     }
@@ -79,15 +79,15 @@ public readonly struct MessageBrokerPublisherCollection
     /// Attempts to bind the client to a channel and to create a message publisher.
     /// </summary>
     /// <param name="channelName">Unique name of the channel to bind to.</param>
-    /// <param name="queueName">
-    /// Optional unique name of the queue to which to push messages. Equal to the provided <paramref name="channelName"/> by default.
+    /// <param name="streamName">
+    /// Optional unique name of the stream to which to push messages. Equal to the provided <paramref name="channelName"/> by default.
     /// </param>
     /// <returns>
     /// A task that represents the operation, which returns a <see cref="Result{T}"/> instance,
     /// with underlying <see cref="MessageBrokerBindResult"/> instance.
     /// </returns>
     /// <exception cref="ArgumentOutOfRangeException">
-    /// When <paramref name="channelName"/> or <paramref name="queueName"/> (if not <b>null</b>) length
+    /// When <paramref name="channelName"/> or <paramref name="streamName"/> (if not <b>null</b>) length
     /// is less than <b>1</b> or greater than <b>512</b>.
     /// </exception>
     /// <exception cref="MessageBrokerClientDisposedException">When client has already been disposed.</exception>
@@ -99,8 +99,8 @@ public readonly struct MessageBrokerPublisherCollection
     /// Returned <see cref="Result{T}"/> will only be valid when either the client has successfully bound to the channel
     /// on the server side, or the client is already locally bound to the channel, which will cancel the request to the server.
     /// </remarks>
-    public ValueTask<Result<MessageBrokerBindResult?>> BindAsync(string channelName, string? queueName = null)
+    public ValueTask<Result<MessageBrokerBindResult?>> BindAsync(string channelName, string? streamName = null)
     {
-        return PublisherCollection.BindAsync( _client, channelName, queueName );
+        return PublisherCollection.BindAsync( _client, channelName, streamName );
     }
 }

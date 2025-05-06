@@ -14,6 +14,7 @@
 
 using System;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Memory;
 
@@ -21,29 +22,52 @@ namespace LfrlAnvil.MessageBroker.Server.Internal;
 
 internal readonly struct QueueMessage
 {
-    internal QueueMessage(
-        ulong id,
-        Timestamp timestamp,
-        MessageBrokerChannelBinding binding,
-        MemoryPoolToken<byte> poolToken,
-        ReadOnlyMemory<byte> data)
+    internal QueueMessage(in StreamMessage message, MessageBrokerSubscription subscription)
     {
-        Id = id;
-        Timestamp = timestamp;
-        Binding = binding;
-        PoolToken = poolToken;
-        Data = data;
+        Id = message.Id;
+        Timestamp = message.Timestamp;
+        Binding = message.Binding;
+        Subscription = subscription;
+
+        PoolToken = Subscription.Client.MemoryPool
+            .Rent( Protocol.PacketHeader.Length + Protocol.MessageNotificationHeader.Payload + message.Data.Length, out var data )
+            .EnableClearing( message.BufferClearEnabled );
+
+        var header = new Protocol.MessageNotificationHeader(
+            Id,
+            Timestamp,
+            Binding.Client.Id,
+            Binding.Channel.Id,
+            Binding.Stream.Id,
+            0,
+            0,
+            message.Data.Length );
+
+        header.Serialize( data.Slice( 0, Protocol.PacketHeader.Length + Protocol.MessageNotificationHeader.Payload ) );
+        message.Data.CopyTo( data.Slice( Protocol.PacketHeader.Length + Protocol.MessageNotificationHeader.Payload ) );
+
+        PacketHeader = header.Header;
+        Packet = data;
     }
 
+    internal readonly Protocol.PacketHeader PacketHeader;
     internal readonly ulong Id;
     internal readonly Timestamp Timestamp;
     internal readonly MessageBrokerChannelBinding Binding;
+    internal readonly MessageBrokerSubscription Subscription;
     internal readonly MemoryPoolToken<byte> PoolToken;
-    internal readonly ReadOnlyMemory<byte> Data;
+    internal readonly ReadOnlyMemory<byte> Packet;
 
     [Pure]
     public override string ToString()
     {
-        return $"Id = {Id}, Timestamp = {Timestamp}, Length = {Data.Length}, Binding = ({Binding})";
+        return
+            $"Id = {Id}, Timestamp = {Timestamp}, Length = {Packet.Length - Protocol.PacketHeader.Length - Protocol.MessageNotificationHeader.Payload}, Binding = ({Binding}), Subscription = ({Subscription})";
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void Return()
+    {
+        PoolToken.Return( Subscription.Client );
     }
 }

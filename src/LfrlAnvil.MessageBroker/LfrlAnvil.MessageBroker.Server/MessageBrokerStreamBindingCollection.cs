@@ -12,23 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System;
 using System.Diagnostics.Contracts;
-using LfrlAnvil.MessageBroker.Server.Internal;
 
 namespace LfrlAnvil.MessageBroker.Server;
 
 /// <summary>
-/// Represents a collection of <see cref="MessageBrokerChannelBinding"/> instances attached to a single queue,
+/// Represents a collection of <see cref="MessageBrokerChannelBinding"/> instances attached to a single stream,
 /// identified by (client-id, channel-id) tuples.
 /// </summary>
-public readonly struct MessageBrokerQueueBindingCollection
+public readonly struct MessageBrokerStreamBindingCollection
 {
-    private readonly MessageBrokerQueue _queue;
+    private readonly MessageBrokerStream _stream;
 
-    internal MessageBrokerQueueBindingCollection(MessageBrokerQueue queue)
+    internal MessageBrokerStreamBindingCollection(MessageBrokerStream stream)
     {
-        _queue = queue;
+        _stream = stream;
     }
 
     /// <summary>
@@ -38,8 +36,8 @@ public readonly struct MessageBrokerQueueBindingCollection
     {
         get
         {
-            using ( _queue.AcquireLock() )
-                return _queue.BindingsByKey.Count;
+            using ( _stream.AcquireLock() )
+                return _stream.BindingsByClientChannelIdPair.Count;
         }
     }
 
@@ -48,20 +46,10 @@ public readonly struct MessageBrokerQueueBindingCollection
     /// </summary>
     /// <returns>All bindings.</returns>
     [Pure]
-    public MessageBrokerChannelBinding[] GetAll()
+    public ReadOnlyArray<MessageBrokerChannelBinding> GetAll()
     {
-        using ( _queue.AcquireLock() )
-        {
-            if ( _queue.BindingsByKey.Count == 0 )
-                return Array.Empty<MessageBrokerChannelBinding>();
-
-            var i = 0;
-            var result = new MessageBrokerChannelBinding[_queue.BindingsByKey.Count];
-            foreach ( var binding in _queue.BindingsByKey.Values )
-                result[i++] = binding;
-
-            return result;
-        }
+        using ( _stream.AcquireLock() )
+            return _stream.BindingsByClientChannelIdPair.GetAll();
     }
 
     /// <summary>
@@ -70,13 +58,15 @@ public readonly struct MessageBrokerQueueBindingCollection
     /// <param name="clientId">Client's unique <see cref="MessageBrokerRemoteClient.Id"/>.</param>
     /// <param name="channelId">Channel's unique <see cref="MessageBrokerChannel.Id"/>.</param>
     /// <returns>
-    /// <see cref="MessageBrokerChannelBinding"/> instance associated with the queue and the provided
+    /// <see cref="MessageBrokerChannelBinding"/> instance associated with the stream and the provided
     /// (<paramref name="clientId"/>, <paramref name="channelId"/>) tuple or <b>null</b>, when such a binding does not exist.
     /// </returns>
     [Pure]
     public MessageBrokerChannelBinding? TryGetByKey(int clientId, int channelId)
     {
-        using ( _queue.AcquireLock() )
-            return _queue.BindingsByKey.TryGetValue( new QueueBindingKey( clientId, channelId ), out var result ) ? result : null;
+        using ( _stream.AcquireLock() )
+            return _stream.BindingsByClientChannelIdPair.TryGet( new Pair<int, int>( clientId, channelId ), out var result )
+                ? result
+                : null;
     }
 }

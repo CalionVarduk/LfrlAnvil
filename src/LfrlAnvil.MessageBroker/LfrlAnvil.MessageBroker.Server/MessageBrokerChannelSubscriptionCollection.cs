@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System;
 using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.MessageBroker.Server;
@@ -46,20 +45,10 @@ public readonly struct MessageBrokerChannelSubscriptionCollection
     /// </summary>
     /// <returns>All subscriptions.</returns>
     [Pure]
-    public MessageBrokerSubscription[] GetAll()
+    public ReadOnlyArray<MessageBrokerSubscription> GetAll()
     {
         using ( _channel.AcquireLock() )
-        {
-            if ( _channel.SubscriptionsByClientId.Count == 0 )
-                return Array.Empty<MessageBrokerSubscription>();
-
-            var i = 0;
-            var result = new MessageBrokerSubscription[_channel.SubscriptionsByClientId.Count];
-            foreach ( var subscription in _channel.SubscriptionsByClientId.Values )
-                result[i++] = subscription;
-
-            return result;
-        }
+            return _channel.SubscriptionsByClientId.GetAll();
     }
 
     /// <summary>
@@ -74,6 +63,6 @@ public readonly struct MessageBrokerChannelSubscriptionCollection
     public MessageBrokerSubscription? TryGetByClientId(int clientId)
     {
         using ( _channel.AcquireLock() )
-            return _channel.SubscriptionsByClientId.TryGetValue( clientId, out var result ) ? result : null;
+            return _channel.SubscriptionsByClientId.TryGet( clientId, out var result ) ? result : null;
     }
 }

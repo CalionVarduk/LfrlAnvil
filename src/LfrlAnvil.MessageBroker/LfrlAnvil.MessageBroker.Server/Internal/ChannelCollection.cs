@@ -13,22 +13,18 @@
 // limitations under the License.
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 namespace LfrlAnvil.MessageBroker.Server.Internal;
 
 internal struct ChannelCollection
 {
-    private SparseListSlim<MessageBrokerChannel> _byId;
-    private readonly Dictionary<string, MessageBrokerChannel> _byName;
+    private ObjectStore<MessageBrokerChannel> _store;
 
     private ChannelCollection(StringComparer nameComparer)
     {
-        _byId = SparseListSlim<MessageBrokerChannel>.Create();
-        _byName = new Dictionary<string, MessageBrokerChannel>( nameComparer );
+        _store = ObjectStore<MessageBrokerChannel>.Create( nameComparer );
     }
 
     [Pure]
@@ -41,41 +37,28 @@ internal struct ChannelCollection
     internal static int GetCount(MessageBrokerServer server)
     {
         using ( server.AcquireLock() )
-            return server.ChannelCollection._byId.Count;
+            return server.ChannelCollection._store.Count;
     }
 
     [Pure]
-    internal static MessageBrokerChannel[] GetAll(MessageBrokerServer server)
+    internal static ReadOnlyArray<MessageBrokerChannel> GetAll(MessageBrokerServer server)
     {
         using ( server.AcquireLock() )
-        {
-            if ( server.ChannelCollection._byId.IsEmpty )
-                return Array.Empty<MessageBrokerChannel>();
-
-            var i = 0;
-            var result = new MessageBrokerChannel[server.ChannelCollection._byId.Count];
-            foreach ( var (_, channel) in server.ChannelCollection._byId )
-                result[i++] = channel;
-
-            return result;
-        }
+            return server.ChannelCollection._store.GetAll();
     }
 
     [Pure]
     internal static MessageBrokerChannel? TryGetById(MessageBrokerServer server, int id)
     {
         using ( server.AcquireLock() )
-        {
-            ref var result = ref server.ChannelCollection._byId[id - 1];
-            return Unsafe.IsNullRef( ref result ) ? null : result;
-        }
+            return server.ChannelCollection._store.TryGetById( id );
     }
 
     [Pure]
     internal static MessageBrokerChannel? TryGetByName(MessageBrokerServer server, string name)
     {
         using ( server.AcquireLock() )
-            return server.ChannelCollection._byName.TryGetValue( name, out var channel ) ? channel : null;
+            return server.ChannelCollection._store.TryGetByName( name );
     }
 
     internal static Result Remove(MessageBrokerChannel channel)
@@ -85,10 +68,7 @@ internal struct ChannelCollection
             using ( channel.Server.AcquireLock() )
             {
                 if ( ! channel.Server.ShouldCancel )
-                {
-                    channel.Server.ChannelCollection._byId.Remove( channel.Id - 1 );
-                    channel.Server.ChannelCollection._byName.Remove( channel.Name );
-                }
+                    RemoveUnsafe( channel );
             }
         }
         catch ( Exception exc )
@@ -102,34 +82,29 @@ internal struct ChannelCollection
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static void RemoveUnsafe(MessageBrokerChannel channel)
     {
-        channel.Server.ChannelCollection._byId.Remove( channel.Id - 1 );
-        channel.Server.ChannelCollection._byName.Remove( channel.Name );
+        channel.Server.ChannelCollection._store.Remove( channel.Id, channel.Name );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerChannel RegisterUnsafe(MessageBrokerServer server, string name, out bool created)
     {
-        ref var channel = ref CollectionsMarshal.GetValueRefOrAddDefault( server.ChannelCollection._byName, name, out var exists )!;
-        if ( exists )
-            created = false;
-        else
+        var token = server.ChannelCollection._store.GetOrAddNull( name );
+        if ( token.Exists )
         {
-            created = true;
-            ref var byId = ref server.ChannelCollection._byId.AddDefault( out var index );
-            try
-            {
-                channel = new MessageBrokerChannel( server, index + 1, name );
-                byId = channel;
-            }
-            catch
-            {
-                server.ChannelCollection._byId.Remove( index );
-                server.ChannelCollection._byName.Remove( name );
-                throw;
-            }
+            created = false;
+            return token.GetObject();
         }
 
-        return channel;
+        try
+        {
+            created = true;
+            return token.SetObject( ref server.ChannelCollection._store, new MessageBrokerChannel( server, token.Id, name ) );
+        }
+        catch
+        {
+            token.Revert( ref server.ChannelCollection._store, name );
+            throw;
+        }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -139,44 +114,11 @@ internal struct ChannelCollection
         bool createIfNotExists,
         ref bool created)
     {
-        ref var channel = ref CollectionsMarshal.GetValueRefOrAddDefault( server.ChannelCollection._byName, name, out var exists );
-        if ( exists )
-            return channel!;
-
-        if ( createIfNotExists )
-        {
-            ref var byId = ref server.ChannelCollection._byId.AddDefault( out var index );
-            try
-            {
-                channel = new MessageBrokerChannel( server, index + 1, name );
-                byId = channel;
-            }
-            catch
-            {
-                server.ChannelCollection._byId.Remove( index );
-                server.ChannelCollection._byName.Remove( name );
-                throw;
-            }
-
-            created = true;
-            return channel;
-        }
-
-        return null;
+        return createIfNotExists ? RegisterUnsafe( server, name, out created ) : server.ChannelCollection._store.TryGetByName( name );
     }
 
     internal MessageBrokerChannel[] DisposeUnsafe()
     {
-        if ( _byId.IsEmpty )
-            return Array.Empty<MessageBrokerChannel>();
-
-        var i = 0;
-        var result = new MessageBrokerChannel[_byId.Count];
-        foreach ( var (_, channel) in _byId )
-            result[i++] = channel;
-
-        _byId.Clear();
-        _byName.Clear();
-        return result;
+        return _store.Clear();
     }
 }

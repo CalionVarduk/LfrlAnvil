@@ -47,9 +47,9 @@ public readonly struct MessageBrokerBindResult
     public bool ChannelCreated => (_state & 2) != 0;
 
     /// <summary>
-    /// Specifies whether or not a new queue has been created by the server.
+    /// Specifies whether or not a new stream has been created by the server.
     /// </summary>
-    public bool QueueCreated => (_state & 4) != 0;
+    public bool StreamCreated => (_state & 4) != 0;
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerBindResult"/> instance.
@@ -62,15 +62,15 @@ public readonly struct MessageBrokerBindResult
             return $"{Publisher} (already bound)";
 
         var channelCreated = ChannelCreated ? " (channel created)" : string.Empty;
-        var queueCreated = QueueCreated ? " (queue created)" : string.Empty;
-        return $"{Publisher}{channelCreated}{queueCreated}";
+        var streamCreated = StreamCreated ? " (stream created)" : string.Empty;
+        return $"{Publisher}{channelCreated}{streamCreated}";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerBindResult Create(MessageBrokerPublisher publisher, bool channelCreated, bool queueCreated)
+    internal static MessageBrokerBindResult Create(MessageBrokerPublisher publisher, bool channelCreated, bool streamCreated)
     {
-        return new MessageBrokerBindResult( publisher, ( byte )((channelCreated ? 2 : 0) | (queueCreated ? 4 : 0)) );
+        return new MessageBrokerBindResult( publisher, ( byte )((channelCreated ? 2 : 0) | (streamCreated ? 4 : 0)) );
     }
 
     [Pure]

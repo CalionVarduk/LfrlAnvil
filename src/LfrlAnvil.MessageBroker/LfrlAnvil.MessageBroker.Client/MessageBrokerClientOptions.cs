@@ -37,6 +37,10 @@ namespace LfrlAnvil.MessageBroker.Client;
 /// <param name="DesiredPingInterval">
 /// Desired send ping interval. Equal to <b>15 seconds</b> by default. Actual interval will be negotiated with the server during handshake.
 /// </param>
+/// <param name="ListenerDisposalTimeout">
+/// Amount of time that <see cref="MessageBrokerListener"/> instances will wait during their disposal
+/// for callbacks to complete before giving up. Equal to <b>15 seconds</b> by default.
+/// </param>
 /// <param name="Timestamps"><see cref="Timestamp"/> provider.</param>
 /// <param name="DelaySource"><see cref="ValueTaskDelaySource"/> instance used for scheduling future events.</param>
 /// <param name="EventHandler"><see cref="MessageBrokerClientEvent"/> callback.</param>
@@ -47,6 +51,7 @@ public readonly record struct MessageBrokerClientOptions(
     Duration? ConnectionTimeout,
     Duration? DesiredMessageTimeout,
     Duration? DesiredPingInterval,
+    Duration? ListenerDisposalTimeout,
     ITimestampProvider? Timestamps,
     ValueTaskDelaySource? DelaySource,
     MessageBrokerClientEventHandler? EventHandler,
@@ -73,6 +78,7 @@ public readonly record struct MessageBrokerClientOptions(
             ConnectionTimeout,
             DesiredMessageTimeout,
             DesiredPingInterval,
+            ListenerDisposalTimeout,
             Timestamps,
             DelaySource,
             EventHandler,
@@ -94,6 +100,7 @@ public readonly record struct MessageBrokerClientOptions(
             ConnectionTimeout,
             DesiredMessageTimeout,
             DesiredPingInterval,
+            ListenerDisposalTimeout,
             Timestamps,
             DelaySource,
             EventHandler,
@@ -115,6 +122,7 @@ public readonly record struct MessageBrokerClientOptions(
             value,
             DesiredMessageTimeout,
             DesiredPingInterval,
+            ListenerDisposalTimeout,
             Timestamps,
             DelaySource,
             EventHandler,
@@ -136,6 +144,7 @@ public readonly record struct MessageBrokerClientOptions(
             ConnectionTimeout,
             value,
             DesiredPingInterval,
+            ListenerDisposalTimeout,
             Timestamps,
             DelaySource,
             EventHandler,
@@ -156,6 +165,29 @@ public readonly record struct MessageBrokerClientOptions(
             MinMemoryPoolSegmentLength,
             ConnectionTimeout,
             DesiredMessageTimeout,
+            value,
+            ListenerDisposalTimeout,
+            Timestamps,
+            DelaySource,
+            EventHandler,
+            StreamDecorator );
+    }
+
+    /// <summary>
+    /// Allows to change <see cref="ListenerDisposalTimeout"/>.
+    /// </summary>
+    /// <param name="value">New value.</param>
+    /// <returns>New <see cref="MessageBrokerClientOptions"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public MessageBrokerClientOptions SetListenerDisposalTimeout(Duration? value)
+    {
+        return new MessageBrokerClientOptions(
+            Tcp,
+            MinMemoryPoolSegmentLength,
+            ConnectionTimeout,
+            DesiredMessageTimeout,
+            DesiredPingInterval,
             value,
             Timestamps,
             DelaySource,
@@ -178,6 +210,7 @@ public readonly record struct MessageBrokerClientOptions(
             ConnectionTimeout,
             DesiredMessageTimeout,
             DesiredPingInterval,
+            ListenerDisposalTimeout,
             value,
             DelaySource,
             EventHandler,
@@ -199,6 +232,7 @@ public readonly record struct MessageBrokerClientOptions(
             ConnectionTimeout,
             DesiredMessageTimeout,
             DesiredPingInterval,
+            ListenerDisposalTimeout,
             Timestamps,
             value,
             EventHandler,
@@ -220,6 +254,7 @@ public readonly record struct MessageBrokerClientOptions(
             ConnectionTimeout,
             DesiredMessageTimeout,
             DesiredPingInterval,
+            ListenerDisposalTimeout,
             Timestamps,
             DelaySource,
             value,
@@ -241,6 +276,7 @@ public readonly record struct MessageBrokerClientOptions(
             ConnectionTimeout,
             DesiredMessageTimeout,
             DesiredPingInterval,
+            ListenerDisposalTimeout,
             Timestamps,
             DelaySource,
             EventHandler,

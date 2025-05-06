@@ -29,11 +29,11 @@ public sealed class MessageBrokerChannelBinding
     private readonly MessageBrokerChannelBindingEventHandler? _eventHandler;
     private MessageBrokerChannelBindingState _state;
 
-    internal MessageBrokerChannelBinding(MessageBrokerRemoteClient client, MessageBrokerChannel channel, MessageBrokerQueue queue)
+    internal MessageBrokerChannelBinding(MessageBrokerRemoteClient client, MessageBrokerChannel channel, MessageBrokerStream stream)
     {
         Client = client;
         Channel = channel;
-        Queue = queue;
+        Stream = stream;
         _state = MessageBrokerChannelBindingState.Running;
         _eventHandler = client.Server.ChannelBindingEventHandlerFactory?.Invoke( this );
     }
@@ -49,9 +49,9 @@ public sealed class MessageBrokerChannelBinding
     public MessageBrokerChannel Channel { get; }
 
     /// <summary>
-    /// <see cref="MessageBrokerQueue"/> instance to which this binding will push messages.
+    /// <see cref="MessageBrokerStream"/> instance through which this binding will push messages to subscribers.
     /// </summary>
-    public MessageBrokerQueue Queue { get; }
+    public MessageBrokerStream Stream { get; }
 
     /// <summary>
     /// Current binding's state.
@@ -76,22 +76,17 @@ public sealed class MessageBrokerChannelBinding
     public override string ToString()
     {
         return
-            $"[{Client.Id}] '{Client.Name}' => [{Channel.Id}] '{Channel.Name}' binding (using [{Queue.Id}] '{Queue.Name}' queue) ({State})";
+            $"[{Client.Id}] '{Client.Name}' => [{Channel.Id}] '{Channel.Name}' binding (using [{Stream.Id}] '{Stream.Name}' stream) ({State})";
     }
 
     internal ValueTask OnServerDisposedAsync()
     {
-        return DisposeAsync( notifyChannel: false, notifyQueue: false );
+        return DisposeAsync( notifyChannel: false, notifyStream: false );
     }
 
     internal ValueTask OnClientDisconnectedAsync()
     {
-        return DisposeAsync( notifyChannel: true, notifyQueue: true );
-    }
-
-    internal ValueTask OnQueueDisposedAsync()
-    {
-        return DisposeAsync( notifyChannel: true, notifyQueue: false );
+        return DisposeAsync( notifyChannel: true, notifyStream: true );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -135,7 +130,7 @@ public sealed class MessageBrokerChannelBinding
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private async ValueTask DisposeAsync(bool notifyChannel, bool notifyQueue)
+    private async ValueTask DisposeAsync(bool notifyChannel, bool notifyStream)
     {
         using ( AcquireLock() )
         {
@@ -147,8 +142,8 @@ public sealed class MessageBrokerChannelBinding
 
         Emit( MessageBrokerChannelBindingEvent.Disposing( this ) );
 
-        if ( notifyQueue )
-            await Queue.OnBindingDisposingAsync( Client, Channel ).ConfigureAwait( false );
+        if ( notifyStream )
+            await Stream.OnBindingDisposingAsync( Client, Channel ).ConfigureAwait( false );
 
         if ( notifyChannel )
             Channel.OnBindingDisposing( Client );

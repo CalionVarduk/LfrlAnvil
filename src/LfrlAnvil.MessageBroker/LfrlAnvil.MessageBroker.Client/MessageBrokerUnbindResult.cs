@@ -41,9 +41,9 @@ public readonly struct MessageBrokerUnbindResult
     public bool ChannelRemoved => (_state & 2) != 0;
 
     /// <summary>
-    /// Specifies whether or not the queue has been removed by the server.
+    /// Specifies whether or not the stream has been removed by the server.
     /// </summary>
-    public bool QueueRemoved => (_state & 4) != 0;
+    public bool StreamRemoved => (_state & 4) != 0;
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerUnbindResult"/> instance.
@@ -56,15 +56,15 @@ public readonly struct MessageBrokerUnbindResult
             return "Not bound";
 
         var channelRemoved = ChannelRemoved ? " (channel removed)" : string.Empty;
-        var queueRemoved = QueueRemoved ? " (queue removed)" : string.Empty;
-        return $"Success{channelRemoved}{queueRemoved}";
+        var streamRemoved = StreamRemoved ? " (stream removed)" : string.Empty;
+        return $"Success{channelRemoved}{streamRemoved}";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerUnbindResult Create(bool channelRemoved, bool queueRemoved)
+    internal static MessageBrokerUnbindResult Create(bool channelRemoved, bool streamRemoved)
     {
-        return new MessageBrokerUnbindResult( ( byte )((channelRemoved ? 2 : 0) | (queueRemoved ? 4 : 0)) );
+        return new MessageBrokerUnbindResult( ( byte )((channelRemoved ? 2 : 0) | (streamRemoved ? 4 : 0)) );
     }
 
     [Pure]

@@ -26,13 +26,22 @@ public sealed class MessageBrokerSubscription
 {
     private readonly object _sync = new object();
     private readonly MessageBrokerSubscriptionEventHandler? _eventHandler;
+    private InterlockedInt32 _prefetchCounter;
     private MessageBrokerSubscriptionState _state;
 
-    internal MessageBrokerSubscription(MessageBrokerRemoteClient client, MessageBrokerChannel channel)
+    internal MessageBrokerSubscription(
+        MessageBrokerRemoteClient client,
+        MessageBrokerChannel channel,
+        MessageBrokerQueue queue,
+        int prefetchHint)
     {
+        Assume.IsGreaterThan( prefetchHint, 0 );
         Client = client;
         Channel = channel;
+        Queue = queue;
         _state = MessageBrokerSubscriptionState.Running;
+        PrefetchHint = prefetchHint;
+        _prefetchCounter = new InterlockedInt32( 0 );
         _eventHandler = client.Server.SubscriptionEventHandlerFactory?.Invoke( this );
     }
 
@@ -45,6 +54,16 @@ public sealed class MessageBrokerSubscription
     /// <see cref="MessageBrokerChannel"/> instance to which the <see cref="Client"/> is subscribed to.
     /// </summary>
     public MessageBrokerChannel Channel { get; }
+
+    /// <summary>
+    /// <see cref="MessageBrokerQueue"/> instance to which messages intended for this subscription get enqueued to.
+    /// </summary>
+    public MessageBrokerQueue Queue { get; }
+
+    /// <summary>
+    /// Specifies how many messages can this subscription send to the <see cref="Client"/> at the same time.
+    /// </summary>
+    public int PrefetchHint { get; }
 
     /// <summary>
     /// Current subscription's state.
@@ -68,7 +87,48 @@ public sealed class MessageBrokerSubscription
     [Pure]
     public override string ToString()
     {
-        return $"[{Client.Id}] '{Client.Name}' => [{Channel.Id}] '{Channel.Name}' subscription ({State})";
+        return
+            $"[{Client.Id}] '{Client.Name}' => [{Channel.Id}] '{Channel.Name}' subscription (using [{Queue.Id}] '{Queue.Name}' queue) ({State})";
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool TryIncrementPrefetchCounter(out bool disposed)
+    {
+        int current;
+        do
+        {
+            current = _prefetchCounter.Value;
+            if ( current < 0 )
+            {
+                disposed = true;
+                return false;
+            }
+
+            if ( current >= PrefetchHint )
+            {
+                disposed = false;
+                return false;
+            }
+        }
+        while ( ! _prefetchCounter.Write( unchecked( current + 1 ), current ) );
+
+        disposed = false;
+        return true;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool DecrementPrefetchCounter()
+    {
+        int current;
+        do
+        {
+            current = _prefetchCounter.Value;
+            if ( current < 0 )
+                return true;
+        }
+        while ( ! _prefetchCounter.Write( unchecked( current - 1 ), current ) );
+
+        return current >= PrefetchHint;
     }
 
     internal void OnServerDisposed()
@@ -85,6 +145,7 @@ public sealed class MessageBrokerSubscription
     internal void BeginDisposingUnsafe()
     {
         Assume.Equals( _state, MessageBrokerSubscriptionState.Running );
+        _prefetchCounter.Write( -1 );
         _state = MessageBrokerSubscriptionState.Disposing;
     }
 
@@ -124,6 +185,7 @@ public sealed class MessageBrokerSubscription
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void Dispose(bool notifyChannel)
     {
+        _prefetchCounter.Write( -1 );
         using ( AcquireLock() )
         {
             if ( ShouldCancel )

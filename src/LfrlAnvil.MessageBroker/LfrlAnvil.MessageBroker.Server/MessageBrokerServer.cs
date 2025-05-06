@@ -38,9 +38,10 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     internal ClientListener ClientListener;
     internal RemoteClientCollection RemoteClientCollection;
     internal ChannelCollection ChannelCollection;
-    internal QueueCollection QueueCollection;
+    internal StreamCollection StreamCollection;
     internal readonly Func<MessageBrokerRemoteClient, MessageBrokerRemoteClientEventHandler?>? RemoteClientEventHandlerFactory;
     internal readonly Func<MessageBrokerChannel, MessageBrokerChannelEventHandler?>? ChannelEventHandlerFactory;
+    internal readonly Func<MessageBrokerStream, MessageBrokerStreamEventHandler?>? StreamEventHandlerFactory;
     internal readonly Func<MessageBrokerQueue, MessageBrokerQueueEventHandler?>? QueueEventHandlerFactory;
     internal readonly Func<MessageBrokerChannelBinding, MessageBrokerChannelBindingEventHandler?>? ChannelBindingEventHandlerFactory;
     internal readonly Func<MessageBrokerSubscription, MessageBrokerSubscriptionEventHandler?>? SubscriptionEventHandlerFactory;
@@ -68,10 +69,11 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         _eventHandler = options.EventHandler;
         RemoteClientEventHandlerFactory = options.ClientEventHandlerFactory;
         ChannelEventHandlerFactory = options.ChannelEventHandlerFactory;
+        StreamEventHandlerFactory = options.StreamEventHandlerFactory;
         QueueEventHandlerFactory = options.QueueEventHandlerFactory;
         ChannelBindingEventHandlerFactory = options.ChannelBindingEventHandlerFactory;
         SubscriptionEventHandlerFactory = options.SubscriptionEventHandlerFactory;
-        TimestampsFactory = options.TimestampsFactory ?? (static _ => new TimestampProvider());
+        TimestampsFactory = options.TimestampsFactory ?? (static _ => TimestampProvider.Shared);
         DelaySourceFactory = options.DelaySourceFactory;
 
         StreamDecorator = options.StreamDecorator;
@@ -80,7 +82,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         ClientListener = ClientListener.Create();
         RemoteClientCollection = RemoteClientCollection.Create( options.Tcp, options.MinMemoryPoolSegmentLength );
         ChannelCollection = ChannelCollection.Create();
-        QueueCollection = QueueCollection.Create();
+        StreamCollection = StreamCollection.Create();
     }
 
     /// <summary>
@@ -129,9 +131,9 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     public MessageBrokerChannelCollection Channels => new MessageBrokerChannelCollection( this );
 
     /// <summary>
-    /// Collection of attached <see cref="MessageBrokerQueue"/> instances.
+    /// Collection of attached <see cref="MessageBrokerStream"/> instances.
     /// </summary>
-    public MessageBrokerQueueCollection Queues => new MessageBrokerQueueCollection( this );
+    public MessageBrokerStreamCollection Streams => new MessageBrokerStreamCollection( this );
 
     internal bool ShouldCancel => _state >= MessageBrokerServerState.Disposing;
 
@@ -156,13 +158,13 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
 
         Exception? exception = null;
         MessageBrokerRemoteClient[] clients;
-        MessageBrokerQueue[] queues;
+        MessageBrokerStream[] streams;
         MessageBrokerChannel[] channels;
         Task? clientListenerTask;
         using ( AcquireLock() )
         {
             channels = ChannelCollection.DisposeUnsafe();
-            queues = QueueCollection.DisposeUnsafe();
+            streams = StreamCollection.DisposeUnsafe();
             clients = RemoteClientCollection.DisposeUnsafe();
             clientListenerTask = ClientListener.DiscardUnderlyingTask();
             ClientListener.Dispose();
@@ -181,7 +183,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         if ( exception is not null )
             Emit( MessageBrokerServerEvent.Unexpected( this, exception ) );
 
-        await Parallel.ForEachAsync( queues, static (q, _) => q.OnServerDisposedAsync() ).ConfigureAwait( false );
+        await Parallel.ForEachAsync( streams, static (q, _) => q.OnServerDisposedAsync() ).ConfigureAwait( false );
         await Parallel.ForEachAsync( channels, static (c, _) => c.OnServerDisposedAsync() ).ConfigureAwait( false );
         await Parallel.ForEachAsync( clients, static (c, _) => c.OnServerDisposedAsync() ).ConfigureAwait( false );
 

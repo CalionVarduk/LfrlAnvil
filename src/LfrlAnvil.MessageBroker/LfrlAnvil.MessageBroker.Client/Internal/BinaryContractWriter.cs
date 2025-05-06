@@ -70,6 +70,13 @@ internal ref struct BinaryContractWriter
         Unsafe.WriteUnaligned( ref _first, value );
     }
 
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void MoveWrite(ulong value)
+    {
+        Write( value );
+        Move( sizeof( ulong ) );
+    }
+
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal Span<byte> GetSpan(int length)

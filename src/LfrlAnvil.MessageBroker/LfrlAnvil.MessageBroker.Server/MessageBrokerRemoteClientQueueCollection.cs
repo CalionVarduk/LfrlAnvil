@@ -13,62 +13,71 @@
 // limitations under the License.
 
 using System.Diagnostics.Contracts;
-using LfrlAnvil.MessageBroker.Server.Internal;
 
 namespace LfrlAnvil.MessageBroker.Server;
 
 /// <summary>
-/// Represents a collection of <see cref="MessageBrokerQueue"/> instances.
+/// Represents a collection of <see cref="MessageBrokerQueue"/> instances attached to a single client, identified by their names.
 /// </summary>
-public readonly struct MessageBrokerQueueCollection
+public readonly struct MessageBrokerRemoteClientQueueCollection
 {
-    private readonly MessageBrokerServer _server;
+    private readonly MessageBrokerRemoteClient _client;
 
-    internal MessageBrokerQueueCollection(MessageBrokerServer server)
+    internal MessageBrokerRemoteClientQueueCollection(MessageBrokerRemoteClient client)
     {
-        _server = server;
+        _client = client;
     }
 
     /// <summary>
-    /// Specifies the number of owned queues.
+    /// Specifies the number of queues.
     /// </summary>
-    public int Count => QueueCollection.GetCount( _server );
+    public int Count
+    {
+        get
+        {
+            using ( _client.AcquireLock() )
+                return _client.QueuesByName.Count;
+        }
+    }
 
     /// <summary>
-    /// Returns all owned queues.
+    /// Returns all queues.
     /// </summary>
-    /// <returns>All owned queues.</returns>
+    /// <returns>All queues.</returns>
     [Pure]
-    public MessageBrokerQueue[] GetAll()
+    public ReadOnlyArray<MessageBrokerQueue> GetAll()
     {
-        return QueueCollection.GetAll( _server );
+        using ( _client.AcquireLock() )
+            return _client.QueuesByName.GetAll();
     }
 
     /// <summary>
-    /// Attempts to return a queue with the provided <paramref name="id"/>.
+    /// Attempts to return a queue by its id.
     /// </summary>
     /// <param name="id">Queue's unique <see cref="MessageBrokerQueue.Id"/>.</param>
     /// <returns>
-    /// <see cref="MessageBrokerQueue"/> instance associated with the provided <paramref name="id"/>
+    /// <see cref="MessageBrokerQueue"/> instance associated with the client and the provided <paramref name="id"/>
     /// or <b>null</b>, when such a queue does not exist.
     /// </returns>
     [Pure]
     public MessageBrokerQueue? TryGetById(int id)
     {
-        return QueueCollection.TryGetById( _server, id );
+        using ( _client.AcquireLock() )
+            return _client.QueuesByName.TryGetById( id );
     }
 
     /// <summary>
-    /// Attempts to return a queue with the provided <paramref name="name"/>.
+    /// Attempts to return a queue by its name.
     /// </summary>
     /// <param name="name">Queue's unique <see cref="MessageBrokerQueue.Name"/>.</param>
     /// <returns>
-    /// <see cref="MessageBrokerQueue"/> instance associated with the provided <paramref name="name"/>
+    /// <see cref="MessageBrokerQueue"/> instance associated with the client and the provided <paramref name="name"/>
     /// or <b>null</b>, when such a queue does not exist.
     /// </returns>
     [Pure]
     public MessageBrokerQueue? TryGetByName(string name)
     {
-        return QueueCollection.TryGetByName( _server, name );
+        using ( _client.AcquireLock() )
+            return _client.QueuesByName.TryGetByName( name );
     }
 }

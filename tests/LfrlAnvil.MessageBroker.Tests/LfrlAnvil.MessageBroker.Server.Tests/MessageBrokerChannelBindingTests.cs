@@ -27,7 +27,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
                             endSource.Complete();
                     } )
                 .SetChannelEventHandlerFactory( _ => logs.Add )
-                .SetQueueEventHandlerFactory( _ => logs.Add )
+                .SetStreamEventHandlerFactory( _ => logs.Add )
                 .SetChannelBindingEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -45,7 +45,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
 
         var remoteClient = server.Clients.TryGetById( 1 );
         var channel = server.Channels.TryGetByName( "c" );
-        var queue = server.Queues.TryGetByName( "c" );
+        var stream = server.Streams.TryGetByName( "c" );
         var binding = channel?.Bindings.TryGetByClientId( 1 );
 
         Assertion.All(
@@ -62,17 +62,17 @@ public class MessageBrokerChannelBindingTests : TestsBase
                         c.Bindings.TryGetByClientId( 1 ).TestRefEquals( binding ),
                         c.Subscriptions.Count.TestEquals( 0 ),
                         c.Subscriptions.GetAll().TestEmpty() ) ),
-                queue.TestNotNull(
-                    q => Assertion.All(
-                        "queue",
-                        q.Server.TestRefEquals( server ),
-                        q.Id.TestEquals( 1 ),
-                        q.Name.TestEquals( "c" ),
-                        q.State.TestEquals( MessageBrokerQueueState.Running ),
-                        q.ToString().TestEquals( "[1] 'c' queue (Running)" ),
-                        q.Bindings.Count.TestEquals( 1 ),
-                        q.Bindings.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding ) ] ),
-                        q.Bindings.TryGetByKey( 1, 1 ).TestRefEquals( binding ) ) ),
+                stream.TestNotNull(
+                    s => Assertion.All(
+                        "stream",
+                        s.Server.TestRefEquals( server ),
+                        s.Id.TestEquals( 1 ),
+                        s.Name.TestEquals( "c" ),
+                        s.State.TestEquals( MessageBrokerStreamState.Running ),
+                        s.ToString().TestEquals( "[1] 'c' stream (Running)" ),
+                        s.Bindings.Count.TestEquals( 1 ),
+                        s.Bindings.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding ) ] ),
+                        s.Bindings.TryGetByKey( 1, 1 ).TestRefEquals( binding ) ) ),
                 remoteClient.TestNotNull(
                     c => Assertion.All(
                         "client",
@@ -83,16 +83,16 @@ public class MessageBrokerChannelBindingTests : TestsBase
                     b => Assertion.All(
                         "binding",
                         b.Channel.TestRefEquals( channel ),
-                        b.Queue.TestRefEquals( queue ),
+                        b.Stream.TestRefEquals( stream ),
                         b.Client.TestRefEquals( remoteClient ),
                         b.State.TestEquals( MessageBrokerChannelBindingState.Running ),
-                        b.ToString().TestEquals( "[1] 'test' => [1] 'c' binding (using [1] 'c' queue) (Running)" ) ) ),
+                        b.ToString().TestEquals( "[1] 'test' => [1] 'c' binding (using [1] 'c' stream) (Running)" ) ) ),
                 server.Channels.Count.TestEquals( 1 ),
                 server.Channels.GetAll().TestSequence( [ (ch, _) => ch.TestRefEquals( channel ) ] ),
                 server.Channels.TryGetById( 1 ).TestRefEquals( channel ),
-                server.Queues.Count.TestEquals( 1 ),
-                server.Queues.GetAll().TestSequence( [ (q, _) => q.TestRefEquals( queue ) ] ),
-                server.Queues.TryGetById( 1 ).TestRefEquals( queue ),
+                server.Streams.Count.TestEquals( 1 ),
+                server.Streams.GetAll().TestSequence( [ (q, _) => q.TestRefEquals( stream ) ] ),
+                server.Streams.TryGetById( 1 ).TestRefEquals( stream ),
                 logs.GetAllClient()
                     .TestContainsSequence(
                     [
@@ -103,7 +103,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
                         "[1::'test'::1] [MessageSent] [PacketLength: 14] BoundResponse"
                     ] ),
                 logs.GetAllChannel().TestSequence( [ "[1::'c'::1] [Created] by client [1::'test']" ] ),
-                logs.GetAllQueue().TestSequence( [ "[1::'c'::1] [Created] by binding [1::'test'] => [1::'c']" ] ),
+                logs.GetAllStream().TestSequence( [ "[1::'c'::1] [Created] by binding [1::'test'] => [1::'c']" ] ),
                 logs.GetAllBinding().TestSequence( [ "[1::'test'=>1::'c'::1] [Created]" ] ) )
             .Go();
     }
@@ -127,7 +127,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
                             endSource.Complete();
                     } )
                 .SetChannelEventHandlerFactory( _ => logs.Add )
-                .SetQueueEventHandlerFactory( _ => logs.Add )
+                .SetStreamEventHandlerFactory( _ => logs.Add )
                 .SetChannelBindingEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -153,7 +153,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
         var remoteClient1 = server.Clients.TryGetById( 1 );
         var remoteClient2 = server.Clients.TryGetById( 2 );
         var channel = server.Channels.TryGetByName( "c" );
-        var queue = server.Queues.TryGetByName( "c" );
+        var stream = server.Streams.TryGetByName( "c" );
         var binding1 = channel?.Bindings.TryGetByClientId( 1 );
         var binding2 = channel?.Bindings.TryGetByClientId( 2 );
         await endSource.Task;
@@ -172,18 +172,18 @@ public class MessageBrokerChannelBindingTests : TestsBase
                         c.Bindings.TryGetByClientId( 2 ).TestRefEquals( binding2 ),
                         c.Subscriptions.Count.TestEquals( 0 ),
                         c.Subscriptions.GetAll().TestEmpty() ) ),
-                queue.TestNotNull(
-                    q => Assertion.All(
-                        "queue",
-                        q.Server.TestRefEquals( server ),
-                        q.Id.TestEquals( 1 ),
-                        q.Name.TestEquals( "c" ),
-                        q.State.TestEquals( MessageBrokerQueueState.Running ),
-                        q.ToString().TestEquals( "[1] 'c' queue (Running)" ),
-                        q.Bindings.Count.TestEquals( 2 ),
-                        q.Bindings.GetAll().TestSetEqual( [ binding1, binding2 ] ),
-                        q.Bindings.TryGetByKey( 1, 1 ).TestRefEquals( binding1 ),
-                        q.Bindings.TryGetByKey( 2, 1 ).TestRefEquals( binding2 ) ) ),
+                stream.TestNotNull(
+                    s => Assertion.All(
+                        "stream",
+                        s.Server.TestRefEquals( server ),
+                        s.Id.TestEquals( 1 ),
+                        s.Name.TestEquals( "c" ),
+                        s.State.TestEquals( MessageBrokerStreamState.Running ),
+                        s.ToString().TestEquals( "[1] 'c' stream (Running)" ),
+                        s.Bindings.Count.TestEquals( 2 ),
+                        s.Bindings.GetAll().TestSetEqual( [ binding1, binding2 ] ),
+                        s.Bindings.TryGetByKey( 1, 1 ).TestRefEquals( binding1 ),
+                        s.Bindings.TryGetByKey( 2, 1 ).TestRefEquals( binding2 ) ) ),
                 remoteClient1.TestNotNull(
                     c => Assertion.All(
                         "client1",
@@ -200,22 +200,22 @@ public class MessageBrokerChannelBindingTests : TestsBase
                     b => Assertion.All(
                         "binding1",
                         b.Channel.TestRefEquals( channel ),
-                        b.Queue.TestRefEquals( queue ),
+                        b.Stream.TestRefEquals( stream ),
                         b.Client.TestRefEquals( remoteClient1 ),
                         b.State.TestEquals( MessageBrokerChannelBindingState.Running ) ) ),
                 binding2.TestNotNull(
                     b => Assertion.All(
                         "binding2",
                         b.Channel.TestRefEquals( channel ),
-                        b.Queue.TestRefEquals( queue ),
+                        b.Stream.TestRefEquals( stream ),
                         b.Client.TestRefEquals( remoteClient2 ),
                         b.State.TestEquals( MessageBrokerChannelBindingState.Running ) ) ),
                 server.Channels.Count.TestEquals( 1 ),
                 server.Channels.GetAll().TestSequence( [ (ch, _) => ch.TestRefEquals( channel ) ] ),
                 server.Channels.TryGetById( 1 ).TestRefEquals( channel ),
-                server.Queues.Count.TestEquals( 1 ),
-                server.Queues.GetAll().TestSequence( [ (q, _) => q.TestRefEquals( queue ) ] ),
-                server.Queues.TryGetById( 1 ).TestRefEquals( queue ),
+                server.Streams.Count.TestEquals( 1 ),
+                server.Streams.GetAll().TestSequence( [ (q, _) => q.TestRefEquals( stream ) ] ),
+                server.Streams.TryGetById( 1 ).TestRefEquals( stream ),
                 logs.GetAllClient()
                     .TestContainsSequence(
                     [
@@ -231,7 +231,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
                         "[2::'test2'::1] [MessageSent] [PacketLength: 14] BoundResponse"
                     ] ),
                 logs.GetAllChannel().TestSequence( [ "[1::'c'::1] [Created] by client [1::'test']" ] ),
-                logs.GetAllQueue().TestSequence( [ "[1::'c'::1] [Created] by binding [1::'test'] => [1::'c']" ] ),
+                logs.GetAllStream().TestSequence( [ "[1::'c'::1] [Created] by binding [1::'test'] => [1::'c']" ] ),
                 logs.GetAllBinding()
                     .TestSequence(
                     [
@@ -242,7 +242,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
     }
 
     [Fact]
-    public async Task Creation_ShouldCreateBindingForExistingQueueCorrectly()
+    public async Task Creation_ShouldCreateBindingForExistingStreamCorrectly()
     {
         var endSource = new SafeTaskCompletionSource( completionCount: 2 );
         var logs = new EventLogger();
@@ -259,7 +259,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
                             endSource.Complete();
                     } )
                 .SetChannelEventHandlerFactory( _ => logs.Add )
-                .SetQueueEventHandlerFactory( _ => logs.Add )
+                .SetStreamEventHandlerFactory( _ => logs.Add )
                 .SetChannelBindingEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -285,7 +285,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
         var remoteClient = server.Clients.TryGetById( 1 );
         var channel1 = server.Channels.TryGetByName( "c" );
         var channel2 = server.Channels.TryGetByName( "d" );
-        var queue = server.Queues.TryGetByName( "c" );
+        var stream = server.Streams.TryGetByName( "c" );
         var binding1 = channel1?.Bindings.TryGetByClientId( 1 );
         var binding2 = channel2?.Bindings.TryGetByClientId( 1 );
 
@@ -316,18 +316,18 @@ public class MessageBrokerChannelBindingTests : TestsBase
                         c.Bindings.TryGetByClientId( 1 ).TestRefEquals( binding2 ),
                         c.Subscriptions.Count.TestEquals( 0 ),
                         c.Subscriptions.GetAll().TestEmpty() ) ),
-                queue.TestNotNull(
-                    q => Assertion.All(
-                        "queue",
-                        q.Server.TestRefEquals( server ),
-                        q.Id.TestEquals( 1 ),
-                        q.Name.TestEquals( "c" ),
-                        q.State.TestEquals( MessageBrokerQueueState.Running ),
-                        q.ToString().TestEquals( "[1] 'c' queue (Running)" ),
-                        q.Bindings.Count.TestEquals( 2 ),
-                        q.Bindings.GetAll().TestSetEqual( [ binding1, binding2 ] ),
-                        q.Bindings.TryGetByKey( 1, 1 ).TestRefEquals( binding1 ),
-                        q.Bindings.TryGetByKey( 1, 2 ).TestRefEquals( binding2 ) ) ),
+                stream.TestNotNull(
+                    s => Assertion.All(
+                        "stream",
+                        s.Server.TestRefEquals( server ),
+                        s.Id.TestEquals( 1 ),
+                        s.Name.TestEquals( "c" ),
+                        s.State.TestEquals( MessageBrokerStreamState.Running ),
+                        s.ToString().TestEquals( "[1] 'c' stream (Running)" ),
+                        s.Bindings.Count.TestEquals( 2 ),
+                        s.Bindings.GetAll().TestSetEqual( [ binding1, binding2 ] ),
+                        s.Bindings.TryGetByKey( 1, 1 ).TestRefEquals( binding1 ),
+                        s.Bindings.TryGetByKey( 1, 2 ).TestRefEquals( binding2 ) ) ),
                 remoteClient.TestNotNull(
                     c => Assertion.All(
                         "client",
@@ -339,25 +339,25 @@ public class MessageBrokerChannelBindingTests : TestsBase
                     b => Assertion.All(
                         "binding1",
                         b.Channel.TestRefEquals( channel1 ),
-                        b.Queue.TestRefEquals( queue ),
+                        b.Stream.TestRefEquals( stream ),
                         b.Client.TestRefEquals( remoteClient ),
                         b.State.TestEquals( MessageBrokerChannelBindingState.Running ),
-                        b.ToString().TestEquals( "[1] 'test' => [1] 'c' binding (using [1] 'c' queue) (Running)" ) ) ),
+                        b.ToString().TestEquals( "[1] 'test' => [1] 'c' binding (using [1] 'c' stream) (Running)" ) ) ),
                 binding2.TestNotNull(
                     b => Assertion.All(
                         "binding2",
                         b.Channel.TestRefEquals( channel2 ),
-                        b.Queue.TestRefEquals( queue ),
+                        b.Stream.TestRefEquals( stream ),
                         b.Client.TestRefEquals( remoteClient ),
                         b.State.TestEquals( MessageBrokerChannelBindingState.Running ),
-                        b.ToString().TestEquals( "[1] 'test' => [2] 'd' binding (using [1] 'c' queue) (Running)" ) ) ),
+                        b.ToString().TestEquals( "[1] 'test' => [2] 'd' binding (using [1] 'c' stream) (Running)" ) ) ),
                 server.Channels.Count.TestEquals( 2 ),
                 server.Channels.GetAll().TestSetEqual( [ channel1, channel2 ] ),
                 server.Channels.TryGetById( 1 ).TestRefEquals( channel1 ),
                 server.Channels.TryGetById( 2 ).TestRefEquals( channel2 ),
-                server.Queues.Count.TestEquals( 1 ),
-                server.Queues.GetAll().TestSequence( [ (q, _) => q.TestRefEquals( queue ) ] ),
-                server.Queues.TryGetById( 1 ).TestRefEquals( queue ),
+                server.Streams.Count.TestEquals( 1 ),
+                server.Streams.GetAll().TestSequence( [ (q, _) => q.TestRefEquals( stream ) ] ),
+                server.Streams.TryGetById( 1 ).TestRefEquals( stream ),
                 logs.GetAllClient()
                     .TestContainsSequence(
                     [
@@ -373,7 +373,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
                         "[1::'c'::1] [Created] by client [1::'test']",
                         "[2::'d'::2] [Created] by client [1::'test']"
                     ] ),
-                logs.GetAllQueue().TestSequence( [ "[1::'c'::1] [Created] by binding [1::'test'] => [1::'c']" ] ),
+                logs.GetAllStream().TestSequence( [ "[1::'c'::1] [Created] by binding [1::'test'] => [1::'c']" ] ),
                 logs.GetAllBinding()
                     .TestSequence(
                     [
@@ -415,7 +415,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
                 remoteClient.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Disposed ) ),
                 server.Clients.Count.TestEquals( 0 ),
                 server.Channels.Count.TestEquals( 0 ),
-                server.Queues.Count.TestEquals( 0 ),
+                server.Streams.Count.TestEquals( 0 ),
                 logs.GetAllClient()
                     .TestContainsSequence(
                     [
@@ -464,7 +464,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
                 remoteClient.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Disposed ) ),
                 server.Clients.Count.TestEquals( 0 ),
                 server.Channels.Count.TestEquals( 0 ),
-                server.Queues.Count.TestEquals( 0 ),
+                server.Streams.Count.TestEquals( 0 ),
                 logs.GetAllClient()
                     .TestContainsSequence(
                     [
@@ -482,7 +482,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
     }
 
     [Fact]
-    public async Task Creation_ShouldDisposeClient_WhenQueueEventHandlerFactoryThrowsForCreatedQueue()
+    public async Task Creation_ShouldDisposeClient_WhenStreamEventHandlerFactoryThrowsForCreatedStream()
     {
         var endSource = new SafeTaskCompletionSource();
         var exception = new Exception( "foo" );
@@ -499,7 +499,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
                         if ( e.Type == MessageBrokerRemoteClientEventType.Disposed )
                             endSource.Complete();
                     } )
-                .SetQueueEventHandlerFactory( _ => throw exception ) );
+                .SetStreamEventHandlerFactory( _ => throw exception ) );
 
         await server.StartAsync();
 
@@ -513,7 +513,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
                 remoteClient.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Disposed ) ),
                 server.Clients.Count.TestEquals( 0 ),
                 server.Channels.Count.TestEquals( 0 ),
-                server.Queues.Count.TestEquals( 0 ),
+                server.Streams.Count.TestEquals( 0 ),
                 logs.GetAllClient()
                     .TestContainsSequence(
                     [
@@ -698,7 +698,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
                 remoteClient.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Disposed ) ),
                 server.Clients.Count.TestEquals( 0 ),
                 server.Channels.Count.TestEquals( 0 ),
-                server.Queues.Count.TestEquals( 0 ),
+                server.Streams.Count.TestEquals( 0 ),
                 logs.GetAllClient()
                     .TestContainsSequence(
                     [
@@ -762,7 +762,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
     }
 
     [Fact]
-    public async Task Creation_ShouldDisposeClient_WhenClientSendsTooLongQueueName()
+    public async Task Creation_ShouldDisposeClient_WhenClientSendsTooLongStreamName()
     {
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
@@ -799,7 +799,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
                         """
                         [1::'test'::1] [MessageRejected] [PacketLength: 524] Encountered an error:
                         LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid BindRequest from client [1] 'test'. Encountered 1 error(s):
-                        1. Expected queue name length to be in [1, 512] range but found 513.
+                        1. Expected stream name length to be in [1, 512] range but found 513.
                         """,
                         "[1::'test'::<ROOT>] [Disposing]",
                         "[1::'test'::<ROOT>] [Disposed]"
@@ -863,7 +863,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
                         c.Bindings.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding ) ] ) ) ),
                 server.Clients.Count.TestEquals( 1 ),
                 server.Channels.Count.TestEquals( 1 ),
-                server.Queues.Count.TestEquals( 1 ),
+                server.Streams.Count.TestEquals( 1 ),
                 channel.TestNotNull(
                     c => Assertion.All(
                         "channel",
@@ -890,7 +890,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
     }
 
     [Fact]
-    public async Task Creation_ShouldNotThrow_WhenChannelOrQueueOrChannelBindingEventHandlerThrows()
+    public async Task Creation_ShouldNotThrow_WhenChannelOrStreamOrChannelBindingEventHandlerThrows()
     {
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
@@ -907,7 +907,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
                             endSource.Complete();
                     } )
                 .SetChannelEventHandlerFactory( _ => _ => throw new Exception( "foo" ) )
-                .SetQueueEventHandlerFactory( _ => _ => throw new Exception( "bar" ) )
+                .SetStreamEventHandlerFactory( _ => _ => throw new Exception( "bar" ) )
                 .SetChannelBindingEventHandlerFactory( _ => _ => throw new Exception( "qux" ) ) );
 
         await server.StartAsync();
@@ -925,7 +925,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
         await endSource.Task;
 
         var channel = server.Channels.TryGetById( 1 );
-        var queue = server.Queues.TryGetById( 1 );
+        var stream = server.Streams.TryGetById( 1 );
         var binding = channel?.Bindings.TryGetByClientId( 1 );
 
         Assertion.All(
@@ -937,18 +937,18 @@ public class MessageBrokerChannelBindingTests : TestsBase
                         c.Bindings.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding ) ] ) ) ),
                 server.Clients.Count.TestEquals( 1 ),
                 server.Channels.Count.TestEquals( 1 ),
-                server.Queues.Count.TestEquals( 1 ),
+                server.Streams.Count.TestEquals( 1 ),
                 channel.TestNotNull(
                     c => Assertion.All(
                         "channel",
                         c.Bindings.Count.TestEquals( 1 ),
                         c.Bindings.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding ) ] ) ) ),
                 binding.TestNotNull(
-                    s => Assertion.All(
+                    b => Assertion.All(
                         "binding",
-                        s.Client.TestRefEquals( remoteClient ),
-                        s.Channel.TestRefEquals( channel ),
-                        s.Queue.TestRefEquals( queue ) ) ),
+                        b.Client.TestRefEquals( remoteClient ),
+                        b.Channel.TestRefEquals( channel ),
+                        b.Stream.TestRefEquals( stream ) ) ),
                 logs.GetAllClient()
                     .TestContainsSequence(
                     [
@@ -970,7 +970,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetChannelEventHandlerFactory( _ => logs.Add )
-                .SetQueueEventHandlerFactory( _ => logs.Add )
+                .SetStreamEventHandlerFactory( _ => logs.Add )
                 .SetChannelBindingEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -986,13 +986,13 @@ public class MessageBrokerChannelBindingTests : TestsBase
 
         var remoteClient = server.Clients.TryGetById( 1 );
         var channel = server.Channels.TryGetById( 1 );
-        var queue = server.Queues.TryGetById( 1 );
+        var stream = server.Streams.TryGetById( 1 );
         var binding = channel?.Bindings.TryGetByClientId( 1 );
         await server.DisposeAsync();
 
         Assertion.All(
                 server.Channels.Count.TestEquals( 0 ),
-                server.Queues.Count.TestEquals( 0 ),
+                server.Streams.Count.TestEquals( 0 ),
                 remoteClient.TestNotNull(
                     c => Assertion.All( "client", c.Bindings.Count.TestEquals( 0 ), c.Bindings.GetAll().TestEmpty() ) ),
                 channel.TestNotNull(
@@ -1001,12 +1001,12 @@ public class MessageBrokerChannelBindingTests : TestsBase
                         c.State.TestEquals( MessageBrokerChannelState.Disposed ),
                         c.Bindings.Count.TestEquals( 0 ),
                         c.Bindings.GetAll().TestEmpty() ) ),
-                queue.TestNotNull(
-                    q => Assertion.All(
-                        "queue",
-                        q.State.TestEquals( MessageBrokerQueueState.Disposed ),
-                        q.Bindings.Count.TestEquals( 0 ),
-                        q.Bindings.GetAll().TestEmpty() ) ),
+                stream.TestNotNull(
+                    s => Assertion.All(
+                        "stream",
+                        s.State.TestEquals( MessageBrokerStreamState.Disposed ),
+                        s.Bindings.Count.TestEquals( 0 ),
+                        s.Bindings.GetAll().TestEmpty() ) ),
                 binding.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelBindingState.Disposed ) ),
                 logs.GetAllChannel()
                     .TestSequence(
@@ -1015,7 +1015,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
                         "[1::'c'::<ROOT>] [Disposing]",
                         "[1::'c'::<ROOT>] [Disposed]"
                     ] ),
-                logs.GetAllQueue()
+                logs.GetAllStream()
                     .TestSequence(
                     [
                         "[1::'c'::1] [Created] by binding [1::'test'] => [1::'c']",
@@ -1041,7 +1041,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetChannelEventHandlerFactory( _ => logs.Add )
-                .SetQueueEventHandlerFactory( _ => logs.Add )
+                .SetStreamEventHandlerFactory( _ => logs.Add )
                 .SetChannelBindingEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -1057,14 +1057,14 @@ public class MessageBrokerChannelBindingTests : TestsBase
 
         var remoteClient = server.Clients.TryGetById( 1 );
         var channel = server.Channels.TryGetById( 1 );
-        var queue = server.Queues.TryGetById( 1 );
+        var stream = server.Streams.TryGetById( 1 );
         var binding = channel?.Bindings.TryGetByClientId( 1 );
         if ( remoteClient is not null )
             await remoteClient.DisconnectAsync();
 
         Assertion.All(
                 server.Channels.Count.TestEquals( 0 ),
-                server.Queues.Count.TestEquals( 0 ),
+                server.Streams.Count.TestEquals( 0 ),
                 remoteClient.TestNotNull(
                     c => Assertion.All( "client", c.Bindings.Count.TestEquals( 0 ), c.Bindings.GetAll().TestEmpty() ) ),
                 channel.TestNotNull(
@@ -1073,12 +1073,12 @@ public class MessageBrokerChannelBindingTests : TestsBase
                         c.State.TestEquals( MessageBrokerChannelState.Disposed ),
                         c.Bindings.Count.TestEquals( 0 ),
                         c.Bindings.GetAll().TestEmpty() ) ),
-                queue.TestNotNull(
-                    q => Assertion.All(
-                        "queue",
-                        q.State.TestEquals( MessageBrokerQueueState.Disposed ),
-                        q.Bindings.Count.TestEquals( 0 ),
-                        q.Bindings.GetAll().TestEmpty() ) ),
+                stream.TestNotNull(
+                    s => Assertion.All(
+                        "stream",
+                        s.State.TestEquals( MessageBrokerStreamState.Disposed ),
+                        s.Bindings.Count.TestEquals( 0 ),
+                        s.Bindings.GetAll().TestEmpty() ) ),
                 binding.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelBindingState.Disposed ) ),
                 logs.GetAllChannel()
                     .TestSequence(
@@ -1087,7 +1087,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
                         "[1::'c'::<ROOT>] [Disposing]",
                         "[1::'c'::<ROOT>] [Disposed]"
                     ] ),
-                logs.GetAllQueue()
+                logs.GetAllStream()
                     .TestSequence(
                     [
                         "[1::'c'::1] [Created] by binding [1::'test'] => [1::'c']",
@@ -1113,7 +1113,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetChannelEventHandlerFactory( _ => logs.Add )
-                .SetQueueEventHandlerFactory( _ => logs.Add )
+                .SetStreamEventHandlerFactory( _ => logs.Add )
                 .SetChannelBindingEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -1139,7 +1139,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
         var remoteClient1 = server.Clients.TryGetById( 1 );
         var remoteClient2 = server.Clients.TryGetById( 2 );
         var channel = server.Channels.TryGetById( 1 );
-        var queue = server.Queues.TryGetById( 1 );
+        var stream = server.Streams.TryGetById( 1 );
         var binding1 = channel?.Bindings.TryGetByClientId( 1 );
         var binding2 = channel?.Bindings.TryGetByClientId( 2 );
         if ( remoteClient1 is not null )
@@ -1147,7 +1147,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
 
         Assertion.All(
                 server.Channels.Count.TestEquals( 1 ),
-                server.Queues.Count.TestEquals( 1 ),
+                server.Streams.Count.TestEquals( 1 ),
                 remoteClient1.TestNotNull(
                     c => Assertion.All( "client1", c.Bindings.Count.TestEquals( 0 ), c.Bindings.GetAll().TestEmpty() ) ),
                 remoteClient2.TestNotNull(
@@ -1162,15 +1162,15 @@ public class MessageBrokerChannelBindingTests : TestsBase
                         c.State.TestEquals( MessageBrokerChannelState.Running ),
                         c.Bindings.Count.TestEquals( 1 ),
                         c.Bindings.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding2 ) ] ) ) ),
-                queue.TestNotNull(
-                    q => Assertion.All(
-                        "queue",
-                        q.State.TestEquals( MessageBrokerQueueState.Running ),
-                        q.Bindings.Count.TestEquals( 1 ),
-                        q.Bindings.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding2 ) ] ) ) ),
+                stream.TestNotNull(
+                    s => Assertion.All(
+                        "stream",
+                        s.State.TestEquals( MessageBrokerStreamState.Running ),
+                        s.Bindings.Count.TestEquals( 1 ),
+                        s.Bindings.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding2 ) ] ) ) ),
                 binding1.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelBindingState.Disposed ) ),
                 logs.GetAllChannel().TestSequence( [ "[1::'c'::1] [Created] by client [1::'test']" ] ),
-                logs.GetAllQueue().TestSequence( [ "[1::'c'::1] [Created] by binding [1::'test'] => [1::'c']" ] ),
+                logs.GetAllStream().TestSequence( [ "[1::'c'::1] [Created] by binding [1::'test'] => [1::'c']" ] ),
                 logs.GetAllBinding()
                     .TestSequence(
                     [
@@ -1183,7 +1183,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
     }
 
     [Fact]
-    public async Task Unbind_ShouldUnbindLastClientFromChannelAndQueueAndRemoveThem()
+    public async Task Unbind_ShouldUnbindLastClientFromChannelAndStreamAndRemoveThem()
     {
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
@@ -1200,7 +1200,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
                             endSource.Complete();
                     } )
                 .SetChannelEventHandlerFactory( _ => logs.Add )
-                .SetQueueEventHandlerFactory( _ => logs.Add )
+                .SetStreamEventHandlerFactory( _ => logs.Add )
                 .SetChannelBindingEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -1216,7 +1216,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
 
         var remoteClient = server.Clients.TryGetById( 1 );
         var channel = server.Channels.TryGetByName( "c" );
-        var queue = server.Queues.TryGetByName( "c" );
+        var stream = server.Streams.TryGetByName( "c" );
         var binding = channel?.Bindings.TryGetByClientId( 1 );
         await client.GetTask(
             c =>
@@ -1234,12 +1234,12 @@ public class MessageBrokerChannelBindingTests : TestsBase
                         c.State.TestEquals( MessageBrokerChannelState.Disposed ),
                         c.Bindings.Count.TestEquals( 0 ),
                         c.Bindings.GetAll().TestEmpty() ) ),
-                queue.TestNotNull(
-                    q => Assertion.All(
-                        "queue",
-                        q.State.TestEquals( MessageBrokerQueueState.Disposed ),
-                        q.Bindings.Count.TestEquals( 0 ),
-                        q.Bindings.GetAll().TestEmpty() ) ),
+                stream.TestNotNull(
+                    s => Assertion.All(
+                        "stream",
+                        s.State.TestEquals( MessageBrokerStreamState.Disposed ),
+                        s.Bindings.Count.TestEquals( 0 ),
+                        s.Bindings.GetAll().TestEmpty() ) ),
                 remoteClient.TestNotNull(
                     c => Assertion.All(
                         "client",
@@ -1248,8 +1248,8 @@ public class MessageBrokerChannelBindingTests : TestsBase
                 binding.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelBindingState.Disposed ) ),
                 server.Channels.Count.TestEquals( 0 ),
                 server.Channels.GetAll().TestEmpty(),
-                server.Queues.Count.TestEquals( 0 ),
-                server.Queues.GetAll().TestEmpty(),
+                server.Streams.Count.TestEquals( 0 ),
+                server.Streams.GetAll().TestEmpty(),
                 logs.GetAllClient()
                     .TestContainsSequence(
                     [
@@ -1266,7 +1266,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
                         "[1::'c'::<ROOT>] [Disposing]",
                         "[1::'c'::<ROOT>] [Disposed]"
                     ] ),
-                logs.GetAllQueue()
+                logs.GetAllStream()
                     .TestSequence(
                     [
                         "[1::'c'::1] [Created] by binding [1::'test'] => [1::'c']",
@@ -1284,7 +1284,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
     }
 
     [Fact]
-    public async Task Unbind_ShouldUnbindNonLastClientFromChannelAndQueueWithoutRemovingThem()
+    public async Task Unbind_ShouldUnbindNonLastClientFromChannelAndStreamWithoutRemovingThem()
     {
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
@@ -1302,7 +1302,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
                             endSource.Complete();
                     } )
                 .SetChannelEventHandlerFactory( _ => logs.Add )
-                .SetQueueEventHandlerFactory( _ => logs.Add )
+                .SetStreamEventHandlerFactory( _ => logs.Add )
                 .SetChannelBindingEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -1328,7 +1328,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
         var remoteClient1 = server.Clients.TryGetById( 1 );
         var remoteClient2 = server.Clients.TryGetById( 2 );
         var channel = server.Channels.TryGetByName( "c" );
-        var queue = server.Queues.TryGetByName( "c" );
+        var stream = server.Streams.TryGetByName( "c" );
         var binding1 = channel?.Bindings.TryGetByClientId( 1 );
         var binding2 = channel?.Bindings.TryGetByClientId( 2 );
 
@@ -1353,17 +1353,17 @@ public class MessageBrokerChannelBindingTests : TestsBase
                         c.Bindings.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding1 ) ] ),
                         c.Bindings.TryGetByClientId( 1 ).TestRefEquals( binding1 ),
                         c.Bindings.TryGetByClientId( 2 ).TestNull() ) ),
-                queue.TestNotNull(
-                    q => Assertion.All(
-                        "queue",
-                        q.Server.TestRefEquals( server ),
-                        q.Id.TestEquals( 1 ),
-                        q.Name.TestEquals( "c" ),
-                        q.State.TestEquals( MessageBrokerQueueState.Running ),
-                        q.Bindings.Count.TestEquals( 1 ),
-                        q.Bindings.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding1 ) ] ),
-                        q.Bindings.TryGetByKey( 1, 1 ).TestRefEquals( binding1 ),
-                        q.Bindings.TryGetByKey( 2, 1 ).TestNull() ) ),
+                stream.TestNotNull(
+                    s => Assertion.All(
+                        "stream",
+                        s.Server.TestRefEquals( server ),
+                        s.Id.TestEquals( 1 ),
+                        s.Name.TestEquals( "c" ),
+                        s.State.TestEquals( MessageBrokerStreamState.Running ),
+                        s.Bindings.Count.TestEquals( 1 ),
+                        s.Bindings.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding1 ) ] ),
+                        s.Bindings.TryGetByKey( 1, 1 ).TestRefEquals( binding1 ),
+                        s.Bindings.TryGetByKey( 2, 1 ).TestNull() ) ),
                 remoteClient1.TestNotNull(
                     c => Assertion.All(
                         "client1",
@@ -1380,9 +1380,9 @@ public class MessageBrokerChannelBindingTests : TestsBase
                 server.Channels.Count.TestEquals( 1 ),
                 server.Channels.GetAll().TestSequence( [ (ch, _) => ch.TestRefEquals( channel ) ] ),
                 server.Channels.TryGetById( 1 ).TestRefEquals( channel ),
-                server.Queues.Count.TestEquals( 1 ),
-                server.Queues.GetAll().TestSequence( [ (q, _) => q.TestRefEquals( queue ) ] ),
-                server.Queues.TryGetById( 1 ).TestRefEquals( queue ),
+                server.Streams.Count.TestEquals( 1 ),
+                server.Streams.GetAll().TestSequence( [ (q, _) => q.TestRefEquals( stream ) ] ),
+                server.Streams.TryGetById( 1 ).TestRefEquals( stream ),
                 logs.GetAllClient()
                     .TestContainsSequence(
                     [
@@ -1403,7 +1403,7 @@ public class MessageBrokerChannelBindingTests : TestsBase
                         "[2::'test2'::2] [MessageSent] [PacketLength: 6] UnboundResponse"
                     ] ),
                 logs.GetAllChannel().TestSequence( [ "[1::'c'::1] [Created] by client [1::'test']" ] ),
-                logs.GetAllQueue().TestSequence( [ "[1::'c'::1] [Created] by binding [1::'test'] => [1::'c']" ] ),
+                logs.GetAllStream().TestSequence( [ "[1::'c'::1] [Created] by binding [1::'test'] => [1::'c']" ] ),
                 logs.GetAllBinding()
                     .TestSequence(
                     [

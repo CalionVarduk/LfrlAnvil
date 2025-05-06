@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System;
 using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.MessageBroker.Server;
@@ -46,20 +45,10 @@ public readonly struct MessageBrokerRemoteClientBindingCollection
     /// </summary>
     /// <returns>All bindings.</returns>
     [Pure]
-    public MessageBrokerChannelBinding[] GetAll()
+    public ReadOnlyArray<MessageBrokerChannelBinding> GetAll()
     {
         using ( _client.AcquireLock() )
-        {
-            if ( _client.BindingsByChannelId.Count == 0 )
-                return Array.Empty<MessageBrokerChannelBinding>();
-
-            var i = 0;
-            var result = new MessageBrokerChannelBinding[_client.BindingsByChannelId.Count];
-            foreach ( var binding in _client.BindingsByChannelId.Values )
-                result[i++] = binding;
-
-            return result;
-        }
+            return _client.BindingsByChannelId.GetAll();
     }
 
     /// <summary>
@@ -74,6 +63,6 @@ public readonly struct MessageBrokerRemoteClientBindingCollection
     public MessageBrokerChannelBinding? TryGetByChannelId(int channelId)
     {
         using ( _client.AcquireLock() )
-            return _client.BindingsByChannelId.TryGetValue( channelId, out var result ) ? result : null;
+            return _client.BindingsByChannelId.TryGet( channelId, out var result ) ? result : null;
     }
 }

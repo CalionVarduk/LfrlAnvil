@@ -1224,7 +1224,11 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
                         "[1::'test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeAcceptedResponse",
                         "[1::'test'::<ROOT>] [WaitingForMessage]",
                         "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 5] ConfirmHandshakeResponse",
-                        "[1::'test'::<ROOT>] [MessageAccepted] [PacketLength: 5] ConfirmHandshakeResponse",
+                        "[1::'test'::<ROOT>] [MessageAccepted] [PacketLength: 5] ConfirmHandshakeResponse"
+                    ] ),
+                logs.GetAllClient()
+                    .TestContainsSequence(
+                    [
                         "[1::'test'::<ROOT>] [WaitingForMessage]",
                         "[1::'test'::<ROOT>] [Disposing]",
                         "[1::'test'::<ROOT>] [Disposed]"

@@ -31,13 +31,13 @@ public sealed class MessageBrokerPublisher
     private readonly object _sync = new object();
     private MessageBrokerPublisherState _state;
 
-    internal MessageBrokerPublisher(MessageBrokerClient client, int channelId, string channelName, int queueId, string queueName)
+    internal MessageBrokerPublisher(MessageBrokerClient client, int channelId, string channelName, int streamId, string streamName)
     {
         Client = client;
         ChannelId = channelId;
         ChannelName = channelName;
-        QueueId = queueId;
-        QueueName = queueName;
+        StreamId = streamId;
+        StreamName = streamName;
         _state = MessageBrokerPublisherState.Bound;
     }
 
@@ -57,14 +57,14 @@ public sealed class MessageBrokerPublisher
     public string ChannelName { get; }
 
     /// <summary>
-    /// Unique id of the queue to which this publisher is pushing messages.
+    /// Unique id of the stream to which this publisher is pushing messages.
     /// </summary>
-    public int QueueId { get; }
+    public int StreamId { get; }
 
     /// <summary>
-    /// Unique name of the queue to which this publisher is pushing messages.
+    /// Unique name of the stream to which this publisher is pushing messages.
     /// </summary>
-    public string QueueName { get; }
+    public string StreamName { get; }
 
     /// <summary>
     /// Current publisher's state.
@@ -87,7 +87,7 @@ public sealed class MessageBrokerPublisher
     public override string ToString()
     {
         return
-            $"[{Client.Id}] '{Client.Name}' => [{ChannelId}] '{ChannelName}' publisher (using [{QueueId}] '{QueueName}' queue) ({State})";
+            $"[{Client.Id}] '{Client.Name}' => [{ChannelId}] '{ChannelName}' publisher (using [{StreamId}] '{StreamName}' stream) ({State})";
     }
 
     /// <summary>

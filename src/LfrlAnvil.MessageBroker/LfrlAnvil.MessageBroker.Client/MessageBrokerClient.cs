@@ -43,6 +43,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     internal MessageListener MessageListener;
     internal MessageContextQueue MessageContextQueue;
     internal PingScheduler PingScheduler;
+    internal MessageNotifications MessageNotifications;
     internal PublisherCollection PublisherCollection;
     internal ListenerCollection ListenerCollection;
     internal readonly MemoryPool<byte> MemoryPool;
@@ -74,9 +75,10 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         ConnectionTimeout = Defaults.Temporal.GetActualTimeout( options.ConnectionTimeout );
         MessageTimeout = Defaults.Temporal.GetActualTimeout( options.DesiredMessageTimeout );
         PingInterval = Defaults.Temporal.GetActualPingInterval( options.DesiredPingInterval );
+        ListenerDisposalTimeout = Defaults.Temporal.GetActualTimeout( options.ListenerDisposalTimeout );
         _streamDecorator = options.StreamDecorator;
         _eventHandler = options.EventHandler;
-        _timestamps = options.Timestamps ?? new TimestampProvider();
+        _timestamps = options.Timestamps ?? TimestampProvider.Shared;
         _messageContextPool = StackSlim<MessageBrokerSendContext>.Create();
 
         _stream = null;
@@ -91,6 +93,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         MessageListener = MessageListener.Create();
         MessageContextQueue = MessageContextQueue.Create();
         PingScheduler = PingScheduler.Create();
+        MessageNotifications = MessageNotifications.Create();
         PublisherCollection = PublisherCollection.Create();
         ListenerCollection = ListenerCollection.Create();
     }
@@ -133,6 +136,12 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     /// </summary>
     /// <remarks>Value may change during handshake with the server.</remarks>
     public Duration PingInterval { get; private set; }
+
+    /// <summary>
+    /// Amount of time that <see cref="MessageBrokerListener"/> instances will wait during their disposal
+    /// for callbacks to complete before giving up.
+    /// </summary>
+    public Duration ListenerDisposalTimeout { get; }
 
     /// <summary>
     /// The local <see cref="EndPoint"/> that this client is using for communications with the server.
@@ -202,21 +211,27 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         Task? eventSchedulerTask;
         Task? pingSchedulerTask;
         Task? messageListenerTask;
+        Task? messageNotificationsTask;
         ValueTaskDelaySource? ownedDelaySource;
+        MessageBrokerListener[] listeners;
 
         using ( AcquireLock() )
         {
             ownedDelaySource = _delaySource.DiscardOwnedSource();
             _messageContextPool.Clear();
             PublisherCollection.Clear();
-            ListenerCollection.Clear();
+            listeners = ListenerCollection.Clear();
             eventSchedulerTask = EventScheduler.DiscardUnderlyingTask();
             pingSchedulerTask = PingScheduler.DiscardUnderlyingTask();
             messageListenerTask = MessageListener.DiscardUnderlyingTask();
+            messageNotificationsTask = MessageNotifications.DiscardUnderlyingTask();
             MessageContextQueue.Dispose();
             PingScheduler.Dispose();
             EventScheduler.Dispose();
+            MessageNotifications.Dispose( this );
         }
+
+        await Parallel.ForEachAsync( listeners, static (l, _) => l.OnClientDisposedAsync() ).ConfigureAwait( false );
 
         if ( eventSchedulerTask is not null )
             await eventSchedulerTask.ConfigureAwait( false );
@@ -226,6 +241,9 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
 
         if ( messageListenerTask is not null )
             await messageListenerTask.ConfigureAwait( false );
+
+        if ( messageNotificationsTask is not null )
+            await messageNotificationsTask.ConfigureAwait( false );
 
         Exception? exception;
         using ( AcquireLock() )
@@ -241,7 +259,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         }
 
         if ( ownedDelaySource is not null )
-            await ownedDelaySource.TryDisposeAsync();
+            await ownedDelaySource.TryDisposeAsync().ConfigureAwait( false );
 
         Emit( MessageBrokerClientEvent.Disposed( this ) );
     }
@@ -341,7 +359,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
             Assume.IsNotNull( stream );
             var messageListenerTask = MessageListener.StartUnderlyingTask( this, stream );
             var pingSchedulerTask = PingScheduler.StartUnderlyingTask( this );
-            //var responderTask = RunResponderAsync();
+            var messageNotificationsTask = MessageNotifications.StartUnderlyingTask( this );
             using ( AcquireLock() )
             {
                 if ( ShouldCancel )
@@ -349,7 +367,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
 
                 MessageListener.SetUnderlyingTask( messageListenerTask );
                 PingScheduler.SetUnderlyingTask( pingSchedulerTask );
-                //_responderTask = responderTask;
+                MessageNotifications.SetUnderlyingTask( messageNotificationsTask );
             }
         }
         catch ( Exception exc )

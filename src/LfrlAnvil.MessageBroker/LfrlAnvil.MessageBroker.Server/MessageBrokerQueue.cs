@@ -13,52 +13,48 @@
 // limitations under the License.
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
-using LfrlAnvil.Memory;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Internal;
 
 namespace LfrlAnvil.MessageBroker.Server;
 
 /// <summary>
-/// Represents a message broker queue, which allows <see cref="MessageBrokerChannelBinding"/> instances to enqueue messages
-/// in order to be processed and moved to relevant <see cref="MessageBrokerSubscription"/> instances.
+/// Represents a message broker queue, which allows a single <see cref="MessageBrokerRemoteClient"/> instance to manage
+/// the order of message notifications between multiple subscriptions, sent by the server.
 /// </summary>
 public sealed class MessageBrokerQueue
 {
-    internal readonly Dictionary<QueueBindingKey, MessageBrokerChannelBinding> BindingsByKey;
+    internal ReferenceStore<int, MessageBrokerSubscription> SubscriptionsByChannelId;
     internal QueueProcessor QueueProcessor;
-
+    private readonly object _sync = new object();
     private readonly MessageBrokerQueueEventHandler? _eventHandler;
     private QueueSlim<QueueMessage> _messages;
-    private ulong _nextMessageId;
     private MessageBrokerQueueState _state;
 
-    internal MessageBrokerQueue(MessageBrokerServer server, int id, string name)
+    internal MessageBrokerQueue(MessageBrokerRemoteClient client, int id, string name)
     {
-        Server = server;
+        Client = client;
         Id = id;
         Name = name;
-        _nextMessageId = 0;
         _state = MessageBrokerQueueState.Running;
+        SubscriptionsByChannelId = ReferenceStore<int, MessageBrokerSubscription>.Create();
         _messages = QueueSlim<QueueMessage>.Create();
-        BindingsByKey = new Dictionary<QueueBindingKey, MessageBrokerChannelBinding>();
         QueueProcessor = QueueProcessor.Create();
-        _eventHandler = Server.QueueEventHandlerFactory?.Invoke( this );
+        _eventHandler = Client.Server.QueueEventHandlerFactory?.Invoke( this );
         QueueProcessor.SetUnderlyingTask( QueueProcessor.StartUnderlyingTask( this ) );
     }
 
     /// <summary>
-    /// <see cref="MessageBrokerServer"/> instance that owns this queue.
+    /// <see cref="MessageBrokerRemoteClient"/> instance to which this queue belongs to.
     /// </summary>
-    public MessageBrokerServer Server { get; }
+    public MessageBrokerRemoteClient Client { get; }
 
     /// <summary>
-    /// Queue's unique identifier assigned by the server.
+    /// Queue's unique identifier assigned by the client.
     /// </summary>
     public int Id { get; }
 
@@ -81,10 +77,9 @@ public sealed class MessageBrokerQueue
     }
 
     /// <summary>
-    /// Collection of <see cref="MessageBrokerChannelBinding"/> instances attached to this queue,
-    /// identified by (client-id, channel-id) tuples.
+    /// Collection of <see cref="MessageBrokerSubscription"/> instances attached to this queue, identified by channel ids.
     /// </summary>
-    public MessageBrokerQueueBindingCollection Bindings => new MessageBrokerQueueBindingCollection( this );
+    public MessageBrokerQueueSubscriptionCollection Subscriptions => new MessageBrokerQueueSubscriptionCollection( this );
 
     internal bool ShouldCancel => _state >= MessageBrokerQueueState.Disposing;
 
@@ -98,94 +93,53 @@ public sealed class MessageBrokerQueue
         return $"[{Id}] '{Name}' queue ({State})";
     }
 
-    /// <summary>
-    /// Removes this queue from the server.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous removal operation.</returns>
-    public async ValueTask RemoveAsync()
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void PushMessages(MessageBrokerSubscription subscription, in ListSlim<StreamMessage> messages)
     {
         using ( AcquireLock() )
         {
+            // TODO: emit 'message-discarded' (log refactor)
             if ( ShouldCancel )
                 return;
 
-            _state = MessageBrokerQueueState.Disposing;
-        }
-
-        Emit( MessageBrokerQueueEvent.Disposing( this ) );
-
-        Task? processorTask;
-        var bindings = Array.Empty<MessageBrokerChannelBinding>();
-        using ( AcquireLock() )
-        {
-            if ( BindingsByKey.Count > 0 )
+            foreach ( var message in messages )
             {
-                var i = 0;
-                bindings = new MessageBrokerChannelBinding[BindingsByKey.Count];
-                foreach ( var binding in BindingsByKey.Values )
-                    bindings[i++] = binding;
-
-                BindingsByKey.Clear();
+                _messages.Enqueue( new QueueMessage( in message, subscription ) );
+                Emit( MessageBrokerQueueEvent.MessageEnqueued( this, subscription, message.Id ) );
             }
 
-            ClearMessages();
-            processorTask = QueueProcessor.DiscardUnderlyingTask();
-            QueueProcessor.Dispose();
-        }
-
-        await Parallel.ForEachAsync( bindings, static (b, _) => b.OnQueueDisposedAsync() ).ConfigureAwait( false );
-        if ( processorTask is not null )
-            await processorTask.ConfigureAwait( false );
-
-        var exc = QueueCollection.Remove( this ).Exception;
-        if ( exc is not null )
-            Emit( MessageBrokerQueueEvent.Unexpected( this, exc ) );
-
-        using ( AcquireLock() )
-            _state = MessageBrokerQueueState.Disposed;
-
-        Emit( MessageBrokerQueueEvent.Disposed( this ) );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal Protocol.MessageRejectedResponse.Reasons Enqueue(
-        MessageBrokerChannelBinding binding,
-        MemoryPoolToken<byte> token,
-        ReadOnlyMemory<byte> data,
-        ulong contextId,
-        ref ulong? messageId)
-    {
-        using ( AcquireLock() )
-        {
-            if ( ShouldCancel )
-                return Protocol.MessageRejectedResponse.Reasons.Cancelled;
-
-            // TODO:
-            // this may require binding lock later (e.g. when permanence is implemented)
-            // right now it doesn't really matter, even though binding in disposing state will be allowed to enqueue messages
-
-            var id = unchecked( _nextMessageId++ );
-            _messages.Enqueue( new QueueMessage( id, binding.Client.GetTimestamp(), binding, token, data ) );
-            messageId = id;
-
-            Emit( MessageBrokerQueueEvent.MessageEnqueued( this, binding, id, contextId ) );
             QueueProcessor.SignalContinuation();
         }
-
-        return Protocol.MessageRejectedResponse.Reasons.None;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool TryDequeueUnsafe(out QueueMessage message)
+    internal int CopyMessagesIntoUnsafe(ref ListSlim<QueueMessage> buffer)
     {
-        return _messages.TryDequeue( out message );
+        Assume.True( buffer.IsEmpty );
+        Assume.IsGreaterThan( buffer.Capacity, 0 );
+        if ( _messages.IsEmpty )
+            return 0;
+
+        var discarded = 0;
+        var queueSlice = _messages.AsMemory();
+
+        if ( ! CopyMessagesInto( queueSlice.First.Span, ref buffer, ref discarded ) )
+            CopyMessagesInto( queueSlice.Second.Span, ref buffer, ref discarded );
+
+        return discarded + buffer.Count;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool TryDisposeByRemovingBindingUnsafe(QueueBindingKey bindingKey)
+    internal void DequeueMessagesUnsafe(int count)
     {
-        BindingsByKey.Remove( bindingKey );
-        if ( BindingsByKey.Count > 0 || ! _messages.IsEmpty )
+        _messages.DequeueRange( count );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool TryDisposeByRemovingSubscriptionUnsafe(int channelId)
+    {
+        SubscriptionsByChannelId.Remove( channelId );
+        if ( SubscriptionsByChannelId.Count > 0 || ! _messages.IsEmpty )
             return false;
 
         _state = MessageBrokerQueueState.Disposing;
@@ -193,78 +147,38 @@ public sealed class MessageBrokerQueue
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool TryDisposeDueToEmptyQueueUnsafe()
+    internal bool TryDisposeDueToPotentiallyEmptyQueueUnsafe()
     {
-        Assume.True( _messages.IsEmpty );
-        if ( BindingsByKey.Count > 0 )
+        if ( SubscriptionsByChannelId.Count > 0 || ! _messages.IsEmpty )
             return false;
 
         _state = MessageBrokerQueueState.Disposing;
         return true;
     }
 
-    internal async ValueTask OnBindingDisposingAsync(MessageBrokerRemoteClient client, MessageBrokerChannel channel)
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal ValueTask OnClientDisconnectedAsync()
     {
-        var dispose = false;
-        using ( AcquireLock() )
-        {
-            if ( ShouldCancel )
-                return;
-
-            if ( BindingsByKey.Remove( new QueueBindingKey( client.Id, channel.Id ) )
-                && BindingsByKey.Count == 0
-                && _messages.IsEmpty )
-            {
-                dispose = true;
-                _state = MessageBrokerQueueState.Disposing;
-            }
-        }
-
-        if ( dispose )
-            await DisposeDueToLackOfReferencesAsync( ignoreProcessorTask: false ).ConfigureAwait( false );
+        return DisposeAsync();
     }
 
-    internal async ValueTask OnServerDisposedAsync()
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal ValueTask OnServerDisposedAsync()
     {
-        using ( AcquireLock() )
-        {
-            if ( ShouldCancel )
-                return;
-
-            _state = MessageBrokerQueueState.Disposing;
-        }
-
-        Emit( MessageBrokerQueueEvent.Disposing( this ) );
-
-        Task? processorTask;
-        using ( AcquireLock() )
-        {
-            BindingsByKey.Clear();
-            ClearMessages();
-            processorTask = QueueProcessor.DiscardUnderlyingTask();
-            QueueProcessor.Dispose();
-        }
-
-        if ( processorTask is not null )
-            await processorTask.ConfigureAwait( false );
-
-        using ( AcquireLock() )
-            _state = MessageBrokerQueueState.Disposed;
-
-        Emit( MessageBrokerQueueEvent.Disposed( this ) );
+        return DisposeAsync();
     }
 
     internal async ValueTask DisposeDueToLackOfReferencesAsync(bool ignoreProcessorTask)
     {
-        Assume.IsEmpty( BindingsByKey );
-        Assume.True( _messages.IsEmpty );
         Assume.Equals( State, MessageBrokerQueueState.Disposing );
-
         Emit( MessageBrokerQueueEvent.Disposing( this ) );
 
         Task? processorTask;
         using ( AcquireLock() )
         {
+            Assume.Equals( SubscriptionsByChannelId.Count, 0 );
+            Assume.True( _messages.IsEmpty );
+
             processorTask = QueueProcessor.DiscardUnderlyingTask();
             if ( ignoreProcessorTask )
                 processorTask = null;
@@ -275,9 +189,11 @@ public sealed class MessageBrokerQueue
         if ( processorTask is not null )
             await processorTask.ConfigureAwait( false );
 
-        var exc = QueueCollection.Remove( this ).Exception;
-        if ( exc is not null )
-            Emit( MessageBrokerQueueEvent.Unexpected( this, exc ) );
+        using ( Client.AcquireLock() )
+        {
+            if ( ! Client.ShouldCancel )
+                Client.QueuesByName.Remove( Id, Name );
+        }
 
         using ( AcquireLock() )
             _state = MessageBrokerQueueState.Disposed;
@@ -288,7 +204,7 @@ public sealed class MessageBrokerQueue
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ExclusiveLock AcquireLock()
     {
-        return ExclusiveLock.SpinWaitEnter( BindingsByKey, spinWaitMultiplier: 4 );
+        return ExclusiveLock.SpinWaitEnter( _sync, spinWaitMultiplier: 4 );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -308,10 +224,60 @@ public sealed class MessageBrokerQueue
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static bool CopyMessagesInto(ReadOnlySpan<QueueMessage> source, ref ListSlim<QueueMessage> target, ref int discarded)
+    {
+        const int maxDiscarded = 128;
+        foreach ( ref readonly var message in source )
+        {
+            if ( message.Subscription.TryIncrementPrefetchCounter( out var disposed ) )
+            {
+                target.Add( message );
+                if ( target.Count >= target.Capacity )
+                    return true;
+            }
+            else if ( ! disposed || ++discarded >= maxDiscarded )
+                return true;
+        }
+
+        return false;
+    }
+
+    private async ValueTask DisposeAsync()
+    {
+        using ( AcquireLock() )
+        {
+            if ( ShouldCancel )
+                return;
+
+            _state = MessageBrokerQueueState.Disposing;
+        }
+
+        Emit( MessageBrokerQueueEvent.Disposing( this ) );
+
+        Task? processorTask;
+        using ( AcquireLock() )
+        {
+            SubscriptionsByChannelId.Clear();
+            ClearMessages();
+            processorTask = QueueProcessor.DiscardUnderlyingTask();
+            QueueProcessor.Dispose();
+        }
+
+        if ( processorTask is not null )
+            await processorTask.ConfigureAwait( false );
+
+        using ( AcquireLock() )
+            _state = MessageBrokerQueueState.Disposed;
+
+        Emit( MessageBrokerQueueEvent.Disposed( this ) );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void ClearMessages()
     {
+        // TODO: emit 'message-discarded' (log refactor)
         foreach ( var message in _messages )
-            message.PoolToken.Return( message.Binding.Client );
+            message.Return();
 
         _messages = QueueSlim<QueueMessage>.Create();
     }

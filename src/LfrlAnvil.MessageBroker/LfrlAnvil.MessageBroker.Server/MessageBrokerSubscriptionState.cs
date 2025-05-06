@@ -25,7 +25,7 @@ public enum MessageBrokerSubscriptionState : byte
     Running = 0,
 
     /// <summary>
-    /// Specifies the the subscription is currently being disposed.
+    /// Specifies that the subscription is currently being disposed.
     /// </summary>
     Disposing = 1,
 

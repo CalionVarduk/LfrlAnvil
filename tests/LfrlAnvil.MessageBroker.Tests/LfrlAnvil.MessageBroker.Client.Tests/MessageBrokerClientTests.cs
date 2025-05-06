@@ -29,6 +29,7 @@ public partial class MessageBrokerClientTests : TestsBase
                 sut.ConnectionTimeout.TestEquals( Duration.FromSeconds( 15 ) ),
                 sut.MessageTimeout.TestEquals( Duration.FromSeconds( 15 ) ),
                 sut.PingInterval.TestEquals( Duration.FromSeconds( 15 ) ),
+                sut.ListenerDisposalTimeout.TestEquals( Duration.FromSeconds( 15 ) ),
                 sut.LocalEndPoint.TestNull(),
                 sut.State.TestEquals( MessageBrokerClientState.Created ),
                 sut.Publishers.Count.TestEquals( 0 ),
@@ -38,16 +39,26 @@ public partial class MessageBrokerClientTests : TestsBase
     }
 
     [Theory]
-    [InlineData( 0, 1, 0, 1, 0, 1 )]
-    [InlineData( 29999, 2, 30001, 3, 600000, 60 )]
-    [InlineData( (int.MaxValue + 1L) * 10000, int.MaxValue, (int.MaxValue + 2L) * 10000, int.MaxValue, 864000010000, 86400000 )]
+    [InlineData( 0, 1, 0, 1, 0, 1, 0, 1 )]
+    [InlineData( 29999, 2, 30001, 3, 600000, 60, 750000, 75 )]
+    [InlineData(
+        (int.MaxValue + 1L) * 10000,
+        int.MaxValue,
+        (int.MaxValue + 2L) * 10000,
+        int.MaxValue,
+        864000010000,
+        86400000,
+        (int.MaxValue + 3L) * 10000,
+        int.MaxValue )]
     public void Ctor_WithCustomTimeouts_ShouldCreateCorrectClient(
         long connectionTimeoutTicks,
         int expectedConnectionTimeoutMs,
         long messageTimeoutTicks,
         int expectedMessageTimeoutMs,
         long pingIntervalTicks,
-        int expectedPingIntervalMs)
+        int expectedPingIntervalMs,
+        long listenerDisposalTimeoutTicks,
+        int expectedListenerDisposalTimeoutMs)
     {
         var remoteEndPoint = new IPEndPoint( IPAddress.Loopback, 12345 );
         var sut = new MessageBrokerClient(
@@ -56,7 +67,8 @@ public partial class MessageBrokerClientTests : TestsBase
             MessageBrokerClientOptions.Default
                 .SetConnectionTimeout( Duration.FromTicks( connectionTimeoutTicks ) )
                 .SetDesiredMessageTimeout( Duration.FromTicks( messageTimeoutTicks ) )
-                .SetDesiredPingInterval( Duration.FromTicks( pingIntervalTicks ) ) );
+                .SetDesiredPingInterval( Duration.FromTicks( pingIntervalTicks ) )
+                .SetListenerDisposalTimeout( Duration.FromTicks( listenerDisposalTimeoutTicks ) ) );
 
         Assertion.All(
                 sut.Id.TestEquals( 0 ),
@@ -66,6 +78,7 @@ public partial class MessageBrokerClientTests : TestsBase
                 sut.ConnectionTimeout.TestEquals( Duration.FromMilliseconds( expectedConnectionTimeoutMs ) ),
                 sut.MessageTimeout.TestEquals( Duration.FromMilliseconds( expectedMessageTimeoutMs ) ),
                 sut.PingInterval.TestEquals( Duration.FromMilliseconds( expectedPingIntervalMs ) ),
+                sut.ListenerDisposalTimeout.TestEquals( Duration.FromMilliseconds( expectedListenerDisposalTimeoutMs ) ),
                 sut.LocalEndPoint.TestNull(),
                 sut.State.TestEquals( MessageBrokerClientState.Created ),
                 sut.Publishers.Count.TestEquals( 0 ),

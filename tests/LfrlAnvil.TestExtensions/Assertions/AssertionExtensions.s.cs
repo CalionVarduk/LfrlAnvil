@@ -353,6 +353,39 @@ public static class AssertionExtensions
     }
 
     [Pure]
+    public static SubjectAssertion<ReadOnlyMemory<char>> TestEndsWith(
+        this string? subject,
+        string value,
+        StringComparison comparison = StringComparison.Ordinal,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
+    {
+        return subject.AsMemory().TestEndsWith( value.AsMemory(), comparison, context );
+    }
+
+    [Pure]
+    public static SubjectAssertion<ReadOnlyMemory<char>> TestEndsWith(
+        this ReadOnlyMemory<char> subject,
+        ReadOnlyMemory<char> value,
+        StringComparison comparison = StringComparison.Ordinal,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
+    {
+        return new LikeAssertion( context, subject, value, comparison, LikeAssertion.ComparisonType.EndsWith );
+    }
+
+    [Pure]
+    public static SubjectAssertion<ReadOnlyMemory<char>> TestEndsWith(
+        this ReadOnlySpan<char> subject,
+        ReadOnlySpan<char> value,
+        StringComparison comparison = StringComparison.Ordinal,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
+    {
+        return subject.ToString().TestEndsWith( value.ToString(), comparison, context );
+    }
+
+    [Pure]
     public static SubjectAssertion<ReadOnlyMemory<char>> TestContains(
         this string? subject,
         string value,

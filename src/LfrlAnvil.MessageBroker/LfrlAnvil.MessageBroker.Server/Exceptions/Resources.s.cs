@@ -113,6 +113,14 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string InvalidStreamNameLength(int length)
+    {
+        return
+            $"Expected stream name length to be in [{Defaults.NameLengthBounds.Min}, {Defaults.NameLengthBounds.Max}] range but found {length}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string InvalidQueueNameLength(int length)
     {
         return
@@ -124,6 +132,13 @@ internal static class Resources
     internal static string InvalidBinaryChannelNameLength(int length, int maxLength)
     {
         return $"Expected binary channel name length to be in [0, {maxLength}] range but found {length}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string InvalidPrefetchHint(int value)
+    {
+        return $"Expected prefetch hint to be greater than 0 but found {value}.";
     }
 
     [Pure]

@@ -39,7 +39,7 @@ public readonly struct MessageBrokerRemoteClientCollection
     /// </summary>
     /// <returns>All owned clients.</returns>
     [Pure]
-    public MessageBrokerRemoteClient[] GetAll()
+    public ReadOnlyArray<MessageBrokerRemoteClient> GetAll()
     {
         return RemoteClientCollection.GetAll( _server );
     }

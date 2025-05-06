@@ -13,7 +13,6 @@
 // limitations under the License.
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -25,15 +24,13 @@ using LfrlAnvil.MessageBroker.Client.Exceptions;
 
 namespace LfrlAnvil.MessageBroker.Client.Internal;
 
-internal readonly struct PublisherCollection
+internal struct PublisherCollection
 {
-    private readonly Dictionary<int, MessageBrokerPublisher> _byChannelId;
-    private readonly Dictionary<string, MessageBrokerPublisher> _byChannelName;
+    private ObjectStore<MessageBrokerPublisher> _store;
 
     private PublisherCollection(StringComparer nameComparer)
     {
-        _byChannelId = new Dictionary<int, MessageBrokerPublisher>();
-        _byChannelName = new Dictionary<string, MessageBrokerPublisher>( nameComparer );
+        _store = ObjectStore<MessageBrokerPublisher>.Create( nameComparer );
     }
 
     [Pure]
@@ -48,25 +45,15 @@ internal readonly struct PublisherCollection
     internal static int GetCount(MessageBrokerClient client)
     {
         using ( client.AcquireLock() )
-            return client.PublisherCollection._byChannelId.Count;
+            return client.PublisherCollection._store.Count;
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerPublisher[] GetAll(MessageBrokerClient client)
+    internal static ReadOnlyArray<MessageBrokerPublisher> GetAll(MessageBrokerClient client)
     {
         using ( client.AcquireLock() )
-        {
-            if ( client.PublisherCollection._byChannelId.Count == 0 )
-                return Array.Empty<MessageBrokerPublisher>();
-
-            var i = 0;
-            var result = new MessageBrokerPublisher[client.PublisherCollection._byChannelId.Count];
-            foreach ( var publisher in client.PublisherCollection._byChannelId.Values )
-                result[i++] = publisher;
-
-            return result;
-        }
+            return client.PublisherCollection._store.GetAll();
     }
 
     [Pure]
@@ -74,7 +61,7 @@ internal readonly struct PublisherCollection
     internal static MessageBrokerPublisher? TryGetByChannelId(MessageBrokerClient client, int channelId)
     {
         using ( client.AcquireLock() )
-            return client.PublisherCollection._byChannelId.TryGetValue( channelId, out var result ) ? result : null;
+            return client.PublisherCollection._store.TryGetById( channelId );
     }
 
     [Pure]
@@ -82,14 +69,17 @@ internal readonly struct PublisherCollection
     internal static MessageBrokerPublisher? TryGetByChannelName(MessageBrokerClient client, string channelName)
     {
         using ( client.AcquireLock() )
-            return client.PublisherCollection._byChannelName.TryGetValue( channelName, out var result ) ? result : null;
+            return client.PublisherCollection._store.TryGetByName( channelName );
     }
 
-    internal static async ValueTask<Result<MessageBrokerBindResult?>> BindAsync(MessageBrokerClient client, string name, string? queueName)
+    internal static async ValueTask<Result<MessageBrokerBindResult?>> BindAsync(
+        MessageBrokerClient client,
+        string channelName,
+        string? streamName)
     {
-        Ensure.IsInRange( name.Length, Defaults.NameLengthBounds.Min, Defaults.NameLengthBounds.Max );
-        if ( queueName is not null )
-            Ensure.IsInRange( queueName.Length, Defaults.NameLengthBounds.Min, Defaults.NameLengthBounds.Max );
+        Ensure.IsInRange( channelName.Length, Defaults.NameLengthBounds.Min, Defaults.NameLengthBounds.Max );
+        if ( streamName is not null )
+            Ensure.IsInRange( streamName.Length, Defaults.NameLengthBounds.Min, Defaults.NameLengthBounds.Max );
 
         bool reverseEndianness;
         using ( client.AcquireLock() )
@@ -98,7 +88,8 @@ internal readonly struct PublisherCollection
                 ExceptionThrower.Throw( client.DisposedException() );
 
             client.AssertState( MessageBrokerClientState.Running );
-            if ( client.PublisherCollection._byChannelName.TryGetValue( name, out var publisher ) )
+            var publisher = client.PublisherCollection._store.TryGetByName( channelName );
+            if ( publisher is not null )
                 return MessageBrokerBindResult.CreateAlreadyBound( publisher );
 
             reverseEndianness = BitConverter.IsLittleEndian != client.IsServerLittleEndian;
@@ -111,7 +102,7 @@ internal readonly struct PublisherCollection
         var poolToken = default( MemoryPoolToken<byte> );
         try
         {
-            request = new Protocol.BindRequest( name, queueName );
+            request = new Protocol.BindRequest( channelName, streamName );
             poolToken = client.MemoryPool.Rent( request.Length, out var buffer ).EnableClearing();
             request.Serialize( buffer, reverseEndianness );
 
@@ -227,17 +218,15 @@ internal readonly struct PublisherCollection
                             var publisher = new MessageBrokerPublisher(
                                 client,
                                 parsedResponse.ChannelId,
-                                name,
-                                parsedResponse.QueueId,
-                                queueName ?? name );
+                                channelName,
+                                parsedResponse.StreamId,
+                                streamName ?? channelName );
 
-                            client.PublisherCollection._byChannelId.Add( parsedResponse.ChannelId, publisher );
-                            client.PublisherCollection._byChannelName.Add( name, publisher );
-
+                            client.PublisherCollection._store.Add( parsedResponse.ChannelId, channelName, publisher );
                             bindResult = MessageBrokerBindResult.Create(
                                 publisher,
                                 parsedResponse.ChannelCreated,
-                                parsedResponse.QueueCreated );
+                                parsedResponse.StreamCreated );
                         }
                     }
 
@@ -266,7 +255,7 @@ internal readonly struct PublisherCollection
                             client,
                             response.Header,
                             contextId,
-                            Protocol.RequestException( client, request.Header, parsedResponse.StringifyErrors( name ) ) ) );
+                            Protocol.RequestException( client, request.Header, parsedResponse.StringifyErrors( channelName ) ) ) );
                 }
                 default:
                 {
@@ -407,10 +396,7 @@ internal readonly struct PublisherCollection
                     {
                         cancel = client.ShouldCancel;
                         if ( ! cancel )
-                        {
-                            client.PublisherCollection._byChannelId.Remove( publisher.ChannelId );
-                            client.PublisherCollection._byChannelName.Remove( publisher.ChannelName );
-                        }
+                            client.PublisherCollection._store.Remove( publisher.ChannelId, publisher.ChannelName );
                     }
 
                     if ( cancel )
@@ -418,7 +404,7 @@ internal readonly struct PublisherCollection
                             MessageBrokerClientEvent.MessageReceived( client, response.Header, contextId, client.DisposedException() ) );
 
                     client.Emit( MessageBrokerClientEvent.MessageAccepted( client, response.Header, contextId ) );
-                    return MessageBrokerUnbindResult.Create( parsedResponse.ChannelRemoved, parsedResponse.QueueRemoved );
+                    return MessageBrokerUnbindResult.Create( parsedResponse.ChannelRemoved, parsedResponse.StreamRemoved );
                 }
                 case MessageBrokerClientEndpoint.UnbindFailureResponse:
                 {
@@ -616,10 +602,9 @@ internal readonly struct PublisherCollection
 
     internal void Clear()
     {
-        foreach ( var publisher in _byChannelId.Values )
-            publisher.OnClientDisposed();
+        foreach ( var obj in _store )
+            obj.OnClientDisposed();
 
-        _byChannelId.Clear();
-        _byChannelName.Clear();
+        _store.Clear();
     }
 }

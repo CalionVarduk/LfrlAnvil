@@ -114,29 +114,14 @@ internal struct MessageListener
 
             client.Emit( MessageBrokerClientEvent.MessageReceived( client, header ) );
 
-            PendingResponseSource target;
-            using ( client.AcquireLock() )
-            {
-                if ( client.ShouldCancel )
-                    return TaskStopReason.OwnerDisposed;
-
-                target = client.MessageContextQueue.GetNextPendingResponse();
-            }
-
-            if ( target.Source is null )
-            {
-                client.HandleUnexpectedEndpoint( header );
-                break;
-            }
-
             var packetPoolToken = default( MemoryPoolToken<byte> );
             var packetBuffer = Memory<byte>.Empty;
-            if ( target.ServerEndpoint != MessageBrokerServerEndpoint.PingRequest )
+            if ( header.GetClientEndpoint() == MessageBrokerClientEndpoint.MessageNotification )
             {
                 var packetLength = Protocol.AssertPacketLength( client, header );
                 if ( packetLength.Exception is not null )
                 {
-                    client.Emit( MessageBrokerClientEvent.MessageRejected( client, header, packetLength.Exception, target.ContextId ) );
+                    client.Emit( MessageBrokerClientEvent.MessageRejected( client, header, packetLength.Exception ) );
                     break;
                 }
 
@@ -154,19 +139,72 @@ internal struct MessageListener
                         break;
                     }
                 }
-            }
 
-            using ( client.AcquireLock() )
-            {
-                if ( client.ShouldCancel )
+                using ( client.AcquireLock() )
                 {
-                    packetPoolToken.Return( client );
-                    return TaskStopReason.OwnerDisposed;
+                    if ( client.ShouldCancel )
+                    {
+                        packetPoolToken.Return( client );
+                        return TaskStopReason.OwnerDisposed;
+                    }
+
+                    client.MessageNotifications.Enqueue( header, client.GetTimestamp(), packetPoolToken, packetBuffer );
+                }
+            }
+            else
+            {
+                PendingResponseSource target;
+                using ( client.AcquireLock() )
+                {
+                    if ( client.ShouldCancel )
+                        return TaskStopReason.OwnerDisposed;
+
+                    target = client.MessageContextQueue.GetNextPendingResponse();
                 }
 
-                client.MessageContextQueue.NotifyPendingResponseSource(
-                    target.Source,
-                    IncomingPacketToken.Ok( header, packetPoolToken, packetBuffer ) );
+                if ( target.Source is null )
+                {
+                    client.HandleUnexpectedEndpoint( header );
+                    break;
+                }
+
+                if ( target.ServerEndpoint != MessageBrokerServerEndpoint.PingRequest )
+                {
+                    var packetLength = Protocol.AssertPacketLength( client, header );
+                    if ( packetLength.Exception is not null )
+                    {
+                        client.Emit( MessageBrokerClientEvent.MessageRejected( client, header, packetLength.Exception, target.ContextId ) );
+                        break;
+                    }
+
+                    if ( packetLength.Value > 0 )
+                    {
+                        packetPoolToken = client.MemoryPool.Rent( packetLength.Value, out packetBuffer ).EnableClearing();
+                        try
+                        {
+                            await stream.ReadExactlyAsync( packetBuffer, timeoutToken ).ConfigureAwait( false );
+                        }
+                        catch ( Exception exc )
+                        {
+                            client.Emit( MessageBrokerClientEvent.WaitingForMessage( client, exc ) );
+                            packetPoolToken.Return( client );
+                            break;
+                        }
+                    }
+                }
+
+                using ( client.AcquireLock() )
+                {
+                    if ( client.ShouldCancel )
+                    {
+                        packetPoolToken.Return( client );
+                        return TaskStopReason.OwnerDisposed;
+                    }
+
+                    client.MessageContextQueue.NotifyPendingResponseSource(
+                        target.Source,
+                        IncomingPacketToken.Ok( header, packetPoolToken, packetBuffer ) );
+                }
             }
         }
 

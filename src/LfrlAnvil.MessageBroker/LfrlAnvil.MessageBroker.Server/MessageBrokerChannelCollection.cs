@@ -39,7 +39,7 @@ public readonly struct MessageBrokerChannelCollection
     /// </summary>
     /// <returns>All owned channels.</returns>
     [Pure]
-    public MessageBrokerChannel[] GetAll()
+    public ReadOnlyArray<MessageBrokerChannel> GetAll()
     {
         return ChannelCollection.GetAll( _server );
     }

@@ -27,14 +27,14 @@ public readonly struct MessageBrokerQueueEvent
 {
     private MessageBrokerQueueEvent(
         MessageBrokerQueue queue,
-        MessageBrokerChannelBinding? binding,
+        MessageBrokerSubscription? subscription,
         MessageBrokerQueueEventType type,
         ulong? messageId = null,
         ulong contextId = MessageBrokerRemoteClientEvent.RootContextId,
         Exception? exception = null)
     {
         Queue = queue;
-        Binding = binding;
+        Subscription = subscription;
         MessageId = messageId;
         ContextId = contextId;
         Type = type;
@@ -47,9 +47,9 @@ public readonly struct MessageBrokerQueueEvent
     public MessageBrokerQueue Queue { get; }
 
     /// <summary>
-    /// <see cref="MessageBrokerChannelBinding"/> related to this event.
+    /// <see cref="MessageBrokerSubscription"/> related to this event.
     /// </summary>
-    public MessageBrokerChannelBinding? Binding { get; }
+    public MessageBrokerSubscription? Subscription { get; }
 
     /// <summary>
     /// Id of a message related to this event.
@@ -60,7 +60,7 @@ public readonly struct MessageBrokerQueueEvent
     /// Id of an internal context with which this event is associated.
     /// </summary>
     /// <remarks>
-    /// Can be used to find other correlating events emitted either by the <see cref="Queue"/> or the <see cref="Binding"/>.
+    /// Can be used to find other correlating events emitted either by the <see cref="Queue"/> or the <see cref="Subscription"/>.
     /// </remarks>
     public ulong ContextId { get; }
 
@@ -101,8 +101,10 @@ public readonly struct MessageBrokerQueueEvent
     {
         builder
             .Append( '[' )
-            .Append( Queue.Id.ToString( CultureInfo.InvariantCulture ) )
+            .Append( Queue.Client.Id.ToString( CultureInfo.InvariantCulture ) )
             .Append( "::'" )
+            .Append( Queue.Client.Name )
+            .Append( "'::'" )
             .Append( Queue.Name )
             .Append( "'::" )
             .Append( IsRootContext ? "<ROOT>" : ContextId.ToString( CultureInfo.InvariantCulture ) )
@@ -118,16 +120,12 @@ public readonly struct MessageBrokerQueueEvent
             {
                 case MessageBrokerQueueEventType.Created:
                 {
-                    if ( Binding is not null )
+                    if ( Subscription is not null )
                         builder
-                            .Append( " by binding [" )
-                            .Append( Binding.Client.Id.ToString( CultureInfo.InvariantCulture ) )
+                            .Append( " by subscription to [" )
+                            .Append( Subscription.Channel.Id.ToString( CultureInfo.InvariantCulture ) )
                             .Append( "::'" )
-                            .Append( Binding.Client.Name )
-                            .Append( "'] => [" )
-                            .Append( Binding.Channel.Id.ToString( CultureInfo.InvariantCulture ) )
-                            .Append( "::'" )
-                            .Append( Binding.Channel.Name )
+                            .Append( Subscription.Channel.Name )
                             .Append( "']" );
 
                     break;
@@ -138,16 +136,12 @@ public readonly struct MessageBrokerQueueEvent
                     if ( MessageId is not null )
                         builder.Append( " MessageId = " ).Append( MessageId.Value.ToString( CultureInfo.InvariantCulture ) );
 
-                    if ( Binding is not null )
+                    if ( Subscription is not null )
                         builder
-                            .Append( " by binding [" )
-                            .Append( Binding.Client.Id.ToString( CultureInfo.InvariantCulture ) )
+                            .Append( " due to subscription to [" )
+                            .Append( Subscription.Channel.Id.ToString( CultureInfo.InvariantCulture ) )
                             .Append( "::'" )
-                            .Append( Binding.Client.Name )
-                            .Append( "'] => [" )
-                            .Append( Binding.Channel.Id.ToString( CultureInfo.InvariantCulture ) )
-                            .Append( "::'" )
-                            .Append( Binding.Channel.Name )
+                            .Append( Subscription.Channel.Name )
                             .Append( "']" );
 
                     break;
@@ -158,16 +152,12 @@ public readonly struct MessageBrokerQueueEvent
                     if ( MessageId is not null )
                         builder.Append( " MessageId = " ).Append( MessageId.Value.ToString( CultureInfo.InvariantCulture ) );
 
-                    if ( Binding is not null )
+                    if ( Subscription is not null )
                         builder
-                            .Append( " by binding [" )
-                            .Append( Binding.Client.Id.ToString( CultureInfo.InvariantCulture ) )
+                            .Append( " due to subscription to [" )
+                            .Append( Subscription.Channel.Id.ToString( CultureInfo.InvariantCulture ) )
                             .Append( "::'" )
-                            .Append( Binding.Client.Name )
-                            .Append( "'] => [" )
-                            .Append( Binding.Channel.Id.ToString( CultureInfo.InvariantCulture ) )
-                            .Append( "::'" )
-                            .Append( Binding.Channel.Name )
+                            .Append( Subscription.Channel.Name )
                             .Append( "']" );
 
                     break;
@@ -189,28 +179,30 @@ public readonly struct MessageBrokerQueueEvent
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerQueueEvent Created(
         MessageBrokerQueue queue,
-        MessageBrokerChannelBinding binding,
+        MessageBrokerSubscription subscription,
         ulong contextId = MessageBrokerRemoteClientEvent.RootContextId)
     {
-        return new MessageBrokerQueueEvent( queue, binding, MessageBrokerQueueEventType.Created, contextId: contextId );
+        return new MessageBrokerQueueEvent( queue, subscription, MessageBrokerQueueEventType.Created, contextId: contextId );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerQueueEvent MessageEnqueued(
         MessageBrokerQueue queue,
-        MessageBrokerChannelBinding binding,
-        ulong messageId,
-        ulong contextId)
+        MessageBrokerSubscription subscription,
+        ulong messageId)
     {
-        return new MessageBrokerQueueEvent( queue, binding, MessageBrokerQueueEventType.MessageEnqueued, messageId, contextId );
+        return new MessageBrokerQueueEvent( queue, subscription, MessageBrokerQueueEventType.MessageEnqueued, messageId );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerQueueEvent MessageDequeued(MessageBrokerQueue queue, MessageBrokerChannelBinding binding, ulong messageId)
+    internal static MessageBrokerQueueEvent MessageDequeued(
+        MessageBrokerQueue queue,
+        MessageBrokerSubscription subscription,
+        ulong messageId)
     {
-        return new MessageBrokerQueueEvent( queue, binding, MessageBrokerQueueEventType.MessageDequeued, messageId );
+        return new MessageBrokerQueueEvent( queue, subscription, MessageBrokerQueueEventType.MessageDequeued, messageId );
     }
 
     [Pure]

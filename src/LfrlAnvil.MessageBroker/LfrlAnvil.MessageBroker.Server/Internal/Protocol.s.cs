@@ -264,6 +264,16 @@ internal static class Protocol
 
             return new BindRequestHeader( flags, channelNameLength );
         }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal Chain<string> StringifyErrors(int packetLength)
+        {
+            var maxChannelNameLength = packetLength - Length;
+            return ChannelNameLength < 0 || ChannelNameLength > maxChannelNameLength
+                ? Chain.Create( Resources.InvalidBinaryChannelNameLength( ChannelNameLength, maxChannelNameLength ) )
+                : Chain<string>.Empty;
+        }
     }
 
     internal readonly struct BoundResponse
@@ -272,20 +282,20 @@ internal static class Protocol
         internal readonly PacketHeader Header;
         internal readonly byte Flags;
         internal readonly int ChannelId;
-        internal readonly int QueueId;
+        internal readonly int StreamId;
 
-        internal BoundResponse(bool channelCreated, bool queueCreated, int channelId, int queueId)
+        internal BoundResponse(bool channelCreated, bool streamCreated, int channelId, int streamId)
         {
             Header = PacketHeader.Create( MessageBrokerClientEndpoint.BoundResponse, Payload );
-            Flags = ( byte )((channelCreated ? 1 : 0) | (queueCreated ? 2 : 0));
+            Flags = ( byte )((channelCreated ? 1 : 0) | (streamCreated ? 2 : 0));
             ChannelId = channelId;
-            QueueId = queueId;
+            StreamId = streamId;
         }
 
         [Pure]
         public override string ToString()
         {
-            return $"[{Header}] Flags = {Flags}, ChannelId = {ChannelId}, QueueId = {QueueId}";
+            return $"[{Header}] Flags = {Flags}, ChannelId = {ChannelId}, StreamId = {StreamId}";
         }
 
         internal void Serialize(Memory<byte> target)
@@ -296,7 +306,7 @@ internal static class Protocol
             writer.MoveWrite( Header.Payload );
             writer.MoveWrite( Flags );
             writer.MoveWrite( unchecked( ( uint )ChannelId ) );
-            writer.Write( unchecked( ( uint )QueueId ) );
+            writer.Write( unchecked( ( uint )StreamId ) );
         }
     }
 
@@ -369,10 +379,10 @@ internal static class Protocol
         internal readonly PacketHeader Header;
         internal readonly byte Flags;
 
-        internal UnboundResponse(bool channelRemoved, bool queueRemoved)
+        internal UnboundResponse(bool channelRemoved, bool streamRemoved)
         {
             Header = PacketHeader.Create( MessageBrokerClientEndpoint.UnboundResponse, Payload );
-            Flags = ( byte )((channelRemoved ? 1 : 0) | (queueRemoved ? 2 : 0));
+            Flags = ( byte )((channelRemoved ? 1 : 0) | (streamRemoved ? 2 : 0));
         }
 
         [Pure]
@@ -428,12 +438,16 @@ internal static class Protocol
 
     internal readonly struct SubscribeRequestHeader
     {
-        internal const int Length = sizeof( byte );
+        internal const int Length = sizeof( byte ) + sizeof( uint ) * 2;
         internal readonly byte Flags;
+        internal readonly int PrefetchHint;
+        internal readonly int ChannelNameLength;
 
-        private SubscribeRequestHeader(byte flags)
+        private SubscribeRequestHeader(byte flags, int prefetchHint, int channelNameLength)
         {
             Flags = flags;
+            PrefetchHint = prefetchHint;
+            ChannelNameLength = channelNameLength;
         }
 
         internal bool CreateChannelIfNotExists => (Flags & 1) != 0;
@@ -441,7 +455,7 @@ internal static class Protocol
         [Pure]
         public override string ToString()
         {
-            return $"Flags = {Flags}";
+            return $"Flags = {Flags}, PrefetchHint = {PrefetchHint}, ChannelNameLength = {ChannelNameLength}";
         }
 
         [Pure]
@@ -450,29 +464,49 @@ internal static class Protocol
         {
             Assume.Equals( source.Length, Length );
             var reader = new BinaryContractReader( source.Span );
-            var flags = reader.ReadInt8();
-            return new SubscribeRequestHeader( flags );
+            var flags = reader.MoveReadInt8();
+            var prefetchHint = unchecked( ( int )reader.MoveReadInt32() );
+            var channelNameLength = unchecked( ( int )reader.ReadInt32() );
+            return new SubscribeRequestHeader( flags, prefetchHint, channelNameLength );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal Chain<string> StringifyErrors(int packetLength)
+        {
+            var errors = Chain<string>.Empty;
+            var maxChannelNameLength = packetLength - Length;
+
+            if ( ChannelNameLength < 0 || ChannelNameLength > maxChannelNameLength )
+                errors = errors.Extend( Resources.InvalidBinaryChannelNameLength( ChannelNameLength, maxChannelNameLength ) );
+
+            if ( PrefetchHint < 1 )
+                errors = errors.Extend( Resources.InvalidPrefetchHint( PrefetchHint ) );
+
+            return errors;
         }
     }
 
     internal readonly struct SubscribedResponse
     {
-        internal const int Payload = sizeof( byte ) + sizeof( uint );
+        internal const int Payload = sizeof( byte ) + sizeof( uint ) * 2;
         internal readonly PacketHeader Header;
         internal readonly byte Flags;
         internal readonly int ChannelId;
+        internal readonly int QueueId;
 
-        internal SubscribedResponse(bool channelCreated, int channelId)
+        internal SubscribedResponse(bool channelCreated, bool queueCreated, int channelId, int queueId)
         {
             Header = PacketHeader.Create( MessageBrokerClientEndpoint.SubscribedResponse, Payload );
-            Flags = ( byte )(channelCreated ? 1 : 0);
+            Flags = ( byte )((channelCreated ? 1 : 0) | (queueCreated ? 2 : 0));
             ChannelId = channelId;
+            QueueId = queueId;
         }
 
         [Pure]
         public override string ToString()
         {
-            return $"[{Header}] Flags = {Flags}, ChannelId = {ChannelId}";
+            return $"[{Header}] Flags = {Flags}, ChannelId = {ChannelId}, QueueId = {QueueId}";
         }
 
         internal void Serialize(Memory<byte> target)
@@ -482,7 +516,8 @@ internal static class Protocol
             writer.MoveWrite( Header.EndpointCode );
             writer.MoveWrite( Header.Payload );
             writer.MoveWrite( Flags );
-            writer.Write( unchecked( ( uint )ChannelId ) );
+            writer.MoveWrite( unchecked( ( uint )ChannelId ) );
+            writer.Write( unchecked( ( uint )QueueId ) );
         }
     }
 
@@ -556,10 +591,10 @@ internal static class Protocol
         internal readonly PacketHeader Header;
         internal readonly byte Flags;
 
-        internal UnsubscribedResponse(bool channelRemoved)
+        internal UnsubscribedResponse(bool channelRemoved, bool queueRemoved)
         {
             Header = PacketHeader.Create( MessageBrokerClientEndpoint.UnsubscribedResponse, Payload );
-            Flags = ( byte )(channelRemoved ? 1 : 0);
+            Flags = ( byte )((channelRemoved ? 1 : 0) | (queueRemoved ? 2 : 0));
         }
 
         [Pure]
@@ -704,6 +739,61 @@ internal static class Protocol
         }
     }
 
+    internal readonly struct MessageNotificationHeader
+    {
+        internal const int Payload = sizeof( ulong ) * 2 + sizeof( uint ) * 5;
+        internal readonly PacketHeader Header;
+        internal readonly ulong MessageId;
+        internal readonly Timestamp EnqueuedAt;
+        internal readonly int SenderId;
+        internal readonly int ChannelId;
+        internal readonly int StreamId;
+        internal readonly int RetryAttempt;
+        internal readonly int RedeliveryAttempt;
+
+        internal MessageNotificationHeader(
+            ulong messageId,
+            Timestamp enqueuedAt,
+            int senderId,
+            int channelId,
+            int streamId,
+            int retryAttempt,
+            int redeliveryAttempt,
+            int length)
+        {
+            Header = PacketHeader.Create( MessageBrokerClientEndpoint.MessageNotification, unchecked( Payload + ( uint )length ) );
+            MessageId = messageId;
+            EnqueuedAt = enqueuedAt;
+            SenderId = senderId;
+            ChannelId = channelId;
+            StreamId = streamId;
+            RetryAttempt = retryAttempt;
+            RedeliveryAttempt = redeliveryAttempt;
+        }
+
+        [Pure]
+        public override string ToString()
+        {
+            return
+                $"[{Header}] MessageId = {MessageId}, EnqueuedAt = {EnqueuedAt}, SenderId = {SenderId}, ChannelId = {ChannelId}, StreamId = {StreamId}, RetryAttempt = {RetryAttempt}, RedeliveryAttempt = {RedeliveryAttempt}";
+        }
+
+        internal void Serialize(Memory<byte> target)
+        {
+            Assume.Equals( target.Length, PacketHeader.Length + Payload );
+            var writer = new BinaryContractWriter( target.Span );
+            writer.MoveWrite( Header.EndpointCode );
+            writer.MoveWrite( Header.Payload );
+            writer.MoveWrite( MessageId );
+            writer.MoveWrite( unchecked( ( ulong )EnqueuedAt.UnixEpochTicks ) );
+            writer.MoveWrite( unchecked( ( uint )SenderId ) );
+            writer.MoveWrite( unchecked( ( uint )ChannelId ) );
+            writer.MoveWrite( unchecked( ( uint )StreamId ) );
+            writer.MoveWrite( unchecked( ( uint )RetryAttempt ) );
+            writer.Write( unchecked( ( uint )RedeliveryAttempt ) );
+        }
+    }
+
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerServerProtocolException ProtocolException(
@@ -752,23 +842,22 @@ internal static class Protocol
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerServerProtocolException InvalidStreamNameLengthException(
+        MessageBrokerRemoteClient client,
+        PacketHeader header,
+        int length)
+    {
+        return ProtocolException( client, header, Chain.Create( Resources.InvalidStreamNameLength( length ) ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerServerProtocolException InvalidQueueNameLengthException(
         MessageBrokerRemoteClient client,
         PacketHeader header,
         int length)
     {
         return ProtocolException( client, header, Chain.Create( Resources.InvalidQueueNameLength( length ) ) );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerServerProtocolException InvalidBinaryChannelNameLengthException(
-        MessageBrokerRemoteClient client,
-        PacketHeader header,
-        int length,
-        int maxLength)
-    {
-        return ProtocolException( client, header, Chain.Create( Resources.InvalidBinaryChannelNameLength( length, maxLength ) ) );
     }
 
     [Pure]

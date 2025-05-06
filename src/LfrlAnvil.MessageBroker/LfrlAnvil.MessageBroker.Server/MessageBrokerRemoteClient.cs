@@ -13,13 +13,11 @@
 // limitations under the License.
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
@@ -38,11 +36,13 @@ namespace LfrlAnvil.MessageBroker.Server;
 /// </summary>
 public sealed partial class MessageBrokerRemoteClient
 {
-    internal readonly Dictionary<int, MessageBrokerChannelBinding> BindingsByChannelId;
-    internal readonly Dictionary<int, MessageBrokerSubscription> SubscriptionsByChannelId;
     internal readonly MemoryPool<byte> MemoryPool;
+    internal ReferenceStore<int, MessageBrokerChannelBinding> BindingsByChannelId;
+    internal ReferenceStore<int, MessageBrokerSubscription> SubscriptionsByChannelId;
+    internal ObjectStore<MessageBrokerQueue> QueuesByName;
     internal EventScheduler EventScheduler;
     internal MessageListener MessageListener;
+    internal MessageNotifications MessageNotifications;
     internal RequestHandler RequestHandler;
     internal MessageContextQueue MessageContextQueue;
 
@@ -67,10 +67,12 @@ public sealed partial class MessageBrokerRemoteClient
         PingInterval = Duration.Zero;
         _state = MessageBrokerRemoteClientState.Created;
 
-        BindingsByChannelId = new Dictionary<int, MessageBrokerChannelBinding>();
-        SubscriptionsByChannelId = new Dictionary<int, MessageBrokerSubscription>();
+        BindingsByChannelId = ReferenceStore<int, MessageBrokerChannelBinding>.Create();
+        SubscriptionsByChannelId = ReferenceStore<int, MessageBrokerSubscription>.Create();
+        QueuesByName = ObjectStore<MessageBrokerQueue>.Create( StringComparer.OrdinalIgnoreCase );
         EventScheduler = EventScheduler.Create();
         MessageListener = MessageListener.Create();
+        MessageNotifications = MessageNotifications.Create();
         RequestHandler = RequestHandler.Create();
         MessageContextQueue = MessageContextQueue.Create();
 
@@ -182,6 +184,11 @@ public sealed partial class MessageBrokerRemoteClient
     /// </summary>
     public MessageBrokerRemoteClientSubscriptionCollection Subscriptions => new MessageBrokerRemoteClientSubscriptionCollection( this );
 
+    /// <summary>
+    /// Collection of <see cref="MessageBrokerQueue"/> instances attached to this client, identified by their names.
+    /// </summary>
+    public MessageBrokerRemoteClientQueueCollection Queues => new MessageBrokerRemoteClientQueueCollection( this );
+
     internal Duration MaxReadTimeout { get; private set; }
     internal bool ShouldCancel => _state >= MessageBrokerRemoteClientState.Disposing;
 
@@ -209,7 +216,8 @@ public sealed partial class MessageBrokerRemoteClient
             _state = MessageBrokerRemoteClientState.Disposing;
         }
 
-        var (bindings, subscriptions) = await DisposeAsync( extractChildren: true ).ConfigureAwait( false );
+        var (bindings, subscriptions, queues) = await DisposeAsync( extractAllChildren: true ).ConfigureAwait( false );
+        await Parallel.ForEachAsync( queues, static (b, _) => b.OnClientDisconnectedAsync() ).ConfigureAwait( false );
         await Parallel.ForEachAsync( bindings, static (b, _) => b.OnClientDisconnectedAsync() ).ConfigureAwait( false );
         foreach ( var subscription in subscriptions )
             subscription.OnClientDisconnected();
@@ -234,7 +242,9 @@ public sealed partial class MessageBrokerRemoteClient
             _state = MessageBrokerRemoteClientState.Disposing;
         }
 
-        await DisposeAsync( extractChildren: false ).ConfigureAwait( false );
+        var (_, _, queues) = await DisposeAsync( extractAllChildren: false ).ConfigureAwait( false );
+        await Parallel.ForEachAsync( queues, static (b, _) => b.OnServerDisposedAsync() ).ConfigureAwait( false );
+
         using ( AcquireLock() )
             _state = MessageBrokerRemoteClientState.Disposed;
 
@@ -281,52 +291,60 @@ public sealed partial class MessageBrokerRemoteClient
     internal Protocol.BindFailureResponse.Reasons BindUnsafe(
         MessageBrokerChannel channel,
         bool channelCreated,
-        string queueName,
+        string streamName,
         ref MessageBrokerChannelBinding? binding,
-        ref MessageBrokerQueue? queue,
-        ref bool queueCreated)
+        ref MessageBrokerStream? stream,
+        ref bool streamCreated)
     {
         using ( channel.AcquireLock() )
         {
             if ( channel.ShouldCancel )
                 return Protocol.BindFailureResponse.Reasons.Cancelled;
 
-            ref var bindingRef = ref CollectionsMarshal.GetValueRefOrAddDefault( channel.BindingsByClientId, Id, out var exists )!;
-            if ( exists )
+            var token = channel.BindingsByClientId.GetOrAddNull( Id );
+            if ( token.Exists )
             {
-                binding = bindingRef;
-                queue = binding.Queue;
+                binding = token.GetObject();
+                stream = binding.Stream;
                 return Protocol.BindFailureResponse.Reasons.AlreadyBound;
             }
 
-            queue = QueueCollection.RegisterUnsafe( Server, queueName, out queueCreated );
-            using ( queue.AcquireLock() )
+            try
             {
-                if ( queue.ShouldCancel )
+                stream = StreamCollection.RegisterUnsafe( Server, streamName, out streamCreated );
+                using ( stream.AcquireLock() )
                 {
-                    channel.BindingsByClientId.Remove( Id );
-                    if ( channelCreated )
-                        ChannelCollection.RemoveUnsafe( channel );
+                    if ( stream.ShouldCancel )
+                    {
+                        token.Revert( ref channel.BindingsByClientId, Id );
+                        if ( channelCreated )
+                            ChannelCollection.RemoveUnsafe( channel );
 
-                    return Protocol.BindFailureResponse.Reasons.Cancelled;
+                        return Protocol.BindFailureResponse.Reasons.Cancelled;
+                    }
+
+                    try
+                    {
+                        binding = token.SetObject(
+                            ref channel.BindingsByClientId,
+                            new MessageBrokerChannelBinding( this, channel, stream ) );
+                    }
+                    catch
+                    {
+                        if ( streamCreated )
+                            StreamCollection.RemoveUnsafe( stream );
+
+                        throw;
+                    }
+
+                    BindingsByChannelId.Add( channel.Id, binding );
+                    stream.BindingsByClientChannelIdPair.Add( new Pair<int, int>( Id, channel.Id ), binding );
                 }
-
-                try
-                {
-                    binding = new MessageBrokerChannelBinding( this, channel, queue );
-                    bindingRef = binding;
-                }
-                catch
-                {
-                    channel.BindingsByClientId.Remove( Id );
-                    if ( queueCreated )
-                        QueueCollection.RemoveUnsafe( queue );
-
-                    throw;
-                }
-
-                BindingsByChannelId.Add( channel.Id, binding );
-                queue.BindingsByKey.Add( new QueueBindingKey( Id, channel.Id ), binding );
+            }
+            catch
+            {
+                token.Revert( ref channel.BindingsByClientId, Id );
+                throw;
             }
         }
 
@@ -336,19 +354,19 @@ public sealed partial class MessageBrokerRemoteClient
     internal Protocol.UnbindFailureResponse.Reasons BeginUnbindUnsafe(
         MessageBrokerChannel channel,
         ref MessageBrokerChannelBinding? binding,
-        ref MessageBrokerQueue? queue,
+        ref MessageBrokerStream? stream,
         ref bool disposingChannel,
-        ref bool disposingQueue)
+        ref bool disposingStream)
     {
         using ( channel.AcquireLock() )
         {
-            if ( channel.ShouldCancel || ! BindingsByChannelId.TryGetValue( channel.Id, out binding ) )
+            if ( channel.ShouldCancel || ! BindingsByChannelId.TryGet( channel.Id, out binding ) )
                 return Protocol.UnbindFailureResponse.Reasons.NotBound;
 
-            queue = binding.Queue;
-            using ( queue.AcquireLock() )
+            stream = binding.Stream;
+            using ( stream.AcquireLock() )
             {
-                if ( queue.ShouldCancel )
+                if ( stream.ShouldCancel )
                     return Protocol.UnbindFailureResponse.Reasons.NotBound;
 
                 using ( binding.AcquireLock() )
@@ -359,7 +377,7 @@ public sealed partial class MessageBrokerRemoteClient
                     binding.BeginDisposingUnsafe();
                     BindingsByChannelId.Remove( channel.Id );
                     disposingChannel = channel.TryDisposeByRemovingBindingUnsafe( Id );
-                    disposingQueue = queue.TryDisposeByRemovingBindingUnsafe( new QueueBindingKey( Id, channel.Id ) );
+                    disposingStream = stream.TryDisposeByRemovingBindingUnsafe( Id, channel.Id );
                 }
             }
         }
@@ -369,57 +387,117 @@ public sealed partial class MessageBrokerRemoteClient
 
     internal Protocol.SubscribeFailureResponse.Reasons SubscribeUnsafe(
         MessageBrokerChannel channel,
-        ref MessageBrokerSubscription? subscription)
+        bool channelCreated,
+        string queueName,
+        int prefetchHint,
+        ref MessageBrokerSubscription? subscription,
+        ref MessageBrokerQueue? queue,
+        ref bool queueCreated)
     {
         using ( channel.AcquireLock() )
         {
             if ( channel.ShouldCancel )
                 return Protocol.SubscribeFailureResponse.Reasons.Cancelled;
 
-            ref var subscriptionRef
-                = ref CollectionsMarshal.GetValueRefOrAddDefault( channel.SubscriptionsByClientId, Id, out var exists )!;
-
-            if ( exists )
+            var token = channel.SubscriptionsByClientId.GetOrAddNull( Id );
+            if ( token.Exists )
             {
-                subscription = subscriptionRef;
+                subscription = token.GetObject();
+                queue = subscription.Queue;
                 return Protocol.SubscribeFailureResponse.Reasons.AlreadySubscribed;
             }
 
             try
             {
-                subscriptionRef = new MessageBrokerSubscription( this, channel );
-                subscription = subscriptionRef;
+                queue = RegisterQueue( queueName, out queueCreated );
+                using ( queue.AcquireLock() )
+                {
+                    if ( queue.ShouldCancel )
+                    {
+                        token.Revert( ref channel.SubscriptionsByClientId, Id );
+                        if ( channelCreated )
+                            ChannelCollection.RemoveUnsafe( channel );
+
+                        return Protocol.SubscribeFailureResponse.Reasons.Cancelled;
+                    }
+
+                    try
+                    {
+                        subscription = token.SetObject(
+                            ref channel.SubscriptionsByClientId,
+                            new MessageBrokerSubscription( this, channel, queue, prefetchHint ) );
+                    }
+                    catch
+                    {
+                        if ( queueCreated )
+                            QueuesByName.Remove( queue.Id, queue.Name );
+
+                        throw;
+                    }
+
+                    SubscriptionsByChannelId.Add( channel.Id, subscription );
+                    queue.SubscriptionsByChannelId.Add( channel.Id, subscription );
+                }
             }
             catch
             {
-                channel.SubscriptionsByClientId.Remove( Id );
+                token.Revert( ref channel.SubscriptionsByClientId, Id );
                 throw;
             }
-
-            SubscriptionsByChannelId.Add( channel.Id, subscription );
         }
 
         return Protocol.SubscribeFailureResponse.Reasons.None;
     }
 
+    private MessageBrokerQueue RegisterQueue(string name, out bool created)
+    {
+        var token = QueuesByName.GetOrAddNull( name );
+        if ( token.Exists )
+        {
+            created = false;
+            return token.GetObject();
+        }
+
+        try
+        {
+            created = true;
+            return token.SetObject( ref QueuesByName, new MessageBrokerQueue( this, token.Id, name ) );
+        }
+        catch
+        {
+            token.Revert( ref QueuesByName, name );
+            throw;
+        }
+    }
+
     internal Protocol.UnsubscribeFailureResponse.Reasons BeginUnsubscribeUnsafe(
         MessageBrokerChannel channel,
         ref MessageBrokerSubscription? subscription,
-        ref bool disposingChannel)
+        ref MessageBrokerQueue? queue,
+        ref bool disposingChannel,
+        ref bool disposingQueue)
     {
         using ( channel.AcquireLock() )
         {
-            if ( channel.ShouldCancel || ! SubscriptionsByChannelId.TryGetValue( channel.Id, out subscription ) )
+            if ( channel.ShouldCancel || ! SubscriptionsByChannelId.TryGet( channel.Id, out subscription ) )
                 return Protocol.UnsubscribeFailureResponse.Reasons.NotSubscribed;
 
-            using ( subscription.AcquireLock() )
+            queue = subscription.Queue;
+            using ( queue.AcquireLock() )
             {
-                if ( subscription.ShouldCancel )
+                if ( queue.ShouldCancel )
                     return Protocol.UnsubscribeFailureResponse.Reasons.NotSubscribed;
 
-                subscription.BeginDisposingUnsafe();
-                SubscriptionsByChannelId.Remove( channel.Id );
-                disposingChannel = channel.TryDisposeByRemovingSubscriptionUnsafe( Id );
+                using ( subscription.AcquireLock() )
+                {
+                    if ( subscription.ShouldCancel )
+                        return Protocol.UnsubscribeFailureResponse.Reasons.NotSubscribed;
+
+                    subscription.BeginDisposingUnsafe();
+                    SubscriptionsByChannelId.Remove( channel.Id );
+                    disposingChannel = channel.TryDisposeByRemovingSubscriptionUnsafe( Id );
+                    disposingQueue = queue.TryDisposeByRemovingSubscriptionUnsafe( channel.Id );
+                }
             }
         }
 
@@ -520,48 +598,44 @@ public sealed partial class MessageBrokerRemoteClient
         return new MessageBrokerRemoteClientDisposedException( this );
     }
 
-    private async ValueTask<(MessageBrokerChannelBinding[] Bindings, MessageBrokerSubscription[] Subscriptions)> DisposeAsync(
-        bool extractChildren)
+    private async ValueTask<(MessageBrokerChannelBinding[] Bindings, MessageBrokerSubscription[] Subscriptions, MessageBrokerQueue[] Queues
+        )> DisposeAsync(bool extractAllChildren)
     {
         Emit( MessageBrokerRemoteClientEvent.Disposing( this ) );
 
         Task? eventSchedulerTask;
         Task? requestHandlerTask;
-        Task? messageReceiverTask;
+        Task? messageListenerTask;
+        Task? messageNotificationsTask;
         ValueTaskDelaySource? ownedDelaySource;
 
         var bindings = Array.Empty<MessageBrokerChannelBinding>();
         var subscriptions = Array.Empty<MessageBrokerSubscription>();
+        MessageBrokerQueue[] queues;
         using ( AcquireLock() )
         {
             ownedDelaySource = _delaySource.DiscardOwnedSource();
-            if ( extractChildren )
+            if ( extractAllChildren )
             {
-                if ( BindingsByChannelId.Count > 0 )
-                {
-                    var i = 0;
-                    bindings = new MessageBrokerChannelBinding[BindingsByChannelId.Count];
-                    foreach ( var binding in BindingsByChannelId.Values )
-                        bindings[i++] = binding;
-                }
-
-                if ( SubscriptionsByChannelId.Count > 0 )
-                {
-                    var i = 0;
-                    subscriptions = new MessageBrokerSubscription[SubscriptionsByChannelId.Count];
-                    foreach ( var subscription in SubscriptionsByChannelId.Values )
-                        subscriptions[i++] = subscription;
-                }
+                bindings = BindingsByChannelId.ClearAndExtract();
+                subscriptions = SubscriptionsByChannelId.ClearAndExtract();
+            }
+            else
+            {
+                BindingsByChannelId.Clear();
+                SubscriptionsByChannelId.Clear();
             }
 
-            BindingsByChannelId.Clear();
-            SubscriptionsByChannelId.Clear();
+            queues = QueuesByName.Clear();
+
             eventSchedulerTask = EventScheduler.DiscardUnderlyingTask();
             requestHandlerTask = RequestHandler.DiscardUnderlyingTask();
-            messageReceiverTask = MessageListener.DiscardUnderlyingTask();
+            messageListenerTask = MessageListener.DiscardUnderlyingTask();
+            messageNotificationsTask = MessageNotifications.DiscardUnderlyingTask();
             MessageContextQueue.Dispose();
             RequestHandler.Dispose();
             EventScheduler.Dispose();
+            MessageNotifications.Dispose();
         }
 
         if ( eventSchedulerTask is not null )
@@ -570,8 +644,11 @@ public sealed partial class MessageBrokerRemoteClient
         if ( requestHandlerTask is not null )
             await requestHandlerTask.ConfigureAwait( false );
 
-        if ( messageReceiverTask is not null )
-            await messageReceiverTask.ConfigureAwait( false );
+        if ( messageListenerTask is not null )
+            await messageListenerTask.ConfigureAwait( false );
+
+        if ( messageNotificationsTask is not null )
+            await messageNotificationsTask.ConfigureAwait( false );
 
         Exception? exception;
         using ( AcquireLock() )
@@ -581,8 +658,8 @@ public sealed partial class MessageBrokerRemoteClient
             Emit( MessageBrokerRemoteClientEvent.Unexpected( this, exception ) );
 
         if ( ownedDelaySource is not null )
-            await ownedDelaySource.TryDisposeAsync();
+            await ownedDelaySource.TryDisposeAsync().ConfigureAwait( false );
 
-        return (bindings, subscriptions);
+        return (bindings, subscriptions, queues);
     }
 }

@@ -44,7 +44,12 @@ public readonly struct MessageBrokerSubscribeResult
     /// <summary>
     /// Specifies whether or not a new channel has been created by the server.
     /// </summary>
-    public bool ChannelCreated => _state == 2;
+    public bool ChannelCreated => (_state & 2) != 0;
+
+    /// <summary>
+    /// Specifies whether or not a new queue has been created by the server.
+    /// </summary>
+    public bool QueueCreated => (_state & 4) != 0;
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerSubscribeResult"/> instance.
@@ -53,19 +58,19 @@ public readonly struct MessageBrokerSubscribeResult
     [Pure]
     public override string ToString()
     {
-        return _state switch
-        {
-            1 => $"{Listener} (already subscribed)",
-            2 => $"{Listener} (channel created)",
-            _ => Listener.ToString()
-        };
+        if ( _state == 1 )
+            return $"{Listener} (already subscribed)";
+
+        var channelCreated = ChannelCreated ? " (channel created)" : string.Empty;
+        var queueCreated = QueueCreated ? " (queue created)" : string.Empty;
+        return $"{Listener}{channelCreated}{queueCreated}";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerSubscribeResult Create(MessageBrokerListener listener, bool channelCreated)
+    internal static MessageBrokerSubscribeResult Create(MessageBrokerListener listener, bool channelCreated, bool queueCreated)
     {
-        return new MessageBrokerSubscribeResult( listener, ( byte )(channelCreated ? 2 : 0) );
+        return new MessageBrokerSubscribeResult( listener, ( byte )((channelCreated ? 2 : 0) | (queueCreated ? 4 : 0)) );
     }
 
     [Pure]

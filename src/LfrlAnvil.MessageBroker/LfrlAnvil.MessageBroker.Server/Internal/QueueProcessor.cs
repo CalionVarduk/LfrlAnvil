@@ -42,24 +42,39 @@ internal struct QueueProcessor
     [MethodImpl( MethodImplOptions.NoInlining )]
     internal static async Task StartUnderlyingTask(MessageBrokerQueue queue)
     {
-        TaskStopReason stopReason;
-        try
+        while ( true )
         {
-            stopReason = await RunCore( queue ).ConfigureAwait( false );
+            TaskStopReason stopReason;
+            try
+            {
+                stopReason = await RunCore( queue ).ConfigureAwait( false );
+            }
+            catch ( Exception exc )
+            {
+                queue.Emit( MessageBrokerQueueEvent.Unexpected( queue, exc ) );
+                stopReason = TaskStopReason.Error;
+            }
+
+            if ( stopReason == TaskStopReason.OwnerDisposed )
+                break;
+
+            try
+            {
+                using ( queue.AcquireLock() )
+                {
+                    if ( queue.ShouldCancel )
+                        break;
+
+                    queue.QueueProcessor.SignalContinuation();
+                }
+
+                await Task.Delay( TimeSpan.FromSeconds( 1 ) ).ConfigureAwait( false );
+            }
+            catch ( Exception exc )
+            {
+                queue.Emit( MessageBrokerQueueEvent.Unexpected( queue, exc ) );
+            }
         }
-        catch ( Exception exc )
-        {
-            queue.Emit( MessageBrokerQueueEvent.Unexpected( queue, exc ) );
-            stopReason = TaskStopReason.Error;
-        }
-
-        if ( stopReason == TaskStopReason.OwnerDisposed )
-            return;
-
-        using ( queue.AcquireLock() )
-            queue.QueueProcessor._task = null;
-
-        await queue.RemoveAsync().ConfigureAwait( false );
     }
 
     internal void Dispose()
@@ -91,6 +106,7 @@ internal struct QueueProcessor
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static async ValueTask<TaskStopReason> RunCore(MessageBrokerQueue queue)
     {
+        var buffer = ListSlim<QueueMessage>.Create( minCapacity: 16 );
         while ( true )
         {
             var @continue = await queue.QueueProcessor._continuation.GetTask().ConfigureAwait( false );
@@ -100,15 +116,16 @@ internal struct QueueProcessor
             var disposed = false;
             while ( true )
             {
-                QueueMessage message;
+                int dequeued;
                 using ( queue.AcquireLock() )
                 {
                     if ( queue.ShouldCancel )
                         return TaskStopReason.OwnerDisposed;
 
-                    if ( ! queue.TryDequeueUnsafe( out message ) )
+                    dequeued = queue.CopyMessagesIntoUnsafe( ref buffer );
+                    if ( dequeued == 0 )
                     {
-                        if ( queue.TryDisposeDueToEmptyQueueUnsafe() )
+                        if ( queue.TryDisposeDueToPotentiallyEmptyQueueUnsafe() )
                             disposed = true;
                         else
                             queue.QueueProcessor._continuation.Reset();
@@ -117,11 +134,19 @@ internal struct QueueProcessor
                     }
                 }
 
-                queue.Emit( MessageBrokerQueueEvent.MessageDequeued( queue, message.Binding, message.Id ) );
+                try
+                {
+                    MessageNotifications.SendMessages( queue.Client, in buffer );
+                }
+                catch ( Exception exc )
+                {
+                    // TODO: log failure to enqueue notifications & continue (log refactor)
+                }
 
-                // TODO:
-                // move message to correct subscribers
-                message.PoolToken.Return( message.Binding.Client );
+                using ( queue.AcquireLock() )
+                    queue.DequeueMessagesUnsafe( dequeued );
+
+                ClearBuffer( queue, ref buffer );
             }
 
             if ( disposed )
@@ -130,5 +155,14 @@ internal struct QueueProcessor
                 return TaskStopReason.OwnerDisposed;
             }
         }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static void ClearBuffer(MessageBrokerQueue queue, ref ListSlim<QueueMessage> messages)
+    {
+        foreach ( ref readonly var message in messages )
+            queue.Emit( MessageBrokerQueueEvent.MessageDequeued( queue, message.Subscription, message.Id ) );
+
+        messages.Clear();
     }
 }

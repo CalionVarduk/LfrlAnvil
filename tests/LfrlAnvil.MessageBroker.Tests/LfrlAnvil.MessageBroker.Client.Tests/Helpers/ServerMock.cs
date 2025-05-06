@@ -141,15 +141,15 @@ internal sealed class ServerMock : IDisposable
         Send( buffer );
     }
 
-    internal void SendBoundResponse(bool channelCreated, bool queueCreated, int channelId, int queueId, uint? payload = null)
+    internal void SendBoundResponse(bool channelCreated, bool streamCreated, int channelId, int streamId, uint? payload = null)
     {
         var buffer = new byte[Protocol.PacketHeader.Length + Protocol.BoundResponse.Length];
         var writer = new BinaryContractWriter( buffer );
         writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.BoundResponse );
         writer.MoveWrite( payload ?? Protocol.BoundResponse.Length );
-        writer.MoveWrite( ( byte )((channelCreated ? 1 : 0) | (queueCreated ? 2 : 0)) );
+        writer.MoveWrite( ( byte )((channelCreated ? 1 : 0) | (streamCreated ? 2 : 0)) );
         writer.MoveWrite( ( uint )channelId );
-        writer.Write( ( uint )queueId );
+        writer.Write( ( uint )streamId );
         Send( buffer );
     }
 
@@ -163,13 +163,13 @@ internal sealed class ServerMock : IDisposable
         Send( buffer );
     }
 
-    internal void SendUnboundResponse(bool channelRemoved, bool queueRemoved, uint? payload = null)
+    internal void SendUnboundResponse(bool channelRemoved, bool streamRemoved, uint? payload = null)
     {
         var buffer = new byte[Protocol.PacketHeader.Length + Protocol.UnboundResponse.Length];
         var writer = new BinaryContractWriter( buffer );
         writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.UnboundResponse );
         writer.MoveWrite( payload ?? Protocol.UnboundResponse.Length );
-        writer.Write( ( byte )((channelRemoved ? 1 : 0) | (queueRemoved ? 2 : 0)) );
+        writer.Write( ( byte )((channelRemoved ? 1 : 0) | (streamRemoved ? 2 : 0)) );
         Send( buffer );
     }
 
@@ -183,14 +183,15 @@ internal sealed class ServerMock : IDisposable
         Send( buffer );
     }
 
-    internal void SendSubscribedResponse(bool channelCreated, int channelId, uint? payload = null)
+    internal void SendSubscribedResponse(bool channelCreated, bool queueCreated, int channelId, int queueId, uint? payload = null)
     {
         var buffer = new byte[Protocol.PacketHeader.Length + Protocol.SubscribedResponse.Length];
         var writer = new BinaryContractWriter( buffer );
         writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.SubscribedResponse );
         writer.MoveWrite( payload ?? Protocol.SubscribedResponse.Length );
-        writer.MoveWrite( ( byte )(channelCreated ? 1 : 0) );
-        writer.Write( ( uint )channelId );
+        writer.MoveWrite( ( byte )((channelCreated ? 1 : 0) | (queueCreated ? 2 : 0)) );
+        writer.MoveWrite( ( uint )channelId );
+        writer.Write( ( uint )queueId );
         Send( buffer );
     }
 
@@ -209,13 +210,13 @@ internal sealed class ServerMock : IDisposable
         Send( buffer );
     }
 
-    internal void SendUnsubscribedResponse(bool channelRemoved, uint? payload = null)
+    internal void SendUnsubscribedResponse(bool channelRemoved, bool queueRemoved, uint? payload = null)
     {
         var buffer = new byte[Protocol.PacketHeader.Length + Protocol.UnsubscribedResponse.Length];
         var writer = new BinaryContractWriter( buffer );
         writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.UnsubscribedResponse );
         writer.MoveWrite( payload ?? Protocol.UnsubscribedResponse.Length );
-        writer.Write( ( byte )(channelRemoved ? 1 : 0) );
+        writer.Write( ( byte )((channelRemoved ? 1 : 0) | (queueRemoved ? 2 : 0)) );
         Send( buffer );
     }
 
@@ -246,6 +247,32 @@ internal sealed class ServerMock : IDisposable
         writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.MessageRejectedResponse );
         writer.MoveWrite( payload ?? Protocol.MessageRejectedResponse.Length );
         writer.Write( ( byte )((notBound ? 1 : 0) | (cancelled ? 2 : 0)) );
+        Send( buffer );
+    }
+
+    internal void SendMessageNotification(
+        ulong messageId,
+        int senderId,
+        int channelId,
+        int streamId,
+        byte[] data,
+        Timestamp? enqueuedAt = null,
+        int? retryAttempt = null,
+        int? redeliveryAttempt = null,
+        uint? payload = null)
+    {
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.MessageNotificationHeader.Length + data.Length];
+        var writer = new BinaryContractWriter( buffer );
+        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.MessageNotification );
+        writer.MoveWrite( payload ?? ( uint )(Protocol.MessageNotificationHeader.Length + data.Length) );
+        writer.MoveWrite( messageId );
+        writer.MoveWrite( ( ulong )(enqueuedAt ?? new Timestamp( DateTime.UtcNow )).UnixEpochTicks );
+        writer.MoveWrite( ( uint )senderId );
+        writer.MoveWrite( ( uint )channelId );
+        writer.MoveWrite( ( uint )streamId );
+        writer.MoveWrite( ( uint? )retryAttempt ?? 0 );
+        writer.MoveWrite( ( uint? )redeliveryAttempt ?? 0 );
+        data.AsSpan().CopyTo( writer.GetSpan( data.Length ) );
         Send( buffer );
     }
 

@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -28,8 +26,9 @@ namespace LfrlAnvil.MessageBroker.Server;
 /// </summary>
 public sealed class MessageBrokerChannel
 {
-    internal readonly Dictionary<int, MessageBrokerChannelBinding> BindingsByClientId;
-    internal readonly Dictionary<int, MessageBrokerSubscription> SubscriptionsByClientId;
+    internal ReferenceStore<int, MessageBrokerChannelBinding> BindingsByClientId;
+    internal ReferenceStore<int, MessageBrokerSubscription> SubscriptionsByClientId;
+    private readonly object _sync = new object();
     private readonly MessageBrokerChannelEventHandler? _eventHandler;
     private MessageBrokerChannelState _state;
 
@@ -39,8 +38,8 @@ public sealed class MessageBrokerChannel
         Id = id;
         Name = name;
         _state = MessageBrokerChannelState.Running;
-        BindingsByClientId = new Dictionary<int, MessageBrokerChannelBinding>();
-        SubscriptionsByClientId = new Dictionary<int, MessageBrokerSubscription>();
+        BindingsByClientId = ReferenceStore<int, MessageBrokerChannelBinding>.Create();
+        SubscriptionsByClientId = ReferenceStore<int, MessageBrokerSubscription>.Create();
         _eventHandler = Server.ChannelEventHandlerFactory?.Invoke( this );
     }
 
@@ -166,35 +165,16 @@ public sealed class MessageBrokerChannel
 
         Emit( MessageBrokerChannelEvent.Disposing( this ) );
 
-        var bindings = Array.Empty<MessageBrokerChannelBinding>();
-        var subscriptions = Array.Empty<MessageBrokerSubscription>();
+        MessageBrokerChannelBinding[] bindings;
+        MessageBrokerSubscription[] subscriptions;
         using ( AcquireLock() )
         {
-            if ( BindingsByClientId.Count > 0 )
-            {
-                var i = 0;
-                bindings = new MessageBrokerChannelBinding[BindingsByClientId.Count];
-                foreach ( var binding in BindingsByClientId.Values )
-                    bindings[i++] = binding;
-
-                BindingsByClientId.Clear();
-            }
-
-            if ( SubscriptionsByClientId.Count > 0 )
-            {
-                var i = 0;
-                subscriptions = new MessageBrokerSubscription[SubscriptionsByClientId.Count];
-                foreach ( var subscription in SubscriptionsByClientId.Values )
-                    subscriptions[i++] = subscription;
-
-                SubscriptionsByClientId.Clear();
-            }
-
+            bindings = BindingsByClientId.ClearAndExtract();
+            subscriptions = SubscriptionsByClientId.ClearAndExtract();
             _state = MessageBrokerChannelState.Disposed;
         }
 
         await Parallel.ForEachAsync( bindings, static (b, _) => b.OnServerDisposedAsync() ).ConfigureAwait( false );
-
         foreach ( var subscription in subscriptions )
             subscription.OnServerDisposed();
 
@@ -203,8 +183,6 @@ public sealed class MessageBrokerChannel
 
     internal void DisposeDueToLackOfReferences()
     {
-        Assume.IsEmpty( BindingsByClientId );
-        Assume.IsEmpty( SubscriptionsByClientId );
         Assume.Equals( State, MessageBrokerChannelState.Disposing );
 
         Emit( MessageBrokerChannelEvent.Disposing( this ) );
@@ -214,7 +192,11 @@ public sealed class MessageBrokerChannel
             Emit( MessageBrokerChannelEvent.Unexpected( this, exc ) );
 
         using ( AcquireLock() )
+        {
+            Assume.Equals( BindingsByClientId.Count, 0 );
+            Assume.Equals( SubscriptionsByClientId.Count, 0 );
             _state = MessageBrokerChannelState.Disposed;
+        }
 
         Emit( MessageBrokerChannelEvent.Disposed( this ) );
     }
@@ -222,7 +204,7 @@ public sealed class MessageBrokerChannel
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ExclusiveLock AcquireLock()
     {
-        return ExclusiveLock.SpinWaitEnter( BindingsByClientId, spinWaitMultiplier: 4 );
+        return ExclusiveLock.SpinWaitEnter( _sync, spinWaitMultiplier: 4 );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
