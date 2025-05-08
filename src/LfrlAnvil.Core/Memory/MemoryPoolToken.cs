@@ -107,15 +107,20 @@ public readonly struct MemoryPoolToken<T> : IDisposable
     /// Length change will invalidate exposed underlying buffer's <see cref="Memory{T}"/> or <see cref="Span{T}"/> instances.
     /// </summary>
     /// <param name="length">New underlying buffer length.</param>
+    /// <param name="trimStart">
+    /// Specifies whether or not elements at the start of the buffer should be trimmed instead of elements at the end,
+    /// when new <paramref name="length"/> is less than current length.
+    /// Equal to <b>false</b> by default.
+    /// </param>
     /// <exception cref="ArgumentOutOfRangeException">When <paramref name="length"/> is less than or equal to <b>0</b>.</exception>
     /// <remarks>
     /// When new <paramref name="length"/> is less than the current length, then elements at the end of the buffer will be discarded.
     /// Additionally, the <see cref="Clear"/> value will determine whether or not discarded elements will be cleared.
     /// </remarks>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public void SetLength(int length)
+    public void SetLength(int length, bool trimStart = false)
     {
-        Owner?.SetLength( _nodeId, length, Clear );
+        Owner?.SetLength( _nodeId, length, Clear, trimStart );
     }
 
     /// <summary>

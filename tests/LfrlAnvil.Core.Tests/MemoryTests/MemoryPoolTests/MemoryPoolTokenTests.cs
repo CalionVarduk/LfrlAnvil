@@ -186,10 +186,11 @@ public class MemoryPoolTokenTests : TestsBase
     {
         var pool = new MemoryPool<int>( 8 );
         var sut = pool.Rent( 6 );
+        new[] { 1, 2, 3, 4, 5, 6 }.CopyTo( sut.AsSpan() );
 
         sut.SetLength( 3 );
 
-        sut.AsSpan().Length.TestEquals( 3 ).Go();
+        sut.AsSpan().TestSequence( [ 1, 2, 3 ] ).Go();
     }
 
     [Fact]
@@ -296,6 +297,127 @@ public class MemoryPoolTokenTests : TestsBase
 
         Assertion.All(
                 sut.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6 ] ),
+                other.AsSpan().TestSequence( [ 0, 0 ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetLength_ShouldReduceLengthCorrectly_WithTrimStart_ForHeadNode()
+    {
+        var pool = new MemoryPool<int>( 8 );
+        var sut = pool.Rent( 6 );
+        new[] { 1, 2, 3, 4, 5, 6 }.CopyTo( sut.AsSpan() );
+
+        sut.SetLength( 3, trimStart: true );
+        var other = pool.Rent( 3 );
+
+        Assertion.All(
+                sut.AsSpan().TestSequence( [ 4, 5, 6 ] ),
+                other.AsSpan().TestSequence( [ 1, 2, 3 ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetLength_ShouldReduceLengthCorrectly_WithTrimStart_ForNodePrecededByActiveNodeInTheSameSegment()
+    {
+        var pool = new MemoryPool<int>( 8 );
+        _ = pool.Rent( 3 );
+        var sut = pool.Rent( 4 );
+        new[] { 1, 2, 3, 4 }.CopyTo( sut.AsSpan() );
+
+        sut.SetLength( 2, trimStart: true );
+        var other = pool.Rent( 2 );
+
+        Assertion.All(
+                sut.AsSpan().TestSequence( [ 3, 4 ] ),
+                other.AsSpan().TestSequence( [ 1, 2 ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetLength_ShouldReduceLengthCorrectly_WithTrimStart_ForNodePrecededByFragmentedNodeInTheSameSegment()
+    {
+        var pool = new MemoryPool<int>( 8 );
+        var other = pool.Rent( 4 );
+        new[] { 1, 2, 3, 4 }.CopyTo( other.AsSpan() );
+        var sut = pool.Rent( 4 );
+        new[] { 5, 6, 7, 8 }.CopyTo( sut.AsSpan() );
+        other.Dispose();
+
+        sut.SetLength( 3, trimStart: true );
+        other = pool.Rent( 5 );
+
+        Assertion.All(
+                sut.AsSpan().TestSequence( [ 6, 7, 8 ] ),
+                other.AsSpan().TestSequence( [ 1, 2, 3, 4, 5 ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetLength_ShouldReduceLengthCorrectly_WithTrimStart_ForNodePrecededByActiveNodeInDifferentSegment()
+    {
+        var pool = new MemoryPool<int>( 8 );
+        _ = pool.Rent( 8 );
+        var sut = pool.Rent( 8 );
+        new[] { 1, 2, 3, 4, 5, 6, 7, 8 }.CopyTo( sut.AsSpan() );
+
+        sut.SetLength( 3, trimStart: true );
+        var other = pool.Rent( 5 );
+
+        Assertion.All(
+                sut.AsSpan().TestSequence( [ 6, 7, 8 ] ),
+                other.AsSpan().TestSequence( [ 1, 2, 3, 4, 5 ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetLength_ShouldReduceLengthCorrectly_WithTrimStart_ForNodePrecededByFragmentedNodeInDifferentSegment()
+    {
+        var pool = new MemoryPool<int>( 8 );
+        _ = pool.Rent( 4 );
+        var other = pool.Rent( 4 );
+        new[] { -1, -1, -1, -1 }.CopyTo( other.AsSpan() );
+        var sut = pool.Rent( 8 );
+        new[] { 1, 2, 3, 4, 5, 6, 7, 8 }.CopyTo( sut.AsSpan() );
+        other.Dispose();
+
+        sut.SetLength( 3, trimStart: true );
+        other = pool.Rent( 5 );
+
+        Assertion.All(
+                sut.AsSpan().TestSequence( [ 6, 7, 8 ] ),
+                other.AsSpan().TestSequence( [ 1, 2, 3, 4, 5 ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetLength_ShouldReduceLengthCorrectly_WithTrimStart_WhenClearIsDisabled()
+    {
+        var pool = new MemoryPool<int>( 8 );
+        var sut = pool.Rent( 8 ).EnableClearing( false );
+        new[] { 1, 2, 3, 4, 5, 6, 7, 8 }.CopyTo( sut.AsSpan() );
+
+        sut.SetLength( 6, trimStart: true );
+        var other = pool.Rent( 2 );
+
+        Assertion.All(
+                sut.AsSpan().TestSequence( [ 3, 4, 5, 6, 7, 8 ] ),
+                other.AsSpan().TestSequence( [ 1, 2 ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetLength_ShouldReduceLengthCorrectly_WithTrimStart_WhenClearIsEnabled()
+    {
+        var pool = new MemoryPool<int>( 8 );
+        var sut = pool.Rent( 8 ).EnableClearing();
+        new[] { 1, 2, 3, 4, 5, 6, 7, 8 }.CopyTo( sut.AsSpan() );
+
+        sut.SetLength( 6, trimStart: true );
+        var other = pool.Rent( 2 );
+
+        Assertion.All(
+                sut.AsSpan().TestSequence( [ 3, 4, 5, 6, 7, 8 ] ),
                 other.AsSpan().TestSequence( [ 0, 0 ] ) )
             .Go();
     }

@@ -26,8 +26,6 @@ Other:
 
 - MemoryPool:
   - add Split method to token, which splits node in two & returns a new token with elements belonging to the first part
-  - add trimSide parameter to token's SetLength method, which allows to specify which part (start or end)
-    - of the buffer should be returned to the pool when length is decreased, equal to 'end' by default (current behavior)
 
 Sql:
 

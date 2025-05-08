@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2025 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -591,7 +591,7 @@ public sealed class MemoryPool<T>
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void SetLength(int nodeId, int length, bool clear)
+    internal void SetLength(int nodeId, int length, bool clear, bool trimStart)
     {
         Ensure.IsGreaterThan( length, 0 );
         ref var node = ref GetSafeNodeRefOrNull( nodeId );
@@ -599,7 +599,7 @@ public sealed class MemoryPool<T>
             return;
 
         if ( node.Length > length )
-            ReduceLength( nodeId, ref node, length, clear );
+            ReduceLength( nodeId, ref node, length, clear, trimStart );
         else
             IncreaseLength( nodeId, ref node, length, clear );
     }
@@ -671,46 +671,97 @@ public sealed class MemoryPool<T>
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void ReduceLength(int nodeId, ref Node node, int length, bool clear)
+    private void ReduceLength(int nodeId, ref Node node, int length, bool clear, bool trimStart)
     {
         Assume.IsLessThan( length, node.Length );
         var segment = GetSegment( node.SegmentIndex );
         var endIndex = node.EndIndex;
 
         var removed = node.Length - length;
-        if ( clear )
-            segment.AsSpan( endIndex - removed, removed ).Clear();
-
-        node.Length = length;
-        if ( ! node.Next.HasValue )
+        if ( trimStart )
         {
-            Assume.Equals( nodeId, _activeListTail.Value );
-            return;
-        }
+            if ( clear )
+                segment.AsSpan( node.StartIndex, removed ).Clear();
 
-        ref var next = ref GetNodeRef( node.Next.Value );
-        var nextFragmentationIndex = next.FragmentationIndex;
-        if ( node.SegmentIndex == next.SegmentIndex && nextFragmentationIndex.HasValue )
-        {
-            next.StartIndex -= removed;
-            next.Length += removed;
-            FixUpFragmentationHeap( nextFragmentationIndex.Value );
+            node.StartIndex += removed;
+            node.Length = length;
+
+            if ( ! node.Prev.HasValue )
+            {
+                ref var freeNode = ref AddDefaultNode( out var freeId );
+                node = ref GetNodeRef( nodeId );
+
+                var heapIndex = _fragmentationHeap.Count;
+                freeNode.MakeActive( node.SegmentIndex, node.StartIndex - removed, removed );
+                freeNode.Prev = NullableIndex.Null;
+                freeNode.Next = NullableIndex.Create( nodeId );
+                freeNode.SetFragmentationIndex( heapIndex );
+                node.Prev = NullableIndex.Create( freeId );
+                _fragmentationHeap.Add( freeId );
+                FixUpFragmentationHeap( heapIndex );
+                return;
+            }
+
+            ref var prev = ref GetNodeRef( node.Prev.Value );
+            var prevFragmentationIndex = prev.FragmentationIndex;
+            if ( node.SegmentIndex == prev.SegmentIndex && prevFragmentationIndex.HasValue )
+            {
+                prev.Length += removed;
+                FixUpFragmentationHeap( prevFragmentationIndex.Value );
+            }
+            else
+            {
+                ref var freeNode = ref AddDefaultNode( out var freeId );
+                node = ref GetNodeRef( nodeId );
+                prev = ref GetNodeRef( node.Prev.Value );
+
+                var heapIndex = _fragmentationHeap.Count;
+                freeNode.MakeActive( node.SegmentIndex, node.StartIndex - removed, removed );
+                freeNode.Prev = node.Prev;
+                freeNode.Next = NullableIndex.Create( nodeId );
+                freeNode.SetFragmentationIndex( heapIndex );
+                prev.Next = NullableIndex.Create( freeId );
+                node.Prev = prev.Next;
+                _fragmentationHeap.Add( freeId );
+                FixUpFragmentationHeap( heapIndex );
+            }
         }
         else
         {
-            ref var freeNode = ref AddDefaultNode( out var freeId );
-            node = ref GetNodeRef( nodeId );
-            next = ref GetNodeRef( node.Next.Value );
+            if ( clear )
+                segment.AsSpan( endIndex - removed, removed ).Clear();
 
-            var heapIndex = _fragmentationHeap.Count;
-            freeNode.MakeActive( node.SegmentIndex, endIndex - removed, removed );
-            freeNode.Prev = NullableIndex.Create( nodeId );
-            freeNode.Next = node.Next;
-            freeNode.SetFragmentationIndex( heapIndex );
-            node.Next = NullableIndex.Create( freeId );
-            next.Prev = node.Next;
-            _fragmentationHeap.Add( freeId );
-            FixUpFragmentationHeap( heapIndex );
+            node.Length = length;
+            if ( ! node.Next.HasValue )
+            {
+                Assume.Equals( nodeId, _activeListTail.Value );
+                return;
+            }
+
+            ref var next = ref GetNodeRef( node.Next.Value );
+            var nextFragmentationIndex = next.FragmentationIndex;
+            if ( node.SegmentIndex == next.SegmentIndex && nextFragmentationIndex.HasValue )
+            {
+                next.StartIndex -= removed;
+                next.Length += removed;
+                FixUpFragmentationHeap( nextFragmentationIndex.Value );
+            }
+            else
+            {
+                ref var freeNode = ref AddDefaultNode( out var freeId );
+                node = ref GetNodeRef( nodeId );
+                next = ref GetNodeRef( node.Next.Value );
+
+                var heapIndex = _fragmentationHeap.Count;
+                freeNode.MakeActive( node.SegmentIndex, endIndex - removed, removed );
+                freeNode.Prev = NullableIndex.Create( nodeId );
+                freeNode.Next = node.Next;
+                freeNode.SetFragmentationIndex( heapIndex );
+                node.Next = NullableIndex.Create( freeId );
+                next.Prev = node.Next;
+                _fragmentationHeap.Add( freeId );
+                FixUpFragmentationHeap( heapIndex );
+            }
         }
     }
 
