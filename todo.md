@@ -24,12 +24,6 @@
 
 Other:
 
-- SegmentedSparseListSlim?
-  - segments of constant 2^n length
-  - segmentIndex = index >> n
-  - elementIndex = index & (n-1)
-  - segments are created on-demand
-  - may require cache of segments
 - MemoryPool:
   - add Split method to token, which splits node in two & returns a new token with elements belonging to the first part
   - add trimSide parameter to token's SetLength method, which allows to specify which part (start or end)
