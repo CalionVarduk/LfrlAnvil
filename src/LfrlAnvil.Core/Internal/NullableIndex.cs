@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2025 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -50,18 +50,14 @@ public readonly struct NullableIndex : IEquatable<NullableIndex>, IComparable<Nu
     public bool HasValue => Value != NullValue;
 
     /// <summary>
-    /// Creates a new non-null <see cref="NullableIndex"/> instance.
+    /// Creates a new <see cref="NullableIndex"/> instance.
     /// </summary>
     /// <param name="value">Underlying index.</param>
     /// <returns>New <see cref="NullableIndex"/> instance.</returns>
-    /// <remarks>
-    /// <see cref="NullValue"/> validation is performed only in <b>DEBUG</b> mode. See <see cref="Assume"/> for more information.
-    /// </remarks>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static NullableIndex Create(int value)
     {
-        Assume.NotEquals( value, NullValue );
         return new NullableIndex( value );
     }
 
@@ -75,18 +71,6 @@ public readonly struct NullableIndex : IEquatable<NullableIndex>, IComparable<Nu
     public static NullableIndex Create(int? value)
     {
         return value.HasValue ? Create( value.Value ) : Null;
-    }
-
-    /// <summary>
-    /// Creates a new <see cref="NullableIndex"/> instance. Accepts <see cref="NullValue"/>.
-    /// </summary>
-    /// <param name="value">Underlying index.</param>
-    /// <returns>New <see cref="NullableIndex"/> instance.</returns>
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static NullableIndex CreateUnsafe(int value)
-    {
-        return new NullableIndex( value );
     }
 
     /// <summary>

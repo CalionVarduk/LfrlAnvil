@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2025 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,8 +29,8 @@ internal struct LinkedEntry<T>
     internal bool IsUnused => _flags == 0;
     internal bool IsInFreeList => (_flags & TypeMask) == FreeListMarker;
     internal bool IsInOccupiedList => (_flags & TypeMask) == OccupiedListMarker;
-    internal NullableIndex Prev => NullableIndex.CreateUnsafe( unchecked( ( int )(_flags >> 31) & NullableIndex.NullValue ) );
-    internal NullableIndex Next => NullableIndex.CreateUnsafe( unchecked( ( int )_flags & NullableIndex.NullValue ) );
+    internal NullableIndex Prev => NullableIndex.Create( unchecked( ( int )(_flags >> 31) & NullableIndex.NullValue ) );
+    internal NullableIndex Next => NullableIndex.Create( unchecked( ( int )_flags & NullableIndex.NullValue ) );
 
     [Pure]
     public override string ToString()

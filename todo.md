@@ -22,11 +22,6 @@
 
 ### Scribbles:
 
-Other:
-
-- MemoryPool:
-  - add Split method to token, which splits node in two & returns a new token with elements belonging to the first part
-
 Sql:
 
 - source generators for queries/statements?

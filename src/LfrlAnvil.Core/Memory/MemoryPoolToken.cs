@@ -124,6 +124,26 @@ public readonly struct MemoryPoolToken<T> : IDisposable
     }
 
     /// <summary>
+    /// Splits this token in-place into two tokens,
+    /// after which this token will contain elements at the end of the original buffer
+    /// and returned token will contain elements at the start of the original buffer.
+    /// </summary>
+    /// <param name="length">Number of elements to move to the returned token.</param>
+    /// <returns>
+    /// New <see cref="MemoryPoolToken{T}"/> instance that contains the first <paramref name="length"/> elements from the original buffer.
+    /// </returns>
+    /// <remarks>
+    /// Returns an <see cref="MemoryPoolToken{T}.Empty"/> instance for disposed tokens
+    /// or when provided <paramref name="length"/> is less than or equal to <b>0</b>.
+    /// Returns this token when the provided <paramref name="length"/> is greater than or equal to its buffer's length.
+    /// <see cref="Clear"/> value is copied from this token.
+    /// </remarks>
+    public MemoryPoolToken<T> Split(int length)
+    {
+        return Owner is null || length <= 0 ? Empty : Owner.Split( _nodeId, length, Clear );
+    }
+
+    /// <summary>
     /// Returns a <see cref="MemoryPool{T}.ReportInfo.Node"/> instance that represents this token, if node exists.
     /// </summary>
     /// <returns>New <see cref="MemoryPool{T}.ReportInfo.Node"/> instance or <b>null</b>, if node does not exist.</returns>

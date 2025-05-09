@@ -654,6 +654,98 @@ public class MemoryPoolTokenTests : TestsBase
     }
 
     [Fact]
+    public void Split_ShouldReturnEmptyForEmpty()
+    {
+        var sut = MemoryPoolToken<int>.Empty;
+        var result = sut.Split( 1 );
+        result.TestEquals( MemoryPoolToken<int>.Empty ).Go();
+    }
+
+    [Fact]
+    public void Split_ShouldReturnEmpty_WhenNodeIsInactive()
+    {
+        var pool = new MemoryPool<int>( 8 );
+        var sut = pool.Rent( 3 );
+        _ = pool.Rent( 4 );
+        sut.Dispose();
+
+        var result = sut.Split( 1 );
+
+        result.TestEquals( MemoryPoolToken<int>.Empty ).Go();
+    }
+
+    [Theory]
+    [InlineData( -1 )]
+    [InlineData( 0 )]
+    public void Split_ShouldReturnEmpty_WhenLengthIsLessThanOne(int length)
+    {
+        var pool = new MemoryPool<int>( 8 );
+        var sut = pool.Rent( 5 );
+        new[] { 1, 2, 3, 4, 5 }.CopyTo( sut.AsSpan() );
+
+        var result = sut.Split( length );
+
+        Assertion.All(
+                result.TestEquals( MemoryPoolToken<int>.Empty ),
+                sut.AsSpan().TestSequence( [ 1, 2, 3, 4, 5 ] ) )
+            .Go();
+    }
+
+    [Theory]
+    [InlineData( 5 )]
+    [InlineData( 6 )]
+    public void Split_ShouldReturnSelf_WhenLengthIsGreaterThanOrEqualToTokenLength(int length)
+    {
+        var pool = new MemoryPool<int>( 8 );
+        var sut = pool.Rent( 5 );
+        new[] { 1, 2, 3, 4, 5 }.CopyTo( sut.AsSpan() );
+
+        var result = sut.Split( length );
+
+        Assertion.All(
+                result.TestEquals( sut ),
+                sut.AsSpan().TestSequence( [ 1, 2, 3, 4, 5 ] ) )
+            .Go();
+    }
+
+    [Theory]
+    [InlineData( false )]
+    [InlineData( true )]
+    public void Split_ShouldReturnFirstPart_ForHeadToken(bool clear)
+    {
+        var pool = new MemoryPool<int>( 8 );
+        var sut = pool.Rent( 5 ).EnableClearing( clear );
+        new[] { 1, 2, 3, 4, 5 }.CopyTo( sut.AsSpan() );
+
+        var result = sut.Split( 3 );
+
+        Assertion.All(
+                result.Clear.TestEquals( sut.Clear ),
+                result.AsSpan().TestSequence( [ 1, 2, 3 ] ),
+                sut.AsSpan().TestSequence( [ 4, 5 ] ) )
+            .Go();
+    }
+
+    [Theory]
+    [InlineData( false )]
+    [InlineData( true )]
+    public void Split_ShouldReturnFirstPart_ForNonHeadToken(bool clear)
+    {
+        var pool = new MemoryPool<int>( 8 );
+        _ = pool.Rent( 3 );
+        var sut = pool.Rent( 5 ).EnableClearing( clear );
+        new[] { 1, 2, 3, 4, 5 }.CopyTo( sut.AsSpan() );
+
+        var result = sut.Split( 2 );
+
+        Assertion.All(
+                result.Clear.TestEquals( sut.Clear ),
+                result.AsSpan().TestSequence( [ 1, 2 ] ),
+                sut.AsSpan().TestSequence( [ 3, 4, 5 ] ) )
+            .Go();
+    }
+
+    [Fact]
     public void TryGetInfo_ShouldReturnNullForEmpty()
     {
         var sut = MemoryPoolToken<int>.Empty;

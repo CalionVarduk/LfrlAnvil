@@ -428,7 +428,7 @@ public sealed class MemoryPool<T>
         internal int EndIndex => StartIndex + Length;
         internal bool IsUnused => _flags == 0;
         internal bool IsActive => Length != 0;
-        internal NullableIndex FragmentationIndex => NullableIndex.CreateUnsafe( unchecked( ( int )_flags & NullableIndex.NullValue ) );
+        internal NullableIndex FragmentationIndex => NullableIndex.Create( unchecked( ( int )_flags & NullableIndex.NullValue ) );
 
         [Pure]
         public override string ToString()
@@ -604,6 +604,36 @@ public sealed class MemoryPool<T>
             IncreaseLength( nodeId, ref node, length, clear );
     }
 
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal MemoryPoolToken<T> Split(int nodeId, int length, bool clear)
+    {
+        Assume.IsGreaterThan( length, 0 );
+        ref var node = ref GetSafeNodeRefOrNull( nodeId );
+        if ( Unsafe.IsNullRef( ref node ) )
+            return MemoryPoolToken<T>.Empty;
+
+        if ( node.Length <= length )
+            return new MemoryPoolToken<T>( this, nodeId, clear );
+
+        ref var freeNode = ref AddDefaultNode( out var freeId );
+        node = ref GetNodeRef( nodeId );
+
+        freeNode.MakeActive( node.SegmentIndex, node.StartIndex, length );
+        freeNode.Prev = node.Prev;
+        freeNode.Next = NullableIndex.Create( nodeId );
+        node.StartIndex += length;
+        node.Length -= length;
+
+        if ( node.Prev.HasValue )
+        {
+            ref var prev = ref GetNodeRef( node.Prev.Value );
+            prev.Next = NullableIndex.Create( freeId );
+        }
+
+        node.Prev = NullableIndex.Create( freeId );
+        return new MemoryPoolToken<T>( this, freeId, clear );
+    }
+
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal Memory<T> AsMemory(int nodeId)
@@ -647,7 +677,7 @@ public sealed class MemoryPool<T>
             segmentIndex: node.SegmentIndex,
             segmentLength: segment.Length,
             isSegmentActive: true,
-            nodeId: NullableIndex.CreateUnsafe( nodeId ),
+            nodeId: NullableIndex.Create( nodeId ),
             startIndex: node.StartIndex,
             length: node.Length,
             isFragmented: node.FragmentationIndex.HasValue );

@@ -34,6 +34,17 @@ public class NullableIndexTests : TestsBase
             .Go();
     }
 
+    [Fact]
+    public void Create_ShouldAllowToCreateNull()
+    {
+        var sut = NullableIndex.Create( NullableIndex.NullValue );
+
+        Assertion.All(
+                sut.HasValue.TestFalse(),
+                sut.ToString().TestEquals( "NULL" ) )
+            .Go();
+    }
+
     [Theory]
     [InlineData( int.MinValue )]
     [InlineData( -1 )]
@@ -64,40 +75,11 @@ public class NullableIndexTests : TestsBase
     }
 
     [Theory]
-    [InlineData( int.MinValue )]
-    [InlineData( -1 )]
-    [InlineData( 0 )]
-    [InlineData( 1 )]
-    [InlineData( 123 )]
-    [InlineData( int.MaxValue - 1 )]
-    public void CreateUnsafe_ShouldCreateIndex(int value)
-    {
-        var sut = NullableIndex.CreateUnsafe( value );
-
-        Assertion.All(
-                sut.HasValue.TestTrue(),
-                sut.Value.TestEquals( value ),
-                sut.ToString().TestEquals( value.ToString() ) )
-            .Go();
-    }
-
-    [Fact]
-    public void CreateUnsafe_ShouldAllowToCreateNull()
-    {
-        var sut = NullableIndex.CreateUnsafe( NullableIndex.NullValue );
-
-        Assertion.All(
-                sut.HasValue.TestFalse(),
-                sut.ToString().TestEquals( "NULL" ) )
-            .Go();
-    }
-
-    [Theory]
     [InlineData( 123 )]
     [InlineData( NullableIndex.NullValue )]
     public void GetHashCode_ShouldReturnCorrectResult(int value)
     {
-        var sut = NullableIndex.CreateUnsafe( value );
+        var sut = NullableIndex.Create( value );
         var result = sut.GetHashCode();
         result.TestEquals( value.GetHashCode() ).Go();
     }
@@ -111,8 +93,8 @@ public class NullableIndexTests : TestsBase
     [InlineData( 123, NullableIndex.NullValue, false )]
     public void Equals_ShouldReturnCorrectResult(int val1, int val2, bool expected)
     {
-        var a = NullableIndex.CreateUnsafe( val1 );
-        var b = NullableIndex.CreateUnsafe( val2 );
+        var a = NullableIndex.Create( val1 );
+        var b = NullableIndex.Create( val2 );
 
         var result = a.Equals( b );
 
@@ -128,8 +110,8 @@ public class NullableIndexTests : TestsBase
     [InlineData( 123, NullableIndex.NullValue, -1 )]
     public void CompareTo_ShouldReturnCorrectResult(int val1, int val2, int expectedSign)
     {
-        var a = NullableIndex.CreateUnsafe( val1 );
-        var b = NullableIndex.CreateUnsafe( val2 );
+        var a = NullableIndex.Create( val1 );
+        var b = NullableIndex.Create( val2 );
 
         var result = a.CompareTo( b );
 
@@ -141,7 +123,7 @@ public class NullableIndexTests : TestsBase
     [InlineData( NullableIndex.NullValue, null )]
     public void NullableIntConversionOperator_ShouldReturnCorrectResult(int value, int? expected)
     {
-        var sut = NullableIndex.CreateUnsafe( value );
+        var sut = NullableIndex.Create( value );
         var result = ( int? )sut;
         result.TestEquals( expected ).Go();
     }
@@ -151,9 +133,9 @@ public class NullableIndexTests : TestsBase
     [InlineData( NullableIndex.NullValue, NullableIndex.NullValue )]
     public void IncrementOperator_ShouldReturnCorrectResult(int value, int expected)
     {
-        var sut = NullableIndex.CreateUnsafe( value );
+        var sut = NullableIndex.Create( value );
         sut++;
-        sut.TestEquals( NullableIndex.CreateUnsafe( expected ) ).Go();
+        sut.TestEquals( NullableIndex.Create( expected ) ).Go();
     }
 
     [Theory]
@@ -161,9 +143,9 @@ public class NullableIndexTests : TestsBase
     [InlineData( NullableIndex.NullValue, NullableIndex.NullValue )]
     public void DecrementOperator_ShouldReturnCorrectResult(int value, int expected)
     {
-        var sut = NullableIndex.CreateUnsafe( value );
+        var sut = NullableIndex.Create( value );
         sut--;
-        sut.TestEquals( NullableIndex.CreateUnsafe( expected ) ).Go();
+        sut.TestEquals( NullableIndex.Create( expected ) ).Go();
     }
 
     [Theory]
@@ -173,12 +155,12 @@ public class NullableIndexTests : TestsBase
     [InlineData( NullableIndex.NullValue, NullableIndex.NullValue, NullableIndex.NullValue )]
     public void AddOperator_ShouldReturnCorrectResult(int val1, int val2, int expected)
     {
-        var a = NullableIndex.CreateUnsafe( val1 );
-        var b = NullableIndex.CreateUnsafe( val2 );
+        var a = NullableIndex.Create( val1 );
+        var b = NullableIndex.Create( val2 );
 
         var result = a + b;
 
-        result.TestEquals( NullableIndex.CreateUnsafe( expected ) ).Go();
+        result.TestEquals( NullableIndex.Create( expected ) ).Go();
     }
 
     [Theory]
@@ -188,12 +170,12 @@ public class NullableIndexTests : TestsBase
     [InlineData( NullableIndex.NullValue, NullableIndex.NullValue, NullableIndex.NullValue )]
     public void SubtractOperator_ShouldReturnCorrectResult(int val1, int val2, int expected)
     {
-        var a = NullableIndex.CreateUnsafe( val1 );
-        var b = NullableIndex.CreateUnsafe( val2 );
+        var a = NullableIndex.Create( val1 );
+        var b = NullableIndex.Create( val2 );
 
         var result = a - b;
 
-        result.TestEquals( NullableIndex.CreateUnsafe( expected ) ).Go();
+        result.TestEquals( NullableIndex.Create( expected ) ).Go();
     }
 
     [Theory]
@@ -205,8 +187,8 @@ public class NullableIndexTests : TestsBase
     [InlineData( 123, NullableIndex.NullValue, false )]
     public void EqualityOperator_ShouldReturnCorrectResult(int val1, int val2, bool expected)
     {
-        var a = NullableIndex.CreateUnsafe( val1 );
-        var b = NullableIndex.CreateUnsafe( val2 );
+        var a = NullableIndex.Create( val1 );
+        var b = NullableIndex.Create( val2 );
 
         var result = a == b;
 
@@ -222,8 +204,8 @@ public class NullableIndexTests : TestsBase
     [InlineData( 123, NullableIndex.NullValue, true )]
     public void InequalityOperator_ShouldReturnCorrectResult(int val1, int val2, bool expected)
     {
-        var a = NullableIndex.CreateUnsafe( val1 );
-        var b = NullableIndex.CreateUnsafe( val2 );
+        var a = NullableIndex.Create( val1 );
+        var b = NullableIndex.Create( val2 );
 
         var result = a != b;
 
@@ -239,8 +221,8 @@ public class NullableIndexTests : TestsBase
     [InlineData( 123, NullableIndex.NullValue, false )]
     public void GreaterThanOperator_ShouldReturnCorrectResult(int val1, int val2, bool expected)
     {
-        var a = NullableIndex.CreateUnsafe( val1 );
-        var b = NullableIndex.CreateUnsafe( val2 );
+        var a = NullableIndex.Create( val1 );
+        var b = NullableIndex.Create( val2 );
 
         var result = a > b;
 
@@ -256,8 +238,8 @@ public class NullableIndexTests : TestsBase
     [InlineData( 123, NullableIndex.NullValue, true )]
     public void LessThanOrEqualToOperator_ShouldReturnCorrectResult(int val1, int val2, bool expected)
     {
-        var a = NullableIndex.CreateUnsafe( val1 );
-        var b = NullableIndex.CreateUnsafe( val2 );
+        var a = NullableIndex.Create( val1 );
+        var b = NullableIndex.Create( val2 );
 
         var result = a <= b;
 
@@ -273,8 +255,8 @@ public class NullableIndexTests : TestsBase
     [InlineData( 123, NullableIndex.NullValue, true )]
     public void LessThanOperator_ShouldReturnCorrectResult(int val1, int val2, bool expected)
     {
-        var a = NullableIndex.CreateUnsafe( val1 );
-        var b = NullableIndex.CreateUnsafe( val2 );
+        var a = NullableIndex.Create( val1 );
+        var b = NullableIndex.Create( val2 );
 
         var result = a < b;
 
@@ -290,8 +272,8 @@ public class NullableIndexTests : TestsBase
     [InlineData( 123, NullableIndex.NullValue, false )]
     public void GreaterThanOrEqualToOperator_ShouldReturnCorrectResult(int val1, int val2, bool expected)
     {
-        var a = NullableIndex.CreateUnsafe( val1 );
-        var b = NullableIndex.CreateUnsafe( val2 );
+        var a = NullableIndex.Create( val1 );
+        var b = NullableIndex.Create( val2 );
 
         var result = a >= b;
 
