@@ -12,7 +12,7 @@ public partial class MessageBrokerRemoteClientTests
     public class Ping : TestsBase
     {
         [Fact]
-        public async Task MessageListener_ShouldReceivePingAndSendPingFromClientOnSchedule()
+        public async Task MessageListener_ShouldReceivePingAndSendPongFromClientOnSchedule()
         {
             var endSource = new SafeTaskCompletionSource( completionCount: 2 );
             var logs = new EventLogger();
@@ -26,7 +26,7 @@ public partial class MessageBrokerRemoteClientTests
                         {
                             logs.Add( e );
                             if ( e.Type == MessageBrokerRemoteClientEventType.MessageSent
-                                && e.GetClientEndpoint() == MessageBrokerClientEndpoint.PingResponse )
+                                && e.GetClientEndpoint() == MessageBrokerClientEndpoint.Pong )
                                 endSource.Complete();
                         } ) );
 
@@ -39,10 +39,10 @@ public partial class MessageBrokerRemoteClientTests
                 {
                     Thread.Sleep( 150 );
                     c.SendPing();
-                    c.ReadPingResponse();
+                    c.ReadPong();
                     Thread.Sleep( 150 );
                     c.SendPing();
-                    c.ReadPingResponse();
+                    c.ReadPong();
                 } );
 
             var remoteClient = server.Clients.TryGetByName( "test" );
@@ -53,15 +53,15 @@ public partial class MessageBrokerRemoteClientTests
                     logs.GetAllClient()
                         .TestContainsSequence(
                         [
-                            "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 5] PingRequest",
-                            "[1::'test'::1] [MessageReceived] [PacketLength: 5] Begin handling PingRequest",
-                            "[1::'test'::1] [MessageAccepted] [PacketLength: 5] PingRequest",
-                            "[1::'test'::1] [SendingMessage] [PacketLength: 5] PingResponse",
-                            "[1::'test'::1] [MessageSent] [PacketLength: 5] PingResponse",
-                            "[1::'test'::2] [MessageReceived] [PacketLength: 5] Begin handling PingRequest",
-                            "[1::'test'::2] [MessageAccepted] [PacketLength: 5] PingRequest",
-                            "[1::'test'::2] [SendingMessage] [PacketLength: 5] PingResponse",
-                            "[1::'test'::2] [MessageSent] [PacketLength: 5] PingResponse"
+                            "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 5] Ping",
+                            "[1::'test'::1] [MessageReceived] [PacketLength: 5] Begin handling Ping",
+                            "[1::'test'::1] [MessageAccepted] [PacketLength: 5] Ping",
+                            "[1::'test'::1] [SendingMessage] [PacketLength: 5] Pong",
+                            "[1::'test'::1] [MessageSent] [PacketLength: 5] Pong",
+                            "[1::'test'::2] [MessageReceived] [PacketLength: 5] Begin handling Ping",
+                            "[1::'test'::2] [MessageAccepted] [PacketLength: 5] Ping",
+                            "[1::'test'::2] [SendingMessage] [PacketLength: 5] Pong",
+                            "[1::'test'::2] [MessageSent] [PacketLength: 5] Pong"
                         ] ) )
                 .Go();
         }
@@ -105,7 +105,7 @@ public partial class MessageBrokerRemoteClientTests
         }
 
         [Fact]
-        public async Task MessageListener_ShouldDisposeGracefully_WhenClientSendsPingRequestWithInvalidPayload()
+        public async Task MessageListener_ShouldDisposeGracefully_WhenClientSendsPingWithInvalidPayload()
         {
             var endSource = new SafeTaskCompletionSource();
             var logs = new EventLogger();
@@ -134,15 +134,15 @@ public partial class MessageBrokerRemoteClientTests
                     logs.GetAllClient()
                         .TestContainsSequence(
                         [
-                            "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 5] PingRequest",
-                            "[1::'test'::1] [MessageReceived] [PacketLength: 5] Begin handling PingRequest"
+                            "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 5] Ping",
+                            "[1::'test'::1] [MessageReceived] [PacketLength: 5] Begin handling Ping"
                         ] ),
                     logs.GetAllClient()
                         .TestAny(
                             (x, _) => x.TestStartsWith(
                                 """
                                 [1::'test'::1] [MessageRejected] [PacketLength: 5] Encountered an error:
-                                LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid PingRequest from client [1] 'test'. Encountered 1 error(s):
+                                LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid Ping from client [1] 'test'. Encountered 1 error(s):
                                 1. Expected endianness verification payload to be 0102fdfe but found 00000001.
                                 """ ) ) )
                 .Go();

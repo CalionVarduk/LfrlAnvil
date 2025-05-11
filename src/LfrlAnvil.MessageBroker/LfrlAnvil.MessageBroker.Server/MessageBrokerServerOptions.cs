@@ -43,8 +43,8 @@ namespace LfrlAnvil.MessageBroker.Server;
 /// <param name="ChannelEventHandlerFactory">Factory of <see cref="MessageBrokerChannelEventHandler"/> callbacks.</param>
 /// <param name="StreamEventHandlerFactory">Factory of <see cref="MessageBrokerStreamEventHandler"/> callbacks.</param>
 /// <param name="QueueEventHandlerFactory">Factory of <see cref="MessageBrokerQueueEventHandler"/> callbacks.</param>
-/// <param name="ChannelBindingEventHandlerFactory">Factory of <see cref="MessageBrokerChannelBindingEventHandler"/> callbacks.</param>
-/// <param name="SubscriptionEventHandlerFactory">Factory of <see cref="MessageBrokerSubscriptionEventHandler"/> callbacks.</param>
+/// <param name="PublisherEventHandlerFactory">Factory of <see cref="MessageBrokerChannelPublisherBindingEventHandler"/> callbacks.</param>
+/// <param name="ListenerEventHandlerFactory">Factory of <see cref="MessageBrokerChannelListenerBindingEventHandler"/> callbacks.</param>
 /// <param name="StreamDecorator"><see cref="MessageBrokerRemoteClientStreamDecorator"/> callback.</param>
 public readonly record struct MessageBrokerServerOptions(
     MessageBrokerTcpServerOptions Tcp,
@@ -59,8 +59,8 @@ public readonly record struct MessageBrokerServerOptions(
     Func<MessageBrokerChannel, MessageBrokerChannelEventHandler?>? ChannelEventHandlerFactory,
     Func<MessageBrokerStream, MessageBrokerStreamEventHandler?>? StreamEventHandlerFactory,
     Func<MessageBrokerQueue, MessageBrokerQueueEventHandler?>? QueueEventHandlerFactory,
-    Func<MessageBrokerChannelBinding, MessageBrokerChannelBindingEventHandler?>? ChannelBindingEventHandlerFactory,
-    Func<MessageBrokerSubscription, MessageBrokerSubscriptionEventHandler?>? SubscriptionEventHandlerFactory,
+    Func<MessageBrokerChannelPublisherBinding, MessageBrokerChannelPublisherBindingEventHandler?>? PublisherEventHandlerFactory,
+    Func<MessageBrokerChannelListenerBinding, MessageBrokerChannelListenerBindingEventHandler?>? ListenerEventHandlerFactory,
     MessageBrokerRemoteClientStreamDecorator? StreamDecorator
 )
 {
@@ -91,8 +91,8 @@ public readonly record struct MessageBrokerServerOptions(
             ChannelEventHandlerFactory,
             StreamEventHandlerFactory,
             QueueEventHandlerFactory,
-            ChannelBindingEventHandlerFactory,
-            SubscriptionEventHandlerFactory,
+            PublisherEventHandlerFactory,
+            ListenerEventHandlerFactory,
             StreamDecorator );
     }
 
@@ -118,8 +118,8 @@ public readonly record struct MessageBrokerServerOptions(
             ChannelEventHandlerFactory,
             StreamEventHandlerFactory,
             QueueEventHandlerFactory,
-            ChannelBindingEventHandlerFactory,
-            SubscriptionEventHandlerFactory,
+            PublisherEventHandlerFactory,
+            ListenerEventHandlerFactory,
             StreamDecorator );
     }
 
@@ -145,8 +145,8 @@ public readonly record struct MessageBrokerServerOptions(
             ChannelEventHandlerFactory,
             StreamEventHandlerFactory,
             QueueEventHandlerFactory,
-            ChannelBindingEventHandlerFactory,
-            SubscriptionEventHandlerFactory,
+            PublisherEventHandlerFactory,
+            ListenerEventHandlerFactory,
             StreamDecorator );
     }
 
@@ -172,8 +172,8 @@ public readonly record struct MessageBrokerServerOptions(
             ChannelEventHandlerFactory,
             StreamEventHandlerFactory,
             QueueEventHandlerFactory,
-            ChannelBindingEventHandlerFactory,
-            SubscriptionEventHandlerFactory,
+            PublisherEventHandlerFactory,
+            ListenerEventHandlerFactory,
             StreamDecorator );
     }
 
@@ -199,8 +199,8 @@ public readonly record struct MessageBrokerServerOptions(
             ChannelEventHandlerFactory,
             StreamEventHandlerFactory,
             QueueEventHandlerFactory,
-            ChannelBindingEventHandlerFactory,
-            SubscriptionEventHandlerFactory,
+            PublisherEventHandlerFactory,
+            ListenerEventHandlerFactory,
             StreamDecorator );
     }
 
@@ -226,8 +226,8 @@ public readonly record struct MessageBrokerServerOptions(
             ChannelEventHandlerFactory,
             StreamEventHandlerFactory,
             QueueEventHandlerFactory,
-            ChannelBindingEventHandlerFactory,
-            SubscriptionEventHandlerFactory,
+            PublisherEventHandlerFactory,
+            ListenerEventHandlerFactory,
             StreamDecorator );
     }
 
@@ -253,8 +253,8 @@ public readonly record struct MessageBrokerServerOptions(
             ChannelEventHandlerFactory,
             StreamEventHandlerFactory,
             QueueEventHandlerFactory,
-            ChannelBindingEventHandlerFactory,
-            SubscriptionEventHandlerFactory,
+            PublisherEventHandlerFactory,
+            ListenerEventHandlerFactory,
             StreamDecorator );
     }
 
@@ -280,8 +280,8 @@ public readonly record struct MessageBrokerServerOptions(
             ChannelEventHandlerFactory,
             StreamEventHandlerFactory,
             QueueEventHandlerFactory,
-            ChannelBindingEventHandlerFactory,
-            SubscriptionEventHandlerFactory,
+            PublisherEventHandlerFactory,
+            ListenerEventHandlerFactory,
             StreamDecorator );
     }
 
@@ -308,8 +308,8 @@ public readonly record struct MessageBrokerServerOptions(
             ChannelEventHandlerFactory,
             StreamEventHandlerFactory,
             QueueEventHandlerFactory,
-            ChannelBindingEventHandlerFactory,
-            SubscriptionEventHandlerFactory,
+            PublisherEventHandlerFactory,
+            ListenerEventHandlerFactory,
             StreamDecorator );
     }
 
@@ -335,8 +335,8 @@ public readonly record struct MessageBrokerServerOptions(
             value,
             StreamEventHandlerFactory,
             QueueEventHandlerFactory,
-            ChannelBindingEventHandlerFactory,
-            SubscriptionEventHandlerFactory,
+            PublisherEventHandlerFactory,
+            ListenerEventHandlerFactory,
             StreamDecorator );
     }
 
@@ -362,8 +362,8 @@ public readonly record struct MessageBrokerServerOptions(
             ChannelEventHandlerFactory,
             value,
             QueueEventHandlerFactory,
-            ChannelBindingEventHandlerFactory,
-            SubscriptionEventHandlerFactory,
+            PublisherEventHandlerFactory,
+            ListenerEventHandlerFactory,
             StreamDecorator );
     }
 
@@ -389,20 +389,20 @@ public readonly record struct MessageBrokerServerOptions(
             ChannelEventHandlerFactory,
             StreamEventHandlerFactory,
             value,
-            ChannelBindingEventHandlerFactory,
-            SubscriptionEventHandlerFactory,
+            PublisherEventHandlerFactory,
+            ListenerEventHandlerFactory,
             StreamDecorator );
     }
 
     /// <summary>
-    /// Allows to change <see cref="ChannelBindingEventHandlerFactory"/>.
+    /// Allows to change <see cref="PublisherEventHandlerFactory"/>.
     /// </summary>
     /// <param name="value">New value.</param>
     /// <returns>New <see cref="MessageBrokerServerOptions"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public MessageBrokerServerOptions SetChannelBindingEventHandlerFactory(
-        Func<MessageBrokerChannelBinding, MessageBrokerChannelBindingEventHandler?>? value)
+    public MessageBrokerServerOptions SetPublisherEventHandlerFactory(
+        Func<MessageBrokerChannelPublisherBinding, MessageBrokerChannelPublisherBindingEventHandler?>? value)
     {
         return new MessageBrokerServerOptions(
             Tcp,
@@ -418,19 +418,19 @@ public readonly record struct MessageBrokerServerOptions(
             StreamEventHandlerFactory,
             QueueEventHandlerFactory,
             value,
-            SubscriptionEventHandlerFactory,
+            ListenerEventHandlerFactory,
             StreamDecorator );
     }
 
     /// <summary>
-    /// Allows to change <see cref="SubscriptionEventHandlerFactory"/>.
+    /// Allows to change <see cref="ListenerEventHandlerFactory"/>.
     /// </summary>
     /// <param name="value">New value.</param>
     /// <returns>New <see cref="MessageBrokerServerOptions"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public MessageBrokerServerOptions SetSubscriptionEventHandlerFactory(
-        Func<MessageBrokerSubscription, MessageBrokerSubscriptionEventHandler?>? value)
+    public MessageBrokerServerOptions SetListenerEventHandlerFactory(
+        Func<MessageBrokerChannelListenerBinding, MessageBrokerChannelListenerBindingEventHandler?>? value)
     {
         return new MessageBrokerServerOptions(
             Tcp,
@@ -445,7 +445,7 @@ public readonly record struct MessageBrokerServerOptions(
             ChannelEventHandlerFactory,
             StreamEventHandlerFactory,
             QueueEventHandlerFactory,
-            ChannelBindingEventHandlerFactory,
+            PublisherEventHandlerFactory,
             value,
             StreamDecorator );
     }
@@ -472,8 +472,8 @@ public readonly record struct MessageBrokerServerOptions(
             ChannelEventHandlerFactory,
             StreamEventHandlerFactory,
             QueueEventHandlerFactory,
-            ChannelBindingEventHandlerFactory,
-            SubscriptionEventHandlerFactory,
+            PublisherEventHandlerFactory,
+            ListenerEventHandlerFactory,
             value );
     }
 }

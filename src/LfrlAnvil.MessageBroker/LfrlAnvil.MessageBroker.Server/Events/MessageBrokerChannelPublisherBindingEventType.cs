@@ -12,25 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-namespace LfrlAnvil.MessageBroker.Server;
+namespace LfrlAnvil.MessageBroker.Server.Events;
 
 /// <summary>
-/// Defines possible <see cref="MessageBrokerSubscription"/> states.
+/// Defines available <see cref="MessageBrokerChannelPublisherBindingEvent"/> types.
 /// </summary>
-public enum MessageBrokerSubscriptionState : byte
+public enum MessageBrokerChannelPublisherBindingEventType : byte
 {
     /// <summary>
-    /// Specifies that the subscription is currently running.
+    /// Specifies that the publisher binding has encountered an unexpected error.
     /// </summary>
-    Running = 0,
+    Unexpected,
 
     /// <summary>
-    /// Specifies that the subscription is currently being disposed.
+    /// Specifies that the publisher binding instance has been created.
     /// </summary>
-    Disposing = 1,
+    Created,
 
     /// <summary>
-    /// Specifies that the subscription has been disposed.
+    /// Specifies that the publisher binding is about to be disposed.
     /// </summary>
-    Disposed = 2
+    Disposing,
+
+    /// <summary>
+    /// Specifies that the publisher binding has been disposed.
+    /// </summary>
+    Disposed
 }

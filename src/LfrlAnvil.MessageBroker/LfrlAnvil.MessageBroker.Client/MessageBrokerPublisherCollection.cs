@@ -76,15 +76,15 @@ public readonly struct MessageBrokerPublisherCollection
     }
 
     /// <summary>
-    /// Attempts to bind the client to a channel and to create a message publisher.
+    /// Attempts to bind the client to a channel as a message publisher.
     /// </summary>
-    /// <param name="channelName">Unique name of the channel to bind to.</param>
+    /// <param name="channelName">Unique name of the channel to bind as publisher to.</param>
     /// <param name="streamName">
     /// Optional unique name of the stream to which to push messages. Equal to the provided <paramref name="channelName"/> by default.
     /// </param>
     /// <returns>
     /// A task that represents the operation, which returns a <see cref="Result{T}"/> instance,
-    /// with underlying <see cref="MessageBrokerBindResult"/> instance.
+    /// with underlying <see cref="MessageBrokerBindPublisherResult"/> instance.
     /// </returns>
     /// <exception cref="ArgumentOutOfRangeException">
     /// When <paramref name="channelName"/> or <paramref name="streamName"/> (if not <b>null</b>) length
@@ -95,11 +95,11 @@ public readonly struct MessageBrokerPublisherCollection
     /// When client is not disposed and not in <see cref="MessageBrokerClientState.Running"/> state.
     /// </exception>
     /// <remarks>
-    /// Unexpected errors encountered during binding attempt will cause the client to be automatically disposed.
-    /// Returned <see cref="Result{T}"/> will only be valid when either the client has successfully bound to the channel
-    /// on the server side, or the client is already locally bound to the channel, which will cancel the request to the server.
+    /// Unexpected errors encountered during publisher binding attempt will cause the client to be automatically disposed.
+    /// Returned <see cref="Result{T}"/> will only be valid when either the client has been successfully bound as publisher to the channel
+    /// on the server side, or the client is already locally bound as publisher to the channel, which will cancel the request to the server.
     /// </remarks>
-    public ValueTask<Result<MessageBrokerBindResult?>> BindAsync(string channelName, string? streamName = null)
+    public ValueTask<Result<MessageBrokerBindPublisherResult?>> BindAsync(string channelName, string? streamName = null)
     {
         return PublisherCollection.BindAsync( _client, channelName, streamName );
     }

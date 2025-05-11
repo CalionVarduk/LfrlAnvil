@@ -17,27 +17,27 @@ using System;
 namespace LfrlAnvil.MessageBroker.Server.Exceptions;
 
 /// <summary>
-/// Represents an error related to a message broker channel binding.
+/// Represents an error related to a message broker channel publisher binding.
 /// </summary>
-public class MessageBrokerChannelBindingException : InvalidOperationException
+public class MessageBrokerChannelPublisherBindingException : InvalidOperationException
 {
     /// <summary>
-    /// Creates a new <see cref="MessageBrokerChannelBindingException"/> instance.
+    /// Creates a new <see cref="MessageBrokerChannelPublisherBindingException"/> instance.
     /// </summary>
     /// <param name="client"><see cref="MessageBrokerServer"/> instance that encountered this error.</param>
     /// <param name="channel">Optional <see cref="MessageBrokerChannel"/> instance that encountered this error.</param>
-    /// <param name="binding">Optional <see cref="MessageBrokerChannelBinding"/> instance that encountered this error.</param>
+    /// <param name="publisher">Optional <see cref="MessageBrokerChannelPublisherBinding"/> instance that encountered this error.</param>
     /// <param name="message">Underlying error message.</param>
-    public MessageBrokerChannelBindingException(
+    public MessageBrokerChannelPublisherBindingException(
         MessageBrokerRemoteClient client,
         MessageBrokerChannel? channel,
-        MessageBrokerChannelBinding? binding,
+        MessageBrokerChannelPublisherBinding? publisher,
         string message)
         : base( message )
     {
         Client = client;
         Channel = channel;
-        Binding = binding;
+        Publisher = publisher;
     }
 
     /// <summary>
@@ -51,7 +51,7 @@ public class MessageBrokerChannelBindingException : InvalidOperationException
     public MessageBrokerChannel? Channel { get; }
 
     /// <summary>
-    /// Optional <see cref="MessageBrokerChannelBinding"/> instance that encountered this error.
+    /// Optional <see cref="MessageBrokerChannelPublisherBinding"/> instance that encountered this error.
     /// </summary>
-    public MessageBrokerChannelBinding? Binding { get; }
+    public MessageBrokerChannelPublisherBinding? Publisher { get; }
 }

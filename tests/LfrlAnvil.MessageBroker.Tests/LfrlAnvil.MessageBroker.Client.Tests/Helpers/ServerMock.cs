@@ -55,24 +55,24 @@ internal sealed class ServerMock : IDisposable
         return AssertEndpoint( Read( Protocol.PacketHeader.Length ), MessageBrokerServerEndpoint.ConfirmHandshakeResponse );
     }
 
-    internal byte[] ReadPingRequest()
+    internal byte[] ReadPing()
     {
-        return AssertEndpoint( Read( Protocol.PacketHeader.Length ), MessageBrokerServerEndpoint.PingRequest );
+        return AssertEndpoint( Read( Protocol.PacketHeader.Length ), MessageBrokerServerEndpoint.Ping );
     }
 
-    internal byte[] ReadUnbindRequest()
+    internal byte[] ReadUnbindPublisherRequest()
     {
-        return AssertEndpoint( Read( Protocol.UnbindRequest.Length ), MessageBrokerServerEndpoint.UnbindRequest );
+        return AssertEndpoint( Read( Protocol.UnbindPublisherRequest.Length ), MessageBrokerServerEndpoint.UnbindPublisherRequest );
     }
 
-    internal byte[] ReadUnsubscribeRequest()
+    internal byte[] ReadUnbindListenerRequest()
     {
-        return AssertEndpoint( Read( Protocol.UnsubscribeRequest.Length ), MessageBrokerServerEndpoint.UnsubscribeRequest );
+        return AssertEndpoint( Read( Protocol.UnbindListenerRequest.Length ), MessageBrokerServerEndpoint.UnbindListenerRequest );
     }
 
-    internal byte[] ReadMessageRequest(int length)
+    internal byte[] ReadPushMessage(int length)
     {
-        return AssertEndpoint( Read( Protocol.MessageRequestHeader.Length + length ), MessageBrokerServerEndpoint.MessageRequest );
+        return AssertEndpoint( Read( Protocol.PushMessageHeader.Length + length ), MessageBrokerServerEndpoint.PushMessage );
     }
 
     internal byte[] Read(Protocol.HandshakeRequest request)
@@ -80,21 +80,21 @@ internal sealed class ServerMock : IDisposable
         return AssertEndpoint( Read( request.Length ), MessageBrokerServerEndpoint.HandshakeRequest );
     }
 
-    internal byte[] Read(Protocol.BindRequest request)
+    internal byte[] Read(Protocol.BindPublisherRequest request)
     {
-        return AssertEndpoint( Read( request.Length ), MessageBrokerServerEndpoint.BindRequest );
+        return AssertEndpoint( Read( request.Length ), MessageBrokerServerEndpoint.BindPublisherRequest );
     }
 
-    internal byte[] Read(Protocol.SubscribeRequest request)
+    internal byte[] Read(Protocol.BindListenerRequest request)
     {
-        return AssertEndpoint( Read( request.Length ), MessageBrokerServerEndpoint.SubscribeRequest );
+        return AssertEndpoint( Read( request.Length ), MessageBrokerServerEndpoint.BindListenerRequest );
     }
 
-    internal byte[] Read(Protocol.MessageRequestHeader request)
+    internal byte[] Read(Protocol.PushMessageHeader request)
     {
         return AssertEndpoint(
             Read( Protocol.PacketHeader.Length + ( int )request.Header.Payload ),
-            MessageBrokerServerEndpoint.MessageRequest );
+            MessageBrokerServerEndpoint.PushMessage );
     }
 
     internal byte[] Read(int length)
@@ -132,101 +132,97 @@ internal sealed class ServerMock : IDisposable
         Send( buffer );
     }
 
-    internal void SendPing(uint? endiannessPayload = null)
+    internal void SendPong(uint? endiannessPayload = null)
     {
         var buffer = new byte[Protocol.PacketHeader.Length];
         var writer = new BinaryContractWriter( buffer );
-        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.PingResponse );
+        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.Pong );
         writer.Write( endiannessPayload ?? Protocol.Endianness.VerificationPayload );
         Send( buffer );
     }
 
-    internal void SendBoundResponse(bool channelCreated, bool streamCreated, int channelId, int streamId, uint? payload = null)
+    internal void SendPublisherBoundResponse(bool channelCreated, bool streamCreated, int channelId, int streamId, uint? payload = null)
     {
-        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.BoundResponse.Length];
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.PublisherBoundResponse.Length];
         var writer = new BinaryContractWriter( buffer );
-        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.BoundResponse );
-        writer.MoveWrite( payload ?? Protocol.BoundResponse.Length );
+        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.PublisherBoundResponse );
+        writer.MoveWrite( payload ?? Protocol.PublisherBoundResponse.Length );
         writer.MoveWrite( ( byte )((channelCreated ? 1 : 0) | (streamCreated ? 2 : 0)) );
         writer.MoveWrite( ( uint )channelId );
         writer.Write( ( uint )streamId );
         Send( buffer );
     }
 
-    internal void SendBindFailureResponse(bool clientAlreadyLinkedToChannel, bool cancelled, uint? payload = null)
+    internal void SendBindPublisherFailureResponse(bool clientAlreadyBound, bool cancelled, uint? payload = null)
     {
-        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.BindFailureResponse.Length];
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.BindPublisherFailureResponse.Length];
         var writer = new BinaryContractWriter( buffer );
-        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.BindFailureResponse );
-        writer.MoveWrite( payload ?? Protocol.BindFailureResponse.Length );
-        writer.Write( ( byte )((clientAlreadyLinkedToChannel ? 1 : 0) | (cancelled ? 2 : 0)) );
+        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.BindPublisherFailureResponse );
+        writer.MoveWrite( payload ?? Protocol.BindPublisherFailureResponse.Length );
+        writer.Write( ( byte )((clientAlreadyBound ? 1 : 0) | (cancelled ? 2 : 0)) );
         Send( buffer );
     }
 
-    internal void SendUnboundResponse(bool channelRemoved, bool streamRemoved, uint? payload = null)
+    internal void SendPublisherUnboundResponse(bool channelRemoved, bool streamRemoved, uint? payload = null)
     {
-        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.UnboundResponse.Length];
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.PublisherUnboundResponse.Length];
         var writer = new BinaryContractWriter( buffer );
-        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.UnboundResponse );
-        writer.MoveWrite( payload ?? Protocol.UnboundResponse.Length );
+        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.PublisherUnboundResponse );
+        writer.MoveWrite( payload ?? Protocol.PublisherUnboundResponse.Length );
         writer.Write( ( byte )((channelRemoved ? 1 : 0) | (streamRemoved ? 2 : 0)) );
         Send( buffer );
     }
 
-    internal void SendUnbindFailureResponse(bool clientNotLinked, uint? payload = null)
+    internal void SendUnbindPublisherFailureResponse(bool clientNotBound, uint? payload = null)
     {
-        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.UnbindFailureResponse.Length];
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.UnbindPublisherFailureResponse.Length];
         var writer = new BinaryContractWriter( buffer );
-        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.UnbindFailureResponse );
-        writer.MoveWrite( payload ?? Protocol.UnbindFailureResponse.Length );
-        writer.Write( ( byte )(clientNotLinked ? 1 : 0) );
+        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.UnbindPublisherFailureResponse );
+        writer.MoveWrite( payload ?? Protocol.UnbindPublisherFailureResponse.Length );
+        writer.Write( ( byte )(clientNotBound ? 1 : 0) );
         Send( buffer );
     }
 
-    internal void SendSubscribedResponse(bool channelCreated, bool queueCreated, int channelId, int queueId, uint? payload = null)
+    internal void SendListenerBoundResponse(bool channelCreated, bool queueCreated, int channelId, int queueId, uint? payload = null)
     {
-        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.SubscribedResponse.Length];
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.ListenerBoundResponse.Length];
         var writer = new BinaryContractWriter( buffer );
-        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.SubscribedResponse );
-        writer.MoveWrite( payload ?? Protocol.SubscribedResponse.Length );
+        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.ListenerBoundResponse );
+        writer.MoveWrite( payload ?? Protocol.ListenerBoundResponse.Length );
         writer.MoveWrite( ( byte )((channelCreated ? 1 : 0) | (queueCreated ? 2 : 0)) );
         writer.MoveWrite( ( uint )channelId );
         writer.Write( ( uint )queueId );
         Send( buffer );
     }
 
-    internal void SendSubscribeFailureResponse(
-        bool channelDoesNotExist,
-        bool clientAlreadySubscribedToChannel,
-        bool cancelled,
-        uint? payload = null)
+    internal void SendBindListenerFailureResponse(bool channelDoesNotExist, bool clientAlreadyBound, bool cancelled, uint? payload = null)
     {
-        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.SubscribeFailureResponse.Length];
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.ListenerBindFailureResponse.Length];
         var writer = new BinaryContractWriter( buffer );
-        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.SubscribeFailureResponse );
-        writer.MoveWrite( payload ?? Protocol.SubscribeFailureResponse.Length );
-        writer.Write( ( byte )((channelDoesNotExist ? 1 : 0) | (clientAlreadySubscribedToChannel ? 2 : 0) | (cancelled ? 4 : 0)) );
+        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.BindListenerFailureResponse );
+        writer.MoveWrite( payload ?? Protocol.ListenerBindFailureResponse.Length );
+        writer.Write( ( byte )((channelDoesNotExist ? 1 : 0) | (clientAlreadyBound ? 2 : 0) | (cancelled ? 4 : 0)) );
 
         Send( buffer );
     }
 
-    internal void SendUnsubscribedResponse(bool channelRemoved, bool queueRemoved, uint? payload = null)
+    internal void SendListenerUnboundResponse(bool channelRemoved, bool queueRemoved, uint? payload = null)
     {
-        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.UnsubscribedResponse.Length];
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.ListenerUnboundResponse.Length];
         var writer = new BinaryContractWriter( buffer );
-        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.UnsubscribedResponse );
-        writer.MoveWrite( payload ?? Protocol.UnsubscribedResponse.Length );
+        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.ListenerUnboundResponse );
+        writer.MoveWrite( payload ?? Protocol.ListenerUnboundResponse.Length );
         writer.Write( ( byte )((channelRemoved ? 1 : 0) | (queueRemoved ? 2 : 0)) );
         Send( buffer );
     }
 
-    internal void SendUnsubscribeFailureResponse(bool clientNotSubscribed, uint? payload = null)
+    internal void SendUnbindListenerFailureResponse(bool clientNotBound, uint? payload = null)
     {
-        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.UnsubscribeFailureResponse.Length];
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.UnbindListenerFailureResponse.Length];
         var writer = new BinaryContractWriter( buffer );
-        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.UnsubscribeFailureResponse );
-        writer.MoveWrite( payload ?? Protocol.UnsubscribeFailureResponse.Length );
-        writer.Write( ( byte )(clientNotSubscribed ? 1 : 0) );
+        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.UnbindListenerFailureResponse );
+        writer.MoveWrite( payload ?? Protocol.UnbindListenerFailureResponse.Length );
+        writer.Write( ( byte )(clientNotBound ? 1 : 0) );
         Send( buffer );
     }
 

@@ -76,9 +76,9 @@ public readonly struct MessageBrokerListenerCollection
     }
 
     /// <summary>
-    /// Attempts to subscribe the client to a channel and to create a message listener.
+    /// Attempts to bind the client to a channel as a message listener.
     /// </summary>
-    /// <param name="channelName">Unique name of the channel to subscribe to.</param>
+    /// <param name="channelName">Unique name of the channel to bind as listener to.</param>
     /// <param name="callback">Callback invoked when the created listener receives a message from the server.</param>
     /// <param name="queueName">
     /// Optional unique name of the queue that will store pending messages to this client server-side.
@@ -88,33 +88,33 @@ public readonly struct MessageBrokerListenerCollection
     /// Specifies whether or not the server should create the channel if it does not exist yet. Equal to <b>true</b> by default.
     /// </param>
     /// <param name="prefetchHint">
-    /// Specifies how many messages intended for created subscription can be sent by the server to this client at the same time.
+    /// Specifies how many messages intended for the created listener can be sent by the server to this client at the same time.
     /// Equal to <b>1</b> by default.
     /// </param>
     /// <returns>
     /// A task that represents the operation, which returns a <see cref="Result{T}"/> instance,
-    /// with underlying <see cref="MessageBrokerSubscribeResult"/> instance.
+    /// with underlying <see cref="MessageBrokerBindListenerResult"/> instance.
     /// </returns>
     /// <exception cref="ArgumentOutOfRangeException">
-    /// When <paramref name="channelName"/> length is less than <b>1</b> or greater than <b>512</b>,
-    /// or when <paramref name="prefetchHint"/> is less than <b>1</b>.
+    /// When <paramref name="channelName"/> or <paramref name="queueName"/> (if not <b>null</b>) length
+    /// is less than <b>1</b> or greater than <b>512</b>, or when <paramref name="prefetchHint"/> is less than <b>1</b>.
     /// </exception>
     /// <exception cref="MessageBrokerClientDisposedException">When client has already been disposed.</exception>
     /// <exception cref="MessageBrokerClientStateException">
     /// When client is not disposed and not in <see cref="MessageBrokerClientState.Running"/> state.
     /// </exception>
     /// <remarks>
-    /// Unexpected errors encountered during subscription attempt will cause the client to be automatically disposed.
-    /// Returned <see cref="Result{T}"/> will only be valid when either the client has successfully subscribed to the channel
-    /// on the server side, or the client is already locally subscribed to the channel, which will cancel the request to the server.
+    /// Unexpected errors encountered during listener binding attempt will cause the client to be automatically disposed.
+    /// Returned <see cref="Result{T}"/> will only be valid when either the client has been successfully bound as listener to the channel
+    /// on the server side, or the client is already locally bound as listener to the channel, which will cancel the request to the server.
     /// </remarks>
-    public ValueTask<Result<MessageBrokerSubscribeResult?>> SubscribeAsync(
+    public ValueTask<Result<MessageBrokerBindListenerResult?>> BindAsync(
         string channelName,
         MessageBrokerListenerCallback callback,
         string? queueName = null,
         bool createChannelIfNotExists = true,
         int prefetchHint = 1)
     {
-        return ListenerCollection.SubscribeAsync( _client, channelName, queueName, callback, createChannelIfNotExists, prefetchHint );
+        return ListenerCollection.BindAsync( _client, channelName, queueName, callback, createChannelIfNotExists, prefetchHint );
     }
 }

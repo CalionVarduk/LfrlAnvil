@@ -17,52 +17,53 @@ using System.Diagnostics.Contracts;
 namespace LfrlAnvil.MessageBroker.Server;
 
 /// <summary>
-/// Represents a collection of <see cref="MessageBrokerChannelBinding"/> instances attached to a single client, identified by channel ids.
+/// Represents a collection of <see cref="MessageBrokerChannelPublisherBinding"/> instances attached to a single client,
+/// identified by channel ids.
 /// </summary>
-public readonly struct MessageBrokerRemoteClientBindingCollection
+public readonly struct MessageBrokerRemoteClientPublisherCollection
 {
     private readonly MessageBrokerRemoteClient _client;
 
-    internal MessageBrokerRemoteClientBindingCollection(MessageBrokerRemoteClient client)
+    internal MessageBrokerRemoteClientPublisherCollection(MessageBrokerRemoteClient client)
     {
         _client = client;
     }
 
     /// <summary>
-    /// Specifies the number of bindings.
+    /// Specifies the number of publishers.
     /// </summary>
     public int Count
     {
         get
         {
             using ( _client.AcquireLock() )
-                return _client.BindingsByChannelId.Count;
+                return _client.PublishersByChannelId.Count;
         }
     }
 
     /// <summary>
-    /// Returns all bindings.
+    /// Returns all publishers.
     /// </summary>
-    /// <returns>All bindings.</returns>
+    /// <returns>All publishers.</returns>
     [Pure]
-    public ReadOnlyArray<MessageBrokerChannelBinding> GetAll()
+    public ReadOnlyArray<MessageBrokerChannelPublisherBinding> GetAll()
     {
         using ( _client.AcquireLock() )
-            return _client.BindingsByChannelId.GetAll();
+            return _client.PublishersByChannelId.GetAll();
     }
 
     /// <summary>
-    /// Attempts to return a binding by related channel id.
+    /// Attempts to return a publisher by related channel id.
     /// </summary>
     /// <param name="channelId">Channel's unique <see cref="MessageBrokerChannel.Id"/>.</param>
     /// <returns>
-    /// <see cref="MessageBrokerChannelBinding"/> instance associated with the client and the provided <paramref name="channelId"/>
-    /// or <b>null</b>, when such a binding does not exist.
+    /// <see cref="MessageBrokerChannelPublisherBinding"/> instance associated with the client and the provided <paramref name="channelId"/>
+    /// or <b>null</b>, when such a publisher does not exist.
     /// </returns>
     [Pure]
-    public MessageBrokerChannelBinding? TryGetByChannelId(int channelId)
+    public MessageBrokerChannelPublisherBinding? TryGetByChannelId(int channelId)
     {
         using ( _client.AcquireLock() )
-            return _client.BindingsByChannelId.TryGet( channelId, out var result ) ? result : null;
+            return _client.PublishersByChannelId.TryGet( channelId, out var result ) ? result : null;
     }
 }

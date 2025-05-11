@@ -43,8 +43,13 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     internal readonly Func<MessageBrokerChannel, MessageBrokerChannelEventHandler?>? ChannelEventHandlerFactory;
     internal readonly Func<MessageBrokerStream, MessageBrokerStreamEventHandler?>? StreamEventHandlerFactory;
     internal readonly Func<MessageBrokerQueue, MessageBrokerQueueEventHandler?>? QueueEventHandlerFactory;
-    internal readonly Func<MessageBrokerChannelBinding, MessageBrokerChannelBindingEventHandler?>? ChannelBindingEventHandlerFactory;
-    internal readonly Func<MessageBrokerSubscription, MessageBrokerSubscriptionEventHandler?>? SubscriptionEventHandlerFactory;
+
+    internal readonly Func<MessageBrokerChannelPublisherBinding, MessageBrokerChannelPublisherBindingEventHandler?>?
+        PublisherEventHandlerFactory;
+
+    internal readonly Func<MessageBrokerChannelListenerBinding, MessageBrokerChannelListenerBindingEventHandler?>?
+        ListenerEventHandlerFactory;
+
     internal readonly MessageBrokerRemoteClientStreamDecorator? StreamDecorator;
     internal readonly Func<MessageBrokerRemoteClient, ITimestampProvider> TimestampsFactory;
     internal readonly Func<MessageBrokerRemoteClient, ValueTaskDelaySource>? DelaySourceFactory;
@@ -71,8 +76,8 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         ChannelEventHandlerFactory = options.ChannelEventHandlerFactory;
         StreamEventHandlerFactory = options.StreamEventHandlerFactory;
         QueueEventHandlerFactory = options.QueueEventHandlerFactory;
-        ChannelBindingEventHandlerFactory = options.ChannelBindingEventHandlerFactory;
-        SubscriptionEventHandlerFactory = options.SubscriptionEventHandlerFactory;
+        PublisherEventHandlerFactory = options.PublisherEventHandlerFactory;
+        ListenerEventHandlerFactory = options.ListenerEventHandlerFactory;
         TimestampsFactory = options.TimestampsFactory ?? (static _ => TimestampProvider.Shared);
         DelaySourceFactory = options.DelaySourceFactory;
 
@@ -183,7 +188,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         if ( exception is not null )
             Emit( MessageBrokerServerEvent.Unexpected( this, exception ) );
 
-        await Parallel.ForEachAsync( streams, static (q, _) => q.OnServerDisposedAsync() ).ConfigureAwait( false );
+        await Parallel.ForEachAsync( streams, static (s, _) => s.OnServerDisposedAsync() ).ConfigureAwait( false );
         await Parallel.ForEachAsync( channels, static (c, _) => c.OnServerDisposedAsync() ).ConfigureAwait( false );
         await Parallel.ForEachAsync( clients, static (c, _) => c.OnServerDisposedAsync() ).ConfigureAwait( false );
 

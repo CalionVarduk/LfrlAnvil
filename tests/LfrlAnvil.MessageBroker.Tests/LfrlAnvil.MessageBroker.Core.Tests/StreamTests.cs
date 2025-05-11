@@ -11,7 +11,7 @@ namespace LfrlAnvil.MessageBroker.Core.Tests;
 public class MessageTests : TestsBase
 {
     [Fact]
-    public async Task Server_ShouldAcceptSentMessages_AndSendThemToAppropriateSubscribers()
+    public async Task Server_ShouldAcceptSentMessages_AndSendThemToAppropriateListeners()
     {
         var endSource = new SafeTaskCompletionSource( completionCount: 6 );
         await using var server = new MessageBrokerServer(
@@ -44,7 +44,7 @@ public class MessageTests : TestsBase
         var receivedMessages2 = new List<MessageSnapshot>();
 
         await client1.Publishers.BindAsync( "foo" );
-        await client1.Listeners.SubscribeAsync(
+        await client1.Listeners.BindAsync(
             "foo",
             (a, _) =>
             {
@@ -55,7 +55,7 @@ public class MessageTests : TestsBase
                 return ValueTask.CompletedTask;
             } );
 
-        await client2.Listeners.SubscribeAsync(
+        await client2.Listeners.BindAsync(
             "foo",
             (a, _) =>
             {

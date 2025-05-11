@@ -17,52 +17,52 @@ using System.Diagnostics.Contracts;
 namespace LfrlAnvil.MessageBroker.Server;
 
 /// <summary>
-/// Represents a collection of <see cref="MessageBrokerSubscription"/> instances attached to a single queue, identified by channel ids.
+/// Represents a collection of <see cref="MessageBrokerChannelListenerBinding"/> instances attached to a single queue, identified by channel ids.
 /// </summary>
-public readonly struct MessageBrokerQueueSubscriptionCollection
+public readonly struct MessageBrokerQueueListenerCollection
 {
     private readonly MessageBrokerQueue _queue;
 
-    internal MessageBrokerQueueSubscriptionCollection(MessageBrokerQueue queue)
+    internal MessageBrokerQueueListenerCollection(MessageBrokerQueue queue)
     {
         _queue = queue;
     }
 
     /// <summary>
-    /// Specifies the number of subscriptions.
+    /// Specifies the number of listeners.
     /// </summary>
     public int Count
     {
         get
         {
             using ( _queue.AcquireLock() )
-                return _queue.SubscriptionsByChannelId.Count;
+                return _queue.ListenersByChannelId.Count;
         }
     }
 
     /// <summary>
-    /// Returns all subscriptions.
+    /// Returns all listeners.
     /// </summary>
-    /// <returns>All subscriptions.</returns>
+    /// <returns>All listeners.</returns>
     [Pure]
-    public ReadOnlyArray<MessageBrokerSubscription> GetAll()
+    public ReadOnlyArray<MessageBrokerChannelListenerBinding> GetAll()
     {
         using ( _queue.AcquireLock() )
-            return _queue.SubscriptionsByChannelId.GetAll();
+            return _queue.ListenersByChannelId.GetAll();
     }
 
     /// <summary>
-    /// Attempts to return a subscription by related channel id.
+    /// Attempts to return a listener by related channel id.
     /// </summary>
     /// <param name="channelId">Channel's unique <see cref="MessageBrokerChannel.Id"/>.</param>
     /// <returns>
-    /// <see cref="MessageBrokerSubscription"/> instance associated with the queue and the provided <paramref name="channelId"/>
-    /// or <b>null</b>, when such a subscription does not exist.
+    /// <see cref="MessageBrokerChannelListenerBinding"/> instance associated with the queue and the provided <paramref name="channelId"/>
+    /// or <b>null</b>, when such a listener does not exist.
     /// </returns>
     [Pure]
-    public MessageBrokerSubscription? TryGetByChannelId(int channelId)
+    public MessageBrokerChannelListenerBinding? TryGetByChannelId(int channelId)
     {
         using ( _queue.AcquireLock() )
-            return _queue.SubscriptionsByChannelId.TryGet( channelId, out var result ) ? result : null;
+            return _queue.ListenersByChannelId.TryGet( channelId, out var result ) ? result : null;
     }
 }

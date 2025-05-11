@@ -106,7 +106,7 @@ internal struct MessageListener
 
             var packetPoolToken = default( MemoryPoolToken<byte> );
             var packetBuffer = Memory<byte>.Empty;
-            if ( header.GetServerEndpoint() != MessageBrokerServerEndpoint.PingRequest )
+            if ( header.GetServerEndpoint() != MessageBrokerServerEndpoint.Ping )
             {
                 var packetLength = Protocol.AssertPacketLength( client, header );
                 if ( packetLength.Exception is not null )

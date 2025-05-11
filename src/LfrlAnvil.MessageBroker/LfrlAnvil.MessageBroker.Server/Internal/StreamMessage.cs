@@ -27,32 +27,32 @@ internal readonly struct StreamMessage
     internal StreamMessage(
         ulong id,
         Timestamp timestamp,
-        MessageBrokerChannelBinding binding,
+        MessageBrokerChannelPublisherBinding publisher,
         MemoryPoolToken<byte> poolToken,
         ReadOnlyMemory<byte> data)
     {
         Id = id;
         Timestamp = timestamp;
-        Binding = binding;
+        Publisher = publisher;
         _poolToken = poolToken;
         Data = data;
     }
 
     internal readonly ulong Id;
     internal readonly Timestamp Timestamp;
-    internal readonly MessageBrokerChannelBinding Binding;
+    internal readonly MessageBrokerChannelPublisherBinding Publisher;
     internal readonly ReadOnlyMemory<byte> Data;
     internal bool BufferClearEnabled => _poolToken.Clear;
 
     [Pure]
     public override string ToString()
     {
-        return $"Id = {Id}, Timestamp = {Timestamp}, Length = {Data.Length}, Binding = ({Binding})";
+        return $"Id = {Id}, Timestamp = {Timestamp}, Length = {Data.Length}, Publisher = ({Publisher})";
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void Return()
     {
-        _poolToken.Return( Binding.Client );
+        _poolToken.Return( Publisher.Client );
     }
 }

@@ -72,7 +72,7 @@ internal struct ListenerCollection
             return client.ListenerCollection._store.TryGetByName( channelName );
     }
 
-    internal static async ValueTask<Result<MessageBrokerSubscribeResult?>> SubscribeAsync(
+    internal static async ValueTask<Result<MessageBrokerBindListenerResult?>> BindAsync(
         MessageBrokerClient client,
         string channelName,
         string? queueName,
@@ -95,19 +95,19 @@ internal struct ListenerCollection
             client.AssertState( MessageBrokerClientState.Running );
             var listener = client.ListenerCollection._store.TryGetByName( channelName );
             if ( listener is not null )
-                return MessageBrokerSubscribeResult.CreateAlreadySubscribed( listener );
+                return MessageBrokerBindListenerResult.CreateAlreadyBound( listener );
 
             reverseEndianness = BitConverter.IsLittleEndian != client.IsServerLittleEndian;
         }
 
         ManualResetValueTaskSource<IncomingPacketToken> responseSource;
-        Protocol.SubscribeRequest request;
+        Protocol.BindListenerRequest request;
         ulong contextId;
 
         var poolToken = default( MemoryPoolToken<byte> );
         try
         {
-            request = new Protocol.SubscribeRequest( channelName, queueName, prefetchHint, createChannelIfNotExists );
+            request = new Protocol.BindListenerRequest( channelName, queueName, prefetchHint, createChannelIfNotExists );
             poolToken = client.MemoryPool.Rent( request.Length, out var buffer ).EnableClearing();
             request.Serialize( buffer, reverseEndianness );
 
@@ -185,11 +185,11 @@ internal struct ListenerCollection
 
             switch ( response.Header.GetClientEndpoint() )
             {
-                case MessageBrokerClientEndpoint.SubscribedResponse:
+                case MessageBrokerClientEndpoint.ListenerBoundResponse:
                 {
                     client.Emit( MessageBrokerClientEvent.MessageReceived( client, response.Header, contextId ) );
 
-                    var exc = Protocol.AssertPayload( client, response.Header, Protocol.SubscribedResponse.Length );
+                    var exc = Protocol.AssertPayload( client, response.Header, Protocol.ListenerBoundResponse.Length );
                     if ( exc is not null )
                     {
                         client.Emit( MessageBrokerClientEvent.MessageRejected( client, response.Header, exc, contextId ) );
@@ -197,7 +197,7 @@ internal struct ListenerCollection
                         return exc;
                     }
 
-                    var parsedResponse = Protocol.SubscribedResponse.Parse( response.Data, reverseEndianness );
+                    var parsedResponse = Protocol.ListenerBoundResponse.Parse( response.Data, reverseEndianness );
                     var errors = parsedResponse.StringifyErrors();
 
                     if ( errors.Count > 0 )
@@ -214,7 +214,7 @@ internal struct ListenerCollection
                     }
 
                     bool cancel;
-                    MessageBrokerSubscribeResult subscribeResult = default;
+                    MessageBrokerBindListenerResult bindResult = default;
                     using ( client.AcquireLock() )
                     {
                         cancel = client.ShouldCancel;
@@ -230,7 +230,7 @@ internal struct ListenerCollection
                                 callback );
 
                             client.ListenerCollection._store.Add( parsedResponse.ChannelId, channelName, listener );
-                            subscribeResult = MessageBrokerSubscribeResult.Create(
+                            bindResult = MessageBrokerBindListenerResult.Create(
                                 listener,
                                 parsedResponse.ChannelCreated,
                                 parsedResponse.QueueCreated );
@@ -241,14 +241,14 @@ internal struct ListenerCollection
                         return client.EmitError(
                             MessageBrokerClientEvent.MessageReceived( client, response.Header, contextId, client.DisposedException() ) );
 
-                    client.Emit( MessageBrokerClientEvent.MessageAccepted( client, response.Header, contextId, subscribeResult.Listener ) );
-                    return subscribeResult;
+                    client.Emit( MessageBrokerClientEvent.MessageAccepted( client, response.Header, contextId, bindResult.Listener ) );
+                    return bindResult;
                 }
-                case MessageBrokerClientEndpoint.SubscribeFailureResponse:
+                case MessageBrokerClientEndpoint.BindListenerFailureResponse:
                 {
                     client.Emit( MessageBrokerClientEvent.MessageReceived( client, response.Header, contextId ) );
 
-                    var exc = Protocol.AssertPayload( client, response.Header, Protocol.SubscribeFailureResponse.Length );
+                    var exc = Protocol.AssertPayload( client, response.Header, Protocol.ListenerBindFailureResponse.Length );
                     if ( exc is not null )
                     {
                         client.Emit( MessageBrokerClientEvent.MessageRejected( client, response.Header, exc, contextId ) );
@@ -256,7 +256,7 @@ internal struct ListenerCollection
                         return exc;
                     }
 
-                    var parsedResponse = Protocol.SubscribeFailureResponse.Parse( response.Data );
+                    var parsedResponse = Protocol.ListenerBindFailureResponse.Parse( response.Data );
                     return client.EmitError(
                         MessageBrokerClientEvent.MessageReceived(
                             client,
@@ -284,7 +284,7 @@ internal struct ListenerCollection
         }
     }
 
-    internal static async ValueTask<Result<MessageBrokerUnsubscribeResult>> UnsubscribeAsync(MessageBrokerListener listener)
+    internal static async ValueTask<Result<MessageBrokerUnbindListenerResult>> UnbindAsync(MessageBrokerListener listener)
     {
         bool reverseEndianness;
         var client = listener.Client;
@@ -294,7 +294,7 @@ internal struct ListenerCollection
                 ExceptionThrower.Throw( client.DisposedException() );
 
             if ( ! listener.BeginDispose() )
-                return MessageBrokerUnsubscribeResult.CreateNotSubscribed();
+                return MessageBrokerUnbindListenerResult.CreateNotBound();
 
             reverseEndianness = BitConverter.IsLittleEndian != client.IsServerLittleEndian;
         }
@@ -303,14 +303,14 @@ internal struct ListenerCollection
         try
         {
             ManualResetValueTaskSource<IncomingPacketToken> responseSource;
-            Protocol.UnsubscribeRequest request;
+            Protocol.UnbindListenerRequest request;
             ulong contextId;
 
             var poolToken = default( MemoryPoolToken<byte> );
             try
             {
-                request = new Protocol.UnsubscribeRequest( listener.ChannelId );
-                poolToken = client.MemoryPool.Rent( Protocol.UnsubscribeRequest.Length, out var buffer ).EnableClearing();
+                request = new Protocol.UnbindListenerRequest( listener.ChannelId );
+                poolToken = client.MemoryPool.Rent( Protocol.UnbindListenerRequest.Length, out var buffer ).EnableClearing();
                 request.Serialize( buffer, reverseEndianness );
 
                 ManualResetValueTaskSource<bool> writerSource;
@@ -389,11 +389,11 @@ internal struct ListenerCollection
 
                 switch ( response.Header.GetClientEndpoint() )
                 {
-                    case MessageBrokerClientEndpoint.UnsubscribedResponse:
+                    case MessageBrokerClientEndpoint.ListenerUnboundResponse:
                     {
                         client.Emit( MessageBrokerClientEvent.MessageReceived( client, response.Header, contextId ) );
 
-                        var exc = Protocol.AssertPayload( client, response.Header, Protocol.UnsubscribedResponse.Length );
+                        var exc = Protocol.AssertPayload( client, response.Header, Protocol.ListenerUnboundResponse.Length );
                         if ( exc is not null )
                         {
                             client.Emit( MessageBrokerClientEvent.MessageRejected( client, response.Header, exc, contextId ) );
@@ -401,7 +401,7 @@ internal struct ListenerCollection
                             return exc;
                         }
 
-                        var parsedResponse = Protocol.UnsubscribedResponse.Parse( response.Data );
+                        var parsedResponse = Protocol.ListenerUnboundResponse.Parse( response.Data );
 
                         bool cancel;
                         using ( client.AcquireLock() )
@@ -420,13 +420,13 @@ internal struct ListenerCollection
                                     client.DisposedException() ) );
 
                         client.Emit( MessageBrokerClientEvent.MessageAccepted( client, response.Header, contextId ) );
-                        return MessageBrokerUnsubscribeResult.Create( parsedResponse.ChannelRemoved, parsedResponse.QueueRemoved );
+                        return MessageBrokerUnbindListenerResult.Create( parsedResponse.ChannelRemoved, parsedResponse.QueueRemoved );
                     }
-                    case MessageBrokerClientEndpoint.UnsubscribeFailureResponse:
+                    case MessageBrokerClientEndpoint.UnbindListenerFailureResponse:
                     {
                         client.Emit( MessageBrokerClientEvent.MessageReceived( client, response.Header, contextId ) );
 
-                        var exc = Protocol.AssertPayload( client, response.Header, Protocol.UnsubscribeFailureResponse.Length );
+                        var exc = Protocol.AssertPayload( client, response.Header, Protocol.UnbindListenerFailureResponse.Length );
                         if ( exc is not null )
                         {
                             client.Emit( MessageBrokerClientEvent.MessageRejected( client, response.Header, exc, contextId ) );
@@ -434,7 +434,7 @@ internal struct ListenerCollection
                             return exc;
                         }
 
-                        var parsedResponse = Protocol.UnsubscribeFailureResponse.Parse( response.Data );
+                        var parsedResponse = Protocol.UnbindListenerFailureResponse.Parse( response.Data );
                         return client.EmitError(
                             MessageBrokerClientEvent.MessageReceived(
                                 client,

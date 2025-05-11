@@ -18,13 +18,13 @@ using System.Runtime.CompilerServices;
 namespace LfrlAnvil.MessageBroker.Client;
 
 /// <summary>
-/// Represents the result of binding a client to a channel.
+/// Represents the result of binding a client to a channel as a publisher.
 /// </summary>
-public readonly struct MessageBrokerBindResult
+public readonly struct MessageBrokerBindPublisherResult
 {
     private readonly byte _state;
 
-    private MessageBrokerBindResult(MessageBrokerPublisher publisher, byte state)
+    private MessageBrokerBindPublisherResult(MessageBrokerPublisher publisher, byte state)
     {
         Publisher = publisher;
         _state = state;
@@ -37,7 +37,7 @@ public readonly struct MessageBrokerBindResult
 
     /// <summary>
     /// Specifies whether or not request to the server has been cancelled
-    /// because the client already contains a local publisher bound to the channel.
+    /// because the client is already locally bound as publisher to the channel.
     /// </summary>
     public bool AlreadyBound => _state == 1;
 
@@ -52,7 +52,7 @@ public readonly struct MessageBrokerBindResult
     public bool StreamCreated => (_state & 4) != 0;
 
     /// <summary>
-    /// Returns a string representation of this <see cref="MessageBrokerBindResult"/> instance.
+    /// Returns a string representation of this <see cref="MessageBrokerBindPublisherResult"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
     [Pure]
@@ -68,15 +68,15 @@ public readonly struct MessageBrokerBindResult
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerBindResult Create(MessageBrokerPublisher publisher, bool channelCreated, bool streamCreated)
+    internal static MessageBrokerBindPublisherResult Create(MessageBrokerPublisher publisher, bool channelCreated, bool streamCreated)
     {
-        return new MessageBrokerBindResult( publisher, ( byte )((channelCreated ? 2 : 0) | (streamCreated ? 4 : 0)) );
+        return new MessageBrokerBindPublisherResult( publisher, ( byte )((channelCreated ? 2 : 0) | (streamCreated ? 4 : 0)) );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerBindResult CreateAlreadyBound(MessageBrokerPublisher publisher)
+    internal static MessageBrokerBindPublisherResult CreateAlreadyBound(MessageBrokerPublisher publisher)
     {
-        return new MessageBrokerBindResult( publisher, 1 );
+        return new MessageBrokerBindPublisherResult( publisher, 1 );
     }
 }

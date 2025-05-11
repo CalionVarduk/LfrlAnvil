@@ -168,7 +168,7 @@ internal struct MessageListener
                     break;
                 }
 
-                if ( target.ServerEndpoint != MessageBrokerServerEndpoint.PingRequest )
+                if ( target.ServerEndpoint != MessageBrokerServerEndpoint.Ping )
                 {
                     var packetLength = Protocol.AssertPacketLength( client, header );
                     if ( packetLength.Exception is not null )

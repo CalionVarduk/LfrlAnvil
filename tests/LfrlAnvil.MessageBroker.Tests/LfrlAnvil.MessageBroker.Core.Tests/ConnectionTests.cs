@@ -15,8 +15,7 @@ public class ConnectionTests : TestsBase
     [Fact]
     public async Task ClientAndServer_ShouldExchangePingsWhenIdle_AfterExchangingHandshake()
     {
-        var pingResponseCount = 0;
-        var endSource = new SafeTaskCompletionSource();
+        var endSource = new SafeTaskCompletionSource( completionCount: 2 );
 
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
@@ -35,8 +34,7 @@ public class ConnectionTests : TestsBase
                     e =>
                     {
                         if ( e.Type == MessageBrokerClientEventType.MessageAccepted
-                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.PingResponse
-                            && ++pingResponseCount == 2 )
+                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.Pong )
                             endSource.Complete();
                     } ) );
 

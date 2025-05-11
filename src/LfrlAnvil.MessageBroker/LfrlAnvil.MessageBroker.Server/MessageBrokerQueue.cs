@@ -24,11 +24,11 @@ namespace LfrlAnvil.MessageBroker.Server;
 
 /// <summary>
 /// Represents a message broker queue, which allows a single <see cref="MessageBrokerRemoteClient"/> instance to manage
-/// the order of message notifications between multiple subscriptions, sent by the server.
+/// the order of message notifications between multiple listeners, sent by the server.
 /// </summary>
 public sealed class MessageBrokerQueue
 {
-    internal ReferenceStore<int, MessageBrokerSubscription> SubscriptionsByChannelId;
+    internal ReferenceStore<int, MessageBrokerChannelListenerBinding> ListenersByChannelId;
     internal QueueProcessor QueueProcessor;
     private readonly object _sync = new object();
     private readonly MessageBrokerQueueEventHandler? _eventHandler;
@@ -41,7 +41,7 @@ public sealed class MessageBrokerQueue
         Id = id;
         Name = name;
         _state = MessageBrokerQueueState.Running;
-        SubscriptionsByChannelId = ReferenceStore<int, MessageBrokerSubscription>.Create();
+        ListenersByChannelId = ReferenceStore<int, MessageBrokerChannelListenerBinding>.Create();
         _messages = QueueSlim<QueueMessage>.Create();
         QueueProcessor = QueueProcessor.Create();
         _eventHandler = Client.Server.QueueEventHandlerFactory?.Invoke( this );
@@ -77,9 +77,9 @@ public sealed class MessageBrokerQueue
     }
 
     /// <summary>
-    /// Collection of <see cref="MessageBrokerSubscription"/> instances attached to this queue, identified by channel ids.
+    /// Collection of <see cref="MessageBrokerChannelListenerBinding"/> instances attached to this queue, identified by channel ids.
     /// </summary>
-    public MessageBrokerQueueSubscriptionCollection Subscriptions => new MessageBrokerQueueSubscriptionCollection( this );
+    public MessageBrokerQueueListenerCollection Listeners => new MessageBrokerQueueListenerCollection( this );
 
     internal bool ShouldCancel => _state >= MessageBrokerQueueState.Disposing;
 
@@ -94,7 +94,7 @@ public sealed class MessageBrokerQueue
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void PushMessages(MessageBrokerSubscription subscription, in ListSlim<StreamMessage> messages)
+    internal void PushMessages(MessageBrokerChannelListenerBinding listener, in ListSlim<StreamMessage> messages)
     {
         using ( AcquireLock() )
         {
@@ -104,8 +104,8 @@ public sealed class MessageBrokerQueue
 
             foreach ( var message in messages )
             {
-                _messages.Enqueue( new QueueMessage( in message, subscription ) );
-                Emit( MessageBrokerQueueEvent.MessageEnqueued( this, subscription, message.Id ) );
+                _messages.Enqueue( new QueueMessage( in message, listener ) );
+                Emit( MessageBrokerQueueEvent.MessageEnqueued( this, listener, message.Id ) );
             }
 
             QueueProcessor.SignalContinuation();
@@ -136,10 +136,10 @@ public sealed class MessageBrokerQueue
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool TryDisposeByRemovingSubscriptionUnsafe(int channelId)
+    internal bool TryDisposeByRemovingListenerUnsafe(int channelId)
     {
-        SubscriptionsByChannelId.Remove( channelId );
-        if ( SubscriptionsByChannelId.Count > 0 || ! _messages.IsEmpty )
+        ListenersByChannelId.Remove( channelId );
+        if ( ListenersByChannelId.Count > 0 || ! _messages.IsEmpty )
             return false;
 
         _state = MessageBrokerQueueState.Disposing;
@@ -149,7 +149,7 @@ public sealed class MessageBrokerQueue
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal bool TryDisposeDueToPotentiallyEmptyQueueUnsafe()
     {
-        if ( SubscriptionsByChannelId.Count > 0 || ! _messages.IsEmpty )
+        if ( ListenersByChannelId.Count > 0 || ! _messages.IsEmpty )
             return false;
 
         _state = MessageBrokerQueueState.Disposing;
@@ -176,7 +176,7 @@ public sealed class MessageBrokerQueue
         Task? processorTask;
         using ( AcquireLock() )
         {
-            Assume.Equals( SubscriptionsByChannelId.Count, 0 );
+            Assume.Equals( ListenersByChannelId.Count, 0 );
             Assume.True( _messages.IsEmpty );
 
             processorTask = QueueProcessor.DiscardUnderlyingTask();
@@ -229,7 +229,7 @@ public sealed class MessageBrokerQueue
         const int maxDiscarded = 128;
         foreach ( ref readonly var message in source )
         {
-            if ( message.Subscription.TryIncrementPrefetchCounter( out var disposed ) )
+            if ( message.Listener.TryIncrementPrefetchCounter( out var disposed ) )
             {
                 target.Add( message );
                 if ( target.Count >= target.Capacity )
@@ -257,7 +257,7 @@ public sealed class MessageBrokerQueue
         Task? processorTask;
         using ( AcquireLock() )
         {
-            SubscriptionsByChannelId.Clear();
+            ListenersByChannelId.Clear();
             ClearMessages();
             processorTask = QueueProcessor.DiscardUnderlyingTask();
             QueueProcessor.Dispose();

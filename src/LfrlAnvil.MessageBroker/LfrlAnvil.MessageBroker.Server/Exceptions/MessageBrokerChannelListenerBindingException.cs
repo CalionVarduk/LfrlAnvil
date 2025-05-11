@@ -17,27 +17,27 @@ using System;
 namespace LfrlAnvil.MessageBroker.Server.Exceptions;
 
 /// <summary>
-/// Represents an error related to a message broker subscription.
+/// Represents an error related to a message broker channel listener binding.
 /// </summary>
-public sealed class MessageBrokerSubscriptionException : InvalidOperationException
+public sealed class MessageBrokerChannelListenerBindingException : InvalidOperationException
 {
     /// <summary>
-    /// Creates a new <see cref="MessageBrokerSubscriptionException"/> instance.
+    /// Creates a new <see cref="MessageBrokerChannelListenerBindingException"/> instance.
     /// </summary>
     /// <param name="client"><see cref="MessageBrokerServer"/> instance that encountered this error.</param>
     /// <param name="channel">Optional <see cref="MessageBrokerChannel"/> instance that encountered this error.</param>
-    /// <param name="subscription">Optional <see cref="MessageBrokerSubscription"/> instance that encountered this error.</param>
+    /// <param name="listener">Optional <see cref="MessageBrokerChannelListenerBinding"/> instance that encountered this error.</param>
     /// <param name="message">Underlying error message.</param>
-    public MessageBrokerSubscriptionException(
+    public MessageBrokerChannelListenerBindingException(
         MessageBrokerRemoteClient client,
         MessageBrokerChannel? channel,
-        MessageBrokerSubscription? subscription,
+        MessageBrokerChannelListenerBinding? listener,
         string message)
         : base( message )
     {
         Client = client;
         Channel = channel;
-        Subscription = subscription;
+        Listener = listener;
     }
 
     /// <summary>
@@ -51,7 +51,7 @@ public sealed class MessageBrokerSubscriptionException : InvalidOperationExcepti
     public MessageBrokerChannel? Channel { get; }
 
     /// <summary>
-    /// Optional <see cref="MessageBrokerSubscription"/> instance that encountered this error.
+    /// Optional <see cref="MessageBrokerChannelListenerBinding"/> instance that encountered this error.
     /// </summary>
-    public MessageBrokerSubscription? Subscription { get; }
+    public MessageBrokerChannelListenerBinding? Listener { get; }
 }

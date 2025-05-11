@@ -46,7 +46,6 @@ MessageBroker:
         - since the actual order may be verified by checking timestamp-of-first-event-in-context
         - so event emitting under active lock might be possible to be kept to bare minimum
 - refactor packet read/write & payload error emitting? there's a lot of copy-pasta (wait for packet batching)
-- change endpoint values to be as sequential as possible (minor switch optimization)
 - separate synchronous enqueue-write operation from asynchronous write-and-wait-for-response operation
     - consumption example: client.Enqueue(...).WaitForResponseAsync()
     - make sure that Enqueue already starts the underlying process
@@ -56,10 +55,7 @@ MessageBroker:
     - since all operations at first validate e.g. client state and may throw
     - or Enqueue itself returns a Result<EnqueuedOperation>, which would allow the consumer to easily react to such a scenario
 - add some basic memory pool tracking & possibility to trim excess
-- rename channel binding to MessageBrokerChannelPublisherBinding
-- rename subscription to MessageBrokerChannelListenerBinding
-- apply renaming to collections, requests, responses etc. (Publishers/Listeners will suffice)
-  - e.g. BindPublisher/BindListener
+- exception messages as string templates (string.format)
 - refactor MessageContextQueue on both client and server side
   - they outlived their usefulness, and are in need of some refactoring/splitting into different structs
   - since now I have a better grasp on how they're used

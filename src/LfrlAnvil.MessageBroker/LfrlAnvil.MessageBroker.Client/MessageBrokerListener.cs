@@ -50,7 +50,7 @@ public sealed class MessageBrokerListener
         QueueName = queueName;
         PrefetchHint = prefetchHint;
         Callback = callback;
-        _state = MessageBrokerListenerState.Subscribed;
+        _state = MessageBrokerListenerState.Bound;
         CancellationSource = new CancellationTokenSource();
         MessageEmitter = MessageEmitter.Create();
         MessageEmitter.SetUnderlyingTask( MessageEmitter.StartUnderlyingTask( this ) );
@@ -117,22 +117,22 @@ public sealed class MessageBrokerListener
     }
 
     /// <summary>
-    /// Attempts to unsubscribe this listener from the channel.
+    /// Attempts to unbind this listener from the channel.
     /// </summary>
     /// <returns>
     /// A task that represents the operation, which returns a <see cref="Result{T}"/> instance,
-    /// with underlying <see cref="MessageBrokerUnsubscribeResult"/> instance.
+    /// with underlying <see cref="MessageBrokerUnbindListenerResult"/> instance.
     /// </returns>
     /// <exception cref="MessageBrokerClientDisposedException">When client has already been disposed.</exception>
     /// <remarks>
     /// This operation will cause all pending messages for this listener to be discarded.
-    /// Unexpected errors encountered during unsubscribing will cause the client to be automatically disposed.
-    /// Returned <see cref="Result{T}"/> will only be valid when either the client has been successfully unsubscribed from the channel
-    /// on the server side, or the listener is already locally unsubscribed from the channel, which will cancel the request to the server.
+    /// Unexpected errors encountered during listener unbinding will cause the client to be automatically disposed.
+    /// Returned <see cref="Result{T}"/> will only be valid when either the listener has been successfully unbound from the channel
+    /// on the server side, or the listener is already locally unbound from the channel, which will cancel the request to the server.
     /// </remarks>
-    public ValueTask<Result<MessageBrokerUnsubscribeResult>> UnsubscribeAsync()
+    public ValueTask<Result<MessageBrokerUnbindListenerResult>> UnbindAsync()
     {
-        return ListenerCollection.UnsubscribeAsync( this );
+        return ListenerCollection.UnbindAsync( this );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -158,7 +158,7 @@ public sealed class MessageBrokerListener
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ValueTask OnClientDisposedAsync()
     {
-        return DisposeAsync( MessageBrokerListenerState.Subscribed );
+        return DisposeAsync( MessageBrokerListenerState.Bound );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

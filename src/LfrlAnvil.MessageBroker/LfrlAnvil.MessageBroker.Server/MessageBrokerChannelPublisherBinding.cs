@@ -21,43 +21,46 @@ using LfrlAnvil.MessageBroker.Server.Events;
 namespace LfrlAnvil.MessageBroker.Server;
 
 /// <summary>
-/// Represents a message broker channel binding, which allows clients to publish messages through channels.
+/// Represents a message broker channel binding for a publisher, which allows clients to publish messages through channels.
 /// </summary>
-public sealed class MessageBrokerChannelBinding
+public sealed class MessageBrokerChannelPublisherBinding
 {
     private readonly object _sync = new object();
-    private readonly MessageBrokerChannelBindingEventHandler? _eventHandler;
-    private MessageBrokerChannelBindingState _state;
+    private readonly MessageBrokerChannelPublisherBindingEventHandler? _eventHandler;
+    private MessageBrokerChannelPublisherBindingState _state;
 
-    internal MessageBrokerChannelBinding(MessageBrokerRemoteClient client, MessageBrokerChannel channel, MessageBrokerStream stream)
+    internal MessageBrokerChannelPublisherBinding(
+        MessageBrokerRemoteClient client,
+        MessageBrokerChannel channel,
+        MessageBrokerStream stream)
     {
         Client = client;
         Channel = channel;
         Stream = stream;
-        _state = MessageBrokerChannelBindingState.Running;
-        _eventHandler = client.Server.ChannelBindingEventHandlerFactory?.Invoke( this );
+        _state = MessageBrokerChannelPublisherBindingState.Running;
+        _eventHandler = client.Server.PublisherEventHandlerFactory?.Invoke( this );
     }
 
     /// <summary>
-    /// <see cref="MessageBrokerRemoteClient"/> instance to which this binding belongs to.
+    /// <see cref="MessageBrokerRemoteClient"/> instance to which this publisher belongs to.
     /// </summary>
     public MessageBrokerRemoteClient Client { get; }
 
     /// <summary>
-    /// <see cref="MessageBrokerChannel"/> instance to which the <see cref="Client"/> is bound to.
+    /// <see cref="MessageBrokerChannel"/> instance to which the <see cref="Client"/> is bound to as a publisher.
     /// </summary>
     public MessageBrokerChannel Channel { get; }
 
     /// <summary>
-    /// <see cref="MessageBrokerStream"/> instance through which this binding will push messages to subscribers.
+    /// <see cref="MessageBrokerStream"/> instance through which this publisher will push messages to subscribers.
     /// </summary>
     public MessageBrokerStream Stream { get; }
 
     /// <summary>
-    /// Current binding's state.
+    /// Current publisher's state.
     /// </summary>
-    /// <remarks>See <see cref="MessageBrokerChannelBindingState"/> for more information.</remarks>
-    public MessageBrokerChannelBindingState State
+    /// <remarks>See <see cref="MessageBrokerChannelPublisherBindingState"/> for more information.</remarks>
+    public MessageBrokerChannelPublisherBindingState State
     {
         get
         {
@@ -66,17 +69,17 @@ public sealed class MessageBrokerChannelBinding
         }
     }
 
-    internal bool ShouldCancel => _state >= MessageBrokerChannelBindingState.Disposing;
+    internal bool ShouldCancel => _state >= MessageBrokerChannelPublisherBindingState.Disposing;
 
     /// <summary>
-    /// Returns a string representation of this <see cref="MessageBrokerChannelBinding"/> instance.
+    /// Returns a string representation of this <see cref="MessageBrokerChannelPublisherBinding"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
         return
-            $"[{Client.Id}] '{Client.Name}' => [{Channel.Id}] '{Channel.Name}' binding (using [{Stream.Id}] '{Stream.Name}' stream) ({State})";
+            $"[{Client.Id}] '{Client.Name}' => [{Channel.Id}] '{Channel.Name}' publisher binding (using [{Stream.Id}] '{Stream.Name}' stream) ({State})";
     }
 
     internal ValueTask OnServerDisposedAsync()
@@ -92,23 +95,23 @@ public sealed class MessageBrokerChannelBinding
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void BeginDisposingUnsafe()
     {
-        Assume.Equals( _state, MessageBrokerChannelBindingState.Running );
-        _state = MessageBrokerChannelBindingState.Disposing;
+        Assume.Equals( _state, MessageBrokerChannelPublisherBindingState.Running );
+        _state = MessageBrokerChannelPublisherBindingState.Disposing;
     }
 
     internal void EndDisposing()
     {
         using ( AcquireLock() )
         {
-            Assume.Equals( _state, MessageBrokerChannelBindingState.Disposing );
-            _state = MessageBrokerChannelBindingState.Disposed;
+            Assume.Equals( _state, MessageBrokerChannelPublisherBindingState.Disposing );
+            _state = MessageBrokerChannelPublisherBindingState.Disposed;
         }
 
-        Emit( MessageBrokerChannelBindingEvent.Disposed( this ) );
+        Emit( MessageBrokerChannelPublisherBindingEvent.Disposed( this ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void Emit(MessageBrokerChannelBindingEvent e)
+    internal void Emit(MessageBrokerChannelPublisherBindingEvent e)
     {
         if ( _eventHandler is null )
             return;
@@ -137,16 +140,16 @@ public sealed class MessageBrokerChannelBinding
             if ( ShouldCancel )
                 return;
 
-            _state = MessageBrokerChannelBindingState.Disposing;
+            _state = MessageBrokerChannelPublisherBindingState.Disposing;
         }
 
-        Emit( MessageBrokerChannelBindingEvent.Disposing( this ) );
+        Emit( MessageBrokerChannelPublisherBindingEvent.Disposing( this ) );
 
         if ( notifyStream )
-            await Stream.OnBindingDisposingAsync( Client, Channel ).ConfigureAwait( false );
+            await Stream.OnPublisherDisposingAsync( Client, Channel ).ConfigureAwait( false );
 
         if ( notifyChannel )
-            Channel.OnBindingDisposing( Client );
+            Channel.OnPublisherDisposing( Client );
 
         EndDisposing();
     }

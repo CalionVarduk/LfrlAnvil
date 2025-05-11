@@ -20,42 +20,42 @@ namespace LfrlAnvil.MessageBroker.Server.Events;
 public enum MessageBrokerServerEndpoint : byte
 {
     /// <summary>
-    /// Represents ping request sent by client.
+    /// Represents ping sent by client.
     /// </summary>
-    PingRequest = 1,
+    Ping = 1,
 
     /// <summary>
-    /// Represents client's confirmation of server's handshake acceptance response.
+    /// Represents push message sent by client.
     /// </summary>
-    ConfirmHandshakeResponse = 2,
+    PushMessage = 2,
+
+    /// <summary>
+    /// Represents bind publisher request sent by client.
+    /// </summary>
+    BindPublisherRequest = 3,
+
+    /// <summary>
+    /// Represents unbind publisher request sent by client.
+    /// </summary>
+    UnbindPublisherRequest = 4,
+
+    /// <summary>
+    /// Represents bind listener request sent by client.
+    /// </summary>
+    BindListenerRequest = 5,
+
+    /// <summary>
+    /// Represents unbind listener request sent by client.
+    /// </summary>
+    UnbindListenerRequest = 6,
 
     /// <summary>
     /// Represents handshake request sent by client.
     /// </summary>
-    HandshakeRequest = 3,
+    HandshakeRequest = 254,
 
     /// <summary>
-    /// Represents bind request sent by client.
+    /// Represents client's confirmation of server's handshake acceptance response.
     /// </summary>
-    BindRequest = 5,
-
-    /// <summary>
-    /// Represents unbind request sent by client.
-    /// </summary>
-    UnbindRequest = 7,
-
-    /// <summary>
-    /// Represents subscribe request sent by client.
-    /// </summary>
-    SubscribeRequest = 9,
-
-    /// <summary>
-    /// Represents unsubscribe request sent by client.
-    /// </summary>
-    UnsubscribeRequest = 11,
-
-    /// <summary>
-    /// Represents message request sent by client.
-    /// </summary>
-    MessageRequest = 13
+    ConfirmHandshakeResponse = 255
 }

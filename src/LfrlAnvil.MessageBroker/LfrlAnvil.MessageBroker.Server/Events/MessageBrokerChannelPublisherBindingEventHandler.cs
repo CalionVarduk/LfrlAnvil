@@ -15,27 +15,8 @@
 namespace LfrlAnvil.MessageBroker.Server.Events;
 
 /// <summary>
-/// Defines available <see cref="MessageBrokerChannelBindingEvent"/> types.
+/// Represents a callback to <see cref="MessageBrokerChannelPublisherBindingEvent"/> instances
+/// emitted by <see cref="MessageBrokerChannelPublisherBinding"/>.
+/// <param name="e">Emitted event.</param>
 /// </summary>
-public enum MessageBrokerChannelBindingEventType : byte
-{
-    /// <summary>
-    /// Specifies that the binding has encountered an unexpected error.
-    /// </summary>
-    Unexpected,
-
-    /// <summary>
-    /// Specifies that the binding instance has been created.
-    /// </summary>
-    Created,
-
-    /// <summary>
-    /// Specifies that the binding is about to be disposed.
-    /// </summary>
-    Disposing,
-
-    /// <summary>
-    /// Specifies that the binding has been disposed.
-    /// </summary>
-    Disposed
-}
+public delegate void MessageBrokerChannelPublisherBindingEventHandler(MessageBrokerChannelPublisherBindingEvent e);

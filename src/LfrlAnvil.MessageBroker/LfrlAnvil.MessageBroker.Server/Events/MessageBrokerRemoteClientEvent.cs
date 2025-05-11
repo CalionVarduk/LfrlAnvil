@@ -92,11 +92,14 @@ public readonly struct MessageBrokerRemoteClientEvent
                 case MessageBrokerRemoteClientEventType.MessageAccepted:
                 case MessageBrokerRemoteClientEventType.MessageRejected:
                     return Protocol.PacketHeader.Length
-                        + (GetServerEndpoint() < MessageBrokerServerEndpoint.HandshakeRequest ? 0 : unchecked( ( int )Payload ));
+                        + (GetServerEndpoint() == MessageBrokerServerEndpoint.Ping
+                            || GetServerEndpoint() == MessageBrokerServerEndpoint.ConfirmHandshakeResponse
+                                ? 0
+                                : unchecked( ( int )Payload ));
                 case MessageBrokerRemoteClientEventType.SendingMessage:
                 case MessageBrokerRemoteClientEventType.MessageSent:
                     return Protocol.PacketHeader.Length
-                        + (GetClientEndpoint() == MessageBrokerClientEndpoint.PingResponse ? 0 : unchecked( ( int )Payload ));
+                        + (GetClientEndpoint() == MessageBrokerClientEndpoint.Pong ? 0 : unchecked( ( int )Payload ));
                 default:
                     return 0;
             }

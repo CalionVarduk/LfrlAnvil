@@ -1,6 +1,7 @@
 ﻿using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
@@ -53,65 +54,65 @@ internal sealed class ClientMock : IDisposable
             MessageBrokerClientEndpoint.HandshakeRejectedResponse );
     }
 
-    internal byte[] ReadPingResponse()
+    internal byte[] ReadPong()
     {
-        return AssertEndpoint( Read( Protocol.PacketHeader.Length ), MessageBrokerClientEndpoint.PingResponse );
+        return AssertEndpoint( Read( Protocol.PacketHeader.Length ), MessageBrokerClientEndpoint.Pong );
     }
 
-    internal byte[] ReadBoundResponse()
+    internal byte[] ReadPublisherBoundResponse()
     {
         return AssertEndpoint(
-            Read( Protocol.PacketHeader.Length + Protocol.BoundResponse.Payload ),
-            MessageBrokerClientEndpoint.BoundResponse );
+            Read( Protocol.PacketHeader.Length + Protocol.PublisherBoundResponse.Payload ),
+            MessageBrokerClientEndpoint.PublisherBoundResponse );
     }
 
-    internal byte[] ReadBindFailureResponse()
+    internal byte[] ReadBindPublisherFailureResponse()
     {
         return AssertEndpoint(
-            Read( Protocol.PacketHeader.Length + Protocol.BindFailureResponse.Payload ),
-            MessageBrokerClientEndpoint.BindFailureResponse );
+            Read( Protocol.PacketHeader.Length + Protocol.BindPublisherFailureResponse.Payload ),
+            MessageBrokerClientEndpoint.BindPublisherFailureResponse );
     }
 
-    internal byte[] ReadUnboundResponse()
+    internal byte[] ReadPublisherUnboundResponse()
     {
         return AssertEndpoint(
-            Read( Protocol.PacketHeader.Length + Protocol.UnboundResponse.Payload ),
-            MessageBrokerClientEndpoint.UnboundResponse );
+            Read( Protocol.PacketHeader.Length + Protocol.PublisherUnboundResponse.Payload ),
+            MessageBrokerClientEndpoint.PublisherUnboundResponse );
     }
 
-    internal byte[] ReadUnbindFailureResponse()
+    internal byte[] ReadUnbindPublisherFailureResponse()
     {
         return AssertEndpoint(
-            Read( Protocol.PacketHeader.Length + Protocol.UnbindFailureResponse.Payload ),
-            MessageBrokerClientEndpoint.UnbindFailureResponse );
+            Read( Protocol.PacketHeader.Length + Protocol.UnbindPublisherFailureResponse.Payload ),
+            MessageBrokerClientEndpoint.UnbindPublisherFailureResponse );
     }
 
-    internal byte[] ReadSubscribedResponse()
+    internal byte[] ReadListenerBoundResponse()
     {
         return AssertEndpoint(
-            Read( Protocol.PacketHeader.Length + Protocol.SubscribedResponse.Payload ),
-            MessageBrokerClientEndpoint.SubscribedResponse );
+            Read( Protocol.PacketHeader.Length + Protocol.ListenerBoundResponse.Payload ),
+            MessageBrokerClientEndpoint.ListenerBoundResponse );
     }
 
-    internal byte[] ReadSubscribeFailureResponse()
+    internal byte[] ReadBindListenerFailureResponse()
     {
         return AssertEndpoint(
-            Read( Protocol.PacketHeader.Length + Protocol.SubscribeFailureResponse.Payload ),
-            MessageBrokerClientEndpoint.SubscribeFailureResponse );
+            Read( Protocol.PacketHeader.Length + Protocol.BindListenerFailureResponse.Payload ),
+            MessageBrokerClientEndpoint.BindListenerFailureResponse );
     }
 
-    internal byte[] ReadUnsubscribedResponse()
+    internal byte[] ReadListenerUnboundResponse()
     {
         return AssertEndpoint(
-            Read( Protocol.PacketHeader.Length + Protocol.UnsubscribedResponse.Payload ),
-            MessageBrokerClientEndpoint.UnsubscribedResponse );
+            Read( Protocol.PacketHeader.Length + Protocol.ListenerUnboundResponse.Payload ),
+            MessageBrokerClientEndpoint.ListenerUnboundResponse );
     }
 
-    internal byte[] ReadUnsubscribeFailureResponse()
+    internal byte[] ReadUnbindListenerFailureResponse()
     {
         return AssertEndpoint(
-            Read( Protocol.PacketHeader.Length + Protocol.UnsubscribeFailureResponse.Payload ),
-            MessageBrokerClientEndpoint.UnsubscribeFailureResponse );
+            Read( Protocol.PacketHeader.Length + Protocol.UnbindListenerFailureResponse.Payload ),
+            MessageBrokerClientEndpoint.UnbindListenerFailureResponse );
     }
 
     internal byte[] ReadMessageAcceptedResponse()
@@ -133,6 +134,15 @@ internal sealed class ClientMock : IDisposable
         return AssertEndpoint(
             Read( Protocol.PacketHeader.Length + Protocol.MessageNotificationHeader.Payload + length ),
             MessageBrokerClientEndpoint.MessageNotification );
+    }
+
+    internal (byte[] Data, int Index) ReadAny(params (MessageBrokerClientEndpoint Endpoint, int Payload)[] expectations)
+    {
+        var header = Read( Protocol.PacketHeader.Length );
+        var endpoint = ( MessageBrokerClientEndpoint )header[0];
+        Assertion.Any( expectations.Select( x => endpoint.TestEquals( x.Endpoint ) ) ).Go();
+        var entry = expectations.Select( static (e, i) => (e.Endpoint, e.Payload, Index: i) ).First( x => endpoint == x.Endpoint );
+        return (header.Concat( Read( entry.Payload ) ).ToArray(), entry.Index);
     }
 
     internal byte[] Read(int length)
@@ -184,24 +194,29 @@ internal sealed class ClientMock : IDisposable
     {
         var buffer = new byte[Protocol.PacketHeader.Length];
         var writer = new BinaryContractWriter( buffer );
-        writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.PingRequest );
+        writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.Ping );
         writer.Write( payload ?? Protocol.Endianness.VerificationPayload );
         Send( buffer );
     }
 
-    internal void SendBindRequest(string channelName, string? streamName = null, int? channelNameLength = null, uint? payload = null)
+    internal void SendBindPublisherRequest(
+        string channelName,
+        string? streamName = null,
+        int? channelNameLength = null,
+        uint? payload = null)
     {
         var preparedChannelName = EncodeableText.Create( TextEncoding.Instance, channelName ).GetValueOrThrow();
         var preparedStreamName = EncodeableText.Create( TextEncoding.Instance, streamName ?? string.Empty ).GetValueOrThrow();
         var buffer = new byte[Protocol.PacketHeader.Length
-            + Protocol.BindRequestHeader.Length
+            + Protocol.BindPublisherRequestHeader.Length
             + preparedChannelName.ByteCount
             + preparedStreamName.ByteCount];
 
         var writer = new BinaryContractWriter( buffer );
-        writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.BindRequest );
+        writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.BindPublisherRequest );
         writer.MoveWrite(
-            payload ?? ( uint )(Protocol.BindRequestHeader.Length + preparedChannelName.ByteCount + preparedStreamName.ByteCount) );
+            payload
+            ?? ( uint )(Protocol.BindPublisherRequestHeader.Length + preparedChannelName.ByteCount + preparedStreamName.ByteCount) );
 
         writer.MoveWrite( 0 );
         writer.MoveWrite( ( uint )(channelNameLength ?? preparedChannelName.ByteCount) );
@@ -212,17 +227,17 @@ internal sealed class ClientMock : IDisposable
         Send( buffer );
     }
 
-    internal void SendUnbindRequest(int channelId, uint? payload = null)
+    internal void SendUnbindPublisherRequest(int channelId, uint? payload = null)
     {
-        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.UnbindRequest.Length];
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.UnbindPublisherRequest.Length];
         var writer = new BinaryContractWriter( buffer );
-        writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.UnbindRequest );
-        writer.MoveWrite( payload ?? Protocol.UnbindRequest.Length );
+        writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.UnbindPublisherRequest );
+        writer.MoveWrite( payload ?? Protocol.UnbindPublisherRequest.Length );
         writer.Write( ( uint )channelId );
         Send( buffer );
     }
 
-    internal void SendSubscribeRequest(
+    internal void SendBindListenerRequest(
         string channelName,
         bool createChannelIfNotExists,
         int? prefetchHint = null,
@@ -233,14 +248,14 @@ internal sealed class ClientMock : IDisposable
         var preparedChannelName = EncodeableText.Create( TextEncoding.Instance, channelName ).GetValueOrThrow();
         var preparedQueueName = EncodeableText.Create( TextEncoding.Instance, queueName ?? string.Empty ).GetValueOrThrow();
         var buffer = new byte[Protocol.PacketHeader.Length
-            + Protocol.SubscribeRequestHeader.Length
+            + Protocol.BindListenerRequestHeader.Length
             + preparedChannelName.ByteCount
             + preparedQueueName.ByteCount];
 
         var writer = new BinaryContractWriter( buffer );
-        writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.SubscribeRequest );
+        writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.BindListenerRequest );
         writer.MoveWrite(
-            payload ?? ( uint )(Protocol.SubscribeRequestHeader.Length + preparedChannelName.ByteCount + preparedQueueName.ByteCount) );
+            payload ?? ( uint )(Protocol.BindListenerRequestHeader.Length + preparedChannelName.ByteCount + preparedQueueName.ByteCount) );
 
         writer.MoveWrite( ( byte )(createChannelIfNotExists ? 1 : 0) );
         writer.MoveWrite( ( uint )(prefetchHint ?? 1) );
@@ -252,22 +267,22 @@ internal sealed class ClientMock : IDisposable
         Send( buffer );
     }
 
-    internal void SendUnsubscribeRequest(int channelId, uint? payload = null)
+    internal void SendUnbindListenerRequest(int channelId, uint? payload = null)
     {
-        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.UnsubscribeRequest.Length];
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.UnbindListenerRequest.Length];
         var writer = new BinaryContractWriter( buffer );
-        writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.UnsubscribeRequest );
-        writer.MoveWrite( payload ?? Protocol.UnsubscribeRequest.Length );
+        writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.UnbindListenerRequest );
+        writer.MoveWrite( payload ?? Protocol.UnbindListenerRequest.Length );
         writer.Write( ( uint )channelId );
         Send( buffer );
     }
 
-    internal void SendMessageRequest(int channelId, byte[] data, uint? payload = null)
+    internal void SendPushMessage(int channelId, byte[] data, uint? payload = null)
     {
-        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.MessageRequestHeader.Length + data.Length];
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.PushMessageHeader.Length + data.Length];
         var writer = new BinaryContractWriter( buffer );
-        writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.MessageRequest );
-        writer.MoveWrite( payload ?? ( uint )(Protocol.MessageRequestHeader.Length + data.Length) );
+        writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.PushMessage );
+        writer.MoveWrite( payload ?? ( uint )(Protocol.PushMessageHeader.Length + data.Length) );
         writer.MoveWrite( ( uint )channelId );
         data.AsSpan().CopyTo( writer.GetSpan( data.Length ) );
         Send( buffer );

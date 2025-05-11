@@ -18,28 +18,28 @@ using System.Runtime.CompilerServices;
 namespace LfrlAnvil.MessageBroker.Client;
 
 /// <summary>
-/// Represents the result of <see cref="MessageBrokerListener"/> creation.
+/// Represents the result of binding a client to a channel as a listener.
 /// </summary>
-public readonly struct MessageBrokerSubscribeResult
+public readonly struct MessageBrokerBindListenerResult
 {
     private readonly byte _state;
 
-    private MessageBrokerSubscribeResult(MessageBrokerListener listener, byte state)
+    private MessageBrokerBindListenerResult(MessageBrokerListener listener, byte state)
     {
         Listener = listener;
         _state = state;
     }
 
     /// <summary>
-    /// Listener subscribed to the channel.
+    /// Listener bound to the channel.
     /// </summary>
     public MessageBrokerListener Listener { get; }
 
     /// <summary>
     /// Specifies whether or not request to the server has been cancelled
-    /// because the client already contains a local listener subscribed to the channel.
+    /// because the client is already locally bound as listener to the channel.
     /// </summary>
-    public bool AlreadySubscribed => _state == 1;
+    public bool AlreadyBound => _state == 1;
 
     /// <summary>
     /// Specifies whether or not a new channel has been created by the server.
@@ -52,14 +52,14 @@ public readonly struct MessageBrokerSubscribeResult
     public bool QueueCreated => (_state & 4) != 0;
 
     /// <summary>
-    /// Returns a string representation of this <see cref="MessageBrokerSubscribeResult"/> instance.
+    /// Returns a string representation of this <see cref="MessageBrokerBindListenerResult"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
         if ( _state == 1 )
-            return $"{Listener} (already subscribed)";
+            return $"{Listener} (already bound)";
 
         var channelCreated = ChannelCreated ? " (channel created)" : string.Empty;
         var queueCreated = QueueCreated ? " (queue created)" : string.Empty;
@@ -68,15 +68,15 @@ public readonly struct MessageBrokerSubscribeResult
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerSubscribeResult Create(MessageBrokerListener listener, bool channelCreated, bool queueCreated)
+    internal static MessageBrokerBindListenerResult Create(MessageBrokerListener listener, bool channelCreated, bool queueCreated)
     {
-        return new MessageBrokerSubscribeResult( listener, ( byte )((channelCreated ? 2 : 0) | (queueCreated ? 4 : 0)) );
+        return new MessageBrokerBindListenerResult( listener, ( byte )((channelCreated ? 2 : 0) | (queueCreated ? 4 : 0)) );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerSubscribeResult CreateAlreadySubscribed(MessageBrokerListener listener)
+    internal static MessageBrokerBindListenerResult CreateAlreadyBound(MessageBrokerListener listener)
     {
-        return new MessageBrokerSubscribeResult( listener, 1 );
+        return new MessageBrokerBindListenerResult( listener, 1 );
     }
 }

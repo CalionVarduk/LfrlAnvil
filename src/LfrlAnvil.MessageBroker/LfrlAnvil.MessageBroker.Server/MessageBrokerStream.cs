@@ -24,12 +24,12 @@ using LfrlAnvil.MessageBroker.Server.Internal;
 namespace LfrlAnvil.MessageBroker.Server;
 
 /// <summary>
-/// Represents a message broker stream, which allows <see cref="MessageBrokerChannelBinding"/> instances to push messages
-/// in order to be processed and moved to relevant <see cref="MessageBrokerSubscription"/> instances.
+/// Represents a message broker stream, which allows <see cref="MessageBrokerChannelPublisherBinding"/> instances to push messages
+/// in order to be processed and moved to relevant <see cref="MessageBrokerChannelListenerBinding"/> instances.
 /// </summary>
 public sealed class MessageBrokerStream
 {
-    internal ReferenceStore<Pair<int, int>, MessageBrokerChannelBinding> BindingsByClientChannelIdPair;
+    internal ReferenceStore<Pair<int, int>, MessageBrokerChannelPublisherBinding> PublishersByClientChannelIdPair;
     internal StreamProcessor StreamProcessor;
 
     private readonly object _sync = new object();
@@ -46,7 +46,7 @@ public sealed class MessageBrokerStream
         _nextMessageId = 0;
         _state = MessageBrokerStreamState.Running;
         _messages = QueueSlim<StreamMessage>.Create();
-        BindingsByClientChannelIdPair = ReferenceStore<Pair<int, int>, MessageBrokerChannelBinding>.Create();
+        PublishersByClientChannelIdPair = ReferenceStore<Pair<int, int>, MessageBrokerChannelPublisherBinding>.Create();
         StreamProcessor = StreamProcessor.Create();
         _eventHandler = Server.StreamEventHandlerFactory?.Invoke( this );
         StreamProcessor.SetUnderlyingTask( StreamProcessor.StartUnderlyingTask( this ) );
@@ -81,10 +81,10 @@ public sealed class MessageBrokerStream
     }
 
     /// <summary>
-    /// Collection of <see cref="MessageBrokerChannelBinding"/> instances attached to this stream,
+    /// Collection of <see cref="MessageBrokerChannelPublisherBinding"/> instances attached to this stream,
     /// identified by (client-id, channel-id) tuples.
     /// </summary>
-    public MessageBrokerStreamBindingCollection Bindings => new MessageBrokerStreamBindingCollection( this );
+    public MessageBrokerStreamPublisherCollection Publishers => new MessageBrokerStreamPublisherCollection( this );
 
     internal bool ShouldCancel => _state >= MessageBrokerStreamState.Disposing;
 
@@ -100,7 +100,7 @@ public sealed class MessageBrokerStream
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal Protocol.MessageRejectedResponse.Reasons PushMessage(
-        MessageBrokerChannelBinding binding,
+        MessageBrokerChannelPublisherBinding publisher,
         MemoryPoolToken<byte> token,
         ReadOnlyMemory<byte> data,
         ulong contextId,
@@ -112,17 +112,17 @@ public sealed class MessageBrokerStream
                 return Protocol.MessageRejectedResponse.Reasons.Cancelled;
 
             ulong id;
-            using ( binding.AcquireLock() )
+            using ( publisher.AcquireLock() )
             {
-                if ( binding.ShouldCancel )
+                if ( publisher.ShouldCancel )
                     return Protocol.MessageRejectedResponse.Reasons.Cancelled;
 
                 id = unchecked( _nextMessageId++ );
-                _messages.Enqueue( new StreamMessage( id, binding.Client.GetTimestamp(), binding, token, data ) );
+                _messages.Enqueue( new StreamMessage( id, publisher.Client.GetTimestamp(), publisher, token, data ) );
             }
 
             messageId = id;
-            Emit( MessageBrokerStreamEvent.MessageEnqueued( this, binding, id, contextId ) );
+            Emit( MessageBrokerStreamEvent.MessageEnqueued( this, publisher, id, contextId ) );
             StreamProcessor.SignalContinuation();
         }
 
@@ -143,7 +143,7 @@ public sealed class MessageBrokerStream
 
         var firstSlice = queueSlice.First.Span;
         var firstMessage = firstSlice[0];
-        var channel = firstMessage.Binding.Channel;
+        var channel = firstMessage.Publisher.Channel;
         buffer.Add( firstMessage );
 
         if ( ! CopyMessagesInto( firstSlice.Slice( 1 ), ref buffer, channel ) )
@@ -159,10 +159,10 @@ public sealed class MessageBrokerStream
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool TryDisposeByRemovingBindingUnsafe(int clientId, int channelId)
+    internal bool TryDisposeByRemovingPublisherUnsafe(int clientId, int channelId)
     {
-        BindingsByClientChannelIdPair.Remove( new Pair<int, int>( clientId, channelId ) );
-        if ( BindingsByClientChannelIdPair.Count > 0 || ! _messages.IsEmpty )
+        PublishersByClientChannelIdPair.Remove( new Pair<int, int>( clientId, channelId ) );
+        if ( PublishersByClientChannelIdPair.Count > 0 || ! _messages.IsEmpty )
             return false;
 
         _state = MessageBrokerStreamState.Disposing;
@@ -173,22 +173,22 @@ public sealed class MessageBrokerStream
     internal bool TryDisposeDueToEmptyQueueUnsafe()
     {
         Assume.True( _messages.IsEmpty );
-        if ( BindingsByClientChannelIdPair.Count > 0 )
+        if ( PublishersByClientChannelIdPair.Count > 0 )
             return false;
 
         _state = MessageBrokerStreamState.Disposing;
         return true;
     }
 
-    internal async ValueTask OnBindingDisposingAsync(MessageBrokerRemoteClient client, MessageBrokerChannel channel)
+    internal async ValueTask OnPublisherDisposingAsync(MessageBrokerRemoteClient client, MessageBrokerChannel channel)
     {
         using ( AcquireLock() )
         {
             if ( ShouldCancel )
                 return;
 
-            if ( ! BindingsByClientChannelIdPair.Remove( new Pair<int, int>( client.Id, channel.Id ) )
-                || BindingsByClientChannelIdPair.Count > 0
+            if ( ! PublishersByClientChannelIdPair.Remove( new Pair<int, int>( client.Id, channel.Id ) )
+                || PublishersByClientChannelIdPair.Count > 0
                 || ! _messages.IsEmpty )
                 return;
 
@@ -213,7 +213,7 @@ public sealed class MessageBrokerStream
         Task? processorTask;
         using ( AcquireLock() )
         {
-            BindingsByClientChannelIdPair.Clear();
+            PublishersByClientChannelIdPair.Clear();
             ClearMessages();
             processorTask = StreamProcessor.DiscardUnderlyingTask();
             StreamProcessor.Dispose();
@@ -236,7 +236,7 @@ public sealed class MessageBrokerStream
         Task? processorTask;
         using ( AcquireLock() )
         {
-            Assume.Equals( BindingsByClientChannelIdPair.Count, 0 );
+            Assume.Equals( PublishersByClientChannelIdPair.Count, 0 );
             Assume.True( _messages.IsEmpty );
 
             processorTask = StreamProcessor.DiscardUnderlyingTask();
@@ -290,7 +290,7 @@ public sealed class MessageBrokerStream
         foreach ( ref readonly var message in source )
         {
             Assume.IsLessThan( target.Count, target.Capacity );
-            if ( ! ReferenceEquals( channel, message.Binding.Channel ) )
+            if ( ! ReferenceEquals( channel, message.Publisher.Channel ) )
                 return true;
 
             target.Add( message );

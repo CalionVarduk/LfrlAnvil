@@ -97,11 +97,14 @@ public readonly struct MessageBrokerClientEvent
                 case MessageBrokerClientEventType.MessageAccepted:
                 case MessageBrokerClientEventType.MessageRejected:
                     return Protocol.PacketHeader.Length
-                        + (GetClientEndpoint() == MessageBrokerClientEndpoint.PingResponse ? 0 : unchecked( ( int )Payload ));
+                        + (GetClientEndpoint() == MessageBrokerClientEndpoint.Pong ? 0 : unchecked( ( int )Payload ));
                 case MessageBrokerClientEventType.SendingMessage:
                 case MessageBrokerClientEventType.MessageSent:
                     return Protocol.PacketHeader.Length
-                        + (GetServerEndpoint() < MessageBrokerServerEndpoint.HandshakeRequest ? 0 : unchecked( ( int )Payload ));
+                        + (GetServerEndpoint() == MessageBrokerServerEndpoint.Ping
+                            || GetServerEndpoint() == MessageBrokerServerEndpoint.ConfirmHandshakeResponse
+                                ? 0
+                                : unchecked( ( int )Payload ));
                 default:
                     return 0;
             }
@@ -207,7 +210,7 @@ public readonly struct MessageBrokerClientEvent
                             .Append( Client.PingInterval )
                             .Append( ')' );
                     }
-                    else if ( GetClientEndpoint() == MessageBrokerClientEndpoint.BoundResponse )
+                    else if ( GetClientEndpoint() == MessageBrokerClientEndpoint.PublisherBoundResponse )
                     {
                         if ( Data is MessageBrokerPublisher publisher )
                         {
@@ -219,7 +222,7 @@ public readonly struct MessageBrokerClientEvent
                                 .Append( ')' );
                         }
                     }
-                    else if ( GetClientEndpoint() == MessageBrokerClientEndpoint.SubscribedResponse )
+                    else if ( GetClientEndpoint() == MessageBrokerClientEndpoint.ListenerBoundResponse )
                     {
                         if ( Data is MessageBrokerListener subscription )
                         {
@@ -236,7 +239,7 @@ public readonly struct MessageBrokerClientEvent
 
                 case MessageBrokerClientEventType.SendingMessage:
                     builder.AppendSpace().Append( Resources.GetEndpoint( GetServerEndpoint() ) );
-                    if ( GetServerEndpoint() == MessageBrokerServerEndpoint.UnbindRequest )
+                    if ( GetServerEndpoint() == MessageBrokerServerEndpoint.UnbindPublisherRequest )
                     {
                         if ( Data is MessageBrokerPublisher publisher )
                             builder
@@ -250,7 +253,7 @@ public readonly struct MessageBrokerClientEvent
                                 .Append( publisher.StreamName )
                                 .Append( "')" );
                     }
-                    else if ( GetServerEndpoint() == MessageBrokerServerEndpoint.UnsubscribeRequest )
+                    else if ( GetServerEndpoint() == MessageBrokerServerEndpoint.UnbindListenerRequest )
                     {
                         if ( Data is MessageBrokerListener listener )
                         {
@@ -262,7 +265,7 @@ public readonly struct MessageBrokerClientEvent
                                 .Append( "')" );
                         }
                     }
-                    else if ( GetServerEndpoint() == MessageBrokerServerEndpoint.MessageRequest )
+                    else if ( GetServerEndpoint() == MessageBrokerServerEndpoint.PushMessage )
                     {
                         if ( Data is MessageBrokerPublisher publisher )
                         {

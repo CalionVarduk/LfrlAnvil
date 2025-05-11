@@ -134,12 +134,12 @@ internal struct StreamProcessor
                     }
                 }
 
-                var subscriptions = channel.Subscriptions.GetAll();
-                foreach ( var subscription in subscriptions )
+                var listeners = channel.Listeners.GetAll();
+                foreach ( var listener in listeners )
                 {
                     try
                     {
-                        subscription.Queue.PushMessages( subscription, in buffer );
+                        listener.Queue.PushMessages( listener, in buffer );
                     }
                     catch ( Exception exc )
                     {
@@ -166,7 +166,7 @@ internal struct StreamProcessor
     {
         foreach ( ref readonly var message in messages )
         {
-            stream.Emit( MessageBrokerStreamEvent.MessageDequeued( stream, message.Binding, message.Id ) );
+            stream.Emit( MessageBrokerStreamEvent.MessageDequeued( stream, message.Publisher, message.Id ) );
             message.Return();
         }
 

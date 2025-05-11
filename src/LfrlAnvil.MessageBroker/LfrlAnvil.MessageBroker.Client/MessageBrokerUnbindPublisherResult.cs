@@ -18,20 +18,20 @@ using System.Runtime.CompilerServices;
 namespace LfrlAnvil.MessageBroker.Client;
 
 /// <summary>
-/// Represents the result of unbinding a client from a channel.
+/// Represents the result of unbinding a client from a channel as a publisher.
 /// </summary>
-public readonly struct MessageBrokerUnbindResult
+public readonly struct MessageBrokerUnbindPublisherResult
 {
     private readonly byte _state;
 
-    private MessageBrokerUnbindResult(byte state)
+    private MessageBrokerUnbindPublisherResult(byte state)
     {
         _state = state;
     }
 
     /// <summary>
     /// Specifies whether or not request to the server has been cancelled
-    /// because the client does not contain a local publisher bound to the channel.
+    /// because the client is not locally bound as a publisher to the channel.
     /// </summary>
     public bool NotBound => _state == 1;
 
@@ -46,7 +46,7 @@ public readonly struct MessageBrokerUnbindResult
     public bool StreamRemoved => (_state & 4) != 0;
 
     /// <summary>
-    /// Returns a string representation of this <see cref="MessageBrokerUnbindResult"/> instance.
+    /// Returns a string representation of this <see cref="MessageBrokerUnbindPublisherResult"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
     [Pure]
@@ -62,15 +62,15 @@ public readonly struct MessageBrokerUnbindResult
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerUnbindResult Create(bool channelRemoved, bool streamRemoved)
+    internal static MessageBrokerUnbindPublisherResult Create(bool channelRemoved, bool streamRemoved)
     {
-        return new MessageBrokerUnbindResult( ( byte )((channelRemoved ? 2 : 0) | (streamRemoved ? 4 : 0)) );
+        return new MessageBrokerUnbindPublisherResult( ( byte )((channelRemoved ? 2 : 0) | (streamRemoved ? 4 : 0)) );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerUnbindResult CreateNotBound()
+    internal static MessageBrokerUnbindPublisherResult CreateNotBound()
     {
-        return new MessageBrokerUnbindResult( 1 );
+        return new MessageBrokerUnbindPublisherResult( 1 );
     }
 }

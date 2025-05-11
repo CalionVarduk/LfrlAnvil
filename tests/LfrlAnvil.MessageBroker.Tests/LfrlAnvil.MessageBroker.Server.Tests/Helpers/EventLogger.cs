@@ -11,8 +11,8 @@ public sealed class EventLogger
     private readonly List<string> _channelEvents = new List<string>();
     private readonly List<string> _streamEvents = new List<string>();
     private readonly List<string> _queueEvents = new List<string>();
-    private readonly List<string> _bindingEvents = new List<string>();
-    private readonly List<string> _subscriptionEvents = new List<string>();
+    private readonly List<string> _publisherEvents = new List<string>();
+    private readonly List<string> _listenerEvents = new List<string>();
 
     public void Add(MessageBrokerServerEvent e)
     {
@@ -44,16 +44,16 @@ public sealed class EventLogger
             _queueEvents.Add( e.ToString() );
     }
 
-    public void Add(MessageBrokerChannelBindingEvent e)
+    public void Add(MessageBrokerChannelPublisherBindingEvent e)
     {
-        lock ( _bindingEvents )
-            _bindingEvents.Add( e.ToString() );
+        lock ( _publisherEvents )
+            _publisherEvents.Add( e.ToString() );
     }
 
-    public void Add(MessageBrokerSubscriptionEvent e)
+    public void Add(MessageBrokerChannelListenerBindingEvent e)
     {
-        lock ( _subscriptionEvents )
-            _subscriptionEvents.Add( e.ToString() );
+        lock ( _listenerEvents )
+            _listenerEvents.Add( e.ToString() );
     }
 
     [Pure]
@@ -92,16 +92,16 @@ public sealed class EventLogger
     }
 
     [Pure]
-    public string[] GetAllBinding()
+    public string[] GetAllPublisher()
     {
-        lock ( _bindingEvents )
-            return _bindingEvents.ToArray();
+        lock ( _publisherEvents )
+            return _publisherEvents.ToArray();
     }
 
     [Pure]
-    public string[] GetAllSubscription()
+    public string[] GetAllListener()
     {
-        lock ( _subscriptionEvents )
-            return _subscriptionEvents.ToArray();
+        lock ( _listenerEvents )
+            return _listenerEvents.ToArray();
     }
 }

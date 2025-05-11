@@ -95,15 +95,15 @@ public sealed class MessageBrokerPublisher
     /// </summary>
     /// <returns>
     /// A task that represents the operation, which returns a <see cref="Result{T}"/> instance,
-    /// with underlying <see cref="MessageBrokerUnbindResult"/> instance.
+    /// with underlying <see cref="MessageBrokerUnbindPublisherResult"/> instance.
     /// </returns>
     /// <exception cref="MessageBrokerClientDisposedException">When client has already been disposed.</exception>
     /// <remarks>
-    /// Unexpected errors encountered during unbinding will cause the client to be automatically disposed.
-    /// Returned <see cref="Result{T}"/> will only be valid when either the client has been successfully unbound from the channel
+    /// Unexpected errors encountered during publisher unbinding will cause the client to be automatically disposed.
+    /// Returned <see cref="Result{T}"/> will only be valid when either the publisher has been successfully unbound from the channel
     /// on the server side, or the publisher is already locally unbound from the channel, which will cancel the request to the server.
     /// </remarks>
-    public ValueTask<Result<MessageBrokerUnbindResult>> UnbindAsync()
+    public ValueTask<Result<MessageBrokerUnbindPublisherResult>> UnbindAsync()
     {
         return PublisherCollection.UnbindAsync( this );
     }
@@ -112,7 +112,7 @@ public sealed class MessageBrokerPublisher
     /// Sends a message to the bound channel.
     /// </summary>
     /// <param name="data">Message to send.</param>
-    /// <param name="clearBufferOnDispose">
+    /// <param name="clearBuffer">
     /// Specifies whether or not to clear the internal memory buffer when it's returned to the pool. Equal to <b>false</b> by default.
     /// </param>
     /// <returns>
@@ -125,9 +125,9 @@ public sealed class MessageBrokerPublisher
     /// Returned <see cref="Result{T}"/> will only be valid when either the message has been successfully enqueued on the server side,
     /// or the publisher is already locally unbound from the channel, which will cancel the request to the server.
     /// </remarks>
-    public async ValueTask<Result<MesageBrokerSendResult>> SendAsync(ReadOnlyMemory<byte> data, bool clearBufferOnDispose = false)
+    public async ValueTask<Result<MesageBrokerSendResult>> SendAsync(ReadOnlyMemory<byte> data, bool clearBuffer = false)
     {
-        using var context = GetSendContext( MemorySize.FromBytes( data.Length ), clearBufferOnDispose );
+        using var context = GetSendContext( MemorySize.FromBytes( data.Length ), clearBuffer );
         return await context.Append( data.Span ).SendAsync().ConfigureAwait( false );
     }
 

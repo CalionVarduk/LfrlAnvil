@@ -20,9 +20,9 @@ namespace LfrlAnvil.MessageBroker.Client;
 public enum MessageBrokerListenerState : byte
 {
     /// <summary>
-    /// Specifies that the listener is subscribed to the channel and listens to messages.
+    /// Specifies that the listener is bound to the channel and listens to messages.
     /// </summary>
-    Subscribed = 0,
+    Bound = 0,
 
     /// <summary>
     /// Specifies the the listener is currently being disposed.

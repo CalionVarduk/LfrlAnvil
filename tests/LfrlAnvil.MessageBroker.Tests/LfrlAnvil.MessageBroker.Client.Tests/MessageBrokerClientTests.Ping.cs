@@ -11,7 +11,7 @@ public partial class MessageBrokerClientTests
     public class Ping : TestsBase
     {
         [Fact]
-        public async Task PingScheduler_ShouldSendPingAndReceivePingFromServerOnSchedule()
+        public async Task PingScheduler_ShouldSendPingAndReceivePongFromServerOnSchedule()
         {
             var endSource = new SafeTaskCompletionSource( completionCount: 2 );
             var logs = new EventLogger();
@@ -29,7 +29,7 @@ public partial class MessageBrokerClientTests
                         {
                             logs.Add( e );
                             if ( e.Type == MessageBrokerClientEventType.MessageAccepted
-                                && e.GetClientEndpoint() == MessageBrokerClientEndpoint.PingResponse )
+                                && e.GetClientEndpoint() == MessageBrokerClientEndpoint.Pong )
                                 endSource.Complete();
                         } ) );
 
@@ -38,11 +38,11 @@ public partial class MessageBrokerClientTests
                 s =>
                 {
                     Thread.Sleep( 150 );
-                    s.ReadPingRequest();
-                    s.SendPing();
+                    s.ReadPing();
+                    s.SendPong();
                     Thread.Sleep( 150 );
-                    s.ReadPingRequest();
-                    s.SendPing();
+                    s.ReadPing();
+                    s.SendPong();
                 } );
 
             await serverTask;
@@ -52,21 +52,21 @@ public partial class MessageBrokerClientTests
                     logs.GetAll()
                         .TestContainsSequence(
                         [
-                            "['test'::1] [SendingMessage] [PacketLength: 5] PingRequest",
-                            "['test'::1] [MessageSent] [PacketLength: 5] PingRequest",
-                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 5] PingResponse",
-                            "['test'::1] [MessageReceived] [PacketLength: 5] Begin handling PingResponse",
-                            "['test'::1] [MessageAccepted] [PacketLength: 5] PingResponse",
-                            "['test'::2] [SendingMessage] [PacketLength: 5] PingRequest",
-                            "['test'::2] [MessageSent] [PacketLength: 5] PingRequest",
-                            "['test'::2] [MessageReceived] [PacketLength: 5] Begin handling PingResponse",
-                            "['test'::2] [MessageAccepted] [PacketLength: 5] PingResponse"
+                            "['test'::1] [SendingMessage] [PacketLength: 5] Ping",
+                            "['test'::1] [MessageSent] [PacketLength: 5] Ping",
+                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 5] Pong",
+                            "['test'::1] [MessageReceived] [PacketLength: 5] Begin handling Pong",
+                            "['test'::1] [MessageAccepted] [PacketLength: 5] Pong",
+                            "['test'::2] [SendingMessage] [PacketLength: 5] Ping",
+                            "['test'::2] [MessageSent] [PacketLength: 5] Ping",
+                            "['test'::2] [MessageReceived] [PacketLength: 5] Begin handling Pong",
+                            "['test'::2] [MessageAccepted] [PacketLength: 5] Pong"
                         ] ) )
                 .Go();
         }
 
         [Fact]
-        public async Task PingScheduler_ShouldReactCorrectlyToClientBeingDisposedBeforeReceivingPingResponseFromServer()
+        public async Task PingScheduler_ShouldReactCorrectlyToClientBeingDisposedBeforeReceivingPongFromServer()
         {
             var endSource = new SafeTaskCompletionSource<Task>();
             var logs = new EventLogger();
@@ -84,7 +84,7 @@ public partial class MessageBrokerClientTests
                         {
                             logs.Add( e );
                             if ( e.Type == MessageBrokerClientEventType.MessageSent
-                                && e.GetServerEndpoint() == MessageBrokerServerEndpoint.PingRequest )
+                                && e.GetServerEndpoint() == MessageBrokerServerEndpoint.Ping )
                                 endSource.Complete( e.Client.DisposeAsync().AsTask() );
                         } ) );
 
@@ -97,7 +97,7 @@ public partial class MessageBrokerClientTests
                 s =>
                 {
                     Thread.Sleep( 150 );
-                    s.ReadPingRequest();
+                    s.ReadPing();
                 } );
 
             await serverTask;
@@ -108,14 +108,14 @@ public partial class MessageBrokerClientTests
                     logs.GetAll()
                         .TestContainsSequence(
                         [
-                            "['test'::1] [SendingMessage] [PacketLength: 5] PingRequest",
-                            "['test'::1] [MessageSent] [PacketLength: 5] PingRequest"
+                            "['test'::1] [SendingMessage] [PacketLength: 5] Ping",
+                            "['test'::1] [MessageSent] [PacketLength: 5] Ping"
                         ] ) )
                 .Go();
         }
 
         [Fact]
-        public async Task PingScheduler_ShouldReactCorrectlyToPingResponseTimeout()
+        public async Task PingScheduler_ShouldReactCorrectlyToPongTimeout()
         {
             var endSource = new SafeTaskCompletionSource();
             var logs = new EventLogger();
@@ -145,7 +145,7 @@ public partial class MessageBrokerClientTests
                 s =>
                 {
                     Thread.Sleep( 150 );
-                    s.ReadPingRequest();
+                    s.ReadPing();
                 } );
 
             await serverTask;
@@ -158,14 +158,14 @@ public partial class MessageBrokerClientTests
                         [
                             """
                             ['test'::<ROOT>] [WaitingForMessage] Encountered an error:
-                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Message broker server failed to respond to 'test' client's PingRequest request in the specified amount of time (200 milliseconds).
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Message broker server failed to respond to 'test' client's Ping in the specified amount of time (200 milliseconds).
                             """
                         ] ) )
                 .Go();
         }
 
         [Fact]
-        public async Task PingScheduler_ShouldReactCorrectlyToInvalidMessageSentByServerWhenExpectingPingResponse()
+        public async Task PingScheduler_ShouldReactCorrectlyToInvalidMessageSentByServerWhenExpectingPong()
         {
             var endSource = new SafeTaskCompletionSource();
             var logs = new EventLogger();
@@ -191,7 +191,7 @@ public partial class MessageBrokerClientTests
                 s =>
                 {
                     Thread.Sleep( 150 );
-                    s.ReadPingRequest();
+                    s.ReadPing();
                     s.Send( [ 0, 0, 0, 0, 0 ] );
                 } );
 
@@ -213,7 +213,7 @@ public partial class MessageBrokerClientTests
         }
 
         [Fact]
-        public async Task PingScheduler_ShouldReactCorrectlyToInvalidPingResponsePayloadSentByServer()
+        public async Task PingScheduler_ShouldReactCorrectlyToInvalidPongPayloadSentByServer()
         {
             var endSource = new SafeTaskCompletionSource();
             var logs = new EventLogger();
@@ -239,8 +239,8 @@ public partial class MessageBrokerClientTests
                 s =>
                 {
                     Thread.Sleep( 150 );
-                    s.ReadPingRequest();
-                    s.SendPing( endiannessPayload: 1 );
+                    s.ReadPing();
+                    s.SendPong( endiannessPayload: 1 );
                 } );
 
             await serverTask;
@@ -253,7 +253,7 @@ public partial class MessageBrokerClientTests
                         [
                             """
                             ['test'::1] [MessageRejected] [PacketLength: 5] Encountered an error:
-                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid PingResponse from the server. Encountered 1 error(s):
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid Pong from the server. Encountered 1 error(s):
                             1. Expected endianness verification payload to be 0102fdfe but found 00000001.
                             """
                         ] ) )

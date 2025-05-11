@@ -21,40 +21,40 @@ using System.Text;
 namespace LfrlAnvil.MessageBroker.Server.Events;
 
 /// <summary>
-/// Represents an event emitted by <see cref="MessageBrokerChannelBinding"/>.
+/// Represents an event emitted by <see cref="MessageBrokerChannelPublisherBinding"/>.
 /// </summary>
-public readonly struct MessageBrokerChannelBindingEvent
+public readonly struct MessageBrokerChannelPublisherBindingEvent
 {
-    private MessageBrokerChannelBindingEvent(
-        MessageBrokerChannelBinding binding,
-        MessageBrokerChannelBindingEventType type,
+    private MessageBrokerChannelPublisherBindingEvent(
+        MessageBrokerChannelPublisherBinding publisher,
+        MessageBrokerChannelPublisherBindingEventType type,
         ulong contextId = MessageBrokerRemoteClientEvent.RootContextId,
         Exception? exception = null)
     {
-        Binding = binding;
+        Publisher = publisher;
         ContextId = contextId;
         Type = type;
         Exception = exception;
     }
 
     /// <summary>
-    /// <see cref="MessageBrokerChannelBinding"/> that emitted this event.
+    /// <see cref="MessageBrokerChannelPublisherBinding"/> that emitted this event.
     /// </summary>
-    public MessageBrokerChannelBinding Binding { get; }
+    public MessageBrokerChannelPublisherBinding Publisher { get; }
 
     /// <summary>
     /// Id of an internal context with which this event is associated.
     /// </summary>
     /// <remarks>
-    /// Can be used to find other correlating events emitted either by the <see cref="Binding"/> or related client or channel.
+    /// Can be used to find other correlating events emitted either by the <see cref="Publisher"/> or related client or channel.
     /// </remarks>
     public ulong ContextId { get; }
 
     /// <summary>
     /// Specifies the type of this event.
     /// </summary>
-    /// <remarks>See <see cref="MessageBrokerChannelBindingEventType"/> for more information.</remarks>
-    public MessageBrokerChannelBindingEventType Type { get; }
+    /// <remarks>See <see cref="MessageBrokerChannelPublisherBindingEventType"/> for more information.</remarks>
+    public MessageBrokerChannelPublisherBindingEventType Type { get; }
 
     /// <summary>
     /// Error associated with this event.
@@ -62,24 +62,24 @@ public readonly struct MessageBrokerChannelBindingEvent
     public Exception? Exception { get; }
 
     /// <summary>
-    /// Specifies whether or not this event is related to a binding-wide operation.
+    /// Specifies whether or not this event is related to a publisher-wide operation.
     /// </summary>
     public bool IsRootContext => ContextId == MessageBrokerRemoteClientEvent.RootContextId;
 
     /// <summary>
-    /// Returns a string representation of this <see cref="MessageBrokerChannelBindingEvent"/> instance.
+    /// Returns a string representation of this <see cref="MessageBrokerChannelPublisherBindingEvent"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
-        var builder = new StringBuilder( capacity: Binding.Client.Name.Length + Binding.Channel.Name.Length + 96 );
+        var builder = new StringBuilder( capacity: Publisher.Client.Name.Length + Publisher.Channel.Name.Length + 96 );
         ToString( builder );
         return builder.ToString();
     }
 
     /// <summary>
-    /// Appends a string representation of this <see cref="MessageBrokerChannelBindingEvent"/> instance
+    /// Appends a string representation of this <see cref="MessageBrokerChannelPublisherBindingEvent"/> instance
     /// to the provided <see cref="StringBuilder"/>.
     /// </summary>
     /// <param name="builder"><see cref="StringBuilder"/> to append this event to.</param>
@@ -87,13 +87,13 @@ public readonly struct MessageBrokerChannelBindingEvent
     {
         builder
             .Append( '[' )
-            .Append( Binding.Client.Id.ToString( CultureInfo.InvariantCulture ) )
+            .Append( Publisher.Client.Id.ToString( CultureInfo.InvariantCulture ) )
             .Append( "::'" )
-            .Append( Binding.Client.Name )
+            .Append( Publisher.Client.Name )
             .Append( "'=>" )
-            .Append( Binding.Channel.Id.ToString( CultureInfo.InvariantCulture ) )
+            .Append( Publisher.Channel.Id.ToString( CultureInfo.InvariantCulture ) )
             .Append( "::'" )
-            .Append( Binding.Channel.Name )
+            .Append( Publisher.Channel.Name )
             .Append( "'::" )
             .Append( IsRootContext ? "<ROOT>" : ContextId.ToString( CultureInfo.InvariantCulture ) )
             .Append( "] [" )
@@ -106,10 +106,10 @@ public readonly struct MessageBrokerChannelBindingEvent
         {
             switch ( Type )
             {
-                case MessageBrokerChannelBindingEventType.Created:
-                case MessageBrokerChannelBindingEventType.Unexpected:
-                case MessageBrokerChannelBindingEventType.Disposing:
-                case MessageBrokerChannelBindingEventType.Disposed:
+                case MessageBrokerChannelPublisherBindingEventType.Created:
+                case MessageBrokerChannelPublisherBindingEventType.Unexpected:
+                case MessageBrokerChannelPublisherBindingEventType.Disposing:
+                case MessageBrokerChannelPublisherBindingEventType.Disposed:
                     break;
 
                 default:
@@ -121,33 +121,41 @@ public readonly struct MessageBrokerChannelBindingEvent
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerChannelBindingEvent Created(
-        MessageBrokerChannelBinding binding,
+    internal static MessageBrokerChannelPublisherBindingEvent Created(
+        MessageBrokerChannelPublisherBinding publisher,
         ulong contextId = MessageBrokerRemoteClientEvent.RootContextId)
     {
-        return new MessageBrokerChannelBindingEvent( binding, MessageBrokerChannelBindingEventType.Created, contextId );
+        return new MessageBrokerChannelPublisherBindingEvent( publisher, MessageBrokerChannelPublisherBindingEventType.Created, contextId );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerChannelBindingEvent Disposing(
-        MessageBrokerChannelBinding binding,
+    internal static MessageBrokerChannelPublisherBindingEvent Disposing(
+        MessageBrokerChannelPublisherBinding publisher,
         ulong contextId = MessageBrokerRemoteClientEvent.RootContextId)
     {
-        return new MessageBrokerChannelBindingEvent( binding, MessageBrokerChannelBindingEventType.Disposing, contextId );
+        return new MessageBrokerChannelPublisherBindingEvent(
+            publisher,
+            MessageBrokerChannelPublisherBindingEventType.Disposing,
+            contextId );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerChannelBindingEvent Disposed(MessageBrokerChannelBinding binding)
+    internal static MessageBrokerChannelPublisherBindingEvent Disposed(MessageBrokerChannelPublisherBinding publisher)
     {
-        return new MessageBrokerChannelBindingEvent( binding, MessageBrokerChannelBindingEventType.Disposed );
+        return new MessageBrokerChannelPublisherBindingEvent( publisher, MessageBrokerChannelPublisherBindingEventType.Disposed );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerChannelBindingEvent Unexpected(MessageBrokerChannelBinding binding, Exception exception)
+    internal static MessageBrokerChannelPublisherBindingEvent Unexpected(
+        MessageBrokerChannelPublisherBinding publisher,
+        Exception exception)
     {
-        return new MessageBrokerChannelBindingEvent( binding, MessageBrokerChannelBindingEventType.Unexpected, exception: exception );
+        return new MessageBrokerChannelPublisherBindingEvent(
+            publisher,
+            MessageBrokerChannelPublisherBindingEventType.Unexpected,
+            exception: exception );
     }
 }

@@ -63,24 +63,6 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string ServerPayloadRejected(
-        int clientId,
-        string clientName,
-        MessageBrokerClientEndpoint endpoint,
-        Chain<string> errors)
-    {
-        var header
-            = $"Message broker client rejected an invalid {GetEndpoint( endpoint )} sent by server's remote client [{clientId}] '{clientName}'.";
-
-        if ( errors.Count == 0 )
-            return header;
-
-        var reasons = string.Join( Environment.NewLine, errors.Select( static (e, i) => $"{i + 1}. {e}" ) );
-        return $"{header} Encountered {errors.Count} error(s):{Environment.NewLine}{reasons}";
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string InvalidPayloadFromClient(
         int clientId,
         string clientName,
@@ -157,81 +139,82 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string FailedToCreateChannelBinding(
+    internal static string FailedToCreatePublisher(
         int clientId,
         string clientName,
         int channelId,
         string channelName,
-        Protocol.BindFailureResponse.Reasons reason)
+        Protocol.BindPublisherFailureResponse.Reasons reason)
     {
-        Assume.NotEquals( reason, Protocol.BindFailureResponse.Reasons.None );
-        var reasonText = reason == Protocol.BindFailureResponse.Reasons.AlreadyBound
-            ? "it is already bound to it"
-            : "the binding process was cancelled";
+        Assume.NotEquals( reason, Protocol.BindPublisherFailureResponse.Reasons.None );
+        var reasonText = reason == Protocol.BindPublisherFailureResponse.Reasons.AlreadyBound
+            ? "it is already bound as a publisher to it"
+            : "the publisher binding process was cancelled";
 
         return
-            $"Message broker client [{clientId}] '{clientName}' could not be bound to channel [{channelId}] '{channelName}' because {reasonText}.";
+            $"Message broker client [{clientId}] '{clientName}' could not be bound as a publisher to channel [{channelId}] '{channelName}' because {reasonText}.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string FailedToUnbindFromChannel(int clientId, string clientName, int channelId, string channelName)
+    internal static string FailedToUnbindPublisherFromChannel(int clientId, string clientName, int channelId, string channelName)
     {
         return
-            $"Message broker client [{clientId}] '{clientName}' could not be unbound from channel [{channelId}] '{channelName}' because it is not bound to it.";
+            $"Message broker client [{clientId}] '{clientName}' could not be unbound as a publisher from channel [{channelId}] '{channelName}' because it is not bound as a publisher to it.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string FailedToUnbindFromNonExistingChannel(int clientId, string clientName, int channelId)
-    {
-        return $"Message broker client [{clientId}] '{clientName}' could not be unbound from non-existing channel with ID {channelId}.";
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string FailedToUnsubscribeFromChannel(int clientId, string clientName, int channelId, string channelName)
+    internal static string FailedToUnbindPublisherFromNonExistingChannel(int clientId, string clientName, int channelId)
     {
         return
-            $"Message broker client [{clientId}] '{clientName}' could not be unsubscribed from channel [{channelId}] '{channelName}' because it is not subscribed to it.";
+            $"Message broker client [{clientId}] '{clientName}' could not be unbound as a publisher from non-existing channel with ID {channelId}.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string FailedToUnsubscribeFromNonExistingChannel(int clientId, string clientName, int channelId)
+    internal static string FailedToUnbindListenerFromChannel(int clientId, string clientName, int channelId, string channelName)
     {
         return
-            $"Message broker client [{clientId}] '{clientName}' could not be unsubscribed from non-existing channel with ID {channelId}.";
+            $"Message broker client [{clientId}] '{clientName}' could not be unbound as a listener from channel [{channelId}] '{channelName}' because it is not bound as a listener to it.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string FailedToAddMessageToUnboundChannel(int clientId, string clientName, int channelId)
+    internal static string FailedToUnbindListenerFromNonExistingChannel(int clientId, string clientName, int channelId)
     {
         return
-            $"Message broker client [{clientId}] '{clientName}' could not add message to channel with ID {channelId} because it is not bound to it.";
+            $"Message broker client [{clientId}] '{clientName}' could not be unbound as a listener from non-existing channel with ID {channelId}.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string FailedToCreateSubscription(
+    internal static string FailedToPushMessageToUnboundChannel(int clientId, string clientName, int channelId)
+    {
+        return
+            $"Message broker client [{clientId}] '{clientName}' could not push message to channel with ID {channelId} because it is not bound as a publisher to it.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string FailedToCreateListenerBinding(
         int clientId,
         string clientName,
         int? channelId,
         string channelName,
-        Protocol.SubscribeFailureResponse.Reasons reason)
+        Protocol.BindListenerFailureResponse.Reasons reason)
     {
-        Assume.NotEquals( reason, Protocol.SubscribeFailureResponse.Reasons.None );
+        Assume.NotEquals( reason, Protocol.BindListenerFailureResponse.Reasons.None );
         var reasonText = reason switch
         {
-            Protocol.SubscribeFailureResponse.Reasons.ChannelDoesNotExist => "channel does not exist",
-            Protocol.SubscribeFailureResponse.Reasons.AlreadySubscribed => "it is already subscribed to it",
-            _ => "the subscription process was cancelled"
+            Protocol.BindListenerFailureResponse.Reasons.ChannelDoesNotExist => "channel does not exist",
+            Protocol.BindListenerFailureResponse.Reasons.AlreadyBound => "it is already bound as a listener to it",
+            _ => "the listener binding process was cancelled"
         };
 
         var channelIdText = channelId is null ? string.Empty : $"[{channelId.Value}] ";
         return
-            $"Message broker client [{clientId}] '{clientName}' failed to create a subscription to channel {channelIdText}'{channelName}' because {reasonText}.";
+            $"Message broker client [{clientId}] '{clientName}' could not be bound as a listener to channel {channelIdText}'{channelName}' because {reasonText}.";
     }
 
     [Pure]

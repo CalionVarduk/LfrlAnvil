@@ -18,22 +18,22 @@ using System.Runtime.CompilerServices;
 namespace LfrlAnvil.MessageBroker.Client;
 
 /// <summary>
-/// Represents the result of unsubscribing a client from a channel.
+/// Represents the result of unbinding a client from a channel as a listener.
 /// </summary>
-public readonly struct MessageBrokerUnsubscribeResult
+public readonly struct MessageBrokerUnbindListenerResult
 {
     private readonly byte _state;
 
-    private MessageBrokerUnsubscribeResult(byte state)
+    private MessageBrokerUnbindListenerResult(byte state)
     {
         _state = state;
     }
 
     /// <summary>
     /// Specifies whether or not request to the server has been cancelled
-    /// because the client does not contain a local listener subscribed to the channel.
+    /// because the client is not locally bound as a listener to the channel.
     /// </summary>
-    public bool NotSubscribed => _state == 1;
+    public bool NotBound => _state == 1;
 
     /// <summary>
     /// Specifies whether or not the channel has been removed by the server.
@@ -46,14 +46,14 @@ public readonly struct MessageBrokerUnsubscribeResult
     public bool QueueRemoved => (_state & 4) != 0;
 
     /// <summary>
-    /// Returns a string representation of this <see cref="MessageBrokerUnsubscribeResult"/> instance.
+    /// Returns a string representation of this <see cref="MessageBrokerUnbindListenerResult"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
         if ( _state == 1 )
-            return "Not subscribed";
+            return "Not bound";
 
         var channelRemoved = ChannelRemoved ? " (channel removed)" : string.Empty;
         var queueRemoved = QueueRemoved ? " (queue removed)" : string.Empty;
@@ -62,15 +62,15 @@ public readonly struct MessageBrokerUnsubscribeResult
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerUnsubscribeResult Create(bool channelRemoved, bool queueRemoved)
+    internal static MessageBrokerUnbindListenerResult Create(bool channelRemoved, bool queueRemoved)
     {
-        return new MessageBrokerUnsubscribeResult( ( byte )((channelRemoved ? 2 : 0) | (queueRemoved ? 4 : 0)) );
+        return new MessageBrokerUnbindListenerResult( ( byte )((channelRemoved ? 2 : 0) | (queueRemoved ? 4 : 0)) );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerUnsubscribeResult CreateNotSubscribed()
+    internal static MessageBrokerUnbindListenerResult CreateNotBound()
     {
-        return new MessageBrokerUnsubscribeResult( 1 );
+        return new MessageBrokerUnbindListenerResult( 1 );
     }
 }

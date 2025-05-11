@@ -15,27 +15,27 @@
 namespace LfrlAnvil.MessageBroker.Server.Events;
 
 /// <summary>
-/// Defines available <see cref="MessageBrokerSubscriptionEvent"/> types.
+/// Defines available <see cref="MessageBrokerChannelListenerBindingEvent"/> types.
 /// </summary>
-public enum MessageBrokerSubscriptionEventType : byte
+public enum MessageBrokerChannelListenerBindingEventType : byte
 {
     /// <summary>
-    /// Specifies that the subscription has encountered an unexpected error.
+    /// Specifies that the listener binding has encountered an unexpected error.
     /// </summary>
     Unexpected,
 
     /// <summary>
-    /// Specifies that the subscription instance has been created.
+    /// Specifies that the listener binding instance has been created.
     /// </summary>
     Created,
 
     /// <summary>
-    /// Specifies that the subscription is about to be disposed.
+    /// Specifies that the listener binding is about to be disposed.
     /// </summary>
     Disposing,
 
     /// <summary>
-    /// Specifies that the subscription has been disposed.
+    /// Specifies that the listener binding has been disposed.
     /// </summary>
     Disposed
 }

@@ -161,7 +161,7 @@ internal struct QueueProcessor
     private static void ClearBuffer(MessageBrokerQueue queue, ref ListSlim<QueueMessage> messages)
     {
         foreach ( ref readonly var message in messages )
-            queue.Emit( MessageBrokerQueueEvent.MessageDequeued( queue, message.Subscription, message.Id ) );
+            queue.Emit( MessageBrokerQueueEvent.MessageDequeued( queue, message.Listener, message.Id ) );
 
         messages.Clear();
     }

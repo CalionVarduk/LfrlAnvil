@@ -12,10 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-namespace LfrlAnvil.MessageBroker.Server.Events;
+namespace LfrlAnvil.MessageBroker.Server;
 
 /// <summary>
-/// Represents a callback to <see cref="MessageBrokerSubscriptionEvent"/> instances emitted by <see cref="MessageBrokerSubscription"/>.
-/// <param name="e">Emitted event.</param>
+/// Defines possible <see cref="MessageBrokerChannelListenerBinding"/> states.
 /// </summary>
-public delegate void MessageBrokerSubscriptionEventHandler(MessageBrokerSubscriptionEvent e);
+public enum MessageBrokerChannelListenerBindingState : byte
+{
+    /// <summary>
+    /// Specifies that the listener binding is currently running.
+    /// </summary>
+    Running = 0,
+
+    /// <summary>
+    /// Specifies that the listener binding is currently being disposed.
+    /// </summary>
+    Disposing = 1,
+
+    /// <summary>
+    /// Specifies that the listener binding has been disposed.
+    /// </summary>
+    Disposed = 2
+}

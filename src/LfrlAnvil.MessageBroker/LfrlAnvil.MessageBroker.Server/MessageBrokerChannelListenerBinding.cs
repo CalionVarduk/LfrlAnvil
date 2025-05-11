@@ -20,16 +20,16 @@ using LfrlAnvil.MessageBroker.Server.Events;
 namespace LfrlAnvil.MessageBroker.Server;
 
 /// <summary>
-/// Represents a message broker subscription, which allows clients to listen to messages published through channels.
+/// Represents a message broker channel binding for a listener, which allows clients to listen to messages published through channels.
 /// </summary>
-public sealed class MessageBrokerSubscription
+public sealed class MessageBrokerChannelListenerBinding
 {
     private readonly object _sync = new object();
-    private readonly MessageBrokerSubscriptionEventHandler? _eventHandler;
+    private readonly MessageBrokerChannelListenerBindingEventHandler? _eventHandler;
     private InterlockedInt32 _prefetchCounter;
-    private MessageBrokerSubscriptionState _state;
+    private MessageBrokerChannelListenerBindingState _state;
 
-    internal MessageBrokerSubscription(
+    internal MessageBrokerChannelListenerBinding(
         MessageBrokerRemoteClient client,
         MessageBrokerChannel channel,
         MessageBrokerQueue queue,
@@ -39,37 +39,37 @@ public sealed class MessageBrokerSubscription
         Client = client;
         Channel = channel;
         Queue = queue;
-        _state = MessageBrokerSubscriptionState.Running;
+        _state = MessageBrokerChannelListenerBindingState.Running;
         PrefetchHint = prefetchHint;
         _prefetchCounter = new InterlockedInt32( 0 );
-        _eventHandler = client.Server.SubscriptionEventHandlerFactory?.Invoke( this );
+        _eventHandler = client.Server.ListenerEventHandlerFactory?.Invoke( this );
     }
 
     /// <summary>
-    /// <see cref="MessageBrokerRemoteClient"/> instance to which this subscription belongs to.
+    /// <see cref="MessageBrokerRemoteClient"/> instance to which this listener belongs to.
     /// </summary>
     public MessageBrokerRemoteClient Client { get; }
 
     /// <summary>
-    /// <see cref="MessageBrokerChannel"/> instance to which the <see cref="Client"/> is subscribed to.
+    /// <see cref="MessageBrokerChannel"/> instance to which the <see cref="Client"/> is bound to as a listener.
     /// </summary>
     public MessageBrokerChannel Channel { get; }
 
     /// <summary>
-    /// <see cref="MessageBrokerQueue"/> instance to which messages intended for this subscription get enqueued to.
+    /// <see cref="MessageBrokerQueue"/> instance to which messages intended for this listener get enqueued into.
     /// </summary>
     public MessageBrokerQueue Queue { get; }
 
     /// <summary>
-    /// Specifies how many messages can this subscription send to the <see cref="Client"/> at the same time.
+    /// Specifies how many messages can this listener send to the <see cref="Client"/> at the same time.
     /// </summary>
     public int PrefetchHint { get; }
 
     /// <summary>
-    /// Current subscription's state.
+    /// Current listener's state.
     /// </summary>
-    /// <remarks>See <see cref="MessageBrokerSubscriptionState"/> for more information.</remarks>
-    public MessageBrokerSubscriptionState State
+    /// <remarks>See <see cref="MessageBrokerChannelListenerBindingState"/> for more information.</remarks>
+    public MessageBrokerChannelListenerBindingState State
     {
         get
         {
@@ -78,17 +78,17 @@ public sealed class MessageBrokerSubscription
         }
     }
 
-    internal bool ShouldCancel => _state >= MessageBrokerSubscriptionState.Disposing;
+    internal bool ShouldCancel => _state >= MessageBrokerChannelListenerBindingState.Disposing;
 
     /// <summary>
-    /// Returns a string representation of this <see cref="MessageBrokerSubscription"/> instance.
+    /// Returns a string representation of this <see cref="MessageBrokerChannelListenerBinding"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
         return
-            $"[{Client.Id}] '{Client.Name}' => [{Channel.Id}] '{Channel.Name}' subscription (using [{Queue.Id}] '{Queue.Name}' queue) ({State})";
+            $"[{Client.Id}] '{Client.Name}' => [{Channel.Id}] '{Channel.Name}' listener binding (using [{Queue.Id}] '{Queue.Name}' queue) ({State})";
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -144,24 +144,24 @@ public sealed class MessageBrokerSubscription
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void BeginDisposingUnsafe()
     {
-        Assume.Equals( _state, MessageBrokerSubscriptionState.Running );
+        Assume.Equals( _state, MessageBrokerChannelListenerBindingState.Running );
         _prefetchCounter.Write( -1 );
-        _state = MessageBrokerSubscriptionState.Disposing;
+        _state = MessageBrokerChannelListenerBindingState.Disposing;
     }
 
     internal void EndDisposing()
     {
         using ( AcquireLock() )
         {
-            Assume.Equals( _state, MessageBrokerSubscriptionState.Disposing );
-            _state = MessageBrokerSubscriptionState.Disposed;
+            Assume.Equals( _state, MessageBrokerChannelListenerBindingState.Disposing );
+            _state = MessageBrokerChannelListenerBindingState.Disposed;
         }
 
-        Emit( MessageBrokerSubscriptionEvent.Disposed( this ) );
+        Emit( MessageBrokerChannelListenerBindingEvent.Disposed( this ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void Emit(MessageBrokerSubscriptionEvent e)
+    internal void Emit(MessageBrokerChannelListenerBindingEvent e)
     {
         if ( _eventHandler is null )
             return;
@@ -191,13 +191,13 @@ public sealed class MessageBrokerSubscription
             if ( ShouldCancel )
                 return;
 
-            _state = MessageBrokerSubscriptionState.Disposing;
+            _state = MessageBrokerChannelListenerBindingState.Disposing;
         }
 
-        Emit( MessageBrokerSubscriptionEvent.Disposing( this ) );
+        Emit( MessageBrokerChannelListenerBindingEvent.Disposing( this ) );
 
         if ( notifyChannel )
-            Channel.OnSubscriptionDisposing( Client );
+            Channel.OnListenerDisposing( Client );
 
         EndDisposing();
     }

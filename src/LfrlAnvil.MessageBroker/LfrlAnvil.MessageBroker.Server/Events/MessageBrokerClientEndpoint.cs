@@ -20,72 +20,72 @@ namespace LfrlAnvil.MessageBroker.Server.Events;
 public enum MessageBrokerClientEndpoint : byte
 {
     /// <summary>
+    /// Represents server's response to client's ping.
+    /// </summary>
+    Pong = 1,
+
+    /// <summary>
     /// Represents message notification sent by server.
     /// </summary>
-    MessageNotification = 1,
+    MessageNotification = 2,
 
     /// <summary>
-    /// Represents server's response to client's ping request.
+    /// Represents server's response to client's valid push message request.
     /// </summary>
-    PingResponse = 2,
+    MessageAcceptedResponse = 4,
 
     /// <summary>
-    /// Represents server's response to client's invalid handshake request.
+    /// Represents server's response to client's invalid push message request.
     /// </summary>
-    HandshakeRejectedResponse = 4,
+    MessageRejectedResponse = 5,
+
+    /// <summary>
+    /// Represents server's response to client's valid bind publisher request.
+    /// </summary>
+    PublisherBoundResponse = 6,
+
+    /// <summary>
+    /// Represents server's response to client's invalid bind publisher request.
+    /// </summary>
+    BindPublisherFailureResponse = 7,
+
+    /// <summary>
+    /// Represents server's response to client's valid unbind publisher request.
+    /// </summary>
+    PublisherUnboundResponse = 8,
+
+    /// <summary>
+    /// Represents server's response to client's invalid unbind publisher request.
+    /// </summary>
+    UnbindPublisherFailureResponse = 9,
+
+    /// <summary>
+    /// Represents server's response to client's valid bind listener request.
+    /// </summary>
+    ListenerBoundResponse = 10,
+
+    /// <summary>
+    /// Represents server's response to client's invalid bind listener request.
+    /// </summary>
+    BindListenerFailureResponse = 11,
+
+    /// <summary>
+    /// Represents server's response to client's valid unbind listener request.
+    /// </summary>
+    ListenerUnboundResponse = 12,
+
+    /// <summary>
+    /// Represents server's response to client's invalid unbind listener request.
+    /// </summary>
+    UnbindListenerFailureResponse = 13,
 
     /// <summary>
     /// Represents server's response to client's valid handshake request.
     /// </summary>
-    HandshakeAcceptedResponse = 6,
+    HandshakeAcceptedResponse = 254,
 
     /// <summary>
-    /// Represents server's response to client's valid bind request.
+    /// Represents server's response to client's invalid handshake request.
     /// </summary>
-    BoundResponse = 8,
-
-    /// <summary>
-    /// Represents server's response to client's invalid bind request.
-    /// </summary>
-    BindFailureResponse = 10,
-
-    /// <summary>
-    /// Represents server's response to client's valid unbind request.
-    /// </summary>
-    UnboundResponse = 12,
-
-    /// <summary>
-    /// Represents server's response to client's invalid unbind request.
-    /// </summary>
-    UnbindFailureResponse = 14,
-
-    /// <summary>
-    /// Represents server's response to client's valid subscribe request.
-    /// </summary>
-    SubscribedResponse = 16,
-
-    /// <summary>
-    /// Represents server's response to client's invalid subscribe request.
-    /// </summary>
-    SubscribeFailureResponse = 18,
-
-    /// <summary>
-    /// Represents server's response to client's valid unsubscribe request.
-    /// </summary>
-    UnsubscribedResponse = 20,
-
-    /// <summary>
-    /// Represents server's response to client's invalid unsubscribe request.
-    /// </summary>
-    UnsubscribeFailureResponse = 22,
-
-    /// <summary>
-    /// Represents server's response to client's valid message request.
-    /// </summary>
-    MessageAcceptedResponse = 24,
-
-    /// <summary>
-    /// Represents server's response to client's invalid message request.
-    /// </summary>
-    MessageRejectedResponse = 26
+    HandshakeRejectedResponse = 255
 }

@@ -243,7 +243,7 @@ internal struct MessageNotifications
         internal Message(in QueueMessage message, ulong contextId, ManualResetValueTaskSource<bool> writerSource)
         {
             PacketHeader = message.PacketHeader;
-            Subscription = message.Subscription;
+            Subscription = message.Listener;
             ContextId = contextId;
             WriterSource = writerSource;
             _poolToken = message.PoolToken;
@@ -251,7 +251,7 @@ internal struct MessageNotifications
         }
 
         internal readonly Protocol.PacketHeader PacketHeader;
-        internal readonly MessageBrokerSubscription Subscription;
+        internal readonly MessageBrokerChannelListenerBinding Subscription;
         internal readonly ulong ContextId;
         internal readonly ManualResetValueTaskSource<bool> WriterSource;
         internal readonly ReadOnlyMemory<byte> Packet;

@@ -22,12 +22,12 @@ using LfrlAnvil.MessageBroker.Server.Internal;
 namespace LfrlAnvil.MessageBroker.Server;
 
 /// <summary>
-/// Represents a message broker channel, which allows clients to publish messages.
+/// Represents a message broker channel, which allows clients to bind to it as either a publisher or a listener.
 /// </summary>
 public sealed class MessageBrokerChannel
 {
-    internal ReferenceStore<int, MessageBrokerChannelBinding> BindingsByClientId;
-    internal ReferenceStore<int, MessageBrokerSubscription> SubscriptionsByClientId;
+    internal ReferenceStore<int, MessageBrokerChannelPublisherBinding> PublishersByClientId;
+    internal ReferenceStore<int, MessageBrokerChannelListenerBinding> ListenersByClientId;
     private readonly object _sync = new object();
     private readonly MessageBrokerChannelEventHandler? _eventHandler;
     private MessageBrokerChannelState _state;
@@ -38,8 +38,8 @@ public sealed class MessageBrokerChannel
         Id = id;
         Name = name;
         _state = MessageBrokerChannelState.Running;
-        BindingsByClientId = ReferenceStore<int, MessageBrokerChannelBinding>.Create();
-        SubscriptionsByClientId = ReferenceStore<int, MessageBrokerSubscription>.Create();
+        PublishersByClientId = ReferenceStore<int, MessageBrokerChannelPublisherBinding>.Create();
+        ListenersByClientId = ReferenceStore<int, MessageBrokerChannelListenerBinding>.Create();
         _eventHandler = Server.ChannelEventHandlerFactory?.Invoke( this );
     }
 
@@ -72,14 +72,14 @@ public sealed class MessageBrokerChannel
     }
 
     /// <summary>
-    /// Collection of <see cref="MessageBrokerChannelBinding"/> instances attached to this channel, identified by client ids.
+    /// Collection of <see cref="MessageBrokerChannelPublisherBinding"/> instances attached to this channel, identified by client ids.
     /// </summary>
-    public MessageBrokerChannelBindingCollection Bindings => new MessageBrokerChannelBindingCollection( this );
+    public MessageBrokerChannelPublisherBindingCollection Publishers => new MessageBrokerChannelPublisherBindingCollection( this );
 
     /// <summary>
-    /// Collection of <see cref="MessageBrokerSubscription"/> instances attached to this channel, identified by client ids.
+    /// Collection of <see cref="MessageBrokerChannelListenerBinding"/> instances attached to this channel, identified by client ids.
     /// </summary>
-    public MessageBrokerChannelSubscriptionCollection Subscriptions => new MessageBrokerChannelSubscriptionCollection( this );
+    public MessageBrokerChannelListenerBindingCollection Listeners => new MessageBrokerChannelListenerBindingCollection( this );
 
     internal bool ShouldCancel => _state >= MessageBrokerChannelState.Disposing;
 
@@ -94,10 +94,10 @@ public sealed class MessageBrokerChannel
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool TryDisposeByRemovingBindingUnsafe(int clientId)
+    internal bool TryDisposeByRemovingPublisherUnsafe(int clientId)
     {
-        BindingsByClientId.Remove( clientId );
-        if ( SubscriptionsByClientId.Count > 0 || BindingsByClientId.Count > 0 )
+        PublishersByClientId.Remove( clientId );
+        if ( ListenersByClientId.Count > 0 || PublishersByClientId.Count > 0 )
             return false;
 
         _state = MessageBrokerChannelState.Disposing;
@@ -105,17 +105,17 @@ public sealed class MessageBrokerChannel
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool TryDisposeByRemovingSubscriptionUnsafe(int clientId)
+    internal bool TryDisposeByRemovingListenerUnsafe(int clientId)
     {
-        SubscriptionsByClientId.Remove( clientId );
-        if ( SubscriptionsByClientId.Count > 0 || BindingsByClientId.Count > 0 )
+        ListenersByClientId.Remove( clientId );
+        if ( ListenersByClientId.Count > 0 || PublishersByClientId.Count > 0 )
             return false;
 
         _state = MessageBrokerChannelState.Disposing;
         return true;
     }
 
-    internal void OnBindingDisposing(MessageBrokerRemoteClient client)
+    internal void OnPublisherDisposing(MessageBrokerRemoteClient client)
     {
         var dispose = false;
         using ( AcquireLock() )
@@ -123,7 +123,7 @@ public sealed class MessageBrokerChannel
             if ( ShouldCancel )
                 return;
 
-            if ( BindingsByClientId.Remove( client.Id ) && BindingsByClientId.Count == 0 && SubscriptionsByClientId.Count == 0 )
+            if ( PublishersByClientId.Remove( client.Id ) && PublishersByClientId.Count == 0 && ListenersByClientId.Count == 0 )
             {
                 dispose = true;
                 _state = MessageBrokerChannelState.Disposing;
@@ -134,7 +134,7 @@ public sealed class MessageBrokerChannel
             DisposeDueToLackOfReferences();
     }
 
-    internal void OnSubscriptionDisposing(MessageBrokerRemoteClient client)
+    internal void OnListenerDisposing(MessageBrokerRemoteClient client)
     {
         var dispose = false;
         using ( AcquireLock() )
@@ -142,7 +142,7 @@ public sealed class MessageBrokerChannel
             if ( ShouldCancel )
                 return;
 
-            if ( SubscriptionsByClientId.Remove( client.Id ) && BindingsByClientId.Count == 0 && SubscriptionsByClientId.Count == 0 )
+            if ( ListenersByClientId.Remove( client.Id ) && PublishersByClientId.Count == 0 && ListenersByClientId.Count == 0 )
             {
                 dispose = true;
                 _state = MessageBrokerChannelState.Disposing;
@@ -165,17 +165,17 @@ public sealed class MessageBrokerChannel
 
         Emit( MessageBrokerChannelEvent.Disposing( this ) );
 
-        MessageBrokerChannelBinding[] bindings;
-        MessageBrokerSubscription[] subscriptions;
+        MessageBrokerChannelPublisherBinding[] publishers;
+        MessageBrokerChannelListenerBinding[] listeners;
         using ( AcquireLock() )
         {
-            bindings = BindingsByClientId.ClearAndExtract();
-            subscriptions = SubscriptionsByClientId.ClearAndExtract();
+            publishers = PublishersByClientId.ClearAndExtract();
+            listeners = ListenersByClientId.ClearAndExtract();
             _state = MessageBrokerChannelState.Disposed;
         }
 
-        await Parallel.ForEachAsync( bindings, static (b, _) => b.OnServerDisposedAsync() ).ConfigureAwait( false );
-        foreach ( var subscription in subscriptions )
+        await Parallel.ForEachAsync( publishers, static (b, _) => b.OnServerDisposedAsync() ).ConfigureAwait( false );
+        foreach ( var subscription in listeners )
             subscription.OnServerDisposed();
 
         Emit( MessageBrokerChannelEvent.Disposed( this ) );
@@ -193,8 +193,8 @@ public sealed class MessageBrokerChannel
 
         using ( AcquireLock() )
         {
-            Assume.Equals( BindingsByClientId.Count, 0 );
-            Assume.Equals( SubscriptionsByClientId.Count, 0 );
+            Assume.Equals( PublishersByClientId.Count, 0 );
+            Assume.Equals( ListenersByClientId.Count, 0 );
             _state = MessageBrokerChannelState.Disposed;
         }
 

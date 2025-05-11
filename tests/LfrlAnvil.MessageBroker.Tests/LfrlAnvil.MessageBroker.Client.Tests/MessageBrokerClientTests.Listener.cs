@@ -18,7 +18,7 @@ public partial class MessageBrokerClientTests
         [InlineData( true, false )]
         [InlineData( false, true )]
         [InlineData( false, false )]
-        public async Task SubscribeAsync_ShouldCreateListenerCorrectly(bool channelCreated, bool queueCreated)
+        public async Task BindAsync_ShouldCreateListenerCorrectly(bool channelCreated, bool queueCreated)
         {
             var logs = new EventLogger();
             using var server = new ServerMock();
@@ -37,7 +37,7 @@ public partial class MessageBrokerClientTests
 
             var channelName = "foo";
             var queueName = "bar";
-            var subscribeRequest = new Protocol.SubscribeRequest(
+            var bindRequest = new Protocol.BindListenerRequest(
                 channelName,
                 createChannelIfNotExists: true,
                 queueName: queueName,
@@ -46,11 +46,11 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( subscribeRequest );
-                    s.SendSubscribedResponse( channelCreated, queueCreated, 1, 2 );
+                    s.Read( bindRequest );
+                    s.SendListenerBoundResponse( channelCreated, queueCreated, 1, 2 );
                 } );
 
-            var result = await client.Listeners.SubscribeAsync( channelName, callback, queueName );
+            var result = await client.Listeners.BindAsync( channelName, callback, queueName );
             await serverTask;
 
             Assertion.All(
@@ -58,7 +58,7 @@ public partial class MessageBrokerClientTests
                     result.Value.TestNotNull(
                         r => Assertion.All(
                             "result.Value",
-                            r.AlreadySubscribed.TestFalse(),
+                            r.AlreadyBound.TestFalse(),
                             r.ChannelCreated.TestEquals( channelCreated ),
                             r.QueueCreated.TestEquals( queueCreated ),
                             r.Listener.TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ),
@@ -66,11 +66,11 @@ public partial class MessageBrokerClientTests
                                 .TestEquals(
                                     channelCreated
                                         ? queueCreated
-                                            ? $"[1] 'test' => [1] '{channelName}' listener (using [2] '{queueName}' queue) (Subscribed) (channel created) (queue created)"
-                                            : $"[1] 'test' => [1] '{channelName}' listener (using [2] '{queueName}' queue) (Subscribed) (channel created)"
+                                            ? $"[1] 'test' => [1] '{channelName}' listener (using [2] '{queueName}' queue) (Bound) (channel created) (queue created)"
+                                            : $"[1] 'test' => [1] '{channelName}' listener (using [2] '{queueName}' queue) (Bound) (channel created)"
                                         : queueCreated
-                                            ? $"[1] 'test' => [1] '{channelName}' listener (using [2] '{queueName}' queue) (Subscribed) (queue created)"
-                                            : $"[1] 'test' => [1] '{channelName}' listener (using [2] '{queueName}' queue) (Subscribed)" ) ) ),
+                                            ? $"[1] 'test' => [1] '{channelName}' listener (using [2] '{queueName}' queue) (Bound) (queue created)"
+                                            : $"[1] 'test' => [1] '{channelName}' listener (using [2] '{queueName}' queue) (Bound)" ) ) ),
                     client.Listeners.Count.TestEquals( 1 ),
                     client.Listeners.GetAll().TestSequence( [ (c, _) => c.TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ) ] ),
                     client.Listeners.TryGetByChannelName( channelName ).TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ),
@@ -85,24 +85,24 @@ public partial class MessageBrokerClientTests
                                 listener.QueueName.TestEquals( queueName ),
                                 listener.PrefetchHint.TestEquals( 1 ),
                                 listener.Callback.TestRefEquals( callback ),
-                                listener.State.TestEquals( MessageBrokerListenerState.Subscribed ),
+                                listener.State.TestEquals( MessageBrokerListenerState.Bound ),
                                 listener.ToString()
                                     .TestEquals(
-                                        $"[1] 'test' => [1] '{channelName}' listener (using [2] '{queueName}' queue) (Subscribed)" ) ) ),
+                                        $"[1] 'test' => [1] '{channelName}' listener (using [2] '{queueName}' queue) (Bound)" ) ) ),
                     logs.GetAll()
                         .TestContainsSequence(
                         [
-                            "['test'::1] [SendingMessage] [PacketLength: 20] SubscribeRequest",
-                            "['test'::1] [MessageSent] [PacketLength: 20] SubscribeRequest",
-                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 14] SubscribedResponse",
-                            "['test'::1] [MessageReceived] [PacketLength: 14] Begin handling SubscribedResponse",
-                            "['test'::1] [MessageAccepted] [PacketLength: 14] SubscribedResponse (ChannelId = 1, QueueId = 2)"
+                            "['test'::1] [SendingMessage] [PacketLength: 20] BindListenerRequest",
+                            "['test'::1] [MessageSent] [PacketLength: 20] BindListenerRequest",
+                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 14] ListenerBoundResponse",
+                            "['test'::1] [MessageReceived] [PacketLength: 14] Begin handling ListenerBoundResponse",
+                            "['test'::1] [MessageAccepted] [PacketLength: 14] ListenerBoundResponse (ChannelId = 1, QueueId = 2)"
                         ] ) )
                 .Go();
         }
 
         [Fact]
-        public async Task SubscribeAsync_ShouldNotThrow_WhenListenerAlreadyLocallyExists()
+        public async Task BindAsync_ShouldNotThrow_WhenListenerIsAlreadyLocallyBound()
         {
             using var server = new ServerMock();
             var remoteEndPoint = server.Start();
@@ -117,7 +117,7 @@ public partial class MessageBrokerClientTests
             await server.EstablishHandshake( client );
 
             var channelName = "foo";
-            var subscribeRequest = new Protocol.SubscribeRequest(
+            var bindRequest = new Protocol.BindListenerRequest(
                 channelName,
                 createChannelIfNotExists: true,
                 queueName: null,
@@ -126,14 +126,14 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( subscribeRequest );
-                    s.SendSubscribedResponse( true, true, 1, 1 );
+                    s.Read( bindRequest );
+                    s.SendListenerBoundResponse( true, true, 1, 1 );
                 } );
 
-            await client.Listeners.SubscribeAsync( channelName, (_, _) => ValueTask.CompletedTask );
+            await client.Listeners.BindAsync( channelName, (_, _) => ValueTask.CompletedTask );
             await serverTask;
 
-            var result = await client.Listeners.SubscribeAsync(
+            var result = await client.Listeners.BindAsync(
                 channelName,
                 (_, _) => ValueTask.CompletedTask,
                 createChannelIfNotExists: false );
@@ -143,13 +143,13 @@ public partial class MessageBrokerClientTests
                     result.Value.TestNotNull(
                         r => Assertion.All(
                             "result.Value",
-                            r.AlreadySubscribed.TestTrue(),
+                            r.AlreadyBound.TestTrue(),
                             r.ChannelCreated.TestFalse(),
                             r.QueueCreated.TestFalse(),
                             r.Listener.TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ),
                             r.ToString()
                                 .TestEquals(
-                                    $"[1] 'test' => [1] '{channelName}' listener (using [1] '{channelName}' queue) (Subscribed) (already subscribed)" ) ) ),
+                                    $"[1] 'test' => [1] '{channelName}' listener (using [1] '{channelName}' queue) (Bound) (already bound)" ) ) ),
                     client.Listeners.Count.TestEquals( 1 ) )
                 .Go();
         }
@@ -170,7 +170,7 @@ public partial class MessageBrokerClientTests
             await server.EstablishHandshake( client );
 
             var channelName = "foo";
-            var subscribeRequest = new Protocol.SubscribeRequest(
+            var bindRequest = new Protocol.BindListenerRequest(
                 channelName,
                 createChannelIfNotExists: true,
                 queueName: null,
@@ -179,11 +179,11 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( subscribeRequest );
-                    s.SendSubscribedResponse( true, true, 1, 1 );
+                    s.Read( bindRequest );
+                    s.SendListenerBoundResponse( true, true, 1, 1 );
                 } );
 
-            var result = await client.Listeners.SubscribeAsync( channelName, (_, _) => ValueTask.CompletedTask );
+            var result = await client.Listeners.BindAsync( channelName, (_, _) => ValueTask.CompletedTask );
             await serverTask;
             await client.DisposeAsync();
 
@@ -196,52 +196,52 @@ public partial class MessageBrokerClientTests
         }
 
         [Fact]
-        public void SubscribeAsync_ShouldThrowArgumentOutOfRangeException_WhenChannelNameIsEmpty()
+        public void BindAsync_ShouldThrowArgumentOutOfRangeException_WhenChannelNameIsEmpty()
         {
             using var client = new MessageBrokerClient( new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
-            var action = Lambda.Of( () => client.Listeners.SubscribeAsync( string.Empty, (_, _) => ValueTask.CompletedTask ) );
+            var action = Lambda.Of( () => client.Listeners.BindAsync( string.Empty, (_, _) => ValueTask.CompletedTask ) );
             action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
         }
 
         [Fact]
-        public void SubscribeAsync_ShouldThrowArgumentOutOfRangeException_WhenQueueNameIsNotNullAndEmpty()
+        public void BindAsync_ShouldThrowArgumentOutOfRangeException_WhenQueueNameIsNotNullAndEmpty()
         {
             using var client = new MessageBrokerClient( new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
-            var action = Lambda.Of( () => client.Listeners.SubscribeAsync( "foo", (_, _) => ValueTask.CompletedTask, string.Empty ) );
+            var action = Lambda.Of( () => client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask, string.Empty ) );
             action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
         }
 
         [Fact]
-        public void SubscribeAsync_ShouldThrowArgumentOutOfRangeException_WhenChannelNameIsTooLong()
+        public void BindAsync_ShouldThrowArgumentOutOfRangeException_WhenChannelNameIsTooLong()
         {
             var name = new string( 'x', 513 );
             using var client = new MessageBrokerClient( new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
-            var action = Lambda.Of( () => client.Listeners.SubscribeAsync( name, (_, _) => ValueTask.CompletedTask ) );
+            var action = Lambda.Of( () => client.Listeners.BindAsync( name, (_, _) => ValueTask.CompletedTask ) );
             action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
         }
 
         [Fact]
-        public void SubscribeAsync_ShouldThrowArgumentOutOfRangeException_WhenQueueNameIsNotNullAndTooLong()
+        public void BindAsync_ShouldThrowArgumentOutOfRangeException_WhenQueueNameIsNotNullAndTooLong()
         {
             var name = new string( 'x', 513 );
             using var client = new MessageBrokerClient( new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
-            var action = Lambda.Of( () => client.Listeners.SubscribeAsync( "foo", (_, _) => ValueTask.CompletedTask, name ) );
+            var action = Lambda.Of( () => client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask, name ) );
             action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
         }
 
         [Fact]
-        public void SubscribeAsync_ShouldThrowArgumentOutOfRangeException_WhenPrefetchHintIsLessThanOne()
+        public void BindAsync_ShouldThrowArgumentOutOfRangeException_WhenPrefetchHintIsLessThanOne()
         {
             using var client = new MessageBrokerClient( new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
-            var action = Lambda.Of( () => client.Listeners.SubscribeAsync( "foo", (_, _) => ValueTask.CompletedTask, prefetchHint: 0 ) );
+            var action = Lambda.Of( () => client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask, prefetchHint: 0 ) );
             action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
         }
 
         [Fact]
-        public void SubscribeAsync_ShouldThrowMessageBrokerClientStateException_WhenClientIsNotRunning()
+        public void BindAsync_ShouldThrowMessageBrokerClientStateException_WhenClientIsNotRunning()
         {
             using var client = new MessageBrokerClient( new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
-            var action = Lambda.Of( () => client.Listeners.SubscribeAsync( "foo", (_, _) => ValueTask.CompletedTask ) );
+            var action = Lambda.Of( () => client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask ) );
             action.Test(
                     exc => exc.TestType()
                         .Exact<MessageBrokerClientStateException>(
@@ -253,7 +253,7 @@ public partial class MessageBrokerClientTests
         }
 
         [Fact]
-        public async Task SubscribeAsync_ShouldThrowMessageBrokerClientDisposedException_WhenClientIsDisposed()
+        public async Task BindAsync_ShouldThrowMessageBrokerClientDisposedException_WhenClientIsDisposed()
         {
             var client = new MessageBrokerClient( new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
             await client.DisposeAsync();
@@ -261,7 +261,7 @@ public partial class MessageBrokerClientTests
             Exception? exception = null;
             try
             {
-                _ = await client.Listeners.SubscribeAsync( "foo", (_, _) => ValueTask.CompletedTask );
+                _ = await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             }
             catch ( Exception exc )
             {
@@ -272,7 +272,7 @@ public partial class MessageBrokerClientTests
         }
 
         [Fact]
-        public async Task SubscribeAsync_ShouldReturnErrorAndDisposeClient_WhenServerDoesNotRespondInTime()
+        public async Task BindAsync_ShouldReturnErrorAndDisposeClient_WhenServerDoesNotRespondInTime()
         {
             var logs = new EventLogger();
             using var server = new ServerMock();
@@ -288,7 +288,7 @@ public partial class MessageBrokerClientTests
 
             await server.EstablishHandshake( client );
 
-            var result = await client.Listeners.SubscribeAsync( "foo", (_, _) => ValueTask.CompletedTask );
+            var result = await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
 
             Assertion.All(
                     client.State.TestEquals( MessageBrokerClientState.Disposed ),
@@ -297,22 +297,22 @@ public partial class MessageBrokerClientTests
                         .Exact<MessageBrokerClientResponseTimeoutException>(
                             exc => Assertion.All(
                                 exc.Client.TestRefEquals( client ),
-                                exc.RequestEndpoint.TestEquals( MessageBrokerServerEndpoint.SubscribeRequest ) ) ),
+                                exc.RequestEndpoint.TestEquals( MessageBrokerServerEndpoint.BindListenerRequest ) ) ),
                     logs.GetAll()
                         .TestContainsSequence(
                         [
-                            "['test'::1] [SendingMessage] [PacketLength: 17] SubscribeRequest",
-                            "['test'::1] [MessageSent] [PacketLength: 17] SubscribeRequest",
+                            "['test'::1] [SendingMessage] [PacketLength: 17] BindListenerRequest",
+                            "['test'::1] [MessageSent] [PacketLength: 17] BindListenerRequest",
                             """
                             ['test'::<ROOT>] [WaitingForMessage] Encountered an error:
-                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Message broker server failed to respond to 'test' client's SubscribeRequest request in the specified amount of time (1000 milliseconds).
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Message broker server failed to respond to 'test' client's BindListenerRequest in the specified amount of time (1000 milliseconds).
                             """
                         ] ) )
                 .Go();
         }
 
         [Fact]
-        public async Task SubscribeAsync_ShouldReturnError_WhenClientIsDisposedBeforeServerResponds()
+        public async Task BindAsync_ShouldReturnError_WhenClientIsDisposedBeforeServerResponds()
         {
             var endSource = new SafeTaskCompletionSource<Task>();
             using var server = new ServerMock();
@@ -328,13 +328,13 @@ public partial class MessageBrokerClientTests
                         e =>
                         {
                             if ( e.Type == MessageBrokerClientEventType.SendingMessage
-                                && e.GetServerEndpoint() == MessageBrokerServerEndpoint.PingRequest )
+                                && e.GetServerEndpoint() == MessageBrokerServerEndpoint.Ping )
                                 endSource.Complete( e.Client.DisposeAsync().AsTask() );
                         } ) );
 
             await server.EstablishHandshake( client, pingInterval: Duration.FromSeconds( 0.2 ) );
 
-            var result = await client.Listeners.SubscribeAsync( "foo", (_, _) => ValueTask.CompletedTask );
+            var result = await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             await endSource.Task.Unwrap();
 
             Assertion.All(
@@ -344,7 +344,7 @@ public partial class MessageBrokerClientTests
         }
 
         [Fact]
-        public async Task SubscribeAsync_ShouldReturnErrorAndDisposeClient_WhenServerRespondsWithSubscribedResponseWithInvalidValues()
+        public async Task BindAsync_ShouldReturnErrorAndDisposeClient_WhenServerRespondsWithListenerBoundResponseWithInvalidValues()
         {
             var logs = new EventLogger();
             using var server = new ServerMock();
@@ -360,7 +360,7 @@ public partial class MessageBrokerClientTests
 
             await server.EstablishHandshake( client );
 
-            var subscribeRequest = new Protocol.SubscribeRequest(
+            var bindRequest = new Protocol.BindListenerRequest(
                 "foo",
                 createChannelIfNotExists: true,
                 queueName: null,
@@ -369,11 +369,11 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( subscribeRequest );
-                    s.SendSubscribedResponse( true, true, channelId: 0, queueId: -1 );
+                    s.Read( bindRequest );
+                    s.SendListenerBoundResponse( true, true, channelId: 0, queueId: -1 );
                 } );
 
-            var result = await client.Listeners.SubscribeAsync( "foo", (_, _) => ValueTask.CompletedTask );
+            var result = await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             await serverTask;
 
             Assertion.All(
@@ -383,15 +383,15 @@ public partial class MessageBrokerClientTests
                         .Exact<MessageBrokerClientProtocolException>(
                             exc => Assertion.All(
                                 exc.Client.TestRefEquals( client ),
-                                exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.SubscribedResponse ) ) ),
+                                exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.ListenerBoundResponse ) ) ),
                     logs.GetAll()
                         .TestContainsSequence(
                         [
-                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 14] SubscribedResponse",
-                            "['test'::1] [MessageReceived] [PacketLength: 14] Begin handling SubscribedResponse",
+                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 14] ListenerBoundResponse",
+                            "['test'::1] [MessageReceived] [PacketLength: 14] Begin handling ListenerBoundResponse",
                             """
                             ['test'::1] [MessageRejected] [PacketLength: 14] Encountered an error:
-                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid SubscribedResponse from the server. Encountered 2 error(s):
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid ListenerBoundResponse from the server. Encountered 2 error(s):
                             1. Expected channel ID to be greater than 0 but found 0.
                             2. Expected queue ID to be greater than 0 but found -1.
                             """
@@ -400,7 +400,7 @@ public partial class MessageBrokerClientTests
         }
 
         [Fact]
-        public async Task SubscribeAsync_ShouldReturnErrorAndDisposeClient_WhenServerRespondsWithSubscribedResponseWithInvalidPayload()
+        public async Task BindAsync_ShouldReturnErrorAndDisposeClient_WhenServerRespondsWithListenerBoundResponseWithInvalidPayload()
         {
             var logs = new EventLogger();
             using var server = new ServerMock();
@@ -416,7 +416,7 @@ public partial class MessageBrokerClientTests
 
             await server.EstablishHandshake( client );
 
-            var subscribeRequest = new Protocol.SubscribeRequest(
+            var bindRequest = new Protocol.BindListenerRequest(
                 "foo",
                 createChannelIfNotExists: true,
                 queueName: null,
@@ -425,11 +425,11 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( subscribeRequest );
-                    s.SendSubscribedResponse( true, true, 1, 1, payload: 8 );
+                    s.Read( bindRequest );
+                    s.SendListenerBoundResponse( true, true, 1, 1, payload: 8 );
                 } );
 
-            var result = await client.Listeners.SubscribeAsync( "foo", (_, _) => ValueTask.CompletedTask );
+            var result = await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             await serverTask;
 
             Assertion.All(
@@ -439,15 +439,15 @@ public partial class MessageBrokerClientTests
                         .Exact<MessageBrokerClientProtocolException>(
                             exc => Assertion.All(
                                 exc.Client.TestRefEquals( client ),
-                                exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.SubscribedResponse ) ) ),
+                                exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.ListenerBoundResponse ) ) ),
                     logs.GetAll()
                         .TestContainsSequence(
                         [
-                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 13] SubscribedResponse",
-                            "['test'::1] [MessageReceived] [PacketLength: 13] Begin handling SubscribedResponse",
+                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 13] ListenerBoundResponse",
+                            "['test'::1] [MessageReceived] [PacketLength: 13] Begin handling ListenerBoundResponse",
                             """
                             ['test'::1] [MessageRejected] [PacketLength: 13] Encountered an error:
-                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid SubscribedResponse from the server. Encountered 1 error(s):
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid ListenerBoundResponse from the server. Encountered 1 error(s):
                             1. Expected header payload to be 9 but found 8.
                             """
                         ] ) )
@@ -455,7 +455,7 @@ public partial class MessageBrokerClientTests
         }
 
         [Fact]
-        public async Task SubscribeAsync_ShouldReturnError_WhenServerRespondsWithSubscribeFailureResponse()
+        public async Task BindAsync_ShouldReturnError_WhenServerRespondsWithBindListenerFailureResponse()
         {
             var logs = new EventLogger();
             using var server = new ServerMock();
@@ -471,7 +471,7 @@ public partial class MessageBrokerClientTests
 
             await server.EstablishHandshake( client );
 
-            var subscribeRequest = new Protocol.SubscribeRequest(
+            var bindRequest = new Protocol.BindListenerRequest(
                 "foo",
                 createChannelIfNotExists: true,
                 queueName: null,
@@ -480,11 +480,11 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( subscribeRequest );
-                    s.SendSubscribeFailureResponse( true, true, true );
+                    s.Read( bindRequest );
+                    s.SendBindListenerFailureResponse( true, true, true );
                 } );
 
-            var result = await client.Listeners.SubscribeAsync( "foo", (_, _) => ValueTask.CompletedTask );
+            var result = await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             await serverTask;
 
             Assertion.All(
@@ -494,26 +494,25 @@ public partial class MessageBrokerClientTests
                         .Exact<MessageBrokerClientRequestException>(
                             exc => Assertion.All(
                                 exc.Client.TestRefEquals( client ),
-                                exc.Endpoint.TestEquals( MessageBrokerServerEndpoint.SubscribeRequest ) ) ),
+                                exc.Endpoint.TestEquals( MessageBrokerServerEndpoint.BindListenerRequest ) ) ),
                     logs.GetAll()
                         .TestContainsSequence(
                         [
-                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 6] SubscribeFailureResponse",
-                            "['test'::1] [MessageReceived] [PacketLength: 6] Begin handling SubscribeFailureResponse",
+                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 6] BindListenerFailureResponse",
+                            "['test'::1] [MessageReceived] [PacketLength: 6] Begin handling BindListenerFailureResponse",
                             """
                             ['test'::1] [MessageReceived] [PacketLength: 6] Encountered an error:
-                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientRequestException: Message broker server rejected an invalid SubscribeRequest sent by client 'test'. Encountered 3 error(s):
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientRequestException: Message broker server rejected an invalid BindListenerRequest sent by client 'test'. Encountered 3 error(s):
                             1. Channel 'foo' does not exist.
-                            2. Client is already subscribed to channel 'foo'.
-                            3. Subscribing client to channel 'foo' has been cancelled by the server.
+                            2. Client is already bound as a listener to channel 'foo'.
+                            3. Binding client to channel 'foo' as a listener has been cancelled by the server.
                             """
                         ] ) )
                 .Go();
         }
 
         [Fact]
-        public async Task
-            SubscribeAsync_ShouldReturnErrorAndDisposeClient_WhenServerRespondsWithSubscribeFailureResponseWithInvalidPayload()
+        public async Task BindAsync_ShouldReturnErrorAndDisposeClient_WhenServerRespondsWithBindListenerFailureResponseWithInvalidPayload()
         {
             var logs = new EventLogger();
             using var server = new ServerMock();
@@ -529,7 +528,7 @@ public partial class MessageBrokerClientTests
 
             await server.EstablishHandshake( client );
 
-            var subscribeRequest = new Protocol.SubscribeRequest(
+            var bindRequest = new Protocol.BindListenerRequest(
                 "foo",
                 createChannelIfNotExists: true,
                 queueName: null,
@@ -538,11 +537,11 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( subscribeRequest );
-                    s.SendSubscribeFailureResponse( true, true, true, payload: 0 );
+                    s.Read( bindRequest );
+                    s.SendBindListenerFailureResponse( true, true, true, payload: 0 );
                 } );
 
-            var result = await client.Listeners.SubscribeAsync( "foo", (_, _) => ValueTask.CompletedTask );
+            var result = await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             await serverTask;
 
             Assertion.All(
@@ -552,15 +551,15 @@ public partial class MessageBrokerClientTests
                         .Exact<MessageBrokerClientProtocolException>(
                             exc => Assertion.All(
                                 exc.Client.TestRefEquals( client ),
-                                exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.SubscribeFailureResponse ) ) ),
+                                exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.BindListenerFailureResponse ) ) ),
                     logs.GetAll()
                         .TestContainsSequence(
                         [
-                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 5] SubscribeFailureResponse",
-                            "['test'::1] [MessageReceived] [PacketLength: 5] Begin handling SubscribeFailureResponse",
+                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 5] BindListenerFailureResponse",
+                            "['test'::1] [MessageReceived] [PacketLength: 5] Begin handling BindListenerFailureResponse",
                             """
                             ['test'::1] [MessageRejected] [PacketLength: 5] Encountered an error:
-                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid SubscribeFailureResponse from the server. Encountered 1 error(s):
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid BindListenerFailureResponse from the server. Encountered 1 error(s):
                             1. Expected header payload to be 1 but found 0.
                             """
                         ] ) )
@@ -568,7 +567,7 @@ public partial class MessageBrokerClientTests
         }
 
         [Fact]
-        public async Task SubscribeAsync_ShouldReturnErrorAndDisposeClient_WhenServerRespondsWithInvalidEndpoint()
+        public async Task BindAsync_ShouldReturnErrorAndDisposeClient_WhenServerRespondsWithInvalidEndpoint()
         {
             var logs = new EventLogger();
             using var server = new ServerMock();
@@ -584,7 +583,7 @@ public partial class MessageBrokerClientTests
 
             await server.EstablishHandshake( client );
 
-            var subscribeRequest = new Protocol.SubscribeRequest(
+            var bindRequest = new Protocol.BindListenerRequest(
                 "foo",
                 createChannelIfNotExists: true,
                 queueName: null,
@@ -593,11 +592,11 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( subscribeRequest );
+                    s.Read( bindRequest );
                     s.Send( [ 0, 0, 0, 0, 0 ] );
                 } );
 
-            var result = await client.Listeners.SubscribeAsync( "foo", (_, _) => ValueTask.CompletedTask );
+            var result = await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             await serverTask;
 
             Assertion.All(
@@ -626,7 +625,7 @@ public partial class MessageBrokerClientTests
         [InlineData( false, true )]
         [InlineData( true, false )]
         [InlineData( false, false )]
-        public async Task UnsubscribeAsync_ShouldUnsubscribeListenerCorrectly(bool channelRemoved, bool queueRemoved)
+        public async Task UnbindAsync_ShouldUnbindListenerCorrectly(bool channelRemoved, bool queueRemoved)
         {
             var logs = new EventLogger();
             using var server = new ServerMock();
@@ -643,7 +642,7 @@ public partial class MessageBrokerClientTests
             var channelId = 1;
             var channelName = "foo";
             await server.EstablishHandshake( client );
-            var subscribeRequest = new Protocol.SubscribeRequest(
+            var bindRequest = new Protocol.BindListenerRequest(
                 channelName,
                 createChannelIfNotExists: true,
                 queueName: null,
@@ -652,23 +651,23 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( subscribeRequest );
-                    s.SendSubscribedResponse( true, true, channelId, 2 );
-                    s.ReadUnsubscribeRequest();
-                    s.SendUnsubscribedResponse( channelRemoved, queueRemoved );
+                    s.Read( bindRequest );
+                    s.SendListenerBoundResponse( true, true, channelId, 2 );
+                    s.ReadUnbindListenerRequest();
+                    s.SendListenerUnboundResponse( channelRemoved, queueRemoved );
                 } );
 
-            var result = Result.Create( default( MessageBrokerUnsubscribeResult ) );
-            await client.Listeners.SubscribeAsync( channelName, (_, _) => ValueTask.CompletedTask );
+            var result = Result.Create( default( MessageBrokerUnbindListenerResult ) );
+            await client.Listeners.BindAsync( channelName, (_, _) => ValueTask.CompletedTask );
             var listener = client.Listeners.TryGetByChannelId( channelId );
             if ( listener is not null )
-                result = await listener.UnsubscribeAsync();
+                result = await listener.UnbindAsync();
 
             await serverTask;
 
             Assertion.All(
                     result.Exception.TestNull(),
-                    result.Value.NotSubscribed.TestFalse(),
+                    result.Value.NotBound.TestFalse(),
                     result.Value.ChannelRemoved.TestEquals( channelRemoved ),
                     result.Value.QueueRemoved.TestEquals( queueRemoved ),
                     result.Value.ToString()
@@ -686,17 +685,17 @@ public partial class MessageBrokerClientTests
                     logs.GetAll()
                         .TestContainsSequence(
                         [
-                            "['test'::2] [SendingMessage] [PacketLength: 9] UnsubscribeRequest (ChannelId = 1, ChannelName = 'foo')",
-                            "['test'::2] [MessageSent] [PacketLength: 9] UnsubscribeRequest",
-                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 6] UnsubscribedResponse",
-                            "['test'::2] [MessageReceived] [PacketLength: 6] Begin handling UnsubscribedResponse",
-                            "['test'::2] [MessageAccepted] [PacketLength: 6] UnsubscribedResponse"
+                            "['test'::2] [SendingMessage] [PacketLength: 9] UnbindListenerRequest (ChannelId = 1, ChannelName = 'foo')",
+                            "['test'::2] [MessageSent] [PacketLength: 9] UnbindListenerRequest",
+                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 6] ListenerUnboundResponse",
+                            "['test'::2] [MessageReceived] [PacketLength: 6] Begin handling ListenerUnboundResponse",
+                            "['test'::2] [MessageAccepted] [PacketLength: 6] ListenerUnboundResponse"
                         ] ) )
                 .Go();
         }
 
         [Fact]
-        public async Task UnsubscribeAsync_ShouldNotThrow_WhenListenerIsAlreadyLocallyDisposed()
+        public async Task UnbindAsync_ShouldNotThrow_WhenListenerIsAlreadyLocallyDisposed()
         {
             using var server = new ServerMock();
             var remoteEndPoint = server.Start();
@@ -711,7 +710,7 @@ public partial class MessageBrokerClientTests
             await server.EstablishHandshake( client );
 
             var channelName = "foo";
-            var subscribeRequest = new Protocol.SubscribeRequest(
+            var bindRequest = new Protocol.BindListenerRequest(
                 channelName,
                 createChannelIfNotExists: true,
                 queueName: null,
@@ -720,33 +719,33 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( subscribeRequest );
-                    s.SendSubscribedResponse( true, true, 1, 1 );
-                    s.ReadUnsubscribeRequest();
-                    s.SendUnsubscribedResponse( true, true );
+                    s.Read( bindRequest );
+                    s.SendListenerBoundResponse( true, true, 1, 1 );
+                    s.ReadUnbindListenerRequest();
+                    s.SendListenerUnboundResponse( true, true );
                 } );
 
-            var result = Result.Create( default( MessageBrokerUnsubscribeResult ) );
-            await client.Listeners.SubscribeAsync( channelName, (_, _) => ValueTask.CompletedTask );
+            var result = Result.Create( default( MessageBrokerUnbindListenerResult ) );
+            await client.Listeners.BindAsync( channelName, (_, _) => ValueTask.CompletedTask );
             var listener = client.Listeners.TryGetByChannelId( 1 );
             if ( listener is not null )
             {
-                await listener.UnsubscribeAsync();
-                result = await listener.UnsubscribeAsync();
+                await listener.UnbindAsync();
+                result = await listener.UnbindAsync();
             }
 
             await serverTask;
 
             Assertion.All(
                     result.Exception.TestNull(),
-                    result.Value.NotSubscribed.TestTrue(),
+                    result.Value.NotBound.TestTrue(),
                     result.Value.ChannelRemoved.TestFalse(),
-                    result.Value.ToString().TestEquals( "Not subscribed" ) )
+                    result.Value.ToString().TestEquals( "Not bound" ) )
                 .Go();
         }
 
         [Fact]
-        public async Task UnsubscribeAsync_ShouldThrowMessageBrokerClientDisposedException_WhenClientIsDisposed()
+        public async Task UnbindAsync_ShouldThrowMessageBrokerClientDisposedException_WhenClientIsDisposed()
         {
             var client = new MessageBrokerClient( new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
             var listener = new MessageBrokerListener( client, 1, "foo", 1, "foo", 1, (_, _) => ValueTask.CompletedTask );
@@ -755,7 +754,7 @@ public partial class MessageBrokerClientTests
             Exception? exception = null;
             try
             {
-                _ = await listener.UnsubscribeAsync();
+                _ = await listener.UnbindAsync();
             }
             catch ( Exception exc )
             {
@@ -766,7 +765,7 @@ public partial class MessageBrokerClientTests
         }
 
         [Fact]
-        public async Task UnsubscribeAsync_ShouldReturnErrorAndDisposeClient_WhenServerDoesNotRespondInTime()
+        public async Task UnbindAsync_ShouldReturnErrorAndDisposeClient_WhenServerDoesNotRespondInTime()
         {
             var logs = new EventLogger();
             using var server = new ServerMock();
@@ -784,18 +783,23 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true, queueName: null, prefetchHint: 1 );
+                    var request = new Protocol.BindListenerRequest(
+                        "foo",
+                        createChannelIfNotExists: true,
+                        queueName: null,
+                        prefetchHint: 1 );
+
                     s.Read( request );
-                    s.SendSubscribedResponse( true, true, 1, 1 );
+                    s.SendListenerBoundResponse( true, true, 1, 1 );
                 } );
 
-            await client.Listeners.SubscribeAsync( "foo", (_, _) => ValueTask.CompletedTask );
+            await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             await serverTask;
 
-            var result = Result.Create( default( MessageBrokerUnsubscribeResult ) );
+            var result = Result.Create( default( MessageBrokerUnbindListenerResult ) );
             var listener = client.Listeners.TryGetByChannelId( 1 );
             if ( listener is not null )
-                result = await listener.UnsubscribeAsync();
+                result = await listener.UnbindAsync();
 
             Assertion.All(
                     client.State.TestEquals( MessageBrokerClientState.Disposed ),
@@ -803,24 +807,24 @@ public partial class MessageBrokerClientTests
                         .Exact<MessageBrokerClientResponseTimeoutException>(
                             exc => Assertion.All(
                                 exc.Client.TestRefEquals( client ),
-                                exc.RequestEndpoint.TestEquals( MessageBrokerServerEndpoint.UnsubscribeRequest ) ) ),
+                                exc.RequestEndpoint.TestEquals( MessageBrokerServerEndpoint.UnbindListenerRequest ) ) ),
                     logs.GetAll()
                         .TestContainsSequence(
                         [
-                            "['test'::2] [SendingMessage] [PacketLength: 9] UnsubscribeRequest (ChannelId = 1, ChannelName = 'foo')",
-                            "['test'::2] [MessageSent] [PacketLength: 9] UnsubscribeRequest",
+                            "['test'::2] [SendingMessage] [PacketLength: 9] UnbindListenerRequest (ChannelId = 1, ChannelName = 'foo')",
+                            "['test'::2] [MessageSent] [PacketLength: 9] UnbindListenerRequest",
                             """
                             ['test'::<ROOT>] [WaitingForMessage] Encountered an error:
-                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Message broker server failed to respond to 'test' client's UnsubscribeRequest request in the specified amount of time (1000 milliseconds).
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Message broker server failed to respond to 'test' client's UnbindListenerRequest in the specified amount of time (1000 milliseconds).
                             """
                         ] ) )
                 .Go();
         }
 
         [Fact]
-        public async Task UnsubscribeAsync_ShouldReturnError_WhenClientIsDisposedBeforeServerResponds()
+        public async Task UnbindAsync_ShouldReturnError_WhenClientIsDisposedBeforeServerResponds()
         {
-            var listenerSubscribed = Ref.Create( false );
+            var listenerBound = Ref.Create( false );
             var endSource = new SafeTaskCompletionSource<Task>();
             using var server = new ServerMock();
             var remoteEndPoint = server.Start();
@@ -834,13 +838,13 @@ public partial class MessageBrokerClientTests
                     .SetEventHandler(
                         e =>
                         {
-                            bool subscribed;
-                            lock ( listenerSubscribed )
-                                subscribed = listenerSubscribed.Value;
+                            bool bound;
+                            lock ( listenerBound )
+                                bound = listenerBound.Value;
 
-                            if ( subscribed
+                            if ( bound
                                 && e.Type == MessageBrokerClientEventType.SendingMessage
-                                && e.GetServerEndpoint() == MessageBrokerServerEndpoint.PingRequest )
+                                && e.GetServerEndpoint() == MessageBrokerServerEndpoint.Ping )
                                 endSource.Complete( e.Client.DisposeAsync().AsTask() );
                         } ) );
 
@@ -848,20 +852,25 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true, queueName: null, prefetchHint: 1 );
+                    var request = new Protocol.BindListenerRequest(
+                        "foo",
+                        createChannelIfNotExists: true,
+                        queueName: null,
+                        prefetchHint: 1 );
+
                     s.Read( request );
-                    s.SendSubscribedResponse( true, true, 1, 1 );
+                    s.SendListenerBoundResponse( true, true, 1, 1 );
                 } );
 
-            await client.Listeners.SubscribeAsync( "foo", (_, _) => ValueTask.CompletedTask );
+            await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             await serverTask;
             var listener = client.Listeners.TryGetByChannelId( 1 );
-            lock ( listenerSubscribed )
-                listenerSubscribed.Value = true;
+            lock ( listenerBound )
+                listenerBound.Value = true;
 
-            var result = Result.Create( default( MessageBrokerUnsubscribeResult ) );
+            var result = Result.Create( default( MessageBrokerUnbindListenerResult ) );
             if ( listener is not null )
-                result = await listener.UnsubscribeAsync();
+                result = await listener.UnbindAsync();
 
             await endSource.Task.Unwrap();
 
@@ -869,7 +878,7 @@ public partial class MessageBrokerClientTests
         }
 
         [Fact]
-        public async Task UnsubscribeAsync_ShouldReturnErrorAndDisposeClient_WhenServerRespondsWithUnsubscribedResponseWithInvalidPayload()
+        public async Task UnbindAsync_ShouldReturnErrorAndDisposeClient_WhenServerRespondsWithListenerUnboundResponseWithInvalidPayload()
         {
             var logs = new EventLogger();
             using var server = new ServerMock();
@@ -887,19 +896,24 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true, queueName: null, prefetchHint: 1 );
+                    var request = new Protocol.BindListenerRequest(
+                        "foo",
+                        createChannelIfNotExists: true,
+                        queueName: null,
+                        prefetchHint: 1 );
+
                     s.Read( request );
-                    s.SendSubscribedResponse( true, true, 1, 1 );
-                    s.ReadUnsubscribeRequest();
-                    s.SendUnsubscribedResponse( true, true, payload: 0 );
+                    s.SendListenerBoundResponse( true, true, 1, 1 );
+                    s.ReadUnbindListenerRequest();
+                    s.SendListenerUnboundResponse( true, true, payload: 0 );
                 } );
 
-            await client.Listeners.SubscribeAsync( "foo", (_, _) => ValueTask.CompletedTask );
+            await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             var listener = client.Listeners.TryGetByChannelId( 1 );
 
-            var result = Result.Create( default( MessageBrokerUnsubscribeResult ) );
+            var result = Result.Create( default( MessageBrokerUnbindListenerResult ) );
             if ( listener is not null )
-                result = await listener.UnsubscribeAsync();
+                result = await listener.UnbindAsync();
 
             await serverTask;
 
@@ -909,15 +923,15 @@ public partial class MessageBrokerClientTests
                         .Exact<MessageBrokerClientProtocolException>(
                             exc => Assertion.All(
                                 exc.Client.TestRefEquals( client ),
-                                exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.UnsubscribedResponse ) ) ),
+                                exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.ListenerUnboundResponse ) ) ),
                     logs.GetAll()
                         .TestContainsSequence(
                         [
-                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 5] UnsubscribedResponse",
-                            "['test'::2] [MessageReceived] [PacketLength: 5] Begin handling UnsubscribedResponse",
+                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 5] ListenerUnboundResponse",
+                            "['test'::2] [MessageReceived] [PacketLength: 5] Begin handling ListenerUnboundResponse",
                             """
                             ['test'::2] [MessageRejected] [PacketLength: 5] Encountered an error:
-                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid UnsubscribedResponse from the server. Encountered 1 error(s):
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid ListenerUnboundResponse from the server. Encountered 1 error(s):
                             1. Expected header payload to be 1 but found 0.
                             """
                         ] ) )
@@ -925,7 +939,7 @@ public partial class MessageBrokerClientTests
         }
 
         [Fact]
-        public async Task UnsubscribeAsync_ShouldReturnError_WhenServerRespondsWithUnsubscribeFailureResponse()
+        public async Task UnbindAsync_ShouldReturnError_WhenServerRespondsWithUnbindListenerFailureResponse()
         {
             var logs = new EventLogger();
             using var server = new ServerMock();
@@ -943,19 +957,24 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true, queueName: null, prefetchHint: 1 );
+                    var request = new Protocol.BindListenerRequest(
+                        "foo",
+                        createChannelIfNotExists: true,
+                        queueName: null,
+                        prefetchHint: 1 );
+
                     s.Read( request );
-                    s.SendSubscribedResponse( true, true, 1, 1 );
-                    s.ReadUnsubscribeRequest();
-                    s.SendUnsubscribeFailureResponse( true );
+                    s.SendListenerBoundResponse( true, true, 1, 1 );
+                    s.ReadUnbindListenerRequest();
+                    s.SendUnbindListenerFailureResponse( true );
                 } );
 
-            await client.Listeners.SubscribeAsync( "foo", (_, _) => ValueTask.CompletedTask );
+            await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             var listener = client.Listeners.TryGetByChannelId( 1 );
 
-            var result = Result.Create( default( MessageBrokerUnsubscribeResult ) );
+            var result = Result.Create( default( MessageBrokerUnbindListenerResult ) );
             if ( listener is not null )
-                result = await listener.UnsubscribeAsync();
+                result = await listener.UnbindAsync();
 
             await serverTask;
 
@@ -965,16 +984,16 @@ public partial class MessageBrokerClientTests
                         .Exact<MessageBrokerClientRequestException>(
                             exc => Assertion.All(
                                 exc.Client.TestRefEquals( client ),
-                                exc.Endpoint.TestEquals( MessageBrokerServerEndpoint.UnsubscribeRequest ) ) ),
+                                exc.Endpoint.TestEquals( MessageBrokerServerEndpoint.UnbindListenerRequest ) ) ),
                     logs.GetAll()
                         .TestContainsSequence(
                         [
-                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 6] UnsubscribeFailureResponse",
-                            "['test'::2] [MessageReceived] [PacketLength: 6] Begin handling UnsubscribeFailureResponse",
+                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 6] UnbindListenerFailureResponse",
+                            "['test'::2] [MessageReceived] [PacketLength: 6] Begin handling UnbindListenerFailureResponse",
                             """
                             ['test'::2] [MessageReceived] [PacketLength: 6] Encountered an error:
-                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientRequestException: Message broker server rejected an invalid UnsubscribeRequest sent by client 'test'. Encountered 1 error(s):
-                            1. Client is not subscribed to channel [1] 'foo'.
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientRequestException: Message broker server rejected an invalid UnbindListenerRequest sent by client 'test'. Encountered 1 error(s):
+                            1. Client is not bound as a listener to channel [1] 'foo'.
                             """
                         ] ) )
                 .Go();
@@ -982,7 +1001,7 @@ public partial class MessageBrokerClientTests
 
         [Fact]
         public async Task
-            UnsubscribeAsync_ShouldReturnErrorAndDisposeClient_WhenServerRespondsWithUnsubscribeFailureResponseWithInvalidPayload()
+            UnbindAsync_ShouldReturnErrorAndDisposeClient_WhenServerRespondsWithUnbindListenerFailureResponseWithInvalidPayload()
         {
             var logs = new EventLogger();
             using var server = new ServerMock();
@@ -1000,19 +1019,24 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true, queueName: null, prefetchHint: 1 );
+                    var request = new Protocol.BindListenerRequest(
+                        "foo",
+                        createChannelIfNotExists: true,
+                        queueName: null,
+                        prefetchHint: 1 );
+
                     s.Read( request );
-                    s.SendSubscribedResponse( true, true, 1, 1 );
-                    s.ReadUnsubscribeRequest();
-                    s.SendUnsubscribeFailureResponse( true, payload: 0 );
+                    s.SendListenerBoundResponse( true, true, 1, 1 );
+                    s.ReadUnbindListenerRequest();
+                    s.SendUnbindListenerFailureResponse( true, payload: 0 );
                 } );
 
-            await client.Listeners.SubscribeAsync( "foo", (_, _) => ValueTask.CompletedTask );
+            await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             var listener = client.Listeners.TryGetByChannelId( 1 );
 
-            var result = Result.Create( default( MessageBrokerUnsubscribeResult ) );
+            var result = Result.Create( default( MessageBrokerUnbindListenerResult ) );
             if ( listener is not null )
-                result = await listener.UnsubscribeAsync();
+                result = await listener.UnbindAsync();
 
             await serverTask;
 
@@ -1022,15 +1046,15 @@ public partial class MessageBrokerClientTests
                         .Exact<MessageBrokerClientProtocolException>(
                             exc => Assertion.All(
                                 exc.Client.TestRefEquals( client ),
-                                exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.UnsubscribeFailureResponse ) ) ),
+                                exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.UnbindListenerFailureResponse ) ) ),
                     logs.GetAll()
                         .TestContainsSequence(
                         [
-                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 5] UnsubscribeFailureResponse",
-                            "['test'::2] [MessageReceived] [PacketLength: 5] Begin handling UnsubscribeFailureResponse",
+                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 5] UnbindListenerFailureResponse",
+                            "['test'::2] [MessageReceived] [PacketLength: 5] Begin handling UnbindListenerFailureResponse",
                             """
                             ['test'::2] [MessageRejected] [PacketLength: 5] Encountered an error:
-                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid UnsubscribeFailureResponse from the server. Encountered 1 error(s):
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid UnbindListenerFailureResponse from the server. Encountered 1 error(s):
                             1. Expected header payload to be 1 but found 0.
                             """
                         ] ) )
@@ -1038,7 +1062,7 @@ public partial class MessageBrokerClientTests
         }
 
         [Fact]
-        public async Task UnsubscribeAsync_ShouldReturnErrorAndDisposeClient_WhenServerRespondsWithInvalidEndpoint()
+        public async Task UnbindAsync_ShouldReturnErrorAndDisposeClient_WhenServerRespondsWithInvalidEndpoint()
         {
             var logs = new EventLogger();
             using var server = new ServerMock();
@@ -1056,19 +1080,24 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true, queueName: null, prefetchHint: 1 );
+                    var request = new Protocol.BindListenerRequest(
+                        "foo",
+                        createChannelIfNotExists: true,
+                        queueName: null,
+                        prefetchHint: 1 );
+
                     s.Read( request );
-                    s.SendSubscribedResponse( true, true, 1, 1 );
-                    s.ReadUnsubscribeRequest();
+                    s.SendListenerBoundResponse( true, true, 1, 1 );
+                    s.ReadUnbindListenerRequest();
                     s.Send( [ 0, 0, 0, 0, 0 ] );
                 } );
 
-            await client.Listeners.SubscribeAsync( "foo", (_, _) => ValueTask.CompletedTask );
+            await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             var listener = client.Listeners.TryGetByChannelId( 1 );
 
-            var result = Result.Create( default( MessageBrokerUnsubscribeResult ) );
+            var result = Result.Create( default( MessageBrokerUnbindListenerResult ) );
             if ( listener is not null )
-                result = await listener.UnsubscribeAsync();
+                result = await listener.UnbindAsync();
 
             await serverTask;
 
@@ -1115,13 +1144,18 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true, queueName: null, prefetchHint: 1 );
+                    var request = new Protocol.BindListenerRequest(
+                        "foo",
+                        createChannelIfNotExists: true,
+                        queueName: null,
+                        prefetchHint: 1 );
+
                     s.Read( request );
-                    s.SendSubscribedResponse( true, true, 1, 1 );
+                    s.SendListenerBoundResponse( true, true, 1, 1 );
                     s.SendMessageNotification( 1, 2, 1, 3, message, enqueuedAt, 4, 5 );
                 } );
 
-            await client.Listeners.SubscribeAsync(
+            await client.Listeners.BindAsync(
                 "foo",
                 (a, _) =>
                 {
@@ -1146,7 +1180,7 @@ public partial class MessageBrokerClientTests
                     caughtMessage.TestSequence( message ),
                     args.ToString()
                         .TestEquals(
-                            $"Listener = ([1] 'test' => [1] 'foo' listener (using [1] 'foo' queue) (Subscribed)), Id = 1, Retry = 4, Redelivery = 5, Length = 4, EnqueuedAt = {args.EnqueuedAt}, ReceivedAt = {args.ReceivedAt}, Sender = 2, Stream = 3" ),
+                            $"Listener = ([1] 'test' => [1] 'foo' listener (using [1] 'foo' queue) (Bound)), Id = 1, Retry = 4, Redelivery = 5, Length = 4, EnqueuedAt = {args.EnqueuedAt}, ReceivedAt = {args.ReceivedAt}, Sender = 2, Stream = 3" ),
                     logs.GetAll()
                         .TestContainsSequence(
                         [
@@ -1194,14 +1228,19 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true, queueName: null, prefetchHint: 1 );
+                    var request = new Protocol.BindListenerRequest(
+                        "foo",
+                        createChannelIfNotExists: true,
+                        queueName: null,
+                        prefetchHint: 1 );
+
                     s.Read( request );
-                    s.SendSubscribedResponse( true, true, 1, 1 );
+                    s.SendListenerBoundResponse( true, true, 1, 1 );
                     s.SendMessageNotification( 1, 2, 1, 1, message1 );
                     s.SendMessageNotification( 2, 3, 1, 2, message2 );
                 } );
 
-            await client.Listeners.SubscribeAsync(
+            await client.Listeners.BindAsync(
                 "foo",
                 async (a, ct) =>
                 {
@@ -1276,20 +1315,25 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true, queueName: null, prefetchHint: 1 );
+                    var request = new Protocol.BindListenerRequest(
+                        "foo",
+                        createChannelIfNotExists: true,
+                        queueName: null,
+                        prefetchHint: 1 );
+
                     s.Read( request );
-                    s.SendSubscribedResponse( true, true, 1, 1 );
+                    s.SendListenerBoundResponse( true, true, 1, 1 );
                     s.SendMessageNotification( 1, 2, 1, 1, [ ] );
                 } );
 
-            await client.Listeners.SubscribeAsync( "foo", (_, _) => throw exception );
+            await client.Listeners.BindAsync( "foo", (_, _) => throw exception );
             await serverTask;
             var listener = client.Listeners.TryGetByChannelId( 1 );
             await endSource.Task;
 
             Assertion.All(
                     client.State.TestEquals( MessageBrokerClientState.Running ),
-                    listener.TestNotNull( l => l.State.TestEquals( MessageBrokerListenerState.Subscribed ) ),
+                    listener.TestNotNull( l => l.State.TestEquals( MessageBrokerListenerState.Bound ) ),
                     logs.GetAll()
                         .TestAny(
                             (l, _) => l.TestStartsWith(
@@ -1326,13 +1370,18 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true, queueName: null, prefetchHint: 1 );
+                    var request = new Protocol.BindListenerRequest(
+                        "foo",
+                        createChannelIfNotExists: true,
+                        queueName: null,
+                        prefetchHint: 1 );
+
                     s.Read( request );
-                    s.SendSubscribedResponse( true, true, 1, 1 );
+                    s.SendListenerBoundResponse( true, true, 1, 1 );
                     s.SendMessageNotification( 1, 2, 1, 1, [ 1 ], payload: 35 );
                 } );
 
-            await client.Listeners.SubscribeAsync( "foo", (_, _) => ValueTask.CompletedTask );
+            await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             await serverTask;
             await endSource.Task;
 
@@ -1378,13 +1427,18 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true, queueName: null, prefetchHint: 1 );
+                    var request = new Protocol.BindListenerRequest(
+                        "foo",
+                        createChannelIfNotExists: true,
+                        queueName: null,
+                        prefetchHint: 1 );
+
                     s.Read( request );
-                    s.SendSubscribedResponse( true, true, 1, 1 );
+                    s.SendListenerBoundResponse( true, true, 1, 1 );
                     s.SendMessageNotification( 0, -2, 0, -3, [ 1 ], retryAttempt: -4, redeliveryAttempt: -5 );
                 } );
 
-            await client.Listeners.SubscribeAsync( "foo", (_, _) => ValueTask.CompletedTask );
+            await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             await serverTask;
             await endSource.Task;
 
@@ -1458,7 +1512,7 @@ public partial class MessageBrokerClientTests
         {
             var messageReceivedContinuation = new SafeTaskCompletionSource( completionCount: 3 );
             var callbackContinuation = new SafeTaskCompletionSource( completionCount: 3 );
-            var unsubscribedContinuation = new SafeTaskCompletionSource();
+            var unboundContinuation = new SafeTaskCompletionSource();
 
             var logs = new EventLogger();
             using var server = new ServerMock();
@@ -1489,10 +1543,10 @@ public partial class MessageBrokerClientTests
                                 if ( e.GetClientEndpoint() == MessageBrokerClientEndpoint.MessageNotification )
                                 {
                                     if ( callbackContinuation.Complete() )
-                                        unsubscribedContinuation.Task.Wait();
+                                        unboundContinuation.Task.Wait();
                                 }
-                                else if ( e.GetClientEndpoint() == MessageBrokerClientEndpoint.UnsubscribedResponse )
-                                    unsubscribedContinuation.Complete();
+                                else if ( e.GetClientEndpoint() == MessageBrokerClientEndpoint.ListenerUnboundResponse )
+                                    unboundContinuation.Complete();
                             }
                         } ) );
 
@@ -1500,28 +1554,33 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true, queueName: null, prefetchHint: 1 );
+                    var request = new Protocol.BindListenerRequest(
+                        "foo",
+                        createChannelIfNotExists: true,
+                        queueName: null,
+                        prefetchHint: 1 );
+
                     s.Read( request );
-                    s.SendSubscribedResponse( true, true, 1, 1 );
+                    s.SendListenerBoundResponse( true, true, 1, 1 );
                     s.SendMessageNotification( 1, 2, 1, 1, [ 1, 2 ] );
                     s.SendMessageNotification( 2, 2, 1, 1, [ 3, 4, 5 ] );
                     s.SendMessageNotification( 3, 2, 1, 1, [ 6, 7, 8, 9 ] );
                 } );
 
-            await client.Listeners.SubscribeAsync(
+            await client.Listeners.BindAsync(
                 "foo",
                 async (a, ct) =>
                 {
                     await callbackContinuation.Task;
-                    _ = a.Listener.UnsubscribeAsync().AsTask();
+                    _ = a.Listener.UnbindAsync().AsTask();
                 } );
 
             await serverTask;
             await server.GetTask(
                 s =>
                 {
-                    s.ReadUnsubscribeRequest();
-                    s.SendUnsubscribedResponse( true, true );
+                    s.ReadUnbindListenerRequest();
+                    s.SendListenerUnboundResponse( true, true );
                 } );
 
             Assertion.All(
@@ -1549,7 +1608,7 @@ public partial class MessageBrokerClientTests
         [Fact]
         public async Task Disposal_ShouldCancelCallbackCancellationToken()
         {
-            var unsubscribeContinuation = new SafeTaskCompletionSource<MessageBrokerListener>();
+            var unbindContinuation = new SafeTaskCompletionSource<MessageBrokerListener>();
             var cancellationSource = new SafeTaskCompletionSource();
             using var server = new ServerMock();
             var remoteEndPoint = server.Start();
@@ -1565,32 +1624,37 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true, queueName: null, prefetchHint: 1 );
+                    var request = new Protocol.BindListenerRequest(
+                        "foo",
+                        createChannelIfNotExists: true,
+                        queueName: null,
+                        prefetchHint: 1 );
+
                     s.Read( request );
-                    s.SendSubscribedResponse( true, true, 1, 1 );
+                    s.SendListenerBoundResponse( true, true, 1, 1 );
                     s.SendMessageNotification( 1, 2, 1, 1, [ 1, 2, 3, 4 ] );
                 } );
 
-            await client.Listeners.SubscribeAsync(
+            await client.Listeners.BindAsync(
                 "foo",
                 async (a, ct) =>
                 {
                     ct.UnsafeRegister( _ => cancellationSource.Complete(), null );
-                    unsubscribeContinuation.Complete( a.Listener );
+                    unbindContinuation.Complete( a.Listener );
                     await cancellationSource.Task;
                     ct.ThrowIfCancellationRequested();
                 } );
 
             await serverTask;
-            var listener = await unsubscribeContinuation.Task;
+            var listener = await unbindContinuation.Task;
             serverTask = server.GetTask(
                 s =>
                 {
-                    s.ReadUnsubscribeRequest();
-                    s.SendUnsubscribedResponse( true, true );
+                    s.ReadUnbindListenerRequest();
+                    s.SendListenerUnboundResponse( true, true );
                 } );
 
-            await listener.UnsubscribeAsync();
+            await listener.UnbindAsync();
             await serverTask;
             await cancellationSource.Task;
 
@@ -1601,7 +1665,7 @@ public partial class MessageBrokerClientTests
         public async Task Disposal_ShouldLogCallbackCancellationTokenRegistrationException()
         {
             var exception = new Exception( "foo" );
-            var unsubscribeContinuation = new SafeTaskCompletionSource<MessageBrokerListener>();
+            var unbindContinuation = new SafeTaskCompletionSource<MessageBrokerListener>();
             var logs = new EventLogger();
             using var server = new ServerMock();
             var remoteEndPoint = server.Start();
@@ -1618,31 +1682,36 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true, queueName: null, prefetchHint: 1 );
+                    var request = new Protocol.BindListenerRequest(
+                        "foo",
+                        createChannelIfNotExists: true,
+                        queueName: null,
+                        prefetchHint: 1 );
+
                     s.Read( request );
-                    s.SendSubscribedResponse( true, true, 1, 1 );
+                    s.SendListenerBoundResponse( true, true, 1, 1 );
                     s.SendMessageNotification( 1, 2, 1, 1, [ 1, 2, 3, 4 ] );
                 } );
 
-            await client.Listeners.SubscribeAsync(
+            await client.Listeners.BindAsync(
                 "foo",
                 (a, ct) =>
                 {
                     ct.UnsafeRegister( _ => throw exception, null );
-                    unsubscribeContinuation.Complete( a.Listener );
+                    unbindContinuation.Complete( a.Listener );
                     return ValueTask.CompletedTask;
                 } );
 
             await serverTask;
-            var listener = await unsubscribeContinuation.Task;
+            var listener = await unbindContinuation.Task;
             serverTask = server.GetTask(
                 s =>
                 {
-                    s.ReadUnsubscribeRequest();
-                    s.SendUnsubscribedResponse( true, true );
+                    s.ReadUnbindListenerRequest();
+                    s.SendListenerUnboundResponse( true, true );
                 } );
 
-            await listener.UnsubscribeAsync();
+            await listener.UnbindAsync();
             await serverTask;
 
             Assertion.All(
@@ -1662,7 +1731,7 @@ public partial class MessageBrokerClientTests
         [Fact]
         public async Task Disposal_ShouldLogInvocationTimeoutAndStopWaiting()
         {
-            var unsubscribeContinuation = new SafeTaskCompletionSource<MessageBrokerListener>();
+            var unbindContinuation = new SafeTaskCompletionSource<MessageBrokerListener>();
             var invocationContinuation = new SafeTaskCompletionSource();
             var logs = new EventLogger();
             using var server = new ServerMock();
@@ -1687,30 +1756,35 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.SubscribeRequest( "foo", createChannelIfNotExists: true, queueName: null, prefetchHint: 1 );
+                    var request = new Protocol.BindListenerRequest(
+                        "foo",
+                        createChannelIfNotExists: true,
+                        queueName: null,
+                        prefetchHint: 1 );
+
                     s.Read( request );
-                    s.SendSubscribedResponse( true, true, 1, 1 );
+                    s.SendListenerBoundResponse( true, true, 1, 1 );
                     s.SendMessageNotification( 1, 2, 1, 1, [ 1, 2, 3, 4 ] );
                 } );
 
-            await client.Listeners.SubscribeAsync(
+            await client.Listeners.BindAsync(
                 "foo",
                 async (a, _) =>
                 {
-                    unsubscribeContinuation.Complete( a.Listener );
+                    unbindContinuation.Complete( a.Listener );
                     await invocationContinuation.Task;
                 } );
 
             await serverTask;
-            var listener = await unsubscribeContinuation.Task;
+            var listener = await unbindContinuation.Task;
             serverTask = server.GetTask(
                 s =>
                 {
-                    s.ReadUnsubscribeRequest();
-                    s.SendUnsubscribedResponse( true, true );
+                    s.ReadUnbindListenerRequest();
+                    s.SendListenerUnboundResponse( true, true );
                 } );
 
-            await listener.UnsubscribeAsync();
+            await listener.UnbindAsync();
             await serverTask;
 
             Assertion.All(

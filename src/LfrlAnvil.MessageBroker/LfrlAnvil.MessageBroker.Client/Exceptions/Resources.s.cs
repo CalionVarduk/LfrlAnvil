@@ -138,16 +138,16 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string AlreadyBound(string channelName)
+    internal static string PublisherAlreadyBound(string channelName)
     {
-        return $"Client is already bound to channel '{channelName}'.";
+        return $"Client is already bound as a publisher to channel '{channelName}'.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string BindCancelled(string channelName)
+    internal static string BindPublisherCancelled(string channelName)
     {
-        return $"Binding client to channel '{channelName}' has been cancelled by the server.";
+        return $"Binding client to channel '{channelName}' as a publisher has been cancelled by the server.";
     }
 
     [Pure]
@@ -159,30 +159,30 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string AlreadySubscribed(string channelName)
+    internal static string ListenerAlreadyBound(string channelName)
     {
-        return $"Client is already subscribed to channel '{channelName}'.";
+        return $"Client is already bound as a listener to channel '{channelName}'.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string SubscribeCancelled(string channelName)
+    internal static string BindListenerCancelled(string channelName)
     {
-        return $"Subscribing client to channel '{channelName}' has been cancelled by the server.";
+        return $"Binding client to channel '{channelName}' as a listener has been cancelled by the server.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string NotBound(int channelId, string channelName)
+    internal static string PublisherNotBound(int channelId, string channelName)
     {
-        return $"Client is not bound to channel [{channelId}] '{channelName}'.";
+        return $"Client is not bound as a publisher to channel [{channelId}] '{channelName}'.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string NotSubscribed(int channelId, string channelName)
+    internal static string ListenerNotBound(int channelId, string channelName)
     {
-        return $"Client is not subscribed to channel [{channelId}] '{channelName}'.";
+        return $"Client is not bound as a listener to channel [{channelId}] '{channelName}'.";
     }
 
     [Pure]
@@ -211,7 +211,7 @@ internal static class Resources
     internal static string ResponseTimeout(string clientName, Duration timeout, MessageBrokerServerEndpoint requestEndpoint)
     {
         return
-            $"Message broker server failed to respond to '{clientName}' client's {requestEndpoint} request in the specified amount of time ({timeout.FullMilliseconds} milliseconds).";
+            $"Message broker server failed to respond to '{clientName}' client's {requestEndpoint} in the specified amount of time ({timeout.FullMilliseconds} milliseconds).";
     }
 
     [Pure]

@@ -143,10 +143,10 @@ public sealed class MessageBrokerSendContext : IBufferWriter<byte>, IDisposable
         Assume.Equals( _written, 0 );
         Assume.IsNull( _publisher );
 
-        var capacity = Defaults.Memory.GetInitialBufferCapacity( checked( minCapacity.Bytes + Protocol.MessageRequestHeader.Length ) );
+        var capacity = Defaults.Memory.GetInitialBufferCapacity( checked( minCapacity.Bytes + Protocol.PushMessageHeader.Length ) );
         _token = _pool.Rent( capacity, out _buffer ).EnableClearing( clearOnDispose );
         _publisher = publisher;
-        _written = Protocol.MessageRequestHeader.Length;
+        _written = Protocol.PushMessageHeader.Length;
         _disposed.WriteFalse();
     }
 

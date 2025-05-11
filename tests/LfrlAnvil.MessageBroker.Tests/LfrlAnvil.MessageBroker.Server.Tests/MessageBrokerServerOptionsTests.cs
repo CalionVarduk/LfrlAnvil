@@ -26,8 +26,8 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 sut.ChannelEventHandlerFactory.TestNull(),
                 sut.StreamEventHandlerFactory.TestNull(),
                 sut.QueueEventHandlerFactory.TestNull(),
-                sut.ChannelBindingEventHandlerFactory.TestNull(),
-                sut.SubscriptionEventHandlerFactory.TestNull(),
+                sut.PublisherEventHandlerFactory.TestNull(),
+                sut.ListenerEventHandlerFactory.TestNull(),
                 sut.StreamDecorator.TestNull() )
             .Go();
     }
@@ -53,8 +53,8 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
-                result.ChannelBindingEventHandlerFactory.TestEquals( sut.ChannelBindingEventHandlerFactory ),
-                result.SubscriptionEventHandlerFactory.TestEquals( sut.SubscriptionEventHandlerFactory ),
+                result.PublisherEventHandlerFactory.TestEquals( sut.PublisherEventHandlerFactory ),
+                result.ListenerEventHandlerFactory.TestEquals( sut.ListenerEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -80,8 +80,8 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
-                result.ChannelBindingEventHandlerFactory.TestEquals( sut.ChannelBindingEventHandlerFactory ),
-                result.SubscriptionEventHandlerFactory.TestEquals( sut.SubscriptionEventHandlerFactory ),
+                result.PublisherEventHandlerFactory.TestEquals( sut.PublisherEventHandlerFactory ),
+                result.ListenerEventHandlerFactory.TestEquals( sut.ListenerEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -107,8 +107,8 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
-                result.ChannelBindingEventHandlerFactory.TestEquals( sut.ChannelBindingEventHandlerFactory ),
-                result.SubscriptionEventHandlerFactory.TestEquals( sut.SubscriptionEventHandlerFactory ),
+                result.PublisherEventHandlerFactory.TestEquals( sut.PublisherEventHandlerFactory ),
+                result.ListenerEventHandlerFactory.TestEquals( sut.ListenerEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -134,8 +134,8 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
-                result.ChannelBindingEventHandlerFactory.TestEquals( sut.ChannelBindingEventHandlerFactory ),
-                result.SubscriptionEventHandlerFactory.TestEquals( sut.SubscriptionEventHandlerFactory ),
+                result.PublisherEventHandlerFactory.TestEquals( sut.PublisherEventHandlerFactory ),
+                result.ListenerEventHandlerFactory.TestEquals( sut.ListenerEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -161,8 +161,8 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
-                result.ChannelBindingEventHandlerFactory.TestEquals( sut.ChannelBindingEventHandlerFactory ),
-                result.SubscriptionEventHandlerFactory.TestEquals( sut.SubscriptionEventHandlerFactory ),
+                result.PublisherEventHandlerFactory.TestEquals( sut.PublisherEventHandlerFactory ),
+                result.ListenerEventHandlerFactory.TestEquals( sut.ListenerEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -188,8 +188,8 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
-                result.ChannelBindingEventHandlerFactory.TestEquals( sut.ChannelBindingEventHandlerFactory ),
-                result.SubscriptionEventHandlerFactory.TestEquals( sut.SubscriptionEventHandlerFactory ),
+                result.PublisherEventHandlerFactory.TestEquals( sut.PublisherEventHandlerFactory ),
+                result.ListenerEventHandlerFactory.TestEquals( sut.ListenerEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -215,8 +215,8 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
-                result.ChannelBindingEventHandlerFactory.TestEquals( sut.ChannelBindingEventHandlerFactory ),
-                result.SubscriptionEventHandlerFactory.TestEquals( sut.SubscriptionEventHandlerFactory ),
+                result.PublisherEventHandlerFactory.TestEquals( sut.PublisherEventHandlerFactory ),
+                result.ListenerEventHandlerFactory.TestEquals( sut.ListenerEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -242,8 +242,8 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
-                result.ChannelBindingEventHandlerFactory.TestEquals( sut.ChannelBindingEventHandlerFactory ),
-                result.SubscriptionEventHandlerFactory.TestEquals( sut.SubscriptionEventHandlerFactory ),
+                result.PublisherEventHandlerFactory.TestEquals( sut.PublisherEventHandlerFactory ),
+                result.ListenerEventHandlerFactory.TestEquals( sut.ListenerEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -269,8 +269,8 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
-                result.ChannelBindingEventHandlerFactory.TestEquals( sut.ChannelBindingEventHandlerFactory ),
-                result.SubscriptionEventHandlerFactory.TestEquals( sut.SubscriptionEventHandlerFactory ),
+                result.PublisherEventHandlerFactory.TestEquals( sut.PublisherEventHandlerFactory ),
+                result.ListenerEventHandlerFactory.TestEquals( sut.ListenerEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -296,8 +296,8 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.ChannelEventHandlerFactory.TestEquals( value ),
                 result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
-                result.ChannelBindingEventHandlerFactory.TestEquals( sut.ChannelBindingEventHandlerFactory ),
-                result.SubscriptionEventHandlerFactory.TestEquals( sut.SubscriptionEventHandlerFactory ),
+                result.PublisherEventHandlerFactory.TestEquals( sut.PublisherEventHandlerFactory ),
+                result.ListenerEventHandlerFactory.TestEquals( sut.ListenerEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -323,8 +323,8 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamEventHandlerFactory.TestEquals( value ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
-                result.ChannelBindingEventHandlerFactory.TestEquals( sut.ChannelBindingEventHandlerFactory ),
-                result.SubscriptionEventHandlerFactory.TestEquals( sut.SubscriptionEventHandlerFactory ),
+                result.PublisherEventHandlerFactory.TestEquals( sut.PublisherEventHandlerFactory ),
+                result.ListenerEventHandlerFactory.TestEquals( sut.ListenerEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -350,19 +350,19 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamEventHandlerFactory.TestEquals( result.StreamEventHandlerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( value ),
-                result.ChannelBindingEventHandlerFactory.TestEquals( sut.ChannelBindingEventHandlerFactory ),
-                result.SubscriptionEventHandlerFactory.TestEquals( sut.SubscriptionEventHandlerFactory ),
+                result.PublisherEventHandlerFactory.TestEquals( sut.PublisherEventHandlerFactory ),
+                result.ListenerEventHandlerFactory.TestEquals( sut.ListenerEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
 
     [Fact]
-    public void SetChannelBindingEventHandlerFactory_ShouldChangeValue()
+    public void SetPublisherEventHandlerFactory_ShouldChangeValue()
     {
-        Func<MessageBrokerChannelBinding, MessageBrokerChannelBindingEventHandler?> value = _ => _ => { };
+        Func<MessageBrokerChannelPublisherBinding, MessageBrokerChannelPublisherBindingEventHandler?> value = _ => _ => { };
         var sut = MessageBrokerServerOptions.Default;
 
-        var result = sut.SetChannelBindingEventHandlerFactory( value );
+        var result = sut.SetPublisherEventHandlerFactory( value );
 
         Assertion.All(
                 result.Tcp.TestEquals( sut.Tcp ),
@@ -377,19 +377,19 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
-                result.ChannelBindingEventHandlerFactory.TestEquals( value ),
-                result.SubscriptionEventHandlerFactory.TestEquals( sut.SubscriptionEventHandlerFactory ),
+                result.PublisherEventHandlerFactory.TestEquals( value ),
+                result.ListenerEventHandlerFactory.TestEquals( sut.ListenerEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
 
     [Fact]
-    public void SetSubscriptionEventHandlerFactory_ShouldChangeValue()
+    public void SetListenerEventHandlerFactory_ShouldChangeValue()
     {
-        Func<MessageBrokerSubscription, MessageBrokerSubscriptionEventHandler?> value = _ => _ => { };
+        Func<MessageBrokerChannelListenerBinding, MessageBrokerChannelListenerBindingEventHandler?> value = _ => _ => { };
         var sut = MessageBrokerServerOptions.Default;
 
-        var result = sut.SetSubscriptionEventHandlerFactory( value );
+        var result = sut.SetListenerEventHandlerFactory( value );
 
         Assertion.All(
                 result.Tcp.TestEquals( sut.Tcp ),
@@ -404,8 +404,8 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
-                result.ChannelBindingEventHandlerFactory.TestEquals( sut.ChannelBindingEventHandlerFactory ),
-                result.SubscriptionEventHandlerFactory.TestEquals( value ),
+                result.PublisherEventHandlerFactory.TestEquals( sut.PublisherEventHandlerFactory ),
+                result.ListenerEventHandlerFactory.TestEquals( value ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -431,8 +431,8 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
-                result.ChannelBindingEventHandlerFactory.TestEquals( sut.ChannelBindingEventHandlerFactory ),
-                result.SubscriptionEventHandlerFactory.TestEquals( sut.SubscriptionEventHandlerFactory ),
+                result.PublisherEventHandlerFactory.TestEquals( sut.PublisherEventHandlerFactory ),
+                result.ListenerEventHandlerFactory.TestEquals( sut.ListenerEventHandlerFactory ),
                 result.StreamDecorator.TestRefEquals( value ) )
             .Go();
     }

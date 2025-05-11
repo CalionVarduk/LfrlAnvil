@@ -27,14 +27,14 @@ public readonly struct MessageBrokerStreamEvent
 {
     private MessageBrokerStreamEvent(
         MessageBrokerStream stream,
-        MessageBrokerChannelBinding? binding,
+        MessageBrokerChannelPublisherBinding? publisher,
         MessageBrokerStreamEventType type,
         ulong? messageId = null,
         ulong contextId = MessageBrokerRemoteClientEvent.RootContextId,
         Exception? exception = null)
     {
         Stream = stream;
-        Binding = binding;
+        Publisher = publisher;
         MessageId = messageId;
         ContextId = contextId;
         Type = type;
@@ -47,9 +47,9 @@ public readonly struct MessageBrokerStreamEvent
     public MessageBrokerStream Stream { get; }
 
     /// <summary>
-    /// <see cref="MessageBrokerChannelBinding"/> related to this event.
+    /// <see cref="MessageBrokerChannelPublisherBinding"/> related to this event.
     /// </summary>
-    public MessageBrokerChannelBinding? Binding { get; }
+    public MessageBrokerChannelPublisherBinding? Publisher { get; }
 
     /// <summary>
     /// Id of a message related to this event.
@@ -60,7 +60,7 @@ public readonly struct MessageBrokerStreamEvent
     /// Id of an internal context with which this event is associated.
     /// </summary>
     /// <remarks>
-    /// Can be used to find other correlating events emitted either by the <see cref="Stream"/> or the <see cref="Binding"/>.
+    /// Can be used to find other correlating events emitted either by the <see cref="Stream"/> or the <see cref="Publisher"/>.
     /// </remarks>
     public ulong ContextId { get; }
 
@@ -118,16 +118,16 @@ public readonly struct MessageBrokerStreamEvent
             {
                 case MessageBrokerStreamEventType.Created:
                 {
-                    if ( Binding is not null )
+                    if ( Publisher is not null )
                         builder
-                            .Append( " by binding [" )
-                            .Append( Binding.Client.Id.ToString( CultureInfo.InvariantCulture ) )
+                            .Append( " by publisher [" )
+                            .Append( Publisher.Client.Id.ToString( CultureInfo.InvariantCulture ) )
                             .Append( "::'" )
-                            .Append( Binding.Client.Name )
+                            .Append( Publisher.Client.Name )
                             .Append( "'] => [" )
-                            .Append( Binding.Channel.Id.ToString( CultureInfo.InvariantCulture ) )
+                            .Append( Publisher.Channel.Id.ToString( CultureInfo.InvariantCulture ) )
                             .Append( "::'" )
-                            .Append( Binding.Channel.Name )
+                            .Append( Publisher.Channel.Name )
                             .Append( "']" );
 
                     break;
@@ -138,16 +138,16 @@ public readonly struct MessageBrokerStreamEvent
                     if ( MessageId is not null )
                         builder.Append( " MessageId = " ).Append( MessageId.Value.ToString( CultureInfo.InvariantCulture ) );
 
-                    if ( Binding is not null )
+                    if ( Publisher is not null )
                         builder
-                            .Append( " by binding [" )
-                            .Append( Binding.Client.Id.ToString( CultureInfo.InvariantCulture ) )
+                            .Append( " by publisher [" )
+                            .Append( Publisher.Client.Id.ToString( CultureInfo.InvariantCulture ) )
                             .Append( "::'" )
-                            .Append( Binding.Client.Name )
+                            .Append( Publisher.Client.Name )
                             .Append( "'] => [" )
-                            .Append( Binding.Channel.Id.ToString( CultureInfo.InvariantCulture ) )
+                            .Append( Publisher.Channel.Id.ToString( CultureInfo.InvariantCulture ) )
                             .Append( "::'" )
-                            .Append( Binding.Channel.Name )
+                            .Append( Publisher.Channel.Name )
                             .Append( "']" );
 
                     break;
@@ -158,16 +158,16 @@ public readonly struct MessageBrokerStreamEvent
                     if ( MessageId is not null )
                         builder.Append( " MessageId = " ).Append( MessageId.Value.ToString( CultureInfo.InvariantCulture ) );
 
-                    if ( Binding is not null )
+                    if ( Publisher is not null )
                         builder
-                            .Append( " by binding [" )
-                            .Append( Binding.Client.Id.ToString( CultureInfo.InvariantCulture ) )
+                            .Append( " by publisher [" )
+                            .Append( Publisher.Client.Id.ToString( CultureInfo.InvariantCulture ) )
                             .Append( "::'" )
-                            .Append( Binding.Client.Name )
+                            .Append( Publisher.Client.Name )
                             .Append( "'] => [" )
-                            .Append( Binding.Channel.Id.ToString( CultureInfo.InvariantCulture ) )
+                            .Append( Publisher.Channel.Id.ToString( CultureInfo.InvariantCulture ) )
                             .Append( "::'" )
-                            .Append( Binding.Channel.Name )
+                            .Append( Publisher.Channel.Name )
                             .Append( "']" );
 
                     break;
@@ -189,31 +189,31 @@ public readonly struct MessageBrokerStreamEvent
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerStreamEvent Created(
         MessageBrokerStream stream,
-        MessageBrokerChannelBinding binding,
+        MessageBrokerChannelPublisherBinding publisher,
         ulong contextId = MessageBrokerRemoteClientEvent.RootContextId)
     {
-        return new MessageBrokerStreamEvent( stream, binding, MessageBrokerStreamEventType.Created, contextId: contextId );
+        return new MessageBrokerStreamEvent( stream, publisher, MessageBrokerStreamEventType.Created, contextId: contextId );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerStreamEvent MessageEnqueued(
         MessageBrokerStream stream,
-        MessageBrokerChannelBinding binding,
+        MessageBrokerChannelPublisherBinding publisher,
         ulong messageId,
         ulong contextId)
     {
-        return new MessageBrokerStreamEvent( stream, binding, MessageBrokerStreamEventType.MessageEnqueued, messageId, contextId );
+        return new MessageBrokerStreamEvent( stream, publisher, MessageBrokerStreamEventType.MessageEnqueued, messageId, contextId );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerStreamEvent MessageDequeued(
         MessageBrokerStream stream,
-        MessageBrokerChannelBinding binding,
+        MessageBrokerChannelPublisherBinding publisher,
         ulong messageId)
     {
-        return new MessageBrokerStreamEvent( stream, binding, MessageBrokerStreamEventType.MessageDequeued, messageId );
+        return new MessageBrokerStreamEvent( stream, publisher, MessageBrokerStreamEventType.MessageDequeued, messageId );
     }
 
     [Pure]

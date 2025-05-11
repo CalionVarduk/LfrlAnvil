@@ -22,23 +22,23 @@ namespace LfrlAnvil.MessageBroker.Server.Internal;
 
 internal readonly struct QueueMessage
 {
-    internal QueueMessage(in StreamMessage message, MessageBrokerSubscription subscription)
+    internal QueueMessage(in StreamMessage message, MessageBrokerChannelListenerBinding listener)
     {
         Id = message.Id;
         Timestamp = message.Timestamp;
-        Binding = message.Binding;
-        Subscription = subscription;
+        Publisher = message.Publisher;
+        Listener = listener;
 
-        PoolToken = Subscription.Client.MemoryPool
+        PoolToken = Listener.Client.MemoryPool
             .Rent( Protocol.PacketHeader.Length + Protocol.MessageNotificationHeader.Payload + message.Data.Length, out var data )
             .EnableClearing( message.BufferClearEnabled );
 
         var header = new Protocol.MessageNotificationHeader(
             Id,
             Timestamp,
-            Binding.Client.Id,
-            Binding.Channel.Id,
-            Binding.Stream.Id,
+            Publisher.Client.Id,
+            Publisher.Channel.Id,
+            Publisher.Stream.Id,
             0,
             0,
             message.Data.Length );
@@ -53,8 +53,8 @@ internal readonly struct QueueMessage
     internal readonly Protocol.PacketHeader PacketHeader;
     internal readonly ulong Id;
     internal readonly Timestamp Timestamp;
-    internal readonly MessageBrokerChannelBinding Binding;
-    internal readonly MessageBrokerSubscription Subscription;
+    internal readonly MessageBrokerChannelPublisherBinding Publisher;
+    internal readonly MessageBrokerChannelListenerBinding Listener;
     internal readonly MemoryPoolToken<byte> PoolToken;
     internal readonly ReadOnlyMemory<byte> Packet;
 
@@ -62,12 +62,12 @@ internal readonly struct QueueMessage
     public override string ToString()
     {
         return
-            $"Id = {Id}, Timestamp = {Timestamp}, Length = {Packet.Length - Protocol.PacketHeader.Length - Protocol.MessageNotificationHeader.Payload}, Binding = ({Binding}), Subscription = ({Subscription})";
+            $"Id = {Id}, Timestamp = {Timestamp}, Length = {Packet.Length - Protocol.PacketHeader.Length - Protocol.MessageNotificationHeader.Payload}, Publisher = ({Publisher}), Listener = ({Listener})";
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void Return()
     {
-        PoolToken.Return( Subscription.Client );
+        PoolToken.Return( Listener.Client );
     }
 }

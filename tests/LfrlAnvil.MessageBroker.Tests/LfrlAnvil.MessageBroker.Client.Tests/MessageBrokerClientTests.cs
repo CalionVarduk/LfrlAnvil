@@ -1249,7 +1249,7 @@ public partial class MessageBrokerClientTests : TestsBase
                 s.SendHandshakeAccepted( 1, Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ) );
                 s.ReadConfirmHandshakeResponse();
                 Thread.Sleep( 50 );
-                s.SendPing( endiannessPayload: 0 );
+                s.SendPong( endiannessPayload: 0 );
             } );
 
         var result = await client.StartAsync();
@@ -1271,10 +1271,10 @@ public partial class MessageBrokerClientTests : TestsBase
                         "['test'::<ROOT>] [SendingMessage] [PacketLength: 5] ConfirmHandshakeResponse",
                         "['test'::<ROOT>] [MessageSent] [PacketLength: 5] ConfirmHandshakeResponse",
                         "['test'::<ROOT>] [WaitingForMessage]",
-                        "['test'::<ROOT>] [MessageReceived] [PacketLength: 5] PingResponse",
+                        "['test'::<ROOT>] [MessageReceived] [PacketLength: 5] Pong",
                         """
                         ['test'::<ROOT>] [MessageRejected] [PacketLength: 5] Encountered an error:
-                        LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid PingResponse from the server. Encountered 1 error(s):
+                        LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid Pong from the server. Encountered 1 error(s):
                         1. Received unexpected client endpoint.
                         """,
                         "['test'::<ROOT>] [Disposing]",

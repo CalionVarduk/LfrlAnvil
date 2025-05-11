@@ -17,55 +17,55 @@ using System.Diagnostics.Contracts;
 namespace LfrlAnvil.MessageBroker.Server;
 
 /// <summary>
-/// Represents a collection of <see cref="MessageBrokerChannelBinding"/> instances attached to a single stream,
+/// Represents a collection of <see cref="MessageBrokerChannelPublisherBinding"/> instances attached to a single stream,
 /// identified by (client-id, channel-id) tuples.
 /// </summary>
-public readonly struct MessageBrokerStreamBindingCollection
+public readonly struct MessageBrokerStreamPublisherCollection
 {
     private readonly MessageBrokerStream _stream;
 
-    internal MessageBrokerStreamBindingCollection(MessageBrokerStream stream)
+    internal MessageBrokerStreamPublisherCollection(MessageBrokerStream stream)
     {
         _stream = stream;
     }
 
     /// <summary>
-    /// Specifies the number of bindings.
+    /// Specifies the number of publishers.
     /// </summary>
     public int Count
     {
         get
         {
             using ( _stream.AcquireLock() )
-                return _stream.BindingsByClientChannelIdPair.Count;
+                return _stream.PublishersByClientChannelIdPair.Count;
         }
     }
 
     /// <summary>
-    /// Returns all bindings.
+    /// Returns all publishers.
     /// </summary>
-    /// <returns>All bindings.</returns>
+    /// <returns>All publishers.</returns>
     [Pure]
-    public ReadOnlyArray<MessageBrokerChannelBinding> GetAll()
+    public ReadOnlyArray<MessageBrokerChannelPublisherBinding> GetAll()
     {
         using ( _stream.AcquireLock() )
-            return _stream.BindingsByClientChannelIdPair.GetAll();
+            return _stream.PublishersByClientChannelIdPair.GetAll();
     }
 
     /// <summary>
-    /// Attempts to return a binding by related (client-id, channel-id) tuple.
+    /// Attempts to return a publisher by related (client-id, channel-id) tuple.
     /// </summary>
     /// <param name="clientId">Client's unique <see cref="MessageBrokerRemoteClient.Id"/>.</param>
     /// <param name="channelId">Channel's unique <see cref="MessageBrokerChannel.Id"/>.</param>
     /// <returns>
-    /// <see cref="MessageBrokerChannelBinding"/> instance associated with the stream and the provided
-    /// (<paramref name="clientId"/>, <paramref name="channelId"/>) tuple or <b>null</b>, when such a binding does not exist.
+    /// <see cref="MessageBrokerChannelPublisherBinding"/> instance associated with the stream and the provided
+    /// (<paramref name="clientId"/>, <paramref name="channelId"/>) tuple or <b>null</b>, when such a publisher does not exist.
     /// </returns>
     [Pure]
-    public MessageBrokerChannelBinding? TryGetByKey(int clientId, int channelId)
+    public MessageBrokerChannelPublisherBinding? TryGetByKey(int clientId, int channelId)
     {
         using ( _stream.AcquireLock() )
-            return _stream.BindingsByClientChannelIdPair.TryGet( new Pair<int, int>( clientId, channelId ), out var result )
+            return _stream.PublishersByClientChannelIdPair.TryGet( new Pair<int, int>( clientId, channelId ), out var result )
                 ? result
                 : null;
     }

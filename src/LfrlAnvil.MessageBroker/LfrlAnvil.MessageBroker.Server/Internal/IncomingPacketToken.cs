@@ -24,8 +24,7 @@ internal readonly struct IncomingPacketToken
     internal enum Result : byte
     {
         Disposed = 0,
-        TimedOut = 1,
-        Ok = 2
+        Ok = 1
     }
 
     internal IncomingPacketToken(Protocol.PacketHeader header, MemoryPoolToken<byte> poolToken, Memory<byte> data, Result type)
@@ -40,13 +39,6 @@ internal readonly struct IncomingPacketToken
     internal readonly MemoryPoolToken<byte> PoolToken;
     internal readonly Memory<byte> Data;
     internal readonly Result Type;
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static IncomingPacketToken TimedOut()
-    {
-        return new IncomingPacketToken( default, default, default, Result.TimedOut );
-    }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

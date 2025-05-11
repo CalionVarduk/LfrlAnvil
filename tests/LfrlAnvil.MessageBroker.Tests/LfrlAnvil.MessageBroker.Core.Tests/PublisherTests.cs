@@ -6,10 +6,10 @@ using LfrlAnvil.MessageBroker.Server;
 
 namespace LfrlAnvil.MessageBroker.Core.Tests;
 
-public class ChannelBindingTests : TestsBase
+public class PublisherTests : TestsBase
 {
     [Fact]
-    public async Task Server_ShouldCreateChannelAndStream_WhenClientBindsToNonExistingOne()
+    public async Task Server_ShouldCreateChannelAndStream_WhenClientBindsAsPublisherToNonExistingOne()
     {
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
@@ -31,7 +31,7 @@ public class ChannelBindingTests : TestsBase
         var remoteClient = server.Clients.TryGetById( 1 );
         var channel = server.Channels.TryGetById( 1 );
         var stream = server.Streams.TryGetById( 1 );
-        var binding = channel?.Bindings.TryGetByClientId( 1 );
+        var binding = channel?.Publishers.TryGetByClientId( 1 );
 
         Assertion.All(
                 client.Publishers.Count.TestEquals( 1 ),
@@ -51,24 +51,24 @@ public class ChannelBindingTests : TestsBase
                 remoteClient.TestNotNull(
                     c => Assertion.All(
                         "remoteClient",
-                        c.Bindings.Count.TestEquals( 1 ),
-                        c.Bindings.TryGetByChannelId( 1 ).TestRefEquals( binding ) ) ),
+                        c.Publishers.Count.TestEquals( 1 ),
+                        c.Publishers.TryGetByChannelId( 1 ).TestRefEquals( binding ) ) ),
                 channel.TestNotNull(
                     c => Assertion.All(
                         "channel",
                         c.Id.TestEquals( 1 ),
                         c.Name.TestEquals( "foo" ),
-                        c.Subscriptions.Count.TestEquals( 0 ),
-                        c.Bindings.Count.TestEquals( 1 ),
-                        c.Bindings.TryGetByClientId( 1 ).TestRefEquals( binding ),
+                        c.Listeners.Count.TestEquals( 0 ),
+                        c.Publishers.Count.TestEquals( 1 ),
+                        c.Publishers.TryGetByClientId( 1 ).TestRefEquals( binding ),
                         c.State.TestEquals( MessageBrokerChannelState.Running ) ) ),
                 stream.TestNotNull(
                     q => Assertion.All(
                         "stream",
                         q.Id.TestEquals( 1 ),
                         q.Name.TestEquals( "foo" ),
-                        q.Bindings.Count.TestEquals( 1 ),
-                        q.Bindings.TryGetByKey( 1, 1 ).TestRefEquals( binding ),
+                        q.Publishers.Count.TestEquals( 1 ),
+                        q.Publishers.TryGetByKey( 1, 1 ).TestRefEquals( binding ),
                         q.State.TestEquals( MessageBrokerStreamState.Running ) ) ),
                 binding.TestNotNull(
                     b => Assertion.All(
@@ -76,12 +76,12 @@ public class ChannelBindingTests : TestsBase
                         b.Channel.TestRefEquals( channel ),
                         b.Stream.TestRefEquals( stream ),
                         b.Client.TestRefEquals( remoteClient ),
-                        b.State.TestEquals( MessageBrokerChannelBindingState.Running ) ) ) )
+                        b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Running ) ) ) )
             .Go();
     }
 
     [Fact]
-    public async Task Server_ShouldNotCreateChannelAndStream_WhenClientBindsToExistingOne()
+    public async Task Server_ShouldNotCreateChannelAndStream_WhenClientBindsAsPublisherToExistingOne()
     {
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
@@ -115,8 +115,8 @@ public class ChannelBindingTests : TestsBase
         var remoteClient2 = server.Clients.TryGetById( 2 );
         var channel = server.Channels.TryGetById( 1 );
         var stream = server.Streams.TryGetById( 1 );
-        var binding1 = channel?.Bindings.TryGetByClientId( 1 );
-        var binding2 = channel?.Bindings.TryGetByClientId( 2 );
+        var binding1 = channel?.Publishers.TryGetByClientId( 1 );
+        var binding2 = channel?.Publishers.TryGetByClientId( 2 );
 
         Assertion.All(
                 client1.Publishers.Count.TestEquals( 1 ),
@@ -136,36 +136,36 @@ public class ChannelBindingTests : TestsBase
                 remoteClient1.TestNotNull(
                     c => Assertion.All(
                         "remoteClient1",
-                        c.Bindings.Count.TestEquals( 1 ),
-                        c.Bindings.TryGetByChannelId( 1 ).TestRefEquals( binding1 ) ) ),
+                        c.Publishers.Count.TestEquals( 1 ),
+                        c.Publishers.TryGetByChannelId( 1 ).TestRefEquals( binding1 ) ) ),
                 remoteClient2.TestNotNull(
                     c => Assertion.All(
                         "remoteClient2",
-                        c.Bindings.Count.TestEquals( 1 ),
-                        c.Bindings.TryGetByChannelId( 1 ).TestRefEquals( binding2 ) ) ),
+                        c.Publishers.Count.TestEquals( 1 ),
+                        c.Publishers.TryGetByChannelId( 1 ).TestRefEquals( binding2 ) ) ),
                 channel.TestNotNull(
                     c => Assertion.All(
                         "channel",
                         c.Id.TestEquals( 1 ),
                         c.Name.TestEquals( "foo" ),
-                        c.Bindings.Count.TestEquals( 2 ),
-                        c.Bindings.TryGetByClientId( 1 ).TestRefEquals( binding1 ),
-                        c.Bindings.TryGetByClientId( 2 ).TestRefEquals( binding2 ),
+                        c.Publishers.Count.TestEquals( 2 ),
+                        c.Publishers.TryGetByClientId( 1 ).TestRefEquals( binding1 ),
+                        c.Publishers.TryGetByClientId( 2 ).TestRefEquals( binding2 ),
                         c.State.TestEquals( MessageBrokerChannelState.Running ) ) ),
                 stream.TestNotNull(
                     q => Assertion.All(
                         "stream",
                         q.Id.TestEquals( 1 ),
                         q.Name.TestEquals( "foo" ),
-                        q.Bindings.Count.TestEquals( 2 ),
-                        q.Bindings.TryGetByKey( 1, 1 ).TestRefEquals( binding1 ),
-                        q.Bindings.TryGetByKey( 2, 1 ).TestRefEquals( binding2 ),
+                        q.Publishers.Count.TestEquals( 2 ),
+                        q.Publishers.TryGetByKey( 1, 1 ).TestRefEquals( binding1 ),
+                        q.Publishers.TryGetByKey( 2, 1 ).TestRefEquals( binding2 ),
                         q.State.TestEquals( MessageBrokerStreamState.Running ) ) ) )
             .Go();
     }
 
     [Fact]
-    public async Task Server_ShouldUnbindChannelAndStreamAndRemoveThem_WhenLastClientUnbinds()
+    public async Task Server_ShouldUnbindChannelAndStreamAndRemoveThem_WhenLastClientUnbindsAsPublisher()
     {
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
@@ -188,9 +188,9 @@ public class ChannelBindingTests : TestsBase
         var remoteClient = server.Clients.TryGetById( 1 );
         var channel = server.Channels.TryGetById( 1 );
         var stream = server.Streams.TryGetById( 1 );
-        var binding = channel?.Bindings.TryGetByClientId( 1 );
+        var binding = channel?.Publishers.TryGetByClientId( 1 );
 
-        var result = Result.Create( default( MessageBrokerUnbindResult ) );
+        var result = Result.Create( default( MessageBrokerUnbindPublisherResult ) );
         if ( publisher is not null )
             result = await publisher.UnbindAsync();
 
@@ -201,15 +201,15 @@ public class ChannelBindingTests : TestsBase
                 result.Value.NotBound.TestFalse(),
                 result.Value.ChannelRemoved.TestTrue(),
                 result.Value.StreamRemoved.TestTrue(),
-                remoteClient.TestNotNull( c => c.Bindings.Count.TestEquals( 0 ) ),
+                remoteClient.TestNotNull( c => c.Publishers.Count.TestEquals( 0 ) ),
                 channel.TestNotNull( c => c.State.TestEquals( MessageBrokerChannelState.Disposed ) ),
                 stream.TestNotNull( q => q.State.TestEquals( MessageBrokerStreamState.Disposed ) ),
-                binding.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelBindingState.Disposed ) ) )
+                binding.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Disposed ) ) )
             .Go();
     }
 
     [Fact]
-    public async Task Server_ShouldUnbindChannelAndStreamAndNotRemoveThem_WhenNonLastClientUnbinds()
+    public async Task Server_ShouldUnbindChannelAndStreamAndNotRemoveThem_WhenNonLastClientUnbindsAsPublisher()
     {
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
@@ -245,10 +245,10 @@ public class ChannelBindingTests : TestsBase
         var remoteClient2 = server.Clients.TryGetById( 2 );
         var channel = server.Channels.TryGetById( 1 );
         var stream = server.Streams.TryGetById( 1 );
-        var binding1 = channel?.Bindings.TryGetByClientId( 1 );
-        var binding2 = channel?.Bindings.TryGetByClientId( 2 );
+        var binding1 = channel?.Publishers.TryGetByClientId( 1 );
+        var binding2 = channel?.Publishers.TryGetByClientId( 2 );
 
-        var result = Result.Create( default( MessageBrokerUnbindResult ) );
+        var result = Result.Create( default( MessageBrokerUnbindPublisherResult ) );
         if ( publisher2 is not null )
             result = await publisher2.UnbindAsync();
 
@@ -264,28 +264,28 @@ public class ChannelBindingTests : TestsBase
                 remoteClient1.TestNotNull(
                     c => Assertion.All(
                         "remoteClient1",
-                        c.Bindings.Count.TestEquals( 1 ),
-                        c.Bindings.TryGetByChannelId( 1 ).TestRefEquals( binding1 ) ) ),
-                remoteClient2.TestNotNull( c => c.Bindings.Count.TestEquals( 0 ) ),
+                        c.Publishers.Count.TestEquals( 1 ),
+                        c.Publishers.TryGetByChannelId( 1 ).TestRefEquals( binding1 ) ) ),
+                remoteClient2.TestNotNull( c => c.Publishers.Count.TestEquals( 0 ) ),
                 channel.TestNotNull(
                     c => Assertion.All(
                         "channel",
                         c.State.TestEquals( MessageBrokerChannelState.Running ),
-                        c.Bindings.Count.TestEquals( 1 ),
-                        c.Bindings.TryGetByClientId( 1 ).TestRefEquals( binding1 ) ) ),
+                        c.Publishers.Count.TestEquals( 1 ),
+                        c.Publishers.TryGetByClientId( 1 ).TestRefEquals( binding1 ) ) ),
                 stream.TestNotNull(
                     q => Assertion.All(
                         "stream",
                         q.State.TestEquals( MessageBrokerStreamState.Running ),
-                        q.Bindings.Count.TestEquals( 1 ),
-                        q.Bindings.TryGetByKey( 1, 1 ).TestRefEquals( binding1 ) ) ),
-                binding1.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelBindingState.Running ) ),
-                binding2.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelBindingState.Disposed ) ) )
+                        q.Publishers.Count.TestEquals( 1 ),
+                        q.Publishers.TryGetByKey( 1, 1 ).TestRefEquals( binding1 ) ) ),
+                binding1.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Running ) ),
+                binding2.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Disposed ) ) )
             .Go();
     }
 
     [Fact]
-    public async Task Server_ShouldUnbindChannelAndNotRemoveIt_WhenLastClientUnbindsButThereAreActiveSubscriptions()
+    public async Task Server_ShouldUnbindChannelAndNotRemoveIt_WhenLastClientUnbindsAsPublishersButThereAreBoundListeners()
     {
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
@@ -304,15 +304,15 @@ public class ChannelBindingTests : TestsBase
         await client.StartAsync();
 
         await client.Publishers.BindAsync( "foo" );
-        await client.Listeners.SubscribeAsync( "foo", (_, _) => ValueTask.CompletedTask );
+        await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
         var publisher = client.Publishers.TryGetByChannelId( 1 );
         var remoteClient = server.Clients.TryGetById( 1 );
         var channel = server.Channels.TryGetById( 1 );
         var stream = server.Streams.TryGetById( 1 );
-        var binding = channel?.Bindings.TryGetByClientId( 1 );
-        var subscription = channel?.Subscriptions.TryGetByClientId( 1 );
+        var binding = channel?.Publishers.TryGetByClientId( 1 );
+        var listener = channel?.Listeners.TryGetByClientId( 1 );
 
-        var result = Result.Create( default( MessageBrokerUnbindResult ) );
+        var result = Result.Create( default( MessageBrokerUnbindPublisherResult ) );
         if ( publisher is not null )
             result = await publisher.UnbindAsync();
 
@@ -327,19 +327,19 @@ public class ChannelBindingTests : TestsBase
                 remoteClient.TestNotNull(
                     c => Assertion.All(
                         "remoteClient",
-                        c.Bindings.Count.TestEquals( 0 ),
-                        c.Subscriptions.Count.TestEquals( 1 ),
-                        c.Subscriptions.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( subscription ) ] ) ) ),
+                        c.Publishers.Count.TestEquals( 0 ),
+                        c.Listeners.Count.TestEquals( 1 ),
+                        c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( listener ) ] ) ) ),
                 channel.TestNotNull(
                     c => Assertion.All(
                         "channel",
                         c.State.TestEquals( MessageBrokerChannelState.Running ),
-                        c.Bindings.Count.TestEquals( 0 ),
-                        c.Subscriptions.Count.TestEquals( 1 ),
-                        c.Subscriptions.TryGetByClientId( 1 ).TestRefEquals( subscription ) ) ),
+                        c.Publishers.Count.TestEquals( 0 ),
+                        c.Listeners.Count.TestEquals( 1 ),
+                        c.Listeners.TryGetByClientId( 1 ).TestRefEquals( listener ) ) ),
                 stream.TestNotNull( q => q.State.TestEquals( MessageBrokerStreamState.Disposed ) ),
-                binding.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelBindingState.Disposed ) ),
-                subscription.TestNotNull( s => s.State.TestEquals( MessageBrokerSubscriptionState.Running ) ) )
+                binding.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Disposed ) ),
+                listener.TestNotNull( s => s.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ) ) )
             .Go();
     }
 }

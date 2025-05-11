@@ -95,7 +95,7 @@ internal struct PingScheduler
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static async ValueTask<TaskStopReason> RunCore(MessageBrokerClient client)
     {
-        var request = Protocol.PingRequest.Create();
+        var request = Protocol.Ping.Create();
         var buffer = new byte[Protocol.PacketHeader.Length].AsMemory();
 
         using ( client.AcquireLock() )
@@ -187,7 +187,7 @@ internal struct PingScheduler
                 client.MessageContextQueue.ResetPendingResponseSource( responseSource );
             }
 
-            if ( response.Header.GetClientEndpoint() != MessageBrokerClientEndpoint.PingResponse )
+            if ( response.Header.GetClientEndpoint() != MessageBrokerClientEndpoint.Pong )
             {
                 client.HandleUnexpectedEndpoint( response.Header, contextId );
                 break;
