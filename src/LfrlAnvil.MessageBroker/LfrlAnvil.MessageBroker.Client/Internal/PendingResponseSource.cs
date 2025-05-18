@@ -15,33 +15,23 @@
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
-using LfrlAnvil.MessageBroker.Client.Events;
 
 namespace LfrlAnvil.MessageBroker.Client.Internal;
 
 internal struct PendingResponseSource
 {
-    internal PendingResponseSource(
-        ManualResetValueTaskSource<IncomingPacketToken> source,
-        ulong contextId,
-        MessageBrokerServerEndpoint serverEndpoint)
+    internal PendingResponseSource(ManualResetValueTaskSource<IncomingPacketToken> source)
     {
         Source = source;
-        ContextId = contextId;
-        ServerEndpoint = serverEndpoint;
         Timeout = TimeoutEntry.MaxTimestamp;
     }
 
     internal readonly ManualResetValueTaskSource<IncomingPacketToken>? Source;
-    internal readonly ulong ContextId;
-    internal readonly MessageBrokerServerEndpoint ServerEndpoint;
     internal Timestamp Timeout;
 
     [Pure]
     public override string ToString()
     {
-        return Source is null
-            ? "<DISPOSED>"
-            : $"Status = {Source.Status}, ContextId = {ContextId}, Endpoint = {ServerEndpoint}, Timeout = {Timeout}";
+        return Source is null ? "<DISPOSED>" : $"Status = {Source.Status}, Timeout = {Timeout}";
     }
 }

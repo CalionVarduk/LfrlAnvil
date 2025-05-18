@@ -3,20 +3,31 @@ using System.Diagnostics.Contracts;
 using System.Net;
 using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.MessageBroker.Client;
+using LfrlAnvil.MessageBroker.Core.Tests.Helpers;
 using LfrlAnvil.MessageBroker.Server;
 
 namespace LfrlAnvil.MessageBroker.Core.Tests;
 
-public class MessageTests : TestsBase
+public class MessageTests : TestsBase, IClassFixture<SharedResourceFixture>
 {
+    private readonly ValueTaskDelaySource _sharedDelaySource;
+
+    public MessageTests(SharedResourceFixture fixture)
+    {
+        _sharedDelaySource = fixture.DelaySource;
+    }
+
     [Fact]
     public async Task Server_ShouldAcceptSentMessages_AndSendThemToAppropriateListeners()
     {
         var endSource = new SafeTaskCompletionSource( completionCount: 6 );
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
-            MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) ) );
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource ) );
 
         await server.StartAsync();
 
@@ -26,7 +37,8 @@ public class MessageTests : TestsBase
             MessageBrokerClientOptions.Default
                 .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
                 .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
-                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) ) );
+                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) )
+                .SetDelaySource( _sharedDelaySource ) );
 
         await using var client2 = new MessageBrokerClient(
             server.LocalEndPoint,
@@ -34,7 +46,8 @@ public class MessageTests : TestsBase
             MessageBrokerClientOptions.Default
                 .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
                 .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
-                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) ) );
+                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) )
+                .SetDelaySource( _sharedDelaySource ) );
 
         await client1.StartAsync();
         await client2.StartAsync();

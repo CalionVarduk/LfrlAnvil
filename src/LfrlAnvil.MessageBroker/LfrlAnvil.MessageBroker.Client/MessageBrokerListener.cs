@@ -150,15 +150,15 @@ public sealed class MessageBrokerListener
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ValueTask EndDisposingAsync()
+    internal ValueTask EndDisposingAsync(ulong traceId)
     {
-        return DisposeAsync( MessageBrokerListenerState.Disposing );
+        return DisposeAsync( MessageBrokerListenerState.Disposing, traceId );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ValueTask OnClientDisposedAsync()
+    internal ValueTask OnClientDisposedAsync(ulong traceId)
     {
-        return DisposeAsync( MessageBrokerListenerState.Bound );
+        return DisposeAsync( MessageBrokerListenerState.Bound, traceId );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -167,9 +167,11 @@ public sealed class MessageBrokerListener
         return ExclusiveLock.SpinWaitEnter( CancellationSource, spinWaitMultiplier: 4 );
     }
 
-    private async ValueTask DisposeAsync(MessageBrokerListenerState expectedState)
+    private async ValueTask DisposeAsync(MessageBrokerListenerState expectedState, ulong traceId)
     {
         Task? messageEmitterTask;
+        int discardedMessageCount;
+        Chain<Exception> exceptions;
         using ( AcquireLock() )
         {
             if ( _state != expectedState )
@@ -177,7 +179,20 @@ public sealed class MessageBrokerListener
 
             _state = MessageBrokerListenerState.Disposing;
             messageEmitterTask = MessageEmitter.DiscardUnderlyingTask();
-            MessageEmitter.Dispose( Client );
+            (discardedMessageCount, exceptions) = MessageEmitter.Dispose();
+        }
+
+        foreach ( var exc in exceptions )
+            MessageBrokerClientErrorEvent.Create( Client, traceId, exc ).Emit( Client.Logger.Error );
+
+        if ( discardedMessageCount > 0 )
+        {
+            var error = new MessageBrokerClientMessageException(
+                Client,
+                this,
+                Resources.MessagesDiscarded( ChannelId, ChannelName, discardedMessageCount ) );
+
+            MessageBrokerClientErrorEvent.Create( Client, traceId, error ).Emit( Client.Logger.Error );
         }
 
         try
@@ -186,7 +201,7 @@ public sealed class MessageBrokerListener
         }
         catch ( Exception exc )
         {
-            Client.Emit( MessageBrokerClientEvent.Unexpected( Client, exc ) );
+            MessageBrokerClientErrorEvent.Create( Client, traceId, exc ).Emit( Client.Logger.Error );
         }
 
         CancellationSource.TryDispose();
@@ -199,7 +214,7 @@ public sealed class MessageBrokerListener
             }
             catch ( Exception exc )
             {
-                Client.Emit( MessageBrokerClientEvent.Unexpected( Client, exc ) );
+                MessageBrokerClientErrorEvent.Create( Client, traceId, exc ).Emit( Client.Logger.Error );
             }
         }
 

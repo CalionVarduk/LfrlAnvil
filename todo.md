@@ -31,20 +31,7 @@ Sql:
 
 MessageBroker:
 
-- redo logging
-- dedicated IMessageBroker*Logger interfaces (?)
-- dedicated methods for each possible event (?)
-    - skip interface maybe, allow to define multiple callbacks
-    - however, there can't be too many of them...
-    - define some event groups, that could be handled by the same callback
-    - for example: network events, obj creation/removal events, message processing events
-    - it should be possible to link chain of events together via context-id, if necessary
-    - some events may have to be emitted under active locks
-        - misuse of handlers may lead to deadlocks - make sure to warn about it
-        - this mostly concerns obj removal (queue/channel) from within the handler on the server side
-        - with new events (like creating-publisher etc.) the order of events and some overlap/swapping may not matter that much
-        - since the actual order may be verified by checking timestamp-of-first-event-in-context
-        - so event emitting under active lock might be possible to be kept to bare minimum
+- publisher push message: add optional 'expectConfirmation' (true by default) that allows to skip server response
 - refactor packet read/write & payload error emitting? there's a lot of copy-pasta (wait for packet batching)
 - separate synchronous enqueue-write operation from asynchronous write-and-wait-for-response operation
     - consumption example: client.Enqueue(...).WaitForResponseAsync()
@@ -81,6 +68,13 @@ MessageBroker:
     - by copying two buffers into one
   - this is to combat message copying from stream to subscribers
     - since this may cause impractically large memory usage for large messages + lots of subscribers
+  - OVERRIDE: for now, track single message buffer on the stream-side and count references for it
+    - copy it on-demand (during request send) for each subscription
+    - subscriptions don't allocate their own separate copy when receiving msg from stream
+    - this makes it so that only one message instance is semi-permanently allocated
+    - while other buffer-copies are temporary and quite short-lived
+    - stream message ref counting will have to be done, sooner or later, so might as well do it now
+    - with that, it should be easier/less-finicky than the dedicated stream interface
 
 Reactive:
 

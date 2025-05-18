@@ -22,7 +22,7 @@ public class MessageBrokerClientOptionsTests : TestsBase
                 sut.ListenerDisposalTimeout.TestNull(),
                 sut.Timestamps.TestNull(),
                 sut.DelaySource.TestNull(),
-                sut.EventHandler.TestNull(),
+                sut.Logger.TestEquals( default ),
                 sut.StreamDecorator.TestNull() )
             .Go();
     }
@@ -44,7 +44,7 @@ public class MessageBrokerClientOptionsTests : TestsBase
                 result.ListenerDisposalTimeout.TestEquals( sut.ListenerDisposalTimeout ),
                 result.Timestamps.TestEquals( sut.Timestamps ),
                 result.DelaySource.TestEquals( sut.DelaySource ),
-                result.EventHandler.TestEquals( sut.EventHandler ),
+                result.Logger.TestEquals( sut.Logger ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -66,7 +66,7 @@ public class MessageBrokerClientOptionsTests : TestsBase
                 result.ListenerDisposalTimeout.TestEquals( sut.ListenerDisposalTimeout ),
                 result.Timestamps.TestEquals( sut.Timestamps ),
                 result.DelaySource.TestEquals( sut.DelaySource ),
-                result.EventHandler.TestEquals( sut.EventHandler ),
+                result.Logger.TestEquals( sut.Logger ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -88,7 +88,7 @@ public class MessageBrokerClientOptionsTests : TestsBase
                 result.ListenerDisposalTimeout.TestEquals( sut.ListenerDisposalTimeout ),
                 result.Timestamps.TestEquals( sut.Timestamps ),
                 result.DelaySource.TestEquals( sut.DelaySource ),
-                result.EventHandler.TestEquals( sut.EventHandler ),
+                result.Logger.TestEquals( sut.Logger ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -110,7 +110,7 @@ public class MessageBrokerClientOptionsTests : TestsBase
                 result.ListenerDisposalTimeout.TestEquals( sut.ListenerDisposalTimeout ),
                 result.Timestamps.TestEquals( sut.Timestamps ),
                 result.DelaySource.TestEquals( sut.DelaySource ),
-                result.EventHandler.TestEquals( sut.EventHandler ),
+                result.Logger.TestEquals( sut.Logger ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -132,7 +132,7 @@ public class MessageBrokerClientOptionsTests : TestsBase
                 result.ListenerDisposalTimeout.TestEquals( sut.ListenerDisposalTimeout ),
                 result.Timestamps.TestEquals( sut.Timestamps ),
                 result.DelaySource.TestEquals( sut.DelaySource ),
-                result.EventHandler.TestEquals( sut.EventHandler ),
+                result.Logger.TestEquals( sut.Logger ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -154,7 +154,7 @@ public class MessageBrokerClientOptionsTests : TestsBase
                 result.ListenerDisposalTimeout.TestEquals( value ),
                 result.Timestamps.TestEquals( sut.Timestamps ),
                 result.DelaySource.TestEquals( sut.DelaySource ),
-                result.EventHandler.TestEquals( sut.EventHandler ),
+                result.Logger.TestEquals( sut.Logger ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -176,7 +176,7 @@ public class MessageBrokerClientOptionsTests : TestsBase
                 result.ListenerDisposalTimeout.TestEquals( sut.ListenerDisposalTimeout ),
                 result.Timestamps.TestEquals( value ),
                 result.DelaySource.TestEquals( sut.DelaySource ),
-                result.EventHandler.TestRefEquals( sut.EventHandler ),
+                result.Logger.TestEquals( sut.Logger ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -198,18 +198,18 @@ public class MessageBrokerClientOptionsTests : TestsBase
                 result.ListenerDisposalTimeout.TestEquals( sut.ListenerDisposalTimeout ),
                 result.Timestamps.TestEquals( sut.Timestamps ),
                 result.DelaySource.TestEquals( value ),
-                result.EventHandler.TestRefEquals( sut.EventHandler ),
+                result.Logger.TestEquals( sut.Logger ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
 
     [Fact]
-    public void SetEventHandler_ShouldChangeValue()
+    public void SetLogger_ShouldChangeValue()
     {
-        MessageBrokerClientEventHandler value = _ => { };
+        var value = MessageBrokerClientLogger.Create( traceStart: _ => { } );
         var sut = MessageBrokerClientOptions.Default;
 
-        var result = sut.SetEventHandler( value );
+        var result = sut.SetLogger( value );
 
         Assertion.All(
                 result.Tcp.TestEquals( sut.Tcp ),
@@ -220,7 +220,7 @@ public class MessageBrokerClientOptionsTests : TestsBase
                 result.ListenerDisposalTimeout.TestEquals( sut.ListenerDisposalTimeout ),
                 result.Timestamps.TestEquals( sut.Timestamps ),
                 result.DelaySource.TestEquals( sut.DelaySource ),
-                result.EventHandler.TestRefEquals( value ),
+                result.Logger.TestEquals( value ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -242,7 +242,7 @@ public class MessageBrokerClientOptionsTests : TestsBase
                 result.ListenerDisposalTimeout.TestEquals( sut.ListenerDisposalTimeout ),
                 result.Timestamps.TestEquals( sut.Timestamps ),
                 result.DelaySource.TestEquals( sut.DelaySource ),
-                result.EventHandler.TestEquals( sut.EventHandler ),
+                result.Logger.TestEquals( sut.Logger ),
                 result.StreamDecorator.TestRefEquals( value ) )
             .Go();
     }

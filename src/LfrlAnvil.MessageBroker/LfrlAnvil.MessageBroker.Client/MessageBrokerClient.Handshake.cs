@@ -20,14 +20,17 @@ using System.Threading.Tasks;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Memory;
 using LfrlAnvil.MessageBroker.Client.Events;
+using LfrlAnvil.MessageBroker.Client.Exceptions;
 using LfrlAnvil.MessageBroker.Client.Internal;
 
 namespace LfrlAnvil.MessageBroker.Client;
 
 public sealed partial class MessageBrokerClient
 {
-    private async ValueTask<Result> EstablishHandshakeAsync(CancellationToken cancellationToken)
+    private async ValueTask<Result> EstablishHandshakeAsync(ulong traceId, CancellationToken cancellationToken)
     {
+        MessageBrokerClientHandshakingEvent.Create( this, traceId ).Emit( Logger.Handshaking );
+
         var poolToken = default( MemoryPoolToken<byte> );
         try
         {
@@ -44,31 +47,35 @@ public sealed partial class MessageBrokerClient
             }
             catch ( Exception exc )
             {
-                return EmitError( MessageBrokerClientEvent.Unexpected( this, exc ) );
+                return EmitError( exc, traceId );
             }
 
-            var result = await SendHandshakeRequestAsync( buffer, handshake ).ConfigureAwait( false );
+            var result = await SendHandshakeRequestAsync( buffer, handshake, traceId ).ConfigureAwait( false );
             if ( result.Exception is not null )
                 return result;
 
-            await DisposeAndThrowIfCancellationRequestedAsync( cancellationToken ).ConfigureAwait( false );
+            await DisposeAndThrowIfCancellationRequestedAsync( traceId, cancellationToken ).ConfigureAwait( false );
 
-            result = await HandleHandshakeResponseAsync( handshake.Header, buffer ).ConfigureAwait( false );
+            result = await HandleHandshakeResponseAsync( handshake.Header, buffer, traceId ).ConfigureAwait( false );
             if ( result.Exception is not null )
                 return result;
 
-            await DisposeAndThrowIfCancellationRequestedAsync( cancellationToken ).ConfigureAwait( false );
+            await DisposeAndThrowIfCancellationRequestedAsync( traceId, cancellationToken ).ConfigureAwait( false );
 
-            return await SendConfirmHandshakeResponseAsync( buffer ).ConfigureAwait( false );
+            result = await SendConfirmHandshakeResponseAsync( buffer, traceId ).ConfigureAwait( false );
+            if ( result.Exception is null )
+                MessageBrokerClientHandshakeEstablishedEvent.Create( this, traceId ).Emit( Logger.HandshakeEstablished );
+
+            return result;
         }
         finally
         {
-            poolToken.Return( this );
+            poolToken.Return( this, traceId );
         }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private ValueTask<Result> SendHandshakeRequestAsync(Memory<byte> buffer, Protocol.HandshakeRequest handshake)
+    private ValueTask<Result> SendHandshakeRequestAsync(Memory<byte> buffer, Protocol.HandshakeRequest handshake, ulong traceId)
     {
         Memory<byte> data;
         try
@@ -76,47 +83,42 @@ public sealed partial class MessageBrokerClient
             data = buffer.Slice( 0, handshake.Length );
             handshake.Serialize( data );
 
-            using ( AcquireLock() )
+            using ( AcquireActiveLock( traceId, out var exc ) )
             {
-                if ( ShouldCancel )
-                    return ValueTask.FromResult<Result>( DisposedException() );
+                if ( exc is not null )
+                    return ValueTask.FromResult<Result>( exc );
 
                 _state = MessageBrokerClientState.Handshaking;
             }
         }
         catch ( Exception exc )
         {
-            return ValueTask.FromResult<Result>( EmitError( MessageBrokerClientEvent.Unexpected( this, exc ) ) );
+            return ValueTask.FromResult<Result>( EmitError( exc, traceId ) );
         }
 
-        return WriteAsync( handshake.Header, data );
+        return WriteAsync( handshake.Header, data, traceId );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private async ValueTask<Result> HandleHandshakeResponseAsync(Protocol.PacketHeader requestHeader, Memory<byte> buffer)
+    private async ValueTask<Result> HandleHandshakeResponseAsync(Protocol.PacketHeader requestHeader, Memory<byte> buffer, ulong traceId)
     {
-        Emit( MessageBrokerClientEvent.WaitingForMessage( this ) );
+        MessageBrokerClientAwaitPacketEvent.Create( this ).Emit( Logger.AwaitPacket );
 
-        Stream? stream = null;
+        Stream? stream;
         Protocol.PacketHeader header;
-        CancellationToken timeoutToken = default;
+        var timeoutToken = default( CancellationToken );
         try
         {
-            bool cancel;
             var headerBuffer = buffer.Slice( 0, Protocol.PacketHeader.Length );
-            using ( AcquireLock() )
+            using ( AcquireActiveLock( traceId, out var exc ) )
             {
-                cancel = ShouldCancel;
-                if ( ! cancel )
-                {
-                    stream = _stream;
-                    EventScheduler.ResetWriteTimeout();
-                    timeoutToken = EventScheduler.ScheduleReadTimeout( this );
-                }
-            }
+                if ( exc is not null )
+                    return exc;
 
-            if ( cancel )
-                return EmitError( MessageBrokerClientEvent.WaitingForMessage( this, DisposedException() ) );
+                stream = _stream;
+                EventScheduler.ResetWriteTimeout();
+                timeoutToken = EventScheduler.ScheduleReadTimeout( this );
+            }
 
             Assume.IsNotNull( stream );
             await stream.ReadExactlyAsync( headerBuffer, timeoutToken ).ConfigureAwait( false );
@@ -124,22 +126,32 @@ public sealed partial class MessageBrokerClient
         }
         catch ( Exception exc )
         {
-            return EmitError( MessageBrokerClientEvent.WaitingForMessage( this, exc ) );
+            if ( exc is OperationCanceledException cancelExc && cancelExc.CancellationToken == timeoutToken )
+            {
+                var error = new MessageBrokerClientResponseTimeoutException( this, requestHeader.GetServerEndpoint() );
+                MessageBrokerClientErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
+                return error;
+            }
+
+            MessageBrokerClientAwaitPacketEvent.Create( this, exc ).Emit( Logger.AwaitPacket );
+            return exc;
         }
 
-        Emit( MessageBrokerClientEvent.MessageReceived( this, header ) );
+        MessageBrokerClientAwaitPacketEvent.Create( this, header ).Emit( Logger.AwaitPacket );
+        MessageBrokerClientReadPacketEvent.CreateReceived( this, traceId, header ).Emit( Logger.ReadPacket );
 
         switch ( header.GetClientEndpoint() )
         {
             case MessageBrokerClientEndpoint.HandshakeAcceptedResponse:
-                return await HandleIncomingHandshakeAcceptedResponseAsync( stream, buffer, header, timeoutToken ).ConfigureAwait( false );
+                return await HandleIncomingHandshakeAcceptedResponseAsync( stream, buffer, header, traceId, timeoutToken )
+                    .ConfigureAwait( false );
 
             case MessageBrokerClientEndpoint.HandshakeRejectedResponse:
-                return await HandleIncomingHandshakeRejectedResponseAsync( stream, buffer, requestHeader, header, timeoutToken )
+                return await HandleIncomingHandshakeRejectedResponseAsync( stream, buffer, requestHeader, header, traceId, timeoutToken )
                     .ConfigureAwait( false );
 
             default:
-                return HandleUnexpectedEndpoint( header );
+                return HandleUnexpectedEndpoint( header, traceId );
         }
     }
 
@@ -148,51 +160,47 @@ public sealed partial class MessageBrokerClient
         Stream stream,
         Memory<byte> buffer,
         Protocol.PacketHeader header,
+        ulong traceId,
         CancellationToken timeoutToken)
     {
         Assume.Equals( header.GetClientEndpoint(), MessageBrokerClientEndpoint.HandshakeAcceptedResponse );
         Chain<string> errors;
         try
         {
-            var exc = Protocol.AssertPayload( this, header, Protocol.HandshakeAcceptedResponse.Length );
-            if ( exc is not null )
-                return EmitError( MessageBrokerClientEvent.MessageRejected( this, header, exception: exc ) );
+            var exception = Protocol.AssertPayload( this, header, Protocol.HandshakeAcceptedResponse.Length );
+            if ( exception is not null )
+                return EmitError( exception, traceId );
 
             var data = buffer.Slice( 0, Protocol.HandshakeAcceptedResponse.Length );
             await stream.ReadExactlyAsync( data, timeoutToken ).ConfigureAwait( false );
             var response = Protocol.HandshakeAcceptedResponse.Parse( data );
             errors = response.StringifyErrors();
 
-            bool cancel;
-            using ( AcquireLock() )
+            using ( AcquireActiveLock( traceId, out var exc ) )
             {
-                cancel = ShouldCancel;
-                if ( ! cancel )
-                {
-                    EventScheduler.ResetReadTimeout();
-                    Id = response.Id;
-                    MessageTimeout = response.MessageTimeout;
-                    PingInterval = response.PingInterval;
-                    IsServerLittleEndian = response.IsServerLittleEndian;
-                }
-            }
+                if ( exc is not null )
+                    return exc;
 
-            if ( cancel )
-                return EmitError( MessageBrokerClientEvent.MessageReceived( this, header, exception: DisposedException() ) );
+                EventScheduler.ResetReadTimeout();
+                Id = response.Id;
+                MessageTimeout = response.MessageTimeout;
+                PingInterval = response.PingInterval;
+                IsServerLittleEndian = response.IsServerLittleEndian;
+            }
         }
         catch ( Exception exc )
         {
-            return EmitError( MessageBrokerClientEvent.MessageReceived( this, header, exception: exc ) );
+            return EmitError(
+                exc is OperationCanceledException cancelExc && cancelExc.CancellationToken == timeoutToken
+                    ? new MessageBrokerClientResponseTimeoutException( this, MessageBrokerServerEndpoint.HandshakeRequest )
+                    : exc,
+                traceId );
         }
 
         if ( errors.Count > 0 )
-            return EmitError(
-                MessageBrokerClientEvent.MessageRejected(
-                    this,
-                    header,
-                    Protocol.ProtocolException( this, header, errors ) ) );
+            return EmitError( Protocol.ProtocolException( this, header, errors ), traceId );
 
-        Emit( MessageBrokerClientEvent.MessageAccepted( this, header ) );
+        MessageBrokerClientReadPacketEvent.CreateAccepted( this, traceId, header ).Emit( Logger.ReadPacket );
         return Result.Valid;
     }
 
@@ -202,33 +210,34 @@ public sealed partial class MessageBrokerClient
         Memory<byte> buffer,
         Protocol.PacketHeader requestHeader,
         Protocol.PacketHeader responseHeader,
+        ulong traceId,
         CancellationToken timeoutToken)
     {
         Assume.Equals( responseHeader.GetClientEndpoint(), MessageBrokerClientEndpoint.HandshakeRejectedResponse );
         try
         {
-            var exc = Protocol.AssertPayload( this, responseHeader, Protocol.HandshakeRejectedResponse.Length );
-            if ( exc is not null )
-                return EmitError( MessageBrokerClientEvent.MessageRejected( this, responseHeader, exception: exc ) );
+            var exception = Protocol.AssertPayload( this, responseHeader, Protocol.HandshakeRejectedResponse.Length );
+            if ( exception is not null )
+                return EmitError( exception, traceId );
 
             var data = buffer.Slice( 0, Protocol.HandshakeRejectedResponse.Length );
             await stream.ReadExactlyAsync( data, timeoutToken ).ConfigureAwait( false );
             var response = Protocol.HandshakeRejectedResponse.Parse( data );
 
-            return EmitError(
-                MessageBrokerClientEvent.MessageReceived(
-                    this,
-                    responseHeader,
-                    exception: Protocol.RequestException( this, requestHeader, response.StringifyErrors() ) ) );
+            return EmitError( Protocol.RequestException( this, requestHeader, response.StringifyErrors() ), traceId );
         }
         catch ( Exception exc )
         {
-            return EmitError( MessageBrokerClientEvent.MessageReceived( this, responseHeader, exception: exc ) );
+            return EmitError(
+                exc is OperationCanceledException cancelExc && cancelExc.CancellationToken == timeoutToken
+                    ? new MessageBrokerClientResponseTimeoutException( this, MessageBrokerServerEndpoint.HandshakeRequest )
+                    : exc,
+                traceId );
         }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private ValueTask<Result> SendConfirmHandshakeResponseAsync(Memory<byte> buffer)
+    private ValueTask<Result> SendConfirmHandshakeResponseAsync(Memory<byte> buffer, ulong traceId)
     {
         Memory<byte> data;
         Protocol.PacketHeader response;
@@ -240,9 +249,9 @@ public sealed partial class MessageBrokerClient
         }
         catch ( Exception exc )
         {
-            return ValueTask.FromResult<Result>( EmitError( MessageBrokerClientEvent.Unexpected( this, exc ) ) );
+            return ValueTask.FromResult<Result>( EmitError( exc, traceId ) );
         }
 
-        return WriteAsync( response, data );
+        return WriteAsync( response, data, traceId );
     }
 }

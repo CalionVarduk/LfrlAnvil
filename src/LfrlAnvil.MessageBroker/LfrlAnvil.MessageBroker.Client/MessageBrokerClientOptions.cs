@@ -43,7 +43,7 @@ namespace LfrlAnvil.MessageBroker.Client;
 /// </param>
 /// <param name="Timestamps"><see cref="Timestamp"/> provider.</param>
 /// <param name="DelaySource"><see cref="ValueTaskDelaySource"/> instance used for scheduling future events.</param>
-/// <param name="EventHandler"><see cref="MessageBrokerClientEvent"/> callback.</param>
+/// <param name="Logger"><see cref="MessageBrokerClientLogger"/> instance.</param>
 /// <param name="StreamDecorator"><see cref="MessageBrokerClientStreamDecorator"/> callback.</param>
 public readonly record struct MessageBrokerClientOptions(
     MessageBrokerTcpClientOptions Tcp,
@@ -54,7 +54,7 @@ public readonly record struct MessageBrokerClientOptions(
     Duration? ListenerDisposalTimeout,
     ITimestampProvider? Timestamps,
     ValueTaskDelaySource? DelaySource,
-    MessageBrokerClientEventHandler? EventHandler,
+    MessageBrokerClientLogger? Logger,
     MessageBrokerClientStreamDecorator? StreamDecorator
 )
 {
@@ -81,7 +81,7 @@ public readonly record struct MessageBrokerClientOptions(
             ListenerDisposalTimeout,
             Timestamps,
             DelaySource,
-            EventHandler,
+            Logger,
             StreamDecorator );
     }
 
@@ -103,7 +103,7 @@ public readonly record struct MessageBrokerClientOptions(
             ListenerDisposalTimeout,
             Timestamps,
             DelaySource,
-            EventHandler,
+            Logger,
             StreamDecorator );
     }
 
@@ -125,7 +125,7 @@ public readonly record struct MessageBrokerClientOptions(
             ListenerDisposalTimeout,
             Timestamps,
             DelaySource,
-            EventHandler,
+            Logger,
             StreamDecorator );
     }
 
@@ -147,7 +147,7 @@ public readonly record struct MessageBrokerClientOptions(
             ListenerDisposalTimeout,
             Timestamps,
             DelaySource,
-            EventHandler,
+            Logger,
             StreamDecorator );
     }
 
@@ -169,7 +169,7 @@ public readonly record struct MessageBrokerClientOptions(
             ListenerDisposalTimeout,
             Timestamps,
             DelaySource,
-            EventHandler,
+            Logger,
             StreamDecorator );
     }
 
@@ -191,7 +191,7 @@ public readonly record struct MessageBrokerClientOptions(
             value,
             Timestamps,
             DelaySource,
-            EventHandler,
+            Logger,
             StreamDecorator );
     }
 
@@ -213,7 +213,7 @@ public readonly record struct MessageBrokerClientOptions(
             ListenerDisposalTimeout,
             value,
             DelaySource,
-            EventHandler,
+            Logger,
             StreamDecorator );
     }
 
@@ -235,18 +235,18 @@ public readonly record struct MessageBrokerClientOptions(
             ListenerDisposalTimeout,
             Timestamps,
             value,
-            EventHandler,
+            Logger,
             StreamDecorator );
     }
 
     /// <summary>
-    /// Allows to change <see cref="EventHandler"/>.
+    /// Allows to change <see cref="Logger"/>.
     /// </summary>
     /// <param name="value">New value.</param>
     /// <returns>New <see cref="MessageBrokerClientOptions"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public MessageBrokerClientOptions SetEventHandler(MessageBrokerClientEventHandler? value)
+    public MessageBrokerClientOptions SetLogger(MessageBrokerClientLogger? value)
     {
         return new MessageBrokerClientOptions(
             Tcp,
@@ -279,7 +279,7 @@ public readonly record struct MessageBrokerClientOptions(
             ListenerDisposalTimeout,
             Timestamps,
             DelaySource,
-            EventHandler,
+            Logger,
             value );
     }
 }

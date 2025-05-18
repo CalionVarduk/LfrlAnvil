@@ -75,8 +75,7 @@ public sealed class MessageBrokerSendContext : IBufferWriter<byte>, IDisposable
         _written = 0;
 
         Assume.IsNotNull( publisher );
-        token.Return( publisher.Client );
-        publisher.Client.ReturnMessageContext( this );
+        publisher.Client.ReturnMessageContext( this, token );
     }
 
     /// <inheritdoc/>

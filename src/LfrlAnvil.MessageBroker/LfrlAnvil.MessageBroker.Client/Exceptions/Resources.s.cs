@@ -28,6 +28,9 @@ internal static class Resources
     internal const string UnexpectedClientEndpoint = "Received unexpected client endpoint.";
     internal const string ClientNameLengthOutOfBounds = "Server found client's name length to be out of bounds.";
 
+    internal const string ExternalDelaySourceHasBeenDisposed
+        = "Operation has been cancelled because external delay value task source has been disposed.";
+
     internal static readonly string ServerFailedToDecodeClientName
         = $"Server failed to decode client's name using {TextEncoding.Instance.EncodingName} encoding.";
 
@@ -35,7 +38,7 @@ internal static class Resources
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string ClientDisposed(string name)
     {
-        return $"Operation has been cancelled because message broker client '{name}' is disposed.";
+        return $"Operation has been cancelled because client '{name}' is disposed.";
     }
 
     [Pure]
@@ -138,6 +141,21 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string MessagesDiscarded(int count)
+    {
+        return $"{count} locally cached message notification(s) have been discarded due to client disposal.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string MessagesDiscarded(int channelId, string channelName, int count)
+    {
+        return
+            $"{count} locally cached message notification(s) by [{channelId}] '{channelName}' channel listener have been discarded due to listener disposal.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string PublisherAlreadyBound(string channelName)
     {
         return $"Client is already bound as a publisher to channel '{channelName}'.";
@@ -211,14 +229,14 @@ internal static class Resources
     internal static string ResponseTimeout(string clientName, Duration timeout, MessageBrokerServerEndpoint requestEndpoint)
     {
         return
-            $"Message broker server failed to respond to '{clientName}' client's {requestEndpoint} in the specified amount of time ({timeout.FullMilliseconds} milliseconds).";
+            $"Server failed to respond to '{clientName}' client's {requestEndpoint} in the specified amount of time ({timeout.FullMilliseconds} milliseconds).";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string ClientPayloadRejected(string clientName, MessageBrokerServerEndpoint endpoint, Chain<string> errors)
     {
-        var header = $"Message broker server rejected an invalid {GetEndpoint( endpoint )} sent by client '{clientName}'.";
+        var header = $"Server rejected an invalid {GetEndpoint( endpoint )} sent by client '{clientName}'.";
         if ( errors.Count == 0 )
             return header;
 
@@ -230,7 +248,7 @@ internal static class Resources
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string InvalidPayloadFromServer(string clientName, MessageBrokerClientEndpoint endpoint, Chain<string> errors)
     {
-        var header = $"Message broker client '{clientName}' received an invalid {GetEndpoint( endpoint )} from the server.";
+        var header = $"Client '{clientName}' received an invalid {GetEndpoint( endpoint )} from the server.";
         if ( errors.Count == 0 )
             return header;
 

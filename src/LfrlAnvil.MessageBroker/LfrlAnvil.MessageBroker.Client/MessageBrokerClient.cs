@@ -40,15 +40,15 @@ namespace LfrlAnvil.MessageBroker.Client;
 public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
 {
     internal EventScheduler EventScheduler;
-    internal MessageListener MessageListener;
+    internal PacketListener PacketListener;
     internal MessageContextQueue MessageContextQueue;
     internal PingScheduler PingScheduler;
     internal MessageNotifications MessageNotifications;
     internal PublisherCollection PublisherCollection;
     internal ListenerCollection ListenerCollection;
     internal readonly MemoryPool<byte> MemoryPool;
+    internal readonly MessageBrokerClientLogger Logger;
 
-    private readonly MessageBrokerClientEventHandler? _eventHandler;
     private readonly ITimestampProvider _timestamps;
     private readonly TcpClient _tcp;
     private StackSlim<MessageBrokerSendContext> _messageContextPool;
@@ -56,6 +56,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     private MessageBrokerClientStreamDecorator? _streamDecorator;
     private Stream? _stream;
     private MessageBrokerClientState _state;
+    private ulong _nextTraceId;
 
     /// <summary>
     /// Creates a new <see cref="MessageBrokerClient"/> instance.
@@ -77,7 +78,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         PingInterval = Defaults.Temporal.GetActualPingInterval( options.DesiredPingInterval );
         ListenerDisposalTimeout = Defaults.Temporal.GetActualTimeout( options.ListenerDisposalTimeout );
         _streamDecorator = options.StreamDecorator;
-        _eventHandler = options.EventHandler;
+        Logger = options.Logger ?? default;
         _timestamps = options.Timestamps ?? TimestampProvider.Shared;
         _messageContextPool = StackSlim<MessageBrokerSendContext>.Create();
 
@@ -87,10 +88,11 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         Name = name;
         RemoteEndPoint = remoteEndPoint;
         IsServerLittleEndian = false;
+        _nextTraceId = 0;
 
         _delaySource = options.DelaySource is not null ? DelaySource.External( options.DelaySource ) : DelaySource.Owned();
         EventScheduler = EventScheduler.Create();
-        MessageListener = MessageListener.Create();
+        PacketListener = PacketListener.Create();
         MessageContextQueue = MessageContextQueue.Create();
         PingScheduler = PingScheduler.Create();
         MessageNotifications = MessageNotifications.Create();
@@ -198,70 +200,17 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
+        ulong traceId;
         using ( AcquireLock() )
         {
-            if ( ShouldCancel )
+            if ( ! TryBeginDispose() )
                 return;
 
-            _state = MessageBrokerClientState.Disposing;
+            traceId = GetTraceId();
         }
 
-        Emit( MessageBrokerClientEvent.Disposing( this ) );
-
-        Task? eventSchedulerTask;
-        Task? pingSchedulerTask;
-        Task? messageListenerTask;
-        Task? messageNotificationsTask;
-        ValueTaskDelaySource? ownedDelaySource;
-        MessageBrokerListener[] listeners;
-
-        using ( AcquireLock() )
-        {
-            ownedDelaySource = _delaySource.DiscardOwnedSource();
-            _messageContextPool.Clear();
-            PublisherCollection.Clear();
-            listeners = ListenerCollection.Clear();
-            eventSchedulerTask = EventScheduler.DiscardUnderlyingTask();
-            pingSchedulerTask = PingScheduler.DiscardUnderlyingTask();
-            messageListenerTask = MessageListener.DiscardUnderlyingTask();
-            messageNotificationsTask = MessageNotifications.DiscardUnderlyingTask();
-            MessageContextQueue.Dispose();
-            PingScheduler.Dispose();
-            EventScheduler.Dispose();
-            MessageNotifications.Dispose( this );
-        }
-
-        await Parallel.ForEachAsync( listeners, static (l, _) => l.OnClientDisposedAsync() ).ConfigureAwait( false );
-
-        if ( eventSchedulerTask is not null )
-            await eventSchedulerTask.ConfigureAwait( false );
-
-        if ( pingSchedulerTask is not null )
-            await pingSchedulerTask.ConfigureAwait( false );
-
-        if ( messageListenerTask is not null )
-            await messageListenerTask.ConfigureAwait( false );
-
-        if ( messageNotificationsTask is not null )
-            await messageNotificationsTask.ConfigureAwait( false );
-
-        Exception? exception;
-        using ( AcquireLock() )
-            exception = _tcp.TryDispose().Exception;
-
-        if ( exception is not null )
-            Emit( MessageBrokerClientEvent.Unexpected( this, exception ) );
-
-        using ( AcquireLock() )
-        {
-            _stream = null;
-            _state = MessageBrokerClientState.Disposed;
-        }
-
-        if ( ownedDelaySource is not null )
-            await ownedDelaySource.TryDisposeAsync().ConfigureAwait( false );
-
-        Emit( MessageBrokerClientEvent.Disposed( this ) );
+        using ( MessageBrokerClientTraceEvent.CreateScope( this, traceId, MessageBrokerClientTraceEventType.Dispose ) )
+            await DisposeAsyncCore( traceId ).ConfigureAwait( false );
     }
 
     /// <summary>
@@ -291,99 +240,127 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     /// </remarks>
     public async ValueTask<Result> StartAsync(CancellationToken cancellationToken = default)
     {
-        await DisposeAndThrowIfCancellationRequestedAsync( cancellationToken ).ConfigureAwait( false );
-
+        ulong traceId;
         using ( AcquireLock() )
         {
             if ( ShouldCancel )
                 ExceptionThrower.Throw( DisposedException() );
 
-            AssertState( MessageBrokerClientState.Created );
-            _state = MessageBrokerClientState.Connecting;
-            EventScheduler.InitializeResetEvent( _delaySource.GetSource() );
+            traceId = GetTraceId();
         }
 
-        try
+        using ( MessageBrokerClientTraceEvent.CreateScope( this, traceId, MessageBrokerClientTraceEventType.Start ) )
         {
-            var eventSchedulerTask = EventScheduler.StartUnderlyingTask( this );
-            using ( AcquireLock() )
+            await DisposeAndThrowIfCancellationRequestedAsync( traceId, cancellationToken ).ConfigureAwait( false );
+
+            using ( AcquireActiveLock( traceId, out var exc ) )
             {
-                if ( ShouldCancel )
-                    return DisposedException();
+                if ( exc is not null )
+                    return exc;
 
-                EventScheduler.SetUnderlyingTask( eventSchedulerTask );
-            }
-        }
-        catch ( Exception exc )
-        {
-            Emit( MessageBrokerClientEvent.Unexpected( this, exc ) );
-            await DisposeAsync().ConfigureAwait( false );
-            return exc;
-        }
-
-        var connectResult = await ConnectToServerAsync( cancellationToken ).ConfigureAwait( false );
-        if ( connectResult.Exception is not null )
-        {
-            if ( connectResult.Exception is not MessageBrokerClientDisposedException )
-                await DisposeAsync().ConfigureAwait( false );
-
-            return connectResult;
-        }
-
-        await DisposeAndThrowIfCancellationRequestedAsync( cancellationToken ).ConfigureAwait( false );
-
-        var handshakeResult = await EstablishHandshakeAsync( cancellationToken ).ConfigureAwait( false );
-        if ( handshakeResult.Exception is not null )
-        {
-            if ( handshakeResult.Exception is not MessageBrokerClientDisposedException )
-                await DisposeAsync().ConfigureAwait( false );
-
-            return handshakeResult;
-        }
-
-        await DisposeAndThrowIfCancellationRequestedAsync( cancellationToken ).ConfigureAwait( false );
-
-        try
-        {
-            Stream? stream;
-            using ( AcquireLock() )
-            {
-                if ( ShouldCancel )
-                    return DisposedException();
-
-                EventScheduler.ResetWriteTimeout();
-                _state = MessageBrokerClientState.Running;
-                stream = _stream;
+                AssertState( MessageBrokerClientState.Created );
+                _state = MessageBrokerClientState.Connecting;
+                EventScheduler.InitializeResetEvent( _delaySource.GetSource() );
             }
 
-            Assume.IsNotNull( stream );
-            var messageListenerTask = MessageListener.StartUnderlyingTask( this, stream );
-            var pingSchedulerTask = PingScheduler.StartUnderlyingTask( this );
-            var messageNotificationsTask = MessageNotifications.StartUnderlyingTask( this );
-            using ( AcquireLock() )
+            try
             {
-                if ( ShouldCancel )
-                    return DisposedException();
+                var eventSchedulerTask = EventScheduler.StartUnderlyingTask( this );
+                using ( AcquireActiveLock( traceId, out var exc ) )
+                {
+                    if ( exc is not null )
+                        return exc;
 
-                MessageListener.SetUnderlyingTask( messageListenerTask );
-                PingScheduler.SetUnderlyingTask( pingSchedulerTask );
-                MessageNotifications.SetUnderlyingTask( messageNotificationsTask );
+                    EventScheduler.SetUnderlyingTask( eventSchedulerTask );
+                }
             }
-        }
-        catch ( Exception exc )
-        {
-            Emit( MessageBrokerClientEvent.Unexpected( this, exc ) );
-            await DisposeAsync().ConfigureAwait( false );
-            return exc;
-        }
+            catch ( Exception exc )
+            {
+                MessageBrokerClientErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
+                await DisposeAsync( traceId ).ConfigureAwait( false );
+                return exc;
+            }
 
-        return Result.Valid;
+            var connectResult = await ConnectToServerAsync( traceId, cancellationToken ).ConfigureAwait( false );
+            if ( connectResult.Exception is not null )
+            {
+                if ( connectResult.Exception is not MessageBrokerClientDisposedException )
+                    await DisposeAsync( traceId ).ConfigureAwait( false );
+
+                return connectResult;
+            }
+
+            await DisposeAndThrowIfCancellationRequestedAsync( traceId, cancellationToken ).ConfigureAwait( false );
+
+            var handshakeResult = await EstablishHandshakeAsync( traceId, cancellationToken ).ConfigureAwait( false );
+            if ( handshakeResult.Exception is not null )
+            {
+                if ( handshakeResult.Exception is not MessageBrokerClientDisposedException )
+                    await DisposeAsync( traceId ).ConfigureAwait( false );
+
+                return handshakeResult;
+            }
+
+            await DisposeAndThrowIfCancellationRequestedAsync( traceId, cancellationToken ).ConfigureAwait( false );
+
+            try
+            {
+                Stream? stream;
+                using ( AcquireActiveLock( traceId, out var exc ) )
+                {
+                    if ( exc is not null )
+                        return exc;
+
+                    EventScheduler.ResetWriteTimeout();
+                    _state = MessageBrokerClientState.Running;
+                    stream = _stream;
+                }
+
+                Assume.IsNotNull( stream );
+                var packetListenerTask = PacketListener.StartUnderlyingTask( this, stream );
+                var pingSchedulerTask = PingScheduler.StartUnderlyingTask( this );
+                var messageNotificationsTask = MessageNotifications.StartUnderlyingTask( this );
+                using ( AcquireActiveLock( traceId, out var exc ) )
+                {
+                    if ( exc is not null )
+                        return exc;
+
+                    PacketListener.SetUnderlyingTask( packetListenerTask );
+                    PingScheduler.SetUnderlyingTask( pingSchedulerTask );
+                    MessageNotifications.SetUnderlyingTask( messageNotificationsTask );
+                }
+            }
+            catch ( Exception exc )
+            {
+                MessageBrokerClientErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
+                await DisposeAsync( traceId ).ConfigureAwait( false );
+                return exc;
+            }
+
+            return Result.Valid;
+        }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ExclusiveLock AcquireLock()
     {
         return ExclusiveLock.SpinWaitEnter( _tcp, spinWaitMultiplier: 4 );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal ExclusiveLock AcquireActiveLock(ulong traceId, out MessageBrokerClientDisposedException? exception)
+    {
+        var @lock = AcquireLock();
+        if ( ! ShouldCancel )
+        {
+            exception = null;
+            return @lock;
+        }
+
+        @lock.Dispose();
+        exception = DisposedException();
+        MessageBrokerClientErrorEvent.Create( this, traceId, exception ).Emit( Logger.Error );
+        return default;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -407,13 +384,24 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void ReturnMessageContext(MessageBrokerSendContext context)
+    internal void ReturnMessageContext(MessageBrokerSendContext context, MemoryPoolToken<byte> token)
     {
+        var exception = token.Return();
+
+        ulong traceId;
         using ( AcquireLock() )
         {
             if ( ! ShouldCancel )
                 _messageContextPool.Push( context );
+
+            if ( exception is null )
+                return;
+
+            traceId = GetTraceId();
         }
+
+        using ( MessageBrokerClientTraceEvent.CreateScope( this, traceId, MessageBrokerClientTraceEventType.Unexpected ) )
+            MessageBrokerClientErrorEvent.Create( this, traceId, exception ).Emit( Logger.Error );
     }
 
     [Pure]
@@ -424,57 +412,31 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void Emit(MessageBrokerClientEvent e)
+    internal Exception HandleUnexpectedEndpoint(Protocol.PacketHeader header, ulong traceId)
     {
-        if ( _eventHandler is null )
-            return;
-
-        try
-        {
-            _eventHandler( e );
-        }
-        catch
-        {
-            // NOTE: do nothing
-        }
+        return EmitError( Protocol.UnexpectedClientEndpointException( this, header ), traceId );
     }
 
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal Exception HandleUnexpectedEndpoint(Protocol.PacketHeader header, ulong contextId = 0)
+    internal async ValueTask<Result> WriteAsync(Protocol.PacketHeader header, ReadOnlyMemory<byte> data, ulong traceId)
     {
-        var exc = Protocol.UnexpectedClientEndpointException( this, header );
-        return EmitError( MessageBrokerClientEvent.MessageRejected( this, header, exc, contextId ) );
-    }
+        MessageBrokerClientSendPacketEvent.CreateSending( this, traceId, header ).Emit( Logger.SendPacket );
 
-    internal async ValueTask<Result> WriteAsync(
-        Protocol.PacketHeader header,
-        ReadOnlyMemory<byte> data,
-        ulong contextId = MessageBrokerClientEvent.RootContextId,
-        object? eventData = null)
-    {
-        Emit( MessageBrokerClientEvent.SendingMessage( this, header, contextId, eventData ) );
-
-        Stream? stream = null;
-        CancellationToken timeoutToken = default;
+        Stream? stream;
+        CancellationToken timeoutToken;
         try
         {
-            bool cancel;
-            using ( AcquireLock() )
+            using ( AcquireActiveLock( traceId, out var exc ) )
             {
-                cancel = ShouldCancel;
-                if ( ! cancel )
-                {
-                    stream = _stream;
-                    timeoutToken = EventScheduler.ScheduleWriteTimeout( this );
-                }
-            }
+                if ( exc is not null )
+                    return exc;
 
-            if ( cancel )
-                return EmitError( MessageBrokerClientEvent.SendingMessage( this, header, contextId, DisposedException() ) );
+                stream = _stream;
+                timeoutToken = EventScheduler.ScheduleWriteTimeout( this );
+            }
         }
         catch ( Exception exc )
         {
-            return EmitError( MessageBrokerClientEvent.SendingMessage( this, header, contextId, exc ) );
+            return EmitError( exc, traceId );
         }
 
         Assume.IsNotNull( stream );
@@ -484,39 +446,36 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         }
         catch ( Exception exc )
         {
-            return EmitError( MessageBrokerClientEvent.SendingMessage( this, header, contextId, exc ) );
+            return EmitError( exc, traceId );
         }
 
-        Emit( MessageBrokerClientEvent.MessageSent( this, header, contextId ) );
+        MessageBrokerClientSendPacketEvent.CreateSent( this, traceId, header ).Emit( Logger.SendPacket );
         return Result.Valid;
     }
 
-    private async ValueTask<Result> ConnectToServerAsync(CancellationToken cancellationToken)
+    private async ValueTask<Result> ConnectToServerAsync(ulong traceId, CancellationToken cancellationToken)
     {
-        Emit( MessageBrokerClientEvent.Connecting( this ) );
+        MessageBrokerClientConnectingEvent.Create( this, traceId ).Emit( Logger.Connecting );
 
         try
         {
-            bool cancel;
-            CancellationToken timeoutToken = default;
-            using ( AcquireLock() )
+            CancellationToken timeoutToken;
+            using ( AcquireActiveLock( traceId, out var exc ) )
             {
-                cancel = ShouldCancel;
-                if ( ! cancel )
-                    timeoutToken = EventScheduler.ScheduleConnectTimeout( this );
-            }
+                if ( exc is not null )
+                    return exc;
 
-            if ( cancel )
-                return EmitError( MessageBrokerClientEvent.Connecting( this, DisposedException() ) );
+                timeoutToken = EventScheduler.ScheduleConnectTimeout( this );
+            }
 
             await _tcp.ConnectAsync( RemoteEndPoint, timeoutToken ).ConfigureAwait( false );
 
             Stream stream;
             MessageBrokerClientStreamDecorator? decorator;
-            using ( AcquireLock() )
+            using ( AcquireActiveLock( traceId, out var exc ) )
             {
-                if ( ShouldCancel )
-                    return EmitError( MessageBrokerClientEvent.Connecting( this, DisposedException() ) );
+                if ( exc is not null )
+                    return exc;
 
                 decorator = _streamDecorator;
                 _streamDecorator = null;
@@ -527,10 +486,10 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
             if ( decorator is not null )
             {
                 stream = await decorator( this, ReinterpretCast.To<NetworkStream>( stream ), cancellationToken ).ConfigureAwait( false );
-                using ( AcquireLock() )
+                using ( AcquireActiveLock( traceId, out var exc ) )
                 {
-                    if ( ShouldCancel )
-                        return EmitError( MessageBrokerClientEvent.Connecting( this, DisposedException() ) );
+                    if ( exc is not null )
+                        return exc;
 
                     _stream = stream;
                 }
@@ -538,23 +497,24 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         }
         catch ( Exception exc )
         {
-            return EmitError( MessageBrokerClientEvent.Connecting( this, exc ) );
+            return EmitError( exc, traceId );
         }
 
-        Emit( MessageBrokerClientEvent.Connected( this ) );
+        MessageBrokerClientConnectedEvent.Create( this, traceId ).Emit( Logger.Connected );
         return Result.Valid;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private async ValueTask DisposeAndThrowIfCancellationRequestedAsync(CancellationToken cancellationToken)
+    private async ValueTask DisposeAndThrowIfCancellationRequestedAsync(ulong traceId, CancellationToken cancellationToken)
     {
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
         }
-        catch
+        catch ( Exception exc )
         {
-            await DisposeAsync().ConfigureAwait( false );
+            MessageBrokerClientErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
+            await DisposeAsync( traceId ).ConfigureAwait( false );
             throw;
         }
     }
@@ -575,10 +535,111 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal Exception EmitError(MessageBrokerClientEvent e)
+    internal Exception EmitError(Exception exception, ulong traceId)
     {
-        Assume.IsNotNull( e.Exception );
-        Emit( e );
-        return e.Exception;
+        MessageBrokerClientErrorEvent.Create( this, traceId, exception ).Emit( Logger.Error );
+        return exception;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal ulong GetTraceId()
+    {
+        return unchecked( _nextTraceId++ );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool TryBeginDispose()
+    {
+        if ( ShouldCancel )
+            return false;
+
+        _state = MessageBrokerClientState.Disposing;
+        return true;
+    }
+
+    internal ValueTask DisposeAsync(ulong traceId)
+    {
+        using ( AcquireLock() )
+        {
+            if ( ShouldCancel )
+                return ValueTask.CompletedTask;
+
+            _state = MessageBrokerClientState.Disposing;
+        }
+
+        return DisposeAsyncCore( traceId );
+    }
+
+    internal async ValueTask DisposeAsyncCore(ulong traceId)
+    {
+        MessageBrokerClientDisposingEvent.Create( this, traceId ).Emit( Logger.Disposing );
+
+        Task? eventSchedulerTask;
+        Task? pingSchedulerTask;
+        Task? packetListenerTask;
+        Task? messageNotificationsTask;
+        ValueTaskDelaySource? ownedDelaySource;
+        MessageBrokerListener[] listeners;
+        int discardedMessageCount;
+        Chain<Exception> exceptions;
+
+        using ( AcquireLock() )
+        {
+            ownedDelaySource = _delaySource.DiscardOwnedSource();
+            _messageContextPool.Clear();
+            PublisherCollection.Clear();
+            listeners = ListenerCollection.Clear();
+            eventSchedulerTask = EventScheduler.DiscardUnderlyingTask();
+            pingSchedulerTask = PingScheduler.DiscardUnderlyingTask();
+            packetListenerTask = PacketListener.DiscardUnderlyingTask();
+            messageNotificationsTask = MessageNotifications.DiscardUnderlyingTask();
+            PingScheduler.Dispose();
+            EventScheduler.Dispose();
+            (discardedMessageCount, exceptions) = MessageNotifications.Dispose();
+        }
+
+        foreach ( var exc in exceptions )
+            MessageBrokerClientErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
+
+        if ( discardedMessageCount > 0 )
+        {
+            var error = new MessageBrokerClientMessageException( this, null, Resources.MessagesDiscarded( discardedMessageCount ) );
+            MessageBrokerClientErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
+        }
+
+        await Parallel.ForEachAsync( listeners, (l, _) => l.OnClientDisposedAsync( traceId ) ).ConfigureAwait( false );
+
+        if ( eventSchedulerTask is not null )
+            await eventSchedulerTask.ConfigureAwait( false );
+
+        if ( pingSchedulerTask is not null )
+            await pingSchedulerTask.ConfigureAwait( false );
+
+        if ( packetListenerTask is not null )
+            await packetListenerTask.ConfigureAwait( false );
+
+        if ( messageNotificationsTask is not null )
+            await messageNotificationsTask.ConfigureAwait( false );
+
+        Exception? exception;
+        using ( AcquireLock() )
+        {
+            MessageContextQueue.Dispose();
+            exception = _tcp.TryDispose().Exception;
+        }
+
+        if ( exception is not null )
+            MessageBrokerClientErrorEvent.Create( this, traceId, exception ).Emit( Logger.Error );
+
+        using ( AcquireLock() )
+        {
+            _stream = null;
+            _state = MessageBrokerClientState.Disposed;
+        }
+
+        if ( ownedDelaySource is not null )
+            await ownedDelaySource.TryDisposeAsync().ConfigureAwait( false );
+
+        MessageBrokerClientDisposedEvent.Create( this, traceId ).Emit( Logger.Disposed );
     }
 }

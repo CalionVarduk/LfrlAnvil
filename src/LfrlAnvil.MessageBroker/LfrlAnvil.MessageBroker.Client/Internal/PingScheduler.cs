@@ -46,24 +46,27 @@ internal struct PingScheduler
     [MethodImpl( MethodImplOptions.NoInlining )]
     internal static async Task StartUnderlyingTask(MessageBrokerClient client)
     {
-        TaskStopReason stopReason;
         try
         {
-            stopReason = await RunCore( client ).ConfigureAwait( false );
+            await RunCore( client ).ConfigureAwait( false );
         }
         catch ( Exception exc )
         {
-            client.Emit( MessageBrokerClientEvent.Unexpected( client, exc ) );
-            stopReason = TaskStopReason.Error;
+            ulong traceId;
+            using ( client.AcquireLock() )
+            {
+                client.PingScheduler._task = null;
+                traceId = client.GetTraceId();
+            }
+
+            using ( MessageBrokerClientTraceEvent.CreateScope( client, traceId, MessageBrokerClientTraceEventType.Unexpected ) )
+            {
+                MessageBrokerClientErrorEvent.Create( client, traceId, exc ).Emit( client.Logger.Error );
+                await client.DisposeAsync( traceId ).ConfigureAwait( false );
+            }
         }
 
-        if ( stopReason == TaskStopReason.OwnerDisposed )
-            return;
-
-        using ( client.AcquireLock() )
-            client.PingScheduler._task = null;
-
-        await client.DisposeAsync().ConfigureAwait( false );
+        Assume.IsGreaterThanOrEqualTo( client.State, MessageBrokerClientState.Disposing );
     }
 
     internal void Dispose()
@@ -93,7 +96,7 @@ internal struct PingScheduler
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static async ValueTask<TaskStopReason> RunCore(MessageBrokerClient client)
+    private static async ValueTask RunCore(MessageBrokerClient client)
     {
         var request = Protocol.Ping.Create();
         var buffer = new byte[Protocol.PacketHeader.Length].AsMemory();
@@ -101,7 +104,7 @@ internal struct PingScheduler
         using ( client.AcquireLock() )
         {
             if ( client.ShouldCancel )
-                return TaskStopReason.OwnerDisposed;
+                return;
 
             request.Serialize( buffer, client.IsServerLittleEndian != BitConverter.IsLittleEndian );
             client.EventScheduler.SchedulePing( client );
@@ -111,15 +114,13 @@ internal struct PingScheduler
         {
             var @continue = await client.PingScheduler._continuation.GetTask().ConfigureAwait( false );
             if ( ! @continue )
-                return TaskStopReason.OwnerDisposed;
+                return;
 
-            ulong contextId;
             ManualResetValueTaskSource<bool> writerSource;
-
             using ( client.AcquireLock() )
             {
                 if ( client.ShouldCancel )
-                    return TaskStopReason.OwnerDisposed;
+                    return;
 
                 var delay = client.EventScheduler.GetPingDelay( client );
                 if ( delay > Duration.Zero )
@@ -128,18 +129,19 @@ internal struct PingScheduler
                     continue;
                 }
 
-                contextId = client.MessageContextQueue.AcquireContextId();
                 writerSource = client.MessageContextQueue.AcquireWriterSource();
             }
 
             if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
-                return TaskStopReason.OwnerDisposed;
+                return;
 
+            ulong traceId;
             ManualResetValueTaskSource<IncomingPacketToken> responseSource;
+
             using ( client.AcquireLock() )
             {
                 if ( client.ShouldCancel )
-                    return TaskStopReason.OwnerDisposed;
+                    return;
 
                 var delay = client.EventScheduler.GetPingDelay( client );
                 if ( delay > Duration.Zero )
@@ -149,76 +151,88 @@ internal struct PingScheduler
                     continue;
                 }
 
-                responseSource = client.MessageContextQueue.AcquirePendingResponseSource( contextId, request.GetServerEndpoint() );
+                traceId = client.GetTraceId();
+                responseSource = client.MessageContextQueue.AcquirePendingResponseSource();
             }
 
-            var result = await client.WriteAsync( request, buffer, contextId ).ConfigureAwait( false );
-            if ( result.Exception is not null )
-                break;
+            using ( MessageBrokerClientTraceEvent.CreateScope( client, traceId, MessageBrokerClientTraceEventType.Ping ) )
+            {
+                var result = await client.WriteAsync( request, buffer, traceId ).ConfigureAwait( false );
+                if ( result.Exception is not null )
+                {
+                    await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
+                    return;
+                }
+
+                using ( client.AcquireActiveLock( traceId, out var exc ) )
+                {
+                    if ( exc is not null )
+                        return;
+
+                    client.MessageContextQueue.ResetOutgoingWriter( client, writerSource );
+                    client.MessageContextQueue.ActivatePendingResponseSource( client, responseSource );
+                }
+
+                var response = await responseSource.GetTask().ConfigureAwait( false );
+                if ( response.Type != IncomingPacketToken.Result.Ok )
+                {
+                    if ( response.Type == IncomingPacketToken.Result.Disposed )
+                    {
+                        MessageBrokerClientErrorEvent.Create( client, traceId, client.DisposedException() ).Emit( client.Logger.Error );
+                        return;
+                    }
+
+                    var error = new MessageBrokerClientResponseTimeoutException( client, request.GetServerEndpoint() );
+                    MessageBrokerClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+                    await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
+                    return;
+                }
+
+                using ( client.AcquireActiveLock( traceId, out var exc ) )
+                {
+                    if ( exc is not null )
+                        return;
+
+                    client.MessageContextQueue.ResetPendingResponseSource( responseSource );
+                }
+
+                if ( response.Header.GetClientEndpoint() != MessageBrokerClientEndpoint.Pong )
+                {
+                    client.HandleUnexpectedEndpoint( response.Header, traceId );
+                    await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
+                    return;
+                }
+
+                MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header ).Emit( client.Logger.ReadPacket );
+
+                if ( response.Header.Payload != Protocol.Endianness.VerificationPayload )
+                {
+                    var error = Protocol.EndiannessPayloadException( client, response.Header );
+                    MessageBrokerClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+                    await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
+                    return;
+                }
+
+                MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header ).Emit( client.Logger.ReadPacket );
+            }
 
             using ( client.AcquireLock() )
             {
                 if ( client.ShouldCancel )
-                    return TaskStopReason.OwnerDisposed;
-
-                client.MessageContextQueue.ResetOutgoingWriter( client, writerSource );
-                client.MessageContextQueue.ActivatePendingResponseSource( client, responseSource );
-            }
-
-            var response = await responseSource.GetTask().ConfigureAwait( false );
-            if ( response.Type != IncomingPacketToken.Result.Ok )
-            {
-                if ( response.Type == IncomingPacketToken.Result.Disposed )
-                    return TaskStopReason.OwnerDisposed;
-
-                client.Emit(
-                    MessageBrokerClientEvent.WaitingForMessage(
-                        client,
-                        new MessageBrokerClientResponseTimeoutException( client, request.GetServerEndpoint() ) ) );
-
-                return TaskStopReason.Error;
-            }
-
-            using ( client.AcquireLock() )
-            {
-                if ( client.ShouldCancel )
-                    return TaskStopReason.OwnerDisposed;
-
-                client.MessageContextQueue.ResetPendingResponseSource( responseSource );
-            }
-
-            if ( response.Header.GetClientEndpoint() != MessageBrokerClientEndpoint.Pong )
-            {
-                client.HandleUnexpectedEndpoint( response.Header, contextId );
-                break;
-            }
-
-            client.Emit( MessageBrokerClientEvent.MessageReceived( client, response.Header, contextId ) );
-
-            if ( response.Header.Payload != Protocol.Endianness.VerificationPayload )
-            {
-                client.Emit(
-                    MessageBrokerClientEvent.MessageRejected(
-                        client,
-                        response.Header,
-                        Protocol.EndiannessPayloadException( client, response.Header ),
-                        contextId ) );
-
-                break;
-            }
-
-            client.Emit( MessageBrokerClientEvent.MessageAccepted( client, response.Header, contextId ) );
-
-            using ( client.AcquireLock() )
-            {
-                if ( client.ShouldCancel )
-                    return TaskStopReason.OwnerDisposed;
+                    return;
 
                 client.PingScheduler._continuation.Reset();
                 client.EventScheduler.SchedulePing( client );
             }
         }
+    }
 
-        return TaskStopReason.Error;
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static ValueTask DisposeClientAsync(MessageBrokerClient client, ulong traceId)
+    {
+        using ( client.AcquireLock() )
+            client.PingScheduler._task = null;
+
+        return client.DisposeAsync( traceId );
     }
 }

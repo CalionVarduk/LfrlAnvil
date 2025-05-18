@@ -32,7 +32,8 @@ public readonly struct MessageBrokerListenerCallbackArgs
         int streamId,
         int retryAttempt,
         int redeliveryAttempt,
-        ReadOnlyMemory<byte> data)
+        ReadOnlyMemory<byte> data,
+        ulong traceId)
     {
         Listener = listener;
         MessageId = messageId;
@@ -43,6 +44,7 @@ public readonly struct MessageBrokerListenerCallbackArgs
         RetryAttempt = retryAttempt;
         RedeliveryAttempt = redeliveryAttempt;
         Data = data;
+        TraceId = traceId;
     }
 
     /// <summary>
@@ -96,6 +98,12 @@ public readonly struct MessageBrokerListenerCallbackArgs
     public ReadOnlyMemory<byte> Data { get; }
 
     /// <summary>
+    /// Identifier of an internal event trace, with which this message is correlated to.
+    /// </summary>
+    /// <remarks>Can be used to correlate this message with events emitted by <see cref="MessageBrokerClient"/>'s logger.</remarks>
+    public ulong TraceId { get; }
+
+    /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerListenerCallbackArgs"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
@@ -103,6 +111,6 @@ public readonly struct MessageBrokerListenerCallbackArgs
     public override string ToString()
     {
         return
-            $"Listener = ({Listener}), Id = {MessageId}, Retry = {RetryAttempt}, Redelivery = {RedeliveryAttempt}, Length = {Data.Length}, EnqueuedAt = {EnqueuedAt}, ReceivedAt = {ReceivedAt}, Sender = {SenderId}, Stream = {StreamId}";
+            $"Listener = ({Listener}), Id = {MessageId}, Retry = {RetryAttempt}, Redelivery = {RedeliveryAttempt}, Length = {Data.Length}, EnqueuedAt = {EnqueuedAt}, ReceivedAt = {ReceivedAt}, Sender = {SenderId}, Stream = {StreamId}, TraceId = {TraceId}";
     }
 }

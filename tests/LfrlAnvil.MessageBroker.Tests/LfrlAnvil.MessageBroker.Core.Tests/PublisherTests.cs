@@ -1,19 +1,30 @@
 ﻿using System.Net;
 using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.MessageBroker.Client;
+using LfrlAnvil.MessageBroker.Core.Tests.Helpers;
 using LfrlAnvil.MessageBroker.Server;
 
 namespace LfrlAnvil.MessageBroker.Core.Tests;
 
-public class PublisherTests : TestsBase
+public class PublisherTests : TestsBase, IClassFixture<SharedResourceFixture>
 {
+    private readonly ValueTaskDelaySource _sharedDelaySource;
+
+    public PublisherTests(SharedResourceFixture fixture)
+    {
+        _sharedDelaySource = fixture.DelaySource;
+    }
+
     [Fact]
     public async Task Server_ShouldCreateChannelAndStream_WhenClientBindsAsPublisherToNonExistingOne()
     {
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
-            MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) ) );
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource ) );
 
         await server.StartAsync();
 
@@ -23,7 +34,8 @@ public class PublisherTests : TestsBase
             MessageBrokerClientOptions.Default
                 .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
                 .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
-                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) ) );
+                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) )
+                .SetDelaySource( _sharedDelaySource ) );
 
         await client.StartAsync();
 
@@ -85,7 +97,9 @@ public class PublisherTests : TestsBase
     {
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
-            MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) ) );
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource ) );
 
         await server.StartAsync();
 
@@ -95,7 +109,8 @@ public class PublisherTests : TestsBase
             MessageBrokerClientOptions.Default
                 .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
                 .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
-                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) ) );
+                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) )
+                .SetDelaySource( _sharedDelaySource ) );
 
         await client1.StartAsync();
 
@@ -105,7 +120,8 @@ public class PublisherTests : TestsBase
             MessageBrokerClientOptions.Default
                 .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
                 .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
-                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) ) );
+                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) )
+                .SetDelaySource( _sharedDelaySource ) );
 
         await client2.StartAsync();
 
@@ -169,7 +185,9 @@ public class PublisherTests : TestsBase
     {
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
-            MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) ) );
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource ) );
 
         await server.StartAsync();
 
@@ -179,7 +197,8 @@ public class PublisherTests : TestsBase
             MessageBrokerClientOptions.Default
                 .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
                 .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
-                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) ) );
+                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) )
+                .SetDelaySource( _sharedDelaySource ) );
 
         await client.StartAsync();
 
@@ -213,7 +232,9 @@ public class PublisherTests : TestsBase
     {
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
-            MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) ) );
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource ) );
 
         await server.StartAsync();
 
@@ -223,7 +244,8 @@ public class PublisherTests : TestsBase
             MessageBrokerClientOptions.Default
                 .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
                 .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
-                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) ) );
+                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) )
+                .SetDelaySource( _sharedDelaySource ) );
 
         await client1.StartAsync();
 
@@ -233,7 +255,8 @@ public class PublisherTests : TestsBase
             MessageBrokerClientOptions.Default
                 .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
                 .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
-                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) ) );
+                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) )
+                .SetDelaySource( _sharedDelaySource ) );
 
         await client2.StartAsync();
 
@@ -289,7 +312,9 @@ public class PublisherTests : TestsBase
     {
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
-            MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) ) );
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource ) );
 
         await server.StartAsync();
 
@@ -299,7 +324,8 @@ public class PublisherTests : TestsBase
             MessageBrokerClientOptions.Default
                 .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
                 .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
-                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) ) );
+                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) )
+                .SetDelaySource( _sharedDelaySource ) );
 
         await client.StartAsync();
 

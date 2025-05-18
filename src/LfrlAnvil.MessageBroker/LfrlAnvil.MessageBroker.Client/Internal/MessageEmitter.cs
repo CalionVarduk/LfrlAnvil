@@ -47,6 +47,115 @@ internal struct MessageEmitter
     {
         while ( true )
         {
+            try
+            {
+                await RunCore( listener ).ConfigureAwait( false );
+                break;
+            }
+            catch ( Exception exc )
+            {
+                ulong traceId;
+                using ( listener.Client.AcquireLock() )
+                    traceId = listener.Client.GetTraceId();
+
+                using ( MessageBrokerClientTraceEvent.CreateScope(
+                    listener.Client,
+                    traceId,
+                    MessageBrokerClientTraceEventType.Unexpected ) )
+                {
+                    MessageBrokerClientErrorEvent.Create( listener.Client, traceId, exc ).Emit( listener.Client.Logger.Error );
+                    try
+                    {
+                        using ( listener.AcquireLock() )
+                        {
+                            if ( listener.ShouldCancel )
+                                break;
+
+                            SignalContinuation( listener );
+                        }
+
+                        await Task.Delay( TimeSpan.FromSeconds( 1 ) ).ConfigureAwait( false );
+                    }
+                    catch ( Exception exc2 )
+                    {
+                        MessageBrokerClientErrorEvent.Create( listener.Client, traceId, exc2 ).Emit( listener.Client.Logger.Error );
+                    }
+                }
+            }
+        }
+
+        Assume.IsGreaterThanOrEqualTo( listener.State, MessageBrokerListenerState.Disposing );
+    }
+
+    internal (int DiscardedMessageCount, Chain<Exception> Exceptions) Dispose()
+    {
+        var discardedMessageCount = _messages.Count;
+        var exceptions = Chain<Exception>.Empty;
+
+        foreach ( ref readonly var message in _messages )
+        {
+            var exc = message.PoolToken.Return();
+            if ( exc is not null )
+                exceptions = exceptions.Extend( exc );
+        }
+
+        _messages.Clear();
+
+        if ( _continuation.Status == ValueTaskSourceStatus.Pending )
+            _continuation.SetResult( false );
+
+        return (discardedMessageCount, exceptions);
+    }
+
+    internal void SetUnderlyingTask(Task task)
+    {
+        Assume.IsNull( _task );
+        _task = task;
+    }
+
+    internal Task? DiscardUnderlyingTask()
+    {
+        var result = _task;
+        _task = null;
+        return result;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static void SignalContinuation(MessageBrokerListener listener)
+    {
+        if ( listener.MessageEmitter._continuation.Status == ValueTaskSourceStatus.Pending )
+            listener.MessageEmitter._continuation.SetResult( true );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static void Enqueue(
+        MessageBrokerListener listener,
+        in Protocol.MessageNotificationHeader request,
+        Timestamp receivedAt,
+        MemoryPoolToken<byte> poolToken,
+        ReadOnlyMemory<byte> data,
+        ulong traceId)
+    {
+        listener.MessageEmitter._messages.Enqueue(
+            new Message(
+                listener,
+                request.MessageId,
+                request.EnqueuedAt,
+                receivedAt,
+                request.SenderId,
+                request.StreamId,
+                request.RetryAttempt,
+                request.RedeliveryAttempt,
+                data,
+                poolToken,
+                traceId ) );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static async ValueTask RunCore(MessageBrokerListener listener)
+    {
+        while ( true )
+        {
             var @continue = await listener.MessageEmitter._continuation.GetTask().ConfigureAwait( false );
             if ( ! @continue )
                 return;
@@ -66,75 +175,36 @@ internal struct MessageEmitter
                     }
                 }
 
-                var cancellationToken = message.Args.Listener.CancellationSource.Token;
+                Assume.Equals( listener, message.Args.Listener );
+                var cancellationToken = listener.CancellationSource.Token;
                 try
                 {
-                    await message.Args.Listener.Callback( message.Args, cancellationToken ).ConfigureAwait( false );
-                }
-                catch ( OperationCanceledException exc ) when ( exc.CancellationToken == cancellationToken )
-                {
-                    // TODO: emit 'message-cancelled' event (log refactor)
+                    await listener.Callback( message.Args, cancellationToken ).ConfigureAwait( false );
                 }
                 catch ( Exception exc )
                 {
-                    message.Args.Listener.Client.Emit( MessageBrokerClientEvent.Unexpected( message.Args.Listener.Client, exc ) );
-                    // TODO: send NACK to server
+                    MessageBrokerClientErrorEvent.Create( listener.Client, message.Args.TraceId, exc ).Emit( listener.Client.Logger.Error );
+                    if ( exc is not OperationCanceledException cancelExc || cancelExc.CancellationToken != cancellationToken )
+                    {
+                        // TODO: send NACK to server
+                    }
                 }
                 finally
                 {
-                    message.PoolToken.Return( message.Args.Listener.Client );
+                    MessageBrokerClientMessageProcessedEvent.Create(
+                            listener,
+                            message.Args.TraceId,
+                            message.Args.MessageId,
+                            message.Args.Data.Length )
+                        .Emit( listener.Client.Logger.MessageProcessed );
+
+                    message.PoolToken.Return( listener.Client, message.Args.TraceId );
+                    MessageBrokerClientTraceEvent
+                        .Create( listener.Client, message.Args.TraceId, MessageBrokerClientTraceEventType.MessageNotification )
+                        .Emit( listener.Client.Logger.TraceEnd );
                 }
             }
         }
-    }
-
-    internal void Dispose(MessageBrokerClient client)
-    {
-        // TODO: emit 'message-discarded' event (log refactor)
-        foreach ( ref readonly var message in _messages )
-            message.PoolToken.Return( client );
-
-        _messages.Clear();
-
-        if ( _continuation.Status == ValueTaskSourceStatus.Pending )
-            _continuation.SetResult( false );
-    }
-
-    internal void SetUnderlyingTask(Task task)
-    {
-        Assume.IsNull( _task );
-        _task = task;
-    }
-
-    internal Task? DiscardUnderlyingTask()
-    {
-        var result = _task;
-        _task = null;
-        return result;
-    }
-
-    internal static void Enqueue(
-        MessageBrokerListener listener,
-        in Protocol.MessageNotificationHeader request,
-        Timestamp receivedAt,
-        MemoryPoolToken<byte> poolToken,
-        ReadOnlyMemory<byte> data)
-    {
-        listener.MessageEmitter._messages.Enqueue(
-            new Message(
-                listener,
-                request.MessageId,
-                request.EnqueuedAt,
-                receivedAt,
-                request.SenderId,
-                request.StreamId,
-                request.RetryAttempt,
-                request.RedeliveryAttempt,
-                data,
-                poolToken ) );
-
-        if ( listener.MessageEmitter._continuation.Status == ValueTaskSourceStatus.Pending )
-            listener.MessageEmitter._continuation.SetResult( true );
     }
 
     private readonly struct Message
@@ -149,7 +219,8 @@ internal struct MessageEmitter
             int retryAttempt,
             int redeliveryAttempt,
             ReadOnlyMemory<byte> data,
-            MemoryPoolToken<byte> poolToken)
+            MemoryPoolToken<byte> poolToken,
+            ulong traceId)
         {
             Args = new MessageBrokerListenerCallbackArgs(
                 listener,
@@ -160,7 +231,8 @@ internal struct MessageEmitter
                 streamId,
                 retryAttempt,
                 redeliveryAttempt,
-                data );
+                data,
+                traceId );
 
             PoolToken = poolToken;
         }

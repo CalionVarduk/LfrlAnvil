@@ -47,36 +47,47 @@ internal struct MessageNotifications
     [MethodImpl( MethodImplOptions.NoInlining )]
     internal static async Task StartUnderlyingTask(MessageBrokerClient client)
     {
-        TaskStopReason stopReason;
         try
         {
-            stopReason = await RunCore( client ).ConfigureAwait( false );
+            await RunCore( client ).ConfigureAwait( false );
         }
         catch ( Exception exc )
         {
-            client.Emit( MessageBrokerClientEvent.Unexpected( client, exc ) );
-            stopReason = TaskStopReason.Error;
+            ulong traceId;
+            using ( client.AcquireLock() )
+            {
+                client.MessageNotifications._task = null;
+                traceId = client.GetTraceId();
+            }
+
+            using ( MessageBrokerClientTraceEvent.CreateScope( client, traceId, MessageBrokerClientTraceEventType.Unexpected ) )
+            {
+                MessageBrokerClientErrorEvent.Create( client, traceId, exc ).Emit( client.Logger.Error );
+                await client.DisposeAsync( traceId ).ConfigureAwait( false );
+            }
         }
 
-        if ( stopReason == TaskStopReason.OwnerDisposed )
-            return;
-
-        using ( client.AcquireLock() )
-            client.MessageNotifications._task = null;
-
-        await client.DisposeAsync().ConfigureAwait( false );
+        Assume.IsGreaterThanOrEqualTo( client.State, MessageBrokerClientState.Disposing );
     }
 
-    internal void Dispose(MessageBrokerClient client)
+    internal (int DiscardedMessageCount, Chain<Exception> Exceptions) Dispose()
     {
-        // TODO: emit 'message-discarded' event (log refactor)
+        var discardedMessageCount = _messages.Count;
+        var exceptions = Chain<Exception>.Empty;
+
         foreach ( ref readonly var message in _messages )
-            message.PoolToken.Return( client );
+        {
+            var exc = message.PoolToken.Return();
+            if ( exc is not null )
+                exceptions = exceptions.Extend( exc );
+        }
 
         _messages.Clear();
 
         if ( _continuation.Status == ValueTaskSourceStatus.Pending )
             _continuation.SetResult( false );
+
+        return (discardedMessageCount, exceptions);
     }
 
     internal void SetUnderlyingTask(Task task)
@@ -92,21 +103,27 @@ internal struct MessageNotifications
         return result;
     }
 
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void Enqueue(Protocol.PacketHeader header, Timestamp receivedAt, MemoryPoolToken<byte> poolToken, ReadOnlyMemory<byte> data)
     {
         _messages.Enqueue( new Message( header, receivedAt, poolToken, data ) );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void SignalContinuation()
+    {
         if ( _continuation.Status == ValueTaskSourceStatus.Pending )
             _continuation.SetResult( true );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static async ValueTask<TaskStopReason> RunCore(MessageBrokerClient client)
+    private static async ValueTask RunCore(MessageBrokerClient client)
     {
         bool reverseEndianness;
         using ( client.AcquireLock() )
         {
             if ( client.ShouldCancel )
-                return TaskStopReason.OwnerDisposed;
+                return;
 
             reverseEndianness = BitConverter.IsLittleEndian != client.IsServerLittleEndian;
         }
@@ -115,16 +132,16 @@ internal struct MessageNotifications
         {
             var @continue = await client.MessageNotifications._continuation.GetTask().ConfigureAwait( false );
             if ( ! @continue )
-                return TaskStopReason.OwnerDisposed;
+                return;
 
             while ( true )
             {
-                ulong contextId;
+                ulong traceId;
                 Message message;
                 using ( client.AcquireLock() )
                 {
                     if ( client.ShouldCancel )
-                        return TaskStopReason.OwnerDisposed;
+                        return;
 
                     if ( ! client.MessageNotifications._messages.TryDequeue( out message ) )
                     {
@@ -132,75 +149,98 @@ internal struct MessageNotifications
                         break;
                     }
 
-                    contextId = client.MessageContextQueue.AcquireContextId();
+                    traceId = client.GetTraceId();
                 }
 
-                client.Emit( MessageBrokerClientEvent.MessageReceived( client, message.Header, contextId ) );
+                var failed = true;
+                MessageBrokerClientTraceEvent.Create( client, traceId, MessageBrokerClientTraceEventType.MessageNotification )
+                    .Emit( client.Logger.TraceStart );
 
-                var exc = Protocol.AssertMinPayload( client, message.Header, Protocol.MessageNotificationHeader.Length );
-                if ( exc is not null )
+                try
                 {
-                    client.Emit( MessageBrokerClientEvent.MessageRejected( client, message.Header, exc, contextId ) );
-                    message.PoolToken.Return( client );
-                    return TaskStopReason.Error;
-                }
+                    MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, message.Header ).Emit( client.Logger.ReadPacket );
 
-                var request = Protocol.MessageNotificationHeader.Parse(
-                    message.Data.Slice( 0, Protocol.MessageNotificationHeader.Length ),
-                    reverseEndianness );
-
-                var errors = request.StringifyErrors();
-                if ( errors.Count > 0 )
-                {
-                    client.Emit(
-                        MessageBrokerClientEvent.MessageRejected(
-                            client,
-                            message.Header,
-                            Protocol.ProtocolException( client, message.Header, errors ),
-                            contextId ) );
-
-                    message.PoolToken.Return( client );
-                    return TaskStopReason.Error;
-                }
-
-                var listener = ListenerCollection.TryGetByChannelId( client, request.ChannelId );
-                if ( listener is null )
-                {
-                    client.Emit(
-                        MessageBrokerClientEvent.MessageRejected(
-                            client,
-                            message.Header,
-                            Protocol.ProtocolException(
-                                client,
-                                message.Header,
-                                Chain.Create( Resources.ListenerDoesNotExist( request.ChannelId ) ) ),
-                            contextId ) );
-
-                    message.PoolToken.Return( client );
-                    continue;
-                }
-
-                client.Emit( MessageBrokerClientEvent.MessageAccepted( client, message.Header, contextId ) );
-
-                using ( listener.AcquireLock() )
-                {
-                    if ( ! listener.ShouldCancel )
+                    var exception = Protocol.AssertMinPayload( client, message.Header, Protocol.MessageNotificationHeader.Length );
+                    if ( exception is not null )
                     {
-                        MessageEmitter.Enqueue(
-                            listener,
-                            in request,
-                            message.ReceivedAt,
-                            message.PoolToken,
-                            message.Data.Slice( Protocol.MessageNotificationHeader.Length ) );
+                        MessageBrokerClientErrorEvent.Create( client, traceId, exception ).Emit( client.Logger.Error );
+                        await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
+                        return;
                     }
-                    else
+
+                    var request = Protocol.MessageNotificationHeader.Parse(
+                        message.Data.Slice( 0, Protocol.MessageNotificationHeader.Length ),
+                        reverseEndianness );
+
+                    var errors = request.StringifyErrors();
+                    if ( errors.Count > 0 )
                     {
-                        // TODO: emit 'message-discarded' event (log refactor)
-                        message.PoolToken.Return( client );
+                        var error = Protocol.ProtocolException( client, message.Header, errors );
+                        MessageBrokerClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+                        await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
+                        return;
+                    }
+
+                    var data = message.Data.Slice( Protocol.MessageNotificationHeader.Length );
+                    MessageBrokerClientMessageProcessingEvent.Create( client, traceId, request.MessageId, request.ChannelId, data.Length )
+                        .Emit( client.Logger.MessageProcessing );
+
+                    var listener = ListenerCollection.TryGetByChannelId( client, request.ChannelId );
+                    if ( listener is null )
+                    {
+                        var error = new MessageBrokerClientMessageException(
+                            client,
+                            null,
+                            Resources.ListenerDoesNotExist( request.ChannelId ) );
+
+                        MessageBrokerClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+                        continue;
+                    }
+
+                    MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, message.Header ).Emit( client.Logger.ReadPacket );
+
+                    bool cancel;
+                    using ( listener.AcquireLock() )
+                    {
+                        cancel = listener.ShouldCancel;
+                        if ( ! cancel )
+                        {
+                            MessageEmitter.Enqueue( listener, in request, message.ReceivedAt, message.PoolToken, data, traceId );
+                            failed = false;
+                            MessageEmitter.SignalContinuation( listener );
+                        }
+                    }
+
+                    if ( cancel )
+                    {
+                        var error = new MessageBrokerClientMessageException(
+                            client,
+                            listener,
+                            Resources.ListenerDoesNotExist( request.ChannelId ) );
+
+                        MessageBrokerClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+                    }
+                }
+                finally
+                {
+                    if ( failed )
+                    {
+                        message.PoolToken.Return( client, traceId );
+                        MessageBrokerClientTraceEvent.Create( client, traceId, MessageBrokerClientTraceEventType.MessageNotification )
+                            .Emit( client.Logger.TraceEnd );
                     }
                 }
             }
         }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static ValueTask DisposeClientAsync(MessageBrokerClient client, ulong traceId)
+    {
+        using ( client.AcquireLock() )
+            client.MessageNotifications._task = null;
+
+        return client.DisposeAsync( traceId );
     }
 
     private readonly struct Message

@@ -17,7 +17,6 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks.Sources;
 using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
-using LfrlAnvil.MessageBroker.Client.Events;
 
 namespace LfrlAnvil.MessageBroker.Client.Internal;
 
@@ -27,17 +26,15 @@ internal struct MessageContextQueue
     private StackSlim<ManualResetValueTaskSource<IncomingPacketToken>> _incomingPendingResponseSourceCache;
     private QueueSlim<ManualResetValueTaskSource<bool>> _pendingOutgoingWriters;
     private QueueSlim<PendingResponseSource> _pendingResponses;
-    private ulong _lastContextId;
     private int _activePendingResponses;
 
-    private MessageContextQueue(ulong lastContextId)
+    private MessageContextQueue(int activePendingResponses)
     {
         _writerTokenSourceCache = StackSlim<ManualResetValueTaskSource<bool>>.Create();
         _incomingPendingResponseSourceCache = StackSlim<ManualResetValueTaskSource<IncomingPacketToken>>.Create();
         _pendingOutgoingWriters = QueueSlim<ManualResetValueTaskSource<bool>>.Create();
         _pendingResponses = QueueSlim<PendingResponseSource>.Create();
-        _lastContextId = lastContextId;
-        _activePendingResponses = 0;
+        _activePendingResponses = activePendingResponses;
     }
 
     [Pure]
@@ -70,12 +67,6 @@ internal struct MessageContextQueue
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ulong AcquireContextId()
-    {
-        return ++_lastContextId;
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ManualResetValueTaskSource<bool> AcquireWriterSource()
     {
         if ( ! _writerTokenSourceCache.TryPop( out var result ) )
@@ -89,14 +80,12 @@ internal struct MessageContextQueue
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ManualResetValueTaskSource<IncomingPacketToken> AcquirePendingResponseSource(
-        ulong contextId,
-        MessageBrokerServerEndpoint serverEndpoint)
+    internal ManualResetValueTaskSource<IncomingPacketToken> AcquirePendingResponseSource()
     {
         if ( ! _incomingPendingResponseSourceCache.TryPop( out var result ) )
             result = new ManualResetValueTaskSource<IncomingPacketToken>();
 
-        _pendingResponses.Enqueue( new PendingResponseSource( result, contextId, serverEndpoint ) );
+        _pendingResponses.Enqueue( new PendingResponseSource( result ) );
         return result;
     }
 

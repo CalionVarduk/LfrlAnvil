@@ -21,8 +21,25 @@ using LfrlAnvil.MessageBroker.Client.Events;
 
 namespace LfrlAnvil.MessageBroker.Client.Internal;
 
-internal static class PoolExtensions
+internal static class MessageBrokerExtensions
 {
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static void Emit<T>(this T @event, Action<T>? emitter)
+        where T : struct
+    {
+        if ( emitter is null )
+            return;
+
+        try
+        {
+            emitter( @event );
+        }
+        catch
+        {
+            // NOTE: do nothing
+        }
+    }
+
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MemoryPoolToken<byte> Rent(this MemoryPool<byte> pool, int length, out Memory<byte> data)
     {
@@ -45,14 +62,18 @@ internal static class PoolExtensions
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static void Return(this MemoryPoolToken<byte> token, MessageBrokerClient client)
+    internal static Exception? Return(this MemoryPoolToken<byte> token)
     {
-        Exception? exception;
         using ( token.AcquireLock() )
-            exception = token.TryDispose().Exception;
+            return token.TryDispose().Exception;
+    }
 
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static void Return(this MemoryPoolToken<byte> token, MessageBrokerClient client, ulong traceId)
+    {
+        var exception = token.Return();
         if ( exception is not null )
-            client.Emit( MessageBrokerClientEvent.Unexpected( client, exception ) );
+            MessageBrokerClientErrorEvent.Create( client, traceId, exception ).Emit( client.Logger.Error );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
