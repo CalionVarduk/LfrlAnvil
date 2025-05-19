@@ -799,23 +799,27 @@ internal static class Protocol
 
     internal readonly struct PushMessageHeader
     {
-        internal const int Length = PacketHeader.Length + sizeof( uint );
+        internal const int Length = PacketHeader.Length + sizeof( byte ) + sizeof( uint );
         internal readonly PacketHeader Header;
+        internal readonly byte Flags;
         internal readonly int ChannelId;
         internal readonly int MessageLength;
 
-        internal PushMessageHeader(int channelId, int messageLength)
+        internal PushMessageHeader(int channelId, int messageLength, bool confirm)
         {
             Assume.IsInRange( messageLength, 0, int.MaxValue - Length );
+            Flags = ( byte )(confirm ? 1 : 0);
             ChannelId = channelId;
             MessageLength = messageLength;
-            Header = PacketHeader.Create( MessageBrokerServerEndpoint.PushMessage, unchecked( sizeof( uint ) + ( uint )MessageLength ) );
+            Header = PacketHeader.Create(
+                MessageBrokerServerEndpoint.PushMessage,
+                unchecked( sizeof( byte ) + sizeof( uint ) + ( uint )MessageLength ) );
         }
 
         [Pure]
         public override string ToString()
         {
-            return $"[{Header}] ChannelId = {ChannelId}, MessageLength = {MessageLength}";
+            return $"[{Header}] Flags = {Flags}, ChannelId = {ChannelId}, MessageLength = {MessageLength}";
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -834,6 +838,7 @@ internal static class Protocol
             var writer = new BinaryContractWriter( target.Span );
             writer.MoveWrite( Header.EndpointCode );
             writer.MoveWrite( payload );
+            writer.MoveWrite( Flags );
             writer.Write( channelId );
         }
     }

@@ -22,11 +22,17 @@ namespace LfrlAnvil.MessageBroker.Client.Events;
 /// </summary>
 public readonly struct MessageBrokerClientMessagePushingEvent
 {
-    private MessageBrokerClientMessagePushingEvent(MessageBrokerClient client, ulong traceId, MessageBrokerPublisher publisher, int length)
+    private MessageBrokerClientMessagePushingEvent(
+        MessageBrokerClient client,
+        ulong traceId,
+        MessageBrokerPublisher publisher,
+        int length,
+        bool confifm)
     {
         Source = MessageBrokerClientEventSource.Create( client, traceId );
         Publisher = publisher;
         Length = length;
+        Confirm = confifm;
     }
 
     /// <summary>
@@ -45,6 +51,11 @@ public readonly struct MessageBrokerClientMessagePushingEvent
     public int Length { get; }
 
     /// <summary>
+    /// Specifies whether or not the server should send confirmation that it received the message.
+    /// </summary>
+    public bool Confirm { get; }
+
+    /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerClientMessagePushingEvent"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
@@ -52,7 +63,7 @@ public readonly struct MessageBrokerClientMessagePushingEvent
     public override string ToString()
     {
         return
-            $"[MessagePushing] {Source}, Channel = [{Publisher.ChannelId}] '{Publisher.ChannelName}', Stream = [{Publisher.StreamId}] '{Publisher.StreamName}', Length = {Length}";
+            $"[MessagePushing] {Source}, Channel = [{Publisher.ChannelId}] '{Publisher.ChannelName}', Stream = [{Publisher.StreamId}] '{Publisher.StreamName}', Length = {Length}, Confirm = {Confirm}";
     }
 
     [Pure]
@@ -61,8 +72,9 @@ public readonly struct MessageBrokerClientMessagePushingEvent
         MessageBrokerClient client,
         ulong traceId,
         MessageBrokerPublisher publisher,
-        int length)
+        int length,
+        bool confirm)
     {
-        return new MessageBrokerClientMessagePushingEvent( client, traceId, publisher, length );
+        return new MessageBrokerClientMessagePushingEvent( client, traceId, publisher, length, confirm );
     }
 }

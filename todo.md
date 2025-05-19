@@ -31,7 +31,6 @@ Sql:
 
 MessageBroker:
 
-- publisher push message: add optional 'expectConfirmation' (true by default) that allows to skip server response
 - refactor packet read/write & payload error emitting? there's a lot of copy-pasta (wait for packet batching)
 - separate synchronous enqueue-write operation from asynchronous write-and-wait-for-response operation
     - consumption example: client.Enqueue(...).WaitForResponseAsync()

@@ -25,13 +25,13 @@ using LfrlAnvil.MessageBroker.Client.Internal;
 namespace LfrlAnvil.MessageBroker.Client;
 
 /// <summary>
-/// Represents an object that can send a single message to the server, with access to the client's internal memory pool,
+/// Represents an object that can push a single message to the server, with access to the client's internal memory pool,
 /// which allows to efficiently buffer data to be sent.
 /// </summary>
 /// <remarks>
-/// Make sure to dispose and discard an instance after sending a message, otherwise issues like memory leaks may be encountered.
+/// Make sure to dispose and discard an instance after pushing a message, otherwise issues like memory leaks may be encountered.
 /// </remarks>
-public sealed class MessageBrokerSendContext : IBufferWriter<byte>, IDisposable
+public sealed class MessageBrokerPushContext : IBufferWriter<byte>, IDisposable
 {
     private readonly Memory.MemoryPool<byte> _pool;
     private MessageBrokerPublisher? _publisher;
@@ -40,7 +40,7 @@ public sealed class MessageBrokerSendContext : IBufferWriter<byte>, IDisposable
     private Memory<byte> _buffer;
     private int _written;
 
-    internal MessageBrokerSendContext(Memory.MemoryPool<byte> pool)
+    internal MessageBrokerPushContext(Memory.MemoryPool<byte> pool)
     {
         _pool = pool;
         _publisher = null;
@@ -108,7 +108,7 @@ public sealed class MessageBrokerSendContext : IBufferWriter<byte>, IDisposable
     /// <param name="data">Data to append to the end of the buffer.</param>
     /// <returns><b>this</b>.</returns>
     /// <exception cref="ObjectDisposedException">When this context has been disposed.</exception>
-    public MessageBrokerSendContext Append(ReadOnlySpan<byte> data)
+    public MessageBrokerPushContext Append(ReadOnlySpan<byte> data)
     {
         data.CopyTo( GetSpan( data.Length ) );
         _written = unchecked( _written + data.Length );
@@ -116,23 +116,26 @@ public sealed class MessageBrokerSendContext : IBufferWriter<byte>, IDisposable
     }
 
     /// <summary>
-    /// Sends the buffered message to the publisher's bound channel.
+    /// Pushes the buffered message to the publisher's bound channel.
     /// </summary>
+    /// <param name="confirm">
+    /// Specifies whether or not the server should send confirmation that it received the message. Equal to <b>true</b> by default.
+    /// </param>
     /// <returns>
     /// A task that represents the operation, which returns a <see cref="Result{T}"/> instance,
-    /// with underlying <see cref="MesageBrokerSendResult"/> instance.
+    /// with underlying <see cref="MessageBrokerPushResult"/> instance.
     /// </returns>
     /// <exception cref="ObjectDisposedException">When this context has been disposed.</exception>
     /// <exception cref="MessageBrokerClientDisposedException">When client has already been disposed.</exception>
     /// <remarks>
-    /// Unexpected errors encountered during sending will cause the client to be automatically disposed.
+    /// Unexpected errors encountered during pushing will cause the client to be automatically disposed.
     /// Returned <see cref="Result{T}"/> will only be valid when either the message has been successfully enqueued on the server side,
     /// or the publisher is already locally unbound from the channel, which will cancel the request to the server.
     /// </remarks>
-    public ValueTask<Result<MesageBrokerSendResult>> SendAsync()
+    public ValueTask<Result<MessageBrokerPushResult>> PushAsync(bool confirm = true)
     {
         ObjectDisposedException.ThrowIf( _disposed.Value, this );
-        return PublisherCollection.SendAsync( this );
+        return PublisherCollection.PushAsync( this, confirm );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

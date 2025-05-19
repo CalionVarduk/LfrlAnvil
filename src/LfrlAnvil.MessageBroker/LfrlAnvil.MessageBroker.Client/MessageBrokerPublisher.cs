@@ -109,31 +109,37 @@ public sealed class MessageBrokerPublisher
     }
 
     /// <summary>
-    /// Sends a message to the bound channel.
+    /// Pushes a message to the bound channel.
     /// </summary>
-    /// <param name="data">Message to send.</param>
+    /// <param name="data">Message to push.</param>
+    /// <param name="confirm">
+    /// Specifies whether or not the server should send confirmation that it received the message. Equal to <b>true</b> by default.
+    /// </param>
     /// <param name="clearBuffer">
     /// Specifies whether or not to clear the internal memory buffer when it's returned to the pool. Equal to <b>false</b> by default.
     /// </param>
     /// <returns>
     /// A task that represents the operation, which returns a <see cref="Result{T}"/> instance,
-    /// with underlying <see cref="MesageBrokerSendResult"/> instance.
+    /// with underlying <see cref="MessageBrokerPushResult"/> instance.
     /// </returns>
     /// <exception cref="MessageBrokerClientDisposedException">When client has already been disposed.</exception>
     /// <remarks>
-    /// Unexpected errors encountered during sending will cause the client to be automatically disposed.
+    /// Unexpected errors encountered during pushing will cause the client to be automatically disposed.
     /// Returned <see cref="Result{T}"/> will only be valid when either the message has been successfully enqueued on the server side,
     /// or the publisher is already locally unbound from the channel, which will cancel the request to the server.
     /// </remarks>
-    public async ValueTask<Result<MesageBrokerSendResult>> SendAsync(ReadOnlyMemory<byte> data, bool clearBuffer = false)
+    public async ValueTask<Result<MessageBrokerPushResult>> PushAsync(
+        ReadOnlyMemory<byte> data,
+        bool confirm = true,
+        bool clearBuffer = false)
     {
-        using var context = GetSendContext( MemorySize.FromBytes( data.Length ), clearBuffer );
-        return await context.Append( data.Span ).SendAsync().ConfigureAwait( false );
+        using var context = GetPushContext( MemorySize.FromBytes( data.Length ), clearBuffer );
+        return await context.Append( data.Span ).PushAsync( confirm ).ConfigureAwait( false );
     }
 
     /// <summary>
-    /// Acquires a <see cref="MessageBrokerSendContext"/> instance which gives access to the internal memory pool
-    /// and allows to send a message to the bound channel.
+    /// Acquires a <see cref="MessageBrokerPushContext"/> instance which gives access to the internal memory pool
+    /// and allows to push a message to the bound channel.
     /// </summary>
     /// <param name="minCapacity">
     /// Specifies minimum initial capacity of the allocated memory buffer.
@@ -142,8 +148,8 @@ public sealed class MessageBrokerPublisher
     /// <param name="clearBufferOnDispose">
     /// Specifies whether or not to clear the internal memory buffer when it's returned to the pool. Equal to <b>false</b> by default.
     /// </param>
-    /// <returns>Pooled <see cref="MessageBrokerSendContext"/> instance.</returns>
-    public MessageBrokerSendContext GetSendContext(MemorySize? minCapacity = null, bool clearBufferOnDispose = false)
+    /// <returns>Pooled <see cref="MessageBrokerPushContext"/> instance.</returns>
+    public MessageBrokerPushContext GetPushContext(MemorySize? minCapacity = null, bool clearBufferOnDispose = false)
     {
         return Client.RentMessageContext( this, minCapacity ?? MemorySize.Zero, clearBufferOnDispose );
     }

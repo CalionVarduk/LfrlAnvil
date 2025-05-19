@@ -865,6 +865,9 @@ internal struct RequestHandler
                             Resources.FailedToPushMessageToUnboundChannel( client.Id, client.Name, parsedRequest.ChannelId ) ),
                         contextId ) );
 
+                if ( ! parsedRequest.Confirm )
+                    return FinishRequestHandling( client );
+
                 var responseLength = Protocol.PacketHeader.Length + Protocol.MessageRejectedResponse.Payload;
                 var response = new Protocol.MessageRejectedResponse( rejectionReasons );
                 poolToken = client.MemoryPool.Rent( responseLength, out responseData ).EnableClearing();
@@ -877,6 +880,9 @@ internal struct RequestHandler
                 Assume.IsNotNull( messageId );
 
                 client.Emit( MessageBrokerRemoteClientEvent.MessageAccepted( client, request.Header, contextId ) );
+
+                if ( ! parsedRequest.Confirm )
+                    return FinishRequestHandling( client );
 
                 var responseLength = Protocol.PacketHeader.Length + Protocol.MessageAcceptedResponse.Payload;
                 var response = new Protocol.MessageAcceptedResponse( messageId.Value );
@@ -963,6 +969,18 @@ internal struct RequestHandler
 
             client.MessageContextQueue.ResetOutgoingWriter( client, writerSource );
             return HandleRequestResult.Ok( client.MessageContextQueue.ContainsEnqueuedRequests() );
+        }
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static HandleRequestResult FinishRequestHandling(MessageBrokerRemoteClient client)
+    {
+        using ( client.AcquireLock() )
+        {
+            return client.ShouldCancel
+                ? HandleRequestResult.OwnerDisposed()
+                : HandleRequestResult.Ok( client.MessageContextQueue.ContainsEnqueuedRequests() );
         }
     }
 

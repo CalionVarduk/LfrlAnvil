@@ -27,7 +27,7 @@ public readonly struct MessageBrokerClientMessagePushedEvent
         ulong traceId,
         MessageBrokerPublisher publisher,
         int length,
-        ulong messageId)
+        ulong? messageId)
     {
         Source = MessageBrokerClientEventSource.Create( client, traceId );
         Publisher = publisher;
@@ -53,7 +53,10 @@ public readonly struct MessageBrokerClientMessagePushedEvent
     /// <summary>
     /// Unique id of the message assigned by the server.
     /// </summary>
-    public ulong MessageId { get; }
+    /// <remarks>
+    /// Id will be <b>null</b> when the client did not request confirmation from the server that it received the message.
+    /// </remarks>
+    public ulong? MessageId { get; }
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerClientMessagePushedEvent"/> instance.
@@ -63,7 +66,7 @@ public readonly struct MessageBrokerClientMessagePushedEvent
     public override string ToString()
     {
         return
-            $"[MessagePushed] {Source}, Channel = [{Publisher.ChannelId}] '{Publisher.ChannelName}', Stream = [{Publisher.StreamId}] '{Publisher.StreamName}', Length = {Length}, MessageId = {MessageId}";
+            $"[MessagePushed] {Source}, Channel = [{Publisher.ChannelId}] '{Publisher.ChannelName}', Stream = [{Publisher.StreamId}] '{Publisher.StreamName}', Length = {Length}, MessageId = {MessageId?.ToString() ?? "<NULL>"}";
     }
 
     [Pure]
@@ -73,7 +76,7 @@ public readonly struct MessageBrokerClientMessagePushedEvent
         ulong traceId,
         MessageBrokerPublisher publisher,
         int length,
-        ulong messageId)
+        ulong? messageId = null)
     {
         return new MessageBrokerClientMessagePushedEvent( client, traceId, publisher, length, messageId );
     }

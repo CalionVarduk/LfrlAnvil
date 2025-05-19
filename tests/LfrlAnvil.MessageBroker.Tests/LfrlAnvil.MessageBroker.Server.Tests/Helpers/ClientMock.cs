@@ -277,12 +277,13 @@ internal sealed class ClientMock : IDisposable
         Send( buffer );
     }
 
-    internal void SendPushMessage(int channelId, byte[] data, uint? payload = null)
+    internal void SendPushMessage(int channelId, byte[] data, bool confirm = true, uint? payload = null)
     {
         var buffer = new byte[Protocol.PacketHeader.Length + Protocol.PushMessageHeader.Length + data.Length];
         var writer = new BinaryContractWriter( buffer );
         writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.PushMessage );
         writer.MoveWrite( payload ?? ( uint )(Protocol.PushMessageHeader.Length + data.Length) );
+        writer.MoveWrite( ( byte )(confirm ? 1 : 0) );
         writer.MoveWrite( ( uint )channelId );
         data.AsSpan().CopyTo( writer.GetSpan( data.Length ) );
         Send( buffer );

@@ -20,7 +20,7 @@ public class MessageTests : TestsBase, IClassFixture<SharedResourceFixture>
     }
 
     [Fact]
-    public async Task Server_ShouldAcceptSentMessages_AndSendThemToAppropriateListeners()
+    public async Task Server_ShouldAcceptPushedMessages_AndSendThemToAppropriateListeners()
     {
         var endSource = new SafeTaskCompletionSource( completionCount: 6 );
         await using var server = new MessageBrokerServer(
@@ -85,11 +85,11 @@ public class MessageTests : TestsBase, IClassFixture<SharedResourceFixture>
 
         if ( publisher is not null )
         {
-            var result = await publisher.SendAsync( new byte[] { 1 } );
+            var result = await publisher.PushAsync( new byte[] { 1 } );
             sentMessageIds.Add( result.Value.Id );
-            result = await publisher.SendAsync( new byte[] { 2, 3 } );
+            result = await publisher.PushAsync( new byte[] { 2, 3 } );
             sentMessageIds.Add( result.Value.Id );
-            result = await publisher.SendAsync( new byte[] { 4, 5, 6 } );
+            result = await publisher.PushAsync( new byte[] { 4, 5, 6 } );
             sentMessageIds.Add( result.Value.Id );
         }
 

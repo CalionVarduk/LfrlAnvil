@@ -454,7 +454,7 @@ internal struct PublisherCollection
         }
     }
 
-    internal static async ValueTask<Result<MesageBrokerSendResult>> SendAsync(MessageBrokerSendContext context)
+    internal static async ValueTask<Result<MessageBrokerPushResult>> PushAsync(MessageBrokerPushContext context, bool confirm)
     {
         ulong traceId;
         bool reverseEndianness;
@@ -465,7 +465,7 @@ internal struct PublisherCollection
                 ExceptionThrower.Throw( client.DisposedException() );
 
             if ( context.Publisher.State != MessageBrokerPublisherState.Bound )
-                return MesageBrokerSendResult.CreateNotBound();
+                return MessageBrokerPushResult.CreateNotBound( confirm );
 
             reverseEndianness = BitConverter.IsLittleEndian != client.IsServerLittleEndian;
             traceId = client.GetTraceId();
@@ -475,15 +475,15 @@ internal struct PublisherCollection
         {
             var buffer = context.Data;
             var messageLength = unchecked( buffer.Length - Protocol.PushMessageHeader.Length );
-            MessageBrokerClientMessagePushingEvent.Create( client, traceId, context.Publisher, messageLength )
+            MessageBrokerClientMessagePushingEvent.Create( client, traceId, context.Publisher, messageLength, confirm )
                 .Emit( client.Logger.MessagePushing );
 
-            ManualResetValueTaskSource<IncomingPacketToken> responseSource;
+            ManualResetValueTaskSource<IncomingPacketToken>? responseSource = null;
             Protocol.PushMessageHeader request;
 
             try
             {
-                request = new Protocol.PushMessageHeader( context.Publisher.ChannelId, messageLength );
+                request = new Protocol.PushMessageHeader( context.Publisher.ChannelId, messageLength, confirm );
                 request.Serialize( buffer.Slice( 0, Protocol.PushMessageHeader.Length ), reverseEndianness );
 
                 ManualResetValueTaskSource<bool> writerSource;
@@ -504,7 +504,8 @@ internal struct PublisherCollection
                         return exc;
 
                     client.EventScheduler.PausePing();
-                    responseSource = client.MessageContextQueue.AcquirePendingResponseSource();
+                    if ( confirm )
+                        responseSource = client.MessageContextQueue.AcquirePendingResponseSource();
                 }
 
                 var result = await client.WriteAsync( request.Header, buffer, traceId ).ConfigureAwait( false );
@@ -520,7 +521,9 @@ internal struct PublisherCollection
                         return exc;
 
                     client.MessageContextQueue.ResetOutgoingWriter( client, writerSource );
-                    client.MessageContextQueue.ActivatePendingResponseSource( client, responseSource );
+                    if ( responseSource is not null )
+                        client.MessageContextQueue.ActivatePendingResponseSource( client, responseSource );
+
                     client.EventScheduler.SchedulePing( client );
                 }
             }
@@ -529,6 +532,14 @@ internal struct PublisherCollection
                 MessageBrokerClientErrorEvent.Create( client, traceId, exc ).Emit( client.Logger.Error );
                 await client.DisposeAsync( traceId ).ConfigureAwait( false );
                 return exc;
+            }
+
+            if ( responseSource is null )
+            {
+                MessageBrokerClientMessagePushedEvent.Create( client, traceId, context.Publisher, messageLength )
+                    .Emit( client.Logger.MessagePushed );
+
+                return MessageBrokerPushResult.CreateUnconfirmed();
             }
 
             var response = await responseSource.GetTask().ConfigureAwait( false );
@@ -576,7 +587,7 @@ internal struct PublisherCollection
                             .Create( client, traceId, context.Publisher, messageLength, parsedResponse.Id )
                             .Emit( client.Logger.MessagePushed );
 
-                        return MesageBrokerSendResult.Create( parsedResponse.Id );
+                        return MessageBrokerPushResult.Create( parsedResponse.Id );
                     }
                     case MessageBrokerClientEndpoint.MessageRejectedResponse:
                     {

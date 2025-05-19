@@ -650,18 +650,22 @@ internal static class Protocol
 
     internal readonly struct PushMessageHeader
     {
-        internal const int Length = sizeof( uint );
+        internal const int Length = sizeof( byte ) + sizeof( uint );
+        internal readonly byte Flags;
         internal readonly int ChannelId;
 
-        private PushMessageHeader(int channelId)
+        private PushMessageHeader(byte flags, int channelId)
         {
+            Flags = flags;
             ChannelId = channelId;
         }
+
+        internal bool Confirm => (Flags & 1) != 0;
 
         [Pure]
         public override string ToString()
         {
-            return $"ChannelId = {ChannelId}";
+            return $"Flags = {Flags}, ChannelId = {ChannelId}";
         }
 
         [Pure]
@@ -670,8 +674,9 @@ internal static class Protocol
         {
             Assume.Equals( source.Length, Length );
             var reader = new BinaryContractReader( source.Span );
+            var flags = reader.MoveReadInt8();
             var channelId = unchecked( ( int )reader.ReadInt32() );
-            return new PushMessageHeader( channelId );
+            return new PushMessageHeader( flags, channelId );
         }
     }
 

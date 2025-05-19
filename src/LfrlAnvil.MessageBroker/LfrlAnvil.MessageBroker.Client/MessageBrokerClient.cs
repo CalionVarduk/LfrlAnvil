@@ -51,7 +51,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
 
     private readonly ITimestampProvider _timestamps;
     private readonly TcpClient _tcp;
-    private StackSlim<MessageBrokerSendContext> _messageContextPool;
+    private StackSlim<MessageBrokerPushContext> _messageContextPool;
     private DelaySource _delaySource;
     private MessageBrokerClientStreamDecorator? _streamDecorator;
     private Stream? _stream;
@@ -80,7 +80,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         _streamDecorator = options.StreamDecorator;
         Logger = options.Logger ?? default;
         _timestamps = options.Timestamps ?? TimestampProvider.Shared;
-        _messageContextPool = StackSlim<MessageBrokerSendContext>.Create();
+        _messageContextPool = StackSlim<MessageBrokerPushContext>.Create();
 
         _stream = null;
         _state = MessageBrokerClientState.Created;
@@ -364,19 +364,19 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal MessageBrokerSendContext RentMessageContext(
+    internal MessageBrokerPushContext RentMessageContext(
         MessageBrokerPublisher publisher,
         MemorySize minCapacity,
         bool clearBufferOnDispose)
     {
-        MessageBrokerSendContext? result;
+        MessageBrokerPushContext? result;
         using ( AcquireLock() )
         {
             if ( ShouldCancel )
                 ExceptionThrower.Throw( DisposedException() );
 
             if ( ! _messageContextPool.TryPop( out result ) )
-                result = new MessageBrokerSendContext( MemoryPool );
+                result = new MessageBrokerPushContext( MemoryPool );
         }
 
         result.Initialize( publisher, minCapacity, clearBufferOnDispose );
@@ -384,7 +384,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void ReturnMessageContext(MessageBrokerSendContext context, MemoryPoolToken<byte> token)
+    internal void ReturnMessageContext(MessageBrokerPushContext context, MemoryPoolToken<byte> token)
     {
         var exception = token.Return();
 

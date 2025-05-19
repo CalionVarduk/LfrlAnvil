@@ -1245,7 +1245,7 @@ public partial class MessageBrokerClientTests
         }
 
         [Fact]
-        public async Task GetSendContext_ShouldReturnContextWhichAllowsToSendSingleMessage()
+        public async Task GetPushContext_ShouldReturnContextWhichAllowsToPushSingleMessage()
         {
             var logs = new EventLogger();
             using var server = new ServerMock();
@@ -1275,16 +1275,16 @@ public partial class MessageBrokerClientTests
             serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( new Protocol.PushMessageHeader( 1, data.Length ) );
+                    s.Read( new Protocol.PushMessageHeader( 1, data.Length, true ) );
                     s.SendMessageAcceptedResponse( 1 );
                 } );
 
-            var result = Result.Create( MesageBrokerSendResult.CreateNotBound() );
+            var result = Result.Create( MessageBrokerPushResult.CreateNotBound( true ) );
             var publisher = client.Publishers.TryGetByChannelId( 1 );
             if ( publisher is not null )
             {
-                using var ctx = publisher.GetSendContext();
-                result = await ctx.Append( data ).SendAsync();
+                using var ctx = publisher.GetPushContext();
+                result = await ctx.Append( data ).PushAsync();
             }
 
             await serverTask;
@@ -1292,6 +1292,7 @@ public partial class MessageBrokerClientTests
             Assertion.All(
                     result.Exception.TestNull(),
                     result.Value.NotBound.TestFalse(),
+                    result.Value.Confirm.TestTrue(),
                     result.Value.Id.TestEquals( 1UL ),
                     logs.GetAll()
                         .Skip( 2 )
@@ -1300,9 +1301,9 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.TestSequence(
                             [
                                 "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (start)",
-                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 14)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 14)",
+                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5, Confirm = True",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageAcceptedResponse, Length = 13)",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (MessageAcceptedResponse, Length = 13)",
                                 "[MessagePushed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5, MessageId = 1",
@@ -1319,7 +1320,7 @@ public partial class MessageBrokerClientTests
         }
 
         [Fact]
-        public async Task GetSendContext_ShouldReturnContextWhichAllowsToSendSingleMessage_UsingBufferWriter()
+        public async Task GetPushContext_ShouldReturnContextWhichAllowsToPushSingleMessage_UsingBufferWriter()
         {
             var logs = new EventLogger();
             using var server = new ServerMock();
@@ -1349,20 +1350,20 @@ public partial class MessageBrokerClientTests
             serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( new Protocol.PushMessageHeader( 1, data.Length ) );
+                    s.Read( new Protocol.PushMessageHeader( 1, data.Length, true ) );
                     s.SendMessageAcceptedResponse( 2 );
                 } );
 
-            var result = Result.Create( MesageBrokerSendResult.CreateNotBound() );
+            var result = Result.Create( MessageBrokerPushResult.CreateNotBound( true ) );
             var publisher = client.Publishers.TryGetByChannelId( 1 );
             if ( publisher is not null )
             {
-                using var ctx = publisher.GetSendContext();
+                using var ctx = publisher.GetPushContext();
                 data.AsSpan( 0, 2 ).CopyTo( ctx.GetSpan( 2 ) );
                 ctx.Advance( 2 );
                 data.AsMemory( 2 ).CopyTo( ctx.GetMemory( 3 ) );
                 ctx.Advance( 3 );
-                result = await ctx.SendAsync();
+                result = await ctx.PushAsync();
             }
 
             await serverTask;
@@ -1370,6 +1371,7 @@ public partial class MessageBrokerClientTests
             Assertion.All(
                     result.Exception.TestNull(),
                     result.Value.NotBound.TestFalse(),
+                    result.Value.Confirm.TestTrue(),
                     result.Value.Id.TestEquals( 2UL ),
                     logs.GetAll()
                         .Skip( 2 )
@@ -1378,9 +1380,9 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.TestSequence(
                             [
                                 "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (start)",
-                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 14)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 14)",
+                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5, Confirm = True",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageAcceptedResponse, Length = 13)",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (MessageAcceptedResponse, Length = 13)",
                                 "[MessagePushed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5, MessageId = 2",
@@ -1397,7 +1399,7 @@ public partial class MessageBrokerClientTests
         }
 
         [Fact]
-        public async Task GetSendContext_ShouldReturnContextWhichAllowsToSendSingleMessage_WhenMessageIsLargerThanInitialCapacity()
+        public async Task GetPushContext_ShouldReturnContextWhichAllowsToPushSingleMessage_WhenMessageIsLargerThanInitialCapacity()
         {
             var logs = new EventLogger();
             using var server = new ServerMock();
@@ -1427,16 +1429,16 @@ public partial class MessageBrokerClientTests
             serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( new Protocol.PushMessageHeader( 1, data.Length ) );
+                    s.Read( new Protocol.PushMessageHeader( 1, data.Length, true ) );
                     s.SendMessageAcceptedResponse( 3 );
                 } );
 
-            var result = Result.Create( MesageBrokerSendResult.CreateNotBound() );
+            var result = Result.Create( MessageBrokerPushResult.CreateNotBound( true ) );
             var publisher = client.Publishers.TryGetByChannelId( 1 );
             if ( publisher is not null )
             {
-                using var ctx = publisher.GetSendContext();
-                result = await ctx.Append( data ).SendAsync();
+                using var ctx = publisher.GetPushContext();
+                result = await ctx.Append( data ).PushAsync();
             }
 
             await serverTask;
@@ -1444,6 +1446,7 @@ public partial class MessageBrokerClientTests
             Assertion.All(
                     result.Exception.TestNull(),
                     result.Value.NotBound.TestFalse(),
+                    result.Value.Confirm.TestTrue(),
                     result.Value.Id.TestEquals( 3UL ),
                     logs.GetAll()
                         .Skip( 2 )
@@ -1452,9 +1455,9 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.TestSequence(
                             [
                                 "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (start)",
-                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 2048",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 2057)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 2057)",
+                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 2048, Confirm = True",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 2058)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 2058)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageAcceptedResponse, Length = 13)",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (MessageAcceptedResponse, Length = 13)",
                                 "[MessagePushed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 2048, MessageId = 3",
@@ -1471,7 +1474,69 @@ public partial class MessageBrokerClientTests
         }
 
         [Fact]
-        public async Task GetSendContext_ShouldReturnContextThatThrowsObjectDisposedExceptionWhenActedOnAfterDisposal()
+        public async Task GetPushContext_ShouldReturnContextWhichAllowsToPushSingleMessage_WithoutConfirmation()
+        {
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger( logs.GetLogger() ) );
+
+            await server.EstablishHandshake( client );
+            var serverTask = server.GetTask(
+                s =>
+                {
+                    s.Read( new Protocol.BindPublisherRequest( "foo", null ) );
+                    s.SendPublisherBoundResponse( true, true, 1, 1 );
+                } );
+
+            await client.Publishers.BindAsync( "foo" );
+            await serverTask;
+
+            var data = new byte[] { 1, 2, 3, 4, 5 };
+            serverTask = server.GetTask( s => s.Read( new Protocol.PushMessageHeader( 1, data.Length, false ) ) );
+
+            var result = Result.Create( MessageBrokerPushResult.CreateNotBound( false ) );
+            var publisher = client.Publishers.TryGetByChannelId( 1 );
+            if ( publisher is not null )
+            {
+                using var ctx = publisher.GetPushContext();
+                result = await ctx.Append( data ).PushAsync( confirm: false );
+            }
+
+            await serverTask;
+
+            Assertion.All(
+                    result.Exception.TestNull(),
+                    result.Value.NotBound.TestFalse(),
+                    result.Value.Confirm.TestFalse(),
+                    result.Value.Id.TestNull(),
+                    logs.GetAll()
+                        .Skip( 2 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.TestSequence(
+                            [
+                                "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (start)",
+                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5, Confirm = False",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
+                                "[MessagePushed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5, MessageId = <NULL>",
+                                "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (end)"
+                            ] )
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task GetPushContext_ShouldReturnContextThatThrowsObjectDisposedExceptionWhenActedOnAfterDisposal()
         {
             using var server = new ServerMock();
             var remoteEndPoint = server.Start();
@@ -1505,13 +1570,13 @@ public partial class MessageBrokerClientTests
             var publisher = client.Publishers.TryGetByChannelId( 1 );
             if ( publisher is not null )
             {
-                var ctx = publisher.GetSendContext();
+                var ctx = publisher.GetPushContext();
                 ctx.Dispose();
                 getMemoryAction = Lambda.Of( () => { _ = ctx.GetMemory( 5 ); } );
                 getSpanAction = Lambda.Of( () => { _ = ctx.GetSpan( 5 ); } );
                 advanceAction = Lambda.Of( () => ctx.Advance( 5 ) );
                 appendAction = Lambda.Of( () => { _ = ctx.Append( Array.Empty<byte>() ); } );
-                sendAction = Lambda.Of( async () => await ctx.SendAsync() );
+                sendAction = Lambda.Of( async () => await ctx.PushAsync() );
                 disposeAction = Lambda.Of( () => ctx.Dispose() );
             }
 
@@ -1526,7 +1591,7 @@ public partial class MessageBrokerClientTests
         }
 
         [Fact]
-        public async Task GetSendContext_ShouldThrowMessageBrokerClientDisposedException_WhenClientIsDisposed()
+        public async Task GetPushContext_ShouldThrowMessageBrokerClientDisposedException_WhenClientIsDisposed()
         {
             using var server = new ServerMock();
             var remoteEndPoint = server.Start();
@@ -1552,13 +1617,13 @@ public partial class MessageBrokerClientTests
 
             var publisher = client.Publishers.TryGetByChannelId( 1 );
             await client.DisposeAsync();
-            var action = publisher is not null ? Lambda.Of( () => { _ = publisher.GetSendContext(); } ) : Lambda.Of( () => { } );
+            var action = publisher is not null ? Lambda.Of( () => { _ = publisher.GetPushContext(); } ) : Lambda.Of( () => { } );
 
             action.Test( exc => exc.TestType().Exact<MessageBrokerClientDisposedException>() ).Go();
         }
 
         [Fact]
-        public async Task SendAsync_ShouldSendSingleMessage()
+        public async Task PushAsync_ShouldPushSingleMessage()
         {
             var logs = new EventLogger();
             using var server = new ServerMock();
@@ -1588,20 +1653,21 @@ public partial class MessageBrokerClientTests
             serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( new Protocol.PushMessageHeader( 1, data.Length ) );
+                    s.Read( new Protocol.PushMessageHeader( 1, data.Length, true ) );
                     s.SendMessageAcceptedResponse( 1 );
                 } );
 
-            var result = Result.Create( MesageBrokerSendResult.CreateNotBound() );
+            var result = Result.Create( MessageBrokerPushResult.CreateNotBound( true ) );
             var publisher = client.Publishers.TryGetByChannelId( 1 );
             if ( publisher is not null )
-                result = await publisher.SendAsync( data );
+                result = await publisher.PushAsync( data );
 
             await serverTask;
 
             Assertion.All(
                     result.Exception.TestNull(),
                     result.Value.NotBound.TestFalse(),
+                    result.Value.Confirm.TestTrue(),
                     result.Value.Id.TestEquals( 1UL ),
                     logs.GetAll()
                         .Skip( 2 )
@@ -1610,9 +1676,9 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.TestSequence(
                             [
                                 "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (start)",
-                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 8",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 17)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 17)",
+                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 8, Confirm = True",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 18)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 18)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageAcceptedResponse, Length = 13)",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (MessageAcceptedResponse, Length = 13)",
                                 "[MessagePushed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 8, MessageId = 1",
@@ -1629,70 +1695,7 @@ public partial class MessageBrokerClientTests
         }
 
         [Fact]
-        public async Task SendAsync_ShouldNotThrow_WhenPublisherIsAlreadyLocallyDisposed()
-        {
-            using var server = new ServerMock();
-            var remoteEndPoint = server.Start();
-
-            await using var client = new MessageBrokerClient(
-                remoteEndPoint,
-                "test",
-                MessageBrokerClientOptions.Default
-                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
-                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
-                    .SetDelaySource( _sharedDelaySource ) );
-
-            await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( new Protocol.BindPublisherRequest( "foo", null ) );
-                    s.SendPublisherBoundResponse( true, true, 1, 1 );
-                    s.ReadUnbindPublisherRequest();
-                    s.SendPublisherUnboundResponse( true, true );
-                } );
-
-            var result = Result.Create( MesageBrokerSendResult.Create( 1 ) );
-            await client.Publishers.BindAsync( "foo" );
-            var publisher = client.Publishers.TryGetByChannelId( 1 );
-            if ( publisher is not null )
-            {
-                await publisher.UnbindAsync();
-                result = await publisher.SendAsync( new byte[] { 1, 2, 3 } );
-            }
-
-            await serverTask;
-
-            Assertion.All(
-                    result.Exception.TestNull(),
-                    result.Value.NotBound.TestTrue(),
-                    result.Value.Id.TestNull() )
-                .Go();
-        }
-
-        [Fact]
-        public async Task SendAsync_ShouldThrowMessageBrokerClientDisposedException_WhenClientIsDisposed()
-        {
-            var client = new MessageBrokerClient( new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
-            var publisher = new MessageBrokerPublisher( client, 1, "foo", 1, "foo" );
-            var context = publisher.GetSendContext();
-            await client.DisposeAsync();
-
-            Exception? exception = null;
-            try
-            {
-                _ = await context.Append( new byte[] { 1, 2, 3 } ).SendAsync();
-            }
-            catch ( Exception exc )
-            {
-                exception = exc;
-            }
-
-            exception.TestType().Exact<MessageBrokerClientDisposedException>( e => e.Client.TestRefEquals( client ) ).Go();
-        }
-
-        [Fact]
-        public async Task SendAsync_ShouldReturnErrorAndDisposeClient_WhenServerDoesNotRespondInTime()
+        public async Task PushAsync_ShouldPushSingleMessage_WithoutConfirmation()
         {
             var logs = new EventLogger();
             using var server = new ServerMock();
@@ -1718,10 +1721,135 @@ public partial class MessageBrokerClientTests
             await client.Publishers.BindAsync( "foo" );
             await serverTask;
 
-            var result = Result.Create( MesageBrokerSendResult.Create( 1 ) );
+            var data = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+            serverTask = server.GetTask( s => s.Read( new Protocol.PushMessageHeader( 1, data.Length, true ) ) );
+
+            var result = Result.Create( MessageBrokerPushResult.CreateNotBound( true ) );
             var publisher = client.Publishers.TryGetByChannelId( 1 );
             if ( publisher is not null )
-                result = await publisher.SendAsync( new byte[] { 1, 2, 3 } );
+                result = await publisher.PushAsync( data, confirm: false );
+
+            await serverTask;
+
+            Assertion.All(
+                    result.Exception.TestNull(),
+                    result.Value.NotBound.TestFalse(),
+                    result.Value.Confirm.TestFalse(),
+                    result.Value.Id.TestNull(),
+                    logs.GetAll()
+                        .Skip( 2 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.TestSequence(
+                            [
+                                "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (start)",
+                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 8, Confirm = False",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 18)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 18)",
+                                "[MessagePushed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 8, MessageId = <NULL>",
+                                "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (end)"
+                            ] )
+                        ] ) )
+                .Go();
+        }
+
+        [Theory]
+        [InlineData( true )]
+        [InlineData( false )]
+        public async Task PushAsync_ShouldNotThrow_WhenPublisherIsAlreadyLocallyDisposed(bool confirm)
+        {
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource ) );
+
+            await server.EstablishHandshake( client );
+            var serverTask = server.GetTask(
+                s =>
+                {
+                    s.Read( new Protocol.BindPublisherRequest( "foo", null ) );
+                    s.SendPublisherBoundResponse( true, true, 1, 1 );
+                    s.ReadUnbindPublisherRequest();
+                    s.SendPublisherUnboundResponse( true, true );
+                } );
+
+            var result = Result.Create( MessageBrokerPushResult.Create( 1 ) );
+            await client.Publishers.BindAsync( "foo" );
+            var publisher = client.Publishers.TryGetByChannelId( 1 );
+            if ( publisher is not null )
+            {
+                await publisher.UnbindAsync();
+                result = await publisher.PushAsync( new byte[] { 1, 2, 3 }, confirm: confirm );
+            }
+
+            await serverTask;
+
+            Assertion.All(
+                    result.Exception.TestNull(),
+                    result.Value.NotBound.TestTrue(),
+                    result.Value.Confirm.TestEquals( confirm ),
+                    result.Value.Id.TestNull() )
+                .Go();
+        }
+
+        [Fact]
+        public async Task PushAsync_ShouldThrowMessageBrokerClientDisposedException_WhenClientIsDisposed()
+        {
+            var client = new MessageBrokerClient( new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
+            var publisher = new MessageBrokerPublisher( client, 1, "foo", 1, "foo" );
+            var context = publisher.GetPushContext();
+            await client.DisposeAsync();
+
+            Exception? exception = null;
+            try
+            {
+                _ = await context.Append( new byte[] { 1, 2, 3 } ).PushAsync();
+            }
+            catch ( Exception exc )
+            {
+                exception = exc;
+            }
+
+            exception.TestType().Exact<MessageBrokerClientDisposedException>( e => e.Client.TestRefEquals( client ) ).Go();
+        }
+
+        [Fact]
+        public async Task PushAsync_ShouldReturnErrorAndDisposeClient_WhenServerDoesNotRespondInTime()
+        {
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger( logs.GetLogger() ) );
+
+            await server.EstablishHandshake( client );
+            var serverTask = server.GetTask(
+                s =>
+                {
+                    s.Read( new Protocol.BindPublisherRequest( "foo", null ) );
+                    s.SendPublisherBoundResponse( true, true, 1, 1 );
+                } );
+
+            await client.Publishers.BindAsync( "foo" );
+            await serverTask;
+
+            var result = Result.Create( MessageBrokerPushResult.Create( 1 ) );
+            var publisher = client.Publishers.TryGetByChannelId( 1 );
+            if ( publisher is not null )
+                result = await publisher.PushAsync( new byte[] { 1, 2, 3 } );
 
             Assertion.All(
                     client.State.TestEquals( MessageBrokerClientState.Disposed ),
@@ -1737,9 +1865,9 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.TestSequence(
                             [
                                 "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (start)",
-                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 3",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 12)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 12)",
+                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 3, Confirm = True",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 13)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 13)",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 2
                                 LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Server failed to respond to 'test' client's PushMessage in the specified amount of time (1000 milliseconds).
@@ -1754,7 +1882,7 @@ public partial class MessageBrokerClientTests
         }
 
         [Fact]
-        public async Task SendAsync_ShouldReturnError_WhenClientIsDisposedBeforeServerResponds()
+        public async Task PushAsync_ShouldReturnError_WhenClientIsDisposedBeforeServerResponds()
         {
             var publisherBound = Ref.Create( false );
             var endSource = new SafeTaskCompletionSource<Task>();
@@ -1798,9 +1926,9 @@ public partial class MessageBrokerClientTests
             lock ( publisherBound )
                 publisherBound.Value = true;
 
-            var result = Result.Create( default( MesageBrokerSendResult ) );
+            var result = Result.Create( default( MessageBrokerPushResult ) );
             if ( publisher is not null )
-                result = await publisher.SendAsync( new byte[] { 1, 2, 3 } );
+                result = await publisher.PushAsync( new byte[] { 1, 2, 3 } );
 
             await endSource.Task.Unwrap();
 
@@ -1808,7 +1936,7 @@ public partial class MessageBrokerClientTests
         }
 
         [Fact]
-        public async Task SendAsync_ShouldReturnErrorAndDisposeClient_WhenServerRespondsWithMessageAcceptedResponseWithInvalidPayload()
+        public async Task PushAsync_ShouldReturnErrorAndDisposeClient_WhenServerRespondsWithMessageAcceptedResponseWithInvalidPayload()
         {
             var logs = new EventLogger();
             using var server = new ServerMock();
@@ -1838,9 +1966,9 @@ public partial class MessageBrokerClientTests
             await client.Publishers.BindAsync( "foo" );
             var publisher = client.Publishers.TryGetByChannelId( 1 );
 
-            var result = Result.Create( default( MesageBrokerSendResult ) );
+            var result = Result.Create( default( MessageBrokerPushResult ) );
             if ( publisher is not null )
-                result = await publisher.SendAsync( data );
+                result = await publisher.PushAsync( data );
 
             await serverTask;
 
@@ -1858,9 +1986,9 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.TestSequence(
                             [
                                 "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (start)",
-                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 14)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 14)",
+                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5, Confirm = True",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageAcceptedResponse, Length = 12)",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 2
@@ -1882,7 +2010,7 @@ public partial class MessageBrokerClientTests
         }
 
         [Fact]
-        public async Task SendAsync_ShouldReturnError_WhenServerRespondsWithMessageRejectedResponse()
+        public async Task PushAsync_ShouldReturnError_WhenServerRespondsWithMessageRejectedResponse()
         {
             var logs = new EventLogger();
             using var server = new ServerMock();
@@ -1912,9 +2040,9 @@ public partial class MessageBrokerClientTests
             await client.Publishers.BindAsync( "foo" );
             var publisher = client.Publishers.TryGetByChannelId( 1 );
 
-            var result = Result.Create( default( MesageBrokerSendResult ) );
+            var result = Result.Create( default( MessageBrokerPushResult ) );
             if ( publisher is not null )
-                result = await publisher.SendAsync( data );
+                result = await publisher.PushAsync( data );
 
             await serverTask;
 
@@ -1932,9 +2060,9 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.TestSequence(
                             [
                                 "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (start)",
-                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 14)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 14)",
+                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5, Confirm = True",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageRejectedResponse, Length = 6)",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (MessageRejectedResponse, Length = 6)",
                                 """
@@ -1956,7 +2084,7 @@ public partial class MessageBrokerClientTests
         }
 
         [Fact]
-        public async Task SendAsync_ShouldReturnErrorAndDisposeClient_WhenServerRespondsWithMessageRejectedResponseWithInvalidPayload()
+        public async Task PushAsync_ShouldReturnErrorAndDisposeClient_WhenServerRespondsWithMessageRejectedResponseWithInvalidPayload()
         {
             var logs = new EventLogger();
             using var server = new ServerMock();
@@ -1986,9 +2114,9 @@ public partial class MessageBrokerClientTests
             await client.Publishers.BindAsync( "foo" );
             var publisher = client.Publishers.TryGetByChannelId( 1 );
 
-            var result = Result.Create( default( MesageBrokerSendResult ) );
+            var result = Result.Create( default( MessageBrokerPushResult ) );
             if ( publisher is not null )
-                result = await publisher.SendAsync( data );
+                result = await publisher.PushAsync( data );
 
             await serverTask;
 
@@ -2006,9 +2134,9 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.TestSequence(
                             [
                                 "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (start)",
-                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 14)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 14)",
+                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5, Confirm = True",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageRejectedResponse, Length = 5)",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 2
@@ -2030,7 +2158,7 @@ public partial class MessageBrokerClientTests
         }
 
         [Fact]
-        public async Task SendAsync_ShouldReturnErrorAndDisposeClient_WhenServerRespondsWithInvalidEndpoint()
+        public async Task PushAsync_ShouldReturnErrorAndDisposeClient_WhenServerRespondsWithInvalidEndpoint()
         {
             var logs = new EventLogger();
             using var server = new ServerMock();
@@ -2060,9 +2188,9 @@ public partial class MessageBrokerClientTests
             await client.Publishers.BindAsync( "foo" );
             var publisher = client.Publishers.TryGetByChannelId( 1 );
 
-            var result = Result.Create( default( MesageBrokerSendResult ) );
+            var result = Result.Create( default( MessageBrokerPushResult ) );
             if ( publisher is not null )
-                result = await publisher.SendAsync( data );
+                result = await publisher.PushAsync( data );
 
             await serverTask;
 
@@ -2080,9 +2208,9 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.TestSequence(
                             [
                                 "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (start)",
-                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 14)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 14)",
+                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5, Confirm = True",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 2
                                 LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Client 'test' received an invalid <unrecognized-endpoint-0> from the server. Encountered 1 error(s):
