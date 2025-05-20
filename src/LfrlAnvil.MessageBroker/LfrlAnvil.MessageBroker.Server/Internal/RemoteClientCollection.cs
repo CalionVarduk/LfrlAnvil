@@ -73,7 +73,7 @@ internal struct RemoteClientCollection
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static Result<MessageBrokerRemoteClient> Register(MessageBrokerServer server, TcpClient tcp)
+    internal static Result<MessageBrokerRemoteClient> Register(MessageBrokerServer server, TcpClient tcp, ulong traceId)
     {
         try
         {
@@ -84,15 +84,16 @@ internal struct RemoteClientCollection
             if ( RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) )
                 tcp.Client.SetSocketOption( SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true );
 
-            using ( server.AcquireLock() )
+            MessageBrokerRemoteClient client;
+            using ( server.AcquireActiveLock( traceId, out var exc ) )
             {
-                if ( server.ShouldCancel )
-                    return server.DisposedException();
+                if ( exc is not null )
+                    return exc;
 
                 var token = server.RemoteClientCollection._store.RegisterNull();
                 try
                 {
-                    return token.SetObject(
+                    client = token.SetObject(
                         ref server.RemoteClientCollection._store,
                         new MessageBrokerRemoteClient(
                             token.Id,
@@ -106,13 +107,16 @@ internal struct RemoteClientCollection
                     throw;
                 }
             }
+
+            MessageBrokerServerClientAcceptedEvent.Create( server, traceId, client ).Emit( server.Logger.ClientAccepted );
+            return client;
         }
         catch ( Exception exc )
         {
-            server.Emit( MessageBrokerServerEvent.ClientRejected( server, exc ) );
-            var result = tcp.TryDispose().Exception;
-            if ( result is not null )
-                server.Emit( MessageBrokerServerEvent.Unexpected( server, result ) );
+            MessageBrokerServerErrorEvent.Create( server, traceId, exc ).Emit( server.Logger.Error );
+            var exception = tcp.TryDispose().Exception;
+            if ( exception is not null )
+                MessageBrokerServerErrorEvent.Create( server, traceId, exception ).Emit( server.Logger.Error );
 
             return exc;
         }

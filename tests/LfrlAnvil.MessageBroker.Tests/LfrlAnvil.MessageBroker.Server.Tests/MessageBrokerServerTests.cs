@@ -85,62 +85,87 @@ public class MessageBrokerServerTests : TestsBase
     [Fact]
     public async Task StartAsync_ShouldStartServer()
     {
-        var logs = new EventLogger();
+        var endSource = new SafeTaskCompletionSource();
+        var logs = new ServerEventLogger();
         var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
         await using var server = new MessageBrokerServer(
             originalEndPoint,
-            MessageBrokerServerOptions.Default.SetEventHandler( logs.Add ) );
+            MessageBrokerServerOptions.Default.SetLogger(
+                logs.GetLogger( MessageBrokerServerLogger.Create( awaitClient: _ => endSource.Complete() ) ) ) );
 
         var result = await server.StartAsync();
         var localEndPoint = server.LocalEndPoint;
-        var events = logs.GetAllServer();
+        await endSource.Task;
 
         Assertion.All(
                 result.Exception.TestNull(),
-                server.LocalEndPoint.Address.TestEquals( IPAddress.Loopback ),
-                server.LocalEndPoint.Port.TestNotEquals( 0 ),
+                server.LocalEndPoint.TestType()
+                    .AssignableTo<IPEndPoint>(
+                        e => Assertion.All(
+                            "LocalEndPoint",
+                            e.Address.TestEquals( IPAddress.Loopback ),
+                            e.Port.TestNotEquals( 0 ) ) ),
                 server.State.TestEquals( MessageBrokerServerState.Running ),
                 server.ToString().TestEquals( $"{localEndPoint} server (Running)" ),
-                events.TestSequence(
-                [
-                    $"[Starting] At {originalEndPoint} (HandshakeTimeout = 15 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                    $"[Started] At {localEndPoint}",
-                    "[WaitingForClient]"
-                ] ) )
+                logs.GetAll()
+                    .TestSequence(
+                    [
+                        (t, _) => t.TestSequence(
+                        [
+                            $"[Trace:Start] Server = {originalEndPoint}, TraceId = 0 (start)",
+                            $"[ListenerStarting] Server = {originalEndPoint}, TraceId = 0, HandshakeTimeout = 15 second(s), AcceptableMessageTimeout = [0.001 second(s), 2147483.647 second(s)], AcceptablePingInterval = [0.001 second(s), 86400 second(s)]",
+                            $"[ListenerStarted] Server = {localEndPoint}, TraceId = 0",
+                            $"[Trace:Start] Server = {localEndPoint}, TraceId = 0 (end)"
+                        ] )
+                    ] ),
+                logs.GetAllAwaitClient()
+                    .TestSequence(
+                    [
+                        $"[AwaitClient] Server = {localEndPoint}"
+                    ] ) )
             .Go();
     }
 
     [Fact]
     public async Task StartAsync_ShouldStartServer_WithThrowingEventHandler()
     {
-        var logs = new EventLogger();
+        var logs = new ServerEventLogger();
         var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
         await using var server = new MessageBrokerServer(
             originalEndPoint,
-            MessageBrokerServerOptions.Default.SetEventHandler(
-                e =>
-                {
-                    logs.Add( e );
-                    throw new Exception( "ignored" );
-                } ) );
+            MessageBrokerServerOptions.Default.SetLogger(
+                logs.GetLogger( MessageBrokerServerLogger.Create( traceStart: _ => throw new Exception( "ignored" ) ) ) ) );
 
         var result = await server.StartAsync();
         var localEndPoint = server.LocalEndPoint;
-        var events = logs.GetAllServer();
 
         Assertion.All(
                 result.Exception.TestNull(),
-                server.LocalEndPoint.Address.TestEquals( IPAddress.Loopback ),
-                server.LocalEndPoint.Port.TestNotEquals( 0 ),
+                server.LocalEndPoint.TestType()
+                    .AssignableTo<IPEndPoint>(
+                        e => Assertion.All(
+                            "LocalEndPoint",
+                            e.Address.TestEquals( IPAddress.Loopback ),
+                            e.Port.TestNotEquals( 0 ) ) ),
                 server.State.TestEquals( MessageBrokerServerState.Running ),
-                events.TestSequence(
-                [
-                    $"[Starting] At {originalEndPoint} (HandshakeTimeout = 15 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                    $"[Started] At {localEndPoint}",
-                    "[WaitingForClient]"
-                ] ) )
+                logs.GetAll()
+                    .TestSequence(
+                    [
+                        (t, _) => t.TestSequence(
+                        [
+                            $"[Trace:Start] Server = {originalEndPoint}, TraceId = 0 (start)",
+                            $"[ListenerStarting] Server = {originalEndPoint}, TraceId = 0, HandshakeTimeout = 15 second(s), AcceptableMessageTimeout = [0.001 second(s), 2147483.647 second(s)], AcceptablePingInterval = [0.001 second(s), 86400 second(s)]",
+                            $"[ListenerStarted] Server = {localEndPoint}, TraceId = 0",
+                            $"[Trace:Start] Server = {localEndPoint}, TraceId = 0 (end)"
+                        ] )
+                    ] ),
+                logs.GetAllAwaitClient()
+                    .TestSequence(
+                    [
+                        $"[AwaitClient] Server = {localEndPoint}"
+                    ] ) )
             .Go();
     }
 
@@ -190,107 +215,129 @@ public class MessageBrokerServerTests : TestsBase
     [Fact]
     public async Task StartAsync_ShouldReturnMessageBrokerServerDisposedException_WhenServerIsDisposedDuringStarting()
     {
-        var logs = new EventLogger();
+        var logs = new ServerEventLogger();
         var localEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
         await using var server = new MessageBrokerServer(
             localEndPoint,
-            MessageBrokerServerOptions.Default.SetEventHandler(
-                e =>
-                {
-                    logs.Add( e );
-                    if ( e.Type == MessageBrokerServerEventType.Starting )
-                        e.Server.Dispose();
-                } ) );
+            MessageBrokerServerOptions.Default.SetLogger(
+                logs.GetLogger( MessageBrokerServerLogger.Create( listenerStarting: e => e.Source.Server.Dispose() ) ) ) );
 
         var result = await server.StartAsync();
 
         Assertion.All(
                 result.Exception.TestType().Exact<MessageBrokerServerDisposedException>( e => e.Server.TestRefEquals( server ) ),
-                logs.GetAllServer()
+                logs.GetAll()
                     .TestSequence(
                     [
-                        $"[Starting] At {localEndPoint} (HandshakeTimeout = 15 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                        "[Disposing]",
-                        "[Disposed]"
-                    ] ) )
+                        (t, _) => t.TestSequence(
+                        [
+                            $"[Trace:Start] Server = {localEndPoint}, TraceId = 0 (start)",
+                            $"[ListenerStarting] Server = {localEndPoint}, TraceId = 0, HandshakeTimeout = 15 second(s), AcceptableMessageTimeout = [0.001 second(s), 2147483.647 second(s)], AcceptablePingInterval = [0.001 second(s), 86400 second(s)]",
+                            $"""
+                             [Error] Server = {localEndPoint}, TraceId = 0
+                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerDisposedException: Operation has been cancelled because server is disposed.
+                             """,
+                            $"[Trace:Start] Server = {localEndPoint}, TraceId = 0 (end)"
+                        ] ),
+                        (t, _) => t.TestSequence(
+                        [
+                            $"[Trace:Dispose] Server = {localEndPoint}, TraceId = 1 (start)",
+                            $"[Disposing] Server = {localEndPoint}, TraceId = 1",
+                            $"[Disposed] Server = {localEndPoint}, TraceId = 1",
+                            $"[Trace:Dispose] Server = {localEndPoint}, TraceId = 1 (end)"
+                        ] )
+                    ] ),
+                logs.GetAllAwaitClient().TestEmpty() )
             .Go();
     }
 
     [Fact]
     public async Task StartAsync_ShouldReturnMessageBrokerServerDisposedException_WhenServerIsDisposedAfterStarting()
     {
-        var logs = new EventLogger();
+        var logs = new ServerEventLogger();
         var localEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
         await using var server = new MessageBrokerServer(
             localEndPoint,
-            MessageBrokerServerOptions.Default.SetEventHandler(
-                e =>
-                {
-                    logs.Add( e );
-                    if ( e.Type == MessageBrokerServerEventType.Started )
-                        e.Server.Dispose();
-                } ) );
+            MessageBrokerServerOptions.Default.SetLogger(
+                logs.GetLogger( MessageBrokerServerLogger.Create( listenerStarted: e => e.Source.Server.Dispose() ) ) ) );
 
         var result = await server.StartAsync();
 
         Assertion.All(
                 result.Exception.TestType().Exact<MessageBrokerServerDisposedException>( e => e.Server.TestRefEquals( server ) ),
-                logs.GetAllServer()
-                    .TestCount( count => count.TestEquals( 6 ) )
-                    .Then(
-                        l => Assertion.All(
-                            l.SkipLast( 1 )
-                                .TestSequence(
-                                [
-                                    $"[Starting] At {localEndPoint} (HandshakeTimeout = 15 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                                    $"[Started] At {server.LocalEndPoint}",
-                                    "[Disposing]",
-                                    "[Disposed]",
-                                    "[WaitingForClient]"
-                                ] ),
-                            l[^1]
-                                .TestStartsWith(
-                                    """
-                                    [WaitingForClient] Encountered an error:
-                                    System.ObjectDisposedException:
-                                    """ ) ) ) )
+                logs.GetAll()
+                    .TestSequence(
+                    [
+                        (t, _) => t.TestSequence(
+                        [
+                            $"[Trace:Start] Server = {localEndPoint}, TraceId = 0 (start)",
+                            $"[ListenerStarting] Server = {localEndPoint}, TraceId = 0, HandshakeTimeout = 15 second(s), AcceptableMessageTimeout = [0.001 second(s), 2147483.647 second(s)], AcceptablePingInterval = [0.001 second(s), 86400 second(s)]",
+                            $"[ListenerStarted] Server = {server.LocalEndPoint}, TraceId = 0",
+                            $"""
+                             [Error] Server = {server.LocalEndPoint}, TraceId = 0
+                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerDisposedException: Operation has been cancelled because server is disposed.
+                             """,
+                            $"[Trace:Start] Server = {server.LocalEndPoint}, TraceId = 0 (end)"
+                        ] ),
+                        (t, _) => t.TestSequence(
+                        [
+                            $"[Trace:Dispose] Server = {server.LocalEndPoint}, TraceId = 1 (start)",
+                            $"[Disposing] Server = {server.LocalEndPoint}, TraceId = 1",
+                            $"[Disposed] Server = {server.LocalEndPoint}, TraceId = 1",
+                            $"[Trace:Dispose] Server = {server.LocalEndPoint}, TraceId = 1 (end)"
+                        ] )
+                    ] ),
+                logs.GetAllAwaitClient()
+                    .TestSequence(
+                    [
+                        (e, _) => e.TestEquals( $"[AwaitClient] Server = {server.LocalEndPoint}" ),
+                        (e, _) => e.TestStartsWith(
+                            $"""
+                             [AwaitClient] Server = {server.LocalEndPoint}
+                             System.InvalidOperationException:
+                             """ )
+                    ] ) )
             .Go();
     }
 
     [Fact]
     public async Task StartAsync_ShouldReturnThrownException_WhenServerIsAttemptingToListenOnActivePort()
     {
-        var logs = new EventLogger();
+        var logs = new ServerEventLogger();
 
         await using var server = new MessageBrokerServer( new IPEndPoint( IPAddress.Loopback, 0 ) );
 
         await server.StartAsync();
 
         await using var other = new MessageBrokerServer(
-            server.LocalEndPoint,
-            MessageBrokerServerOptions.Default.SetEventHandler( logs.Add ) );
+            ( IPEndPoint )server.LocalEndPoint,
+            MessageBrokerServerOptions.Default.SetLogger( logs.GetLogger() ) );
 
         var result = await other.StartAsync();
 
         Assertion.All(
                 result.Exception.TestType().AssignableTo<SocketException>(),
-                logs.GetAllServer()
-                    .TestCount( count => count.TestEquals( 4 ) )
-                    .Then(
-                        l => Assertion.All(
-                            l[0]
-                                .TestEquals(
-                                    $"[Starting] At {server.LocalEndPoint} (HandshakeTimeout = 15 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))" ),
-                            l[1]
-                                .TestStartsWith(
-                                    """
-                                    [Starting] Encountered an error:
-                                    System.Net.Sockets.SocketException
-                                    """ ),
-                            l[2].TestEquals( "[Disposing]" ),
-                            l[3].TestEquals( "[Disposed]" ) ) ) )
+                logs.GetAll()
+                    .TestSequence(
+                    [
+                        (t, _) => t.TestSequence(
+                        [
+                            (e, _) => e.TestEquals( $"[Trace:Start] Server = {server.LocalEndPoint}, TraceId = 0 (start)" ),
+                            (e, _) => e.TestEquals(
+                                $"[ListenerStarting] Server = {server.LocalEndPoint}, TraceId = 0, HandshakeTimeout = 15 second(s), AcceptableMessageTimeout = [0.001 second(s), 2147483.647 second(s)], AcceptablePingInterval = [0.001 second(s), 86400 second(s)]" ),
+                            (e, _) => e.TestStartsWith(
+                                $"""
+                                 [Error] Server = {server.LocalEndPoint}, TraceId = 0
+                                 System.Net.Sockets.SocketException
+                                 """ ),
+                            (e, _) => e.TestEquals( $"[Disposing] Server = {server.LocalEndPoint}, TraceId = 0" ),
+                            (e, _) => e.TestEquals( $"[Disposed] Server = {server.LocalEndPoint}, TraceId = 0" ),
+                            (e, _) => e.TestEquals( $"[Trace:Start] Server = {server.LocalEndPoint}, TraceId = 0 (end)" )
+                        ] )
+                    ] ),
+                logs.GetAllAwaitClient().TestEmpty() )
             .Go();
     }
 
@@ -305,28 +352,29 @@ public class MessageBrokerServerTests : TestsBase
         action.Test(
                 exc => Assertion.All(
                     exc.TestType().AssignableTo<OperationCanceledException>(),
-                    sut.State.TestEquals( MessageBrokerServerState.Disposed ) ) )
+                    sut.State.TestEquals( MessageBrokerServerState.Created ) ) )
             .Go();
     }
 
     [Fact]
-    public async Task ClientListener_ShouldEmitClientRejectedEvent_WhenClientCannotBeCreated()
+    public async Task ClientListener_ShouldDiscardClient_WhenClientCannotBeCreated()
     {
         var exception = new Exception( "failure" );
-        var endSource = new SafeTaskCompletionSource();
-        var logs = new EventLogger();
+        var endSource = new SafeTaskCompletionSource( completionCount: 2 );
+        var logs = new ServerEventLogger();
         var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
         await using var sut = new MessageBrokerServer(
             originalEndPoint,
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetEventHandler(
-                    e =>
-                    {
-                        logs.Add( e );
-                        if ( e.Type == MessageBrokerServerEventType.ClientRejected )
-                            endSource.Complete();
-                    } )
+                .SetLogger(
+                    logs.GetLogger(
+                        MessageBrokerServerLogger.Create(
+                            awaitClient: e =>
+                            {
+                                if ( e.EndPoint is null )
+                                    endSource.Complete();
+                            } ) ) )
                 .SetClientEventHandlerFactory( _ => throw exception ) );
 
         await sut.StartAsync();
@@ -346,18 +394,27 @@ public class MessageBrokerServerTests : TestsBase
 
         Assertion.All(
                 sut.Clients.Count.TestEquals( 0 ),
-                logs.GetAllServer()
-                    .TestContainsContiguousSequence(
+                logs.GetAll()
+                    .Skip( 1 )
+                    .TestSequence(
                     [
-                        (l, _) => l.TestEquals(
-                            $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))" ),
-                        (l, _) => l.TestEquals( $"[Started] At {endPoint}" ),
-                        (l, _) => l.TestEquals( "[WaitingForClient]" ),
-                        (l, _) => l.TestStartsWith(
-                            """
-                            [ClientRejected] Encountered an error:
-                            System.Exception: failure
-                            """ )
+                        (t, _) => t.TestSequence(
+                        [
+                            (e, _) => e.TestEquals( $"[Trace:AcceptClient] Server = {endPoint}, TraceId = 1 (start)" ),
+                            (e, _) => e.TestStartsWith(
+                                $"""
+                                 [Error] Server = {endPoint}, TraceId = 1
+                                 System.Exception: failure
+                                 """ ),
+                            (e, _) => e.TestEquals( $"[Trace:AcceptClient] Server = {endPoint}, TraceId = 1 (end)" )
+                        ] )
+                    ] ),
+                logs.GetAllAwaitClient()
+                    .TestSequence(
+                    [
+                        (e, _) => e.TestEquals( $"[AwaitClient] Server = {endPoint}" ),
+                        (e, _) => e.TestStartsWith( $"[AwaitClient] Server = {endPoint}, EndPoint = " ),
+                        (e, _) => e.TestEquals( $"[AwaitClient] Server = {endPoint}" )
                     ] ) )
             .Go();
     }

@@ -6,19 +6,12 @@ namespace LfrlAnvil.MessageBroker.Server.Tests.Helpers;
 
 public sealed class EventLogger
 {
-    private readonly List<string> _serverEvents = new List<string>();
     private readonly List<string> _clientEvents = new List<string>();
     private readonly List<string> _channelEvents = new List<string>();
     private readonly List<string> _streamEvents = new List<string>();
     private readonly List<string> _queueEvents = new List<string>();
     private readonly List<string> _publisherEvents = new List<string>();
     private readonly List<string> _listenerEvents = new List<string>();
-
-    public void Add(MessageBrokerServerEvent e)
-    {
-        lock ( _serverEvents )
-            _serverEvents.Add( e.ToString() );
-    }
 
     public void Add(MessageBrokerRemoteClientEvent e)
     {
@@ -54,13 +47,6 @@ public sealed class EventLogger
     {
         lock ( _listenerEvents )
             _listenerEvents.Add( e.ToString() );
-    }
-
-    [Pure]
-    public string[] GetAllServer()
-    {
-        lock ( _serverEvents )
-            return _serverEvents.ToArray();
     }
 
     [Pure]

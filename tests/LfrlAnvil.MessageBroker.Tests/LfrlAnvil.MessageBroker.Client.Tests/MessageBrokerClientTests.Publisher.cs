@@ -13,11 +13,11 @@ namespace LfrlAnvil.MessageBroker.Client.Tests;
 
 public partial class MessageBrokerClientTests
 {
-    public class Publisher : TestsBase, IClassFixture<SharedClientResourceFixture>
+    public class Publisher : TestsBase, IClassFixture<SharedResourceFixture>
     {
         private readonly ValueTaskDelaySource _sharedDelaySource;
 
-        public Publisher(SharedClientResourceFixture fixture)
+        public Publisher(SharedResourceFixture fixture)
         {
             _sharedDelaySource = fixture.DelaySource;
         }

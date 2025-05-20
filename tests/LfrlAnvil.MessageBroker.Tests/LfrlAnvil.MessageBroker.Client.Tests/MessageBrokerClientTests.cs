@@ -14,11 +14,11 @@ using LfrlAnvil.MessageBroker.Client.Tests.Helpers;
 
 namespace LfrlAnvil.MessageBroker.Client.Tests;
 
-public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedClientResourceFixture>
+public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedResourceFixture>
 {
     private readonly ValueTaskDelaySource _sharedDelaySource;
 
-    public MessageBrokerClientTests(SharedClientResourceFixture fixture)
+    public MessageBrokerClientTests(SharedResourceFixture fixture)
     {
         _sharedDelaySource = fixture.DelaySource;
     }
@@ -1523,7 +1523,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedC
         action.Test(
                 exc => Assertion.All(
                     exc.TestType().AssignableTo<OperationCanceledException>(),
-                    sut.State.TestEquals( MessageBrokerClientState.Disposed ),
+                    sut.State.TestEquals( MessageBrokerClientState.Created ),
                     sut.LocalEndPoint.TestNull() ) )
             .Go();
     }

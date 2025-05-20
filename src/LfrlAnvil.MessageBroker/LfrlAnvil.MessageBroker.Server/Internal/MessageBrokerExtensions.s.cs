@@ -21,8 +21,25 @@ using LfrlAnvil.MessageBroker.Server.Events;
 
 namespace LfrlAnvil.MessageBroker.Server.Internal;
 
-internal static class PoolExtensions
+internal static class MessageBrokerExtensions
 {
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static void Emit<T>(this T @event, Action<T>? emitter)
+        where T : struct
+    {
+        if ( emitter is null )
+            return;
+
+        try
+        {
+            emitter( @event );
+        }
+        catch
+        {
+            // NOTE: do nothing
+        }
+    }
+
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MemoryPoolToken<byte> Rent(this MemoryPool<byte> pool, int length, out Memory<byte> data)
     {

@@ -14,11 +14,10 @@
 
 using System;
 using System.Diagnostics.Contracts;
+using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using System.Threading.Tasks;
-using LfrlAnvil.Extensions;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Exceptions;
 
@@ -26,56 +25,43 @@ namespace LfrlAnvil.MessageBroker.Server.Internal;
 
 internal struct ClientListener
 {
-    private readonly CancellationTokenSource _cancellation;
     private Task? _task;
 
-    private ClientListener(CancellationTokenSource cancellation)
+    private ClientListener(Task? task)
     {
-        _cancellation = cancellation;
-        _task = null;
+        _task = task;
     }
 
     [Pure]
     internal static ClientListener Create()
     {
-        return new ClientListener( new CancellationTokenSource() );
+        return new ClientListener( null );
     }
 
     [MethodImpl( MethodImplOptions.NoInlining )]
     internal static async Task StartUnderlyingTask(MessageBrokerServer server, TcpListener listener)
     {
-        TaskStopReason stopReason;
         try
         {
-            stopReason = await RunCore( server, listener ).ConfigureAwait( false );
+            await RunCore( server, listener ).ConfigureAwait( false );
         }
         catch ( Exception exc )
         {
-            server.Emit( MessageBrokerServerEvent.Unexpected( server, exc ) );
-            stopReason = TaskStopReason.Error;
+            ulong traceId;
+            using ( server.AcquireLock() )
+            {
+                server.ClientListener._task = null;
+                traceId = server.GetTraceId();
+            }
+
+            using ( MessageBrokerServerTraceEvent.CreateScope( server, traceId, MessageBrokerServerTraceEventType.Unexpected ) )
+            {
+                MessageBrokerServerErrorEvent.Create( server, traceId, exc ).Emit( server.Logger.Error );
+                await server.DisposeAsync( traceId ).ConfigureAwait( false );
+            }
         }
 
-        if ( stopReason == TaskStopReason.OwnerDisposed )
-            return;
-
-        using ( server.AcquireLock() )
-            server.ClientListener._task = null;
-
-        await server.DisposeAsync().ConfigureAwait( false );
-    }
-
-    internal void Dispose()
-    {
-        try
-        {
-            _cancellation.Cancel();
-        }
-        catch
-        {
-            // NOTE: do nothing
-        }
-
-        _cancellation.TryDispose();
+        Assume.IsGreaterThanOrEqualTo( server.State, MessageBrokerServerState.Disposing );
     }
 
     internal void SetUnderlyingTask(Task task)
@@ -92,36 +78,67 @@ internal struct ClientListener
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static async ValueTask<TaskStopReason> RunCore(MessageBrokerServer server, TcpListener listener)
+    private static async ValueTask RunCore(MessageBrokerServer server, TcpListener listener)
     {
         while ( true )
         {
-            server.Emit( MessageBrokerServerEvent.WaitingForClient( server ) );
+            ulong traceId;
+            MessageBrokerServerAwaitClientEvent.Create( server ).Emit( server.Logger.AwaitClient );
 
             TcpClient tcp;
             try
             {
-                tcp = await listener.AcceptTcpClientAsync( server.ClientListener._cancellation.Token ).ConfigureAwait( false );
+                tcp = await listener.AcceptTcpClientAsync().ConfigureAwait( false );
             }
             catch ( Exception exc )
             {
-                server.Emit( MessageBrokerServerEvent.WaitingForClient( server, exc ) );
-                break;
+                MessageBrokerServerAwaitClientEvent.Create( server, exc ).Emit( server.Logger.AwaitClient );
+
+                using ( server.AcquireLock() )
+                {
+                    if ( ! server.TryBeginDispose() )
+                        return;
+
+                    server.ClientListener._task = null;
+                    traceId = server.GetTraceId();
+                }
+
+                using ( MessageBrokerServerTraceEvent.CreateScope( server, traceId, MessageBrokerServerTraceEventType.Dispose ) )
+                    await server.DisposeAsyncCore( traceId ).ConfigureAwait( false );
+
+                return;
             }
 
-            var result = RemoteClientCollection.Register( server, tcp );
-            if ( result.Exception is not null )
+            EndPoint? endPoint;
+            try
             {
-                if ( result.Exception is MessageBrokerServerDisposedException )
-                    return TaskStopReason.OwnerDisposed;
-
-                continue;
+                endPoint = tcp.Client.RemoteEndPoint;
+            }
+            catch
+            {
+                endPoint = null;
             }
 
-            Assume.IsNotNull( result.Value );
-            result.Value.Start();
-        }
+            if ( endPoint is not null )
+                MessageBrokerServerAwaitClientEvent.Create( server, endPoint ).Emit( server.Logger.AwaitClient );
 
-        return TaskStopReason.Error;
+            using ( server.AcquireLock() )
+                traceId = server.GetTraceId();
+
+            using ( MessageBrokerServerTraceEvent.CreateScope( server, traceId, MessageBrokerServerTraceEventType.AcceptClient ) )
+            {
+                var result = RemoteClientCollection.Register( server, tcp, traceId );
+                if ( result.Exception is not null )
+                {
+                    if ( result.Exception is MessageBrokerServerDisposedException )
+                        return;
+
+                    continue;
+                }
+
+                Assume.IsNotNull( result.Value );
+                await result.Value.StartAsync().ConfigureAwait( false );
+            }
+        }
     }
 }

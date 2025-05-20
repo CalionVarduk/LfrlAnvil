@@ -35,7 +35,7 @@ public class ConnectionTests : TestsBase, IClassFixture<SharedResourceFixture>
         await server.StartAsync();
 
         await using var client = new MessageBrokerClient(
-            server.LocalEndPoint,
+            ( IPEndPoint )server.LocalEndPoint,
             "test",
             MessageBrokerClientOptions.Default
                 .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
@@ -77,7 +77,7 @@ public class ConnectionTests : TestsBase, IClassFixture<SharedResourceFixture>
         await server.StartAsync();
 
         await using var client1 = new MessageBrokerClient(
-            server.LocalEndPoint,
+            ( IPEndPoint )server.LocalEndPoint,
             "test",
             MessageBrokerClientOptions.Default
                 .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
@@ -88,7 +88,7 @@ public class ConnectionTests : TestsBase, IClassFixture<SharedResourceFixture>
         await client1.StartAsync();
 
         await using var client2 = new MessageBrokerClient(
-            server.LocalEndPoint,
+            ( IPEndPoint )server.LocalEndPoint,
             "test",
             MessageBrokerClientOptions.Default
                 .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
@@ -123,7 +123,7 @@ public class ConnectionTests : TestsBase, IClassFixture<SharedResourceFixture>
         await server.StartAsync();
 
         var client = new MessageBrokerClient(
-            server.LocalEndPoint,
+            ( IPEndPoint )server.LocalEndPoint,
             "test",
             MessageBrokerClientOptions.Default
                 .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
@@ -155,7 +155,7 @@ public class ConnectionTests : TestsBase, IClassFixture<SharedResourceFixture>
         await server.StartAsync();
 
         await using var client = new MessageBrokerClient(
-            server.LocalEndPoint,
+            ( IPEndPoint )server.LocalEndPoint,
             "test",
             MessageBrokerClientOptions.Default
                 .SetConnectionTimeout( Duration.FromSeconds( 1 ) )

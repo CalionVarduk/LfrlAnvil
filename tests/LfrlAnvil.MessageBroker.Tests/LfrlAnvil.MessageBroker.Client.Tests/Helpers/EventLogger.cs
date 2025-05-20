@@ -128,12 +128,6 @@ public sealed class EventLogger
         }
     }
 
-    private void AddAwaitPacket(string e)
-    {
-        lock ( _awaitPacket )
-            _awaitPacket.Add( e );
-    }
-
     [Pure]
     public string[][] GetAll()
     {
@@ -146,5 +140,11 @@ public sealed class EventLogger
     {
         lock ( _awaitPacket )
             return _awaitPacket.ToArray();
+    }
+
+    private void AddAwaitPacket(string e)
+    {
+        lock ( _awaitPacket )
+            _awaitPacket.Add( e );
     }
 }

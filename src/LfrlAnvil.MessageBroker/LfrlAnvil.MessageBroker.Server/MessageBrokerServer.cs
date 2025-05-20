@@ -53,10 +53,11 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     internal readonly MessageBrokerRemoteClientStreamDecorator? StreamDecorator;
     internal readonly Func<MessageBrokerRemoteClient, ITimestampProvider> TimestampsFactory;
     internal readonly Func<MessageBrokerRemoteClient, ValueTaskDelaySource>? DelaySourceFactory;
+    internal readonly MessageBrokerServerLogger Logger;
 
     private readonly TcpListener _listener;
-    private readonly MessageBrokerServerEventHandler? _eventHandler;
     private MessageBrokerServerState _state;
+    private ulong _nextTraceId;
 
     /// <summary>
     /// Creates a new <see cref="MessageBrokerServer"/> instance.
@@ -71,7 +72,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         HandshakeTimeout = Defaults.Temporal.GetActualTimeout( options.HandshakeTimeout );
         AcceptableMessageTimeout = Defaults.Temporal.GetActualTimeoutBounds( options.AcceptableMessageTimeout );
         AcceptablePingInterval = Defaults.Temporal.GetActualPingIntervalBounds( options.AcceptablePingInterval );
-        _eventHandler = options.EventHandler;
+        Logger = options.Logger ?? default;
         RemoteClientEventHandlerFactory = options.ClientEventHandlerFactory;
         ChannelEventHandlerFactory = options.ChannelEventHandlerFactory;
         StreamEventHandlerFactory = options.StreamEventHandlerFactory;
@@ -83,6 +84,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
 
         StreamDecorator = options.StreamDecorator;
         _state = MessageBrokerServerState.Created;
+        _nextTraceId = 0;
 
         ClientListener = ClientListener.Create();
         RemoteClientCollection = RemoteClientCollection.Create( options.Tcp, options.MinMemoryPoolSegmentLength );
@@ -108,9 +110,9 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     public Bounds<Duration> AcceptablePingInterval { get; }
 
     /// <summary>
-    /// The local <see cref="IPEndPoint"/> of this server's listener socket.
+    /// The local <see cref="EndPoint"/> of this server's listener socket.
     /// </summary>
-    public IPEndPoint LocalEndPoint { get; private set; }
+    public EndPoint LocalEndPoint { get; private set; }
 
     /// <summary>
     /// Current server's state.
@@ -151,54 +153,17 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
+        ulong traceId;
         using ( AcquireLock() )
         {
-            if ( ShouldCancel )
+            if ( ! TryBeginDispose() )
                 return;
 
-            _state = MessageBrokerServerState.Disposing;
+            traceId = GetTraceId();
         }
 
-        Emit( MessageBrokerServerEvent.Disposing( this ) );
-
-        Exception? exception = null;
-        MessageBrokerRemoteClient[] clients;
-        MessageBrokerStream[] streams;
-        MessageBrokerChannel[] channels;
-        Task? clientListenerTask;
-        using ( AcquireLock() )
-        {
-            channels = ChannelCollection.DisposeUnsafe();
-            streams = StreamCollection.DisposeUnsafe();
-            clients = RemoteClientCollection.DisposeUnsafe();
-            clientListenerTask = ClientListener.DiscardUnderlyingTask();
-            ClientListener.Dispose();
-
-            try
-            {
-                _listener.Stop();
-            }
-            catch ( Exception exc )
-            {
-                exception = exc;
-                clientListenerTask = null;
-            }
-        }
-
-        if ( exception is not null )
-            Emit( MessageBrokerServerEvent.Unexpected( this, exception ) );
-
-        await Parallel.ForEachAsync( streams, static (s, _) => s.OnServerDisposedAsync() ).ConfigureAwait( false );
-        await Parallel.ForEachAsync( channels, static (c, _) => c.OnServerDisposedAsync() ).ConfigureAwait( false );
-        await Parallel.ForEachAsync( clients, static (c, _) => c.OnServerDisposedAsync() ).ConfigureAwait( false );
-
-        if ( clientListenerTask is not null )
-            await clientListenerTask.ConfigureAwait( false );
-
-        using ( AcquireLock() )
-            _state = MessageBrokerServerState.Disposed;
-
-        Emit( MessageBrokerServerEvent.Disposed( this ) );
+        using ( MessageBrokerServerTraceEvent.CreateScope( this, traceId, MessageBrokerServerTraceEventType.Dispose ) )
+            await DisposeAsyncCore( traceId ).ConfigureAwait( false );
     }
 
     /// <summary>
@@ -228,68 +193,92 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     /// </remarks>
     public async ValueTask<Result> StartAsync(CancellationToken cancellationToken = default)
     {
-        await DisposeAndThrowIfCancellationRequested( cancellationToken ).ConfigureAwait( false );
-
+        ulong traceId;
         using ( AcquireLock() )
         {
             if ( ShouldCancel )
                 ExceptionThrower.Throw( DisposedException() );
 
-            AssertState( MessageBrokerServerState.Created );
-            _state = MessageBrokerServerState.Starting;
+            traceId = GetTraceId();
         }
 
-        Emit( MessageBrokerServerEvent.Starting( this ) );
-
-        try
+        using ( MessageBrokerServerTraceEvent.CreateScope( this, traceId, MessageBrokerServerTraceEventType.Start ) )
         {
-            using ( AcquireLock() )
+            try
             {
-                if ( ShouldCancel )
-                    return DisposedException();
-
-                _listener.Start();
+                cancellationToken.ThrowIfCancellationRequested();
             }
-        }
-        catch ( Exception exc )
-        {
-            Emit( MessageBrokerServerEvent.Starting( this, exc ) );
-            await DisposeAsync().ConfigureAwait( false );
-            return exc;
-        }
-
-        await DisposeAndThrowIfCancellationRequested( cancellationToken ).ConfigureAwait( false );
-
-        try
-        {
-            using ( AcquireLock() )
+            catch ( Exception exc )
             {
-                if ( ShouldCancel )
-                    return DisposedException();
-
-                LocalEndPoint = ( IPEndPoint )_listener.LocalEndpoint;
-                _state = MessageBrokerServerState.Running;
+                MessageBrokerServerErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
+                throw;
             }
 
-            Emit( MessageBrokerServerEvent.Started( this ) );
-
-            var clientListenerTask = ClientListener.StartUnderlyingTask( this, _listener );
-            using ( AcquireLock() )
+            try
             {
-                if ( ShouldCancel )
-                    return DisposedException();
+                using ( AcquireActiveLock( traceId, out var exc ) )
+                {
+                    if ( exc is not null )
+                        return exc;
 
-                ClientListener.SetUnderlyingTask( clientListenerTask );
+                    AssertState( MessageBrokerServerState.Created );
+                    _state = MessageBrokerServerState.Starting;
+                }
             }
-        }
-        catch ( Exception exc )
-        {
-            Emit( MessageBrokerServerEvent.Unexpected( this, exc ) );
-            await DisposeAsync().ConfigureAwait( false );
-            return exc;
-        }
+            catch ( Exception exc )
+            {
+                MessageBrokerServerErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
+                if ( exc is MessageBrokerServerStateException )
+                    throw;
 
-        return Result.Valid;
+                await DisposeAsync( traceId ).ConfigureAwait( false );
+                return exc;
+            }
+
+            try
+            {
+                MessageBrokerServerListenerStartingEvent.Create( this, traceId ).Emit( Logger.ListenerStarting );
+
+                using ( AcquireActiveLock( traceId, out var exc ) )
+                {
+                    if ( exc is not null )
+                        return exc;
+
+                    _listener.Start();
+                    LocalEndPoint = _listener.LocalEndpoint;
+                    _state = MessageBrokerServerState.Running;
+                }
+
+                MessageBrokerServerListenerStartedEvent.Create( this, traceId ).Emit( Logger.ListenerStarted );
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+            catch ( Exception exc )
+            {
+                MessageBrokerServerErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
+                await DisposeAsync( traceId ).ConfigureAwait( false );
+                return exc;
+            }
+
+            try
+            {
+                var clientListenerTask = ClientListener.StartUnderlyingTask( this, _listener );
+                using ( AcquireActiveLock( traceId, out var exc ) )
+                {
+                    if ( exc is not null )
+                        return exc;
+
+                    ClientListener.SetUnderlyingTask( clientListenerTask );
+                }
+            }
+            catch ( Exception exc )
+            {
+                MessageBrokerServerErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
+                await DisposeAsync( traceId ).ConfigureAwait( false );
+                return exc;
+            }
+
+            return Result.Valid;
+        }
     }
 
     [Pure]
@@ -306,33 +295,91 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void Emit(MessageBrokerServerEvent e)
+    internal ExclusiveLock AcquireActiveLock(ulong traceId, out MessageBrokerServerDisposedException? exception)
     {
-        if ( _eventHandler is null )
-            return;
+        var @lock = AcquireLock();
+        if ( ! ShouldCancel )
+        {
+            exception = null;
+            return @lock;
+        }
 
-        try
-        {
-            _eventHandler( e );
-        }
-        catch
-        {
-            // NOTE: do nothing
-        }
+        @lock.Dispose();
+        exception = DisposedException();
+        MessageBrokerServerErrorEvent.Create( this, traceId, exception ).Emit( Logger.Error );
+        return default;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private async ValueTask DisposeAndThrowIfCancellationRequested(CancellationToken cancellationToken)
+    internal ulong GetTraceId()
     {
-        try
+        return unchecked( _nextTraceId++ );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool TryBeginDispose()
+    {
+        if ( ShouldCancel )
+            return false;
+
+        _state = MessageBrokerServerState.Disposing;
+        return true;
+    }
+
+    internal ValueTask DisposeAsync(ulong traceId)
+    {
+        using ( AcquireLock() )
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            if ( ShouldCancel )
+                return ValueTask.CompletedTask;
+
+            _state = MessageBrokerServerState.Disposing;
         }
-        catch
+
+        return DisposeAsyncCore( traceId );
+    }
+
+    internal async ValueTask DisposeAsyncCore(ulong traceId)
+    {
+        MessageBrokerServerDisposingEvent.Create( this, traceId ).Emit( Logger.Disposing );
+
+        Exception? exception = null;
+        MessageBrokerRemoteClient[] clients;
+        MessageBrokerStream[] streams;
+        MessageBrokerChannel[] channels;
+        Task? clientListenerTask;
+        using ( AcquireLock() )
         {
-            await DisposeAsync().ConfigureAwait( false );
-            throw;
+            channels = ChannelCollection.DisposeUnsafe();
+            streams = StreamCollection.DisposeUnsafe();
+            clients = RemoteClientCollection.DisposeUnsafe();
+            clientListenerTask = ClientListener.DiscardUnderlyingTask();
+
+            try
+            {
+                _listener.Stop();
+            }
+            catch ( Exception exc )
+            {
+                exception = exc;
+                clientListenerTask = null;
+            }
         }
+
+        if ( exception is not null )
+            MessageBrokerServerErrorEvent.Create( this, traceId, exception ).Emit( Logger.Error );
+
+        await Parallel.ForEachAsync( streams, static (s, _) => s.OnServerDisposedAsync() ).ConfigureAwait( false );
+        await Parallel.ForEachAsync( channels, static (c, _) => c.OnServerDisposedAsync() ).ConfigureAwait( false );
+        await Parallel.ForEachAsync( clients, static (c, _) => c.OnServerDisposedAsync() ).ConfigureAwait( false );
+
+        if ( clientListenerTask is not null )
+            await clientListenerTask.ConfigureAwait( false );
+
+        using ( AcquireLock() )
+            _state = MessageBrokerServerState.Disposed;
+
+        MessageBrokerServerDisposedEvent.Create( this, traceId ).Emit( Logger.Disposed );
     }
 
     [StackTraceHidden]

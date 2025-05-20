@@ -251,7 +251,7 @@ public sealed partial class MessageBrokerRemoteClient
         Emit( MessageBrokerRemoteClientEvent.Disposed( this ) );
     }
 
-    internal void Start()
+    internal async ValueTask StartAsync()
     {
         Emit( MessageBrokerRemoteClientEvent.Created( this ) );
 
@@ -284,7 +284,7 @@ public sealed partial class MessageBrokerRemoteClient
         catch ( Exception exc )
         {
             Emit( MessageBrokerRemoteClientEvent.Unexpected( this, exc ) );
-            DisconnectAsync().AsTask().Wait();
+            await DisconnectAsync().ConfigureAwait( false );
         }
     }
 

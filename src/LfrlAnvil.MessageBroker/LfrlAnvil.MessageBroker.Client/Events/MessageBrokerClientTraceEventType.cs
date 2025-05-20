@@ -27,45 +27,45 @@ public enum MessageBrokerClientTraceEventType : byte
     /// <summary>
     /// Specifies that trace is related to the client sending ping packet to the server.
     /// </summary>
-    Ping = 2,
+    Ping = 1,
 
     /// <summary>
     /// Specifies that trace is related to the client listener binding.
     /// </summary>
-    BindListener = 3,
+    BindListener = 2,
 
     /// <summary>
     /// Specifies that trace is related to the client listener unbinding.
     /// </summary>
-    UnbindListener = 4,
+    UnbindListener = 3,
 
     /// <summary>
     /// Specifies that trace is related to the client publisher binding.
     /// </summary>
-    BindPublisher = 5,
+    BindPublisher = 4,
 
     /// <summary>
     /// Specifies that trace is related to the client publisher unbinding.
     /// </summary>
-    UnbindPublisher = 6,
+    UnbindPublisher = 5,
 
     /// <summary>
     /// Specifies that trace is related to the client pushing message packet to the server.
     /// </summary>
-    PushMessage = 7,
+    PushMessage = 6,
 
     /// <summary>
     /// Specifies that trace is related to the client receiving message notification from the server.
     /// </summary>
-    MessageNotification = 8,
+    MessageNotification = 7,
 
     /// <summary>
     /// Specifies that trace is related to the client disposal.
     /// </summary>
-    Dispose = 9,
+    Dispose = 8,
 
     /// <summary>
     /// Specifies that trace is related to an unexpected occurrence in the client e.g. an error.
     /// </summary>
-    Unexpected = 10
+    Unexpected = 9
 }

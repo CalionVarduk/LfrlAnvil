@@ -1,11 +1,11 @@
 ﻿using System.Threading.Tasks;
 using LfrlAnvil.Chrono.Async;
 
-namespace LfrlAnvil.MessageBroker.Client.Tests.Helpers;
+namespace LfrlAnvil.MessageBroker.Server.Tests.Helpers;
 
-public sealed class SharedClientResourceFixture : IAsyncDisposable
+public sealed class SharedResourceFixture : IAsyncDisposable
 {
-    public SharedClientResourceFixture()
+    public SharedResourceFixture()
     {
         DelaySource = ValueTaskDelaySource.Start();
     }

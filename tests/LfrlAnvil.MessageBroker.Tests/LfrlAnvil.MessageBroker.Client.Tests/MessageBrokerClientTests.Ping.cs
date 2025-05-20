@@ -10,11 +10,11 @@ namespace LfrlAnvil.MessageBroker.Client.Tests;
 
 public partial class MessageBrokerClientTests
 {
-    public class Ping : TestsBase, IClassFixture<SharedClientResourceFixture>
+    public class Ping : TestsBase, IClassFixture<SharedResourceFixture>
     {
         private readonly ValueTaskDelaySource _sharedDelaySource;
 
-        public Ping(SharedClientResourceFixture fixture)
+        public Ping(SharedResourceFixture fixture)
         {
             _sharedDelaySource = fixture.DelaySource;
         }

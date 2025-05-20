@@ -32,11 +32,11 @@ internal sealed class ClientMock : IDisposable
         }
     }
 
-    internal void Connect(IPEndPoint endPoint)
+    internal void Connect(EndPoint endPoint)
     {
         lock ( _client )
         {
-            _client.Connect( endPoint );
+            _client.Connect( ( IPEndPoint )endPoint );
         }
     }
 

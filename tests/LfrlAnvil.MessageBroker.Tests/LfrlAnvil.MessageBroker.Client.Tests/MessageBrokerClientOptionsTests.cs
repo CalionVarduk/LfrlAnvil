@@ -22,7 +22,7 @@ public class MessageBrokerClientOptionsTests : TestsBase
                 sut.ListenerDisposalTimeout.TestNull(),
                 sut.Timestamps.TestNull(),
                 sut.DelaySource.TestNull(),
-                sut.Logger.TestEquals( default ),
+                sut.Logger.TestNull(),
                 sut.StreamDecorator.TestNull() )
             .Go();
     }

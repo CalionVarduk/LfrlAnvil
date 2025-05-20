@@ -251,16 +251,36 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
 
         using ( MessageBrokerClientTraceEvent.CreateScope( this, traceId, MessageBrokerClientTraceEventType.Start ) )
         {
-            await DisposeAndThrowIfCancellationRequestedAsync( traceId, cancellationToken ).ConfigureAwait( false );
-
-            using ( AcquireActiveLock( traceId, out var exc ) )
+            try
             {
-                if ( exc is not null )
-                    return exc;
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+            catch ( Exception exc )
+            {
+                MessageBrokerClientErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
+                throw;
+            }
 
-                AssertState( MessageBrokerClientState.Created );
-                _state = MessageBrokerClientState.Connecting;
-                EventScheduler.InitializeResetEvent( _delaySource.GetSource() );
+            try
+            {
+                using ( AcquireActiveLock( traceId, out var exc ) )
+                {
+                    if ( exc is not null )
+                        return exc;
+
+                    AssertState( MessageBrokerClientState.Created );
+                    _state = MessageBrokerClientState.Connecting;
+                    EventScheduler.InitializeResetEvent( _delaySource.GetSource() );
+                }
+            }
+            catch ( Exception exc )
+            {
+                MessageBrokerClientErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
+                if ( exc is MessageBrokerClientStateException )
+                    throw;
+
+                await DisposeAsync( traceId ).ConfigureAwait( false );
+                return exc;
             }
 
             try

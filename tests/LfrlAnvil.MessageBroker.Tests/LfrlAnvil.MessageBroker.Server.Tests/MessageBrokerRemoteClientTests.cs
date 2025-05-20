@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.Contracts;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -8,7 +7,6 @@ using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.MessageBroker.Server.Events;
-using LfrlAnvil.MessageBroker.Server.Internal;
 using LfrlAnvil.MessageBroker.Server.Tests.Helpers;
 
 namespace LfrlAnvil.MessageBroker.Server.Tests;
@@ -19,6 +17,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
     public async Task Start_ShouldRegisterClientAndEstablishHandshake()
     {
         var endSource = new SafeTaskCompletionSource( completionCount: 3 );
+        var serverLogs = new ServerEventLogger();
         var logs = new EventLogger();
         var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
@@ -26,7 +25,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
             originalEndPoint,
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetEventHandler( logs.Add )
+                .SetLogger( serverLogs.GetLogger() )
                 .SetClientEventHandlerFactory(
                     _ =>
                         e =>
@@ -72,16 +71,23 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
                         r.Publishers.GetAll().TestEmpty(),
                         r.Listeners.Count.TestEquals( 0 ),
                         r.Listeners.GetAll().TestEmpty() ) ),
-                AssertClientData(
-                    client.GetAllReceived(),
-                    (Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload,
-                        MessageBrokerClientEndpoint.HandshakeAcceptedResponse) ),
-                logs.GetAllServer()
-                    .TestContainsSequence(
+                serverLogs.GetAll()
+                    .Skip( 1 )
+                    .TestSequence(
                     [
-                        $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                        $"[Started] At {server.LocalEndPoint}",
-                        "[WaitingForClient]"
+                        (t, _) => t.TestSequence(
+                        [
+                            $"[Trace:AcceptClient] Server = {server.LocalEndPoint}, TraceId = 1 (start)",
+                            $"[ClientAccepted] Server = {server.LocalEndPoint}, TraceId = 1, ClientId = 1",
+                            $"[Trace:AcceptClient] Server = {server.LocalEndPoint}, TraceId = 1 (end)"
+                        ] )
+                    ] ),
+                serverLogs.GetAllAwaitClient()
+                    .TestSequence(
+                    [
+                        $"[AwaitClient] Server = {server.LocalEndPoint}",
+                        $"[AwaitClient] Server = {server.LocalEndPoint}, EndPoint = {remoteClient?.RemoteEndPoint}",
+                        $"[AwaitClient] Server = {server.LocalEndPoint}"
                     ] ),
                 logs.GetAllClient()
                     .TestSequence(
@@ -110,8 +116,8 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         await using var server = new MessageBrokerServer(
             originalEndPoint,
-            MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetEventHandler( logs.Add )
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetClientEventHandlerFactory(
                     _ =>
                         e =>
@@ -165,17 +171,6 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
                         r.Publishers.GetAll().TestEmpty(),
                         r.Listeners.Count.TestEquals( 0 ),
                         r.Listeners.GetAll().TestEmpty() ) ),
-                AssertClientData(
-                    client.GetAllReceived(),
-                    (Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload,
-                        MessageBrokerClientEndpoint.HandshakeAcceptedResponse) ),
-                logs.GetAllServer()
-                    .TestContainsSequence(
-                    [
-                        $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                        $"[Started] At {server.LocalEndPoint}",
-                        "[WaitingForClient]"
-                    ] ),
                 logs.GetAllClient()
                     .TestSequence(
                     [
@@ -197,7 +192,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
     public async Task Start_ShouldRegisterManyClientsAndEstablishHandshake()
     {
         var endSource = new SafeTaskCompletionSource( completionCount: 6 );
-        var serverLogs = new EventLogger();
+        var serverLogs = new ServerEventLogger();
         var clientLogIndex = new InterlockedInt32( 0 );
         var clientLogs = new[] { new EventLogger(), new EventLogger() };
         var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
@@ -208,7 +203,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetAcceptableMessageTimeout( Bounds.Create( Duration.FromSeconds( 1 ), Duration.FromSeconds( 1.5 ) ) )
                 .SetAcceptablePingInterval( Bounds.Create( Duration.FromSeconds( 10 ), Duration.FromSeconds( 15 ) ) )
-                .SetEventHandler( serverLogs.Add )
+                .SetLogger( serverLogs.GetLogger() )
                 .SetClientEventHandlerFactory(
                     _ =>
                     {
@@ -283,21 +278,31 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
                         r.Publishers.GetAll().TestEmpty(),
                         r.Listeners.Count.TestEquals( 0 ),
                         r.Listeners.GetAll().TestEmpty() ) ),
-                AssertClientData(
-                    client1.GetAllReceived(),
-                    (Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload,
-                        MessageBrokerClientEndpoint.HandshakeAcceptedResponse) ),
-                AssertClientData(
-                    client2.GetAllReceived(),
-                    (Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload,
-                        MessageBrokerClientEndpoint.HandshakeAcceptedResponse) ),
-                serverLogs.GetAllServer()
-                    .TestContainsSequence(
+                serverLogs.GetAll()
+                    .Skip( 1 )
+                    .TestSequence(
                     [
-                        $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(1 second(s) : 1.5 second(s)), AcceptablePingInterval = Bounds(10 second(s) : 15 second(s)))",
-                        $"[Started] At {server.LocalEndPoint}",
-                        "[WaitingForClient]",
-                        "[WaitingForClient]"
+                        (t, _) => t.TestSequence(
+                        [
+                            $"[Trace:AcceptClient] Server = {server.LocalEndPoint}, TraceId = 1 (start)",
+                            $"[ClientAccepted] Server = {server.LocalEndPoint}, TraceId = 1, ClientId = 1",
+                            $"[Trace:AcceptClient] Server = {server.LocalEndPoint}, TraceId = 1 (end)"
+                        ] ),
+                        (t, _) => t.TestSequence(
+                        [
+                            $"[Trace:AcceptClient] Server = {server.LocalEndPoint}, TraceId = 2 (start)",
+                            $"[ClientAccepted] Server = {server.LocalEndPoint}, TraceId = 2, ClientId = 2",
+                            $"[Trace:AcceptClient] Server = {server.LocalEndPoint}, TraceId = 2 (end)"
+                        ] )
+                    ] ),
+                serverLogs.GetAllAwaitClient()
+                    .TestSequence(
+                    [
+                        $"[AwaitClient] Server = {server.LocalEndPoint}",
+                        $"[AwaitClient] Server = {server.LocalEndPoint}, EndPoint = {remoteClient1?.RemoteEndPoint}",
+                        $"[AwaitClient] Server = {server.LocalEndPoint}",
+                        $"[AwaitClient] Server = {server.LocalEndPoint}, EndPoint = {remoteClient2?.RemoteEndPoint}",
+                        $"[AwaitClient] Server = {server.LocalEndPoint}"
                     ] ),
                 clientLogs[0]
                     .GetAllClient()
@@ -342,8 +347,8 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         await using var server = new MessageBrokerServer(
             originalEndPoint,
-            MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetEventHandler( logs.Add )
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetClientEventHandlerFactory(
                     _ => e =>
                     {
@@ -362,13 +367,6 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         Assertion.All(
                 server.Clients.Count.TestEquals( 0 ),
-                logs.GetAllServer()
-                    .TestContainsSequence(
-                    [
-                        $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                        $"[Started] At {server.LocalEndPoint}",
-                        "[WaitingForClient]"
-                    ] ),
                 logs.GetAllClient()
                     .Skip( 1 )
                     .TestCount( count => count.TestEquals( 3 ) )
@@ -388,17 +386,16 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
     public async Task Start_ShouldDisposeGracefully_WhenStreamDecoratorDisposesClient()
     {
         var endSource = new SafeTaskCompletionSource<(MessageBrokerRemoteClient Client, Task DisposeTask)>();
-        var logs = new EventLogger();
         var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
         await using var server = new MessageBrokerServer(
             originalEndPoint,
-            MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetEventHandler( logs.Add )
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetStreamDecorator(
                     (c, ns) =>
                     {
-                        endSource.Complete( (c, Task.Factory.StartNew( () => c.DisconnectAsync().AsTask().Wait() )) );
+                        endSource.Complete( (c, c.DisconnectAsync().AsTask()) );
                         return ValueTask.FromResult<Stream>( ns );
                     } ) );
 
@@ -414,14 +411,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
                 server.Clients.Count.TestEquals( 0 ),
                 remoteClient.LocalEndPoint.TestNull(),
                 remoteClient.RemoteEndPoint.TestNull(),
-                remoteClient.State.TestEquals( MessageBrokerRemoteClientState.Disposed ),
-                logs.GetAllServer()
-                    .TestContainsSequence(
-                    [
-                        $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                        $"[Started] At {server.LocalEndPoint}",
-                        "[WaitingForClient]"
-                    ] ) )
+                remoteClient.State.TestEquals( MessageBrokerRemoteClientState.Disposed ) )
             .Go();
     }
 
@@ -435,8 +425,8 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         await using var server = new MessageBrokerServer(
             originalEndPoint,
-            MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetEventHandler( logs.Add )
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetClientEventHandlerFactory(
                     _ => e =>
                     {
@@ -468,13 +458,6 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         Assertion.All(
                 server.Clients.Count.TestEquals( 0 ),
-                logs.GetAllServer()
-                    .TestContainsSequence(
-                    [
-                        $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                        $"[Started] At {server.LocalEndPoint}",
-                        "[WaitingForClient]"
-                    ] ),
                 logs.GetAllClient()
                     .Skip( 1 )
                     .TestCount( count => count.TestEquals( 7 ) )
@@ -507,8 +490,8 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         await using var server = new MessageBrokerServer(
             originalEndPoint,
-            MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetEventHandler( logs.Add )
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetClientEventHandlerFactory(
                     _ => e =>
                     {
@@ -532,13 +515,6 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         Assertion.All(
                 server.Clients.Count.TestEquals( 0 ),
-                logs.GetAllServer()
-                    .TestContainsSequence(
-                    [
-                        $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                        $"[Started] At {server.LocalEndPoint}",
-                        "[WaitingForClient]"
-                    ] ),
                 logs.GetAllClient()
                     .Skip( 1 )
                     .TestCount( count => count.TestEquals( 4 ) )
@@ -564,8 +540,8 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         await using var server = new MessageBrokerServer(
             originalEndPoint,
-            MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetEventHandler( logs.Add )
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetClientEventHandlerFactory(
                     _ => e =>
                     {
@@ -591,13 +567,6 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         Assertion.All(
                 server.Clients.Count.TestEquals( 0 ),
-                logs.GetAllServer()
-                    .TestContainsSequence(
-                    [
-                        $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                        $"[Started] At {server.LocalEndPoint}",
-                        "[WaitingForClient]"
-                    ] ),
                 logs.GetAllClient()
                     .Skip( 1 )
                     .TestCount( count => count.TestEquals( 9 ) )
@@ -632,8 +601,8 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         await using var server = new MessageBrokerServer(
             originalEndPoint,
-            MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetEventHandler( logs.Add )
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetClientEventHandlerFactory(
                     _ => e =>
                     {
@@ -657,13 +626,6 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         Assertion.All(
                 server.Clients.Count.TestEquals( 0 ),
-                logs.GetAllServer()
-                    .TestContainsSequence(
-                    [
-                        $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                        $"[Started] At {server.LocalEndPoint}",
-                        "[WaitingForClient]"
-                    ] ),
                 logs.GetAllClient()
                     .Skip( 1 )
                     .TestCount( count => count.TestEquals( 5 ) )
@@ -695,8 +657,8 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         await using var server = new MessageBrokerServer(
             originalEndPoint,
-            MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetEventHandler( logs.Add )
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetClientEventHandlerFactory(
                     _ => e =>
                     {
@@ -720,13 +682,6 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         Assertion.All(
                 server.Clients.Count.TestEquals( 0 ),
-                logs.GetAllServer()
-                    .TestContainsSequence(
-                    [
-                        $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                        $"[Started] At {server.LocalEndPoint}",
-                        "[WaitingForClient]"
-                    ] ),
                 logs.GetAllClient()
                     .Skip( 1 )
                     .TestCount( count => count.TestEquals( 5 ) )
@@ -758,8 +713,8 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         await using var server = new MessageBrokerServer(
             originalEndPoint,
-            MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetEventHandler( logs.Add )
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetClientEventHandlerFactory(
                     _ => e =>
                     {
@@ -784,17 +739,6 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         Assertion.All(
                 server.Clients.Count.TestEquals( 0 ),
-                AssertClientData(
-                    client.GetAllReceived(),
-                    (Protocol.PacketHeader.Length + Protocol.HandshakeRejectedResponse.Payload,
-                        MessageBrokerClientEndpoint.HandshakeRejectedResponse) ),
-                logs.GetAllServer()
-                    .TestContainsSequence(
-                    [
-                        $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                        $"[Started] At {server.LocalEndPoint}",
-                        "[WaitingForClient]"
-                    ] ),
                 logs.GetAllClient()
                     .Skip( 1 )
                     .TestCount( count => count.TestEquals( 7 ) )
@@ -833,8 +777,8 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         await using var server = new MessageBrokerServer(
             originalEndPoint,
-            MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetEventHandler( logs.Add )
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetClientEventHandlerFactory(
                     _ => e =>
                     {
@@ -859,17 +803,6 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         Assertion.All(
                 server.Clients.Count.TestEquals( 0 ),
-                AssertClientData(
-                    client.GetAllReceived(),
-                    (Protocol.PacketHeader.Length + Protocol.HandshakeRejectedResponse.Payload,
-                        MessageBrokerClientEndpoint.HandshakeRejectedResponse) ),
-                logs.GetAllServer()
-                    .TestContainsSequence(
-                    [
-                        $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                        $"[Started] At {server.LocalEndPoint}",
-                        "[WaitingForClient]"
-                    ] ),
                 logs.GetAllClient()
                     .Skip( 1 )
                     .TestCount( count => count.TestEquals( 7 ) )
@@ -903,7 +836,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
     public async Task Start_ShouldDisposeGracefully_WhenClientSendsInvalidHandshakeRequestWithDuplicatedName()
     {
         var endSource = new SafeTaskCompletionSource();
-        var serverLogs = new EventLogger();
+        var serverLogs = new ServerEventLogger();
         var clientLogIndex = new InterlockedInt32( 0 );
         var clientLogs = new[] { new EventLogger(), new EventLogger() };
         var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
@@ -911,7 +844,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         await using var server = new MessageBrokerServer(
             originalEndPoint,
             MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetEventHandler( serverLogs.Add )
+                .SetLogger( serverLogs.GetLogger() )
                 .SetClientEventHandlerFactory(
                     _ =>
                     {
@@ -951,22 +884,6 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         Assertion.All(
                 server.Clients.Count.TestEquals( 1 ),
-                AssertClientData(
-                    client1.GetAllReceived(),
-                    (Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload,
-                        MessageBrokerClientEndpoint.HandshakeAcceptedResponse) ),
-                AssertClientData(
-                    client2.GetAllReceived(),
-                    (Protocol.PacketHeader.Length + Protocol.HandshakeRejectedResponse.Payload,
-                        MessageBrokerClientEndpoint.HandshakeRejectedResponse) ),
-                serverLogs.GetAllServer()
-                    .TestContainsSequence(
-                    [
-                        $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                        $"[Started] At {server.LocalEndPoint}",
-                        "[WaitingForClient]",
-                        "[WaitingForClient]"
-                    ] ),
                 clientLogs[1]
                     .GetAllClient()
                     .Skip( 1 )
@@ -1005,8 +922,8 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         await using var server = new MessageBrokerServer(
             originalEndPoint,
-            MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetEventHandler( logs.Add )
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetClientEventHandlerFactory(
                     _ => e =>
                     {
@@ -1032,13 +949,6 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         Assertion.All(
                 server.Clients.Count.TestEquals( 0 ),
-                logs.GetAllServer()
-                    .TestContainsSequence(
-                    [
-                        $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                        $"[Started] At {server.LocalEndPoint}",
-                        "[WaitingForClient]"
-                    ] ),
                 logs.GetAllClient()
                     .Skip( 1 )
                     .TestCount( count => count.TestEquals( 10 ) )
@@ -1075,8 +985,8 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         await using var server = new MessageBrokerServer(
             originalEndPoint,
-            MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetEventHandler( logs.Add )
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetClientEventHandlerFactory(
                     _ => e =>
                     {
@@ -1102,13 +1012,6 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
 
         Assertion.All(
                 server.Clients.Count.TestEquals( 0 ),
-                logs.GetAllServer()
-                    .TestContainsSequence(
-                    [
-                        $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                        $"[Started] At {server.LocalEndPoint}",
-                        "[WaitingForClient]"
-                    ] ),
                 logs.GetAllClient()
                     .Skip( 1 )
                     .TestCount( count => count.TestEquals( 10 ) )
@@ -1307,17 +1210,5 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         await endSource.Task;
 
         remoteClient.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Disposed ) ).Go();
-    }
-
-    [Pure]
-    private static Assertion AssertClientData(byte[][] received, params (int Length, MessageBrokerClientEndpoint Endpoint)[] expected)
-    {
-        return received.TestCount( count => count.TestEquals( expected.Length ) )
-            .Then(
-                r => r.TestAll(
-                    (e, i) => Assertion.All(
-                        "element",
-                        e.Length.TestEquals( expected[i].Length ),
-                        e.ElementAtOrDefault( 0 ).TestEquals( ( byte )expected[i].Endpoint ) ) ) );
     }
 }

@@ -38,7 +38,7 @@ namespace LfrlAnvil.MessageBroker.Server;
 /// </param>
 /// <param name="TimestampsFactory">Factory of <see cref="Timestamp"/> providers.</param>
 /// <param name="DelaySourceFactory">Factory of <see cref="ValueTaskDelaySource"/> instances used for scheduling future events.</param>
-/// <param name="EventHandler"><see cref="MessageBrokerServerEvent"/> callback.</param>
+/// <param name="Logger"><see cref="MessageBrokerServerLogger"/> instance.</param>
 /// <param name="ClientEventHandlerFactory">Factory of <see cref="MessageBrokerRemoteClientEventHandler"/> callbacks.</param>
 /// <param name="ChannelEventHandlerFactory">Factory of <see cref="MessageBrokerChannelEventHandler"/> callbacks.</param>
 /// <param name="StreamEventHandlerFactory">Factory of <see cref="MessageBrokerStreamEventHandler"/> callbacks.</param>
@@ -54,7 +54,7 @@ public readonly record struct MessageBrokerServerOptions(
     Bounds<Duration>? AcceptablePingInterval,
     Func<MessageBrokerRemoteClient, ITimestampProvider>? TimestampsFactory,
     Func<MessageBrokerRemoteClient, ValueTaskDelaySource>? DelaySourceFactory,
-    MessageBrokerServerEventHandler? EventHandler,
+    MessageBrokerServerLogger? Logger,
     Func<MessageBrokerRemoteClient, MessageBrokerRemoteClientEventHandler?>? ClientEventHandlerFactory,
     Func<MessageBrokerChannel, MessageBrokerChannelEventHandler?>? ChannelEventHandlerFactory,
     Func<MessageBrokerStream, MessageBrokerStreamEventHandler?>? StreamEventHandlerFactory,
@@ -86,7 +86,7 @@ public readonly record struct MessageBrokerServerOptions(
             AcceptablePingInterval,
             TimestampsFactory,
             DelaySourceFactory,
-            EventHandler,
+            Logger,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,
             StreamEventHandlerFactory,
@@ -113,7 +113,7 @@ public readonly record struct MessageBrokerServerOptions(
             AcceptablePingInterval,
             TimestampsFactory,
             DelaySourceFactory,
-            EventHandler,
+            Logger,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,
             StreamEventHandlerFactory,
@@ -140,7 +140,7 @@ public readonly record struct MessageBrokerServerOptions(
             AcceptablePingInterval,
             TimestampsFactory,
             DelaySourceFactory,
-            EventHandler,
+            Logger,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,
             StreamEventHandlerFactory,
@@ -167,7 +167,7 @@ public readonly record struct MessageBrokerServerOptions(
             AcceptablePingInterval,
             TimestampsFactory,
             DelaySourceFactory,
-            EventHandler,
+            Logger,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,
             StreamEventHandlerFactory,
@@ -194,7 +194,7 @@ public readonly record struct MessageBrokerServerOptions(
             value,
             TimestampsFactory,
             DelaySourceFactory,
-            EventHandler,
+            Logger,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,
             StreamEventHandlerFactory,
@@ -221,7 +221,7 @@ public readonly record struct MessageBrokerServerOptions(
             AcceptablePingInterval,
             value,
             DelaySourceFactory,
-            EventHandler,
+            Logger,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,
             StreamEventHandlerFactory,
@@ -248,7 +248,7 @@ public readonly record struct MessageBrokerServerOptions(
             AcceptablePingInterval,
             TimestampsFactory,
             value,
-            EventHandler,
+            Logger,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,
             StreamEventHandlerFactory,
@@ -259,13 +259,13 @@ public readonly record struct MessageBrokerServerOptions(
     }
 
     /// <summary>
-    /// Allows to change <see cref="EventHandler"/>.
+    /// Allows to change <see cref="Logger"/>.
     /// </summary>
     /// <param name="value">New value.</param>
     /// <returns>New <see cref="MessageBrokerServerOptions"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public MessageBrokerServerOptions SetEventHandler(MessageBrokerServerEventHandler? value)
+    public MessageBrokerServerOptions SetLogger(MessageBrokerServerLogger? value)
     {
         return new MessageBrokerServerOptions(
             Tcp,
@@ -303,7 +303,7 @@ public readonly record struct MessageBrokerServerOptions(
             AcceptablePingInterval,
             TimestampsFactory,
             DelaySourceFactory,
-            EventHandler,
+            Logger,
             value,
             ChannelEventHandlerFactory,
             StreamEventHandlerFactory,
@@ -330,7 +330,7 @@ public readonly record struct MessageBrokerServerOptions(
             AcceptablePingInterval,
             TimestampsFactory,
             DelaySourceFactory,
-            EventHandler,
+            Logger,
             ClientEventHandlerFactory,
             value,
             StreamEventHandlerFactory,
@@ -357,7 +357,7 @@ public readonly record struct MessageBrokerServerOptions(
             AcceptablePingInterval,
             TimestampsFactory,
             DelaySourceFactory,
-            EventHandler,
+            Logger,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,
             value,
@@ -384,7 +384,7 @@ public readonly record struct MessageBrokerServerOptions(
             AcceptablePingInterval,
             TimestampsFactory,
             DelaySourceFactory,
-            EventHandler,
+            Logger,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,
             StreamEventHandlerFactory,
@@ -412,7 +412,7 @@ public readonly record struct MessageBrokerServerOptions(
             AcceptablePingInterval,
             TimestampsFactory,
             DelaySourceFactory,
-            EventHandler,
+            Logger,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,
             StreamEventHandlerFactory,
@@ -440,7 +440,7 @@ public readonly record struct MessageBrokerServerOptions(
             AcceptablePingInterval,
             TimestampsFactory,
             DelaySourceFactory,
-            EventHandler,
+            Logger,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,
             StreamEventHandlerFactory,
@@ -467,7 +467,7 @@ public readonly record struct MessageBrokerServerOptions(
             AcceptablePingInterval,
             TimestampsFactory,
             DelaySourceFactory,
-            EventHandler,
+            Logger,
             ClientEventHandlerFactory,
             ChannelEventHandlerFactory,
             StreamEventHandlerFactory,
