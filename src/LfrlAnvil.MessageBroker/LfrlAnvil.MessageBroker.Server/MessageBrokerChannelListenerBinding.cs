@@ -15,7 +15,6 @@
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Async;
-using LfrlAnvil.MessageBroker.Server.Events;
 
 namespace LfrlAnvil.MessageBroker.Server;
 
@@ -25,7 +24,6 @@ namespace LfrlAnvil.MessageBroker.Server;
 public sealed class MessageBrokerChannelListenerBinding
 {
     private readonly object _sync = new object();
-    private readonly MessageBrokerChannelListenerBindingEventHandler? _eventHandler;
     private InterlockedInt32 _prefetchCounter;
     private MessageBrokerChannelListenerBindingState _state;
 
@@ -42,7 +40,6 @@ public sealed class MessageBrokerChannelListenerBinding
         _state = MessageBrokerChannelListenerBindingState.Running;
         PrefetchHint = prefetchHint;
         _prefetchCounter = new InterlockedInt32( 0 );
-        _eventHandler = client.Server.ListenerEventHandlerFactory?.Invoke( this );
     }
 
     /// <summary>
@@ -133,57 +130,17 @@ public sealed class MessageBrokerChannelListenerBinding
 
     internal void OnServerDisposed()
     {
-        Dispose( notifyChannel: false );
-    }
-
-    internal void OnClientDisconnected()
-    {
-        Dispose( notifyChannel: true );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void BeginDisposingUnsafe()
-    {
-        Assume.Equals( _state, MessageBrokerChannelListenerBindingState.Running );
         _prefetchCounter.Write( -1 );
-        _state = MessageBrokerChannelListenerBindingState.Disposing;
-    }
-
-    internal void EndDisposing()
-    {
         using ( AcquireLock() )
         {
-            Assume.Equals( _state, MessageBrokerChannelListenerBindingState.Disposing );
+            if ( ShouldCancel )
+                return;
+
             _state = MessageBrokerChannelListenerBindingState.Disposed;
         }
-
-        Emit( MessageBrokerChannelListenerBindingEvent.Disposed( this ) );
     }
 
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void Emit(MessageBrokerChannelListenerBindingEvent e)
-    {
-        if ( _eventHandler is null )
-            return;
-
-        try
-        {
-            _eventHandler( e );
-        }
-        catch
-        {
-            // NOTE: do nothing
-        }
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ExclusiveLock AcquireLock()
-    {
-        return ExclusiveLock.SpinWaitEnter( _sync, spinWaitMultiplier: 4 );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void Dispose(bool notifyChannel)
+    internal void OnClientDisconnected(ulong traceId)
     {
         _prefetchCounter.Write( -1 );
         using ( AcquireLock() )
@@ -194,11 +151,32 @@ public sealed class MessageBrokerChannelListenerBinding
             _state = MessageBrokerChannelListenerBindingState.Disposing;
         }
 
-        Emit( MessageBrokerChannelListenerBindingEvent.Disposing( this ) );
+        Channel.OnListenerDisposing( Client, traceId );
+        using ( AcquireLock() )
+            _state = MessageBrokerChannelListenerBindingState.Disposed;
+    }
 
-        if ( notifyChannel )
-            Channel.OnListenerDisposing( Client );
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void BeginDisposingUnsafe()
+    {
+        Assume.Equals( _state, MessageBrokerChannelListenerBindingState.Running );
+        _prefetchCounter.Write( -1 );
+        _state = MessageBrokerChannelListenerBindingState.Disposing;
+    }
 
-        EndDisposing();
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void EndDisposing()
+    {
+        using ( AcquireLock() )
+        {
+            Assume.Equals( _state, MessageBrokerChannelListenerBindingState.Disposing );
+            _state = MessageBrokerChannelListenerBindingState.Disposed;
+        }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal ExclusiveLock AcquireLock()
+    {
+        return ExclusiveLock.SpinWaitEnter( _sync, spinWaitMultiplier: 4 );
     }
 }

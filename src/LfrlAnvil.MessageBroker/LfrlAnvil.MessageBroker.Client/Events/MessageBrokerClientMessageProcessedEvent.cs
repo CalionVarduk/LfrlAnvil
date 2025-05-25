@@ -23,12 +23,12 @@ namespace LfrlAnvil.MessageBroker.Client.Events;
 /// </summary>
 public readonly struct MessageBrokerClientMessageProcessedEvent
 {
-    private MessageBrokerClientMessageProcessedEvent(MessageBrokerListener listener, ulong traceId, ulong messageId, int length)
+    private MessageBrokerClientMessageProcessedEvent(MessageBrokerListener listener, ulong traceId, int streamId, ulong messageId)
     {
         Source = MessageBrokerClientEventSource.Create( listener.Client, traceId );
         Listener = listener;
+        StreamId = streamId;
         MessageId = messageId;
-        Length = length;
     }
 
     /// <summary>
@@ -42,14 +42,14 @@ public readonly struct MessageBrokerClientMessageProcessedEvent
     public MessageBrokerListener Listener { get; }
 
     /// <summary>
+    /// Unique id of the stream through which the message was pushed.
+    /// </summary>
+    public int StreamId { get; }
+
+    /// <summary>
     /// Unique id of the message assigned by the server.
     /// </summary>
     public ulong MessageId { get; }
-
-    /// <summary>
-    /// Message length.
-    /// </summary>
-    public int Length { get; }
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerClientMessageProcessedEvent"/> instance.
@@ -59,7 +59,7 @@ public readonly struct MessageBrokerClientMessageProcessedEvent
     public override string ToString()
     {
         return
-            $"[MessageProcessed] {Source}, Channel = [{Listener.ChannelId}] '{Listener.ChannelName}', Queue = [{Listener.QueueId}] '{Listener.QueueName}', MessageId = {MessageId}, Length = {Length}";
+            $"[MessageProcessed] {Source}, Channel = [{Listener.ChannelId}] '{Listener.ChannelName}', Queue = [{Listener.QueueId}] '{Listener.QueueName}', StreamId = {StreamId}, MessageId = {MessageId}";
     }
 
     [Pure]
@@ -67,9 +67,9 @@ public readonly struct MessageBrokerClientMessageProcessedEvent
     internal static MessageBrokerClientMessageProcessedEvent Create(
         MessageBrokerListener listener,
         ulong traceId,
-        ulong messageId,
-        int length)
+        int streamId,
+        ulong messageId)
     {
-        return new MessageBrokerClientMessageProcessedEvent( listener, traceId, messageId, length );
+        return new MessageBrokerClientMessageProcessedEvent( listener, traceId, streamId, messageId );
     }
 }

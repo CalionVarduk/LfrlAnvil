@@ -15,8 +15,17 @@
 namespace LfrlAnvil.MessageBroker.Server.Events;
 
 /// <summary>
-/// Represents a callback to <see cref="MessageBrokerChannelPublisherBindingEvent"/> instances
-/// emitted by <see cref="MessageBrokerChannelPublisherBinding"/>.
-/// <param name="e">Emitted event.</param>
+/// Represents the type of a <see cref="MessageBrokerRemoteClientReadPacketEvent"/>.
 /// </summary>
-public delegate void MessageBrokerChannelPublisherBindingEventHandler(MessageBrokerChannelPublisherBindingEvent e);
+public enum MessageBrokerRemoteClientReadPacketEventType : byte
+{
+    /// <summary>
+    /// Specifies that an event has been emitted after the read network packet has been received and is ready for processing.
+    /// </summary>
+    Received = 0,
+
+    /// <summary>
+    /// Specifies that an event has been emitted after the read network packet has been accepted.
+    /// </summary>
+    Accepted = 1
+}

@@ -190,11 +190,15 @@ public sealed partial class MessageBrokerClient
         }
         catch ( Exception exc )
         {
-            return EmitError(
-                exc is OperationCanceledException cancelExc && cancelExc.CancellationToken == timeoutToken
-                    ? new MessageBrokerClientResponseTimeoutException( this, MessageBrokerServerEndpoint.HandshakeRequest )
-                    : exc,
-                traceId );
+            if ( exc is OperationCanceledException cancelExc && cancelExc.CancellationToken == timeoutToken )
+            {
+                var error = new MessageBrokerClientResponseTimeoutException( this, MessageBrokerServerEndpoint.HandshakeRequest );
+                MessageBrokerClientErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
+                return error;
+            }
+
+            MessageBrokerClientAwaitPacketEvent.Create( this, exc ).Emit( Logger.AwaitPacket );
+            return exc;
         }
 
         if ( errors.Count > 0 )
@@ -228,11 +232,15 @@ public sealed partial class MessageBrokerClient
         }
         catch ( Exception exc )
         {
-            return EmitError(
-                exc is OperationCanceledException cancelExc && cancelExc.CancellationToken == timeoutToken
-                    ? new MessageBrokerClientResponseTimeoutException( this, MessageBrokerServerEndpoint.HandshakeRequest )
-                    : exc,
-                traceId );
+            if ( exc is OperationCanceledException cancelExc && cancelExc.CancellationToken == timeoutToken )
+            {
+                var error = new MessageBrokerClientResponseTimeoutException( this, requestHeader.GetServerEndpoint() );
+                MessageBrokerClientErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
+                return error;
+            }
+
+            MessageBrokerClientAwaitPacketEvent.Create( this, exc ).Emit( Logger.AwaitPacket );
+            return exc;
         }
     }
 

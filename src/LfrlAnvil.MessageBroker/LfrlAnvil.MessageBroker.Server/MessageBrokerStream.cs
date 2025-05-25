@@ -103,7 +103,7 @@ public sealed class MessageBrokerStream
         MessageBrokerChannelPublisherBinding publisher,
         MemoryPoolToken<byte> token,
         ReadOnlyMemory<byte> data,
-        ulong contextId,
+        ulong traceId,
         ref ulong? messageId)
     {
         using ( AcquireLock() )
@@ -122,7 +122,7 @@ public sealed class MessageBrokerStream
             }
 
             messageId = id;
-            Emit( MessageBrokerStreamEvent.MessageEnqueued( this, publisher, id, contextId ) );
+            Emit( MessageBrokerStreamEvent.MessageEnqueued( this, publisher, id, traceId ) );
             StreamProcessor.SignalContinuation();
         }
 
@@ -180,7 +180,7 @@ public sealed class MessageBrokerStream
         return true;
     }
 
-    internal async ValueTask OnPublisherDisposingAsync(MessageBrokerRemoteClient client, MessageBrokerChannel channel)
+    internal async ValueTask OnPublisherDisposingAsync(MessageBrokerRemoteClient client, MessageBrokerChannel channel, ulong clientTraceId)
     {
         using ( AcquireLock() )
         {

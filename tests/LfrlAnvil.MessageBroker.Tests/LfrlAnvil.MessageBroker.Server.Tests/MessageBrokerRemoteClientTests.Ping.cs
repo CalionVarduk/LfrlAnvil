@@ -1,34 +1,46 @@
-﻿using System.Net;
+﻿using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.MessageBroker.Server.Events;
+using LfrlAnvil.MessageBroker.Server.Exceptions;
 using LfrlAnvil.MessageBroker.Server.Tests.Helpers;
 
 namespace LfrlAnvil.MessageBroker.Server.Tests;
 
 public partial class MessageBrokerRemoteClientTests
 {
-    public class Ping : TestsBase
+    public class Ping : TestsBase, IClassFixture<SharedResourceFixture>
     {
+        private readonly ValueTaskDelaySource _sharedDelaySource;
+
+        public Ping(SharedResourceFixture fixture)
+        {
+            _sharedDelaySource = fixture.DelaySource;
+        }
+
         [Fact]
         public async Task MessageListener_ShouldReceivePingAndSendPongFromClientOnSchedule()
         {
             var endSource = new SafeTaskCompletionSource( completionCount: 2 );
-            var logs = new EventLogger();
+            var logs = new ClientEventLogger();
             var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
             await using var server = new MessageBrokerServer(
                 originalEndPoint,
-                MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                    .SetClientEventHandlerFactory(
-                        _ => e =>
-                        {
-                            logs.Add( e );
-                            if ( e.Type == MessageBrokerRemoteClientEventType.MessageSent
-                                && e.GetClientEndpoint() == MessageBrokerClientEndpoint.Pong )
-                                endSource.Complete();
-                        } ) );
+                MessageBrokerServerOptions.Default
+                    .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySourceFactory( _ => _sharedDelaySource )
+                    .SetClientLoggerFactory(
+                        _ => logs.GetLogger(
+                            MessageBrokerRemoteClientLogger.Create(
+                                traceEnd: e =>
+                                {
+                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.Ping )
+                                        endSource.Complete();
+                                } ) ) ) );
 
             await server.StartAsync();
 
@@ -50,18 +62,36 @@ public partial class MessageBrokerRemoteClientTests
 
             Assertion.All(
                     (remoteClient?.State).TestEquals( MessageBrokerRemoteClientState.Running ),
-                    logs.GetAllClient()
-                        .TestContainsSequence(
+                    logs.GetAll()
+                        .Skip( 1 )
+                        .TestSequence(
                         [
-                            "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 5] Ping",
-                            "[1::'test'::1] [MessageReceived] [PacketLength: 5] Begin handling Ping",
-                            "[1::'test'::1] [MessageAccepted] [PacketLength: 5] Ping",
-                            "[1::'test'::1] [SendingMessage] [PacketLength: 5] Pong",
-                            "[1::'test'::1] [MessageSent] [PacketLength: 5] Pong",
-                            "[1::'test'::2] [MessageReceived] [PacketLength: 5] Begin handling Ping",
-                            "[1::'test'::2] [MessageAccepted] [PacketLength: 5] Ping",
-                            "[1::'test'::2] [SendingMessage] [PacketLength: 5] Pong",
-                            "[1::'test'::2] [MessageSent] [PacketLength: 5] Pong"
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:Ping] Client = [1] 'test', TraceId = 1 (start)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (Ping, Length = 5)",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (Ping, Length = 5)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (Pong, Length = 5)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (Pong, Length = 5)",
+                                "[Trace:Ping] Client = [1] 'test', TraceId = 1 (end)"
+                            ] ),
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:Ping] Client = [1] 'test', TraceId = 2 (start)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (Ping, Length = 5)",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (Ping, Length = 5)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (Pong, Length = 5)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (Pong, Length = 5)",
+                                "[Trace:Ping] Client = [1] 'test', TraceId = 2 (end)"
+                            ] )
+                        ] ),
+                    logs.GetAllAwaitPacket()
+                        .TestContainsContiguousSequence(
+                        [
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (Ping, Length = 5)",
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (Ping, Length = 5)"
                         ] ) )
                 .Go();
         }
@@ -70,19 +100,22 @@ public partial class MessageBrokerRemoteClientTests
         public async Task MessageListener_ShouldDisposeGracefully_WhenClientSendsInvalidRequest()
         {
             var endSource = new SafeTaskCompletionSource();
-            var logs = new EventLogger();
+            var logs = new ClientEventLogger();
             var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
             await using var server = new MessageBrokerServer(
                 originalEndPoint,
-                MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                    .SetClientEventHandlerFactory(
-                        _ => e =>
-                        {
-                            logs.Add( e );
-                            if ( e.Type == MessageBrokerRemoteClientEventType.Disposed )
-                                endSource.Complete();
-                        } ) );
+                MessageBrokerServerOptions.Default
+                    .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySourceFactory( _ => _sharedDelaySource )
+                    .SetClientLoggerFactory(
+                        _ => logs.GetLogger(
+                            MessageBrokerRemoteClientLogger.Create(
+                                traceEnd: e =>
+                                {
+                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.Unexpected )
+                                        endSource.Complete();
+                                } ) ) ) );
 
             await server.StartAsync();
 
@@ -93,14 +126,31 @@ public partial class MessageBrokerRemoteClientTests
 
             Assertion.All(
                     server.Clients.Count.TestEquals( 0 ),
-                    logs.GetAllClient()
-                        .TestAny(
-                            (x, _) => x.TestStartsWith(
+                    logs.GetAll()
+                        .Skip( 1 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:Unexpected] Client = [1] 'test', TraceId = 1 (start)",
                                 """
-                                [1::'test'::<ROOT>] [MessageRejected] [PacketLength: 5] Encountered an error:
-                                LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid ConfirmHandshakeResponse from client [1] 'test'. Encountered 1 error(s):
+                                [Error] Client = [1] 'test', TraceId = 1
+                                LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid ConfirmHandshakeResponse from client [1] 'test'. Encountered 1 error(s):
                                 1. Received unexpected server endpoint.
-                                """ ) ) )
+                                """,
+                                "[Disposing] Client = [1] 'test', TraceId = 1",
+                                "[Disposed] Client = [1] 'test', TraceId = 1",
+                                "[Trace:Unexpected] Client = [1] 'test', TraceId = 1 (end)"
+                            ] )
+                        ] ),
+                    logs.GetAllAwaitPacket()
+                        .TestContainsContiguousSequence(
+                        [
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (ConfirmHandshakeResponse, Length = 5)",
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (ConfirmHandshakeResponse, Length = 5)"
+                        ] ) )
                 .Go();
         }
 
@@ -108,19 +158,22 @@ public partial class MessageBrokerRemoteClientTests
         public async Task MessageListener_ShouldDisposeGracefully_WhenClientSendsPingWithInvalidPayload()
         {
             var endSource = new SafeTaskCompletionSource();
-            var logs = new EventLogger();
+            var logs = new ClientEventLogger();
             var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
             await using var server = new MessageBrokerServer(
                 originalEndPoint,
-                MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                    .SetClientEventHandlerFactory(
-                        _ => e =>
-                        {
-                            logs.Add( e );
-                            if ( e.Type == MessageBrokerRemoteClientEventType.Disposed )
-                                endSource.Complete();
-                        } ) );
+                MessageBrokerServerOptions.Default
+                    .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySourceFactory( _ => _sharedDelaySource )
+                    .SetClientLoggerFactory(
+                        _ => logs.GetLogger(
+                            MessageBrokerRemoteClientLogger.Create(
+                                traceEnd: e =>
+                                {
+                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.Ping )
+                                        endSource.Complete();
+                                } ) ) ) );
 
             await server.StartAsync();
 
@@ -131,62 +184,92 @@ public partial class MessageBrokerRemoteClientTests
 
             Assertion.All(
                     server.Clients.Count.TestEquals( 0 ),
-                    logs.GetAllClient()
-                        .TestContainsSequence(
+                    logs.GetAll()
+                        .Skip( 1 )
+                        .TestSequence(
                         [
-                            "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 5] Ping",
-                            "[1::'test'::1] [MessageReceived] [PacketLength: 5] Begin handling Ping"
-                        ] ),
-                    logs.GetAllClient()
-                        .TestAny(
-                            (x, _) => x.TestStartsWith(
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:Ping] Client = [1] 'test', TraceId = 1 (start)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (Ping, Length = 5)",
                                 """
-                                [1::'test'::1] [MessageRejected] [PacketLength: 5] Encountered an error:
-                                LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid Ping from client [1] 'test'. Encountered 1 error(s):
+                                [Error] Client = [1] 'test', TraceId = 1
+                                LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid Ping from client [1] 'test'. Encountered 1 error(s):
                                 1. Expected endianness verification payload to be 0102fdfe but found 00000001.
-                                """ ) ) )
+                                """,
+                                "[Disposing] Client = [1] 'test', TraceId = 1",
+                                "[Disposed] Client = [1] 'test', TraceId = 1",
+                                "[Trace:Ping] Client = [1] 'test', TraceId = 1 (end)"
+                            ] )
+                        ] ),
+                    logs.GetAllAwaitPacket()
+                        .TestContainsContiguousSequence(
+                        [
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (Ping, Length = 5)"
+                        ] ) )
                 .Go();
         }
 
         [Fact]
         public async Task MessageListener_ShouldDisposeGracefully_WhenClientFailsToSendAnyRequestInTime()
         {
+            Exception? exception = null;
             var endSource = new SafeTaskCompletionSource();
-            var logs = new EventLogger();
+            var logs = new ClientEventLogger();
             var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
             await using var server = new MessageBrokerServer(
                 originalEndPoint,
-                MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                    .SetClientEventHandlerFactory(
-                        _ => e =>
-                        {
-                            logs.Add( e );
-                            if ( e.Type == MessageBrokerRemoteClientEventType.Disposed )
-                                endSource.Complete();
-                        } ) );
+                MessageBrokerServerOptions.Default
+                    .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySourceFactory( _ => _sharedDelaySource )
+                    .SetClientLoggerFactory(
+                        _ => logs.GetLogger(
+                            MessageBrokerRemoteClientLogger.Create(
+                                traceEnd: e =>
+                                {
+                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.Dispose )
+                                        endSource.Complete();
+                                },
+                                error: e => exception = e.Exception ) ) ) );
 
             await server.StartAsync();
 
             using var client = new ClientMock();
             await client.EstablishHandshake( server, messageTimeout: Duration.FromSeconds( 0.4 ), pingInterval: Duration.FromTicks( 1 ) );
+            var remoteClient = server.Clients.TryGetById( 1 );
             await endSource.Task;
 
             Assertion.All(
+                    exception.TestType()
+                        .Exact<MessageBrokerRemoteClientRequestTimeoutException>( exc => exc.Client.TestRefEquals( remoteClient ) ),
                     server.Clients.Count.TestEquals( 0 ),
-                    logs.GetAllClient()
-                        .TestContainsSequence(
+                    logs.GetAll()
+                        .Skip( 1 )
+                        .TestSequence(
                         [
-                            "[1::<ROOT>] [WaitingForMessage]",
-                            "[1::<ROOT>] [MessageReceived] [PacketLength: 18] Begin handling HandshakeRequest",
-                            "[1::'test'::<ROOT>] [MessageAccepted] [PacketLength: 18] HandshakeRequest (IsLittleEndian = True, MessageTimeout = 0.4 second(s), PingInterval = 0.001 second(s))",
-                            "[1::'test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeAcceptedResponse",
-                            "[1::'test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeAcceptedResponse",
-                            "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 5] ConfirmHandshakeResponse",
-                            "[1::'test'::<ROOT>] [MessageAccepted] [PacketLength: 5] ConfirmHandshakeResponse",
-                            "[1::'test'::<ROOT>] [WaitingForMessage] Operation cancelled",
-                            "[1::'test'::<ROOT>] [Disposing]",
-                            "[1::'test'::<ROOT>] [Disposed]"
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:Dispose] Client = [1] 'test', TraceId = 1 (start)",
+                                """
+                                [Error] Client = [1] 'test', TraceId = 1
+                                LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientRequestTimeoutException: Client [1] 'test' failed to send a request to the server in the specified amount of time (400 milliseconds).
+                                """,
+                                "[Disposing] Client = [1] 'test', TraceId = 1",
+                                "[Disposed] Client = [1] 'test', TraceId = 1",
+                                "[Trace:Dispose] Client = [1] 'test', TraceId = 1 (end)"
+                            ] )
+                        ] ),
+                    logs.GetAllAwaitPacket()
+                        .TestContainsContiguousSequence(
+                        [
+                            (e, _) => e.TestEquals( "[AwaitPacket] Client = [1] 'test'" ),
+                            (e, _) => e.TestStartsWith(
+                                """
+                                [AwaitPacket] Client = [1] 'test'
+                                System.OperationCanceledException:
+                                """ )
                         ] ) )
                 .Go();
         }

@@ -33,12 +33,16 @@ public readonly struct MessageBrokerClientLogger
         Action<MessageBrokerClientSendPacketEvent>? sendPacket,
         Action<MessageBrokerClientReadPacketEvent>? readPacket,
         Action<MessageBrokerClientBindingPublisherEvent>? bindingPublisher,
-        Action<MessageBrokerClientPublisherChangeEvent>? publisherChange,
+        Action<MessageBrokerClientPublisherBoundEvent>? publisherBound,
+        Action<MessageBrokerClientUnbindingPublisherEvent>? unbindingPublisher,
+        Action<MessageBrokerClientPublisherUnboundEvent>? publisherUnbound,
         Action<MessageBrokerClientBindingListenerEvent>? bindingListener,
-        Action<MessageBrokerClientListenerChangeEvent>? listenerChange,
-        Action<MessageBrokerClientMessagePushingEvent>? messagePushing,
+        Action<MessageBrokerClientListenerBoundEvent>? listenerBound,
+        Action<MessageBrokerClientUnbindingListenerEvent>? unbindingListener,
+        Action<MessageBrokerClientListenerUnboundEvent>? listenerUnbound,
+        Action<MessageBrokerClientPushingMessageEvent>? pushingMessage,
         Action<MessageBrokerClientMessagePushedEvent>? messagePushed,
-        Action<MessageBrokerClientMessageProcessingEvent>? messageProcessing,
+        Action<MessageBrokerClientProcessingMessageEvent>? processingMessage,
         Action<MessageBrokerClientMessageProcessedEvent>? messageProcessed,
         Action<MessageBrokerClientDisposingEvent>? disposing,
         Action<MessageBrokerClientDisposedEvent>? disposed,
@@ -54,12 +58,16 @@ public readonly struct MessageBrokerClientLogger
         SendPacket = sendPacket;
         ReadPacket = readPacket;
         BindingPublisher = bindingPublisher;
-        PublisherChange = publisherChange;
+        PublisherBound = publisherBound;
+        UnbindingPublisher = unbindingPublisher;
+        PublisherUnbound = publisherUnbound;
         BindingListener = bindingListener;
-        ListenerChange = listenerChange;
-        MessagePushing = messagePushing;
+        ListenerBound = listenerBound;
+        UnbindingListener = unbindingListener;
+        ListenerUnbound = listenerUnbound;
+        PushingMessage = pushingMessage;
         MessagePushed = messagePushed;
-        MessageProcessing = messageProcessing;
+        ProcessingMessage = processingMessage;
         MessageProcessed = messageProcessed;
         Disposing = disposing;
         Disposed = disposed;
@@ -117,9 +125,19 @@ public readonly struct MessageBrokerClientLogger
     public readonly Action<MessageBrokerClientBindingPublisherEvent>? BindingPublisher;
 
     /// <summary>
-    /// Optional callback for a <see cref="MessageBrokerClientPublisherChangeEvent"/>.
+    /// Optional callback for a <see cref="MessageBrokerClientPublisherBoundEvent"/>.
     /// </summary>
-    public readonly Action<MessageBrokerClientPublisherChangeEvent>? PublisherChange;
+    public readonly Action<MessageBrokerClientPublisherBoundEvent>? PublisherBound;
+
+    /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerClientUnbindingPublisherEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerClientUnbindingPublisherEvent>? UnbindingPublisher;
+
+    /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerClientPublisherUnboundEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerClientPublisherUnboundEvent>? PublisherUnbound;
 
     /// <summary>
     /// Optional callback for a <see cref="MessageBrokerClientBindingListenerEvent"/>.
@@ -127,14 +145,24 @@ public readonly struct MessageBrokerClientLogger
     public readonly Action<MessageBrokerClientBindingListenerEvent>? BindingListener;
 
     /// <summary>
-    /// Optional callback for a <see cref="MessageBrokerClientListenerChangeEvent"/>.
+    /// Optional callback for a <see cref="MessageBrokerClientListenerBoundEvent"/>.
     /// </summary>
-    public readonly Action<MessageBrokerClientListenerChangeEvent>? ListenerChange;
+    public readonly Action<MessageBrokerClientListenerBoundEvent>? ListenerBound;
 
     /// <summary>
-    /// Optional callback for a <see cref="MessageBrokerClientMessagePushingEvent"/>.
+    /// Optional callback for a <see cref="MessageBrokerClientUnbindingListenerEvent"/>.
     /// </summary>
-    public readonly Action<MessageBrokerClientMessagePushingEvent>? MessagePushing;
+    public readonly Action<MessageBrokerClientUnbindingListenerEvent>? UnbindingListener;
+
+    /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerClientListenerUnboundEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerClientListenerUnboundEvent>? ListenerUnbound;
+
+    /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerClientPushingMessageEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerClientPushingMessageEvent>? PushingMessage;
 
     /// <summary>
     /// Optional callback for a <see cref="MessageBrokerClientMessagePushedEvent"/>.
@@ -142,9 +170,9 @@ public readonly struct MessageBrokerClientLogger
     public readonly Action<MessageBrokerClientMessagePushedEvent>? MessagePushed;
 
     /// <summary>
-    /// Optional callback for a <see cref="MessageBrokerClientMessageProcessingEvent"/>.
+    /// Optional callback for a <see cref="MessageBrokerClientProcessingMessageEvent"/>.
     /// </summary>
-    public readonly Action<MessageBrokerClientMessageProcessingEvent>? MessageProcessing;
+    public readonly Action<MessageBrokerClientProcessingMessageEvent>? ProcessingMessage;
 
     /// <summary>
     /// Optional callback for a <see cref="MessageBrokerClientMessageProcessedEvent"/>.
@@ -179,12 +207,16 @@ public readonly struct MessageBrokerClientLogger
     /// <param name="sendPacket">Optional <see cref="SendPacket"/> callback.</param>
     /// <param name="readPacket">Optional <see cref="ReadPacket"/> callback.</param>
     /// <param name="bindingPublisher">Optional <see cref="BindingPublisher"/> callback.</param>
-    /// <param name="publisherChange">Optional <see cref="PublisherChange"/> callback.</param>
+    /// <param name="publisherBound">Optional <see cref="PublisherBound"/> callback.</param>
+    /// <param name="unbindingPublisher">Optional <see cref="UnbindingPublisher"/> callback.</param>
+    /// <param name="publisherUnbound">Optional <see cref="PublisherUnbound"/> callback.</param>
     /// <param name="bindingListener">Optional <see cref="BindingListener"/> callback.</param>
-    /// <param name="listenerChange">Optional <see cref="ListenerChange"/> callback.</param>
-    /// <param name="messagePushing">Optional <see cref="MessagePushing"/> callback.</param>
+    /// <param name="listenerBound">Optional <see cref="ListenerBound"/> callback.</param>
+    /// <param name="unbindingListener">Optional <see cref="UnbindingListener"/> callback.</param>
+    /// <param name="listenerUnbound">Optional <see cref="ListenerUnbound"/> callback.</param>
+    /// <param name="pushingMessage">Optional <see cref="PushingMessage"/> callback.</param>
     /// <param name="messagePushed">Optional <see cref="MessagePushed"/> callback.</param>
-    /// <param name="messageProcessing">Optional <see cref="MessageProcessing"/> callback.</param>
+    /// <param name="processingMessage">Optional <see cref="ProcessingMessage"/> callback.</param>
     /// <param name="messageProcessed">Optional <see cref="MessageProcessed"/> callback.</param>
     /// <param name="disposing">Optional <see cref="Disposing"/> callback.</param>
     /// <param name="disposed">Optional <see cref="Disposed"/> callback.</param>
@@ -202,12 +234,16 @@ public readonly struct MessageBrokerClientLogger
         Action<MessageBrokerClientSendPacketEvent>? sendPacket = null,
         Action<MessageBrokerClientReadPacketEvent>? readPacket = null,
         Action<MessageBrokerClientBindingPublisherEvent>? bindingPublisher = null,
-        Action<MessageBrokerClientPublisherChangeEvent>? publisherChange = null,
+        Action<MessageBrokerClientPublisherBoundEvent>? publisherBound = null,
+        Action<MessageBrokerClientUnbindingPublisherEvent>? unbindingPublisher = null,
+        Action<MessageBrokerClientPublisherUnboundEvent>? publisherUnbound = null,
         Action<MessageBrokerClientBindingListenerEvent>? bindingListener = null,
-        Action<MessageBrokerClientListenerChangeEvent>? listenerChange = null,
-        Action<MessageBrokerClientMessagePushingEvent>? messagePushing = null,
+        Action<MessageBrokerClientListenerBoundEvent>? listenerBound = null,
+        Action<MessageBrokerClientUnbindingListenerEvent>? unbindingListener = null,
+        Action<MessageBrokerClientListenerUnboundEvent>? listenerUnbound = null,
+        Action<MessageBrokerClientPushingMessageEvent>? pushingMessage = null,
         Action<MessageBrokerClientMessagePushedEvent>? messagePushed = null,
-        Action<MessageBrokerClientMessageProcessingEvent>? messageProcessing = null,
+        Action<MessageBrokerClientProcessingMessageEvent>? processingMessage = null,
         Action<MessageBrokerClientMessageProcessedEvent>? messageProcessed = null,
         Action<MessageBrokerClientDisposingEvent>? disposing = null,
         Action<MessageBrokerClientDisposedEvent>? disposed = null,
@@ -224,12 +260,16 @@ public readonly struct MessageBrokerClientLogger
             sendPacket,
             readPacket,
             bindingPublisher,
-            publisherChange,
+            publisherBound,
+            unbindingPublisher,
+            publisherUnbound,
             bindingListener,
-            listenerChange,
-            messagePushing,
+            listenerBound,
+            unbindingListener,
+            listenerUnbound,
+            pushingMessage,
             messagePushed,
-            messageProcessing,
+            processingMessage,
             messageProcessed,
             disposing,
             disposed,

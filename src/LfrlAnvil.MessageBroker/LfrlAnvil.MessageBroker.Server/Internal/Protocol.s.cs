@@ -74,6 +74,13 @@ internal static class Protocol
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal MessageBrokerClientEndpoint GetClientEndpoint()
+        {
+            return ( MessageBrokerClientEndpoint )EndpointCode;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal PacketHeader ReverseEndianness()
         {
             return new PacketHeader( EndpointCode, BinaryPrimitives.ReverseEndianness( Payload ) );
@@ -371,6 +378,13 @@ internal static class Protocol
             var channelId = unchecked( ( int )reader.ReadInt32() );
             return new UnbindPublisherRequest( channelId );
         }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal Chain<string> StringifyErrors()
+        {
+            return ChannelId <= 0 ? Chain.Create( Resources.ChannelIdIsNotPositive( ChannelId ) ) : Chain<string>.Empty;
+        }
     }
 
     internal readonly struct PublisherUnboundResponse
@@ -583,6 +597,13 @@ internal static class Protocol
             var channelId = unchecked( ( int )reader.ReadInt32() );
             return new UnbindListenerRequest( channelId );
         }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal Chain<string> StringifyErrors()
+        {
+            return ChannelId <= 0 ? Chain.Create( Resources.ChannelIdIsNotPositive( ChannelId ) ) : Chain<string>.Empty;
+        }
     }
 
     internal readonly struct ListenerUnboundResponse
@@ -677,6 +698,13 @@ internal static class Protocol
             var flags = reader.MoveReadInt8();
             var channelId = unchecked( ( int )reader.ReadInt32() );
             return new PushMessageHeader( flags, channelId );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal Chain<string> StringifyErrors()
+        {
+            return ChannelId <= 0 ? Chain.Create( Resources.ChannelIdIsNotPositive( ChannelId ) ) : Chain<string>.Empty;
         }
     }
 

@@ -1,34 +1,44 @@
-﻿using System.Net;
+﻿using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Exceptions;
 using LfrlAnvil.MessageBroker.Server.Tests.Helpers;
 
 namespace LfrlAnvil.MessageBroker.Server.Tests;
 
-public class MessageBrokerChannelPublisherBindingTests : TestsBase
+public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixture<SharedResourceFixture>
 {
+    private readonly ValueTaskDelaySource _sharedDelaySource;
+
+    public MessageBrokerChannelPublisherBindingTests(SharedResourceFixture fixture)
+    {
+        _sharedDelaySource = fixture.DelaySource;
+    }
+
     [Fact]
     public async Task Creation_ShouldCreateBindingCorrectly()
     {
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
+        var clientLogs = new ClientEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetClientEventHandlerFactory(
-                    _ => e =>
-                    {
-                        logs.Add( e );
-                        if ( e.Type == MessageBrokerRemoteClientEventType.MessageSent
-                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.PublisherBoundResponse )
-                            endSource.Complete();
-                    } )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
+                                    endSource.Complete();
+                            } ) ) )
                 .SetChannelEventHandlerFactory( _ => logs.Add )
-                .SetStreamEventHandlerFactory( _ => logs.Add )
-                .SetPublisherEventHandlerFactory( _ => logs.Add ) );
+                .SetStreamEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
 
@@ -93,18 +103,30 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
                 server.Streams.Count.TestEquals( 1 ),
                 server.Streams.GetAll().TestSequence( [ (q, _) => q.TestRefEquals( stream ) ] ),
                 server.Streams.TryGetById( 1 ).TestRefEquals( stream ),
-                logs.GetAllClient()
-                    .TestContainsSequence(
+                clientLogs.GetAll()
+                    .Skip( 1 )
+                    .TestSequence(
                     [
-                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 11] BindPublisherRequest",
-                        "[1::'test'::1] [MessageReceived] [PacketLength: 11] Begin handling BindPublisherRequest",
-                        "[1::'test'::1] [MessageAccepted] [PacketLength: 11] BindPublisherRequest",
-                        "[1::'test'::1] [SendingMessage] [PacketLength: 14] PublisherBoundResponse",
-                        "[1::'test'::1] [MessageSent] [PacketLength: 14] PublisherBoundResponse"
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
+                            "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'c'",
+                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
+                            "[PublisherBound] Client = [1] 'test', TraceId = 1, Channel = [1] 'c' (created), Stream = [1] 'c' (created)",
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (PublisherBoundResponse, Length = 14)",
+                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (PublisherBoundResponse, Length = 14)",
+                            "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (end)"
+                        ] )
+                    ] ),
+                clientLogs.GetAllAwaitPacket()
+                    .TestContainsContiguousSequence(
+                    [
+                        "[AwaitPacket] Client = [1] 'test'",
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 11)"
                     ] ),
                 logs.GetAllChannel().TestSequence( [ "[1::'c'::1] [Created] by client [1::'test']" ] ),
-                logs.GetAllStream().TestSequence( [ "[1::'c'::1] [Created] by publisher [1::'test'] => [1::'c']" ] ),
-                logs.GetAllPublisher().TestSequence( [ "[1::'test'=>1::'c'::1] [Created]" ] ) )
+                logs.GetAllStream().TestSequence( [ "[1::'c'::1] [Created] by publisher [1::'test'] => [1::'c']" ] ) )
             .Go();
     }
 
@@ -113,22 +135,24 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
     {
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
+        var clientLogs = new ClientEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetClientEventHandlerFactory(
-                    _ => e =>
-                    {
-                        logs.Add( e );
-                        if ( e.Client.Id == 2
-                            && e.Type == MessageBrokerRemoteClientEventType.MessageSent
-                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.PublisherBoundResponse )
-                            endSource.Complete();
-                    } )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    c => c.Id == 2
+                        ? clientLogs.GetLogger(
+                            MessageBrokerRemoteClientLogger.Create(
+                                traceEnd: e =>
+                                {
+                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
+                                        endSource.Complete();
+                                } ) )
+                        : null )
                 .SetChannelEventHandlerFactory( _ => logs.Add )
-                .SetStreamEventHandlerFactory( _ => logs.Add )
-                .SetPublisherEventHandlerFactory( _ => logs.Add ) );
+                .SetStreamEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
 
@@ -216,28 +240,30 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
                 server.Streams.Count.TestEquals( 1 ),
                 server.Streams.GetAll().TestSequence( [ (q, _) => q.TestRefEquals( stream ) ] ),
                 server.Streams.TryGetById( 1 ).TestRefEquals( stream ),
-                logs.GetAllClient()
-                    .TestContainsSequence(
-                    [
-                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 11] BindPublisherRequest",
-                        "[1::'test'::1] [MessageReceived] [PacketLength: 11] Begin handling BindPublisherRequest",
-                        "[1::'test'::1] [MessageAccepted] [PacketLength: 11] BindPublisherRequest",
-                        "[1::'test'::1] [SendingMessage] [PacketLength: 14] PublisherBoundResponse",
-                        "[1::'test'::1] [MessageSent] [PacketLength: 14] PublisherBoundResponse",
-                        "[2::'test2'::<ROOT>] [MessageReceived] [PacketLength: 11] BindPublisherRequest",
-                        "[2::'test2'::1] [MessageReceived] [PacketLength: 11] Begin handling BindPublisherRequest",
-                        "[2::'test2'::1] [MessageAccepted] [PacketLength: 11] BindPublisherRequest",
-                        "[2::'test2'::1] [SendingMessage] [PacketLength: 14] PublisherBoundResponse",
-                        "[2::'test2'::1] [MessageSent] [PacketLength: 14] PublisherBoundResponse"
-                    ] ),
-                logs.GetAllChannel().TestSequence( [ "[1::'c'::1] [Created] by client [1::'test']" ] ),
-                logs.GetAllStream().TestSequence( [ "[1::'c'::1] [Created] by publisher [1::'test'] => [1::'c']" ] ),
-                logs.GetAllPublisher()
+                clientLogs.GetAll()
+                    .Skip( 1 )
                     .TestSequence(
                     [
-                        "[1::'test'=>1::'c'::1] [Created]",
-                        "[2::'test2'=>1::'c'::1] [Created]"
-                    ] ) )
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindPublisher] Client = [2] 'test2', TraceId = 1 (start)",
+                            "[ReadPacket:Received] Client = [2] 'test2', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
+                            "[BindingPublisher] Client = [2] 'test2', TraceId = 1, ChannelName = 'c'",
+                            "[ReadPacket:Accepted] Client = [2] 'test2', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
+                            "[PublisherBound] Client = [2] 'test2', TraceId = 1, Channel = [1] 'c', Stream = [1] 'c'",
+                            "[SendPacket:Sending] Client = [2] 'test2', TraceId = 1, Packet = (PublisherBoundResponse, Length = 14)",
+                            "[SendPacket:Sent] Client = [2] 'test2', TraceId = 1, Packet = (PublisherBoundResponse, Length = 14)",
+                            "[Trace:BindPublisher] Client = [2] 'test2', TraceId = 1 (end)"
+                        ] )
+                    ] ),
+                clientLogs.GetAllAwaitPacket()
+                    .TestContainsContiguousSequence(
+                    [
+                        "[AwaitPacket] Client = [2] 'test2'",
+                        "[AwaitPacket] Client = [2] 'test2', Packet = (BindPublisherRequest, Length = 11)"
+                    ] ),
+                logs.GetAllChannel().TestSequence( [ "[1::'c'::1] [Created] by client [1::'test']" ] ),
+                logs.GetAllStream().TestSequence( [ "[1::'c'::1] [Created] by publisher [1::'test'] => [1::'c']" ] ) )
             .Go();
     }
 
@@ -246,21 +272,22 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
     {
         var endSource = new SafeTaskCompletionSource( completionCount: 2 );
         var logs = new EventLogger();
+        var clientLogs = new ClientEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetClientEventHandlerFactory(
-                    _ => e =>
-                    {
-                        logs.Add( e );
-                        if ( e.Type == MessageBrokerRemoteClientEventType.MessageSent
-                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.PublisherBoundResponse )
-                            endSource.Complete();
-                    } )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
+                                    endSource.Complete();
+                            } ) ) )
                 .SetChannelEventHandlerFactory( _ => logs.Add )
-                .SetStreamEventHandlerFactory( _ => logs.Add )
-                .SetPublisherEventHandlerFactory( _ => logs.Add ) );
+                .SetStreamEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
 
@@ -358,14 +385,27 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
                 server.Streams.Count.TestEquals( 1 ),
                 server.Streams.GetAll().TestSequence( [ (q, _) => q.TestRefEquals( stream ) ] ),
                 server.Streams.TryGetById( 1 ).TestRefEquals( stream ),
-                logs.GetAllClient()
-                    .TestContainsSequence(
+                clientLogs.GetAll()
+                    .Skip( 2 )
+                    .TestSequence(
                     [
-                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 11] BindPublisherRequest",
-                        "[1::'test'::1] [MessageReceived] [PacketLength: 11] Begin handling BindPublisherRequest",
-                        "[1::'test'::1] [MessageAccepted] [PacketLength: 11] BindPublisherRequest",
-                        "[1::'test'::1] [SendingMessage] [PacketLength: 14] PublisherBoundResponse",
-                        "[1::'test'::1] [MessageSent] [PacketLength: 14] PublisherBoundResponse"
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindPublisher] Client = [1] 'test', TraceId = 2 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (BindPublisherRequest, Length = 12)",
+                            "[BindingPublisher] Client = [1] 'test', TraceId = 2, ChannelName = 'd', StreamName = 'c'",
+                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (BindPublisherRequest, Length = 12)",
+                            "[PublisherBound] Client = [1] 'test', TraceId = 2, Channel = [2] 'd' (created), Stream = [1] 'c'",
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PublisherBoundResponse, Length = 14)",
+                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PublisherBoundResponse, Length = 14)",
+                            "[Trace:BindPublisher] Client = [1] 'test', TraceId = 2 (end)"
+                        ] )
+                    ] ),
+                clientLogs.GetAllAwaitPacket()
+                    .TestContainsContiguousSequence(
+                    [
+                        "[AwaitPacket] Client = [1] 'test'",
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 12)"
                     ] ),
                 logs.GetAllChannel()
                     .TestSequence(
@@ -373,83 +413,31 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
                         "[1::'c'::1] [Created] by client [1::'test']",
                         "[2::'d'::2] [Created] by client [1::'test']"
                     ] ),
-                logs.GetAllStream().TestSequence( [ "[1::'c'::1] [Created] by publisher [1::'test'] => [1::'c']" ] ),
-                logs.GetAllPublisher()
-                    .TestSequence(
-                    [
-                        "[1::'test'=>1::'c'::1] [Created]",
-                        "[1::'test'=>2::'d'::2] [Created]"
-                    ] ) )
-            .Go();
-    }
-
-    [Fact]
-    public async Task Creation_ShouldDisposeClient_WhenPublisherEventHandlerFactoryThrows()
-    {
-        var endSource = new SafeTaskCompletionSource();
-        var exception = new Exception( "foo" );
-        var logs = new EventLogger();
-
-        await using var server = new MessageBrokerServer(
-            new IPEndPoint( IPAddress.Loopback, 0 ),
-            MessageBrokerServerOptions.Default
-                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetClientEventHandlerFactory(
-                    _ => e =>
-                    {
-                        logs.Add( e );
-                        if ( e.Type == MessageBrokerRemoteClientEventType.Disposed )
-                            endSource.Complete();
-                    } )
-                .SetPublisherEventHandlerFactory( _ => throw exception ) );
-
-        await server.StartAsync();
-
-        using var client = new ClientMock();
-        await client.EstablishHandshake( server );
-        var remoteClient = server.Clients.TryGetById( 1 );
-        await client.GetTask( c => c.SendBindPublisherRequest( "c" ) );
-        await endSource.Task;
-
-        Assertion.All(
-                remoteClient.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Disposed ) ),
-                server.Clients.Count.TestEquals( 0 ),
-                server.Channels.Count.TestEquals( 0 ),
-                server.Streams.Count.TestEquals( 0 ),
-                logs.GetAllClient()
-                    .TestContainsSequence(
-                    [
-                        (m, _) => m.TestEquals( "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 11] BindPublisherRequest" ),
-                        (m, _) => m.TestEquals( "[1::'test'::1] [MessageReceived] [PacketLength: 11] Begin handling BindPublisherRequest" ),
-                        (m, _) => m.TestStartsWith(
-                            """
-                            [1::'test'::<ROOT>] [Unexpected] Encountered an error:
-                            System.Exception: foo
-                            """ ),
-                        (m, _) => m.TestEquals( "[1::'test'::<ROOT>] [Disposing]" ),
-                        (m, _) => m.TestEquals( "[1::'test'::<ROOT>] [Disposed]" )
-                    ] ) )
+                logs.GetAllStream().TestSequence( [ "[1::'c'::1] [Created] by publisher [1::'test'] => [1::'c']" ] ) )
             .Go();
     }
 
     [Fact]
     public async Task Creation_ShouldDisposeClient_WhenChannelEventHandlerFactoryThrowsForCreatedChannel()
     {
-        var endSource = new SafeTaskCompletionSource();
+        var endSource = new SafeTaskCompletionSource( completionCount: 2 );
         var exception = new Exception( "foo" );
-        var logs = new EventLogger();
+        var clientLogs = new ClientEventLogger();
 
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetClientEventHandlerFactory(
-                    _ => e =>
-                    {
-                        logs.Add( e );
-                        if ( e.Type == MessageBrokerRemoteClientEventType.Disposed )
-                            endSource.Complete();
-                    } )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type is MessageBrokerRemoteClientTraceEventType.BindPublisher
+                                    or MessageBrokerRemoteClientTraceEventType.Unexpected )
+                                    endSource.Complete();
+                            } ) ) )
                 .SetChannelEventHandlerFactory( _ => throw exception ) );
 
         await server.StartAsync();
@@ -465,18 +453,35 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
                 server.Clients.Count.TestEquals( 0 ),
                 server.Channels.Count.TestEquals( 0 ),
                 server.Streams.Count.TestEquals( 0 ),
-                logs.GetAllClient()
-                    .TestContainsSequence(
+                clientLogs.GetAll()
+                    .Skip( 1 )
+                    .TestSequence(
                     [
-                        (m, _) => m.TestEquals( "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 11] BindPublisherRequest" ),
-                        (m, _) => m.TestEquals( "[1::'test'::1] [MessageReceived] [PacketLength: 11] Begin handling BindPublisherRequest" ),
-                        (m, _) => m.TestStartsWith(
-                            """
-                            [1::'test'::<ROOT>] [Unexpected] Encountered an error:
-                            System.Exception: foo
-                            """ ),
-                        (m, _) => m.TestEquals( "[1::'test'::<ROOT>] [Disposing]" ),
-                        (m, _) => m.TestEquals( "[1::'test'::<ROOT>] [Disposed]" )
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
+                            "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'c'",
+                            "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (end)"
+                        ] ),
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            (e, _) => e.TestEquals( "[Trace:Unexpected] Client = [1] 'test', TraceId = 2 (start)" ),
+                            (e, _) => e.TestStartsWith(
+                                """
+                                [Error] Client = [1] 'test', TraceId = 2
+                                System.Exception: foo
+                                """ ),
+                            (e, _) => e.TestEquals( "[Disposing] Client = [1] 'test', TraceId = 2" ),
+                            (e, _) => e.TestEquals( "[Disposed] Client = [1] 'test', TraceId = 2" ),
+                            (e, _) => e.TestEquals( "[Trace:Unexpected] Client = [1] 'test', TraceId = 2 (end)" )
+                        ] )
+                    ] ),
+                clientLogs.GetAllAwaitPacket()
+                    .TestContainsContiguousSequence(
+                    [
+                        "[AwaitPacket] Client = [1] 'test'",
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 11)"
                     ] ) )
             .Go();
     }
@@ -484,21 +489,24 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
     [Fact]
     public async Task Creation_ShouldDisposeClient_WhenStreamEventHandlerFactoryThrowsForCreatedStream()
     {
-        var endSource = new SafeTaskCompletionSource();
+        var endSource = new SafeTaskCompletionSource( completionCount: 2 );
         var exception = new Exception( "foo" );
-        var logs = new EventLogger();
+        var clientLogs = new ClientEventLogger();
 
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetClientEventHandlerFactory(
-                    _ => e =>
-                    {
-                        logs.Add( e );
-                        if ( e.Type == MessageBrokerRemoteClientEventType.Disposed )
-                            endSource.Complete();
-                    } )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type is MessageBrokerRemoteClientTraceEventType.BindPublisher
+                                    or MessageBrokerRemoteClientTraceEventType.Unexpected )
+                                    endSource.Complete();
+                            } ) ) )
                 .SetStreamEventHandlerFactory( _ => throw exception ) );
 
         await server.StartAsync();
@@ -514,18 +522,35 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
                 server.Clients.Count.TestEquals( 0 ),
                 server.Channels.Count.TestEquals( 0 ),
                 server.Streams.Count.TestEquals( 0 ),
-                logs.GetAllClient()
-                    .TestContainsSequence(
+                clientLogs.GetAll()
+                    .Skip( 1 )
+                    .TestSequence(
                     [
-                        (m, _) => m.TestEquals( "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 11] BindPublisherRequest" ),
-                        (m, _) => m.TestEquals( "[1::'test'::1] [MessageReceived] [PacketLength: 11] Begin handling BindPublisherRequest" ),
-                        (m, _) => m.TestStartsWith(
-                            """
-                            [1::'test'::<ROOT>] [Unexpected] Encountered an error:
-                            System.Exception: foo
-                            """ ),
-                        (m, _) => m.TestEquals( "[1::'test'::<ROOT>] [Disposing]" ),
-                        (m, _) => m.TestEquals( "[1::'test'::<ROOT>] [Disposed]" )
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
+                            "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'c'",
+                            "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (end)"
+                        ] ),
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            (e, _) => e.TestEquals( "[Trace:Unexpected] Client = [1] 'test', TraceId = 2 (start)" ),
+                            (e, _) => e.TestStartsWith(
+                                """
+                                [Error] Client = [1] 'test', TraceId = 2
+                                System.Exception: foo
+                                """ ),
+                            (e, _) => e.TestEquals( "[Disposing] Client = [1] 'test', TraceId = 2" ),
+                            (e, _) => e.TestEquals( "[Disposed] Client = [1] 'test', TraceId = 2" ),
+                            (e, _) => e.TestEquals( "[Trace:Unexpected] Client = [1] 'test', TraceId = 2 (end)" )
+                        ] )
+                    ] ),
+                clientLogs.GetAllAwaitPacket()
+                    .TestContainsContiguousSequence(
+                    [
+                        "[AwaitPacket] Client = [1] 'test'",
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 11)"
                     ] ) )
             .Go();
     }
@@ -534,44 +559,57 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
     public async Task Creation_ShouldDisposeClient_WhenClientSendsInvalidPayload()
     {
         var endSource = new SafeTaskCompletionSource();
-        var logs = new EventLogger();
+        var clientLogs = new ClientEventLogger();
 
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetClientEventHandlerFactory(
-                    _ => e =>
-                    {
-                        logs.Add( e );
-                        if ( e.Type == MessageBrokerRemoteClientEventType.Disposed )
-                            endSource.Complete();
-                    } ) );
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
+                                    endSource.Complete();
+                            } ) ) ) );
 
         await server.StartAsync();
 
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
         var remoteClient = server.Clients.TryGetById( 1 );
-        await client.GetTask( c => c.SendBindPublisherRequest( "c", payload: 0 ) );
+        await client.GetTask( c => c.SendBindPublisherRequest( "c", payload: 4 ) );
         await endSource.Task;
 
         Assertion.All(
                 remoteClient.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Disposed ) ),
                 server.Clients.Count.TestEquals( 0 ),
                 server.Channels.Count.TestEquals( 0 ),
-                logs.GetAllClient()
-                    .TestContainsSequence(
+                clientLogs.GetAll()
+                    .Skip( 1 )
+                    .TestSequence(
                     [
-                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 5] BindPublisherRequest",
-                        "[1::'test'::1] [MessageReceived] [PacketLength: 5] Begin handling BindPublisherRequest",
-                        """
-                        [1::'test'::1] [MessageRejected] [PacketLength: 5] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid BindPublisherRequest from client [1] 'test'. Encountered 1 error(s):
-                        1. Expected header payload to be at least 5 but found 0.
-                        """,
-                        "[1::'test'::<ROOT>] [Disposing]",
-                        "[1::'test'::<ROOT>] [Disposed]"
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 9)",
+                            """
+                            [Error] Client = [1] 'test', TraceId = 1
+                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid BindPublisherRequest from client [1] 'test'. Encountered 1 error(s):
+                            1. Expected header payload to be at least 5 but found 4.
+                            """,
+                            "[Disposing] Client = [1] 'test', TraceId = 1",
+                            "[Disposed] Client = [1] 'test', TraceId = 1",
+                            "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (end)"
+                        ] )
+                    ] ),
+                clientLogs.GetAllAwaitPacket()
+                    .TestContainsContiguousSequence(
+                    [
+                        "[AwaitPacket] Client = [1] 'test'",
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 9)"
                     ] ) )
             .Go();
     }
@@ -580,19 +618,21 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
     public async Task Creation_ShouldDisposeClient_WhenClientSendsNegativeChannelNameLength()
     {
         var endSource = new SafeTaskCompletionSource();
-        var logs = new EventLogger();
+        var clientLogs = new ClientEventLogger();
 
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetClientEventHandlerFactory(
-                    _ => e =>
-                    {
-                        logs.Add( e );
-                        if ( e.Type == MessageBrokerRemoteClientEventType.Disposed )
-                            endSource.Complete();
-                    } ) );
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
+                                    endSource.Complete();
+                            } ) ) ) );
 
         await server.StartAsync();
 
@@ -606,18 +646,29 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
                 remoteClient.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Disposed ) ),
                 server.Clients.Count.TestEquals( 0 ),
                 server.Channels.Count.TestEquals( 0 ),
-                logs.GetAllClient()
-                    .TestContainsSequence(
+                clientLogs.GetAll()
+                    .Skip( 1 )
+                    .TestSequence(
                     [
-                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 11] BindPublisherRequest",
-                        "[1::'test'::1] [MessageReceived] [PacketLength: 11] Begin handling BindPublisherRequest",
-                        """
-                        [1::'test'::1] [MessageRejected] [PacketLength: 11] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid BindPublisherRequest from client [1] 'test'. Encountered 1 error(s):
-                        1. Expected binary channel name length to be in [0, 1] range but found -1.
-                        """,
-                        "[1::'test'::<ROOT>] [Disposing]",
-                        "[1::'test'::<ROOT>] [Disposed]"
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
+                            """
+                            [Error] Client = [1] 'test', TraceId = 1
+                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid BindPublisherRequest from client [1] 'test'. Encountered 1 error(s):
+                            1. Expected binary channel name length to be in [0, 1] range but found -1.
+                            """,
+                            "[Disposing] Client = [1] 'test', TraceId = 1",
+                            "[Disposed] Client = [1] 'test', TraceId = 1",
+                            "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (end)"
+                        ] )
+                    ] ),
+                clientLogs.GetAllAwaitPacket()
+                    .TestContainsContiguousSequence(
+                    [
+                        "[AwaitPacket] Client = [1] 'test'",
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 11)"
                     ] ) )
             .Go();
     }
@@ -626,19 +677,21 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
     public async Task Creation_ShouldDisposeClient_WhenClientSendsTooLongChannelNameLength()
     {
         var endSource = new SafeTaskCompletionSource();
-        var logs = new EventLogger();
+        var clientLogs = new ClientEventLogger();
 
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetClientEventHandlerFactory(
-                    _ => e =>
-                    {
-                        logs.Add( e );
-                        if ( e.Type == MessageBrokerRemoteClientEventType.Disposed )
-                            endSource.Complete();
-                    } ) );
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
+                                    endSource.Complete();
+                            } ) ) ) );
 
         await server.StartAsync();
 
@@ -652,18 +705,29 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
                 remoteClient.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Disposed ) ),
                 server.Clients.Count.TestEquals( 0 ),
                 server.Channels.Count.TestEquals( 0 ),
-                logs.GetAllClient()
-                    .TestContainsSequence(
+                clientLogs.GetAll()
+                    .Skip( 1 )
+                    .TestSequence(
                     [
-                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 13] BindPublisherRequest",
-                        "[1::'test'::1] [MessageReceived] [PacketLength: 13] Begin handling BindPublisherRequest",
-                        """
-                        [1::'test'::1] [MessageRejected] [PacketLength: 13] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid BindPublisherRequest from client [1] 'test'. Encountered 1 error(s):
-                        1. Expected binary channel name length to be in [0, 3] range but found 4.
-                        """,
-                        "[1::'test'::<ROOT>] [Disposing]",
-                        "[1::'test'::<ROOT>] [Disposed]"
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 13)",
+                            """
+                            [Error] Client = [1] 'test', TraceId = 1
+                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid BindPublisherRequest from client [1] 'test'. Encountered 1 error(s):
+                            1. Expected binary channel name length to be in [0, 3] range but found 4.
+                            """,
+                            "[Disposing] Client = [1] 'test', TraceId = 1",
+                            "[Disposed] Client = [1] 'test', TraceId = 1",
+                            "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (end)"
+                        ] )
+                    ] ),
+                clientLogs.GetAllAwaitPacket()
+                    .TestContainsContiguousSequence(
+                    [
+                        "[AwaitPacket] Client = [1] 'test'",
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 13)"
                     ] ) )
             .Go();
     }
@@ -672,19 +736,21 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
     public async Task Creation_ShouldDisposeClient_WhenClientSendsEmptyChannelName()
     {
         var endSource = new SafeTaskCompletionSource();
-        var logs = new EventLogger();
+        var clientLogs = new ClientEventLogger();
 
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetClientEventHandlerFactory(
-                    _ => e =>
-                    {
-                        logs.Add( e );
-                        if ( e.Type == MessageBrokerRemoteClientEventType.Disposed )
-                            endSource.Complete();
-                    } ) );
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
+                                    endSource.Complete();
+                            } ) ) ) );
 
         await server.StartAsync();
 
@@ -699,18 +765,29 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
                 server.Clients.Count.TestEquals( 0 ),
                 server.Channels.Count.TestEquals( 0 ),
                 server.Streams.Count.TestEquals( 0 ),
-                logs.GetAllClient()
-                    .TestContainsSequence(
+                clientLogs.GetAll()
+                    .Skip( 1 )
+                    .TestSequence(
                     [
-                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 10] BindPublisherRequest",
-                        "[1::'test'::1] [MessageReceived] [PacketLength: 10] Begin handling BindPublisherRequest",
-                        """
-                        [1::'test'::1] [MessageRejected] [PacketLength: 10] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid BindPublisherRequest from client [1] 'test'. Encountered 1 error(s):
-                        1. Expected channel name length to be in [1, 512] range but found 0.
-                        """,
-                        "[1::'test'::<ROOT>] [Disposing]",
-                        "[1::'test'::<ROOT>] [Disposed]"
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 10)",
+                            """
+                            [Error] Client = [1] 'test', TraceId = 1
+                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid BindPublisherRequest from client [1] 'test'. Encountered 1 error(s):
+                            1. Expected channel name length to be in [1, 512] range but found 0.
+                            """,
+                            "[Disposing] Client = [1] 'test', TraceId = 1",
+                            "[Disposed] Client = [1] 'test', TraceId = 1",
+                            "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (end)"
+                        ] )
+                    ] ),
+                clientLogs.GetAllAwaitPacket()
+                    .TestContainsContiguousSequence(
+                    [
+                        "[AwaitPacket] Client = [1] 'test'",
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 10)"
                     ] ) )
             .Go();
     }
@@ -719,19 +796,21 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
     public async Task Creation_ShouldDisposeClient_WhenClientSendsTooLongChannelName()
     {
         var endSource = new SafeTaskCompletionSource();
-        var logs = new EventLogger();
+        var clientLogs = new ClientEventLogger();
 
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetClientEventHandlerFactory(
-                    _ => e =>
-                    {
-                        logs.Add( e );
-                        if ( e.Type == MessageBrokerRemoteClientEventType.Disposed )
-                            endSource.Complete();
-                    } ) );
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
+                                    endSource.Complete();
+                            } ) ) ) );
 
         await server.StartAsync();
 
@@ -745,18 +824,29 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
                 remoteClient.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Disposed ) ),
                 server.Clients.Count.TestEquals( 0 ),
                 server.Channels.Count.TestEquals( 0 ),
-                logs.GetAllClient()
-                    .TestContainsSequence(
+                clientLogs.GetAll()
+                    .Skip( 1 )
+                    .TestSequence(
                     [
-                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 523] BindPublisherRequest",
-                        "[1::'test'::1] [MessageReceived] [PacketLength: 523] Begin handling BindPublisherRequest",
-                        """
-                        [1::'test'::1] [MessageRejected] [PacketLength: 523] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid BindPublisherRequest from client [1] 'test'. Encountered 1 error(s):
-                        1. Expected channel name length to be in [1, 512] range but found 513.
-                        """,
-                        "[1::'test'::<ROOT>] [Disposing]",
-                        "[1::'test'::<ROOT>] [Disposed]"
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 523)",
+                            """
+                            [Error] Client = [1] 'test', TraceId = 1
+                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid BindPublisherRequest from client [1] 'test'. Encountered 1 error(s):
+                            1. Expected channel name length to be in [1, 512] range but found 513.
+                            """,
+                            "[Disposing] Client = [1] 'test', TraceId = 1",
+                            "[Disposed] Client = [1] 'test', TraceId = 1",
+                            "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (end)"
+                        ] )
+                    ] ),
+                clientLogs.GetAllAwaitPacket()
+                    .TestContainsContiguousSequence(
+                    [
+                        "[AwaitPacket] Client = [1] 'test'",
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 523)"
                     ] ) )
             .Go();
     }
@@ -765,19 +855,21 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
     public async Task Creation_ShouldDisposeClient_WhenClientSendsTooLongStreamName()
     {
         var endSource = new SafeTaskCompletionSource();
-        var logs = new EventLogger();
+        var clientLogs = new ClientEventLogger();
 
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetClientEventHandlerFactory(
-                    _ => e =>
-                    {
-                        logs.Add( e );
-                        if ( e.Type == MessageBrokerRemoteClientEventType.Disposed )
-                            endSource.Complete();
-                    } ) );
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
+                                    endSource.Complete();
+                            } ) ) ) );
 
         await server.StartAsync();
 
@@ -791,18 +883,29 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
                 remoteClient.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Disposed ) ),
                 server.Clients.Count.TestEquals( 0 ),
                 server.Channels.Count.TestEquals( 0 ),
-                logs.GetAllClient()
-                    .TestContainsSequence(
+                clientLogs.GetAll()
+                    .Skip( 1 )
+                    .TestSequence(
                     [
-                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 524] BindPublisherRequest",
-                        "[1::'test'::1] [MessageReceived] [PacketLength: 524] Begin handling BindPublisherRequest",
-                        """
-                        [1::'test'::1] [MessageRejected] [PacketLength: 524] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid BindPublisherRequest from client [1] 'test'. Encountered 1 error(s):
-                        1. Expected stream name length to be in [1, 512] range but found 513.
-                        """,
-                        "[1::'test'::<ROOT>] [Disposing]",
-                        "[1::'test'::<ROOT>] [Disposed]"
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 524)",
+                            """
+                            [Error] Client = [1] 'test', TraceId = 1
+                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid BindPublisherRequest from client [1] 'test'. Encountered 1 error(s):
+                            1. Expected stream name length to be in [1, 512] range but found 513.
+                            """,
+                            "[Disposing] Client = [1] 'test', TraceId = 1",
+                            "[Disposed] Client = [1] 'test', TraceId = 1",
+                            "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (end)"
+                        ] )
+                    ] ),
+                clientLogs.GetAllAwaitPacket()
+                    .TestContainsContiguousSequence(
+                    [
+                        "[AwaitPacket] Client = [1] 'test'",
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 524)"
                     ] ) )
             .Go();
     }
@@ -812,22 +915,21 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
     {
         Exception? exception = null;
         var endSource = new SafeTaskCompletionSource();
-        var logs = new EventLogger();
+        var clientLogs = new ClientEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetClientEventHandlerFactory(
-                    _ => e =>
-                    {
-                        logs.Add( e );
-                        if ( e.Type == MessageBrokerRemoteClientEventType.MessageRejected )
-                            exception = e.Exception;
-
-                        if ( e.Type == MessageBrokerRemoteClientEventType.MessageSent
-                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.BindPublisherFailureResponse )
-                            endSource.Complete();
-                    } ) );
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
+                                    endSource.Complete();
+                            },
+                            error: e => exception = e.Exception ) ) ) );
 
         await server.StartAsync();
 
@@ -869,46 +971,55 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
                         "channel",
                         c.Publishers.Count.TestEquals( 1 ),
                         c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding ) ] ) ) ),
-                logs.GetAllClient()
-                    .TestContainsSequence(
+                clientLogs.GetAll()
+                    .Skip( 2 )
+                    .TestSequence(
                     [
-                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 11] BindPublisherRequest",
-                        "[1::'test'::1] [MessageReceived] [PacketLength: 11] Begin handling BindPublisherRequest",
-                        "[1::'test'::1] [MessageAccepted] [PacketLength: 11] BindPublisherRequest",
-                        "[1::'test'::1] [SendingMessage] [PacketLength: 14] PublisherBoundResponse",
-                        "[1::'test'::1] [MessageSent] [PacketLength: 14] PublisherBoundResponse",
-                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 12] BindPublisherRequest",
-                        "[1::'test'::2] [MessageReceived] [PacketLength: 12] Begin handling BindPublisherRequest",
-                        """
-                        [1::'test'::2] [MessageRejected] [PacketLength: 12] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerChannelPublisherBindingException: Message broker client [1] 'test' could not be bound as a publisher to channel [1] 'c' because it is already bound as a publisher to it.
-                        """,
-                        "[1::'test'::2] [SendingMessage] [PacketLength: 6] BindPublisherFailureResponse",
-                        "[1::'test'::2] [MessageSent] [PacketLength: 6] BindPublisherFailureResponse"
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindPublisher] Client = [1] 'test', TraceId = 2 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (BindPublisherRequest, Length = 12)",
+                            "[BindingPublisher] Client = [1] 'test', TraceId = 2, ChannelName = 'c', StreamName = 'd'",
+                            """
+                            [Error] Client = [1] 'test', TraceId = 2
+                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerChannelPublisherBindingException: Client [1] 'test' could not be bound as a publisher to channel [1] 'c' because it is already bound as a publisher to it.
+                            """,
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (BindPublisherFailureResponse, Length = 6)",
+                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (BindPublisherFailureResponse, Length = 6)",
+                            "[Trace:BindPublisher] Client = [1] 'test', TraceId = 2 (end)"
+                        ] )
+                    ] ),
+                clientLogs.GetAllAwaitPacket()
+                    .TestContainsContiguousSequence(
+                    [
+                        "[AwaitPacket] Client = [1] 'test'",
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 11)",
+                        "[AwaitPacket] Client = [1] 'test'",
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 12)"
                     ] ) )
             .Go();
     }
 
     [Fact]
-    public async Task Creation_ShouldNotThrow_WhenChannelOrStreamOrPublisherEventHandlerThrows()
+    public async Task Creation_ShouldNotThrow_WhenChannelOrStreamEventHandlerThrows()
     {
         var endSource = new SafeTaskCompletionSource();
-        var logs = new EventLogger();
+        var clientLogs = new ClientEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetClientEventHandlerFactory(
-                    _ => e =>
-                    {
-                        logs.Add( e );
-                        if ( e.Type == MessageBrokerRemoteClientEventType.MessageSent
-                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.PublisherBoundResponse )
-                            endSource.Complete();
-                    } )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
+                                    endSource.Complete();
+                            } ) ) )
                 .SetChannelEventHandlerFactory( _ => _ => throw new Exception( "foo" ) )
-                .SetStreamEventHandlerFactory( _ => _ => throw new Exception( "bar" ) )
-                .SetPublisherEventHandlerFactory( _ => _ => throw new Exception( "qux" ) ) );
+                .SetStreamEventHandlerFactory( _ => _ => throw new Exception( "bar" ) ) );
 
         await server.StartAsync();
 
@@ -949,14 +1060,27 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
                         b.Client.TestRefEquals( remoteClient ),
                         b.Channel.TestRefEquals( channel ),
                         b.Stream.TestRefEquals( stream ) ) ),
-                logs.GetAllClient()
-                    .TestContainsSequence(
+                clientLogs.GetAll()
+                    .Skip( 1 )
+                    .TestSequence(
                     [
-                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 11] BindPublisherRequest",
-                        "[1::'test'::1] [MessageReceived] [PacketLength: 11] Begin handling BindPublisherRequest",
-                        "[1::'test'::1] [MessageAccepted] [PacketLength: 11] BindPublisherRequest",
-                        "[1::'test'::1] [SendingMessage] [PacketLength: 14] PublisherBoundResponse",
-                        "[1::'test'::1] [MessageSent] [PacketLength: 14] PublisherBoundResponse"
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
+                            "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'c'",
+                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
+                            "[PublisherBound] Client = [1] 'test', TraceId = 1, Channel = [1] 'c' (created), Stream = [1] 'c' (created)",
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (PublisherBoundResponse, Length = 14)",
+                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (PublisherBoundResponse, Length = 14)",
+                            "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (end)"
+                        ] )
+                    ] ),
+                clientLogs.GetAllAwaitPacket()
+                    .TestContainsContiguousSequence(
+                    [
+                        "[AwaitPacket] Client = [1] 'test'",
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 11)"
                     ] ) )
             .Go();
     }
@@ -965,13 +1089,15 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
     public async Task ServerDispose_ShouldDisposeBinding()
     {
         var logs = new EventLogger();
+        var clientLogs = new ClientEventLogger();
         var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger() )
                 .SetChannelEventHandlerFactory( _ => logs.Add )
-                .SetStreamEventHandlerFactory( _ => logs.Add )
-                .SetPublisherEventHandlerFactory( _ => logs.Add ) );
+                .SetStreamEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
 
@@ -1022,12 +1148,18 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
                         "[1::'c'::<ROOT>] [Disposing]",
                         "[1::'c'::<ROOT>] [Disposed]"
                     ] ),
-                logs.GetAllPublisher()
+                clientLogs.GetAll()
+                    .Skip( 2 )
                     .TestSequence(
                     [
-                        "[1::'test'=>1::'c'::1] [Created]",
-                        "[1::'test'=>1::'c'::<ROOT>] [Disposing]",
-                        "[1::'test'=>1::'c'::<ROOT>] [Disposed]"
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:Dispose] Client = [1] 'test', TraceId = 2 (start)",
+                            $"[ServerTrace] Client = [1] 'test', TraceId = 2, Correlation = (Server = {server.LocalEndPoint}, TraceId = 2)",
+                            "[Disposing] Client = [1] 'test', TraceId = 2",
+                            "[Disposed] Client = [1] 'test', TraceId = 2",
+                            "[Trace:Dispose] Client = [1] 'test', TraceId = 2 (end)"
+                        ] )
                     ] ) )
             .Go();
     }
@@ -1036,13 +1168,15 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
     public async Task ClientDisconnect_ShouldDisposeBinding_WhenChannelIsOnlyBoundAsPublisherToDisconnectedClient()
     {
         var logs = new EventLogger();
+        var clientLogs = new ClientEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger() )
                 .SetChannelEventHandlerFactory( _ => logs.Add )
-                .SetStreamEventHandlerFactory( _ => logs.Add )
-                .SetPublisherEventHandlerFactory( _ => logs.Add ) );
+                .SetStreamEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
 
@@ -1094,12 +1228,17 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
                         "[1::'c'::<ROOT>] [Disposing]",
                         "[1::'c'::<ROOT>] [Disposed]"
                     ] ),
-                logs.GetAllPublisher()
+                clientLogs.GetAll()
+                    .Skip( 2 )
                     .TestSequence(
                     [
-                        "[1::'test'=>1::'c'::1] [Created]",
-                        "[1::'test'=>1::'c'::<ROOT>] [Disposing]",
-                        "[1::'test'=>1::'c'::<ROOT>] [Disposed]"
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:Dispose] Client = [1] 'test', TraceId = 2 (start)",
+                            "[Disposing] Client = [1] 'test', TraceId = 2",
+                            "[Disposed] Client = [1] 'test', TraceId = 2",
+                            "[Trace:Dispose] Client = [1] 'test', TraceId = 2 (end)"
+                        ] )
                     ] ) )
             .Go();
     }
@@ -1108,13 +1247,15 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
     public async Task ClientDisconnect_ShouldRemoveBinding_WhenChannelIsAlsoBoundAsPublisherToOtherClient()
     {
         var logs = new EventLogger();
+        var clientLogs = new ClientEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory( c => c.Id == 1 ? clientLogs.GetLogger() : null )
                 .SetChannelEventHandlerFactory( _ => logs.Add )
-                .SetStreamEventHandlerFactory( _ => logs.Add )
-                .SetPublisherEventHandlerFactory( _ => logs.Add ) );
+                .SetStreamEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
 
@@ -1171,13 +1312,17 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
                 binding1.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Disposed ) ),
                 logs.GetAllChannel().TestSequence( [ "[1::'c'::1] [Created] by client [1::'test']" ] ),
                 logs.GetAllStream().TestSequence( [ "[1::'c'::1] [Created] by publisher [1::'test'] => [1::'c']" ] ),
-                logs.GetAllPublisher()
+                clientLogs.GetAll()
+                    .Skip( 2 )
                     .TestSequence(
                     [
-                        "[1::'test'=>1::'c'::1] [Created]",
-                        "[2::'test2'=>1::'c'::1] [Created]",
-                        "[1::'test'=>1::'c'::<ROOT>] [Disposing]",
-                        "[1::'test'=>1::'c'::<ROOT>] [Disposed]"
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:Dispose] Client = [1] 'test', TraceId = 2 (start)",
+                            "[Disposing] Client = [1] 'test', TraceId = 2",
+                            "[Disposed] Client = [1] 'test', TraceId = 2",
+                            "[Trace:Dispose] Client = [1] 'test', TraceId = 2 (end)"
+                        ] )
                     ] ) )
             .Go();
     }
@@ -1187,21 +1332,22 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
     {
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
+        var clientLogs = new ClientEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetClientEventHandlerFactory(
-                    _ => e =>
-                    {
-                        logs.Add( e );
-                        if ( e.Type == MessageBrokerRemoteClientEventType.MessageSent
-                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.PublisherUnboundResponse )
-                            endSource.Complete();
-                    } )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindPublisher )
+                                    endSource.Complete();
+                            } ) ) )
                 .SetChannelEventHandlerFactory( _ => logs.Add )
-                .SetStreamEventHandlerFactory( _ => logs.Add )
-                .SetPublisherEventHandlerFactory( _ => logs.Add ) );
+                .SetStreamEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
 
@@ -1250,14 +1396,27 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
                 server.Channels.GetAll().TestEmpty(),
                 server.Streams.Count.TestEquals( 0 ),
                 server.Streams.GetAll().TestEmpty(),
-                logs.GetAllClient()
-                    .TestContainsSequence(
+                clientLogs.GetAll()
+                    .Skip( 2 )
+                    .TestSequence(
                     [
-                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 9] UnbindPublisherRequest",
-                        "[1::'test'::2] [MessageReceived] [PacketLength: 9] Begin handling UnbindPublisherRequest",
-                        "[1::'test'::2] [MessageAccepted] [PacketLength: 9] UnbindPublisherRequest",
-                        "[1::'test'::2] [SendingMessage] [PacketLength: 6] PublisherUnboundResponse",
-                        "[1::'test'::2] [MessageSent] [PacketLength: 6] PublisherUnboundResponse"
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 2 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (UnbindPublisherRequest, Length = 9)",
+                            "[UnbindingPublisher] Client = [1] 'test', TraceId = 2, ChannelId = 1",
+                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (UnbindPublisherRequest, Length = 9)",
+                            "[PublisherUnbound] Client = [1] 'test', TraceId = 2, Channel = [1] 'c' (removed), Stream = [1] 'c' (removed)",
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PublisherUnboundResponse, Length = 6)",
+                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PublisherUnboundResponse, Length = 6)",
+                            "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 2 (end)"
+                        ] )
+                    ] ),
+                clientLogs.GetAllAwaitPacket()
+                    .TestContainsContiguousSequence(
+                    [
+                        "[AwaitPacket] Client = [1] 'test'",
+                        "[AwaitPacket] Client = [1] 'test', Packet = (UnbindPublisherRequest, Length = 9)"
                     ] ),
                 logs.GetAllChannel()
                     .TestSequence(
@@ -1272,13 +1431,6 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
                         "[1::'c'::1] [Created] by publisher [1::'test'] => [1::'c']",
                         "[1::'c'::<ROOT>] [Disposing]",
                         "[1::'c'::<ROOT>] [Disposed]"
-                    ] ),
-                logs.GetAllPublisher()
-                    .TestSequence(
-                    [
-                        "[1::'test'=>1::'c'::1] [Created]",
-                        "[1::'test'=>1::'c'::2] [Disposing]",
-                        "[1::'test'=>1::'c'::<ROOT>] [Disposed]"
                     ] ) )
             .Go();
     }
@@ -1288,22 +1440,24 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
     {
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
+        var clientLogs = new ClientEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetClientEventHandlerFactory(
-                    _ => e =>
-                    {
-                        logs.Add( e );
-                        if ( e.Client.Id == 2
-                            && e.Type == MessageBrokerRemoteClientEventType.MessageSent
-                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.PublisherUnboundResponse )
-                            endSource.Complete();
-                    } )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    c => c.Id == 2
+                        ? clientLogs.GetLogger(
+                            MessageBrokerRemoteClientLogger.Create(
+                                traceEnd: e =>
+                                {
+                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindPublisher )
+                                        endSource.Complete();
+                                } ) )
+                        : null )
                 .SetChannelEventHandlerFactory( _ => logs.Add )
-                .SetStreamEventHandlerFactory( _ => logs.Add )
-                .SetPublisherEventHandlerFactory( _ => logs.Add ) );
+                .SetStreamEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
 
@@ -1383,35 +1537,30 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
                 server.Streams.Count.TestEquals( 1 ),
                 server.Streams.GetAll().TestSequence( [ (q, _) => q.TestRefEquals( stream ) ] ),
                 server.Streams.TryGetById( 1 ).TestRefEquals( stream ),
-                logs.GetAllClient()
-                    .TestContainsSequence(
-                    [
-                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 11] BindPublisherRequest",
-                        "[1::'test'::1] [MessageReceived] [PacketLength: 11] Begin handling BindPublisherRequest",
-                        "[1::'test'::1] [MessageAccepted] [PacketLength: 11] BindPublisherRequest",
-                        "[1::'test'::1] [SendingMessage] [PacketLength: 14] PublisherBoundResponse",
-                        "[1::'test'::1] [MessageSent] [PacketLength: 14] PublisherBoundResponse",
-                        "[2::'test2'::<ROOT>] [MessageReceived] [PacketLength: 11] BindPublisherRequest",
-                        "[2::'test2'::1] [MessageReceived] [PacketLength: 11] Begin handling BindPublisherRequest",
-                        "[2::'test2'::1] [MessageAccepted] [PacketLength: 11] BindPublisherRequest",
-                        "[2::'test2'::1] [SendingMessage] [PacketLength: 14] PublisherBoundResponse",
-                        "[2::'test2'::1] [MessageSent] [PacketLength: 14] PublisherBoundResponse",
-                        "[2::'test2'::<ROOT>] [MessageReceived] [PacketLength: 9] UnbindPublisherRequest",
-                        "[2::'test2'::2] [MessageReceived] [PacketLength: 9] Begin handling UnbindPublisherRequest",
-                        "[2::'test2'::2] [MessageAccepted] [PacketLength: 9] UnbindPublisherRequest",
-                        "[2::'test2'::2] [SendingMessage] [PacketLength: 6] PublisherUnboundResponse",
-                        "[2::'test2'::2] [MessageSent] [PacketLength: 6] PublisherUnboundResponse"
-                    ] ),
-                logs.GetAllChannel().TestSequence( [ "[1::'c'::1] [Created] by client [1::'test']" ] ),
-                logs.GetAllStream().TestSequence( [ "[1::'c'::1] [Created] by publisher [1::'test'] => [1::'c']" ] ),
-                logs.GetAllPublisher()
+                clientLogs.GetAll()
+                    .Skip( 2 )
                     .TestSequence(
                     [
-                        "[1::'test'=>1::'c'::1] [Created]",
-                        "[2::'test2'=>1::'c'::1] [Created]",
-                        "[2::'test2'=>1::'c'::2] [Disposing]",
-                        "[2::'test2'=>1::'c'::<ROOT>] [Disposed]"
-                    ] ) )
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindPublisher] Client = [2] 'test2', TraceId = 2 (start)",
+                            "[ReadPacket:Received] Client = [2] 'test2', TraceId = 2, Packet = (UnbindPublisherRequest, Length = 9)",
+                            "[UnbindingPublisher] Client = [2] 'test2', TraceId = 2, ChannelId = 1",
+                            "[ReadPacket:Accepted] Client = [2] 'test2', TraceId = 2, Packet = (UnbindPublisherRequest, Length = 9)",
+                            "[PublisherUnbound] Client = [2] 'test2', TraceId = 2, Channel = [1] 'c', Stream = [1] 'c'",
+                            "[SendPacket:Sending] Client = [2] 'test2', TraceId = 2, Packet = (PublisherUnboundResponse, Length = 6)",
+                            "[SendPacket:Sent] Client = [2] 'test2', TraceId = 2, Packet = (PublisherUnboundResponse, Length = 6)",
+                            "[Trace:UnbindPublisher] Client = [2] 'test2', TraceId = 2 (end)"
+                        ] )
+                    ] ),
+                clientLogs.GetAllAwaitPacket()
+                    .TestContainsContiguousSequence(
+                    [
+                        "[AwaitPacket] Client = [2] 'test2'",
+                        "[AwaitPacket] Client = [2] 'test2', Packet = (UnbindPublisherRequest, Length = 9)"
+                    ] ),
+                logs.GetAllChannel().TestSequence( [ "[1::'c'::1] [Created] by client [1::'test']" ] ),
+                logs.GetAllStream().TestSequence( [ "[1::'c'::1] [Created] by publisher [1::'test'] => [1::'c']" ] ) )
             .Go();
     }
 
@@ -1420,20 +1569,21 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
     {
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
+        var clientLogs = new ClientEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetClientEventHandlerFactory(
-                    _ => e =>
-                    {
-                        logs.Add( e );
-                        if ( e.Type == MessageBrokerRemoteClientEventType.MessageSent
-                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.PublisherUnboundResponse )
-                            endSource.Complete();
-                    } )
-                .SetChannelEventHandlerFactory( _ => logs.Add )
-                .SetPublisherEventHandlerFactory( _ => logs.Add ) );
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindPublisher )
+                                    endSource.Complete();
+                            } ) ) )
+                .SetChannelEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
 
@@ -1480,23 +1630,29 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
                 binding.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Disposed ) ),
                 subscription.TestNotNull( s => s.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ) ),
                 server.Channels.Count.TestEquals( 1 ),
-                logs.GetAllClient()
-                    .TestContainsSequence(
-                    [
-                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 9] UnbindPublisherRequest",
-                        "[1::'test'::3] [MessageReceived] [PacketLength: 9] Begin handling UnbindPublisherRequest",
-                        "[1::'test'::3] [MessageAccepted] [PacketLength: 9] UnbindPublisherRequest",
-                        "[1::'test'::3] [SendingMessage] [PacketLength: 6] PublisherUnboundResponse",
-                        "[1::'test'::3] [MessageSent] [PacketLength: 6] PublisherUnboundResponse"
-                    ] ),
-                logs.GetAllChannel().TestSequence( [ "[1::'c'::1] [Created] by client [1::'test']" ] ),
-                logs.GetAllPublisher()
+                clientLogs.GetAll()
+                    .Skip( 3 )
                     .TestSequence(
                     [
-                        "[1::'test'=>1::'c'::1] [Created]",
-                        "[1::'test'=>1::'c'::3] [Disposing]",
-                        "[1::'test'=>1::'c'::<ROOT>] [Disposed]"
-                    ] ) )
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 3 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 3, Packet = (UnbindPublisherRequest, Length = 9)",
+                            "[UnbindingPublisher] Client = [1] 'test', TraceId = 3, ChannelId = 1",
+                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 3, Packet = (UnbindPublisherRequest, Length = 9)",
+                            "[PublisherUnbound] Client = [1] 'test', TraceId = 3, Channel = [1] 'c', Stream = [1] 'c' (removed)",
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 3, Packet = (PublisherUnboundResponse, Length = 6)",
+                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 3, Packet = (PublisherUnboundResponse, Length = 6)",
+                            "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 3 (end)"
+                        ] )
+                    ] ),
+                clientLogs.GetAllAwaitPacket()
+                    .TestContainsContiguousSequence(
+                    [
+                        "[AwaitPacket] Client = [1] 'test'",
+                        "[AwaitPacket] Client = [1] 'test', Packet = (UnbindPublisherRequest, Length = 9)"
+                    ] ),
+                logs.GetAllChannel().TestSequence( [ "[1::'c'::1] [Created] by client [1::'test']" ] ) )
             .Go();
     }
 
@@ -1505,19 +1661,21 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
     {
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
+        var clientLogs = new ClientEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetClientEventHandlerFactory(
-                    _ => e =>
-                    {
-                        logs.Add( e );
-                        if ( e.Type == MessageBrokerRemoteClientEventType.Disposed )
-                            endSource.Complete();
-                    } )
-                .SetChannelEventHandlerFactory( _ => logs.Add )
-                .SetPublisherEventHandlerFactory( _ => logs.Add ) );
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindPublisher )
+                                    endSource.Complete();
+                            } ) ) )
+                .SetChannelEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
 
@@ -1544,16 +1702,29 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
                 server.Clients.GetAll().TestEmpty(),
                 server.Channels.Count.TestEquals( 0 ),
                 server.Channels.GetAll().TestEmpty(),
-                logs.GetAllClient()
-                    .TestContainsSequence(
+                clientLogs.GetAll()
+                    .Skip( 2 )
+                    .TestSequence(
                     [
-                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 8] UnbindPublisherRequest",
-                        "[1::'test'::2] [MessageReceived] [PacketLength: 8] Begin handling UnbindPublisherRequest",
-                        """
-                        [1::'test'::2] [MessageRejected] [PacketLength: 8] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid UnbindPublisherRequest from client [1] 'test'. Encountered 1 error(s):
-                        1. Expected header payload to be 4 but found 3.
-                        """
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 2 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (UnbindPublisherRequest, Length = 8)",
+                            """
+                            [Error] Client = [1] 'test', TraceId = 2
+                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid UnbindPublisherRequest from client [1] 'test'. Encountered 1 error(s):
+                            1. Expected header payload to be 4 but found 3.
+                            """,
+                            "[Disposing] Client = [1] 'test', TraceId = 2",
+                            "[Disposed] Client = [1] 'test', TraceId = 2",
+                            "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 2 (end)"
+                        ] )
+                    ] ),
+                clientLogs.GetAllAwaitPacket()
+                    .TestContainsContiguousSequence(
+                    [
+                        "[AwaitPacket] Client = [1] 'test'",
+                        "[AwaitPacket] Client = [1] 'test', Packet = (UnbindPublisherRequest, Length = 8)"
                     ] ),
                 logs.GetAllChannel()
                     .TestSequence(
@@ -1561,13 +1732,72 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
                         "[1::'c'::1] [Created] by client [1::'test']",
                         "[1::'c'::<ROOT>] [Disposing]",
                         "[1::'c'::<ROOT>] [Disposed]"
-                    ] ),
-                logs.GetAllPublisher()
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task Unbind_ShouldDisposeClient_WhenClientSendsNonPositiveChannelId()
+    {
+        var endSource = new SafeTaskCompletionSource();
+        var clientLogs = new ClientEventLogger();
+
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindPublisher )
+                                    endSource.Complete();
+                            } ) ) ) );
+
+        await server.StartAsync();
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server );
+        var remoteClient = server.Clients.TryGetById( 1 );
+        await client.GetTask(
+            c =>
+            {
+                c.SendBindPublisherRequest( "c" );
+                c.ReadPublisherBoundResponse();
+                c.SendUnbindPublisherRequest( 0 );
+            } );
+
+        await endSource.Task;
+
+        Assertion.All(
+                remoteClient.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Disposed ) ),
+                server.Clients.Count.TestEquals( 0 ),
+                server.Channels.Count.TestEquals( 0 ),
+                clientLogs.GetAll()
+                    .Skip( 2 )
                     .TestSequence(
                     [
-                        "[1::'test'=>1::'c'::1] [Created]",
-                        "[1::'test'=>1::'c'::<ROOT>] [Disposing]",
-                        "[1::'test'=>1::'c'::<ROOT>] [Disposed]"
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 2 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (UnbindPublisherRequest, Length = 9)",
+                            """
+                            [Error] Client = [1] 'test', TraceId = 2
+                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid UnbindPublisherRequest from client [1] 'test'. Encountered 1 error(s):
+                            1. Expected channel ID to be greater than 0 but found 0.
+                            """,
+                            "[Disposing] Client = [1] 'test', TraceId = 2",
+                            "[Disposed] Client = [1] 'test', TraceId = 2",
+                            "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 2 (end)"
+                        ] )
+                    ] ),
+                clientLogs.GetAllAwaitPacket()
+                    .TestContainsContiguousSequence(
+                    [
+                        "[AwaitPacket] Client = [1] 'test'",
+                        "[AwaitPacket] Client = [1] 'test', Packet = (UnbindPublisherRequest, Length = 9)"
                     ] ) )
             .Go();
     }
@@ -1577,23 +1807,21 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
     {
         Exception? exception = null;
         var endSource = new SafeTaskCompletionSource();
-        var logs = new EventLogger();
+        var clientLogs = new ClientEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetClientEventHandlerFactory(
-                    _ => e =>
-                    {
-                        logs.Add( e );
-                        if ( e.Type == MessageBrokerRemoteClientEventType.MessageRejected
-                            && e.GetServerEndpoint() == MessageBrokerServerEndpoint.UnbindPublisherRequest )
-                            exception = e.Exception;
-
-                        if ( e.Type == MessageBrokerRemoteClientEventType.MessageSent
-                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.UnbindPublisherFailureResponse )
-                            endSource.Complete();
-                    } ) );
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindPublisher )
+                                    endSource.Complete();
+                            },
+                            error: e => exception = e.Exception ) ) ) );
 
         await server.StartAsync();
 
@@ -1620,17 +1848,29 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
                 remoteClient.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Running ) ),
                 server.Clients.Count.TestEquals( 1 ),
                 server.Clients.GetAll().TestSequence( [ (c, _) => c.TestRefEquals( remoteClient ) ] ),
-                logs.GetAllClient()
-                    .TestContainsSequence(
+                clientLogs.GetAll()
+                    .Skip( 1 )
+                    .TestSequence(
                     [
-                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 9] UnbindPublisherRequest",
-                        "[1::'test'::1] [MessageReceived] [PacketLength: 9] Begin handling UnbindPublisherRequest",
-                        """
-                        [1::'test'::1] [MessageRejected] [PacketLength: 9] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerChannelPublisherBindingException: Message broker client [1] 'test' could not be unbound as a publisher from non-existing channel with ID 1.
-                        """,
-                        "[1::'test'::1] [SendingMessage] [PacketLength: 6] UnbindPublisherFailureResponse",
-                        "[1::'test'::1] [MessageSent] [PacketLength: 6] UnbindPublisherFailureResponse"
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 1 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (UnbindPublisherRequest, Length = 9)",
+                            "[UnbindingPublisher] Client = [1] 'test', TraceId = 1, ChannelId = 1",
+                            """
+                            [Error] Client = [1] 'test', TraceId = 1
+                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerChannelPublisherBindingException: Client [1] 'test' could not be unbound as a publisher from non-existing channel with ID 1.
+                            """,
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (UnbindPublisherFailureResponse, Length = 6)",
+                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (UnbindPublisherFailureResponse, Length = 6)",
+                            "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 1 (end)"
+                        ] )
+                    ] ),
+                clientLogs.GetAllAwaitPacket()
+                    .TestContainsContiguousSequence(
+                    [
+                        "[AwaitPacket] Client = [1] 'test'",
+                        "[AwaitPacket] Client = [1] 'test', Packet = (UnbindPublisherRequest, Length = 9)"
                     ] ) )
             .Go();
     }
@@ -1641,22 +1881,23 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
         Exception? exception = null;
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
+        var clientLogs = new ClientEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetClientEventHandlerFactory(
-                    _ => e =>
-                    {
-                        logs.Add( e );
-                        if ( e.Type == MessageBrokerRemoteClientEventType.MessageRejected
-                            && e.GetServerEndpoint() == MessageBrokerServerEndpoint.UnbindPublisherRequest )
-                            exception = e.Exception;
-
-                        if ( e.Type == MessageBrokerRemoteClientEventType.MessageSent
-                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.UnbindPublisherFailureResponse )
-                            endSource.Complete();
-                    } )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    c => c.Id == 2
+                        ? clientLogs.GetLogger(
+                            MessageBrokerRemoteClientLogger.Create(
+                                traceEnd: e =>
+                                {
+                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindPublisher )
+                                        endSource.Complete();
+                                },
+                                error: e => exception = e.Exception ) )
+                        : null )
                 .SetChannelEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -1703,17 +1944,29 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase
                 server.Clients.GetAll().TestSetEqual( [ remoteClient1, remoteClient2 ] ),
                 server.Channels.Count.TestEquals( 1 ),
                 server.Channels.GetAll().TestSequence( [ (c, _) => c.TestRefEquals( channel ) ] ),
-                logs.GetAllClient()
-                    .TestContainsSequence(
+                clientLogs.GetAll()
+                    .Skip( 1 )
+                    .TestSequence(
                     [
-                        "[2::'test2'::<ROOT>] [MessageReceived] [PacketLength: 9] UnbindPublisherRequest",
-                        "[2::'test2'::1] [MessageReceived] [PacketLength: 9] Begin handling UnbindPublisherRequest",
-                        """
-                        [2::'test2'::1] [MessageRejected] [PacketLength: 9] Encountered an error:
-                        LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerChannelPublisherBindingException: Message broker client [2] 'test2' could not be unbound as a publisher from channel [1] 'c' because it is not bound as a publisher to it.
-                        """,
-                        "[2::'test2'::1] [SendingMessage] [PacketLength: 6] UnbindPublisherFailureResponse",
-                        "[2::'test2'::1] [MessageSent] [PacketLength: 6] UnbindPublisherFailureResponse"
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindPublisher] Client = [2] 'test2', TraceId = 1 (start)",
+                            "[ReadPacket:Received] Client = [2] 'test2', TraceId = 1, Packet = (UnbindPublisherRequest, Length = 9)",
+                            "[UnbindingPublisher] Client = [2] 'test2', TraceId = 1, ChannelId = 1",
+                            """
+                            [Error] Client = [2] 'test2', TraceId = 1
+                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerChannelPublisherBindingException: Client [2] 'test2' could not be unbound as a publisher from channel [1] 'c' because it is not bound as a publisher to it.
+                            """,
+                            "[SendPacket:Sending] Client = [2] 'test2', TraceId = 1, Packet = (UnbindPublisherFailureResponse, Length = 6)",
+                            "[SendPacket:Sent] Client = [2] 'test2', TraceId = 1, Packet = (UnbindPublisherFailureResponse, Length = 6)",
+                            "[Trace:UnbindPublisher] Client = [2] 'test2', TraceId = 1 (end)"
+                        ] )
+                    ] ),
+                clientLogs.GetAllAwaitPacket()
+                    .TestContainsContiguousSequence(
+                    [
+                        "[AwaitPacket] Client = [2] 'test2'",
+                        "[AwaitPacket] Client = [2] 'test2', Packet = (UnbindPublisherRequest, Length = 9)"
                     ] ),
                 logs.GetAllChannel().TestContainsSequence( [ "[1::'c'::1] [Created] by client [1::'test']" ] ) )
             .Go();

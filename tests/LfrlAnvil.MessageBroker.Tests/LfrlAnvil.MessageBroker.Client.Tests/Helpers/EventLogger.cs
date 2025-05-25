@@ -64,35 +64,55 @@ public sealed class EventLogger
                 Add( e.Source.TraceId, e.ToString() );
                 logger.BindingPublisher?.Invoke( e );
             },
-            publisherChange: e =>
+            publisherBound: e =>
             {
                 Add( e.Source.TraceId, e.ToString() );
-                logger.PublisherChange?.Invoke( e );
+                logger.PublisherBound?.Invoke( e );
+            },
+            unbindingPublisher: e =>
+            {
+                Add( e.Source.TraceId, e.ToString() );
+                logger.UnbindingPublisher?.Invoke( e );
+            },
+            publisherUnbound: e =>
+            {
+                Add( e.Source.TraceId, e.ToString() );
+                logger.PublisherUnbound?.Invoke( e );
             },
             bindingListener: e =>
             {
                 Add( e.Source.TraceId, e.ToString() );
                 logger.BindingListener?.Invoke( e );
             },
-            listenerChange: e =>
+            listenerBound: e =>
             {
                 Add( e.Source.TraceId, e.ToString() );
-                logger.ListenerChange?.Invoke( e );
+                logger.ListenerBound?.Invoke( e );
             },
-            messagePushing: e =>
+            unbindingListener: e =>
             {
                 Add( e.Source.TraceId, e.ToString() );
-                logger.MessagePushing?.Invoke( e );
+                logger.UnbindingListener?.Invoke( e );
+            },
+            listenerUnbound: e =>
+            {
+                Add( e.Source.TraceId, e.ToString() );
+                logger.ListenerUnbound?.Invoke( e );
+            },
+            pushingMessage: e =>
+            {
+                Add( e.Source.TraceId, e.ToString() );
+                logger.PushingMessage?.Invoke( e );
             },
             messagePushed: e =>
             {
                 Add( e.Source.TraceId, e.ToString() );
                 logger.MessagePushed?.Invoke( e );
             },
-            messageProcessing: e =>
+            processingMessage: e =>
             {
                 Add( e.Source.TraceId, e.ToString() );
-                logger.MessageProcessing?.Invoke( e );
+                logger.ProcessingMessage?.Invoke( e );
             },
             messageProcessed: e =>
             {
@@ -129,10 +149,10 @@ public sealed class EventLogger
     }
 
     [Pure]
-    public string[][] GetAll()
+    public TraceLog[] GetAll()
     {
         lock ( _traces )
-            return _traces.OrderBy( kv => kv.Key ).Select( kv => kv.Value.ToArray() ).ToArray();
+            return _traces.OrderBy( kv => kv.Key ).Select( kv => new TraceLog( kv.Key, kv.Value.ToArray() ) ).ToArray();
     }
 
     [Pure]

@@ -104,7 +104,7 @@ public partial class MessageBrokerClientTests
                         .Skip( 1 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
                                 $"[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = '{channelName}', QueueName = '{queueName}', PrefetchHint = 1, CreateChannelIfNotExists = True",
@@ -112,7 +112,7 @@ public partial class MessageBrokerClientTests
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 20)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (ListenerBoundResponse, Length = 14)",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (ListenerBoundResponse, Length = 14)",
-                                $"[ListenerChange:Bound] Client = [1] 'test', TraceId = 1, Channel = [1] '{channelName}', Queue = [2] '{queueName}', PrefetchHint = 1",
+                                $"[ListenerBound] Client = [1] 'test', TraceId = 1, Channel = [1] '{channelName}'{(channelCreated ? " (created)" : string.Empty)}, Queue = [2] '{queueName}'{(queueCreated ? " (created)" : string.Empty)}, PrefetchHint = 1",
                                 "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (end)"
                             ] )
                         ] ),
@@ -329,7 +329,7 @@ public partial class MessageBrokerClientTests
                         .Skip( 1 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
                                 "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', QueueName = 'foo', PrefetchHint = 1, CreateChannelIfNotExists = True",
@@ -427,7 +427,7 @@ public partial class MessageBrokerClientTests
                         .Skip( 1 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
                                 "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', QueueName = 'foo', PrefetchHint = 1, CreateChannelIfNotExists = True",
@@ -500,7 +500,7 @@ public partial class MessageBrokerClientTests
                         .Skip( 1 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
                                 "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', QueueName = 'foo', PrefetchHint = 1, CreateChannelIfNotExists = True",
@@ -572,7 +572,7 @@ public partial class MessageBrokerClientTests
                         .Skip( 1 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
                                 "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', QueueName = 'foo', PrefetchHint = 1, CreateChannelIfNotExists = True",
@@ -645,7 +645,7 @@ public partial class MessageBrokerClientTests
                         .Skip( 1 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
                                 "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', QueueName = 'foo', PrefetchHint = 1, CreateChannelIfNotExists = True",
@@ -717,7 +717,7 @@ public partial class MessageBrokerClientTests
                         .Skip( 1 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
                                 "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', QueueName = 'foo', PrefetchHint = 1, CreateChannelIfNotExists = True",
@@ -809,15 +809,15 @@ public partial class MessageBrokerClientTests
                         .Skip( 2 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:UnbindListener] Client = [1] 'test', TraceId = 2 (start)",
-                                $"[ListenerChange:Unbinding] Client = [1] 'test', TraceId = 2, Channel = [1] '{channelName}', Queue = [2] '{channelName}'",
+                                $"[UnbindingListener] Client = [1] 'test', TraceId = 2, Channel = [1] '{channelName}', Queue = [2] '{channelName}'",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (UnbindListenerRequest, Length = 9)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (UnbindListenerRequest, Length = 9)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (ListenerUnboundResponse, Length = 6)",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (ListenerUnboundResponse, Length = 6)",
-                                $"[ListenerChange:Unbound] Client = [1] 'test', TraceId = 2, Channel = [1] '{channelName}', Queue = [2] '{channelName}'",
+                                $"[ListenerUnbound] Client = [1] 'test', TraceId = 2, Channel = [1] '{channelName}'{(channelRemoved ? " (removed)" : string.Empty)}, Queue = [2] '{channelName}'{(queueRemoved ? " (removed)" : string.Empty)}",
                                 "[Trace:UnbindListener] Client = [1] 'test', TraceId = 2 (end)"
                             ] )
                         ] ),
@@ -950,10 +950,10 @@ public partial class MessageBrokerClientTests
                         .Skip( 2 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:UnbindListener] Client = [1] 'test', TraceId = 2 (start)",
-                                "[ListenerChange:Unbinding] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo'",
+                                "[UnbindingListener] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo'",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (UnbindListenerRequest, Length = 9)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (UnbindListenerRequest, Length = 9)",
                                 """
@@ -1077,10 +1077,10 @@ public partial class MessageBrokerClientTests
                         .Skip( 2 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:UnbindListener] Client = [1] 'test', TraceId = 2 (start)",
-                                "[ListenerChange:Unbinding] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo'",
+                                "[UnbindingListener] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo'",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (UnbindListenerRequest, Length = 9)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (UnbindListenerRequest, Length = 9)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (ListenerUnboundResponse, Length = 5)",
@@ -1155,10 +1155,10 @@ public partial class MessageBrokerClientTests
                         .Skip( 2 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:UnbindListener] Client = [1] 'test', TraceId = 2 (start)",
-                                "[ListenerChange:Unbinding] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo'",
+                                "[UnbindingListener] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo'",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (UnbindListenerRequest, Length = 9)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (UnbindListenerRequest, Length = 9)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (UnbindListenerFailureResponse, Length = 6)",
@@ -1233,10 +1233,10 @@ public partial class MessageBrokerClientTests
                         .Skip( 2 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:UnbindListener] Client = [1] 'test', TraceId = 2 (start)",
-                                "[ListenerChange:Unbinding] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo'",
+                                "[UnbindingListener] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo'",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (UnbindListenerRequest, Length = 9)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (UnbindListenerRequest, Length = 9)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (UnbindListenerFailureResponse, Length = 5)",
@@ -1311,10 +1311,10 @@ public partial class MessageBrokerClientTests
                         .Skip( 2 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:UnbindListener] Client = [1] 'test', TraceId = 2 (start)",
-                                "[ListenerChange:Unbinding] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo'",
+                                "[UnbindingListener] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo'",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (UnbindListenerRequest, Length = 9)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (UnbindListenerRequest, Length = 9)",
                                 """
@@ -1402,13 +1402,13 @@ public partial class MessageBrokerClientTests
                         .Skip( 2 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 45)",
-                                "[MessageProcessing] Client = [1] 'test', TraceId = 2, MessageId = 1, ChannelId = 1, Length = 4",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 2, SenderId = 2, StreamId = 3, MessageId = 1, ChannelId = 1, RetryAttempt = 4, RedeliveryAttempt = 5, Length = 4",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 45)",
-                                "[MessageProcessed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', MessageId = 1, Length = 4",
+                                "[MessageProcessed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 3, MessageId = 1",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (end)"
                             ] )
                         ] ),
@@ -1520,25 +1520,25 @@ public partial class MessageBrokerClientTests
                         .Skip( 2 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 45)",
-                                "[MessageProcessing] Client = [1] 'test', TraceId = 2, MessageId = 1, ChannelId = 1, Length = 4",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 2, SenderId = 2, StreamId = 1, MessageId = 1, ChannelId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 4",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 45)",
                                 "1st invocation",
-                                "[MessageProcessed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', MessageId = 1, Length = 4",
+                                "[MessageProcessed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 1, MessageId = 1",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (end)"
                             ] ),
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 3 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 3, Packet = (MessageNotification, Length = 46)",
-                                "[MessageProcessing] Client = [1] 'test', TraceId = 3, MessageId = 2, ChannelId = 1, Length = 5",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 3, SenderId = 3, StreamId = 2, MessageId = 2, ChannelId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 5",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 3, Packet = (MessageNotification, Length = 46)",
                                 "1st invocation",
                                 "2nd invocation",
-                                "[MessageProcessed] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [1] 'foo', MessageId = 2, Length = 5",
+                                "[MessageProcessed] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 2, MessageId = 2",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 3 (end)"
                             ] )
                         ] ),
@@ -1605,13 +1605,13 @@ public partial class MessageBrokerClientTests
                         .Skip( 2 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 (e, _) => e.TestEquals( "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (start)" ),
                                 (e, _) => e.TestEquals(
                                     "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 41)" ),
                                 (e, _) => e.TestEquals(
-                                    "[MessageProcessing] Client = [1] 'test', TraceId = 2, MessageId = 1, ChannelId = 1, Length = 0" ),
+                                    "[ProcessingMessage] Client = [1] 'test', TraceId = 2, SenderId = 2, StreamId = 1, MessageId = 1, ChannelId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 0" ),
                                 (e, _) => e.TestEquals(
                                     "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 41)" ),
                                 (e, _) => e.TestStartsWith(
@@ -1620,7 +1620,7 @@ public partial class MessageBrokerClientTests
                                     System.Exception: foo
                                     """ ),
                                 (e, _) => e.TestEquals(
-                                    "[MessageProcessed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', MessageId = 1, Length = 0" ),
+                                    "[MessageProcessed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 1, MessageId = 1" ),
                                 (e, _) => e.TestEquals( "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (end)" )
                             ] )
                         ] ),
@@ -1682,7 +1682,7 @@ public partial class MessageBrokerClientTests
                         .Skip( 2 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 40)",
@@ -1754,7 +1754,7 @@ public partial class MessageBrokerClientTests
                         .Skip( 2 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 42)",
@@ -1817,11 +1817,11 @@ public partial class MessageBrokerClientTests
                         .Skip( 1 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 1 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (MessageNotification, Length = 45)",
-                                "[MessageProcessing] Client = [1] 'test', TraceId = 1, MessageId = 1, ChannelId = 1, Length = 4",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 1, SenderId = 1, StreamId = 1, MessageId = 1, ChannelId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 4",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 1
                                 LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientMessageException: Listener for channel with ID 1 does not exist.
@@ -1939,27 +1939,27 @@ public partial class MessageBrokerClientTests
                         .Skip( 2 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 43)",
-                                "[MessageProcessing] Client = [1] 'test', TraceId = 2, MessageId = 1, ChannelId = 1, Length = 2",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 2, SenderId = 2, StreamId = 1, MessageId = 1, ChannelId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 2",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 43)",
-                                "[MessageProcessed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', MessageId = 1, Length = 2",
+                                "[MessageProcessed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 1, MessageId = 1",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (end)"
                             ] ),
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 3 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 3, Packet = (MessageNotification, Length = 44)",
-                                "[MessageProcessing] Client = [1] 'test', TraceId = 3, MessageId = 2, ChannelId = 1, Length = 3",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 3, SenderId = 2, StreamId = 1, MessageId = 2, ChannelId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 3",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 3, Packet = (MessageNotification, Length = 44)"
                             ] ),
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 45)",
-                                "[MessageProcessing] Client = [1] 'test', TraceId = 4, MessageId = 3, ChannelId = 1, Length = 4",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 4, SenderId = 2, StreamId = 1, MessageId = 3, ChannelId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 4",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 45)",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 4
@@ -1968,22 +1968,22 @@ public partial class MessageBrokerClientTests
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (end)"
                             ] ),
                             (t, _) => Assertion.All(
-                                t.TestContainsSequence(
+                                t.Logs.TestContainsSequence(
                                 [
                                     "[Trace:UnbindListener] Client = [1] 'test', TraceId = 5 (start)",
-                                    "[ListenerChange:Unbinding] Client = [1] 'test', TraceId = 5, Channel = [1] 'foo', Queue = [1] 'foo'",
+                                    "[UnbindingListener] Client = [1] 'test', TraceId = 5, Channel = [1] 'foo', Queue = [1] 'foo'",
                                     "[SendPacket:Sending] Client = [1] 'test', TraceId = 5, Packet = (UnbindListenerRequest, Length = 9)",
                                     "[SendPacket:Sent] Client = [1] 'test', TraceId = 5, Packet = (UnbindListenerRequest, Length = 9)",
                                     "[ReadPacket:Received] Client = [1] 'test', TraceId = 5, Packet = (ListenerUnboundResponse, Length = 6)",
                                     "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 5, Packet = (ListenerUnboundResponse, Length = 6)",
-                                    "[ListenerChange:Unbound] Client = [1] 'test', TraceId = 5, Channel = [1] 'foo', Queue = [1] 'foo'",
+                                    "[ListenerUnbound] Client = [1] 'test', TraceId = 5, Channel = [1] 'foo' (removed), Queue = [1] 'foo' (removed)",
                                     "[Trace:UnbindListener] Client = [1] 'test', TraceId = 5 (end)"
                                 ] ),
-                                t.TestContainsSequence(
+                                t.Logs.TestContainsSequence(
                                 [
                                     """
                                     [Error] Client = [1] 'test', TraceId = 5
-                                    LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientMessageException: 1 locally cached message notification(s) by [1] 'foo' channel listener have been discarded due to listener disposal.
+                                    LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientMessageException: 1 locally stored message notification(s) by [1] 'foo' channel listener have been discarded due to listener disposal.
                                     """
                                 ] ) )
                         ] ),
@@ -2074,24 +2074,24 @@ public partial class MessageBrokerClientTests
                         .Skip( 1 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 1 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (MessageNotification, Length = 43)",
-                                "[MessageProcessing] Client = [1] 'test', TraceId = 1, MessageId = 1, ChannelId = 1, Length = 2",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 1, SenderId = 2, StreamId = 1, MessageId = 1, ChannelId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 2",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 1
                                 LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientMessageException: Listener for channel with ID 1 does not exist.
                                 """,
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 1 (end)"
                             ] ),
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:Dispose] Client = [1] 'test', TraceId = 2 (start)",
                                 "[Disposing] Client = [1] 'test', TraceId = 2",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 2
-                                LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientMessageException: 1 locally cached message notification(s) have been discarded due to client disposal.
+                                LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientMessageException: 1 locally stored message notification(s) have been discarded due to client disposal.
                                 """,
                                 "[Disposed] Client = [1] 'test', TraceId = 2",
                                 "[Trace:Dispose] Client = [1] 'test', TraceId = 2 (end)"
@@ -2227,18 +2227,18 @@ public partial class MessageBrokerClientTests
                         .TestSequence(
                         [
                             (t, _) => Assertion.All(
-                                t.TestContainsSequence(
+                                t.Logs.TestContainsSequence(
                                 [
                                     "[Trace:UnbindListener] Client = [1] 'test', TraceId = 3 (start)",
-                                    "[ListenerChange:Unbinding] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [1] 'foo'",
+                                    "[UnbindingListener] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [1] 'foo'",
                                     "[SendPacket:Sending] Client = [1] 'test', TraceId = 3, Packet = (UnbindListenerRequest, Length = 9)",
                                     "[SendPacket:Sent] Client = [1] 'test', TraceId = 3, Packet = (UnbindListenerRequest, Length = 9)",
                                     "[ReadPacket:Received] Client = [1] 'test', TraceId = 3, Packet = (ListenerUnboundResponse, Length = 6)",
                                     "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 3, Packet = (ListenerUnboundResponse, Length = 6)",
-                                    "[ListenerChange:Unbound] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [1] 'foo'",
+                                    "[ListenerUnbound] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo' (removed), Queue = [1] 'foo' (removed)",
                                     "[Trace:UnbindListener] Client = [1] 'test', TraceId = 3 (end)"
                                 ] ),
-                                t.TestContainsSequence(
+                                t.Logs.TestContainsSequence(
                                 [
                                     (e, _) => Assertion.All(
                                         e.TestStartsWith(
@@ -2327,18 +2327,18 @@ public partial class MessageBrokerClientTests
                         .TestSequence(
                         [
                             (t, _) => Assertion.All(
-                                t.TestContainsSequence(
+                                t.Logs.TestContainsSequence(
                                 [
                                     "[Trace:UnbindListener] Client = [1] 'test', TraceId = 3 (start)",
-                                    "[ListenerChange:Unbinding] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [1] 'foo'",
+                                    "[UnbindingListener] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [1] 'foo'",
                                     "[SendPacket:Sending] Client = [1] 'test', TraceId = 3, Packet = (UnbindListenerRequest, Length = 9)",
                                     "[SendPacket:Sent] Client = [1] 'test', TraceId = 3, Packet = (UnbindListenerRequest, Length = 9)",
                                     "[ReadPacket:Received] Client = [1] 'test', TraceId = 3, Packet = (ListenerUnboundResponse, Length = 6)",
                                     "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 3, Packet = (ListenerUnboundResponse, Length = 6)",
-                                    "[ListenerChange:Unbound] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [1] 'foo'",
+                                    "[ListenerUnbound] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo' (removed), Queue = [1] 'foo' (removed)",
                                     "[Trace:UnbindListener] Client = [1] 'test', TraceId = 3 (end)"
                                 ] ),
-                                t.TestContainsSequence(
+                                t.Logs.TestContainsSequence(
                                 [
                                     (e, _) => e.TestStartsWith(
                                         """

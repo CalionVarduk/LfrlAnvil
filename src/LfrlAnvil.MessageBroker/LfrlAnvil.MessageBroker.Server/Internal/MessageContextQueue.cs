@@ -27,20 +27,18 @@ internal struct MessageContextQueue
     private StackSlim<ManualResetValueTaskSource<bool>> _writerTokenSourceCache;
     private QueueSlim<ManualResetValueTaskSource<bool>> _pendingOutgoingWriters;
     private QueueSlim<IncomingPacketToken> _incomingRequests;
-    private ulong _lastId;
 
-    private MessageContextQueue(ulong lastId)
+    private MessageContextQueue(QueueSlim<IncomingPacketToken> incomingRequests)
     {
         _writerTokenSourceCache = StackSlim<ManualResetValueTaskSource<bool>>.Create();
         _pendingOutgoingWriters = QueueSlim<ManualResetValueTaskSource<bool>>.Create();
-        _incomingRequests = QueueSlim<IncomingPacketToken>.Create();
-        _lastId = lastId;
+        _incomingRequests = incomingRequests;
     }
 
     [Pure]
     internal static MessageContextQueue Create()
     {
-        return new MessageContextQueue( 0 );
+        return new MessageContextQueue( QueueSlim<IncomingPacketToken>.Create() );
     }
 
     internal void Dispose()
@@ -57,12 +55,6 @@ internal struct MessageContextQueue
         _incomingRequests = QueueSlim<IncomingPacketToken>.Create();
         _pendingOutgoingWriters = QueueSlim<ManualResetValueTaskSource<bool>>.Create();
         _writerTokenSourceCache = StackSlim<ManualResetValueTaskSource<bool>>.Create();
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ulong AcquireContextId()
-    {
-        return ++_lastId;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

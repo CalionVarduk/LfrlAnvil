@@ -16,6 +16,7 @@ using System;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Chrono;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Internal;
 
@@ -26,18 +27,21 @@ internal static class Resources
     internal const string ServerDisposed = "Operation has been cancelled because server is disposed.";
     internal const string UnexpectedServerEndpoint = "Received unexpected server endpoint.";
 
+    internal const string ExternalDelaySourceHasBeenDisposed
+        = "Operation has been cancelled because external delay value task source has been disposed.";
+
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string InvalidServerState(MessageBrokerServerState actual, MessageBrokerServerState expected)
     {
-        return $"Expected message broker server to be in {expected} state but found {actual} state.";
+        return $"Expected server to be in {expected} state but found {actual} state.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string ClientDisposed(int id, string name)
     {
-        return $"Operation has been cancelled because remote message broker client [{id}] '{name}' is disposed.";
+        return $"Operation has been cancelled because remote client [{id}] '{name}' is disposed.";
     }
 
     [Pure]
@@ -69,7 +73,7 @@ internal static class Resources
         MessageBrokerServerEndpoint endpoint,
         Chain<string> errors)
     {
-        var header = $"Message broker server received an invalid {GetEndpoint( endpoint )} from client [{clientId}] '{clientName}'.";
+        var header = $"Server received an invalid {GetEndpoint( endpoint )} from client [{clientId}] '{clientName}'.";
         if ( errors.Count == 0 )
             return header;
 
@@ -118,6 +122,20 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string ChannelIdIsNotPositive(int received)
+    {
+        return $"Expected channel ID to be greater than 0 but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string MessagesDiscarded(int count)
+    {
+        return $"{count} stored pending message notification(s) have been discarded due to client disposal.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string InvalidPrefetchHint(int value)
     {
         return $"Expected prefetch hint to be greater than 0 but found {value}.";
@@ -152,7 +170,7 @@ internal static class Resources
             : "the publisher binding process was cancelled";
 
         return
-            $"Message broker client [{clientId}] '{clientName}' could not be bound as a publisher to channel [{channelId}] '{channelName}' because {reasonText}.";
+            $"Client [{clientId}] '{clientName}' could not be bound as a publisher to channel [{channelId}] '{channelName}' because {reasonText}.";
     }
 
     [Pure]
@@ -160,7 +178,7 @@ internal static class Resources
     internal static string FailedToUnbindPublisherFromChannel(int clientId, string clientName, int channelId, string channelName)
     {
         return
-            $"Message broker client [{clientId}] '{clientName}' could not be unbound as a publisher from channel [{channelId}] '{channelName}' because it is not bound as a publisher to it.";
+            $"Client [{clientId}] '{clientName}' could not be unbound as a publisher from channel [{channelId}] '{channelName}' because it is not bound as a publisher to it.";
     }
 
     [Pure]
@@ -168,7 +186,7 @@ internal static class Resources
     internal static string FailedToUnbindPublisherFromNonExistingChannel(int clientId, string clientName, int channelId)
     {
         return
-            $"Message broker client [{clientId}] '{clientName}' could not be unbound as a publisher from non-existing channel with ID {channelId}.";
+            $"Client [{clientId}] '{clientName}' could not be unbound as a publisher from non-existing channel with ID {channelId}.";
     }
 
     [Pure]
@@ -176,7 +194,7 @@ internal static class Resources
     internal static string FailedToUnbindListenerFromChannel(int clientId, string clientName, int channelId, string channelName)
     {
         return
-            $"Message broker client [{clientId}] '{clientName}' could not be unbound as a listener from channel [{channelId}] '{channelName}' because it is not bound as a listener to it.";
+            $"Client [{clientId}] '{clientName}' could not be unbound as a listener from channel [{channelId}] '{channelName}' because it is not bound as a listener to it.";
     }
 
     [Pure]
@@ -184,7 +202,7 @@ internal static class Resources
     internal static string FailedToUnbindListenerFromNonExistingChannel(int clientId, string clientName, int channelId)
     {
         return
-            $"Message broker client [{clientId}] '{clientName}' could not be unbound as a listener from non-existing channel with ID {channelId}.";
+            $"Client [{clientId}] '{clientName}' could not be unbound as a listener from non-existing channel with ID {channelId}.";
     }
 
     [Pure]
@@ -192,7 +210,15 @@ internal static class Resources
     internal static string FailedToPushMessageToUnboundChannel(int clientId, string clientName, int channelId)
     {
         return
-            $"Message broker client [{clientId}] '{clientName}' could not push message to channel with ID {channelId} because it is not bound as a publisher to it.";
+            $"Client [{clientId}] '{clientName}' could not push message to channel with ID {channelId} because it is not bound as a publisher to it.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string RequestTimeout(int clientId, string clientName, Duration timeout)
+    {
+        return
+            $"Client [{clientId}] '{clientName}' failed to send a request to the server in the specified amount of time ({timeout.FullMilliseconds} milliseconds).";
     }
 
     [Pure]
@@ -214,7 +240,7 @@ internal static class Resources
 
         var channelIdText = channelId is null ? string.Empty : $"[{channelId.Value}] ";
         return
-            $"Message broker client [{clientId}] '{clientName}' could not be bound as a listener to channel {channelIdText}'{channelName}' because {reasonText}.";
+            $"Client [{clientId}] '{clientName}' could not be bound as a listener to channel {channelIdText}'{channelName}' because {reasonText}.";
     }
 
     [Pure]

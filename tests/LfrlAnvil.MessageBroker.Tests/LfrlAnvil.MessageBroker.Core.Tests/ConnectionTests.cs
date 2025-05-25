@@ -113,12 +113,13 @@ public class ConnectionTests : TestsBase, IClassFixture<SharedResourceFixture>
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientEventHandlerFactory(
-                    _ => e =>
-                    {
-                        if ( e.Type == MessageBrokerRemoteClientEventType.Disposed )
-                            endSource.Complete();
-                    } ) );
+                .SetClientLoggerFactory(
+                    _ => MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.Dispose )
+                                endSource.Complete();
+                        } ) ) );
 
         await server.StartAsync();
 

@@ -111,7 +111,7 @@ public class MessageBrokerServerTests : TestsBase
                 logs.GetAll()
                     .TestSequence(
                     [
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             $"[Trace:Start] Server = {originalEndPoint}, TraceId = 0 (start)",
                             $"[ListenerStarting] Server = {originalEndPoint}, TraceId = 0, HandshakeTimeout = 15 second(s), AcceptableMessageTimeout = [0.001 second(s), 2147483.647 second(s)], AcceptablePingInterval = [0.001 second(s), 86400 second(s)]",
@@ -153,7 +153,7 @@ public class MessageBrokerServerTests : TestsBase
                 logs.GetAll()
                     .TestSequence(
                     [
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             $"[Trace:Start] Server = {originalEndPoint}, TraceId = 0 (start)",
                             $"[ListenerStarting] Server = {originalEndPoint}, TraceId = 0, HandshakeTimeout = 15 second(s), AcceptableMessageTimeout = [0.001 second(s), 2147483.647 second(s)], AcceptablePingInterval = [0.001 second(s), 86400 second(s)]",
@@ -230,7 +230,7 @@ public class MessageBrokerServerTests : TestsBase
                 logs.GetAll()
                     .TestSequence(
                     [
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             $"[Trace:Start] Server = {localEndPoint}, TraceId = 0 (start)",
                             $"[ListenerStarting] Server = {localEndPoint}, TraceId = 0, HandshakeTimeout = 15 second(s), AcceptableMessageTimeout = [0.001 second(s), 2147483.647 second(s)], AcceptablePingInterval = [0.001 second(s), 86400 second(s)]",
@@ -240,7 +240,7 @@ public class MessageBrokerServerTests : TestsBase
                              """,
                             $"[Trace:Start] Server = {localEndPoint}, TraceId = 0 (end)"
                         ] ),
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             $"[Trace:Dispose] Server = {localEndPoint}, TraceId = 1 (start)",
                             $"[Disposing] Server = {localEndPoint}, TraceId = 1",
@@ -270,7 +270,7 @@ public class MessageBrokerServerTests : TestsBase
                 logs.GetAll()
                     .TestSequence(
                     [
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             $"[Trace:Start] Server = {localEndPoint}, TraceId = 0 (start)",
                             $"[ListenerStarting] Server = {localEndPoint}, TraceId = 0, HandshakeTimeout = 15 second(s), AcceptableMessageTimeout = [0.001 second(s), 2147483.647 second(s)], AcceptablePingInterval = [0.001 second(s), 86400 second(s)]",
@@ -281,7 +281,7 @@ public class MessageBrokerServerTests : TestsBase
                              """,
                             $"[Trace:Start] Server = {server.LocalEndPoint}, TraceId = 0 (end)"
                         ] ),
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             $"[Trace:Dispose] Server = {server.LocalEndPoint}, TraceId = 1 (start)",
                             $"[Disposing] Server = {server.LocalEndPoint}, TraceId = 1",
@@ -322,7 +322,7 @@ public class MessageBrokerServerTests : TestsBase
                 logs.GetAll()
                     .TestSequence(
                     [
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             (e, _) => e.TestEquals( $"[Trace:Start] Server = {server.LocalEndPoint}, TraceId = 0 (start)" ),
                             (e, _) => e.TestEquals(
@@ -375,7 +375,7 @@ public class MessageBrokerServerTests : TestsBase
                                 if ( e.EndPoint is null )
                                     endSource.Complete();
                             } ) ) )
-                .SetClientEventHandlerFactory( _ => throw exception ) );
+                .SetClientLoggerFactory( _ => throw exception ) );
 
         await sut.StartAsync();
         var endPoint = sut.LocalEndPoint;
@@ -398,7 +398,7 @@ public class MessageBrokerServerTests : TestsBase
                     .Skip( 1 )
                     .TestSequence(
                     [
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             (e, _) => e.TestEquals( $"[Trace:AcceptClient] Server = {endPoint}, TraceId = 1 (start)" ),
                             (e, _) => e.TestStartsWith(

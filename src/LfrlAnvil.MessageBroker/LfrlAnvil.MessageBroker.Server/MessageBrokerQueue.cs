@@ -157,15 +157,15 @@ public sealed class MessageBrokerQueue
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ValueTask OnClientDisconnectedAsync()
+    internal ValueTask OnClientDisconnectedAsync(ulong clientTraceId)
     {
-        return DisposeAsync();
+        return DisposeAsync( clientTraceId );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ValueTask OnServerDisposedAsync()
+    internal ValueTask OnServerDisposedAsync(ulong clientTraceId)
     {
-        return DisposeAsync();
+        return DisposeAsync( clientTraceId );
     }
 
     internal async ValueTask DisposeDueToLackOfReferencesAsync(bool ignoreProcessorTask)
@@ -242,7 +242,7 @@ public sealed class MessageBrokerQueue
         return false;
     }
 
-    private async ValueTask DisposeAsync()
+    private async ValueTask DisposeAsync(ulong clientTraceId)
     {
         using ( AcquireLock() )
         {

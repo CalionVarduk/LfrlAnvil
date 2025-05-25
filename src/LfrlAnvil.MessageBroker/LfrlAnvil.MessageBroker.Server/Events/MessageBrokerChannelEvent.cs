@@ -29,7 +29,7 @@ public readonly struct MessageBrokerChannelEvent
         MessageBrokerChannel channel,
         MessageBrokerRemoteClient? client,
         MessageBrokerChannelEventType type,
-        ulong contextId = MessageBrokerRemoteClientEvent.RootContextId,
+        ulong contextId = 0,
         Exception? exception = null)
     {
         Channel = channel;
@@ -71,7 +71,7 @@ public readonly struct MessageBrokerChannelEvent
     /// <summary>
     /// Specifies whether or not this event is related to a channel-wide operation.
     /// </summary>
-    public bool IsRootContext => ContextId == MessageBrokerRemoteClientEvent.RootContextId;
+    public bool IsRootContext => ContextId == 0;
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerChannelEvent"/> instance.
@@ -139,7 +139,7 @@ public readonly struct MessageBrokerChannelEvent
     internal static MessageBrokerChannelEvent Created(
         MessageBrokerChannel channel,
         MessageBrokerRemoteClient? client,
-        ulong contextId = MessageBrokerRemoteClientEvent.RootContextId)
+        ulong contextId = 0)
     {
         return new MessageBrokerChannelEvent( channel, client, MessageBrokerChannelEventType.Created, contextId );
     }

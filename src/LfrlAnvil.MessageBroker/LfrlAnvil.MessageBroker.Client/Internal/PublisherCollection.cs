@@ -231,8 +231,12 @@ internal struct PublisherCollection
                         MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header )
                             .Emit( client.Logger.ReadPacket );
 
-                        MessageBrokerClientPublisherChangeEvent.CreateBound( client, traceId, bindResult.Publisher )
-                            .Emit( client.Logger.PublisherChange );
+                        MessageBrokerClientPublisherBoundEvent.Create(
+                                bindResult.Publisher,
+                                traceId,
+                                parsedResponse.ChannelCreated,
+                                parsedResponse.StreamCreated )
+                            .Emit( client.Logger.PublisherBound );
 
                         return bindResult;
                     }
@@ -297,7 +301,7 @@ internal struct PublisherCollection
 
         using ( MessageBrokerClientTraceEvent.CreateScope( client, traceId, MessageBrokerClientTraceEventType.UnbindPublisher ) )
         {
-            MessageBrokerClientPublisherChangeEvent.CreateUnbinding( client, traceId, publisher ).Emit( client.Logger.PublisherChange );
+            MessageBrokerClientUnbindingPublisherEvent.Create( publisher, traceId ).Emit( client.Logger.UnbindingPublisher );
             ManualResetValueTaskSource<IncomingPacketToken> responseSource;
             Protocol.UnbindPublisherRequest request;
 
@@ -407,8 +411,12 @@ internal struct PublisherCollection
                         MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header )
                             .Emit( client.Logger.ReadPacket );
 
-                        MessageBrokerClientPublisherChangeEvent.CreateUnbound( client, traceId, publisher )
-                            .Emit( client.Logger.PublisherChange );
+                        MessageBrokerClientPublisherUnboundEvent.Create(
+                                publisher,
+                                traceId,
+                                parsedResponse.ChannelRemoved,
+                                parsedResponse.StreamRemoved )
+                            .Emit( client.Logger.PublisherUnbound );
 
                         return MessageBrokerUnbindPublisherResult.Create( parsedResponse.ChannelRemoved, parsedResponse.StreamRemoved );
                     }
@@ -475,8 +483,8 @@ internal struct PublisherCollection
         {
             var buffer = context.Data;
             var messageLength = unchecked( buffer.Length - Protocol.PushMessageHeader.Length );
-            MessageBrokerClientMessagePushingEvent.Create( client, traceId, context.Publisher, messageLength, confirm )
-                .Emit( client.Logger.MessagePushing );
+            MessageBrokerClientPushingMessageEvent.Create( client, traceId, context.Publisher, messageLength, confirm )
+                .Emit( client.Logger.PushingMessage );
 
             ManualResetValueTaskSource<IncomingPacketToken>? responseSource = null;
             Protocol.PushMessageHeader request;

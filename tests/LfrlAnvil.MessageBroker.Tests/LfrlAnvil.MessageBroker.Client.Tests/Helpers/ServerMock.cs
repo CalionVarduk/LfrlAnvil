@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Buffers.Binary;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Net;
 using System.Net.Sockets;
@@ -42,8 +43,8 @@ internal sealed class ServerMock : IDisposable
         lock ( _listener )
         {
             _client = _listener.AcceptTcpClient();
-            _client.ReceiveTimeout = ChronoConstants.MillisecondsPerSecond;
-            _client.SendTimeout = ChronoConstants.MillisecondsPerSecond;
+            _client.ReceiveTimeout = ChronoConstants.MillisecondsPerSecond * 5;
+            _client.SendTimeout = ChronoConstants.MillisecondsPerSecond * 5;
             _client.NoDelay = true;
             if ( RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) )
                 _client.Client.SetSocketOption( SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true );
@@ -269,6 +270,15 @@ internal sealed class ServerMock : IDisposable
         writer.MoveWrite( ( uint? )retryAttempt ?? 0 );
         writer.MoveWrite( ( uint? )redeliveryAttempt ?? 0 );
         data.AsSpan().CopyTo( writer.GetSpan( data.Length ) );
+        Send( buffer );
+    }
+
+    internal void SendHeader(MessageBrokerClientEndpoint endpoint, uint payload, bool reverseEndianness = false)
+    {
+        var buffer = new byte[Protocol.PacketHeader.Length];
+        var writer = new BinaryContractWriter( buffer );
+        writer.MoveWrite( ( byte )endpoint );
+        writer.Write( reverseEndianness ? BinaryPrimitives.ReverseEndianness( payload ) : payload );
         Send( buffer );
     }
 

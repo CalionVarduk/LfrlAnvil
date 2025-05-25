@@ -14,7 +14,6 @@
 
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Internal;
@@ -115,7 +114,7 @@ public sealed class MessageBrokerChannel
         return true;
     }
 
-    internal void OnPublisherDisposing(MessageBrokerRemoteClient client)
+    internal void OnPublisherDisposing(MessageBrokerRemoteClient client, ulong clientTraceId)
     {
         var dispose = false;
         using ( AcquireLock() )
@@ -134,7 +133,7 @@ public sealed class MessageBrokerChannel
             DisposeDueToLackOfReferences();
     }
 
-    internal void OnListenerDisposing(MessageBrokerRemoteClient client)
+    internal void OnListenerDisposing(MessageBrokerRemoteClient client, ulong clientTraceId)
     {
         var dispose = false;
         using ( AcquireLock() )
@@ -153,7 +152,7 @@ public sealed class MessageBrokerChannel
             DisposeDueToLackOfReferences();
     }
 
-    internal async ValueTask OnServerDisposedAsync()
+    internal void OnServerDisposed()
     {
         using ( AcquireLock() )
         {
@@ -165,18 +164,12 @@ public sealed class MessageBrokerChannel
 
         Emit( MessageBrokerChannelEvent.Disposing( this ) );
 
-        MessageBrokerChannelPublisherBinding[] publishers;
-        MessageBrokerChannelListenerBinding[] listeners;
         using ( AcquireLock() )
         {
-            publishers = PublishersByClientId.ClearAndExtract();
-            listeners = ListenersByClientId.ClearAndExtract();
+            PublishersByClientId.Clear();
+            ListenersByClientId.Clear();
             _state = MessageBrokerChannelState.Disposed;
         }
-
-        await Parallel.ForEachAsync( publishers, static (b, _) => b.OnServerDisposedAsync() ).ConfigureAwait( false );
-        foreach ( var subscription in listeners )
-            subscription.OnServerDisposed();
 
         Emit( MessageBrokerChannelEvent.Disposed( this ) );
     }

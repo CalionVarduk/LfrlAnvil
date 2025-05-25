@@ -39,16 +39,10 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     internal RemoteClientCollection RemoteClientCollection;
     internal ChannelCollection ChannelCollection;
     internal StreamCollection StreamCollection;
-    internal readonly Func<MessageBrokerRemoteClient, MessageBrokerRemoteClientEventHandler?>? RemoteClientEventHandlerFactory;
+    internal readonly Func<MessageBrokerRemoteClient, MessageBrokerRemoteClientLogger?>? RemoteClientLoggerFactory;
     internal readonly Func<MessageBrokerChannel, MessageBrokerChannelEventHandler?>? ChannelEventHandlerFactory;
     internal readonly Func<MessageBrokerStream, MessageBrokerStreamEventHandler?>? StreamEventHandlerFactory;
     internal readonly Func<MessageBrokerQueue, MessageBrokerQueueEventHandler?>? QueueEventHandlerFactory;
-
-    internal readonly Func<MessageBrokerChannelPublisherBinding, MessageBrokerChannelPublisherBindingEventHandler?>?
-        PublisherEventHandlerFactory;
-
-    internal readonly Func<MessageBrokerChannelListenerBinding, MessageBrokerChannelListenerBindingEventHandler?>?
-        ListenerEventHandlerFactory;
 
     internal readonly MessageBrokerRemoteClientStreamDecorator? StreamDecorator;
     internal readonly Func<MessageBrokerRemoteClient, ITimestampProvider> TimestampsFactory;
@@ -73,12 +67,10 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         AcceptableMessageTimeout = Defaults.Temporal.GetActualTimeoutBounds( options.AcceptableMessageTimeout );
         AcceptablePingInterval = Defaults.Temporal.GetActualPingIntervalBounds( options.AcceptablePingInterval );
         Logger = options.Logger ?? default;
-        RemoteClientEventHandlerFactory = options.ClientEventHandlerFactory;
+        RemoteClientLoggerFactory = options.ClientLoggerFactory;
         ChannelEventHandlerFactory = options.ChannelEventHandlerFactory;
         StreamEventHandlerFactory = options.StreamEventHandlerFactory;
         QueueEventHandlerFactory = options.QueueEventHandlerFactory;
-        PublisherEventHandlerFactory = options.PublisherEventHandlerFactory;
-        ListenerEventHandlerFactory = options.ListenerEventHandlerFactory;
         TimestampsFactory = options.TimestampsFactory ?? (static _ => TimestampProvider.Shared);
         DelaySourceFactory = options.DelaySourceFactory;
 
@@ -370,8 +362,10 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
             MessageBrokerServerErrorEvent.Create( this, traceId, exception ).Emit( Logger.Error );
 
         await Parallel.ForEachAsync( streams, static (s, _) => s.OnServerDisposedAsync() ).ConfigureAwait( false );
-        await Parallel.ForEachAsync( channels, static (c, _) => c.OnServerDisposedAsync() ).ConfigureAwait( false );
-        await Parallel.ForEachAsync( clients, static (c, _) => c.OnServerDisposedAsync() ).ConfigureAwait( false );
+        foreach ( var channel in channels )
+            channel.OnServerDisposed();
+
+        await Parallel.ForEachAsync( clients, (c, _) => c.OnServerDisposedAsync( traceId ) ).ConfigureAwait( false );
 
         if ( clientListenerTask is not null )
             await clientListenerTask.ConfigureAwait( false );

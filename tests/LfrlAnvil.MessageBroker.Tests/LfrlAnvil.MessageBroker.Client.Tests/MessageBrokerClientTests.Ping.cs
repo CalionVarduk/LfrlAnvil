@@ -63,7 +63,7 @@ public partial class MessageBrokerClientTests
                         .Skip( 1 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:Ping] Client = [1] 'test', TraceId = 1 (start)",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (Ping, Length = 5)",
@@ -72,7 +72,7 @@ public partial class MessageBrokerClientTests
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (Pong, Length = 5)",
                                 "[Trace:Ping] Client = [1] 'test', TraceId = 1 (end)"
                             ] ),
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:Ping] Client = [1] 'test', TraceId = 2 (start)",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (Ping, Length = 5)",
@@ -145,7 +145,7 @@ public partial class MessageBrokerClientTests
                         .Skip( 1 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:Ping] Client = [1] 'test', TraceId = 1 (start)",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (Ping, Length = 5)",
@@ -156,7 +156,7 @@ public partial class MessageBrokerClientTests
                                 """,
                                 "[Trace:Ping] Client = [1] 'test', TraceId = 1 (end)"
                             ] ),
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:Dispose] Client = [1] 'test', TraceId = 2 (start)",
                                 "[Disposing] Client = [1] 'test', TraceId = 2",
@@ -222,7 +222,7 @@ public partial class MessageBrokerClientTests
                         .Skip( 1 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:Ping] Client = [1] 'test', TraceId = 1 (start)",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (Ping, Length = 5)",
@@ -281,7 +281,7 @@ public partial class MessageBrokerClientTests
                         .Skip( 1 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:Ping] Client = [1] 'test', TraceId = 1 (start)",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (Ping, Length = 5)",
@@ -346,7 +346,7 @@ public partial class MessageBrokerClientTests
                         .Skip( 1 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:Ping] Client = [1] 'test', TraceId = 1 (start)",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (Ping, Length = 5)",

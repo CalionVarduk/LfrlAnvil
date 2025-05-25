@@ -143,7 +143,7 @@ internal static class Resources
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string MessagesDiscarded(int count)
     {
-        return $"{count} locally cached message notification(s) have been discarded due to client disposal.";
+        return $"{count} locally stored message notification(s) have been discarded due to client disposal.";
     }
 
     [Pure]
@@ -151,7 +151,7 @@ internal static class Resources
     internal static string MessagesDiscarded(int channelId, string channelName, int count)
     {
         return
-            $"{count} locally cached message notification(s) by [{channelId}] '{channelName}' channel listener have been discarded due to listener disposal.";
+            $"{count} locally stored message notification(s) by [{channelId}] '{channelName}' channel listener have been discarded due to listener disposal.";
     }
 
     [Pure]

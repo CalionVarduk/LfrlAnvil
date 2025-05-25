@@ -87,7 +87,13 @@ internal struct MessageEmitter
         Assume.IsGreaterThanOrEqualTo( listener.State, MessageBrokerListenerState.Disposing );
     }
 
-    internal (int DiscardedMessageCount, Chain<Exception> Exceptions) Dispose()
+    internal void BeginDispose()
+    {
+        if ( _continuation.Status == ValueTaskSourceStatus.Pending )
+            _continuation.SetResult( false );
+    }
+
+    internal (int DiscardedMessageCount, Chain<Exception> Exceptions) EndDispose()
     {
         var discardedMessageCount = _messages.Count;
         var exceptions = Chain<Exception>.Empty;
@@ -100,10 +106,6 @@ internal struct MessageEmitter
         }
 
         _messages.Clear();
-
-        if ( _continuation.Status == ValueTaskSourceStatus.Pending )
-            _continuation.SetResult( false );
-
         return (discardedMessageCount, exceptions);
     }
 
@@ -194,8 +196,8 @@ internal struct MessageEmitter
                     MessageBrokerClientMessageProcessedEvent.Create(
                             listener,
                             message.Args.TraceId,
-                            message.Args.MessageId,
-                            message.Args.Data.Length )
+                            message.Args.StreamId,
+                            message.Args.MessageId )
                         .Emit( listener.Client.Logger.MessageProcessed );
 
                     message.PoolToken.Return( listener.Client, message.Args.TraceId );

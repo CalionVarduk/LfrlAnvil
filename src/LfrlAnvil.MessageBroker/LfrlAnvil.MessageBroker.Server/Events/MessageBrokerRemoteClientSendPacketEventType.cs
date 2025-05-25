@@ -15,27 +15,17 @@
 namespace LfrlAnvil.MessageBroker.Server.Events;
 
 /// <summary>
-/// Defines available <see cref="MessageBrokerChannelPublisherBindingEvent"/> types.
+/// Represents the type of a <see cref="MessageBrokerRemoteClientSendPacketEvent"/>.
 /// </summary>
-public enum MessageBrokerChannelPublisherBindingEventType : byte
+public enum MessageBrokerRemoteClientSendPacketEventType : byte
 {
     /// <summary>
-    /// Specifies that the publisher binding has encountered an unexpected error.
+    /// Specifies that an event has been emitted before the network packet send.
     /// </summary>
-    Unexpected,
+    Sending = 0,
 
     /// <summary>
-    /// Specifies that the publisher binding instance has been created.
+    /// Specifies that an event has been emitted after the network packet send.
     /// </summary>
-    Created,
-
-    /// <summary>
-    /// Specifies that the publisher binding is about to be disposed.
-    /// </summary>
-    Disposing,
-
-    /// <summary>
-    /// Specifies that the publisher binding has been disposed.
-    /// </summary>
-    Disposed
+    Sent = 1
 }

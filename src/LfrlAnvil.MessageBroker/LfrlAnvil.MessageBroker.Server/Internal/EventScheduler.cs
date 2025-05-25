@@ -21,6 +21,7 @@ using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.MessageBroker.Server.Events;
+using LfrlAnvil.MessageBroker.Server.Exceptions;
 
 namespace LfrlAnvil.MessageBroker.Server.Internal;
 
@@ -50,26 +51,31 @@ internal struct EventScheduler
     [MethodImpl( MethodImplOptions.NoInlining )]
     internal static async Task StartUnderlyingTask(MessageBrokerRemoteClient client)
     {
-        bool dispose;
+        Exception? exception;
         try
         {
-            await RunCore( client ).ConfigureAwait( false );
-            using ( client.AcquireLock() )
-                dispose = ! client.ShouldCancel;
+            exception = await RunCore( client ).ConfigureAwait( false );
         }
         catch ( Exception exc )
         {
-            client.Emit( MessageBrokerRemoteClientEvent.Unexpected( client, exc ) );
-            dispose = true;
+            exception = exc;
         }
 
-        if ( ! dispose )
+        if ( exception is null )
             return;
 
+        ulong traceId;
         using ( client.AcquireLock() )
+        {
             client.EventScheduler._task = null;
+            traceId = client.GetTraceId();
+        }
 
-        await client.DisconnectAsync().ConfigureAwait( false );
+        using ( MessageBrokerRemoteClientTraceEvent.CreateScope( client, traceId, MessageBrokerRemoteClientTraceEventType.Unexpected ) )
+        {
+            MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exception ).Emit( client.Logger.Error );
+            await client.DisposeAsync( traceId ).ConfigureAwait( false );
+        }
     }
 
     internal void Dispose()
@@ -137,13 +143,13 @@ internal struct EventScheduler
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static async ValueTask RunCore(MessageBrokerRemoteClient client)
+    private static async ValueTask<Exception?> RunCore(MessageBrokerRemoteClient client)
     {
         Duration delay;
         using ( client.AcquireLock() )
         {
             if ( client.ShouldCancel )
-                return;
+                return null;
 
             delay = client.EventScheduler.UpdateNextEventTimestamp( client.GetTimestamp() );
         }
@@ -152,12 +158,14 @@ internal struct EventScheduler
         {
             var waitResult = await client.EventScheduler._reset.WaitAsync( delay ).ConfigureAwait( false );
             if ( waitResult == AsyncManualResetEventResult.Disposed )
-                return;
+                return client.State < MessageBrokerRemoteClientState.Disposing
+                    ? new OperationCanceledException( Resources.ExternalDelaySourceHasBeenDisposed )
+                    : null;
 
             using ( client.AcquireLock() )
             {
                 if ( client.ShouldCancel )
-                    return;
+                    return null;
 
                 client.EventScheduler._reset.Reset();
                 var now = client.GetTimestamp();

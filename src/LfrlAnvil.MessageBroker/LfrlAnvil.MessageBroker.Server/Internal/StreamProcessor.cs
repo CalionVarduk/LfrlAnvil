@@ -14,10 +14,12 @@
 
 using System;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Sources;
 using LfrlAnvil.Async;
+using LfrlAnvil.Exceptions;
 using LfrlAnvil.MessageBroker.Server.Events;
 
 namespace LfrlAnvil.MessageBroker.Server.Internal;
@@ -135,20 +137,29 @@ internal struct StreamProcessor
                 }
 
                 var listeners = channel.Listeners.GetAll();
-                foreach ( var listener in listeners )
-                {
-                    try
-                    {
-                        listener.Queue.PushMessages( listener, in buffer );
-                    }
-                    catch ( Exception exc )
-                    {
-                        // TODO: log failure to propagate to subscription/queue & continue (log refactor)
-                    }
-                }
-
                 using ( stream.AcquireLock() )
+                {
+                    if ( stream.ShouldCancel )
+                        return TaskStopReason.OwnerDisposed;
+
+                    var exceptions = Chain<Exception>.Empty;
+                    foreach ( var listener in listeners )
+                    {
+                        try
+                        {
+                            listener.Queue.PushMessages( listener, in buffer );
+                        }
+                        catch ( Exception exc )
+                        {
+                            exceptions = exceptions.Extend( exc );
+                        }
+                    }
+
+                    if ( exceptions.Count > 0 )
+                        ExceptionThrower.Throw( exceptions.Count == 1 ? exceptions.First() : new AggregateException( exceptions ) );
+
                     stream.DequeueMessagesUnsafe( buffer.Count );
+                }
 
                 ClearBuffer( stream, ref buffer );
             }

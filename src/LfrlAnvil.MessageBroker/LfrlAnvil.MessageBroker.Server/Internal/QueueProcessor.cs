@@ -134,17 +134,21 @@ internal struct QueueProcessor
                     }
                 }
 
-                try
+                using ( queue.Client.AcquireLock() )
                 {
-                    MessageNotifications.SendMessages( queue.Client, in buffer );
-                }
-                catch ( Exception exc )
-                {
-                    // TODO: log failure to enqueue notifications & continue (log refactor)
-                }
+                    if ( queue.Client.ShouldCancel )
+                        return TaskStopReason.OwnerDisposed;
 
-                using ( queue.AcquireLock() )
-                    queue.DequeueMessagesUnsafe( dequeued );
+                    using ( queue.AcquireLock() )
+                    {
+                        if ( queue.ShouldCancel )
+                            return TaskStopReason.OwnerDisposed;
+
+                        MessageNotifications.EnqueueMessagesUnsafe( queue.Client, in buffer );
+                        queue.DequeueMessagesUnsafe( dequeued );
+                        queue.Client.MessageNotifications.SignalContinuation();
+                    }
+                }
 
                 ClearBuffer( queue, ref buffer );
             }

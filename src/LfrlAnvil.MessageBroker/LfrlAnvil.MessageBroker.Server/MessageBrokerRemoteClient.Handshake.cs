@@ -28,66 +28,71 @@ namespace LfrlAnvil.MessageBroker.Server;
 public sealed partial class MessageBrokerRemoteClient
 {
     [MethodImpl( MethodImplOptions.NoInlining )]
-    private Task StartHandshakeTask()
+    private Task StartHandshakeTask(ulong traceId)
     {
         return Task.Run(
             async () =>
             {
-                var result = await DecorateStreamAsync().ConfigureAwait( false );
-                if ( result.Exception is null )
+                try
                 {
-                    result = await EstablishHandshakeAsync().ConfigureAwait( false );
+                    var result = await DecorateStreamAsync( traceId ).ConfigureAwait( false );
                     if ( result.Exception is null )
                     {
-                        try
+                        result = await EstablishHandshakeAsync( traceId ).ConfigureAwait( false );
+                        if ( result.Exception is null )
                         {
-                            using ( AcquireLock() )
+                            using ( AcquireActiveLock( traceId, out var exc ) )
                             {
-                                if ( ShouldCancel )
+                                if ( exc is not null )
                                     return;
 
-                                MessageListener.SetUnderlyingTask( null );
+                                PacketListener.SetUnderlyingTask( null );
                                 _state = MessageBrokerRemoteClientState.Running;
                             }
 
-                            var messageReceiverTask = MessageListener.StartUnderlyingTask( this, _stream );
+                            var packetListenerTask = PacketListener.StartUnderlyingTask( this, _stream );
                             var requestHandlerTask = RequestHandler.StartUnderlyingTask( this );
                             var messageNotificationsTask = MessageNotifications.StartUnderlyingTask( this );
-                            using ( AcquireLock() )
+                            using ( AcquireActiveLock( traceId, out var exc ) )
                             {
-                                if ( ShouldCancel )
+                                if ( exc is not null )
                                     return;
 
-                                MessageListener.SetUnderlyingTask( messageReceiverTask );
+                                PacketListener.SetUnderlyingTask( packetListenerTask );
                                 RequestHandler.SetUnderlyingTask( requestHandlerTask );
                                 MessageNotifications.SetUnderlyingTask( messageNotificationsTask );
                             }
-                        }
-                        catch ( Exception exc )
-                        {
-                            Emit( MessageBrokerRemoteClientEvent.Unexpected( this, exc ) );
-                            using ( AcquireLock() )
-                                MessageListener.SetUnderlyingTask( null );
 
-                            await DisconnectAsync().ConfigureAwait( false );
+                            return;
                         }
-
-                        return;
                     }
+
+                    if ( result.Exception is MessageBrokerRemoteClientDisposedException or MessageBrokerServerDisposedException )
+                        return;
+
+                    using ( AcquireLock() )
+                        PacketListener.SetUnderlyingTask( null );
+
+                    await DisposeAsync( traceId ).ConfigureAwait( false );
                 }
+                catch ( Exception exc )
+                {
+                    MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
+                    using ( AcquireLock() )
+                        PacketListener.SetUnderlyingTask( null );
 
-                if ( result.Exception is MessageBrokerRemoteClientDisposedException or MessageBrokerServerDisposedException )
-                    return;
-
-                using ( AcquireLock() )
-                    MessageListener.SetUnderlyingTask( null );
-
-                await DisconnectAsync().ConfigureAwait( false );
+                    await DisposeAsync( traceId ).ConfigureAwait( false );
+                }
+                finally
+                {
+                    MessageBrokerRemoteClientTraceEvent.Create( this, traceId, MessageBrokerRemoteClientTraceEventType.Start )
+                        .Emit( Logger.TraceEnd );
+                }
             } );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private async ValueTask<Result> DecorateStreamAsync()
+    private async ValueTask<Result> DecorateStreamAsync(ulong traceId)
     {
         if ( Server.StreamDecorator is null )
             return Result.Valid;
@@ -95,10 +100,10 @@ public sealed partial class MessageBrokerRemoteClient
         try
         {
             var stream = await Server.StreamDecorator( this, ReinterpretCast.To<NetworkStream>( _stream ) ).ConfigureAwait( false );
-            using ( AcquireLock() )
+            using ( AcquireActiveLock( traceId, out var exc ) )
             {
-                if ( ShouldCancel )
-                    return DisposedException();
+                if ( exc is not null )
+                    return exc;
 
                 _stream = stream;
             }
@@ -107,25 +112,23 @@ public sealed partial class MessageBrokerRemoteClient
         }
         catch ( Exception exc )
         {
-            return EmitError( MessageBrokerRemoteClientEvent.Unexpected( this, exc ) );
+            return EmitError( exc, traceId );
         }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private async ValueTask<Result> EstablishHandshakeAsync()
+    private async ValueTask<Result> EstablishHandshakeAsync(ulong traceId)
     {
         var poolToken = default( MemoryPoolToken<byte> );
         try
         {
-            using ( AcquireLock() )
+            using ( AcquireActiveLock( traceId, out var exc ) )
             {
-                if ( ShouldCancel )
-                    return DisposedException();
+                if ( exc is not null )
+                    return exc;
 
                 _state = MessageBrokerRemoteClientState.Handshaking;
             }
-
-            Emit( MessageBrokerRemoteClientEvent.WaitingForMessage( this ) );
 
             Memory<byte> buffer;
             try
@@ -138,10 +141,10 @@ public sealed partial class MessageBrokerRemoteClient
             }
             catch ( Exception exc )
             {
-                return EmitError<bool>( MessageBrokerRemoteClientEvent.Unexpected( this, exc ) );
+                return EmitError( exc, traceId );
             }
 
-            var (readResult, exception) = await ReadHandshakeRequestAsync( poolToken, buffer ).ConfigureAwait( false );
+            var (readResult, exception) = await ReadHandshakeRequestAsync( poolToken, buffer, traceId ).ConfigureAwait( false );
             buffer = readResult.Buffer;
 
             if ( readResult.RejectedResponse is not null )
@@ -150,7 +153,8 @@ public sealed partial class MessageBrokerRemoteClient
                 var sendResult = await SendHandshakeRejectedResponseAsync(
                         buffer,
                         readResult.RejectedResponse.Value,
-                        readResult.IsClientLittleEndian )
+                        readResult.IsClientLittleEndian,
+                        traceId )
                     .ConfigureAwait( false );
 
                 return sendResult.Exception ?? exception;
@@ -163,32 +167,37 @@ public sealed partial class MessageBrokerRemoteClient
             var writeResult = await SendHandshakeAcceptedResponseAsync(
                     buffer,
                     readResult.AcceptedResponse.Value,
-                    readResult.IsClientLittleEndian )
+                    readResult.IsClientLittleEndian,
+                    traceId )
                 .ConfigureAwait( false );
 
             if ( writeResult.Exception is not null )
-                return Result.Error<bool>( writeResult.Exception );
+                return writeResult;
 
-            var result = await ReadConfirmHandshakeResponseAsync( buffer ).ConfigureAwait( false );
-            return result.Exception is not null ? Result.Error<bool>( result.Exception ) : Result.Create( true );
+            return await ReadConfirmHandshakeResponseAsync( buffer, traceId ).ConfigureAwait( false );
         }
         finally
         {
-            poolToken.Return( this );
+            poolToken.Return( this, traceId );
         }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private async ValueTask<Result<ReadHandshakeResult>> ReadHandshakeRequestAsync(MemoryPoolToken<byte> poolToken, Memory<byte> buffer)
+    private async ValueTask<Result<ReadHandshakeResult>> ReadHandshakeRequestAsync(
+        MemoryPoolToken<byte> poolToken,
+        Memory<byte> buffer,
+        ulong traceId)
     {
+        MessageBrokerRemoteClientAwaitPacketEvent.Create( this ).Emit( Logger.AwaitPacket );
+
         Protocol.PacketHeader header;
-        CancellationToken timeoutToken;
+        var timeoutToken = default( CancellationToken );
         try
         {
-            using ( AcquireLock() )
+            using ( AcquireActiveLock( traceId, out var exc ) )
             {
-                if ( ShouldCancel )
-                    return DisposedException();
+                if ( exc is not null )
+                    return exc;
 
                 timeoutToken = EventScheduler.ScheduleReadTimeout( this );
             }
@@ -201,21 +210,26 @@ public sealed partial class MessageBrokerRemoteClient
         }
         catch ( Exception exc )
         {
-            return EmitError<ReadHandshakeResult>( MessageBrokerRemoteClientEvent.WaitingForMessage( this, exc ) );
+            if ( exc is OperationCanceledException cancelExc && cancelExc.CancellationToken == timeoutToken )
+            {
+                var error = new MessageBrokerRemoteClientRequestTimeoutException( this );
+                MessageBrokerRemoteClientErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
+                return error;
+            }
+
+            MessageBrokerRemoteClientAwaitPacketEvent.Create( this, exc ).Emit( Logger.AwaitPacket );
+            return exc;
         }
 
-        Emit( MessageBrokerRemoteClientEvent.MessageReceived( this, header ) );
+        MessageBrokerRemoteClientAwaitPacketEvent.Create( this, header ).Emit( Logger.AwaitPacket );
+        MessageBrokerRemoteClientReadPacketEvent.CreateReceived( this, traceId, header ).Emit( Logger.ReadPacket );
 
         if ( header.GetServerEndpoint() != MessageBrokerServerEndpoint.HandshakeRequest )
-            return EmitError<ReadHandshakeResult>(
-                MessageBrokerRemoteClientEvent.MessageRejected(
-                    this,
-                    header,
-                    Protocol.UnexpectedServerEndpointException( this, header ) ) );
+            return HandleUnexpectedEndpoint( header, traceId );
 
         var exception = Protocol.AssertMinPayload( this, header, Protocol.HandshakeRequestHeader.Length );
         if ( exception is not null )
-            return EmitError<ReadHandshakeResult>( MessageBrokerRemoteClientEvent.MessageRejected( this, header, exception ) );
+            return EmitError( exception, traceId );
 
         var packetLength = unchecked( ( int )header.Payload );
         Protocol.HandshakeAcceptedResponse acceptedResponse;
@@ -233,31 +247,44 @@ public sealed partial class MessageBrokerRemoteClient
             isClientLittleEndian = handshakeHeader.IsClientLittleEndian;
             name = TextEncoding.Parse( data.Slice( Protocol.HandshakeRequestHeader.Length ) );
             if ( name.Exception is not null )
-                return EmitError(
-                    MessageBrokerRemoteClientEvent.MessageRejected( this, header, exception: name.Exception ),
-                    new ReadHandshakeResult(
-                        Buffer: buffer,
-                        RejectedResponse: new Protocol.HandshakeRejectedResponse(
-                            Protocol.HandshakeRejectedResponse.Reasons.NameDecodingFailure ),
-                        IsClientLittleEndian: isClientLittleEndian ) );
+            {
+                var result = new ReadHandshakeResult(
+                    Buffer: buffer,
+                    RejectedResponse: new Protocol.HandshakeRejectedResponse(
+                        Protocol.HandshakeRejectedResponse.Reasons.NameDecodingFailure ),
+                    IsClientLittleEndian: isClientLittleEndian );
+
+                MessageBrokerRemoteClientErrorEvent.Create( this, traceId, name.Exception ).Emit( Logger.Error );
+                return Result.Error( name.Exception, result );
+            }
 
             Assume.IsNotNull( name.Value );
             if ( ! Defaults.NameLengthBounds.Contains( name.Value.Length ) )
-                return EmitError(
-                    MessageBrokerRemoteClientEvent.MessageRejected(
-                        this,
-                        header,
-                        exception: Protocol.InvalidNameLengthException( this, header, name.Value.Length ) ),
-                    new ReadHandshakeResult(
-                        Buffer: buffer,
-                        RejectedResponse: new Protocol.HandshakeRejectedResponse(
-                            Protocol.HandshakeRejectedResponse.Reasons.InvalidNameLength ),
-                        IsClientLittleEndian: isClientLittleEndian ) );
-
-            using ( AcquireLock() )
             {
-                if ( ShouldCancel )
-                    return DisposedException();
+                var error = Protocol.InvalidNameLengthException( this, header, name.Value.Length );
+                var result = new ReadHandshakeResult(
+                    Buffer: buffer,
+                    RejectedResponse: new Protocol.HandshakeRejectedResponse(
+                        Protocol.HandshakeRejectedResponse.Reasons.InvalidNameLength ),
+                    IsClientLittleEndian: isClientLittleEndian );
+
+                MessageBrokerRemoteClientErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
+                return Result.Error( error, result );
+            }
+
+            MessageBrokerRemoteClientHandshakingEvent.Create(
+                    this,
+                    traceId,
+                    name.Value,
+                    handshakeHeader.MessageTimeout,
+                    handshakeHeader.PingInterval,
+                    isClientLittleEndian )
+                .Emit( Logger.Handshaking );
+
+            using ( AcquireActiveLock( traceId, out var exc ) )
+            {
+                if ( exc is not null )
+                    return exc;
 
                 EventScheduler.ResetReadTimeout();
                 Name = name.Value;
@@ -270,33 +297,34 @@ public sealed partial class MessageBrokerRemoteClient
         }
         catch ( Exception exc )
         {
-            return EmitError<ReadHandshakeResult>( MessageBrokerRemoteClientEvent.MessageReceived( this, header, exception: exc ) );
+            if ( exc is OperationCanceledException cancelExc && cancelExc.CancellationToken == timeoutToken )
+            {
+                var error = new MessageBrokerRemoteClientRequestTimeoutException( this );
+                MessageBrokerRemoteClientErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
+                return error;
+            }
+
+            MessageBrokerRemoteClientAwaitPacketEvent.Create( this, exc ).Emit( Logger.AwaitPacket );
+            return exc;
         }
 
         var registration = RemoteClientCollection.RegisterName( this, name.Value );
         if ( registration.Exception is not null )
-        {
-            Emit(
-                registration.Exception is MessageBrokerServerDisposedException
-                    ? MessageBrokerRemoteClientEvent.MessageReceived( this, header, exception: registration.Exception )
-                    : MessageBrokerRemoteClientEvent.Unexpected( this, registration.Exception ) );
-
-            return registration.Exception;
-        }
+            return EmitError( registration.Exception, traceId );
 
         if ( ! registration.Value )
-            return EmitError(
-                MessageBrokerRemoteClientEvent.MessageRejected(
-                    this,
-                    header,
-                    new MessageBrokerServerDuplicateClientNameException( Server, name.Value ) ),
-                new ReadHandshakeResult(
-                    Buffer: buffer,
-                    RejectedResponse: new Protocol.HandshakeRejectedResponse(
-                        Protocol.HandshakeRejectedResponse.Reasons.NameAlreadyExists ),
-                    IsClientLittleEndian: isClientLittleEndian ) );
+        {
+            var error = new MessageBrokerServerDuplicateClientNameException( Server, name.Value );
+            var result = new ReadHandshakeResult(
+                Buffer: buffer,
+                RejectedResponse: new Protocol.HandshakeRejectedResponse( Protocol.HandshakeRejectedResponse.Reasons.NameAlreadyExists ),
+                IsClientLittleEndian: isClientLittleEndian );
 
-        Emit( MessageBrokerRemoteClientEvent.MessageAccepted( this, header ) );
+            MessageBrokerRemoteClientErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
+            return Result.Error( error, result );
+        }
+
+        MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( this, traceId, header ).Emit( Logger.ReadPacket );
         return new ReadHandshakeResult( Buffer: buffer, AcceptedResponse: acceptedResponse, IsClientLittleEndian: isClientLittleEndian );
     }
 
@@ -304,7 +332,8 @@ public sealed partial class MessageBrokerRemoteClient
     private ValueTask<Result> SendHandshakeRejectedResponseAsync(
         Memory<byte> buffer,
         Protocol.HandshakeRejectedResponse response,
-        bool isClientLittleEndian)
+        bool isClientLittleEndian,
+        ulong traceId)
     {
         Memory<byte> data;
         try
@@ -314,17 +343,18 @@ public sealed partial class MessageBrokerRemoteClient
         }
         catch ( Exception exc )
         {
-            return ValueTask.FromResult( EmitError( MessageBrokerRemoteClientEvent.Unexpected( this, exc ) ) );
+            return ValueTask.FromResult<Result>( EmitError( exc, traceId ) );
         }
 
-        return WriteAsync( response.Header, data );
+        return WriteAsync( response.Header, data, traceId );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private ValueTask<Result> SendHandshakeAcceptedResponseAsync(
         Memory<byte> buffer,
         Protocol.HandshakeAcceptedResponse response,
-        bool isClientLittleEndian)
+        bool isClientLittleEndian,
+        ulong traceId)
     {
         Memory<byte> data;
         try
@@ -334,25 +364,25 @@ public sealed partial class MessageBrokerRemoteClient
         }
         catch ( Exception exc )
         {
-            return ValueTask.FromResult( EmitError( MessageBrokerRemoteClientEvent.Unexpected( this, exc ) ) );
+            return ValueTask.FromResult<Result>( EmitError( exc, traceId ) );
         }
 
-        return WriteAsync( response.Header, data );
+        return WriteAsync( response.Header, data, traceId );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private async ValueTask<Result> ReadConfirmHandshakeResponseAsync(Memory<byte> buffer)
+    private async ValueTask<Result> ReadConfirmHandshakeResponseAsync(Memory<byte> buffer, ulong traceId)
     {
-        Emit( MessageBrokerRemoteClientEvent.WaitingForMessage( this ) );
+        MessageBrokerRemoteClientAwaitPacketEvent.Create( this ).Emit( Logger.AwaitPacket );
 
         Protocol.PacketHeader header;
+        var timeoutToken = default( CancellationToken );
         try
         {
-            CancellationToken timeoutToken;
-            using ( AcquireLock() )
+            using ( AcquireActiveLock( traceId, out var exc ) )
             {
-                if ( ShouldCancel )
-                    return EmitError( MessageBrokerRemoteClientEvent.WaitingForMessage( this, DisposedException() ) );
+                if ( exc is not null )
+                    return exc;
 
                 EventScheduler.ResetWriteTimeout();
                 timeoutToken = EventScheduler.ScheduleReadTimeout( this );
@@ -364,19 +394,28 @@ public sealed partial class MessageBrokerRemoteClient
         }
         catch ( Exception exc )
         {
-            return EmitError( MessageBrokerRemoteClientEvent.WaitingForMessage( this, exc ) );
+            if ( exc is OperationCanceledException cancelExc && cancelExc.CancellationToken == timeoutToken )
+            {
+                var error = new MessageBrokerRemoteClientRequestTimeoutException( this );
+                MessageBrokerRemoteClientErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
+                return error;
+            }
+
+            MessageBrokerRemoteClientAwaitPacketEvent.Create( this, exc ).Emit( Logger.AwaitPacket );
+            return exc;
         }
 
-        Emit( MessageBrokerRemoteClientEvent.MessageReceived( this, header ) );
+        MessageBrokerRemoteClientAwaitPacketEvent.Create( this, header ).Emit( Logger.AwaitPacket );
+        MessageBrokerRemoteClientReadPacketEvent.CreateReceived( this, traceId, header ).Emit( Logger.ReadPacket );
 
         if ( header.GetServerEndpoint() != MessageBrokerServerEndpoint.ConfirmHandshakeResponse )
-            return HandleUnexpectedEndpoint( header );
+            return HandleUnexpectedEndpoint( header, traceId );
 
         if ( header.Payload != Protocol.Endianness.VerificationPayload )
-            return EmitError(
-                MessageBrokerRemoteClientEvent.MessageRejected( this, header, Protocol.EndiannessPayloadException( this, header ) ) );
+            return EmitError( Protocol.EndiannessPayloadException( this, header ), traceId );
 
-        Emit( MessageBrokerRemoteClientEvent.MessageAccepted( this, header ) );
+        MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( this, traceId, header ).Emit( Logger.ReadPacket );
+        MessageBrokerRemoteClientHandshakeEstablishedEvent.Create( this, traceId ).Emit( Logger.HandshakeEstablished );
         return Result.Valid;
     }
 

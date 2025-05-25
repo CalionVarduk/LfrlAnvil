@@ -16,7 +16,6 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
-using LfrlAnvil.MessageBroker.Server.Events;
 
 namespace LfrlAnvil.MessageBroker.Server;
 
@@ -26,7 +25,6 @@ namespace LfrlAnvil.MessageBroker.Server;
 public sealed class MessageBrokerChannelPublisherBinding
 {
     private readonly object _sync = new object();
-    private readonly MessageBrokerChannelPublisherBindingEventHandler? _eventHandler;
     private MessageBrokerChannelPublisherBindingState _state;
 
     internal MessageBrokerChannelPublisherBinding(
@@ -38,7 +36,6 @@ public sealed class MessageBrokerChannelPublisherBinding
         Channel = channel;
         Stream = stream;
         _state = MessageBrokerChannelPublisherBindingState.Running;
-        _eventHandler = client.Server.PublisherEventHandlerFactory?.Invoke( this );
     }
 
     /// <summary>
@@ -82,58 +79,18 @@ public sealed class MessageBrokerChannelPublisherBinding
             $"[{Client.Id}] '{Client.Name}' => [{Channel.Id}] '{Channel.Name}' publisher binding (using [{Stream.Id}] '{Stream.Name}' stream) ({State})";
     }
 
-    internal ValueTask OnServerDisposedAsync()
-    {
-        return DisposeAsync( notifyChannel: false, notifyStream: false );
-    }
-
-    internal ValueTask OnClientDisconnectedAsync()
-    {
-        return DisposeAsync( notifyChannel: true, notifyStream: true );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void BeginDisposingUnsafe()
-    {
-        Assume.Equals( _state, MessageBrokerChannelPublisherBindingState.Running );
-        _state = MessageBrokerChannelPublisherBindingState.Disposing;
-    }
-
-    internal void EndDisposing()
+    internal void OnServerDisposed()
     {
         using ( AcquireLock() )
         {
-            Assume.Equals( _state, MessageBrokerChannelPublisherBindingState.Disposing );
+            if ( ShouldCancel )
+                return;
+
             _state = MessageBrokerChannelPublisherBindingState.Disposed;
         }
-
-        Emit( MessageBrokerChannelPublisherBindingEvent.Disposed( this ) );
     }
 
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void Emit(MessageBrokerChannelPublisherBindingEvent e)
-    {
-        if ( _eventHandler is null )
-            return;
-
-        try
-        {
-            _eventHandler( e );
-        }
-        catch
-        {
-            // NOTE: do nothing
-        }
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ExclusiveLock AcquireLock()
-    {
-        return ExclusiveLock.SpinWaitEnter( _sync, spinWaitMultiplier: 4 );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private async ValueTask DisposeAsync(bool notifyChannel, bool notifyStream)
+    internal async ValueTask OnClientDisconnectedAsync(ulong traceId)
     {
         using ( AcquireLock() )
         {
@@ -143,14 +100,33 @@ public sealed class MessageBrokerChannelPublisherBinding
             _state = MessageBrokerChannelPublisherBindingState.Disposing;
         }
 
-        Emit( MessageBrokerChannelPublisherBindingEvent.Disposing( this ) );
+        await Stream.OnPublisherDisposingAsync( Client, Channel, traceId ).ConfigureAwait( false );
+        Channel.OnPublisherDisposing( Client, traceId );
 
-        if ( notifyStream )
-            await Stream.OnPublisherDisposingAsync( Client, Channel ).ConfigureAwait( false );
+        using ( AcquireLock() )
+            _state = MessageBrokerChannelPublisherBindingState.Disposed;
+    }
 
-        if ( notifyChannel )
-            Channel.OnPublisherDisposing( Client );
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void BeginDisposingUnsafe()
+    {
+        Assume.Equals( _state, MessageBrokerChannelPublisherBindingState.Running );
+        _state = MessageBrokerChannelPublisherBindingState.Disposing;
+    }
 
-        EndDisposing();
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void EndDisposing()
+    {
+        using ( AcquireLock() )
+        {
+            Assume.Equals( _state, MessageBrokerChannelPublisherBindingState.Disposing );
+            _state = MessageBrokerChannelPublisherBindingState.Disposed;
+        }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal ExclusiveLock AcquireLock()
+    {
+        return ExclusiveLock.SpinWaitEnter( _sync, spinWaitMultiplier: 4 );
     }
 }

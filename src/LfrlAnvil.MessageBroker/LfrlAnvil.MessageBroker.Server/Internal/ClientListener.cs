@@ -137,7 +137,7 @@ internal struct ClientListener
                 }
 
                 Assume.IsNotNull( result.Value );
-                await result.Value.StartAsync().ConfigureAwait( false );
+                await result.Value.StartAsync( traceId ).ConfigureAwait( false );
             }
         }
     }

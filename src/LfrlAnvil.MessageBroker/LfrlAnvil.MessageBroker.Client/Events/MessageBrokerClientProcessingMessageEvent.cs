@@ -21,13 +21,26 @@ namespace LfrlAnvil.MessageBroker.Client.Events;
 /// Represents an event emitted by <see cref="MessageBrokerClient"/> when attempting to process
 /// received message notification from the server.
 /// </summary>
-public readonly struct MessageBrokerClientMessageProcessingEvent
+public readonly struct MessageBrokerClientProcessingMessageEvent
 {
-    private MessageBrokerClientMessageProcessingEvent(MessageBrokerClient client, ulong traceId, ulong messageId, int channelId, int length)
+    private MessageBrokerClientProcessingMessageEvent(
+        MessageBrokerClient client,
+        ulong traceId,
+        int senderId,
+        int streamId,
+        ulong messageId,
+        int channelId,
+        int retryAttempt,
+        int redeliveryAttempt,
+        int length)
     {
         Source = MessageBrokerClientEventSource.Create( client, traceId );
+        SenderId = senderId;
+        StreamId = streamId;
         MessageId = messageId;
         ChannelId = channelId;
+        RetryAttempt = retryAttempt;
+        RedeliveryAttempt = redeliveryAttempt;
         Length = length;
     }
 
@@ -35,6 +48,16 @@ public readonly struct MessageBrokerClientMessageProcessingEvent
     /// Event source.
     /// </summary>
     public MessageBrokerClientEventSource Source { get; }
+
+    /// <summary>
+    /// Identifier of the client that published this message.
+    /// </summary>
+    public int SenderId { get; }
+
+    /// <summary>
+    /// Unique id of the stream through which the message has been pushed.
+    /// </summary>
+    public int StreamId { get; }
 
     /// <summary>
     /// Unique id of the message assigned by the server.
@@ -47,29 +70,53 @@ public readonly struct MessageBrokerClientMessageProcessingEvent
     public int ChannelId { get; }
 
     /// <summary>
+    /// Retry attempt number of this message.
+    /// </summary>
+    public int RetryAttempt { get; }
+
+    /// <summary>
+    /// Redelivery attempt number of this message.
+    /// </summary>
+    public int RedeliveryAttempt { get; }
+
+    /// <summary>
     /// Message length.
     /// </summary>
     public int Length { get; }
 
     /// <summary>
-    /// Returns a string representation of this <see cref="MessageBrokerClientMessageProcessingEvent"/> instance.
+    /// Returns a string representation of this <see cref="MessageBrokerClientProcessingMessageEvent"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
-        return $"[MessageProcessing] {Source}, MessageId = {MessageId}, ChannelId = {ChannelId}, Length = {Length}";
+        return
+            $"[ProcessingMessage] {Source}, SenderId = {SenderId}, StreamId = {StreamId}, MessageId = {MessageId}, ChannelId = {ChannelId}, RetryAttempt = {RetryAttempt}, RedeliveryAttempt = {RedeliveryAttempt}, Length = {Length}";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerClientMessageProcessingEvent Create(
+    internal static MessageBrokerClientProcessingMessageEvent Create(
         MessageBrokerClient client,
         ulong traceId,
+        int senderId,
+        int streamId,
         ulong messageId,
         int channelId,
+        int retryAttempt,
+        int redeliveryAttempt,
         int length)
     {
-        return new MessageBrokerClientMessageProcessingEvent( client, traceId, messageId, channelId, length );
+        return new MessageBrokerClientProcessingMessageEvent(
+            client,
+            traceId,
+            senderId,
+            streamId,
+            messageId,
+            channelId,
+            retryAttempt,
+            redeliveryAttempt,
+            length );
     }
 }

@@ -68,6 +68,7 @@ internal readonly struct QueueMessage
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void Return()
     {
-        PoolToken.Return( Listener.Client );
+        // TODO: handle exception (queue events refactor)
+        PoolToken.Return();
     }
 }

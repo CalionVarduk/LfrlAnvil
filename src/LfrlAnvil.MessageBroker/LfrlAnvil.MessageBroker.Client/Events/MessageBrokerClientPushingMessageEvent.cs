@@ -20,9 +20,9 @@ namespace LfrlAnvil.MessageBroker.Client.Events;
 /// <summary>
 /// Represents an event emitted by <see cref="MessageBrokerClient"/> when attempting to push a message to the server.
 /// </summary>
-public readonly struct MessageBrokerClientMessagePushingEvent
+public readonly struct MessageBrokerClientPushingMessageEvent
 {
-    private MessageBrokerClientMessagePushingEvent(
+    private MessageBrokerClientPushingMessageEvent(
         MessageBrokerClient client,
         ulong traceId,
         MessageBrokerPublisher publisher,
@@ -51,30 +51,30 @@ public readonly struct MessageBrokerClientMessagePushingEvent
     public int Length { get; }
 
     /// <summary>
-    /// Specifies whether or not the server should send confirmation that it received the message.
+    /// Specifies whether or not the server should send confirmation that it successfully handled the message.
     /// </summary>
     public bool Confirm { get; }
 
     /// <summary>
-    /// Returns a string representation of this <see cref="MessageBrokerClientMessagePushingEvent"/> instance.
+    /// Returns a string representation of this <see cref="MessageBrokerClientPushingMessageEvent"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
         return
-            $"[MessagePushing] {Source}, Channel = [{Publisher.ChannelId}] '{Publisher.ChannelName}', Stream = [{Publisher.StreamId}] '{Publisher.StreamName}', Length = {Length}, Confirm = {Confirm}";
+            $"[PushingMessage] {Source}, Channel = [{Publisher.ChannelId}] '{Publisher.ChannelName}', Stream = [{Publisher.StreamId}] '{Publisher.StreamName}', Length = {Length}, Confirm = {Confirm}";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerClientMessagePushingEvent Create(
+    internal static MessageBrokerClientPushingMessageEvent Create(
         MessageBrokerClient client,
         ulong traceId,
         MessageBrokerPublisher publisher,
         int length,
         bool confirm)
     {
-        return new MessageBrokerClientMessagePushingEvent( client, traceId, publisher, length, confirm );
+        return new MessageBrokerClientPushingMessageEvent( client, traceId, publisher, length, confirm );
     }
 }

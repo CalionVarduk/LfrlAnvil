@@ -22,12 +22,10 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 sut.TimestampsFactory.TestNull(),
                 sut.DelaySourceFactory.TestNull(),
                 sut.Logger.TestNull(),
-                sut.ClientEventHandlerFactory.TestNull(),
+                sut.ClientLoggerFactory.TestNull(),
                 sut.ChannelEventHandlerFactory.TestNull(),
                 sut.StreamEventHandlerFactory.TestNull(),
                 sut.QueueEventHandlerFactory.TestNull(),
-                sut.PublisherEventHandlerFactory.TestNull(),
-                sut.ListenerEventHandlerFactory.TestNull(),
                 sut.StreamDecorator.TestNull() )
             .Go();
     }
@@ -49,12 +47,10 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
                 result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.Logger.TestEquals( sut.Logger ),
-                result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
+                result.ClientLoggerFactory.TestEquals( sut.ClientLoggerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
-                result.PublisherEventHandlerFactory.TestEquals( sut.PublisherEventHandlerFactory ),
-                result.ListenerEventHandlerFactory.TestEquals( sut.ListenerEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -76,12 +72,10 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
                 result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.Logger.TestEquals( sut.Logger ),
-                result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
+                result.ClientLoggerFactory.TestEquals( sut.ClientLoggerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
-                result.PublisherEventHandlerFactory.TestEquals( sut.PublisherEventHandlerFactory ),
-                result.ListenerEventHandlerFactory.TestEquals( sut.ListenerEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -103,12 +97,10 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
                 result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.Logger.TestEquals( sut.Logger ),
-                result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
+                result.ClientLoggerFactory.TestEquals( sut.ClientLoggerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
-                result.PublisherEventHandlerFactory.TestEquals( sut.PublisherEventHandlerFactory ),
-                result.ListenerEventHandlerFactory.TestEquals( sut.ListenerEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -130,12 +122,10 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
                 result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.Logger.TestEquals( sut.Logger ),
-                result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
+                result.ClientLoggerFactory.TestEquals( sut.ClientLoggerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
-                result.PublisherEventHandlerFactory.TestEquals( sut.PublisherEventHandlerFactory ),
-                result.ListenerEventHandlerFactory.TestEquals( sut.ListenerEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -157,12 +147,10 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
                 result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.Logger.TestEquals( sut.Logger ),
-                result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
+                result.ClientLoggerFactory.TestEquals( sut.ClientLoggerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
-                result.PublisherEventHandlerFactory.TestEquals( sut.PublisherEventHandlerFactory ),
-                result.ListenerEventHandlerFactory.TestEquals( sut.ListenerEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -184,12 +172,10 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.TimestampsFactory.TestEquals( value ),
                 result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.Logger.TestEquals( sut.Logger ),
-                result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
+                result.ClientLoggerFactory.TestEquals( sut.ClientLoggerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
-                result.PublisherEventHandlerFactory.TestEquals( sut.PublisherEventHandlerFactory ),
-                result.ListenerEventHandlerFactory.TestEquals( sut.ListenerEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -211,12 +197,10 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
                 result.DelaySourceFactory.TestEquals( value ),
                 result.Logger.TestEquals( sut.Logger ),
-                result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
+                result.ClientLoggerFactory.TestEquals( sut.ClientLoggerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
-                result.PublisherEventHandlerFactory.TestEquals( sut.PublisherEventHandlerFactory ),
-                result.ListenerEventHandlerFactory.TestEquals( sut.ListenerEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -238,23 +222,23 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
                 result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.Logger.TestEquals( value ),
-                result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
+                result.ClientLoggerFactory.TestEquals( sut.ClientLoggerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
-                result.PublisherEventHandlerFactory.TestEquals( sut.PublisherEventHandlerFactory ),
-                result.ListenerEventHandlerFactory.TestEquals( sut.ListenerEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
 
     [Fact]
-    public void SetClientEventHandlerFactory_ShouldChangeValue()
+    public void SetClientLoggerFactory_ShouldChangeValue()
     {
-        Func<MessageBrokerRemoteClient, MessageBrokerRemoteClientEventHandler?> value = _ => _ => { };
+        Func<MessageBrokerRemoteClient, MessageBrokerRemoteClientLogger?> value = _ =>
+            MessageBrokerRemoteClientLogger.Create( traceStart: _ => { } );
+
         var sut = MessageBrokerServerOptions.Default;
 
-        var result = sut.SetClientEventHandlerFactory( value );
+        var result = sut.SetClientLoggerFactory( value );
 
         Assertion.All(
                 result.Tcp.TestEquals( sut.Tcp ),
@@ -265,12 +249,10 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
                 result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.Logger.TestEquals( sut.Logger ),
-                result.ClientEventHandlerFactory.TestEquals( value ),
+                result.ClientLoggerFactory.TestEquals( value ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
-                result.PublisherEventHandlerFactory.TestEquals( sut.PublisherEventHandlerFactory ),
-                result.ListenerEventHandlerFactory.TestEquals( sut.ListenerEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -292,12 +274,10 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
                 result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.Logger.TestEquals( sut.Logger ),
-                result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
+                result.ClientLoggerFactory.TestEquals( sut.ClientLoggerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( value ),
                 result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
-                result.PublisherEventHandlerFactory.TestEquals( sut.PublisherEventHandlerFactory ),
-                result.ListenerEventHandlerFactory.TestEquals( sut.ListenerEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -319,12 +299,10 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
                 result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.Logger.TestEquals( sut.Logger ),
-                result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
+                result.ClientLoggerFactory.TestEquals( sut.ClientLoggerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamEventHandlerFactory.TestEquals( value ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
-                result.PublisherEventHandlerFactory.TestEquals( sut.PublisherEventHandlerFactory ),
-                result.ListenerEventHandlerFactory.TestEquals( sut.ListenerEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -346,66 +324,10 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
                 result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.Logger.TestEquals( sut.Logger ),
-                result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
+                result.ClientLoggerFactory.TestEquals( sut.ClientLoggerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamEventHandlerFactory.TestEquals( result.StreamEventHandlerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( value ),
-                result.PublisherEventHandlerFactory.TestEquals( sut.PublisherEventHandlerFactory ),
-                result.ListenerEventHandlerFactory.TestEquals( sut.ListenerEventHandlerFactory ),
-                result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
-            .Go();
-    }
-
-    [Fact]
-    public void SetPublisherEventHandlerFactory_ShouldChangeValue()
-    {
-        Func<MessageBrokerChannelPublisherBinding, MessageBrokerChannelPublisherBindingEventHandler?> value = _ => _ => { };
-        var sut = MessageBrokerServerOptions.Default;
-
-        var result = sut.SetPublisherEventHandlerFactory( value );
-
-        Assertion.All(
-                result.Tcp.TestEquals( sut.Tcp ),
-                result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
-                result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
-                result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
-                result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
-                result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
-                result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
-                result.Logger.TestEquals( sut.Logger ),
-                result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
-                result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
-                result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
-                result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
-                result.PublisherEventHandlerFactory.TestEquals( value ),
-                result.ListenerEventHandlerFactory.TestEquals( sut.ListenerEventHandlerFactory ),
-                result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
-            .Go();
-    }
-
-    [Fact]
-    public void SetListenerEventHandlerFactory_ShouldChangeValue()
-    {
-        Func<MessageBrokerChannelListenerBinding, MessageBrokerChannelListenerBindingEventHandler?> value = _ => _ => { };
-        var sut = MessageBrokerServerOptions.Default;
-
-        var result = sut.SetListenerEventHandlerFactory( value );
-
-        Assertion.All(
-                result.Tcp.TestEquals( sut.Tcp ),
-                result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
-                result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
-                result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
-                result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
-                result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
-                result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
-                result.Logger.TestEquals( sut.Logger ),
-                result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
-                result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
-                result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
-                result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
-                result.PublisherEventHandlerFactory.TestEquals( sut.PublisherEventHandlerFactory ),
-                result.ListenerEventHandlerFactory.TestEquals( value ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
@@ -427,12 +349,10 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
                 result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.Logger.TestEquals( sut.Logger ),
-                result.ClientEventHandlerFactory.TestEquals( sut.ClientEventHandlerFactory ),
+                result.ClientLoggerFactory.TestEquals( sut.ClientLoggerFactory ),
                 result.ChannelEventHandlerFactory.TestEquals( sut.ChannelEventHandlerFactory ),
                 result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
-                result.PublisherEventHandlerFactory.TestEquals( sut.PublisherEventHandlerFactory ),
-                result.ListenerEventHandlerFactory.TestEquals( sut.ListenerEventHandlerFactory ),
                 result.StreamDecorator.TestRefEquals( value ) )
             .Go();
     }

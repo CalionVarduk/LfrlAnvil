@@ -26,13 +26,13 @@ namespace LfrlAnvil.MessageBroker.Server.Internal;
 internal struct MessageNotifications
 {
     private readonly ManualResetValueTaskSource<bool> _continuation;
-    private QueueSlim<Message> _pending;
+    private QueueSlim<Message> _messages;
     private Task? _task;
 
     private MessageNotifications(ManualResetValueTaskSource<bool> continuation)
     {
         _continuation = continuation;
-        _pending = QueueSlim<Message>.Create();
+        _messages = QueueSlim<Message>.Create();
         _task = null;
     }
 
@@ -45,37 +45,49 @@ internal struct MessageNotifications
     [MethodImpl( MethodImplOptions.NoInlining )]
     internal static async Task StartUnderlyingTask(MessageBrokerRemoteClient client)
     {
-        TaskStopReason stopReason;
         try
         {
-            stopReason = await RunCore( client ).ConfigureAwait( false );
+            await RunCore( client ).ConfigureAwait( false );
         }
         catch ( Exception exc )
         {
-            client.Emit( MessageBrokerRemoteClientEvent.Unexpected( client, exc ) );
-            stopReason = TaskStopReason.Error;
+            ulong traceId;
+            using ( client.AcquireLock() )
+            {
+                client.MessageNotifications._task = null;
+                traceId = client.GetTraceId();
+            }
+
+            using ( MessageBrokerRemoteClientTraceEvent.CreateScope( client, traceId, MessageBrokerRemoteClientTraceEventType.Unexpected ) )
+            {
+                MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ).Emit( client.Logger.Error );
+                await client.DisposeAsync( traceId ).ConfigureAwait( false );
+            }
         }
 
-        if ( stopReason == TaskStopReason.OwnerDisposed )
-            return;
-
-        using ( client.AcquireLock() )
-            client.MessageNotifications._task = null;
-
-        await client.DisconnectAsync().ConfigureAwait( false );
+        Assume.IsGreaterThanOrEqualTo( client.State, MessageBrokerRemoteClientState.Disposing );
     }
 
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void Dispose()
+    internal void BeginDispose()
     {
-        // TODO: emit 'message-discarded' (log refactor & permanence)
-        foreach ( ref readonly var message in _pending )
-            message.Return();
-
-        _pending.Clear();
-
         if ( _continuation.Status == ValueTaskSourceStatus.Pending )
             _continuation.SetResult( false );
+    }
+
+    internal (int DiscardedMessageCount, Chain<Exception> Exceptions) EndDispose()
+    {
+        var discardedMessageCount = _messages.Count;
+        var exceptions = Chain<Exception>.Empty;
+
+        foreach ( ref readonly var message in _messages )
+        {
+            var exc = message.PoolToken.Return();
+            if ( exc is not null )
+                exceptions = exceptions.Extend( exc );
+        }
+
+        _messages.Clear();
+        return (discardedMessageCount, exceptions);
     }
 
     internal void SetUnderlyingTask(Task? task)
@@ -98,174 +110,136 @@ internal struct MessageNotifications
             _continuation.SetResult( true );
     }
 
-    internal static void SendMessages(MessageBrokerRemoteClient client, in ListSlim<QueueMessage> messages)
+    internal static void EnqueueMessagesUnsafe(MessageBrokerRemoteClient client, in ListSlim<QueueMessage> messages)
     {
-        using ( client.AcquireLock() )
+        foreach ( ref readonly var message in messages )
         {
-            if ( client.ShouldCancel )
-            {
-                // TODO: emit 'message-discarded' (log refactor & permanence)
-                foreach ( ref readonly var message in messages )
-                    message.Return();
-
-                return;
-            }
-
-            foreach ( ref readonly var message in messages )
-            {
-                var contextId = client.MessageContextQueue.AcquireContextId();
-                var writerSource = client.MessageContextQueue.AcquireWriterSource();
-                client.MessageNotifications._pending.Enqueue( new Message( in message, contextId, writerSource ) );
-            }
-
-            client.MessageNotifications.SignalContinuation();
+            var writerSource = client.MessageContextQueue.AcquireWriterSource();
+            client.MessageNotifications._messages.Enqueue( new Message( in message, writerSource ) );
         }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static async ValueTask<TaskStopReason> RunCore(MessageBrokerRemoteClient client)
+    private static async ValueTask RunCore(MessageBrokerRemoteClient client)
     {
-        var buffer = ListSlim<Message>.Create( minCapacity: 16 );
         while ( true )
         {
             var @continue = await client.MessageNotifications._continuation.GetTask().ConfigureAwait( false );
             if ( ! @continue )
-                return TaskStopReason.OwnerDisposed;
+                return;
 
             while ( true )
             {
+                ulong traceId;
+                Message message;
                 using ( client.AcquireLock() )
                 {
                     if ( client.ShouldCancel )
-                        return TaskStopReason.OwnerDisposed;
+                        return;
 
-                    client.MessageNotifications.CopyMessagesInto( ref buffer );
-                    if ( buffer.Count == 0 )
+                    if ( ! client.MessageNotifications._messages.TryDequeue( out message ) )
                     {
                         client.MessageNotifications._continuation.Reset();
                         break;
                     }
+
+                    traceId = client.GetTraceId();
                 }
 
-                TaskStopReason? stopReason = null;
-                for ( var i = 0; i < buffer.Count; ++i )
+                Assume.Equals( message.Listener.Client, client );
+                using ( MessageBrokerRemoteClientTraceEvent.CreateScope(
+                    client,
+                    traceId,
+                    MessageBrokerRemoteClientTraceEventType.MessageNotification ) )
                 {
-                    var message = buffer[i];
+                    MessageBrokerRemoteClientProcessingMessageEvent.Create(
+                            message.Listener,
+                            traceId,
+                            message.Publisher,
+                            message.Id,
+                            0,
+                            0,
+                            message.Length )
+                        .Emit( client.Logger.ProcessingMessage );
+
                     try
                     {
-                        if ( stopReason is not null )
-                            continue;
-
                         if ( ! await message.WriterSource.GetTask().ConfigureAwait( false ) )
                         {
-                            stopReason = TaskStopReason.OwnerDisposed;
-                            continue;
+                            MessageBrokerRemoteClientErrorEvent.Create( client, traceId, client.DisposedException() )
+                                .Emit( client.Logger.Error );
+
+                            return;
                         }
 
-                        var writeResult = await client.WriteAsync( message.PacketHeader, message.Packet, message.ContextId )
+                        var writeResult = await client.WriteAsync( message.PacketHeader, message.Packet, traceId )
                             .ConfigureAwait( false );
 
                         if ( writeResult.Exception is not null )
                         {
-                            stopReason = TaskStopReason.Error;
-                            continue;
+                            using ( client.AcquireLock() )
+                                client.MessageNotifications._task = null;
+
+                            await client.DisposeAsync( traceId ).ConfigureAwait( false );
+                            return;
                         }
 
-                        if ( message.Subscription.DecrementPrefetchCounter() )
+                        MessageBrokerRemoteClientMessageProcessedEvent.Create( message.Listener, traceId, message.Publisher, message.Id )
+                            .Emit( client.Logger.MessageProcessed );
+
+                        if ( message.Listener.DecrementPrefetchCounter() )
                         {
-                            using ( message.Subscription.Queue.AcquireLock() )
+                            using ( message.Listener.Queue.AcquireLock() )
                             {
-                                if ( ! message.Subscription.Queue.ShouldCancel )
-                                    message.Subscription.Queue.QueueProcessor.SignalContinuation();
+                                if ( ! message.Listener.Queue.ShouldCancel )
+                                    message.Listener.Queue.QueueProcessor.SignalContinuation();
                             }
                         }
 
-                        using ( client.AcquireLock() )
+                        using ( client.AcquireActiveLock( traceId, out var exc ) )
                         {
-                            if ( client.ShouldCancel )
-                            {
-                                stopReason = TaskStopReason.OwnerDisposed;
-                                continue;
-                            }
+                            if ( exc is not null )
+                                return;
 
                             client.MessageContextQueue.ResetOutgoingWriter( client, message.WriterSource );
                         }
                     }
-                    catch ( Exception exc )
-                    {
-                        client.Emit( MessageBrokerRemoteClientEvent.Unexpected( client, exc ) );
-                        stopReason = TaskStopReason.Error;
-                    }
                     finally
                     {
-                        message.Return();
+                        message.PoolToken.Return( client, traceId );
                     }
                 }
-
-                if ( stopReason is not null )
-                    return stopReason.Value;
-
-                using ( client.AcquireLock() )
-                    client.MessageNotifications._pending.DequeueRange( buffer.Count );
-
-                buffer.Clear();
             }
         }
     }
 
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void CopyMessagesInto(ref ListSlim<Message> buffer)
-    {
-        Assume.True( buffer.IsEmpty );
-        Assume.IsGreaterThan( buffer.Capacity, 0 );
-        if ( _pending.IsEmpty )
-            return;
-
-        var queueSlice = _pending.AsMemory();
-        if ( queueSlice.Length > buffer.Capacity )
-            queueSlice = queueSlice.Slice( 0, buffer.Capacity );
-
-        CopyMessagesInto( queueSlice.First.Span, ref buffer );
-        CopyMessagesInto( queueSlice.Second.Span, ref buffer );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static void CopyMessagesInto(ReadOnlySpan<Message> source, ref ListSlim<Message> target)
-    {
-        Assume.IsLessThanOrEqualTo( target.Count + source.Length, target.Capacity );
-        target.AddRange( source );
-    }
-
     private readonly struct Message
     {
-        private readonly MemoryPoolToken<byte> _poolToken;
-
-        internal Message(in QueueMessage message, ulong contextId, ManualResetValueTaskSource<bool> writerSource)
+        internal Message(in QueueMessage message, ManualResetValueTaskSource<bool> writerSource)
         {
             PacketHeader = message.PacketHeader;
-            Subscription = message.Listener;
-            ContextId = contextId;
+            Publisher = message.Publisher;
+            Listener = message.Listener;
+            Id = message.Id;
             WriterSource = writerSource;
-            _poolToken = message.PoolToken;
+            PoolToken = message.PoolToken;
             Packet = message.Packet;
         }
 
         internal readonly Protocol.PacketHeader PacketHeader;
-        internal readonly MessageBrokerChannelListenerBinding Subscription;
-        internal readonly ulong ContextId;
+        internal readonly MessageBrokerChannelPublisherBinding Publisher;
+        internal readonly MessageBrokerChannelListenerBinding Listener;
+        internal readonly ulong Id;
         internal readonly ManualResetValueTaskSource<bool> WriterSource;
+        internal readonly MemoryPoolToken<byte> PoolToken;
         internal readonly ReadOnlyMemory<byte> Packet;
+
+        internal int Length => unchecked( Packet.Length - Protocol.PacketHeader.Length - Protocol.MessageNotificationHeader.Payload );
 
         [Pure]
         public override string ToString()
         {
-            return $"Header = ({PacketHeader}), Subscription = ({Subscription}), ContextId = {ContextId}";
-        }
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal void Return()
-        {
-            _poolToken.Return( Subscription.Client );
+            return $"Header = ({PacketHeader}), Id = {Id}, Publisher = ({Publisher}), Listener = ({Listener})";
         }
     }
 }

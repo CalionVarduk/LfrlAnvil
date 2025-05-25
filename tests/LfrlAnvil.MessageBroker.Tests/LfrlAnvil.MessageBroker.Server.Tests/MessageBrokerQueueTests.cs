@@ -1,33 +1,45 @@
-﻿using System.Net;
+﻿using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Internal;
 using LfrlAnvil.MessageBroker.Server.Tests.Helpers;
 
 namespace LfrlAnvil.MessageBroker.Server.Tests;
 
-public class MessageBrokerQueueTests : TestsBase
+public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFixture>
 {
+    private readonly ValueTaskDelaySource _sharedDelaySource;
+
+    public MessageBrokerQueueTests(SharedResourceFixture fixture)
+    {
+        _sharedDelaySource = fixture.DelaySource;
+    }
+
     [Theory]
     [InlineData( 1 )]
     [InlineData( 5 )]
     public async Task MessageRequest_ShouldPropagateMessagesToListenersCorrectly(int prefetchHint)
     {
-        var endSource = new SafeTaskCompletionSource( completionCount: 3 );
+        var endSource = new SafeTaskCompletionSource( completionCount: 6 );
         var logs = new EventLogger();
+        var clientLogs = new ClientEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetClientEventHandlerFactory(
-                    _ => e =>
-                    {
-                        logs.Add( e );
-                        if ( e.Type == MessageBrokerRemoteClientEventType.MessageSent
-                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.MessageNotification )
-                            endSource.Complete();
-                    } )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type is MessageBrokerRemoteClientTraceEventType.MessageNotification
+                                    or MessageBrokerRemoteClientTraceEventType.PushMessage )
+                                    endSource.Complete();
+                            } ) ) )
                 .SetQueueEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -62,15 +74,85 @@ public class MessageBrokerQueueTests : TestsBase
         await endSource.Task;
 
         Assertion.All(
-                logs.GetAllClient()
-                    .TestContainsSequence(
+                clientLogs.GetAll()
+                    .Where( t => t.Logs.Any( e => e.Contains( "[Trace:PushMessage]" ) ) )
+                    .TestSequence(
                     [
-                        (v, _) => v.TestEndsWith( "[SendingMessage] [PacketLength: 42] MessageNotification" ),
-                        (v, _) => v.TestEndsWith( "[MessageSent] [PacketLength: 42] MessageNotification" ),
-                        (v, _) => v.TestEndsWith( "[SendingMessage] [PacketLength: 43] MessageNotification" ),
-                        (v, _) => v.TestEndsWith( "[MessageSent] [PacketLength: 43] MessageNotification" ),
-                        (v, _) => v.TestEndsWith( "[SendingMessage] [PacketLength: 44] MessageNotification" ),
-                        (v, _) => v.TestEndsWith( "[MessageSent] [PacketLength: 44] MessageNotification" )
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            $"[Trace:PushMessage] Client = [1] 'test', TraceId = {t.Id} (start)",
+                            $"[ReadPacket:Received] Client = [1] 'test', TraceId = {t.Id}, Packet = (PushMessage, Length = 11)",
+                            $"[PushingMessage] Client = [1] 'test', TraceId = {t.Id}, Length = 1, ChannelId = 1, Confirm = True",
+                            $"[ReadPacket:Accepted] Client = [1] 'test', TraceId = {t.Id}, Packet = (PushMessage, Length = 11)",
+                            $"[MessagePushed] Client = [1] 'test', TraceId = {t.Id}, Channel = [1] 'c', Stream = [1] 'c', MessageId = 0",
+                            $"[SendPacket:Sending] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageAcceptedResponse, Length = 13)",
+                            $"[SendPacket:Sent] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageAcceptedResponse, Length = 13)",
+                            $"[Trace:PushMessage] Client = [1] 'test', TraceId = {t.Id} (end)"
+                        ] ),
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            $"[Trace:PushMessage] Client = [1] 'test', TraceId = {t.Id} (start)",
+                            $"[ReadPacket:Received] Client = [1] 'test', TraceId = {t.Id}, Packet = (PushMessage, Length = 12)",
+                            $"[PushingMessage] Client = [1] 'test', TraceId = {t.Id}, Length = 2, ChannelId = 1, Confirm = True",
+                            $"[ReadPacket:Accepted] Client = [1] 'test', TraceId = {t.Id}, Packet = (PushMessage, Length = 12)",
+                            $"[MessagePushed] Client = [1] 'test', TraceId = {t.Id}, Channel = [1] 'c', Stream = [1] 'c', MessageId = 1",
+                            $"[SendPacket:Sending] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageAcceptedResponse, Length = 13)",
+                            $"[SendPacket:Sent] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageAcceptedResponse, Length = 13)",
+                            $"[Trace:PushMessage] Client = [1] 'test', TraceId = {t.Id} (end)"
+                        ] ),
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            $"[Trace:PushMessage] Client = [1] 'test', TraceId = {t.Id} (start)",
+                            $"[ReadPacket:Received] Client = [1] 'test', TraceId = {t.Id}, Packet = (PushMessage, Length = 13)",
+                            $"[PushingMessage] Client = [1] 'test', TraceId = {t.Id}, Length = 3, ChannelId = 1, Confirm = True",
+                            $"[ReadPacket:Accepted] Client = [1] 'test', TraceId = {t.Id}, Packet = (PushMessage, Length = 13)",
+                            $"[MessagePushed] Client = [1] 'test', TraceId = {t.Id}, Channel = [1] 'c', Stream = [1] 'c', MessageId = 2",
+                            $"[SendPacket:Sending] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageAcceptedResponse, Length = 13)",
+                            $"[SendPacket:Sent] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageAcceptedResponse, Length = 13)",
+                            $"[Trace:PushMessage] Client = [1] 'test', TraceId = {t.Id} (end)"
+                        ] )
+                    ] ),
+                clientLogs.GetAll()
+                    .Where( t => t.Logs.Any( e => e.Contains( "[Trace:MessageNotification]" ) ) )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (start)",
+                            $"[ProcessingMessage] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 1",
+                            $"[SendPacket:Sending] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 42)",
+                            $"[SendPacket:Sent] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 42)",
+                            $"[MessageProcessed] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0",
+                            $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (end)"
+                        ] ),
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (start)",
+                            $"[ProcessingMessage] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 2",
+                            $"[SendPacket:Sending] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 43)",
+                            $"[SendPacket:Sent] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 43)",
+                            $"[MessageProcessed] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 1",
+                            $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (end)"
+                        ] ),
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (start)",
+                            $"[ProcessingMessage] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 2, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 3",
+                            $"[SendPacket:Sending] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 44)",
+                            $"[SendPacket:Sent] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 44)",
+                            $"[MessageProcessed] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 2",
+                            $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (end)"
+                        ] )
+                    ] ),
+                clientLogs.GetAllAwaitPacket()
+                    .TestContainsContiguousSequence(
+                    [
+                        "[AwaitPacket] Client = [1] 'test'",
+                        "[AwaitPacket] Client = [1] 'test', Packet = (PushMessage, Length = 11)",
+                        "[AwaitPacket] Client = [1] 'test'",
+                        "[AwaitPacket] Client = [1] 'test', Packet = (PushMessage, Length = 12)",
+                        "[AwaitPacket] Client = [1] 'test'",
+                        "[AwaitPacket] Client = [1] 'test', Packet = (PushMessage, Length = 13)"
                     ] ),
                 logs.GetAllQueue()
                     .TestContainsSequence(
@@ -103,12 +185,14 @@ public class MessageBrokerQueueTests : TestsBase
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetListenerEventHandlerFactory(
-                    _ => e =>
-                    {
-                        if ( e.Type == MessageBrokerChannelListenerBindingEventType.Disposed )
-                            endSource.Complete();
-                    } )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindListener )
+                                endSource.Complete();
+                        } ) )
                 .SetQueueEventHandlerFactory(
                     _ => e =>
                     {
@@ -189,12 +273,10 @@ public class MessageBrokerQueueTests : TestsBase
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetListenerEventHandlerFactory(
-                    _ => e =>
-                    {
-                        if ( e.Type == MessageBrokerChannelListenerBindingEventType.Disposed )
-                            listenerDisposedSource.Complete( e.Listener.Queue.State );
-                    } )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => MessageBrokerRemoteClientLogger.Create(
+                        listenerUnbound: e => listenerDisposedSource.Complete( e.Listener.Queue.State ) ) )
                 .SetQueueEventHandlerFactory(
                     _ => e =>
                     {

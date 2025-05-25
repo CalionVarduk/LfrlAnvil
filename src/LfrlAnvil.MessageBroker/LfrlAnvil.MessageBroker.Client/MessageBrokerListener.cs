@@ -170,8 +170,6 @@ public sealed class MessageBrokerListener
     private async ValueTask DisposeAsync(MessageBrokerListenerState expectedState, ulong traceId)
     {
         Task? messageEmitterTask;
-        int discardedMessageCount;
-        Chain<Exception> exceptions;
         using ( AcquireLock() )
         {
             if ( _state != expectedState )
@@ -179,20 +177,7 @@ public sealed class MessageBrokerListener
 
             _state = MessageBrokerListenerState.Disposing;
             messageEmitterTask = MessageEmitter.DiscardUnderlyingTask();
-            (discardedMessageCount, exceptions) = MessageEmitter.Dispose();
-        }
-
-        foreach ( var exc in exceptions )
-            MessageBrokerClientErrorEvent.Create( Client, traceId, exc ).Emit( Client.Logger.Error );
-
-        if ( discardedMessageCount > 0 )
-        {
-            var error = new MessageBrokerClientMessageException(
-                Client,
-                this,
-                Resources.MessagesDiscarded( ChannelId, ChannelName, discardedMessageCount ) );
-
-            MessageBrokerClientErrorEvent.Create( Client, traceId, error ).Emit( Client.Logger.Error );
+            MessageEmitter.BeginDispose();
         }
 
         try
@@ -216,6 +201,24 @@ public sealed class MessageBrokerListener
             {
                 MessageBrokerClientErrorEvent.Create( Client, traceId, exc ).Emit( Client.Logger.Error );
             }
+        }
+
+        int discardedMessageCount;
+        Chain<Exception> exceptions;
+        using ( AcquireLock() )
+            (discardedMessageCount, exceptions) = MessageEmitter.EndDispose();
+
+        foreach ( var exc in exceptions )
+            MessageBrokerClientErrorEvent.Create( Client, traceId, exc ).Emit( Client.Logger.Error );
+
+        if ( discardedMessageCount > 0 )
+        {
+            var error = new MessageBrokerClientMessageException(
+                Client,
+                this,
+                Resources.MessagesDiscarded( ChannelId, ChannelName, discardedMessageCount ) );
+
+            MessageBrokerClientErrorEvent.Create( Client, traceId, error ).Emit( Client.Logger.Error );
         }
 
         using ( AcquireLock() )

@@ -70,7 +70,13 @@ internal struct MessageNotifications
         Assume.IsGreaterThanOrEqualTo( client.State, MessageBrokerClientState.Disposing );
     }
 
-    internal (int DiscardedMessageCount, Chain<Exception> Exceptions) Dispose()
+    internal void BeginDispose()
+    {
+        if ( _continuation.Status == ValueTaskSourceStatus.Pending )
+            _continuation.SetResult( false );
+    }
+
+    internal (int DiscardedMessageCount, Chain<Exception> Exceptions) EndDispose()
     {
         var discardedMessageCount = _messages.Count;
         var exceptions = Chain<Exception>.Empty;
@@ -83,10 +89,6 @@ internal struct MessageNotifications
         }
 
         _messages.Clear();
-
-        if ( _continuation.Status == ValueTaskSourceStatus.Pending )
-            _continuation.SetResult( false );
-
         return (discardedMessageCount, exceptions);
     }
 
@@ -182,8 +184,17 @@ internal struct MessageNotifications
                     }
 
                     var data = message.Data.Slice( Protocol.MessageNotificationHeader.Length );
-                    MessageBrokerClientMessageProcessingEvent.Create( client, traceId, request.MessageId, request.ChannelId, data.Length )
-                        .Emit( client.Logger.MessageProcessing );
+                    MessageBrokerClientProcessingMessageEvent.Create(
+                            client,
+                            traceId,
+                            request.SenderId,
+                            request.StreamId,
+                            request.MessageId,
+                            request.ChannelId,
+                            request.RetryAttempt,
+                            request.RedeliveryAttempt,
+                            data.Length )
+                        .Emit( client.Logger.ProcessingMessage );
 
                     var listener = ListenerCollection.TryGetByChannelId( client, request.ChannelId );
                     if ( listener is null )

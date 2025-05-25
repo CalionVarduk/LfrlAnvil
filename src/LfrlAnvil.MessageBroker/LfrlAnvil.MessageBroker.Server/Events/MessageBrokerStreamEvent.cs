@@ -30,7 +30,7 @@ public readonly struct MessageBrokerStreamEvent
         MessageBrokerChannelPublisherBinding? publisher,
         MessageBrokerStreamEventType type,
         ulong? messageId = null,
-        ulong contextId = MessageBrokerRemoteClientEvent.RootContextId,
+        ulong contextId = 0,
         Exception? exception = null)
     {
         Stream = stream;
@@ -78,7 +78,7 @@ public readonly struct MessageBrokerStreamEvent
     /// <summary>
     /// Specifies whether or not this event is related to a stream-wide operation.
     /// </summary>
-    public bool IsRootContext => ContextId == MessageBrokerRemoteClientEvent.RootContextId;
+    public bool IsRootContext => ContextId == 0;
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerStreamEvent"/> instance.
@@ -190,7 +190,7 @@ public readonly struct MessageBrokerStreamEvent
     internal static MessageBrokerStreamEvent Created(
         MessageBrokerStream stream,
         MessageBrokerChannelPublisherBinding publisher,
-        ulong contextId = MessageBrokerRemoteClientEvent.RootContextId)
+        ulong contextId = 0)
     {
         return new MessageBrokerStreamEvent( stream, publisher, MessageBrokerStreamEventType.Created, contextId: contextId );
     }

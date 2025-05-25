@@ -244,8 +244,12 @@ internal struct ListenerCollection
                         MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header )
                             .Emit( client.Logger.ReadPacket );
 
-                        MessageBrokerClientListenerChangeEvent.CreateBound( client, traceId, bindResult.Listener )
-                            .Emit( client.Logger.ListenerChange );
+                        MessageBrokerClientListenerBoundEvent.Create(
+                                bindResult.Listener,
+                                traceId,
+                                parsedResponse.ChannelCreated,
+                                parsedResponse.QueueCreated )
+                            .Emit( client.Logger.ListenerBound );
 
                         return bindResult;
                     }
@@ -310,7 +314,7 @@ internal struct ListenerCollection
 
         using ( MessageBrokerClientTraceEvent.CreateScope( client, traceId, MessageBrokerClientTraceEventType.UnbindListener ) )
         {
-            MessageBrokerClientListenerChangeEvent.CreateUnbinding( client, traceId, listener ).Emit( client.Logger.ListenerChange );
+            MessageBrokerClientUnbindingListenerEvent.Create( listener, traceId ).Emit( client.Logger.UnbindingListener );
             var endDispose = listener.EndDisposingAsync( traceId );
             try
             {
@@ -423,8 +427,12 @@ internal struct ListenerCollection
                             MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header )
                                 .Emit( client.Logger.ReadPacket );
 
-                            MessageBrokerClientListenerChangeEvent.CreateUnbound( client, traceId, listener )
-                                .Emit( client.Logger.ListenerChange );
+                            MessageBrokerClientListenerUnboundEvent.Create(
+                                    listener,
+                                    traceId,
+                                    parsedResponse.ChannelRemoved,
+                                    parsedResponse.QueueRemoved )
+                                .Emit( client.Logger.ListenerUnbound );
 
                             return MessageBrokerUnbindListenerResult.Create( parsedResponse.ChannelRemoved, parsedResponse.QueueRemoved );
                         }

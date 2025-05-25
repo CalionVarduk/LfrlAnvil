@@ -20,8 +20,8 @@ internal sealed class ClientMock : IDisposable
     internal ClientMock()
     {
         _client.NoDelay = true;
-        _client.SendTimeout = ChronoConstants.MillisecondsPerSecond;
-        _client.ReceiveTimeout = ChronoConstants.MillisecondsPerSecond;
+        _client.SendTimeout = ChronoConstants.MillisecondsPerSecond * 5;
+        _client.ReceiveTimeout = ChronoConstants.MillisecondsPerSecond * 5;
     }
 
     public void Dispose()
@@ -286,6 +286,15 @@ internal sealed class ClientMock : IDisposable
         writer.MoveWrite( ( byte )(confirm ? 1 : 0) );
         writer.MoveWrite( ( uint )channelId );
         data.AsSpan().CopyTo( writer.GetSpan( data.Length ) );
+        Send( buffer );
+    }
+
+    internal void SendHeader(MessageBrokerServerEndpoint endpoint, uint payload, bool reverseEndianness = false)
+    {
+        var buffer = new byte[Protocol.PacketHeader.Length];
+        var writer = new BinaryContractWriter( buffer );
+        writer.MoveWrite( ( byte )endpoint );
+        writer.Write( reverseEndianness ? BinaryPrimitives.ReverseEndianness( payload ) : payload );
         Send( buffer );
     }
 

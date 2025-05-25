@@ -599,35 +599,20 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         Task? packetListenerTask;
         Task? messageNotificationsTask;
         ValueTaskDelaySource? ownedDelaySource;
-        MessageBrokerListener[] listeners;
-        int discardedMessageCount;
-        Chain<Exception> exceptions;
 
         using ( AcquireLock() )
         {
-            ownedDelaySource = _delaySource.DiscardOwnedSource();
             _messageContextPool.Clear();
-            PublisherCollection.Clear();
-            listeners = ListenerCollection.Clear();
+            ownedDelaySource = _delaySource.DiscardOwnedSource();
             eventSchedulerTask = EventScheduler.DiscardUnderlyingTask();
             pingSchedulerTask = PingScheduler.DiscardUnderlyingTask();
             packetListenerTask = PacketListener.DiscardUnderlyingTask();
             messageNotificationsTask = MessageNotifications.DiscardUnderlyingTask();
             PingScheduler.Dispose();
             EventScheduler.Dispose();
-            (discardedMessageCount, exceptions) = MessageNotifications.Dispose();
+            MessageNotifications.BeginDispose();
+            MessageContextQueue.Dispose();
         }
-
-        foreach ( var exc in exceptions )
-            MessageBrokerClientErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
-
-        if ( discardedMessageCount > 0 )
-        {
-            var error = new MessageBrokerClientMessageException( this, null, Resources.MessagesDiscarded( discardedMessageCount ) );
-            MessageBrokerClientErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
-        }
-
-        await Parallel.ForEachAsync( listeners, (l, _) => l.OnClientDisposedAsync( traceId ) ).ConfigureAwait( false );
 
         if ( eventSchedulerTask is not null )
             await eventSchedulerTask.ConfigureAwait( false );
@@ -641,15 +626,30 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         if ( messageNotificationsTask is not null )
             await messageNotificationsTask.ConfigureAwait( false );
 
-        Exception? exception;
+        MessageBrokerListener[] listeners;
+        int discardedMessageCount;
+        Chain<Exception> exceptions;
+
         using ( AcquireLock() )
         {
-            MessageContextQueue.Dispose();
-            exception = _tcp.TryDispose().Exception;
+            PublisherCollection.Clear();
+            listeners = ListenerCollection.Clear();
+            (discardedMessageCount, exceptions) = MessageNotifications.EndDispose();
+            var exception = _tcp.TryDispose().Exception;
+            if ( exception is not null )
+                exceptions = exceptions.Extend( exception );
         }
 
-        if ( exception is not null )
-            MessageBrokerClientErrorEvent.Create( this, traceId, exception ).Emit( Logger.Error );
+        foreach ( var exc in exceptions )
+            MessageBrokerClientErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
+
+        if ( discardedMessageCount > 0 )
+        {
+            var error = new MessageBrokerClientMessageException( this, null, Resources.MessagesDiscarded( discardedMessageCount ) );
+            MessageBrokerClientErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
+        }
+
+        await Parallel.ForEachAsync( listeners, (l, _) => l.OnClientDisposedAsync( traceId ) ).ConfigureAwait( false );
 
         using ( AcquireLock() )
         {

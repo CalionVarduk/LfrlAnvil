@@ -95,7 +95,7 @@ public partial class MessageBrokerClientTests
                         .Skip( 1 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
                                 $"[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = '{channelName}', StreamName = '{streamName}'",
@@ -103,7 +103,7 @@ public partial class MessageBrokerClientTests
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 16)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (PublisherBoundResponse, Length = 14)",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (PublisherBoundResponse, Length = 14)",
-                                $"[PublisherChange:Bound] Client = [1] 'test', TraceId = 1, Channel = [1] '{channelName}', Stream = [2] '{streamName}'",
+                                $"[PublisherBound] Client = [1] 'test', TraceId = 1, Channel = [1] '{channelName}'{(channelCreated ? " (created)" : string.Empty)}, Stream = [2] '{streamName}'{(streamCreated ? " (created)" : string.Empty)}",
                                 "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (end)"
                             ] )
                         ] ),
@@ -299,7 +299,7 @@ public partial class MessageBrokerClientTests
                         .Skip( 1 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
                                 "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', StreamName = 'foo'",
@@ -393,7 +393,7 @@ public partial class MessageBrokerClientTests
                         .Skip( 1 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
                                 "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', StreamName = 'foo'",
@@ -461,7 +461,7 @@ public partial class MessageBrokerClientTests
                         .Skip( 1 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
                                 "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', StreamName = 'foo'",
@@ -528,7 +528,7 @@ public partial class MessageBrokerClientTests
                         .Skip( 1 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
                                 "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', StreamName = 'foo'",
@@ -595,7 +595,7 @@ public partial class MessageBrokerClientTests
                         .Skip( 1 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
                                 "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', StreamName = 'foo'",
@@ -662,7 +662,7 @@ public partial class MessageBrokerClientTests
                         .Skip( 1 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
                                 "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', StreamName = 'foo'",
@@ -750,15 +750,15 @@ public partial class MessageBrokerClientTests
                         .Skip( 2 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 2 (start)",
-                                $"[PublisherChange:Unbinding] Client = [1] 'test', TraceId = 2, Channel = [1] '{channelName}', Stream = [2] '{channelName}'",
+                                $"[UnbindingPublisher] Client = [1] 'test', TraceId = 2, Channel = [1] '{channelName}', Stream = [2] '{channelName}'",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (UnbindPublisherRequest, Length = 9)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (UnbindPublisherRequest, Length = 9)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (PublisherUnboundResponse, Length = 6)",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (PublisherUnboundResponse, Length = 6)",
-                                $"[PublisherChange:Unbound] Client = [1] 'test', TraceId = 2, Channel = [1] '{channelName}', Stream = [2] '{channelName}'",
+                                $"[PublisherUnbound] Client = [1] 'test', TraceId = 2, Channel = [1] '{channelName}'{(channelRemoved ? " (removed)" : string.Empty)}, Stream = [2] '{channelName}'{(streamRemoved ? " (removed)" : string.Empty)}",
                                 "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 2 (end)"
                             ] )
                         ] ),
@@ -881,10 +881,10 @@ public partial class MessageBrokerClientTests
                         .Skip( 2 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 2 (start)",
-                                "[PublisherChange:Unbinding] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo'",
+                                "[UnbindingPublisher] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo'",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (UnbindPublisherRequest, Length = 9)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (UnbindPublisherRequest, Length = 9)",
                                 """
@@ -1000,10 +1000,10 @@ public partial class MessageBrokerClientTests
                         .Skip( 2 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 2 (start)",
-                                "[PublisherChange:Unbinding] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo'",
+                                "[UnbindingPublisher] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo'",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (UnbindPublisherRequest, Length = 9)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (UnbindPublisherRequest, Length = 9)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (PublisherUnboundResponse, Length = 5)",
@@ -1073,10 +1073,10 @@ public partial class MessageBrokerClientTests
                         .Skip( 2 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 2 (start)",
-                                "[PublisherChange:Unbinding] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo'",
+                                "[UnbindingPublisher] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo'",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (UnbindPublisherRequest, Length = 9)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (UnbindPublisherRequest, Length = 9)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (UnbindPublisherFailureResponse, Length = 6)",
@@ -1146,10 +1146,10 @@ public partial class MessageBrokerClientTests
                         .Skip( 2 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 2 (start)",
-                                "[PublisherChange:Unbinding] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo'",
+                                "[UnbindingPublisher] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo'",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (UnbindPublisherRequest, Length = 9)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (UnbindPublisherRequest, Length = 9)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (UnbindPublisherFailureResponse, Length = 5)",
@@ -1219,10 +1219,10 @@ public partial class MessageBrokerClientTests
                         .Skip( 2 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 2 (start)",
-                                "[PublisherChange:Unbinding] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo'",
+                                "[UnbindingPublisher] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo'",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (UnbindPublisherRequest, Length = 9)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (UnbindPublisherRequest, Length = 9)",
                                 """
@@ -1298,10 +1298,10 @@ public partial class MessageBrokerClientTests
                         .Skip( 2 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (start)",
-                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5, Confirm = True",
+                                "[PushingMessage] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5, Confirm = True",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageAcceptedResponse, Length = 13)",
@@ -1377,10 +1377,10 @@ public partial class MessageBrokerClientTests
                         .Skip( 2 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (start)",
-                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5, Confirm = True",
+                                "[PushingMessage] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5, Confirm = True",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageAcceptedResponse, Length = 13)",
@@ -1452,10 +1452,10 @@ public partial class MessageBrokerClientTests
                         .Skip( 2 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (start)",
-                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 2048, Confirm = True",
+                                "[PushingMessage] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 2048, Confirm = True",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 2058)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 2058)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageAcceptedResponse, Length = 13)",
@@ -1522,10 +1522,10 @@ public partial class MessageBrokerClientTests
                         .Skip( 2 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (start)",
-                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5, Confirm = False",
+                                "[PushingMessage] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5, Confirm = False",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
                                 "[MessagePushed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5, MessageId = <NULL>",
@@ -1673,10 +1673,10 @@ public partial class MessageBrokerClientTests
                         .Skip( 2 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (start)",
-                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 8, Confirm = True",
+                                "[PushingMessage] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 8, Confirm = True",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 18)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 18)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageAcceptedResponse, Length = 13)",
@@ -1740,10 +1740,10 @@ public partial class MessageBrokerClientTests
                         .Skip( 2 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (start)",
-                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 8, Confirm = False",
+                                "[PushingMessage] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 8, Confirm = False",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 18)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 18)",
                                 "[MessagePushed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 8, MessageId = <NULL>",
@@ -1862,10 +1862,10 @@ public partial class MessageBrokerClientTests
                         .Skip( 2 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (start)",
-                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 3, Confirm = True",
+                                "[PushingMessage] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 3, Confirm = True",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 13)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 13)",
                                 """
@@ -1983,10 +1983,10 @@ public partial class MessageBrokerClientTests
                         .Skip( 2 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (start)",
-                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5, Confirm = True",
+                                "[PushingMessage] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5, Confirm = True",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageAcceptedResponse, Length = 12)",
@@ -2057,10 +2057,10 @@ public partial class MessageBrokerClientTests
                         .Skip( 2 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (start)",
-                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5, Confirm = True",
+                                "[PushingMessage] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5, Confirm = True",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageRejectedResponse, Length = 6)",
@@ -2131,10 +2131,10 @@ public partial class MessageBrokerClientTests
                         .Skip( 2 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (start)",
-                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5, Confirm = True",
+                                "[PushingMessage] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5, Confirm = True",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageRejectedResponse, Length = 5)",
@@ -2205,10 +2205,10 @@ public partial class MessageBrokerClientTests
                         .Skip( 2 )
                         .TestSequence(
                         [
-                            (t, _) => t.TestSequence(
+                            (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (start)",
-                                "[MessagePushing] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5, Confirm = True",
+                                "[PushingMessage] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5, Confirm = True",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
                                 """

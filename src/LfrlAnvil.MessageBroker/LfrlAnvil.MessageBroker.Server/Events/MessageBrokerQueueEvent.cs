@@ -30,7 +30,7 @@ public readonly struct MessageBrokerQueueEvent
         MessageBrokerChannelListenerBinding? listener,
         MessageBrokerQueueEventType type,
         ulong? messageId = null,
-        ulong contextId = MessageBrokerRemoteClientEvent.RootContextId,
+        ulong contextId = 0,
         Exception? exception = null)
     {
         Queue = queue;
@@ -78,7 +78,7 @@ public readonly struct MessageBrokerQueueEvent
     /// <summary>
     /// Specifies whether or not this event is related to a queue-wide operation.
     /// </summary>
-    public bool IsRootContext => ContextId == MessageBrokerRemoteClientEvent.RootContextId;
+    public bool IsRootContext => ContextId == 0;
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerQueueEvent"/> instance.
@@ -180,7 +180,7 @@ public readonly struct MessageBrokerQueueEvent
     internal static MessageBrokerQueueEvent Created(
         MessageBrokerQueue queue,
         MessageBrokerChannelListenerBinding listener,
-        ulong contextId = MessageBrokerRemoteClientEvent.RootContextId)
+        ulong contextId = 0)
     {
         return new MessageBrokerQueueEvent( queue, listener, MessageBrokerQueueEventType.Created, contextId: contextId );
     }

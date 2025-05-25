@@ -74,10 +74,10 @@ public sealed class ServerEventLogger
     }
 
     [Pure]
-    public string[][] GetAll()
+    public TraceLog[] GetAll()
     {
         lock ( _traces )
-            return _traces.OrderBy( kv => kv.Key ).Select( kv => kv.Value.ToArray() ).ToArray();
+            return _traces.OrderBy( kv => kv.Key ).Select( kv => new TraceLog( kv.Key, kv.Value.ToArray() ) ).ToArray();
     }
 
     [Pure]

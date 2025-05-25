@@ -158,7 +158,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                 logs.GetAll()
                     .TestSequence(
                     [
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:Start] Client = 'test', TraceId = 0 (start)",
                             $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
@@ -242,7 +242,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                 logs.GetAll()
                     .TestSequence(
                     [
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:Start] Client = 'foo', TraceId = 0 (start)",
                             $"[Connecting] Client = 'foo', TraceId = 0, Server = {remoteEndPoint}",
@@ -355,7 +355,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                 logs.GetAll()
                     .TestSequence(
                     [
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             (e, _) => e.TestEquals( "[Trace:Start] Client = 'test', TraceId = 0 (start)" ),
                             (e, _) => e.TestEquals( $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}" ),
@@ -403,7 +403,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                 logs.GetAll()
                     .TestSequence(
                     [
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:Start] Client = 'test', TraceId = 0 (start)",
                             $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
@@ -413,7 +413,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             """,
                             "[Trace:Start] Client = 'test', TraceId = 0 (end)"
                         ] ),
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:Dispose] Client = 'test', TraceId = 1 (start)",
                             "[Disposing] Client = 'test', TraceId = 1",
@@ -465,7 +465,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                 logs.GetAll()
                     .TestSequence(
                     [
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             (e, _) => e.TestEquals( "[Trace:Start] Client = 'test', TraceId = 0 (start)" ),
                             (e, _) => e.TestEquals( $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}" ),
@@ -524,7 +524,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                 logs.GetAll()
                     .TestSequence(
                     [
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:Start] Client = 'test', TraceId = 0 (start)",
                             $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
@@ -588,7 +588,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                 logs.GetAll()
                     .TestSequence(
                     [
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:Start] Client = 'test', TraceId = 0 (start)",
                             $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
@@ -657,7 +657,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                 logs.GetAll()
                     .TestSequence(
                     [
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:Start] Client = 'test', TraceId = 0 (start)",
                             $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
@@ -724,7 +724,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                 logs.GetAll()
                     .TestSequence(
                     [
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:Start] Client = 'test', TraceId = 0 (start)",
                             $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
@@ -793,7 +793,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                 logs.GetAll()
                     .TestSequence(
                     [
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:Start] Client = 'test', TraceId = 0 (start)",
                             $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
@@ -860,7 +860,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                 logs.GetAll()
                     .TestSequence(
                     [
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:Start] Client = 'test', TraceId = 0 (start)",
                             $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
@@ -910,7 +910,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                 logs.GetAll()
                     .TestSequence(
                     [
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:Start] Client = 'test', TraceId = 0 (start)",
                             $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
@@ -920,7 +920,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             """,
                             "[Trace:Start] Client = 'test', TraceId = 0 (end)"
                         ] ),
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:Dispose] Client = 'test', TraceId = 1 (start)",
                             "[Disposing] Client = 'test', TraceId = 1",
@@ -965,7 +965,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                 logs.GetAll()
                     .TestSequence(
                     [
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:Start] Client = 'test', TraceId = 0 (start)",
                             $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
@@ -977,7 +977,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             """,
                             "[Trace:Start] Client = 'test', TraceId = 0 (end)"
                         ] ),
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:Dispose] Client = 'test', TraceId = 1 (start)",
                             "[Disposing] Client = 'test', TraceId = 1",
@@ -1022,7 +1022,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                 logs.GetAll()
                     .TestSequence(
                     [
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:Start] Client = 'test', TraceId = 0 (start)",
                             $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
@@ -1034,7 +1034,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             """,
                             "[Trace:Start] Client = 'test', TraceId = 0 (end)"
                         ] ),
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:Dispose] Client = 'test', TraceId = 1 (start)",
                             "[Disposing] Client = 'test', TraceId = 1",
@@ -1080,7 +1080,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                 logs.GetAll()
                     .TestSequence(
                     [
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:Start] Client = 'test', TraceId = 0 (start)",
                             $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
@@ -1094,7 +1094,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             """,
                             "[Trace:Start] Client = 'test', TraceId = 0 (end)"
                         ] ),
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:Dispose] Client = 'test', TraceId = 1 (start)",
                             "[Disposing] Client = 'test', TraceId = 1",
@@ -1134,7 +1134,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                 logs.GetAll()
                     .TestSequence(
                     [
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             (e, _) => e.TestEquals( "[Trace:Start] Client = 'test', TraceId = 0 (start)" ),
                             (e, _) => e.TestEquals( $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}" ),
@@ -1179,7 +1179,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                 logs.GetAll()
                     .TestSequence(
                     [
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:Start] Client = 'test', TraceId = 0 (start)",
                             $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
@@ -1200,6 +1200,130 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                     .TestSequence(
                     [
                         "[AwaitPacket] Client = 'test'"
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task StartAsync_ShouldReturnOperationCanceledException_WhenServerFailsToRespondWithFullHandshakeAcceptedInTime()
+    {
+        var logs = new EventLogger();
+        using var server = new ServerMock();
+        var remoteEndPoint = server.Start();
+        EndPoint? localEndPoint = null;
+
+        await using var client = new MessageBrokerClient(
+            remoteEndPoint,
+            "test",
+            MessageBrokerClientOptions.Default
+                .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredMessageTimeout( Duration.FromMilliseconds( 100 ) )
+                .SetDelaySource( _sharedDelaySource )
+                .SetLogger(
+                    logs.GetLogger( MessageBrokerClientLogger.Create( connected: e => localEndPoint = e.Source.Client.LocalEndPoint ) ) ) );
+
+        var handshakeRequest = new Protocol.HandshakeRequest( client );
+        var serverTask = server.GetTask(
+            s =>
+            {
+                s.WaitForClient();
+                s.Read( handshakeRequest );
+                s.SendHeader( MessageBrokerClientEndpoint.HandshakeAcceptedResponse, Protocol.HandshakeAcceptedResponse.Length );
+            } );
+
+        var result = await client.StartAsync();
+        await serverTask;
+
+        Assertion.All(
+                result.Exception.TestType().AssignableTo<OperationCanceledException>(),
+                logs.GetAll()
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:Start] Client = 'test', TraceId = 0 (start)",
+                            $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
+                            $"[Connected] Client = 'test', TraceId = 0, Server = {remoteEndPoint}, LocalEndPoint = {localEndPoint}",
+                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 0.1 second(s), PingInterval = 15 second(s)",
+                            "[SendPacket:Sending] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 18)",
+                            "[SendPacket:Sent] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 18)",
+                            "[ReadPacket:Received] Client = 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 18)",
+                            """
+                            [Error] Client = 'test', TraceId = 0
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Server failed to respond to 'test' client's HandshakeRequest in the specified amount of time (100 milliseconds).
+                            """,
+                            "[Disposing] Client = 'test', TraceId = 0",
+                            "[Disposed] Client = 'test', TraceId = 0",
+                            "[Trace:Start] Client = 'test', TraceId = 0 (end)"
+                        ] )
+                    ] ),
+                logs.GetAllAwaitPacket()
+                    .TestSequence(
+                    [
+                        "[AwaitPacket] Client = 'test'",
+                        "[AwaitPacket] Client = 'test', Packet = (HandshakeAcceptedResponse, Length = 18)"
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task StartAsync_ShouldReturnOperationCanceledException_WhenServerFailsToRespondWithFullHandshakeRejectedInTime()
+    {
+        var logs = new EventLogger();
+        using var server = new ServerMock();
+        var remoteEndPoint = server.Start();
+        EndPoint? localEndPoint = null;
+
+        await using var client = new MessageBrokerClient(
+            remoteEndPoint,
+            "test",
+            MessageBrokerClientOptions.Default
+                .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredMessageTimeout( Duration.FromMilliseconds( 100 ) )
+                .SetDelaySource( _sharedDelaySource )
+                .SetLogger(
+                    logs.GetLogger( MessageBrokerClientLogger.Create( connected: e => localEndPoint = e.Source.Client.LocalEndPoint ) ) ) );
+
+        var handshakeRequest = new Protocol.HandshakeRequest( client );
+        var serverTask = server.GetTask(
+            s =>
+            {
+                s.WaitForClient();
+                s.Read( handshakeRequest );
+                s.SendHeader( MessageBrokerClientEndpoint.HandshakeRejectedResponse, Protocol.HandshakeRejectedResponse.Length );
+            } );
+
+        var result = await client.StartAsync();
+        await serverTask;
+
+        Assertion.All(
+                result.Exception.TestType().AssignableTo<OperationCanceledException>(),
+                logs.GetAll()
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:Start] Client = 'test', TraceId = 0 (start)",
+                            $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
+                            $"[Connected] Client = 'test', TraceId = 0, Server = {remoteEndPoint}, LocalEndPoint = {localEndPoint}",
+                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 0.1 second(s), PingInterval = 15 second(s)",
+                            "[SendPacket:Sending] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 18)",
+                            "[SendPacket:Sent] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 18)",
+                            "[ReadPacket:Received] Client = 'test', TraceId = 0, Packet = (HandshakeRejectedResponse, Length = 6)",
+                            """
+                            [Error] Client = 'test', TraceId = 0
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Server failed to respond to 'test' client's HandshakeRequest in the specified amount of time (100 milliseconds).
+                            """,
+                            "[Disposing] Client = 'test', TraceId = 0",
+                            "[Disposed] Client = 'test', TraceId = 0",
+                            "[Trace:Start] Client = 'test', TraceId = 0 (end)"
+                        ] )
+                    ] ),
+                logs.GetAllAwaitPacket()
+                    .TestSequence(
+                    [
+                        "[AwaitPacket] Client = 'test'",
+                        "[AwaitPacket] Client = 'test', Packet = (HandshakeRejectedResponse, Length = 6)"
                     ] ) )
             .Go();
     }
@@ -1248,28 +1372,18 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                 logs.GetAll()
                     .TestSequence(
                     [
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
-                            (e, _) => e.TestEquals( "[Trace:Start] Client = 'test', TraceId = 0 (start)" ),
-                            (e, _) => e.TestEquals( $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}" ),
-                            (e, _) => e.TestEquals(
-                                $"[Connected] Client = 'test', TraceId = 0, Server = {remoteEndPoint}, LocalEndPoint = {localEndPoint}" ),
-                            (e, _) => e.TestEquals(
-                                "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s)" ),
-                            (e, _) => e.TestEquals(
-                                "[SendPacket:Sending] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 18)" ),
-                            (e, _) => e.TestEquals(
-                                "[SendPacket:Sent] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 18)" ),
-                            (e, _) => e.TestEquals(
-                                "[ReadPacket:Received] Client = 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 18)" ),
-                            (e, _) => e.TestStartsWith(
-                                """
-                                [Error] Client = 'test', TraceId = 0
-                                System.ObjectDisposedException:
-                                """ ),
-                            (e, _) => e.TestEquals( "[Trace:Start] Client = 'test', TraceId = 0 (end)" )
+                            "[Trace:Start] Client = 'test', TraceId = 0 (start)",
+                            $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
+                            $"[Connected] Client = 'test', TraceId = 0, Server = {remoteEndPoint}, LocalEndPoint = {localEndPoint}",
+                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s)",
+                            "[SendPacket:Sending] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 18)",
+                            "[SendPacket:Sent] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 18)",
+                            "[ReadPacket:Received] Client = 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 18)",
+                            "[Trace:Start] Client = 'test', TraceId = 0 (end)"
                         ] ),
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:Dispose] Client = 'test', TraceId = 1 (start)",
                             "[Disposing] Client = 'test', TraceId = 1",
@@ -1280,8 +1394,13 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                 logs.GetAllAwaitPacket()
                     .TestSequence(
                     [
-                        "[AwaitPacket] Client = 'test'",
-                        "[AwaitPacket] Client = 'test', Packet = (HandshakeAcceptedResponse, Length = 18)"
+                        (e, _) => e.TestEquals( "[AwaitPacket] Client = 'test'" ),
+                        (e, _) => e.TestEquals( "[AwaitPacket] Client = 'test', Packet = (HandshakeAcceptedResponse, Length = 18)" ),
+                        (e, _) => e.TestStartsWith(
+                            """
+                            [AwaitPacket] Client = 'test'
+                            System.ObjectDisposedException:
+                            """ )
                     ] ) )
             .Go();
     }
@@ -1330,28 +1449,18 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                 logs.GetAll()
                     .TestSequence(
                     [
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
-                            (e, _) => e.TestEquals( "[Trace:Start] Client = 'test', TraceId = 0 (start)" ),
-                            (e, _) => e.TestEquals( $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}" ),
-                            (e, _) => e.TestEquals(
-                                $"[Connected] Client = 'test', TraceId = 0, Server = {remoteEndPoint}, LocalEndPoint = {localEndPoint}" ),
-                            (e, _) => e.TestEquals(
-                                "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s)" ),
-                            (e, _) => e.TestEquals(
-                                "[SendPacket:Sending] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 18)" ),
-                            (e, _) => e.TestEquals(
-                                "[SendPacket:Sent] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 18)" ),
-                            (e, _) => e.TestEquals(
-                                "[ReadPacket:Received] Client = 'test', TraceId = 0, Packet = (HandshakeRejectedResponse, Length = 6)" ),
-                            (e, _) => e.TestStartsWith(
-                                """
-                                [Error] Client = 'test', TraceId = 0
-                                System.ObjectDisposedException:
-                                """ ),
-                            (e, _) => e.TestEquals( "[Trace:Start] Client = 'test', TraceId = 0 (end)" )
+                            "[Trace:Start] Client = 'test', TraceId = 0 (start)",
+                            $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
+                            $"[Connected] Client = 'test', TraceId = 0, Server = {remoteEndPoint}, LocalEndPoint = {localEndPoint}",
+                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s)",
+                            "[SendPacket:Sending] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 18)",
+                            "[SendPacket:Sent] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 18)",
+                            "[ReadPacket:Received] Client = 'test', TraceId = 0, Packet = (HandshakeRejectedResponse, Length = 6)",
+                            "[Trace:Start] Client = 'test', TraceId = 0 (end)"
                         ] ),
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:Dispose] Client = 'test', TraceId = 1 (start)",
                             "[Disposing] Client = 'test', TraceId = 1",
@@ -1362,8 +1471,13 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                 logs.GetAllAwaitPacket()
                     .TestSequence(
                     [
-                        "[AwaitPacket] Client = 'test'",
-                        "[AwaitPacket] Client = 'test', Packet = (HandshakeRejectedResponse, Length = 6)"
+                        (e, _) => e.TestEquals( "[AwaitPacket] Client = 'test'" ),
+                        (e, _) => e.TestEquals( "[AwaitPacket] Client = 'test', Packet = (HandshakeRejectedResponse, Length = 6)" ),
+                        (e, _) => e.TestStartsWith(
+                            """
+                            [AwaitPacket] Client = 'test'
+                            System.ObjectDisposedException:
+                            """ )
                     ] ) )
             .Go();
     }
@@ -1409,7 +1523,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                 logs.GetAll()
                     .TestSequence(
                     [
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:Start] Client = 'test', TraceId = 0 (start)",
                             $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
@@ -1428,7 +1542,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             """,
                             "[Trace:Start] Client = [1] 'test', TraceId = 0 (end)"
                         ] ),
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:Dispose] Client = [1] 'test', TraceId = 1 (start)",
                             "[Disposing] Client = [1] 'test', TraceId = 1",
@@ -1491,7 +1605,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                     .Skip( 1 )
                     .TestSequence(
                     [
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:Unexpected] Client = [1] 'test', TraceId = 1 (start)",
                             "[Disposing] Client = [1] 'test', TraceId = 1",
@@ -1766,7 +1880,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                     .Skip( 1 )
                     .TestSequence(
                     [
-                        (t, _) => t.TestSequence(
+                        (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:Unexpected] Client = [1] 'test', TraceId = 1 (start)",
                             """
