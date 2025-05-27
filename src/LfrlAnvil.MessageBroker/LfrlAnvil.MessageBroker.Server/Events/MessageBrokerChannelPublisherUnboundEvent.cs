@@ -18,27 +18,21 @@ using System.Runtime.CompilerServices;
 namespace LfrlAnvil.MessageBroker.Server.Events;
 
 /// <summary>
-/// Represents an event emitted by <see cref="MessageBrokerRemoteClient"/> related to a publisher being successfully unbound.
+/// Represents an event emitted by <see cref="MessageBrokerChannel"/> related to a publisher being successfully unbound.
 /// </summary>
-public readonly struct MessageBrokerRemoteClientPublisherUnboundEvent
+public readonly struct MessageBrokerChannelPublisherUnboundEvent
 {
-    private readonly byte _state;
-
-    private MessageBrokerRemoteClientPublisherUnboundEvent(
-        MessageBrokerChannelPublisherBinding publisher,
-        ulong traceId,
-        bool channelRemoved,
-        bool streamRemoved)
+    private MessageBrokerChannelPublisherUnboundEvent(MessageBrokerChannelPublisherBinding publisher, ulong traceId, bool streamRemoved)
     {
-        Source = MessageBrokerRemoteClientEventSource.Create( publisher.Client, traceId );
+        Source = MessageBrokerChannelEventSource.Create( publisher.Channel, traceId );
         Publisher = publisher;
-        _state = ( byte )((channelRemoved ? 1 : 0) | (streamRemoved ? 2 : 0));
+        StreamRemoved = streamRemoved;
     }
 
     /// <summary>
     /// Event source.
     /// </summary>
-    public MessageBrokerRemoteClientEventSource Source { get; }
+    public MessageBrokerChannelEventSource Source { get; }
 
     /// <summary>
     /// Unbound publisher.
@@ -46,36 +40,29 @@ public readonly struct MessageBrokerRemoteClientPublisherUnboundEvent
     public MessageBrokerChannelPublisherBinding Publisher { get; }
 
     /// <summary>
-    /// Specifies whether or not removal of the channel bound to the <see cref="Publisher"/> was part of the unbinding operation.
-    /// </summary>
-    public bool ChannelRemoved => (_state & 1) != 0;
-
-    /// <summary>
     /// Specifies whether or not removal of the stream bound to the <see cref="Publisher"/> was part of the unbinding operation.
     /// </summary>
-    public bool StreamRemoved => (_state & 2) != 0;
+    public bool StreamRemoved { get; }
 
     /// <summary>
-    /// Returns a string representation of this <see cref="MessageBrokerRemoteClientPublisherUnboundEvent"/> instance.
+    /// Returns a string representation of this <see cref="MessageBrokerChannelPublisherUnboundEvent"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
-        var channelRemoved = ChannelRemoved ? " (removed)" : string.Empty;
         var streamRemoved = StreamRemoved ? " (removed)" : string.Empty;
         return
-            $"[PublisherUnbound] {Source}, Channel = [{Publisher.Channel.Id}] '{Publisher.Channel.Name}'{channelRemoved}, Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}'{streamRemoved}";
+            $"[PublisherUnbound] {Source}, Client = [{Publisher.Client.Id}] '{Publisher.Client.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}'{streamRemoved}";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerRemoteClientPublisherUnboundEvent Create(
+    internal static MessageBrokerChannelPublisherUnboundEvent Create(
         MessageBrokerChannelPublisherBinding publisher,
         ulong traceId,
-        bool channelRemoved,
         bool streamRemoved)
     {
-        return new MessageBrokerRemoteClientPublisherUnboundEvent( publisher, traceId, channelRemoved, streamRemoved );
+        return new MessageBrokerChannelPublisherUnboundEvent( publisher, traceId, streamRemoved );
     }
 }

@@ -18,20 +18,20 @@ using System.Runtime.CompilerServices;
 namespace LfrlAnvil.MessageBroker.Server.Events;
 
 /// <summary>
-/// Represents a source of an event emitted by <see cref="MessageBrokerRemoteClient"/>.
+/// Represents a source of an event emitted by <see cref="MessageBrokerChannel"/>.
 /// </summary>
-public readonly struct MessageBrokerRemoteClientEventSource
+public readonly struct MessageBrokerChannelEventSource
 {
-    private MessageBrokerRemoteClientEventSource(MessageBrokerRemoteClient client, ulong traceId)
+    private MessageBrokerChannelEventSource(MessageBrokerChannel channel, ulong traceId)
     {
-        Client = client;
+        Channel = channel;
         TraceId = traceId;
     }
 
     /// <summary>
-    /// <see cref="MessageBrokerRemoteClient"/> that emitted an event.
+    /// <see cref="MessageBrokerChannel"/> that emitted an event.
     /// </summary>
-    public MessageBrokerRemoteClient Client { get; }
+    public MessageBrokerChannel Channel { get; }
 
     /// <summary>
     /// Identifier of an internal trace, with which an event is correlated to.
@@ -40,21 +40,19 @@ public readonly struct MessageBrokerRemoteClientEventSource
     public ulong TraceId { get; }
 
     /// <summary>
-    /// Returns a string representation of this <see cref="MessageBrokerRemoteClientEventSource"/> instance.
+    /// Returns a string representation of this <see cref="MessageBrokerChannelEventSource"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
-        return Client.Name.Length == 0
-            ? $"Client = [{Client.Id}], TraceId = {TraceId}"
-            : $"Client = [{Client.Id}] '{Client.Name}', TraceId = {TraceId}";
+        return $"Channel = [{Channel.Id}] '{Channel.Name}', TraceId = {TraceId}";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerRemoteClientEventSource Create(MessageBrokerRemoteClient client, ulong traceId)
+    internal static MessageBrokerChannelEventSource Create(MessageBrokerChannel channel, ulong traceId)
     {
-        return new MessageBrokerRemoteClientEventSource( client, traceId );
+        return new MessageBrokerChannelEventSource( channel, traceId );
     }
 }

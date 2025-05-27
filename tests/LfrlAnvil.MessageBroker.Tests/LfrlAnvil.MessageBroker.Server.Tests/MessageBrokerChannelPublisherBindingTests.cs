@@ -24,6 +24,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
         var clientLogs = new ClientEventLogger();
+        var channelLogs = new ChannelEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
@@ -37,7 +38,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                                 if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
                                     endSource.Complete();
                             } ) ) )
-                .SetChannelEventHandlerFactory( _ => logs.Add )
+                .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
                 .SetStreamEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -125,7 +126,18 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                         "[AwaitPacket] Client = [1] 'test'",
                         "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 11)"
                     ] ),
-                logs.GetAllChannel().TestSequence( [ "[1::'c'::1] [Created] by client [1::'test']" ] ),
+                channelLogs.GetAll()
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindPublisher] Channel = [1] 'c', TraceId = 0 (start)",
+                            "[ClientTrace] Channel = [1] 'c', TraceId = 0, Correlation = (Client = [1] 'test', TraceId = 1)",
+                            "[Created] Channel = [1] 'c', TraceId = 0",
+                            "[PublisherBound] Channel = [1] 'c', TraceId = 0, Client = [1] 'test', Stream = [1] 'c' (created)",
+                            "[Trace:BindPublisher] Channel = [1] 'c', TraceId = 0 (end)"
+                        ] )
+                    ] ),
                 logs.GetAllStream().TestSequence( [ "[1::'c'::1] [Created] by publisher [1::'test'] => [1::'c']" ] ) )
             .Go();
     }
@@ -136,6 +148,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
         var clientLogs = new ClientEventLogger();
+        var channelLogs = new ChannelEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
@@ -151,7 +164,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                                         endSource.Complete();
                                 } ) )
                         : null )
-                .SetChannelEventHandlerFactory( _ => logs.Add )
+                .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
                 .SetStreamEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -262,7 +275,18 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                         "[AwaitPacket] Client = [2] 'test2'",
                         "[AwaitPacket] Client = [2] 'test2', Packet = (BindPublisherRequest, Length = 11)"
                     ] ),
-                logs.GetAllChannel().TestSequence( [ "[1::'c'::1] [Created] by client [1::'test']" ] ),
+                channelLogs.GetAll()
+                    .Skip( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindPublisher] Channel = [1] 'c', TraceId = 1 (start)",
+                            "[ClientTrace] Channel = [1] 'c', TraceId = 1, Correlation = (Client = [2] 'test2', TraceId = 1)",
+                            "[PublisherBound] Channel = [1] 'c', TraceId = 1, Client = [2] 'test2', Stream = [1] 'c'",
+                            "[Trace:BindPublisher] Channel = [1] 'c', TraceId = 1 (end)"
+                        ] )
+                    ] ),
                 logs.GetAllStream().TestSequence( [ "[1::'c'::1] [Created] by publisher [1::'test'] => [1::'c']" ] ) )
             .Go();
     }
@@ -273,6 +297,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
         var endSource = new SafeTaskCompletionSource( completionCount: 2 );
         var logs = new EventLogger();
         var clientLogs = new ClientEventLogger();
+        var channelLogs = new ChannelEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
@@ -286,7 +311,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                                 if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
                                     endSource.Complete();
                             } ) ) )
-                .SetChannelEventHandlerFactory( _ => logs.Add )
+                .SetChannelLoggerFactory( c => c.Id == 2 ? channelLogs.GetLogger() : null )
                 .SetStreamEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -407,11 +432,17 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                         "[AwaitPacket] Client = [1] 'test'",
                         "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 12)"
                     ] ),
-                logs.GetAllChannel()
+                channelLogs.GetAll()
                     .TestSequence(
                     [
-                        "[1::'c'::1] [Created] by client [1::'test']",
-                        "[2::'d'::2] [Created] by client [1::'test']"
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindPublisher] Channel = [2] 'd', TraceId = 0 (start)",
+                            "[ClientTrace] Channel = [2] 'd', TraceId = 0, Correlation = (Client = [1] 'test', TraceId = 2)",
+                            "[Created] Channel = [2] 'd', TraceId = 0",
+                            "[PublisherBound] Channel = [2] 'd', TraceId = 0, Client = [1] 'test', Stream = [1] 'c'",
+                            "[Trace:BindPublisher] Channel = [2] 'd', TraceId = 0 (end)"
+                        ] )
                     ] ),
                 logs.GetAllStream().TestSequence( [ "[1::'c'::1] [Created] by publisher [1::'test'] => [1::'c']" ] ) )
             .Go();
@@ -438,7 +469,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                                     or MessageBrokerRemoteClientTraceEventType.Unexpected )
                                     endSource.Complete();
                             } ) ) )
-                .SetChannelEventHandlerFactory( _ => throw exception ) );
+                .SetChannelLoggerFactory( _ => throw exception ) );
 
         await server.StartAsync();
 
@@ -1001,7 +1032,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
     }
 
     [Fact]
-    public async Task Creation_ShouldNotThrow_WhenChannelOrStreamEventHandlerThrows()
+    public async Task Creation_ShouldNotThrow_WhenStreamEventHandlerThrows()
     {
         var endSource = new SafeTaskCompletionSource();
         var clientLogs = new ClientEventLogger();
@@ -1018,7 +1049,6 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                                 if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
                                     endSource.Complete();
                             } ) ) )
-                .SetChannelEventHandlerFactory( _ => _ => throw new Exception( "foo" ) )
                 .SetStreamEventHandlerFactory( _ => _ => throw new Exception( "bar" ) ) );
 
         await server.StartAsync();
@@ -1090,13 +1120,14 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
     {
         var logs = new EventLogger();
         var clientLogs = new ClientEventLogger();
+        var channelLogs = new ChannelEventLogger();
         var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
                 .SetClientLoggerFactory( _ => clientLogs.GetLogger() )
-                .SetChannelEventHandlerFactory( _ => logs.Add )
+                .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
                 .SetStreamEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -1134,12 +1165,18 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                         s.Publishers.Count.TestEquals( 0 ),
                         s.Publishers.GetAll().TestEmpty() ) ),
                 binding.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Disposed ) ),
-                logs.GetAllChannel()
+                channelLogs.GetAll()
+                    .Skip( 1 )
                     .TestSequence(
                     [
-                        "[1::'c'::1] [Created] by client [1::'test']",
-                        "[1::'c'::<ROOT>] [Disposing]",
-                        "[1::'c'::<ROOT>] [Disposed]"
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:Dispose] Channel = [1] 'c', TraceId = 1 (start)",
+                            $"[ServerTrace] Channel = [1] 'c', TraceId = 1, Correlation = (Server = {server.LocalEndPoint}, TraceId = 2)",
+                            "[Disposing] Channel = [1] 'c', TraceId = 1",
+                            "[Disposed] Channel = [1] 'c', TraceId = 1",
+                            "[Trace:Dispose] Channel = [1] 'c', TraceId = 1 (end)"
+                        ] )
                     ] ),
                 logs.GetAllStream()
                     .TestSequence(
@@ -1169,13 +1206,14 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
     {
         var logs = new EventLogger();
         var clientLogs = new ClientEventLogger();
+        var channelLogs = new ChannelEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
                 .SetClientLoggerFactory( _ => clientLogs.GetLogger() )
-                .SetChannelEventHandlerFactory( _ => logs.Add )
+                .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
                 .SetStreamEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -1214,12 +1252,19 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                         s.Publishers.Count.TestEquals( 0 ),
                         s.Publishers.GetAll().TestEmpty() ) ),
                 binding.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Disposed ) ),
-                logs.GetAllChannel()
+                channelLogs.GetAll()
+                    .Skip( 1 )
                     .TestSequence(
                     [
-                        "[1::'c'::1] [Created] by client [1::'test']",
-                        "[1::'c'::<ROOT>] [Disposing]",
-                        "[1::'c'::<ROOT>] [Disposed]"
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindPublisher] Channel = [1] 'c', TraceId = 1 (start)",
+                            "[ClientTrace] Channel = [1] 'c', TraceId = 1, Correlation = (Client = [1] 'test', TraceId = 2)",
+                            "[PublisherUnbound] Channel = [1] 'c', TraceId = 1, Client = [1] 'test', Stream = [1] 'c'",
+                            "[Disposing] Channel = [1] 'c', TraceId = 1",
+                            "[Disposed] Channel = [1] 'c', TraceId = 1",
+                            "[Trace:UnbindPublisher] Channel = [1] 'c', TraceId = 1 (end)"
+                        ] )
                     ] ),
                 logs.GetAllStream()
                     .TestSequence(
@@ -1248,13 +1293,14 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
     {
         var logs = new EventLogger();
         var clientLogs = new ClientEventLogger();
+        var channelLogs = new ChannelEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
                 .SetClientLoggerFactory( c => c.Id == 1 ? clientLogs.GetLogger() : null )
-                .SetChannelEventHandlerFactory( _ => logs.Add )
+                .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
                 .SetStreamEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -1310,7 +1356,18 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                         s.Publishers.Count.TestEquals( 1 ),
                         s.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding2 ) ] ) ) ),
                 binding1.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Disposed ) ),
-                logs.GetAllChannel().TestSequence( [ "[1::'c'::1] [Created] by client [1::'test']" ] ),
+                channelLogs.GetAll()
+                    .Skip( 2 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindPublisher] Channel = [1] 'c', TraceId = 2 (start)",
+                            "[ClientTrace] Channel = [1] 'c', TraceId = 2, Correlation = (Client = [1] 'test', TraceId = 2)",
+                            "[PublisherUnbound] Channel = [1] 'c', TraceId = 2, Client = [1] 'test', Stream = [1] 'c'",
+                            "[Trace:UnbindPublisher] Channel = [1] 'c', TraceId = 2 (end)"
+                        ] )
+                    ] ),
                 logs.GetAllStream().TestSequence( [ "[1::'c'::1] [Created] by publisher [1::'test'] => [1::'c']" ] ),
                 clientLogs.GetAll()
                     .Skip( 2 )
@@ -1333,6 +1390,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
         var clientLogs = new ClientEventLogger();
+        var channelLogs = new ChannelEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
@@ -1346,7 +1404,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                                 if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindPublisher )
                                     endSource.Complete();
                             } ) ) )
-                .SetChannelEventHandlerFactory( _ => logs.Add )
+                .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
                 .SetStreamEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -1418,12 +1476,19 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                         "[AwaitPacket] Client = [1] 'test'",
                         "[AwaitPacket] Client = [1] 'test', Packet = (UnbindPublisherRequest, Length = 9)"
                     ] ),
-                logs.GetAllChannel()
+                channelLogs.GetAll()
+                    .Skip( 1 )
                     .TestSequence(
                     [
-                        "[1::'c'::1] [Created] by client [1::'test']",
-                        "[1::'c'::<ROOT>] [Disposing]",
-                        "[1::'c'::<ROOT>] [Disposed]"
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindPublisher] Channel = [1] 'c', TraceId = 1 (start)",
+                            "[ClientTrace] Channel = [1] 'c', TraceId = 1, Correlation = (Client = [1] 'test', TraceId = 2)",
+                            "[PublisherUnbound] Channel = [1] 'c', TraceId = 1, Client = [1] 'test', Stream = [1] 'c' (removed)",
+                            "[Disposing] Channel = [1] 'c', TraceId = 1",
+                            "[Disposed] Channel = [1] 'c', TraceId = 1",
+                            "[Trace:UnbindPublisher] Channel = [1] 'c', TraceId = 1 (end)"
+                        ] )
                     ] ),
                 logs.GetAllStream()
                     .TestSequence(
@@ -1441,6 +1506,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
         var clientLogs = new ClientEventLogger();
+        var channelLogs = new ChannelEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
@@ -1456,7 +1522,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                                         endSource.Complete();
                                 } ) )
                         : null )
-                .SetChannelEventHandlerFactory( _ => logs.Add )
+                .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
                 .SetStreamEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -1559,7 +1625,18 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                         "[AwaitPacket] Client = [2] 'test2'",
                         "[AwaitPacket] Client = [2] 'test2', Packet = (UnbindPublisherRequest, Length = 9)"
                     ] ),
-                logs.GetAllChannel().TestSequence( [ "[1::'c'::1] [Created] by client [1::'test']" ] ),
+                channelLogs.GetAll()
+                    .Skip( 2 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindPublisher] Channel = [1] 'c', TraceId = 2 (start)",
+                            "[ClientTrace] Channel = [1] 'c', TraceId = 2, Correlation = (Client = [2] 'test2', TraceId = 2)",
+                            "[PublisherUnbound] Channel = [1] 'c', TraceId = 2, Client = [2] 'test2', Stream = [1] 'c'",
+                            "[Trace:UnbindPublisher] Channel = [1] 'c', TraceId = 2 (end)"
+                        ] )
+                    ] ),
                 logs.GetAllStream().TestSequence( [ "[1::'c'::1] [Created] by publisher [1::'test'] => [1::'c']" ] ) )
             .Go();
     }
@@ -1568,8 +1645,8 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
     public async Task Unbind_ShouldUnbindLastClientFromChannelWithListenerBindingAndNotRemoveIt()
     {
         var endSource = new SafeTaskCompletionSource();
-        var logs = new EventLogger();
         var clientLogs = new ClientEventLogger();
+        var channelLogs = new ChannelEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
@@ -1583,7 +1660,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                                 if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindPublisher )
                                     endSource.Complete();
                             } ) ) )
-                .SetChannelEventHandlerFactory( _ => logs.Add ) );
+                .SetChannelLoggerFactory( _ => channelLogs.GetLogger() ) );
 
         await server.StartAsync();
 
@@ -1652,7 +1729,18 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                         "[AwaitPacket] Client = [1] 'test'",
                         "[AwaitPacket] Client = [1] 'test', Packet = (UnbindPublisherRequest, Length = 9)"
                     ] ),
-                logs.GetAllChannel().TestSequence( [ "[1::'c'::1] [Created] by client [1::'test']" ] ) )
+                channelLogs.GetAll()
+                    .Skip( 2 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindPublisher] Channel = [1] 'c', TraceId = 2 (start)",
+                            "[ClientTrace] Channel = [1] 'c', TraceId = 2, Correlation = (Client = [1] 'test', TraceId = 3)",
+                            "[PublisherUnbound] Channel = [1] 'c', TraceId = 2, Client = [1] 'test', Stream = [1] 'c' (removed)",
+                            "[Trace:UnbindPublisher] Channel = [1] 'c', TraceId = 2 (end)"
+                        ] )
+                    ] ) )
             .Go();
     }
 
@@ -1660,8 +1748,8 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
     public async Task Unbind_ShouldDisposeClient_WhenClientSendsInvalidPayload()
     {
         var endSource = new SafeTaskCompletionSource();
-        var logs = new EventLogger();
         var clientLogs = new ClientEventLogger();
+        var channelLogs = new ChannelEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
@@ -1675,7 +1763,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                                 if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindPublisher )
                                     endSource.Complete();
                             } ) ) )
-                .SetChannelEventHandlerFactory( _ => logs.Add ) );
+                .SetChannelLoggerFactory( _ => channelLogs.GetLogger() ) );
 
         await server.StartAsync();
 
@@ -1726,12 +1814,19 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                         "[AwaitPacket] Client = [1] 'test'",
                         "[AwaitPacket] Client = [1] 'test', Packet = (UnbindPublisherRequest, Length = 8)"
                     ] ),
-                logs.GetAllChannel()
+                channelLogs.GetAll()
+                    .Skip( 1 )
                     .TestSequence(
                     [
-                        "[1::'c'::1] [Created] by client [1::'test']",
-                        "[1::'c'::<ROOT>] [Disposing]",
-                        "[1::'c'::<ROOT>] [Disposed]"
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindPublisher] Channel = [1] 'c', TraceId = 1 (start)",
+                            "[ClientTrace] Channel = [1] 'c', TraceId = 1, Correlation = (Client = [1] 'test', TraceId = 2)",
+                            "[PublisherUnbound] Channel = [1] 'c', TraceId = 1, Client = [1] 'test', Stream = [1] 'c'",
+                            "[Disposing] Channel = [1] 'c', TraceId = 1",
+                            "[Disposed] Channel = [1] 'c', TraceId = 1",
+                            "[Trace:UnbindPublisher] Channel = [1] 'c', TraceId = 1 (end)"
+                        ] )
                     ] ) )
             .Go();
     }
@@ -1880,7 +1975,6 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
     {
         Exception? exception = null;
         var endSource = new SafeTaskCompletionSource();
-        var logs = new EventLogger();
         var clientLogs = new ClientEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
@@ -1897,8 +1991,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                                         endSource.Complete();
                                 },
                                 error: e => exception = e.Exception ) )
-                        : null )
-                .SetChannelEventHandlerFactory( _ => logs.Add ) );
+                        : null ) );
 
         await server.StartAsync();
 
@@ -1967,8 +2060,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                     [
                         "[AwaitPacket] Client = [2] 'test2'",
                         "[AwaitPacket] Client = [2] 'test2', Packet = (UnbindPublisherRequest, Length = 9)"
-                    ] ),
-                logs.GetAllChannel().TestContainsSequence( [ "[1::'c'::1] [Created] by client [1::'test']" ] ) )
+                    ] ) )
             .Go();
     }
 }

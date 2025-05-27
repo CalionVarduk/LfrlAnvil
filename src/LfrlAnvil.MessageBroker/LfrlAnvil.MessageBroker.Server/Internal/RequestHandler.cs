@@ -225,6 +225,7 @@ internal struct RequestHandler
 
                 bool channelCreated;
                 var streamCreated = false;
+                ulong channelTraceId = 0;
                 MessageBrokerChannel? channel;
                 MessageBrokerStream? stream = null;
                 MessageBrokerChannelPublisherBinding? publisher = null;
@@ -249,6 +250,7 @@ internal struct RequestHandler
                                 channelCreated,
                                 streamName.Value,
                                 ref publisher,
+                                ref channelTraceId,
                                 ref stream,
                                 ref streamCreated );
                         }
@@ -300,8 +302,20 @@ internal struct RequestHandler
                     MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( client, traceId, request.Header )
                         .Emit( client.Logger.ReadPacket );
 
-                    if ( channelCreated )
-                        channel.Emit( MessageBrokerChannelEvent.Created( channel, client, traceId ) );
+                    using ( MessageBrokerChannelTraceEvent.CreateScope(
+                        channel,
+                        channelTraceId,
+                        MessageBrokerChannelTraceEventType.BindPublisher ) )
+                    {
+                        MessageBrokerChannelClientTraceEvent.Create( channel, channelTraceId, client, traceId )
+                            .Emit( channel.Logger.ClientTrace );
+
+                        if ( channelCreated )
+                            MessageBrokerChannelCreatedEvent.Create( channel, channelTraceId ).Emit( channel.Logger.Created );
+
+                        MessageBrokerChannelPublisherBoundEvent.Create( publisher, channelTraceId, streamCreated )
+                            .Emit( channel.Logger.PublisherBound );
+                    }
 
                     if ( streamCreated )
                         stream.Emit( MessageBrokerStreamEvent.Created( stream, publisher, traceId ) );
@@ -372,6 +386,7 @@ internal struct RequestHandler
 
                 var disposingChannel = false;
                 var disposingStream = false;
+                ulong channelTraceId = 0;
                 MessageBrokerChannelPublisherBinding? publisher = null;
                 MessageBrokerStream? stream = null;
                 Protocol.UnbindPublisherFailureResponse.Reasons rejectionReasons;
@@ -389,6 +404,7 @@ internal struct RequestHandler
                         rejectionReasons = client.BeginUnbindPublisherUnsafe(
                             channel,
                             ref publisher,
+                            ref channelTraceId,
                             ref stream,
                             ref disposingChannel,
                             ref disposingStream );
@@ -434,8 +450,20 @@ internal struct RequestHandler
                     if ( disposingStream )
                         await stream.DisposeDueToLackOfReferencesAsync( ignoreProcessorTask: false ).ConfigureAwait( false );
 
-                    if ( disposingChannel )
-                        channel.DisposeDueToLackOfReferences();
+                    using ( MessageBrokerChannelTraceEvent.CreateScope(
+                        channel,
+                        channelTraceId,
+                        MessageBrokerChannelTraceEventType.UnbindPublisher ) )
+                    {
+                        MessageBrokerChannelClientTraceEvent.Create( channel, channelTraceId, client, traceId )
+                            .Emit( channel.Logger.ClientTrace );
+
+                        MessageBrokerChannelPublisherUnboundEvent.Create( publisher, channelTraceId, disposingStream )
+                            .Emit( channel.Logger.PublisherUnbound );
+
+                        if ( disposingChannel )
+                            channel.DisposeDueToLackOfReferences( channelTraceId );
+                    }
 
                     publisher.EndDisposing();
 
@@ -548,6 +576,7 @@ internal struct RequestHandler
 
                 var channelCreated = false;
                 var queueCreated = false;
+                ulong channelTraceId = 0;
                 MessageBrokerChannel? channel;
                 MessageBrokerQueue? queue = null;
                 MessageBrokerChannelListenerBinding? listener = null;
@@ -582,6 +611,7 @@ internal struct RequestHandler
                                     queueName.Value,
                                     parsedRequestHeader.PrefetchHint,
                                     ref listener,
+                                    ref channelTraceId,
                                     ref queue,
                                     ref queueCreated );
                             }
@@ -632,8 +662,20 @@ internal struct RequestHandler
                     MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( client, traceId, request.Header )
                         .Emit( client.Logger.ReadPacket );
 
-                    if ( channelCreated )
-                        channel.Emit( MessageBrokerChannelEvent.Created( channel, client, traceId ) );
+                    using ( MessageBrokerChannelTraceEvent.CreateScope(
+                        channel,
+                        channelTraceId,
+                        MessageBrokerChannelTraceEventType.BindListener ) )
+                    {
+                        MessageBrokerChannelClientTraceEvent.Create( channel, channelTraceId, client, traceId )
+                            .Emit( channel.Logger.ClientTrace );
+
+                        if ( channelCreated )
+                            MessageBrokerChannelCreatedEvent.Create( channel, channelTraceId ).Emit( channel.Logger.Created );
+
+                        MessageBrokerChannelListenerBoundEvent.Create( listener, channelTraceId, queueCreated )
+                            .Emit( channel.Logger.ListenerBound );
+                    }
 
                     if ( queueCreated )
                         queue.Emit( MessageBrokerQueueEvent.Created( queue, listener, traceId ) );
@@ -701,6 +743,7 @@ internal struct RequestHandler
 
                 var disposingChannel = false;
                 var disposingQueue = false;
+                ulong channelTraceId = 0;
                 MessageBrokerChannelListenerBinding? listener = null;
                 MessageBrokerQueue? queue = null;
                 Protocol.UnbindListenerFailureResponse.Reasons rejectionReasons;
@@ -718,6 +761,7 @@ internal struct RequestHandler
                         rejectionReasons = client.BeginUnbindListenerUnsafe(
                             channel,
                             ref listener,
+                            ref channelTraceId,
                             ref queue,
                             ref disposingChannel,
                             ref disposingQueue );
@@ -767,8 +811,20 @@ internal struct RequestHandler
                     if ( disposingQueue )
                         await queue.DisposeDueToLackOfReferencesAsync( ignoreProcessorTask: false ).ConfigureAwait( false );
 
-                    if ( disposingChannel )
-                        channel.DisposeDueToLackOfReferences();
+                    using ( MessageBrokerChannelTraceEvent.CreateScope(
+                        channel,
+                        channelTraceId,
+                        MessageBrokerChannelTraceEventType.UnbindListener ) )
+                    {
+                        MessageBrokerChannelClientTraceEvent.Create( channel, channelTraceId, client, traceId )
+                            .Emit( channel.Logger.ClientTrace );
+
+                        MessageBrokerChannelListenerUnboundEvent.Create( listener, channelTraceId, disposingQueue )
+                            .Emit( channel.Logger.ListenerUnbound );
+
+                        if ( disposingChannel )
+                            channel.DisposeDueToLackOfReferences( channelTraceId );
+                    }
 
                     listener.EndDisposing();
 

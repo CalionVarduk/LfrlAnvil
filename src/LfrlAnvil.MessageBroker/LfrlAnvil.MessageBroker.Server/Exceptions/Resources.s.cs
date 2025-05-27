@@ -46,6 +46,27 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string ChannelDisposed(int id, string name)
+    {
+        return $"Operation has been cancelled because channel [{id}] '{name}' is disposed.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string ClientIsNotBoundAsPublisher(MessageBrokerChannel channel, MessageBrokerRemoteClient client)
+    {
+        return $"Client [{client.Id}] '{client.Name}' is not bound as publisher to channel [{channel.Id}] '{channel.Name}'.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string ClientIsNotBoundAsListener(MessageBrokerChannel channel, MessageBrokerRemoteClient client)
+    {
+        return $"Client [{client.Id}] '{client.Name}' is not bound as listener to channel [{channel.Id}] '{channel.Name}'.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string InvalidEndiannessPayload(uint received)
     {
         return $"Expected endianness verification payload to be {Protocol.Endianness.VerificationPayload:x8} but found {received:x8}.";

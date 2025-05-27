@@ -40,7 +40,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     internal ChannelCollection ChannelCollection;
     internal StreamCollection StreamCollection;
     internal readonly Func<MessageBrokerRemoteClient, MessageBrokerRemoteClientLogger?>? RemoteClientLoggerFactory;
-    internal readonly Func<MessageBrokerChannel, MessageBrokerChannelEventHandler?>? ChannelEventHandlerFactory;
+    internal readonly Func<MessageBrokerChannel, MessageBrokerChannelLogger?>? ChannelLoggerFactory;
     internal readonly Func<MessageBrokerStream, MessageBrokerStreamEventHandler?>? StreamEventHandlerFactory;
     internal readonly Func<MessageBrokerQueue, MessageBrokerQueueEventHandler?>? QueueEventHandlerFactory;
 
@@ -68,7 +68,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         AcceptablePingInterval = Defaults.Temporal.GetActualPingIntervalBounds( options.AcceptablePingInterval );
         Logger = options.Logger ?? default;
         RemoteClientLoggerFactory = options.ClientLoggerFactory;
-        ChannelEventHandlerFactory = options.ChannelEventHandlerFactory;
+        ChannelLoggerFactory = options.ChannelLoggerFactory;
         StreamEventHandlerFactory = options.StreamEventHandlerFactory;
         QueueEventHandlerFactory = options.QueueEventHandlerFactory;
         TimestampsFactory = options.TimestampsFactory ?? (static _ => TimestampProvider.Shared);
@@ -363,7 +363,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
 
         await Parallel.ForEachAsync( streams, static (s, _) => s.OnServerDisposedAsync() ).ConfigureAwait( false );
         foreach ( var channel in channels )
-            channel.OnServerDisposed();
+            channel.OnServerDisposed( traceId );
 
         await Parallel.ForEachAsync( clients, (c, _) => c.OnServerDisposedAsync( traceId ) ).ConfigureAwait( false );
 

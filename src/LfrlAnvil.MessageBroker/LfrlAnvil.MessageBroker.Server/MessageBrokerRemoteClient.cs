@@ -293,6 +293,7 @@ public sealed partial class MessageBrokerRemoteClient
         bool channelCreated,
         string streamName,
         ref MessageBrokerChannelPublisherBinding? publisher,
+        ref ulong channelTraceId,
         ref MessageBrokerStream? stream,
         ref bool streamCreated)
     {
@@ -339,6 +340,7 @@ public sealed partial class MessageBrokerRemoteClient
 
                     PublishersByChannelId.Add( channel.Id, publisher );
                     stream.PublishersByClientChannelIdPair.Add( new Pair<int, int>( Id, channel.Id ), publisher );
+                    channelTraceId = channel.GetTraceId();
                 }
             }
             catch
@@ -354,6 +356,7 @@ public sealed partial class MessageBrokerRemoteClient
     internal Protocol.UnbindPublisherFailureResponse.Reasons BeginUnbindPublisherUnsafe(
         MessageBrokerChannel channel,
         ref MessageBrokerChannelPublisherBinding? publisher,
+        ref ulong channelTraceId,
         ref MessageBrokerStream? stream,
         ref bool disposingChannel,
         ref bool disposingStream)
@@ -378,6 +381,7 @@ public sealed partial class MessageBrokerRemoteClient
                     PublishersByChannelId.Remove( channel.Id );
                     disposingChannel = channel.TryDisposeByRemovingPublisherUnsafe( Id );
                     disposingStream = stream.TryDisposeByRemovingPublisherUnsafe( Id, channel.Id );
+                    channelTraceId = channel.GetTraceId();
                 }
             }
         }
@@ -391,6 +395,7 @@ public sealed partial class MessageBrokerRemoteClient
         string queueName,
         int prefetchHint,
         ref MessageBrokerChannelListenerBinding? listener,
+        ref ulong channelTraceId,
         ref MessageBrokerQueue? queue,
         ref bool queueCreated)
     {
@@ -437,6 +442,7 @@ public sealed partial class MessageBrokerRemoteClient
 
                     ListenersByChannelId.Add( channel.Id, listener );
                     queue.ListenersByChannelId.Add( channel.Id, listener );
+                    channelTraceId = channel.GetTraceId();
                 }
             }
             catch
@@ -473,6 +479,7 @@ public sealed partial class MessageBrokerRemoteClient
     internal Protocol.UnbindListenerFailureResponse.Reasons BeginUnbindListenerUnsafe(
         MessageBrokerChannel channel,
         ref MessageBrokerChannelListenerBinding? listener,
+        ref ulong channelTraceId,
         ref MessageBrokerQueue? queue,
         ref bool disposingChannel,
         ref bool disposingQueue)
@@ -497,6 +504,7 @@ public sealed partial class MessageBrokerRemoteClient
                     ListenersByChannelId.Remove( channel.Id );
                     disposingChannel = channel.TryDisposeByRemovingListenerUnsafe( Id );
                     disposingQueue = queue.TryDisposeByRemovingListenerUnsafe( channel.Id );
+                    channelTraceId = channel.GetTraceId();
                 }
             }
         }

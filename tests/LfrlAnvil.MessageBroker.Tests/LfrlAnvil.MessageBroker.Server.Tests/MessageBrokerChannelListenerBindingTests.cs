@@ -24,6 +24,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
         var clientLogs = new ClientEventLogger();
+        var channelLogs = new ChannelEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
@@ -37,7 +38,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                                 if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
                                     endSource.Complete();
                             } ) ) )
-                .SetChannelEventHandlerFactory( _ => logs.Add )
+                .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
                 .SetQueueEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -126,7 +127,18 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         "[AwaitPacket] Client = [1] 'test'",
                         "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 15)"
                     ] ),
-                logs.GetAllChannel().TestSequence( [ "[1::'c'::1] [Created] by client [1::'test']" ] ),
+                channelLogs.GetAll()
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Channel = [1] 'c', TraceId = 0 (start)",
+                            "[ClientTrace] Channel = [1] 'c', TraceId = 0, Correlation = (Client = [1] 'test', TraceId = 1)",
+                            "[Created] Channel = [1] 'c', TraceId = 0",
+                            "[ListenerBound] Channel = [1] 'c', TraceId = 0, Client = [1] 'test', Queue = [1] 'c' (created), PrefetchHint = 1",
+                            "[Trace:BindListener] Channel = [1] 'c', TraceId = 0 (end)"
+                        ] )
+                    ] ),
                 logs.GetAllQueue().TestSequence( [ "[1::'test'::'c'::1] [Created] by listener to [1::'c']" ] ) )
             .Go();
     }
@@ -137,6 +149,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
         var clientLogs = new ClientEventLogger();
+        var channelLogs = new ChannelEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
@@ -150,7 +163,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                                 if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
                                     endSource.Complete();
                             } ) ) )
-                .SetChannelEventHandlerFactory( _ => logs.Add )
+                .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
                 .SetQueueEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -236,7 +249,18 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         "[AwaitPacket] Client = [1] 'test'",
                         "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 15)"
                     ] ),
-                logs.GetAllChannel().TestSequence( [ "[1::'c'::1] [Created] by client [1::'test']" ] ),
+                channelLogs.GetAll()
+                    .Skip( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Channel = [1] 'c', TraceId = 1 (start)",
+                            "[ClientTrace] Channel = [1] 'c', TraceId = 1, Correlation = (Client = [1] 'test', TraceId = 2)",
+                            "[ListenerBound] Channel = [1] 'c', TraceId = 1, Client = [1] 'test', Queue = [1] 'c' (created), PrefetchHint = 10",
+                            "[Trace:BindListener] Channel = [1] 'c', TraceId = 1 (end)"
+                        ] )
+                    ] ),
                 logs.GetAllQueue().TestSequence( [ "[1::'test'::'c'::2] [Created] by listener to [1::'c']" ] ) )
             .Go();
     }
@@ -247,6 +271,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
         var endSource = new SafeTaskCompletionSource( completionCount: 2 );
         var logs = new EventLogger();
         var clientLogs = new ClientEventLogger();
+        var channelLogs = new ChannelEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
@@ -260,7 +285,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                                 if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
                                     endSource.Complete();
                             } ) ) )
-                .SetChannelEventHandlerFactory( _ => logs.Add )
+                .SetChannelLoggerFactory( c => c.Id == 2 ? channelLogs.GetLogger() : null )
                 .SetQueueEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -376,11 +401,17 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         "[AwaitPacket] Client = [1] 'test'",
                         "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 16)"
                     ] ),
-                logs.GetAllChannel()
+                channelLogs.GetAll()
                     .TestSequence(
                     [
-                        "[1::'c'::1] [Created] by client [1::'test']",
-                        "[2::'d'::2] [Created] by client [1::'test']"
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Channel = [2] 'd', TraceId = 0 (start)",
+                            "[ClientTrace] Channel = [2] 'd', TraceId = 0, Correlation = (Client = [1] 'test', TraceId = 2)",
+                            "[Created] Channel = [2] 'd', TraceId = 0",
+                            "[ListenerBound] Channel = [2] 'd', TraceId = 0, Client = [1] 'test', Queue = [1] 'c', PrefetchHint = 1",
+                            "[Trace:BindListener] Channel = [2] 'd', TraceId = 0 (end)"
+                        ] )
                     ] ),
                 logs.GetAllQueue().TestSequence( [ "[1::'test'::'c'::1] [Created] by listener to [1::'c']" ] ) )
             .Go();
@@ -407,7 +438,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                                     or MessageBrokerRemoteClientTraceEventType.Unexpected )
                                     endSource.Complete();
                             } ) ) )
-                .SetChannelEventHandlerFactory( _ => throw exception ) );
+                .SetChannelLoggerFactory( _ => throw exception ) );
 
         await server.StartAsync();
 
@@ -1099,7 +1130,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
     }
 
     [Fact]
-    public async Task Creation_ShouldNotThrow_WhenChannelOrQueueEventHandlerThrows()
+    public async Task Creation_ShouldNotThrow_WhenQueueEventHandlerThrows()
     {
         var endSource = new SafeTaskCompletionSource();
         var clientLogs = new ClientEventLogger();
@@ -1116,7 +1147,6 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                                 if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
                                     endSource.Complete();
                             } ) ) )
-                .SetChannelEventHandlerFactory( _ => _ => throw new Exception( "foo" ) )
                 .SetQueueEventHandlerFactory( _ => _ => throw new Exception( "bar" ) ) );
 
         await server.StartAsync();
@@ -1189,13 +1219,14 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
     {
         var logs = new EventLogger();
         var clientLogs = new ClientEventLogger();
+        var channelLogs = new ChannelEventLogger();
         var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
                 .SetClientLoggerFactory( _ => clientLogs.GetLogger() )
-                .SetChannelEventHandlerFactory( _ => logs.Add )
+                .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
                 .SetQueueEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -1237,12 +1268,18 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         q.Listeners.Count.TestEquals( 0 ),
                         q.Listeners.GetAll().TestEmpty() ) ),
                 binding.TestNotNull( s => s.State.TestEquals( MessageBrokerChannelListenerBindingState.Disposed ) ),
-                logs.GetAllChannel()
+                channelLogs.GetAll()
+                    .Skip( 1 )
                     .TestSequence(
                     [
-                        "[1::'c'::1] [Created] by client [1::'test']",
-                        "[1::'c'::<ROOT>] [Disposing]",
-                        "[1::'c'::<ROOT>] [Disposed]"
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:Dispose] Channel = [1] 'c', TraceId = 1 (start)",
+                            $"[ServerTrace] Channel = [1] 'c', TraceId = 1, Correlation = (Server = {server.LocalEndPoint}, TraceId = 2)",
+                            "[Disposing] Channel = [1] 'c', TraceId = 1",
+                            "[Disposed] Channel = [1] 'c', TraceId = 1",
+                            "[Trace:Dispose] Channel = [1] 'c', TraceId = 1 (end)"
+                        ] )
                     ] ),
                 logs.GetAllQueue()
                     .TestSequence(
@@ -1272,13 +1309,14 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
     {
         var logs = new EventLogger();
         var clientLogs = new ClientEventLogger();
+        var channelLogs = new ChannelEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
                 .SetClientLoggerFactory( _ => clientLogs.GetLogger() )
-                .SetChannelEventHandlerFactory( _ => logs.Add )
+                .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
                 .SetQueueEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -1329,12 +1367,26 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         q.Listeners.GetAll().TestEmpty() ) ),
                 listenerBinding.TestNotNull( s => s.State.TestEquals( MessageBrokerChannelListenerBindingState.Disposed ) ),
                 publisherBinding.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Disposed ) ),
-                logs.GetAllChannel()
+                channelLogs.GetAll()
+                    .Skip( 2 )
                     .TestSequence(
                     [
-                        "[1::'c'::1] [Created] by client [1::'test']",
-                        "[1::'c'::<ROOT>] [Disposing]",
-                        "[1::'c'::<ROOT>] [Disposed]"
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindPublisher] Channel = [1] 'c', TraceId = 2 (start)",
+                            "[ClientTrace] Channel = [1] 'c', TraceId = 2, Correlation = (Client = [1] 'test', TraceId = 3)",
+                            "[PublisherUnbound] Channel = [1] 'c', TraceId = 2, Client = [1] 'test', Stream = [1] 'c'",
+                            "[Trace:UnbindPublisher] Channel = [1] 'c', TraceId = 2 (end)"
+                        ] ),
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindListener] Channel = [1] 'c', TraceId = 3 (start)",
+                            "[ClientTrace] Channel = [1] 'c', TraceId = 3, Correlation = (Client = [1] 'test', TraceId = 3)",
+                            "[ListenerUnbound] Channel = [1] 'c', TraceId = 3, Client = [1] 'test', Queue = [1] 'c'",
+                            "[Disposing] Channel = [1] 'c', TraceId = 3",
+                            "[Disposed] Channel = [1] 'c', TraceId = 3",
+                            "[Trace:UnbindListener] Channel = [1] 'c', TraceId = 3 (end)"
+                        ] )
                     ] ),
                 logs.GetAllQueue()
                     .TestSequence(
@@ -1364,13 +1416,14 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
     {
         var logs = new EventLogger();
         var clientLogs = new ClientEventLogger();
+        var channelLogs = new ChannelEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
                 .SetClientLoggerFactory( c => c.Id == 2 ? clientLogs.GetLogger() : null )
-                .SetChannelEventHandlerFactory( _ => logs.Add )
+                .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
                 .SetQueueEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -1431,7 +1484,18 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         q.Listeners.Count.TestEquals( 0 ),
                         q.Listeners.GetAll().TestEmpty() ) ),
                 listenerBinding.TestNotNull( s => s.State.TestEquals( MessageBrokerChannelListenerBindingState.Disposed ) ),
-                logs.GetAllChannel().TestSequence( [ "[1::'c'::1] [Created] by client [1::'test']" ] ),
+                channelLogs.GetAll()
+                    .Skip( 2 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindListener] Channel = [1] 'c', TraceId = 2 (start)",
+                            "[ClientTrace] Channel = [1] 'c', TraceId = 2, Correlation = (Client = [2] 'test2', TraceId = 2)",
+                            "[ListenerUnbound] Channel = [1] 'c', TraceId = 2, Client = [2] 'test2', Queue = [1] 'c'",
+                            "[Trace:UnbindListener] Channel = [1] 'c', TraceId = 2 (end)"
+                        ] )
+                    ] ),
                 logs.GetAllQueue()
                     .TestSequence(
                     [
@@ -1460,13 +1524,14 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
     {
         var logs = new EventLogger();
         var clientLogs = new ClientEventLogger();
+        var channelLogs = new ChannelEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
                 .SetClientLoggerFactory( _ => clientLogs.GetLogger() )
-                .SetChannelEventHandlerFactory( _ => logs.Add )
+                .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
                 .SetQueueEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -1513,12 +1578,19 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         q.Listeners.Count.TestEquals( 0 ),
                         q.Listeners.GetAll().TestEmpty() ) ),
                 binding.TestNotNull( s => s.State.TestEquals( MessageBrokerChannelListenerBindingState.Disposed ) ),
-                logs.GetAllChannel()
+                channelLogs.GetAll()
+                    .Skip( 1 )
                     .TestSequence(
                     [
-                        "[1::'c'::1] [Created] by client [1::'test']",
-                        "[1::'c'::<ROOT>] [Disposing]",
-                        "[1::'c'::<ROOT>] [Disposed]"
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindListener] Channel = [1] 'c', TraceId = 1 (start)",
+                            "[ClientTrace] Channel = [1] 'c', TraceId = 1, Correlation = (Client = [1] 'test', TraceId = 2)",
+                            "[ListenerUnbound] Channel = [1] 'c', TraceId = 1, Client = [1] 'test', Queue = [1] 'c'",
+                            "[Disposing] Channel = [1] 'c', TraceId = 1",
+                            "[Disposed] Channel = [1] 'c', TraceId = 1",
+                            "[Trace:UnbindListener] Channel = [1] 'c', TraceId = 1 (end)"
+                        ] )
                     ] ),
                 logs.GetAllQueue()
                     .TestSequence(
@@ -1547,13 +1619,14 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
     {
         var logs = new EventLogger();
         var clientLogs = new ClientEventLogger();
+        var channelLogs = new ChannelEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
                 .SetClientLoggerFactory( c => c.Id == 2 ? clientLogs.GetLogger() : null )
-                .SetChannelEventHandlerFactory( _ => logs.Add )
+                .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
                 .SetQueueEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -1624,7 +1697,18 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         q.Listeners.GetAll().TestEmpty() ) ),
                 binding1.TestNotNull( s => s.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ) ),
                 binding2.TestNotNull( s => s.State.TestEquals( MessageBrokerChannelListenerBindingState.Disposed ) ),
-                logs.GetAllChannel().TestSequence( [ "[1::'c'::1] [Created] by client [1::'test']" ] ),
+                channelLogs.GetAll()
+                    .Skip( 2 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindListener] Channel = [1] 'c', TraceId = 2 (start)",
+                            "[ClientTrace] Channel = [1] 'c', TraceId = 2, Correlation = (Client = [2] 'test2', TraceId = 2)",
+                            "[ListenerUnbound] Channel = [1] 'c', TraceId = 2, Client = [2] 'test2', Queue = [1] 'c'",
+                            "[Trace:UnbindListener] Channel = [1] 'c', TraceId = 2 (end)"
+                        ] )
+                    ] ),
                 logs.GetAllQueue()
                     .TestSequence(
                     [
@@ -1654,6 +1738,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
         var clientLogs = new ClientEventLogger();
+        var channelLogs = new ChannelEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
@@ -1667,7 +1752,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                                 if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindListener )
                                     endSource.Complete();
                             } ) ) )
-                .SetChannelEventHandlerFactory( _ => logs.Add )
+                .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
                 .SetQueueEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -1740,12 +1825,19 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         "[AwaitPacket] Client = [1] 'test'",
                         "[AwaitPacket] Client = [1] 'test', Packet = (UnbindListenerRequest, Length = 9)"
                     ] ),
-                logs.GetAllChannel()
+                channelLogs.GetAll()
+                    .Skip( 1 )
                     .TestSequence(
                     [
-                        "[1::'c'::1] [Created] by client [1::'test']",
-                        "[1::'c'::<ROOT>] [Disposing]",
-                        "[1::'c'::<ROOT>] [Disposed]"
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindListener] Channel = [1] 'c', TraceId = 1 (start)",
+                            "[ClientTrace] Channel = [1] 'c', TraceId = 1, Correlation = (Client = [1] 'test', TraceId = 2)",
+                            "[ListenerUnbound] Channel = [1] 'c', TraceId = 1, Client = [1] 'test', Queue = [1] 'c' (removed)",
+                            "[Disposing] Channel = [1] 'c', TraceId = 1",
+                            "[Disposed] Channel = [1] 'c', TraceId = 1",
+                            "[Trace:UnbindListener] Channel = [1] 'c', TraceId = 1 (end)"
+                        ] )
                     ] ),
                 logs.GetAllQueue()
                     .TestSequence(
@@ -1763,6 +1855,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
         var clientLogs = new ClientEventLogger();
+        var channelLogs = new ChannelEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
@@ -1778,7 +1871,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                                         endSource.Complete();
                                 } ) )
                         : null )
-                .SetChannelEventHandlerFactory( _ => logs.Add )
+                .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
                 .SetQueueEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -1874,7 +1967,18 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         "[AwaitPacket] Client = [2] 'test2'",
                         "[AwaitPacket] Client = [2] 'test2', Packet = (UnbindListenerRequest, Length = 9)"
                     ] ),
-                logs.GetAllChannel().TestSequence( [ "[1::'c'::1] [Created] by client [1::'test']" ] ),
+                channelLogs.GetAll()
+                    .Skip( 2 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindListener] Channel = [1] 'c', TraceId = 2 (start)",
+                            "[ClientTrace] Channel = [1] 'c', TraceId = 2, Correlation = (Client = [2] 'test2', TraceId = 2)",
+                            "[ListenerUnbound] Channel = [1] 'c', TraceId = 2, Client = [2] 'test2', Queue = [1] 'c' (removed)",
+                            "[Trace:UnbindListener] Channel = [1] 'c', TraceId = 2 (end)"
+                        ] )
+                    ] ),
                 logs.GetAllQueue()
                     .TestSequence(
                     [
@@ -1892,6 +1996,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
         var clientLogs = new ClientEventLogger();
+        var channelLogs = new ChannelEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
@@ -1905,7 +2010,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                                 if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindListener )
                                     endSource.Complete();
                             } ) ) )
-                .SetChannelEventHandlerFactory( _ => logs.Add )
+                .SetChannelLoggerFactory( c => c.Id == 1 ? channelLogs.GetLogger() : null )
                 .SetQueueEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -1975,13 +2080,19 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         "[AwaitPacket] Client = [1] 'test'",
                         "[AwaitPacket] Client = [1] 'test', Packet = (UnbindListenerRequest, Length = 9)"
                     ] ),
-                logs.GetAllChannel()
+                channelLogs.GetAll()
+                    .Skip( 1 )
                     .TestSequence(
                     [
-                        "[1::'c'::1] [Created] by client [1::'test']",
-                        "[2::'d'::2] [Created] by client [1::'test']",
-                        "[1::'c'::<ROOT>] [Disposing]",
-                        "[1::'c'::<ROOT>] [Disposed]"
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindListener] Channel = [1] 'c', TraceId = 1 (start)",
+                            "[ClientTrace] Channel = [1] 'c', TraceId = 1, Correlation = (Client = [1] 'test', TraceId = 3)",
+                            "[ListenerUnbound] Channel = [1] 'c', TraceId = 1, Client = [1] 'test', Queue = [1] 'c'",
+                            "[Disposing] Channel = [1] 'c', TraceId = 1",
+                            "[Disposed] Channel = [1] 'c', TraceId = 1",
+                            "[Trace:UnbindListener] Channel = [1] 'c', TraceId = 1 (end)"
+                        ] )
                     ] ),
                 logs.GetAllQueue().TestSequence( [ "[1::'test'::'c'::1] [Created] by listener to [1::'c']" ] ) )
             .Go();
@@ -1993,6 +2104,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
         var endSource = new SafeTaskCompletionSource();
         var logs = new EventLogger();
         var clientLogs = new ClientEventLogger();
+        var channelLogs = new ChannelEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
@@ -2006,7 +2118,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                                 if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindListener )
                                     endSource.Complete();
                             } ) ) )
-                .SetChannelEventHandlerFactory( _ => logs.Add )
+                .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
                 .SetQueueEventHandlerFactory( _ => logs.Add ) );
 
         await server.StartAsync();
@@ -2085,7 +2197,18 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         "[AwaitPacket] Client = [1] 'test'",
                         "[AwaitPacket] Client = [1] 'test', Packet = (UnbindListenerRequest, Length = 9)"
                     ] ),
-                logs.GetAllChannel().TestSequence( [ "[1::'c'::1] [Created] by client [1::'test']" ] ),
+                channelLogs.GetAll()
+                    .Skip( 2 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindListener] Channel = [1] 'c', TraceId = 2 (start)",
+                            "[ClientTrace] Channel = [1] 'c', TraceId = 2, Correlation = (Client = [1] 'test', TraceId = 3)",
+                            "[ListenerUnbound] Channel = [1] 'c', TraceId = 2, Client = [1] 'test', Queue = [1] 'c' (removed)",
+                            "[Trace:UnbindListener] Channel = [1] 'c', TraceId = 2 (end)"
+                        ] )
+                    ] ),
                 logs.GetAllQueue()
                     .TestSequence(
                     [
@@ -2100,8 +2223,8 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
     public async Task Unbind_ShouldDisposeClient_WhenClientSendsInvalidPayload()
     {
         var endSource = new SafeTaskCompletionSource();
-        var logs = new EventLogger();
         var clientLogs = new ClientEventLogger();
+        var channelLogs = new ChannelEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
@@ -2115,7 +2238,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                                 if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindListener )
                                     endSource.Complete();
                             } ) ) )
-                .SetChannelEventHandlerFactory( _ => logs.Add ) );
+                .SetChannelLoggerFactory( _ => channelLogs.GetLogger() ) );
 
         await server.StartAsync();
 
@@ -2166,12 +2289,19 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         "[AwaitPacket] Client = [1] 'test'",
                         "[AwaitPacket] Client = [1] 'test', Packet = (UnbindListenerRequest, Length = 8)"
                     ] ),
-                logs.GetAllChannel()
+                channelLogs.GetAll()
+                    .Skip( 1 )
                     .TestSequence(
                     [
-                        "[1::'c'::1] [Created] by client [1::'test']",
-                        "[1::'c'::<ROOT>] [Disposing]",
-                        "[1::'c'::<ROOT>] [Disposed]"
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindListener] Channel = [1] 'c', TraceId = 1 (start)",
+                            "[ClientTrace] Channel = [1] 'c', TraceId = 1, Correlation = (Client = [1] 'test', TraceId = 2)",
+                            "[ListenerUnbound] Channel = [1] 'c', TraceId = 1, Client = [1] 'test', Queue = [1] 'c'",
+                            "[Disposing] Channel = [1] 'c', TraceId = 1",
+                            "[Disposed] Channel = [1] 'c', TraceId = 1",
+                            "[Trace:UnbindListener] Channel = [1] 'c', TraceId = 1 (end)"
+                        ] )
                     ] ) )
             .Go();
     }
@@ -2322,7 +2452,6 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
     {
         Exception? exception = null;
         var endSource = new SafeTaskCompletionSource();
-        var logs = new EventLogger();
         var clientLogs = new ClientEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
@@ -2339,8 +2468,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                                         endSource.Complete();
                                 },
                                 error: e => exception = e.Exception ) )
-                        : null )
-                .SetChannelEventHandlerFactory( _ => logs.Add ) );
+                        : null ) );
 
         await server.StartAsync();
 
@@ -2409,8 +2537,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                     [
                         "[AwaitPacket] Client = [2] 'test2'",
                         "[AwaitPacket] Client = [2] 'test2', Packet = (UnbindListenerRequest, Length = 9)"
-                    ] ),
-                logs.GetAllChannel().TestContainsSequence( [ "[1::'c'::1] [Created] by client [1::'test']" ] ) )
+                    ] ) )
             .Go();
     }
 }

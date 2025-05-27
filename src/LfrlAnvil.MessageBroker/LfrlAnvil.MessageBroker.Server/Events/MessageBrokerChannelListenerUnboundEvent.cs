@@ -18,27 +18,21 @@ using System.Runtime.CompilerServices;
 namespace LfrlAnvil.MessageBroker.Server.Events;
 
 /// <summary>
-/// Represents an event emitted by <see cref="MessageBrokerRemoteClient"/> related to a listener being successfully unbound.
+/// Represents an event emitted by <see cref="MessageBrokerChannel"/> related to a listener being successfully unbound.
 /// </summary>
-public readonly struct MessageBrokerRemoteClientListenerUnboundEvent
+public readonly struct MessageBrokerChannelListenerUnboundEvent
 {
-    private readonly byte _state;
-
-    private MessageBrokerRemoteClientListenerUnboundEvent(
-        MessageBrokerChannelListenerBinding listener,
-        ulong traceId,
-        bool channelRemoved,
-        bool queueRemoved)
+    private MessageBrokerChannelListenerUnboundEvent(MessageBrokerChannelListenerBinding listener, ulong traceId, bool queueRemoved)
     {
-        Source = MessageBrokerRemoteClientEventSource.Create( listener.Client, traceId );
+        Source = MessageBrokerChannelEventSource.Create( listener.Channel, traceId );
         Listener = listener;
-        _state = ( byte )((channelRemoved ? 1 : 0) | (queueRemoved ? 2 : 0));
+        QueueRemoved = queueRemoved;
     }
 
     /// <summary>
     /// Event source.
     /// </summary>
-    public MessageBrokerRemoteClientEventSource Source { get; }
+    public MessageBrokerChannelEventSource Source { get; }
 
     /// <summary>
     /// Unbound listener.
@@ -46,36 +40,29 @@ public readonly struct MessageBrokerRemoteClientListenerUnboundEvent
     public MessageBrokerChannelListenerBinding Listener { get; }
 
     /// <summary>
-    /// Specifies whether or not removal of the channel bound to the <see cref="Listener"/> was part of the unbinding operation.
-    /// </summary>
-    public bool ChannelRemoved => (_state & 1) != 0;
-
-    /// <summary>
     /// Specifies whether or not removal of the queue bound to the <see cref="Listener"/> was part of the unbinding operation.
     /// </summary>
-    public bool QueueRemoved => (_state & 2) != 0;
+    public bool QueueRemoved { get; }
 
     /// <summary>
-    /// Returns a string representation of this <see cref="MessageBrokerRemoteClientListenerUnboundEvent"/> instance.
+    /// Returns a string representation of this <see cref="MessageBrokerChannelListenerUnboundEvent"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
-        var channelRemoved = ChannelRemoved ? " (removed)" : string.Empty;
         var queueRemoved = QueueRemoved ? " (removed)" : string.Empty;
         return
-            $"[ListenerUnbound] {Source}, Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}'{channelRemoved}, Queue = [{Listener.Queue.Id}] '{Listener.Queue.Name}'{queueRemoved}";
+            $"[ListenerUnbound] {Source}, Client = [{Listener.Client.Id}] '{Listener.Client.Name}', Queue = [{Listener.Queue.Id}] '{Listener.Queue.Name}'{queueRemoved}";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerRemoteClientListenerUnboundEvent Create(
+    internal static MessageBrokerChannelListenerUnboundEvent Create(
         MessageBrokerChannelListenerBinding listener,
         ulong traceId,
-        bool channelRemoved,
         bool queueRemoved)
     {
-        return new MessageBrokerRemoteClientListenerUnboundEvent( listener, traceId, channelRemoved, queueRemoved );
+        return new MessageBrokerChannelListenerUnboundEvent( listener, traceId, queueRemoved );
     }
 }

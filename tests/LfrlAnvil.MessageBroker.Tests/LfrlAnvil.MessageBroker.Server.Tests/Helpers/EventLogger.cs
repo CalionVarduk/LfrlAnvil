@@ -6,15 +6,8 @@ namespace LfrlAnvil.MessageBroker.Server.Tests.Helpers;
 
 public sealed class EventLogger
 {
-    private readonly List<string> _channelEvents = new List<string>();
     private readonly List<string> _streamEvents = new List<string>();
     private readonly List<string> _queueEvents = new List<string>();
-
-    public void Add(MessageBrokerChannelEvent e)
-    {
-        lock ( _channelEvents )
-            _channelEvents.Add( e.ToString() );
-    }
 
     public void Add(MessageBrokerStreamEvent e)
     {
@@ -26,13 +19,6 @@ public sealed class EventLogger
     {
         lock ( _queueEvents )
             _queueEvents.Add( e.ToString() );
-    }
-
-    [Pure]
-    public string[] GetAllChannel()
-    {
-        lock ( _channelEvents )
-            return _channelEvents.ToArray();
     }
 
     [Pure]

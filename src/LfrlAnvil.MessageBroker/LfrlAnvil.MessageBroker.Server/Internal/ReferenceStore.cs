@@ -91,6 +91,19 @@ internal struct ReferenceStore<TKey, T>
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool Remove(TKey key, [MaybeNullWhen( false )] out T removed)
+    {
+        try
+        {
+            return _map.Remove( key, out removed );
+        }
+        finally
+        {
+            _cache = null;
+        }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal T[] ClearAndExtract()
     {
         var result = _cache;

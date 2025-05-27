@@ -16,6 +16,7 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Async;
 using LfrlAnvil.MessageBroker.Server.Events;
+using LfrlAnvil.MessageBroker.Server.Exceptions;
 using LfrlAnvil.MessageBroker.Server.Internal;
 
 namespace LfrlAnvil.MessageBroker.Server;
@@ -27,9 +28,10 @@ public sealed class MessageBrokerChannel
 {
     internal ReferenceStore<int, MessageBrokerChannelPublisherBinding> PublishersByClientId;
     internal ReferenceStore<int, MessageBrokerChannelListenerBinding> ListenersByClientId;
+    internal readonly MessageBrokerChannelLogger Logger;
     private readonly object _sync = new object();
-    private readonly MessageBrokerChannelEventHandler? _eventHandler;
     private MessageBrokerChannelState _state;
+    private ulong _nextTraceId;
 
     internal MessageBrokerChannel(MessageBrokerServer server, int id, string name)
     {
@@ -37,9 +39,10 @@ public sealed class MessageBrokerChannel
         Id = id;
         Name = name;
         _state = MessageBrokerChannelState.Running;
+        _nextTraceId = 0;
         PublishersByClientId = ReferenceStore<int, MessageBrokerChannelPublisherBinding>.Create();
         ListenersByClientId = ReferenceStore<int, MessageBrokerChannelListenerBinding>.Create();
-        _eventHandler = Server.ChannelEventHandlerFactory?.Invoke( this );
+        Logger = Server.ChannelLoggerFactory?.Invoke( this ) ?? default;
     }
 
     /// <summary>
@@ -116,73 +119,128 @@ public sealed class MessageBrokerChannel
 
     internal void OnPublisherDisposing(MessageBrokerRemoteClient client, ulong clientTraceId)
     {
-        var dispose = false;
+        ulong traceId;
         using ( AcquireLock() )
         {
             if ( ShouldCancel )
                 return;
 
-            if ( PublishersByClientId.Remove( client.Id ) && PublishersByClientId.Count == 0 && ListenersByClientId.Count == 0 )
-            {
-                dispose = true;
-                _state = MessageBrokerChannelState.Disposing;
-            }
+            traceId = GetTraceId();
         }
 
-        if ( dispose )
-            DisposeDueToLackOfReferences();
+        using ( MessageBrokerChannelTraceEvent.CreateScope( this, traceId, MessageBrokerChannelTraceEventType.UnbindPublisher ) )
+        {
+            MessageBrokerChannelClientTraceEvent.Create( this, traceId, client, clientTraceId ).Emit( Logger.ClientTrace );
+
+            var dispose = false;
+            MessageBrokerChannelPublisherBinding? publisher;
+            using ( AcquireActiveLock( traceId, out var exc ) )
+            {
+                if ( exc is not null )
+                    return;
+
+                if ( PublishersByClientId.Remove( client.Id, out publisher )
+                    && PublishersByClientId.Count == 0
+                    && ListenersByClientId.Count == 0 )
+                {
+                    dispose = true;
+                    _state = MessageBrokerChannelState.Disposing;
+                }
+            }
+
+            if ( publisher is null )
+            {
+                var error = new MessageBrokerChannelException( this, Resources.ClientIsNotBoundAsPublisher( this, client ) );
+                MessageBrokerChannelErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
+                return;
+            }
+
+            MessageBrokerChannelPublisherUnboundEvent.Create( publisher, traceId, streamRemoved: false ).Emit( Logger.PublisherUnbound );
+            if ( dispose )
+                DisposeDueToLackOfReferences( traceId );
+        }
     }
 
     internal void OnListenerDisposing(MessageBrokerRemoteClient client, ulong clientTraceId)
     {
-        var dispose = false;
+        ulong traceId;
         using ( AcquireLock() )
         {
             if ( ShouldCancel )
                 return;
 
-            if ( ListenersByClientId.Remove( client.Id ) && PublishersByClientId.Count == 0 && ListenersByClientId.Count == 0 )
-            {
-                dispose = true;
-                _state = MessageBrokerChannelState.Disposing;
-            }
+            traceId = GetTraceId();
         }
 
-        if ( dispose )
-            DisposeDueToLackOfReferences();
+        using ( MessageBrokerChannelTraceEvent.CreateScope( this, traceId, MessageBrokerChannelTraceEventType.UnbindListener ) )
+        {
+            MessageBrokerChannelClientTraceEvent.Create( this, traceId, client, clientTraceId ).Emit( Logger.ClientTrace );
+
+            var dispose = false;
+            MessageBrokerChannelListenerBinding? listener;
+            using ( AcquireActiveLock( traceId, out var exc ) )
+            {
+                if ( exc is not null )
+                    return;
+
+                if ( ListenersByClientId.Remove( client.Id, out listener )
+                    && PublishersByClientId.Count == 0
+                    && ListenersByClientId.Count == 0 )
+                {
+                    dispose = true;
+                    _state = MessageBrokerChannelState.Disposing;
+                }
+            }
+
+            if ( listener is null )
+            {
+                var error = new MessageBrokerChannelException( this, Resources.ClientIsNotBoundAsListener( this, client ) );
+                MessageBrokerChannelErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
+                return;
+            }
+
+            MessageBrokerChannelListenerUnboundEvent.Create( listener, traceId, queueRemoved: false ).Emit( Logger.ListenerUnbound );
+            if ( dispose )
+                DisposeDueToLackOfReferences( traceId );
+        }
     }
 
-    internal void OnServerDisposed()
+    internal void OnServerDisposed(ulong serverTraceId)
     {
+        ulong traceId;
         using ( AcquireLock() )
         {
             if ( ShouldCancel )
                 return;
 
             _state = MessageBrokerChannelState.Disposing;
+            traceId = GetTraceId();
         }
 
-        Emit( MessageBrokerChannelEvent.Disposing( this ) );
-
-        using ( AcquireLock() )
+        using ( MessageBrokerChannelTraceEvent.CreateScope( this, traceId, MessageBrokerChannelTraceEventType.Dispose ) )
         {
-            PublishersByClientId.Clear();
-            ListenersByClientId.Clear();
-            _state = MessageBrokerChannelState.Disposed;
-        }
+            MessageBrokerChannelServerTraceEvent.Create( this, traceId, serverTraceId ).Emit( Logger.ServerTrace );
+            MessageBrokerChannelDisposingEvent.Create( this, traceId ).Emit( Logger.Disposing );
 
-        Emit( MessageBrokerChannelEvent.Disposed( this ) );
+            using ( AcquireLock() )
+            {
+                PublishersByClientId.Clear();
+                ListenersByClientId.Clear();
+                _state = MessageBrokerChannelState.Disposed;
+            }
+
+            MessageBrokerChannelDisposedEvent.Create( this, traceId ).Emit( Logger.Disposed );
+        }
     }
 
-    internal void DisposeDueToLackOfReferences()
+    internal void DisposeDueToLackOfReferences(ulong traceId)
     {
         Assume.Equals( State, MessageBrokerChannelState.Disposing );
-
-        Emit( MessageBrokerChannelEvent.Disposing( this ) );
+        MessageBrokerChannelDisposingEvent.Create( this, traceId ).Emit( Logger.Disposing );
 
         var exc = ChannelCollection.Remove( this ).Exception;
         if ( exc is not null )
-            Emit( MessageBrokerChannelEvent.Unexpected( this, exc ) );
+            MessageBrokerChannelErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
 
         using ( AcquireLock() )
         {
@@ -191,7 +249,7 @@ public sealed class MessageBrokerChannel
             _state = MessageBrokerChannelState.Disposed;
         }
 
-        Emit( MessageBrokerChannelEvent.Disposed( this ) );
+        MessageBrokerChannelDisposedEvent.Create( this, traceId ).Emit( Logger.Disposed );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -201,18 +259,24 @@ public sealed class MessageBrokerChannel
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void Emit(MessageBrokerChannelEvent e)
+    internal ExclusiveLock AcquireActiveLock(ulong traceId, out MessageBrokerChannelDisposedException? exception)
     {
-        if ( _eventHandler is null )
-            return;
+        var @lock = AcquireLock();
+        if ( ! ShouldCancel )
+        {
+            exception = null;
+            return @lock;
+        }
 
-        try
-        {
-            _eventHandler( e );
-        }
-        catch
-        {
-            // NOTE: do nothing
-        }
+        @lock.Dispose();
+        exception = new MessageBrokerChannelDisposedException( this );
+        MessageBrokerChannelErrorEvent.Create( this, traceId, exception ).Emit( Logger.Error );
+        return default;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal ulong GetTraceId()
+    {
+        return unchecked( _nextTraceId++ );
     }
 }
