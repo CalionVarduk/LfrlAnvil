@@ -88,7 +88,7 @@ internal struct MessageNotifications
                 exceptions = exceptions.Extend( exc );
         }
 
-        _messages.Clear();
+        _messages = QueueSlim<Message>.Create();
         return (discardedMessageCount, exceptions);
     }
 

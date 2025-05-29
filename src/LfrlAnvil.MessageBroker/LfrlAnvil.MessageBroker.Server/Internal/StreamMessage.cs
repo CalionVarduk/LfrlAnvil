@@ -51,9 +51,8 @@ internal readonly struct StreamMessage
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void Return()
+    internal Exception? Return()
     {
-        // TODO: handle exception (stream events refactor)
-        _poolToken.Return();
+        return _poolToken.Return();
     }
 }

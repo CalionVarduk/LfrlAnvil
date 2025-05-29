@@ -295,6 +295,7 @@ public sealed partial class MessageBrokerRemoteClient
         ref MessageBrokerChannelPublisherBinding? publisher,
         ref ulong channelTraceId,
         ref MessageBrokerStream? stream,
+        ref ulong streamTraceId,
         ref bool streamCreated)
     {
         using ( channel.AcquireLock() )
@@ -341,6 +342,7 @@ public sealed partial class MessageBrokerRemoteClient
                     PublishersByChannelId.Add( channel.Id, publisher );
                     stream.PublishersByClientChannelIdPair.Add( new Pair<int, int>( Id, channel.Id ), publisher );
                     channelTraceId = channel.GetTraceId();
+                    streamTraceId = stream.GetTraceId();
                 }
             }
             catch
@@ -358,6 +360,7 @@ public sealed partial class MessageBrokerRemoteClient
         ref MessageBrokerChannelPublisherBinding? publisher,
         ref ulong channelTraceId,
         ref MessageBrokerStream? stream,
+        ref ulong streamTraceId,
         ref bool disposingChannel,
         ref bool disposingStream)
     {
@@ -382,6 +385,7 @@ public sealed partial class MessageBrokerRemoteClient
                     disposingChannel = channel.TryDisposeByRemovingPublisherUnsafe( Id );
                     disposingStream = stream.TryDisposeByRemovingPublisherUnsafe( Id, channel.Id );
                     channelTraceId = channel.GetTraceId();
+                    streamTraceId = stream.GetTraceId();
                 }
             }
         }

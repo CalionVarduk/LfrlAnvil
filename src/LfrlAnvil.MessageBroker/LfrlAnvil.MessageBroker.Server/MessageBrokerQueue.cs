@@ -94,7 +94,7 @@ public sealed class MessageBrokerQueue
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void PushMessages(MessageBrokerChannelListenerBinding listener, in ListSlim<StreamMessage> messages)
+    internal void PushMessages(MessageBrokerChannelListenerBinding listener, in ListSlim<StreamMessage> messages, ulong streamTraceId)
     {
         using ( AcquireLock() )
         {

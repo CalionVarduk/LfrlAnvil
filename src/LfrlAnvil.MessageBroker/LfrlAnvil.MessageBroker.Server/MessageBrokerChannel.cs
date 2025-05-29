@@ -150,7 +150,7 @@ public sealed class MessageBrokerChannel
 
             if ( publisher is null )
             {
-                var error = new MessageBrokerChannelException( this, Resources.ClientIsNotBoundAsPublisher( this, client ) );
+                var error = new MessageBrokerChannelException( this, Resources.NotBoundAsPublisher( this, client ) );
                 MessageBrokerChannelErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
                 return;
             }
@@ -194,7 +194,7 @@ public sealed class MessageBrokerChannel
 
             if ( listener is null )
             {
-                var error = new MessageBrokerChannelException( this, Resources.ClientIsNotBoundAsListener( this, client ) );
+                var error = new MessageBrokerChannelException( this, Resources.NotBoundAsListener( this, client ) );
                 MessageBrokerChannelErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
                 return;
             }

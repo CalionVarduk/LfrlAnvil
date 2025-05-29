@@ -15,37 +15,37 @@
 namespace LfrlAnvil.MessageBroker.Server.Events;
 
 /// <summary>
-/// Defines available <see cref="MessageBrokerStreamEvent"/> types.
+/// Represents the type of a <see cref="MessageBrokerStreamTraceEvent"/>.
 /// </summary>
-public enum MessageBrokerStreamEventType : byte
+public enum MessageBrokerStreamTraceEventType : byte
 {
     /// <summary>
-    /// Specifies that the stream has encountered an unexpected error.
+    /// Specifies that trace is related to the channel publisher binding.
     /// </summary>
-    Unexpected,
+    BindPublisher = 0,
 
     /// <summary>
-    /// Specifies that the stream instance has been created.
+    /// Specifies that trace is related to the channel publisher unbinding.
     /// </summary>
-    Created,
+    UnbindPublisher = 1,
 
     /// <summary>
-    /// Specifies that a message has been enqueued in the stream.
+    /// Specifies that trace is related to a message being pushed by a publisher.
     /// </summary>
-    MessageEnqueued,
+    PushMessage = 2,
 
     /// <summary>
-    /// Specifies that a message has been dequeued from the stream.
+    /// Specifies that trace is related to processing a batch of messages.
     /// </summary>
-    MessageDequeued,
+    ProcessMessages = 3,
 
     /// <summary>
-    /// Specifies that the stream is about to be disposed.
+    /// Specifies that trace is related to the stream disposal.
     /// </summary>
-    Disposing,
+    Dispose = 4,
 
     /// <summary>
-    /// Specifies that the stream has been disposed.
+    /// Specifies that trace is related to an unexpected occurrence in the stream e.g. an error.
     /// </summary>
-    Disposed
+    Unexpected = 5
 }

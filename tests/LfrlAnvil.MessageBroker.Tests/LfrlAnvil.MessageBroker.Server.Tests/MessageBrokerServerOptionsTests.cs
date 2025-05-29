@@ -24,7 +24,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 sut.Logger.TestNull(),
                 sut.ClientLoggerFactory.TestNull(),
                 sut.ChannelLoggerFactory.TestNull(),
-                sut.StreamEventHandlerFactory.TestNull(),
+                sut.StreamLoggerFactory.TestNull(),
                 sut.QueueEventHandlerFactory.TestNull(),
                 sut.StreamDecorator.TestNull() )
             .Go();
@@ -49,7 +49,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.Logger.TestEquals( sut.Logger ),
                 result.ClientLoggerFactory.TestEquals( sut.ClientLoggerFactory ),
                 result.ChannelLoggerFactory.TestEquals( sut.ChannelLoggerFactory ),
-                result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
+                result.StreamLoggerFactory.TestEquals( sut.StreamLoggerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
@@ -74,7 +74,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.Logger.TestEquals( sut.Logger ),
                 result.ClientLoggerFactory.TestEquals( sut.ClientLoggerFactory ),
                 result.ChannelLoggerFactory.TestEquals( sut.ChannelLoggerFactory ),
-                result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
+                result.StreamLoggerFactory.TestEquals( sut.StreamLoggerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
@@ -99,7 +99,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.Logger.TestEquals( sut.Logger ),
                 result.ClientLoggerFactory.TestEquals( sut.ClientLoggerFactory ),
                 result.ChannelLoggerFactory.TestEquals( sut.ChannelLoggerFactory ),
-                result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
+                result.StreamLoggerFactory.TestEquals( sut.StreamLoggerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
@@ -124,7 +124,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.Logger.TestEquals( sut.Logger ),
                 result.ClientLoggerFactory.TestEquals( sut.ClientLoggerFactory ),
                 result.ChannelLoggerFactory.TestEquals( sut.ChannelLoggerFactory ),
-                result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
+                result.StreamLoggerFactory.TestEquals( sut.StreamLoggerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
@@ -149,7 +149,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.Logger.TestEquals( sut.Logger ),
                 result.ClientLoggerFactory.TestEquals( sut.ClientLoggerFactory ),
                 result.ChannelLoggerFactory.TestEquals( sut.ChannelLoggerFactory ),
-                result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
+                result.StreamLoggerFactory.TestEquals( sut.StreamLoggerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
@@ -174,7 +174,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.Logger.TestEquals( sut.Logger ),
                 result.ClientLoggerFactory.TestEquals( sut.ClientLoggerFactory ),
                 result.ChannelLoggerFactory.TestEquals( sut.ChannelLoggerFactory ),
-                result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
+                result.StreamLoggerFactory.TestEquals( sut.StreamLoggerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
@@ -199,7 +199,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.Logger.TestEquals( sut.Logger ),
                 result.ClientLoggerFactory.TestEquals( sut.ClientLoggerFactory ),
                 result.ChannelLoggerFactory.TestEquals( sut.ChannelLoggerFactory ),
-                result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
+                result.StreamLoggerFactory.TestEquals( sut.StreamLoggerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
@@ -224,7 +224,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.Logger.TestEquals( value ),
                 result.ClientLoggerFactory.TestEquals( sut.ClientLoggerFactory ),
                 result.ChannelLoggerFactory.TestEquals( sut.ChannelLoggerFactory ),
-                result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
+                result.StreamLoggerFactory.TestEquals( sut.StreamLoggerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
@@ -251,7 +251,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.Logger.TestEquals( sut.Logger ),
                 result.ClientLoggerFactory.TestEquals( value ),
                 result.ChannelLoggerFactory.TestEquals( sut.ChannelLoggerFactory ),
-                result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
+                result.StreamLoggerFactory.TestEquals( sut.StreamLoggerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
@@ -276,19 +276,19 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.Logger.TestEquals( sut.Logger ),
                 result.ClientLoggerFactory.TestEquals( sut.ClientLoggerFactory ),
                 result.ChannelLoggerFactory.TestEquals( value ),
-                result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
+                result.StreamLoggerFactory.TestEquals( sut.StreamLoggerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
     }
 
     [Fact]
-    public void SetStreamEventHandlerFactory_ShouldChangeValue()
+    public void SetStreamLoggerFactory_ShouldChangeValue()
     {
-        Func<MessageBrokerStream, MessageBrokerStreamEventHandler?> value = _ => _ => { };
+        Func<MessageBrokerStream, MessageBrokerStreamLogger?> value = _ => MessageBrokerStreamLogger.Create( traceStart: _ => { } );
         var sut = MessageBrokerServerOptions.Default;
 
-        var result = sut.SetStreamEventHandlerFactory( value );
+        var result = sut.SetStreamLoggerFactory( value );
 
         Assertion.All(
                 result.Tcp.TestEquals( sut.Tcp ),
@@ -301,7 +301,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.Logger.TestEquals( sut.Logger ),
                 result.ClientLoggerFactory.TestEquals( sut.ClientLoggerFactory ),
                 result.ChannelLoggerFactory.TestEquals( sut.ChannelLoggerFactory ),
-                result.StreamEventHandlerFactory.TestEquals( value ),
+                result.StreamLoggerFactory.TestEquals( value ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
@@ -326,7 +326,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.Logger.TestEquals( sut.Logger ),
                 result.ClientLoggerFactory.TestEquals( sut.ClientLoggerFactory ),
                 result.ChannelLoggerFactory.TestEquals( sut.ChannelLoggerFactory ),
-                result.StreamEventHandlerFactory.TestEquals( result.StreamEventHandlerFactory ),
+                result.StreamLoggerFactory.TestEquals( result.StreamLoggerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( value ),
                 result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
             .Go();
@@ -351,7 +351,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.Logger.TestEquals( sut.Logger ),
                 result.ClientLoggerFactory.TestEquals( sut.ClientLoggerFactory ),
                 result.ChannelLoggerFactory.TestEquals( sut.ChannelLoggerFactory ),
-                result.StreamEventHandlerFactory.TestEquals( sut.StreamEventHandlerFactory ),
+                result.StreamLoggerFactory.TestEquals( sut.StreamLoggerFactory ),
                 result.QueueEventHandlerFactory.TestEquals( sut.QueueEventHandlerFactory ),
                 result.StreamDecorator.TestRefEquals( value ) )
             .Go();

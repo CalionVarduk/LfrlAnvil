@@ -53,16 +53,31 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string ClientIsNotBoundAsPublisher(MessageBrokerChannel channel, MessageBrokerRemoteClient client)
+    internal static string StreamDisposed(int id, string name)
+    {
+        return $"Operation has been cancelled because stream [{id}] '{name}' is disposed.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string NotBoundAsPublisher(MessageBrokerChannel channel, MessageBrokerRemoteClient client)
     {
         return $"Client [{client.Id}] '{client.Name}' is not bound as publisher to channel [{channel.Id}] '{channel.Name}'.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string ClientIsNotBoundAsListener(MessageBrokerChannel channel, MessageBrokerRemoteClient client)
+    internal static string NotBoundAsListener(MessageBrokerChannel channel, MessageBrokerRemoteClient client)
     {
         return $"Client [{client.Id}] '{client.Name}' is not bound as listener to channel [{channel.Id}] '{channel.Name}'.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string NotBoundAsPublisher(MessageBrokerStream stream, MessageBrokerRemoteClient client, MessageBrokerChannel channel)
+    {
+        return
+            $"Client [{client.Id}] '{client.Name}' is not bound as publisher to channel [{channel.Id}] '{channel.Name}' using stream [{stream.Id}] '{stream.Name}'.";
     }
 
     [Pure]
@@ -153,6 +168,13 @@ internal static class Resources
     internal static string MessagesDiscarded(int count)
     {
         return $"{count} stored pending message notification(s) have been discarded due to client disposal.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string StreamMessagesDiscarded(int count)
+    {
+        return $"{count} stored pending message(s) have been discarded due to server disposal.";
     }
 
     [Pure]

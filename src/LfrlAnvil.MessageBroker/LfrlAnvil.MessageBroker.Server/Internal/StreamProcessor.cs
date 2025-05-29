@@ -14,12 +14,10 @@
 
 using System;
 using System.Diagnostics.Contracts;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Sources;
 using LfrlAnvil.Async;
-using LfrlAnvil.Exceptions;
 using LfrlAnvil.MessageBroker.Server.Events;
 
 namespace LfrlAnvil.MessageBroker.Server.Internal;
@@ -46,35 +44,37 @@ internal struct StreamProcessor
     {
         while ( true )
         {
-            TaskStopReason stopReason;
             try
             {
-                stopReason = await RunCore( stream ).ConfigureAwait( false );
-            }
-            catch ( Exception exc )
-            {
-                stream.Emit( MessageBrokerStreamEvent.Unexpected( stream, exc ) );
-                stopReason = TaskStopReason.Error;
-            }
-
-            if ( stopReason == TaskStopReason.OwnerDisposed )
+                await RunCore( stream ).ConfigureAwait( false );
                 break;
-
-            try
-            {
-                using ( stream.AcquireLock() )
-                {
-                    if ( stream.ShouldCancel )
-                        break;
-
-                    stream.StreamProcessor.SignalContinuation();
-                }
-
-                await Task.Delay( TimeSpan.FromSeconds( 1 ) ).ConfigureAwait( false );
             }
             catch ( Exception exc )
             {
-                stream.Emit( MessageBrokerStreamEvent.Unexpected( stream, exc ) );
+                ulong traceId;
+                using ( stream.AcquireLock() )
+                    traceId = stream.GetTraceId();
+
+                using ( MessageBrokerStreamTraceEvent.CreateScope( stream, traceId, MessageBrokerStreamTraceEventType.Unexpected ) )
+                {
+                    MessageBrokerStreamErrorEvent.Create( stream, traceId, exc ).Emit( stream.Logger.Error );
+                    try
+                    {
+                        using ( stream.AcquireLock() )
+                        {
+                            if ( stream.ShouldCancel )
+                                break;
+
+                            stream.StreamProcessor.SignalContinuation();
+                        }
+
+                        await Task.Delay( TimeSpan.FromSeconds( 1 ) ).ConfigureAwait( false );
+                    }
+                    catch ( Exception exc2 )
+                    {
+                        MessageBrokerStreamErrorEvent.Create( stream, traceId, exc2 ).Emit( stream.Logger.Error );
+                    }
+                }
             }
         }
     }
@@ -106,23 +106,24 @@ internal struct StreamProcessor
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static async ValueTask<TaskStopReason> RunCore(MessageBrokerStream stream)
+    private static async ValueTask RunCore(MessageBrokerStream stream)
     {
         var buffer = ListSlim<StreamMessage>.Create( minCapacity: 16 );
         while ( true )
         {
             var @continue = await stream.StreamProcessor._continuation.GetTask().ConfigureAwait( false );
             if ( ! @continue )
-                return TaskStopReason.OwnerDisposed;
+                return;
 
             var disposed = false;
             while ( true )
             {
+                ulong traceId;
                 MessageBrokerChannel? channel;
                 using ( stream.AcquireLock() )
                 {
                     if ( stream.ShouldCancel )
-                        return TaskStopReason.OwnerDisposed;
+                        return;
 
                     channel = stream.CopyMessagesIntoUnsafe( ref buffer );
                     if ( channel is null )
@@ -134,51 +135,60 @@ internal struct StreamProcessor
 
                         break;
                     }
+
+                    traceId = stream.GetTraceId();
                 }
 
-                var listeners = channel.Listeners.GetAll();
-                using ( stream.AcquireLock() )
+                using ( MessageBrokerStreamTraceEvent.CreateScope( stream, traceId, MessageBrokerStreamTraceEventType.ProcessMessages ) )
                 {
-                    if ( stream.ShouldCancel )
-                        return TaskStopReason.OwnerDisposed;
+                    MessageBrokerStreamMessageProcessingEvent.Create( stream, traceId, channel, buffer.Count )
+                        .Emit( stream.Logger.MessageProcessing );
 
-                    var exceptions = Chain<Exception>.Empty;
+                    var listeners = channel.Listeners.GetAll();
                     foreach ( var listener in listeners )
                     {
                         try
                         {
-                            listener.Queue.PushMessages( listener, in buffer );
+                            listener.Queue.PushMessages( listener, in buffer, traceId );
                         }
                         catch ( Exception exc )
                         {
-                            exceptions = exceptions.Extend( exc );
+                            MessageBrokerStreamErrorEvent.Create( stream, traceId, exc ).Emit( stream.Logger.Error );
                         }
                     }
 
-                    if ( exceptions.Count > 0 )
-                        ExceptionThrower.Throw( exceptions.Count == 1 ? exceptions.First() : new AggregateException( exceptions ) );
+                    using ( stream.AcquireLock() )
+                        stream.DequeueMessagesUnsafe( buffer.Count );
 
-                    stream.DequeueMessagesUnsafe( buffer.Count );
+                    ClearBuffer( stream, ref buffer, traceId );
                 }
-
-                ClearBuffer( stream, ref buffer );
             }
 
             if ( disposed )
             {
-                await stream.DisposeDueToLackOfReferencesAsync( ignoreProcessorTask: true ).ConfigureAwait( false );
-                return TaskStopReason.OwnerDisposed;
+                ulong traceId;
+                using ( stream.AcquireLock() )
+                    traceId = stream.GetTraceId();
+
+                using ( MessageBrokerStreamTraceEvent.CreateScope( stream, traceId, MessageBrokerStreamTraceEventType.Dispose ) )
+                    await stream.DisposeDueToLackOfReferencesAsync( ignoreProcessorTask: true, traceId ).ConfigureAwait( false );
+
+                return;
             }
         }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static void ClearBuffer(MessageBrokerStream stream, ref ListSlim<StreamMessage> messages)
+    private static void ClearBuffer(MessageBrokerStream stream, ref ListSlim<StreamMessage> messages, ulong traceId)
     {
         foreach ( ref readonly var message in messages )
         {
-            stream.Emit( MessageBrokerStreamEvent.MessageDequeued( stream, message.Publisher, message.Id ) );
-            message.Return();
+            MessageBrokerStreamMessageProcessedEvent.Create( message.Publisher, traceId, message.Id, message.Data.Length )
+                .Emit( stream.Logger.MessageProcessed );
+
+            var exc = message.Return();
+            if ( exc is not null )
+                MessageBrokerStreamErrorEvent.Create( stream, traceId, exc ).Emit( stream.Logger.Error );
         }
 
         messages.Clear();

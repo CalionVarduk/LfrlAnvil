@@ -226,6 +226,7 @@ internal struct RequestHandler
                 bool channelCreated;
                 var streamCreated = false;
                 ulong channelTraceId = 0;
+                ulong streamTraceId = 0;
                 MessageBrokerChannel? channel;
                 MessageBrokerStream? stream = null;
                 MessageBrokerChannelPublisherBinding? publisher = null;
@@ -252,6 +253,7 @@ internal struct RequestHandler
                                 ref publisher,
                                 ref channelTraceId,
                                 ref stream,
+                                ref streamTraceId,
                                 ref streamCreated );
                         }
                         catch
@@ -317,8 +319,20 @@ internal struct RequestHandler
                             .Emit( channel.Logger.PublisherBound );
                     }
 
-                    if ( streamCreated )
-                        stream.Emit( MessageBrokerStreamEvent.Created( stream, publisher, traceId ) );
+                    using ( MessageBrokerStreamTraceEvent.CreateScope(
+                        stream,
+                        streamTraceId,
+                        MessageBrokerStreamTraceEventType.BindPublisher ) )
+                    {
+                        MessageBrokerStreamClientTraceEvent.Create( stream, streamTraceId, client, traceId )
+                            .Emit( stream.Logger.ClientTrace );
+
+                        if ( streamCreated )
+                            MessageBrokerStreamCreatedEvent.Create( stream, streamTraceId ).Emit( stream.Logger.Created );
+
+                        MessageBrokerStreamPublisherBoundEvent.Create( publisher, streamTraceId, channelCreated )
+                            .Emit( stream.Logger.PublisherBound );
+                    }
 
                     MessageBrokerRemoteClientPublisherBoundEvent.Create( publisher, traceId, channelCreated, streamCreated )
                         .Emit( client.Logger.PublisherBound );
@@ -387,6 +401,7 @@ internal struct RequestHandler
                 var disposingChannel = false;
                 var disposingStream = false;
                 ulong channelTraceId = 0;
+                ulong streamTraceId = 0;
                 MessageBrokerChannelPublisherBinding? publisher = null;
                 MessageBrokerStream? stream = null;
                 Protocol.UnbindPublisherFailureResponse.Reasons rejectionReasons;
@@ -406,6 +421,7 @@ internal struct RequestHandler
                             ref publisher,
                             ref channelTraceId,
                             ref stream,
+                            ref streamTraceId,
                             ref disposingChannel,
                             ref disposingStream );
                     }
@@ -447,8 +463,21 @@ internal struct RequestHandler
                     MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( client, traceId, request.Header )
                         .Emit( client.Logger.ReadPacket );
 
-                    if ( disposingStream )
-                        await stream.DisposeDueToLackOfReferencesAsync( ignoreProcessorTask: false ).ConfigureAwait( false );
+                    using ( MessageBrokerStreamTraceEvent.CreateScope(
+                        stream,
+                        streamTraceId,
+                        MessageBrokerStreamTraceEventType.UnbindPublisher ) )
+                    {
+                        MessageBrokerStreamClientTraceEvent.Create( stream, streamTraceId, client, traceId )
+                            .Emit( stream.Logger.ClientTrace );
+
+                        MessageBrokerStreamPublisherUnboundEvent.Create( publisher, streamTraceId, disposingChannel )
+                            .Emit( stream.Logger.PublisherUnbound );
+
+                        if ( disposingStream )
+                            await stream.DisposeDueToLackOfReferencesAsync( ignoreProcessorTask: false, streamTraceId )
+                                .ConfigureAwait( false );
+                    }
 
                     using ( MessageBrokerChannelTraceEvent.CreateScope(
                         channel,
@@ -878,9 +907,11 @@ internal struct RequestHandler
         using ( MessageBrokerRemoteClientTraceEvent.CreateScope( client, traceId, MessageBrokerRemoteClientTraceEventType.PushMessage ) )
         {
             ulong? messageId = null;
+            ulong streamTraceId = 0;
             MessageBrokerChannelPublisherBinding? publisher;
             Protocol.MessageRejectedResponse.Reasons rejectionReasons;
             Protocol.PushMessageHeader parsedRequest;
+            Memory<byte> messageData;
 
             try
             {
@@ -898,7 +929,7 @@ internal struct RequestHandler
                     return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
                 }
 
-                var messageData = request.Data.Slice( Protocol.PushMessageHeader.Length );
+                messageData = request.Data.Slice( Protocol.PushMessageHeader.Length );
                 MessageBrokerRemoteClientPushingMessageEvent.Create(
                         client,
                         traceId,
@@ -918,8 +949,8 @@ internal struct RequestHandler
                             publisher,
                             request.PoolToken,
                             messageData,
-                            traceId,
-                            ref messageId );
+                            ref messageId,
+                            ref streamTraceId );
                     }
                     else
                         rejectionReasons = Protocol.MessageRejectedResponse.Reasons.NotBound;
@@ -962,6 +993,18 @@ internal struct RequestHandler
 
                     MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( client, traceId, request.Header )
                         .Emit( client.Logger.ReadPacket );
+
+                    using ( MessageBrokerStreamTraceEvent.CreateScope(
+                        publisher.Stream,
+                        streamTraceId,
+                        MessageBrokerStreamTraceEventType.PushMessage ) )
+                    {
+                        MessageBrokerStreamClientTraceEvent.Create( publisher.Stream, streamTraceId, client, traceId )
+                            .Emit( publisher.Stream.Logger.ClientTrace );
+
+                        MessageBrokerStreamMessagePushedEvent.Create( publisher, streamTraceId, messageId.Value, messageData.Length )
+                            .Emit( publisher.Stream.Logger.MessagePushed );
+                    }
 
                     MessageBrokerRemoteClientMessagePushedEvent.Create( publisher, traceId, messageId.Value )
                         .Emit( client.Logger.MessagePushed );

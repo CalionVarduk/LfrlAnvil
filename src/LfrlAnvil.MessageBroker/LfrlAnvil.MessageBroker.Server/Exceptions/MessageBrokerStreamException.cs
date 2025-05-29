@@ -17,23 +17,23 @@ using System;
 namespace LfrlAnvil.MessageBroker.Server.Exceptions;
 
 /// <summary>
-/// Represents an exception thrown when <see cref="MessageBrokerChannel"/> encountered an error.
+/// Represents an exception thrown when <see cref="MessageBrokerStream"/> encountered an error.
 /// </summary>
-public class MessageBrokerChannelException : InvalidOperationException
+public class MessageBrokerStreamException : InvalidOperationException
 {
     /// <summary>
-    /// Creates a new <see cref="MessageBrokerChannelException"/> instance.
+    /// Creates a new <see cref="MessageBrokerStreamException"/> instance.
     /// </summary>
-    /// <param name="channel"><see cref="MessageBrokerChannel"/> instance that encountered this error.</param>
+    /// <param name="stream"><see cref="MessageBrokerStream"/> instance that encountered this error.</param>
     /// <param name="error">Encountered error.</param>
-    public MessageBrokerChannelException(MessageBrokerChannel channel, string error)
+    public MessageBrokerStreamException(MessageBrokerStream stream, string error)
         : base( error )
     {
-        Channel = channel;
+        Stream = stream;
     }
 
     /// <summary>
-    /// <see cref="MessageBrokerChannel"/> instance that encountered this error.
+    /// <see cref="MessageBrokerStream"/> instance that encountered this error.
     /// </summary>
-    public MessageBrokerChannel Channel { get; }
+    public MessageBrokerStream Stream { get; }
 }

@@ -41,7 +41,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     internal StreamCollection StreamCollection;
     internal readonly Func<MessageBrokerRemoteClient, MessageBrokerRemoteClientLogger?>? RemoteClientLoggerFactory;
     internal readonly Func<MessageBrokerChannel, MessageBrokerChannelLogger?>? ChannelLoggerFactory;
-    internal readonly Func<MessageBrokerStream, MessageBrokerStreamEventHandler?>? StreamEventHandlerFactory;
+    internal readonly Func<MessageBrokerStream, MessageBrokerStreamLogger?>? StreamLoggerFactory;
     internal readonly Func<MessageBrokerQueue, MessageBrokerQueueEventHandler?>? QueueEventHandlerFactory;
 
     internal readonly MessageBrokerRemoteClientStreamDecorator? StreamDecorator;
@@ -69,7 +69,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         Logger = options.Logger ?? default;
         RemoteClientLoggerFactory = options.ClientLoggerFactory;
         ChannelLoggerFactory = options.ChannelLoggerFactory;
-        StreamEventHandlerFactory = options.StreamEventHandlerFactory;
+        StreamLoggerFactory = options.StreamLoggerFactory;
         QueueEventHandlerFactory = options.QueueEventHandlerFactory;
         TimestampsFactory = options.TimestampsFactory ?? (static _ => TimestampProvider.Shared);
         DelaySourceFactory = options.DelaySourceFactory;
@@ -361,7 +361,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         if ( exception is not null )
             MessageBrokerServerErrorEvent.Create( this, traceId, exception ).Emit( Logger.Error );
 
-        await Parallel.ForEachAsync( streams, static (s, _) => s.OnServerDisposedAsync() ).ConfigureAwait( false );
+        await Parallel.ForEachAsync( streams, (s, _) => s.OnServerDisposedAsync( traceId ) ).ConfigureAwait( false );
         foreach ( var channel in channels )
             channel.OnServerDisposed( traceId );
 

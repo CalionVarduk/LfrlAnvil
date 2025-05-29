@@ -13,27 +13,27 @@
 // limitations under the License.
 
 using System;
+using System.Threading;
 
 namespace LfrlAnvil.MessageBroker.Server.Exceptions;
 
 /// <summary>
-/// Represents an exception thrown when <see cref="MessageBrokerChannel"/> encountered an error.
+/// Represents an exception thrown when <see cref="MessageBrokerStream"/> is in disposed state.
 /// </summary>
-public class MessageBrokerChannelException : InvalidOperationException
+public class MessageBrokerStreamDisposedException : OperationCanceledException
 {
     /// <summary>
-    /// Creates a new <see cref="MessageBrokerChannelException"/> instance.
+    /// Creates a new <see cref="MessageBrokerChannelDisposedException"/> instance.
     /// </summary>
-    /// <param name="channel"><see cref="MessageBrokerChannel"/> instance that encountered this error.</param>
-    /// <param name="error">Encountered error.</param>
-    public MessageBrokerChannelException(MessageBrokerChannel channel, string error)
-        : base( error )
+    /// <param name="stream">Disposed <see cref="MessageBrokerStream"/>.</param>
+    public MessageBrokerStreamDisposedException(MessageBrokerStream stream)
+        : base( Resources.StreamDisposed( stream.Id, stream.Name ), new CancellationToken( canceled: true ) )
     {
-        Channel = channel;
+        Stream = stream;
     }
 
     /// <summary>
-    /// <see cref="MessageBrokerChannel"/> instance that encountered this error.
+    /// Disposed <see cref="MessageBrokerStream"/>.
     /// </summary>
-    public MessageBrokerChannel Channel { get; }
+    public MessageBrokerStream Stream { get; }
 }

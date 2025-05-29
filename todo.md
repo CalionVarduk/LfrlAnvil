@@ -100,6 +100,8 @@ project idea:
     - it must be relatively safe, no loss of data etc.:
         - client sends message
             - \[stage 2\] client can limit target clients by providing their ids, by default all subscribed clients are notified
+            - hard max route count is 128
+            - route can either be a client id (if known by the consumer) or client name
         - server moves message to channel's storage
         - server immediately responds with ack/nack (ack contains message id - uint64)
         - server propagates message from channel to all subscribers (channel's task loop)
@@ -133,16 +135,18 @@ project idea:
                 - and client should be able to react accordingly before a disaster happens
             - it's more important to NOT LOSE messages rather than making sure they are unique
 - server should be allowed to send messages to any channel or subscriber
-- \[stage 4\] channel synchronization groups (queues):
-    - each client-channel link can define a custom synchronization group key (string)
-    - each such group acts as a separate synced queue of messages that were received from the client
-    - and are yet to be propagated to subscribers
-    - each channel by default uses a queue with the same name
 
 ### MessageBroker: Max Packet Length & Batching
 
 - Add internal limit to single TCP packet's length (configurable, min 16KB, server defines acceptable range)
     - data that exceeds the limit will be chunked accordingly
+      - or will it? I might give up on the whole chunking idea and just throw an error when message is too large
+      - max configurable max packet length would be 1GB (maybe less...? 100MB?), by default equal to min 16KB
+      - the limit might be linked to memory pool's segment length?
+      - configuration is server-wide, it's up to the clients to conform
+      - most endpoints (if not all except for push-message and message-notification) could have a hard limit of 16KB
+      - other endpoints could allocate buffer in steps, squaring its size each step
+      - server could have a shared large buffer memory pool, which would be used after some packet size threshold is exceeded
     - data must be handled atomically by both client and server (impacts ack/nack)
         - (server-side) store in some sort of temp file with managed lifetime
         - (client-side) if client is configured to ignore large packet buffering:
@@ -234,6 +238,8 @@ project idea:
 - can have multiple subscribers, which all must respond
 - cannot be made permanent
 - its subscribers also cannot be permanent
+- WON'T DO
+  - can be setup manually with correct meta channels
 
 ### MessageBroker: Subscriber Filter
 

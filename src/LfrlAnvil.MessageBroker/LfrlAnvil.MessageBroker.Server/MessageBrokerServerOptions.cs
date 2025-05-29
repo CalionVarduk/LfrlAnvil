@@ -41,7 +41,7 @@ namespace LfrlAnvil.MessageBroker.Server;
 /// <param name="Logger"><see cref="MessageBrokerServerLogger"/> instance.</param>
 /// <param name="ClientLoggerFactory">Factory of <see cref="MessageBrokerRemoteClientLogger"/> instances.</param>
 /// <param name="ChannelLoggerFactory">Factory of <see cref="MessageBrokerChannelLogger"/> instances.</param>
-/// <param name="StreamEventHandlerFactory">Factory of <see cref="MessageBrokerStreamEventHandler"/> callbacks.</param>
+/// <param name="StreamLoggerFactory">Factory of <see cref="MessageBrokerStreamLogger"/> instances.</param>
 /// <param name="QueueEventHandlerFactory">Factory of <see cref="MessageBrokerQueueEventHandler"/> callbacks.</param>
 /// <param name="StreamDecorator"><see cref="MessageBrokerRemoteClientStreamDecorator"/> callback.</param>
 public readonly record struct MessageBrokerServerOptions(
@@ -55,7 +55,7 @@ public readonly record struct MessageBrokerServerOptions(
     MessageBrokerServerLogger? Logger,
     Func<MessageBrokerRemoteClient, MessageBrokerRemoteClientLogger?>? ClientLoggerFactory,
     Func<MessageBrokerChannel, MessageBrokerChannelLogger?>? ChannelLoggerFactory,
-    Func<MessageBrokerStream, MessageBrokerStreamEventHandler?>? StreamEventHandlerFactory,
+    Func<MessageBrokerStream, MessageBrokerStreamLogger?>? StreamLoggerFactory,
     Func<MessageBrokerQueue, MessageBrokerQueueEventHandler?>? QueueEventHandlerFactory,
     MessageBrokerRemoteClientStreamDecorator? StreamDecorator
 )
@@ -85,7 +85,7 @@ public readonly record struct MessageBrokerServerOptions(
             Logger,
             ClientLoggerFactory,
             ChannelLoggerFactory,
-            StreamEventHandlerFactory,
+            StreamLoggerFactory,
             QueueEventHandlerFactory,
             StreamDecorator );
     }
@@ -110,7 +110,7 @@ public readonly record struct MessageBrokerServerOptions(
             Logger,
             ClientLoggerFactory,
             ChannelLoggerFactory,
-            StreamEventHandlerFactory,
+            StreamLoggerFactory,
             QueueEventHandlerFactory,
             StreamDecorator );
     }
@@ -135,7 +135,7 @@ public readonly record struct MessageBrokerServerOptions(
             Logger,
             ClientLoggerFactory,
             ChannelLoggerFactory,
-            StreamEventHandlerFactory,
+            StreamLoggerFactory,
             QueueEventHandlerFactory,
             StreamDecorator );
     }
@@ -160,7 +160,7 @@ public readonly record struct MessageBrokerServerOptions(
             Logger,
             ClientLoggerFactory,
             ChannelLoggerFactory,
-            StreamEventHandlerFactory,
+            StreamLoggerFactory,
             QueueEventHandlerFactory,
             StreamDecorator );
     }
@@ -185,7 +185,7 @@ public readonly record struct MessageBrokerServerOptions(
             Logger,
             ClientLoggerFactory,
             ChannelLoggerFactory,
-            StreamEventHandlerFactory,
+            StreamLoggerFactory,
             QueueEventHandlerFactory,
             StreamDecorator );
     }
@@ -210,7 +210,7 @@ public readonly record struct MessageBrokerServerOptions(
             Logger,
             ClientLoggerFactory,
             ChannelLoggerFactory,
-            StreamEventHandlerFactory,
+            StreamLoggerFactory,
             QueueEventHandlerFactory,
             StreamDecorator );
     }
@@ -235,7 +235,7 @@ public readonly record struct MessageBrokerServerOptions(
             Logger,
             ClientLoggerFactory,
             ChannelLoggerFactory,
-            StreamEventHandlerFactory,
+            StreamLoggerFactory,
             QueueEventHandlerFactory,
             StreamDecorator );
     }
@@ -260,7 +260,7 @@ public readonly record struct MessageBrokerServerOptions(
             value,
             ClientLoggerFactory,
             ChannelLoggerFactory,
-            StreamEventHandlerFactory,
+            StreamLoggerFactory,
             QueueEventHandlerFactory,
             StreamDecorator );
     }
@@ -285,7 +285,7 @@ public readonly record struct MessageBrokerServerOptions(
             Logger,
             value,
             ChannelLoggerFactory,
-            StreamEventHandlerFactory,
+            StreamLoggerFactory,
             QueueEventHandlerFactory,
             StreamDecorator );
     }
@@ -310,19 +310,19 @@ public readonly record struct MessageBrokerServerOptions(
             Logger,
             ClientLoggerFactory,
             value,
-            StreamEventHandlerFactory,
+            StreamLoggerFactory,
             QueueEventHandlerFactory,
             StreamDecorator );
     }
 
     /// <summary>
-    /// Allows to change <see cref="StreamEventHandlerFactory"/>.
+    /// Allows to change <see cref="StreamLoggerFactory"/>.
     /// </summary>
     /// <param name="value">New value.</param>
     /// <returns>New <see cref="MessageBrokerServerOptions"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public MessageBrokerServerOptions SetStreamEventHandlerFactory(Func<MessageBrokerStream, MessageBrokerStreamEventHandler?>? value)
+    public MessageBrokerServerOptions SetStreamLoggerFactory(Func<MessageBrokerStream, MessageBrokerStreamLogger?>? value)
     {
         return new MessageBrokerServerOptions(
             Tcp,
@@ -360,7 +360,7 @@ public readonly record struct MessageBrokerServerOptions(
             Logger,
             ClientLoggerFactory,
             ChannelLoggerFactory,
-            StreamEventHandlerFactory,
+            StreamLoggerFactory,
             value,
             StreamDecorator );
     }
@@ -385,7 +385,7 @@ public readonly record struct MessageBrokerServerOptions(
             Logger,
             ClientLoggerFactory,
             ChannelLoggerFactory,
-            StreamEventHandlerFactory,
+            StreamLoggerFactory,
             QueueEventHandlerFactory,
             value );
     }
