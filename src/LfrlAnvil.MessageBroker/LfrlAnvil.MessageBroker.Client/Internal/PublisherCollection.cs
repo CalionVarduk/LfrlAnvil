@@ -118,7 +118,7 @@ internal struct PublisherCollection
                     if ( exc is not null )
                         return exc;
 
-                    writerSource = client.MessageContextQueue.AcquireWriterSource();
+                    writerSource = client.WriterQueue.AcquireSource();
                 }
 
                 if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
@@ -130,7 +130,7 @@ internal struct PublisherCollection
                         return exc;
 
                     client.EventScheduler.PausePing();
-                    responseSource = client.MessageContextQueue.AcquirePendingResponseSource();
+                    responseSource = client.ResponseQueue.EnqueueSource();
                 }
 
                 var result = await client.WriteAsync( request.Header, buffer, traceId ).ConfigureAwait( false );
@@ -145,8 +145,8 @@ internal struct PublisherCollection
                     if ( exc is not null )
                         return exc;
 
-                    client.MessageContextQueue.ResetOutgoingWriter( client, writerSource );
-                    client.MessageContextQueue.ActivatePendingResponseSource( client, responseSource );
+                    client.WriterQueue.Release( client, writerSource );
+                    client.ResponseQueue.ActivateTimeout( client, responseSource );
                     client.EventScheduler.SchedulePing( client );
                 }
             }
@@ -180,7 +180,7 @@ internal struct PublisherCollection
                     if ( exc is not null )
                         return exc;
 
-                    client.MessageContextQueue.ResetPendingResponseSource( responseSource );
+                    client.ResponseQueue.Release( responseSource );
                 }
 
                 switch ( response.Header.GetClientEndpoint() )
@@ -318,7 +318,7 @@ internal struct PublisherCollection
                     if ( exc is not null )
                         return exc;
 
-                    writerSource = client.MessageContextQueue.AcquireWriterSource();
+                    writerSource = client.WriterQueue.AcquireSource();
                 }
 
                 if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
@@ -330,7 +330,7 @@ internal struct PublisherCollection
                         return exc;
 
                     client.EventScheduler.PausePing();
-                    responseSource = client.MessageContextQueue.AcquirePendingResponseSource();
+                    responseSource = client.ResponseQueue.EnqueueSource();
                 }
 
                 var result = await client.WriteAsync( request.Header, buffer, traceId ).ConfigureAwait( false );
@@ -345,8 +345,8 @@ internal struct PublisherCollection
                     if ( exc is not null )
                         return exc;
 
-                    client.MessageContextQueue.ResetOutgoingWriter( client, writerSource );
-                    client.MessageContextQueue.ActivatePendingResponseSource( client, responseSource );
+                    client.WriterQueue.Release( client, writerSource );
+                    client.ResponseQueue.ActivateTimeout( client, responseSource );
                     client.EventScheduler.SchedulePing( client );
                 }
             }
@@ -380,7 +380,7 @@ internal struct PublisherCollection
                     if ( exc is not null )
                         return exc;
 
-                    client.MessageContextQueue.ResetPendingResponseSource( responseSource );
+                    client.ResponseQueue.Release( responseSource );
                 }
 
                 switch ( response.Header.GetClientEndpoint() )
@@ -500,7 +500,7 @@ internal struct PublisherCollection
                     if ( exc is not null )
                         return exc;
 
-                    writerSource = client.MessageContextQueue.AcquireWriterSource();
+                    writerSource = client.WriterQueue.AcquireSource();
                 }
 
                 if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
@@ -513,7 +513,7 @@ internal struct PublisherCollection
 
                     client.EventScheduler.PausePing();
                     if ( confirm )
-                        responseSource = client.MessageContextQueue.AcquirePendingResponseSource();
+                        responseSource = client.ResponseQueue.EnqueueSource();
                 }
 
                 var result = await client.WriteAsync( request.Header, buffer, traceId ).ConfigureAwait( false );
@@ -528,9 +528,9 @@ internal struct PublisherCollection
                     if ( exc is not null )
                         return exc;
 
-                    client.MessageContextQueue.ResetOutgoingWriter( client, writerSource );
+                    client.WriterQueue.Release( client, writerSource );
                     if ( responseSource is not null )
-                        client.MessageContextQueue.ActivatePendingResponseSource( client, responseSource );
+                        client.ResponseQueue.ActivateTimeout( client, responseSource );
 
                     client.EventScheduler.SchedulePing( client );
                 }
@@ -569,7 +569,7 @@ internal struct PublisherCollection
                     if ( exc is not null )
                         return exc;
 
-                    client.MessageContextQueue.ResetPendingResponseSource( responseSource );
+                    client.ResponseQueue.Release( responseSource );
                 }
 
                 switch ( response.Header.GetClientEndpoint() )

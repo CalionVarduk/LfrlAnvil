@@ -129,7 +129,7 @@ internal struct ListenerCollection
                     if ( exc is not null )
                         return exc;
 
-                    writerSource = client.MessageContextQueue.AcquireWriterSource();
+                    writerSource = client.WriterQueue.AcquireSource();
                 }
 
                 if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
@@ -141,7 +141,7 @@ internal struct ListenerCollection
                         return exc;
 
                     client.EventScheduler.PausePing();
-                    responseSource = client.MessageContextQueue.AcquirePendingResponseSource();
+                    responseSource = client.ResponseQueue.EnqueueSource();
                 }
 
                 var result = await client.WriteAsync( request.Header, buffer, traceId ).ConfigureAwait( false );
@@ -156,8 +156,8 @@ internal struct ListenerCollection
                     if ( exc is not null )
                         return exc;
 
-                    client.MessageContextQueue.ResetOutgoingWriter( client, writerSource );
-                    client.MessageContextQueue.ActivatePendingResponseSource( client, responseSource );
+                    client.WriterQueue.Release( client, writerSource );
+                    client.ResponseQueue.ActivateTimeout( client, responseSource );
                     client.EventScheduler.SchedulePing( client );
                 }
             }
@@ -191,7 +191,7 @@ internal struct ListenerCollection
                     if ( exc is not null )
                         return exc;
 
-                    client.MessageContextQueue.ResetPendingResponseSource( responseSource );
+                    client.ResponseQueue.Release( responseSource );
                 }
 
                 switch ( response.Header.GetClientEndpoint() )
@@ -334,7 +334,7 @@ internal struct ListenerCollection
                         if ( exc is not null )
                             return exc;
 
-                        writerSource = client.MessageContextQueue.AcquireWriterSource();
+                        writerSource = client.WriterQueue.AcquireSource();
                     }
 
                     if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
@@ -346,7 +346,7 @@ internal struct ListenerCollection
                             return exc;
 
                         client.EventScheduler.PausePing();
-                        responseSource = client.MessageContextQueue.AcquirePendingResponseSource();
+                        responseSource = client.ResponseQueue.EnqueueSource();
                     }
 
                     var result = await client.WriteAsync( request.Header, buffer, traceId ).ConfigureAwait( false );
@@ -361,8 +361,8 @@ internal struct ListenerCollection
                         if ( exc is not null )
                             return exc;
 
-                        client.MessageContextQueue.ResetOutgoingWriter( client, writerSource );
-                        client.MessageContextQueue.ActivatePendingResponseSource( client, responseSource );
+                        client.WriterQueue.Release( client, writerSource );
+                        client.ResponseQueue.ActivateTimeout( client, responseSource );
                         client.EventScheduler.SchedulePing( client );
                     }
                 }
@@ -396,7 +396,7 @@ internal struct ListenerCollection
                         if ( exc is not null )
                             return exc;
 
-                        client.MessageContextQueue.ResetPendingResponseSource( responseSource );
+                        client.ResponseQueue.Release( responseSource );
                     }
 
                     switch ( response.Header.GetClientEndpoint() )

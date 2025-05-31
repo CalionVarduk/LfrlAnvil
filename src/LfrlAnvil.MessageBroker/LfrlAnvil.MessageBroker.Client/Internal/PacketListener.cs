@@ -184,7 +184,7 @@ internal struct PacketListener
                     if ( ! acquired )
                         return;
 
-                    target = client.MessageContextQueue.GetNextPendingResponse();
+                    target = client.ResponseQueue.GetNext();
                 }
 
                 if ( target.Source is null )
@@ -231,9 +231,7 @@ internal struct PacketListener
                         return;
                     }
 
-                    client.MessageContextQueue.NotifyPendingResponseSource(
-                        target.Source,
-                        IncomingPacketToken.Ok( header, packetPoolToken, packetBuffer ) );
+                    client.ResponseQueue.Signal( target.Source, IncomingPacketToken.Ok( header, packetPoolToken, packetBuffer ) );
                 }
             }
         }

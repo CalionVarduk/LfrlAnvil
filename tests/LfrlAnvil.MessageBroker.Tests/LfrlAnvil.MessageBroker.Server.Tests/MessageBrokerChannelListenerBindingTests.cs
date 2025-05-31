@@ -1000,7 +1000,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
     public async Task BindListenerRequest_ShouldBeRejected_WhenClientIsAlreadyBoundAsListenerToChannel()
     {
         Exception? exception = null;
-        var endSource = new SafeTaskCompletionSource();
+        var endSource = new SafeTaskCompletionSource( completionCount: 2 );
         var clientLogs = new ClientEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),

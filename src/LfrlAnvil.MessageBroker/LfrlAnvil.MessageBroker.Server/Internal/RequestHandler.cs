@@ -106,7 +106,7 @@ internal struct RequestHandler
             if ( ! @continue )
                 return;
 
-            bool containsEnqueuedRequests;
+            bool containsRequests;
             do
             {
                 ulong traceId;
@@ -116,7 +116,7 @@ internal struct RequestHandler
                     if ( client.ShouldCancel )
                         return;
 
-                    request = client.MessageContextQueue.DequeueRequest();
+                    request = client.RequestQueue.Dequeue();
                     traceId = client.GetTraceId();
                 }
 
@@ -148,9 +148,9 @@ internal struct RequestHandler
                 if ( result.IsDone )
                     return;
 
-                containsEnqueuedRequests = result.Continue;
+                containsRequests = result.Continue;
             }
-            while ( containsEnqueuedRequests );
+            while ( containsRequests );
 
             using ( client.AcquireLock() )
             {
@@ -158,7 +158,7 @@ internal struct RequestHandler
                     return;
 
                 client.RequestHandler._continuation.Reset();
-                if ( client.MessageContextQueue.ContainsEnqueuedRequests() )
+                if ( client.RequestQueue.IsNotEmpty() )
                     client.RequestHandler.SignalContinuation();
             }
         }
@@ -266,7 +266,7 @@ internal struct RequestHandler
 
                         // TODO:
                         // packet batching will probably require data to be prepared before acquiring writer source
-                        writerSource = client.MessageContextQueue.AcquireWriterSource();
+                        writerSource = client.WriterQueue.AcquireSource();
                     }
                 }
 
@@ -515,7 +515,7 @@ internal struct RequestHandler
                     if ( exc is not null )
                         return RequestResult.Done();
 
-                    writerSource = client.MessageContextQueue.AcquireWriterSource();
+                    writerSource = client.WriterQueue.AcquireSource();
                 }
 
                 if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
@@ -655,7 +655,7 @@ internal struct RequestHandler
                             }
                         }
 
-                        writerSource = client.MessageContextQueue.AcquireWriterSource();
+                        writerSource = client.WriterQueue.AcquireSource();
                     }
                 }
 
@@ -898,7 +898,7 @@ internal struct RequestHandler
                     if ( exc is not null )
                         return RequestResult.Done();
 
-                    writerSource = client.MessageContextQueue.AcquireWriterSource();
+                    writerSource = client.WriterQueue.AcquireSource();
                 }
 
                 if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
@@ -1047,7 +1047,7 @@ internal struct RequestHandler
                     if ( exc is not null )
                         return RequestResult.Done();
 
-                    writerSource = client.MessageContextQueue.AcquireWriterSource();
+                    writerSource = client.WriterQueue.AcquireSource();
                 }
 
                 if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
@@ -1095,7 +1095,7 @@ internal struct RequestHandler
                 if ( exc is not null )
                     return RequestResult.Done();
 
-                writerSource = client.MessageContextQueue.AcquireWriterSource();
+                writerSource = client.WriterQueue.AcquireSource();
             }
 
             if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
@@ -1136,8 +1136,8 @@ internal struct RequestHandler
             if ( exc is not null )
                 return RequestResult.Done();
 
-            client.MessageContextQueue.ResetOutgoingWriter( client, writerSource );
-            return RequestResult.Ok( client.MessageContextQueue.ContainsEnqueuedRequests() );
+            client.WriterQueue.Release( client, writerSource );
+            return RequestResult.Ok( client.RequestQueue.IsNotEmpty() );
         }
     }
 
@@ -1149,7 +1149,7 @@ internal struct RequestHandler
         {
             return exc is not null
                 ? RequestResult.Done()
-                : RequestResult.Ok( client.MessageContextQueue.ContainsEnqueuedRequests() );
+                : RequestResult.Ok( client.RequestQueue.IsNotEmpty() );
         }
     }
 

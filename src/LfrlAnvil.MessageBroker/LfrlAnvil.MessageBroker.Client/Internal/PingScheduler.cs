@@ -129,7 +129,7 @@ internal struct PingScheduler
                     continue;
                 }
 
-                writerSource = client.MessageContextQueue.AcquireWriterSource();
+                writerSource = client.WriterQueue.AcquireSource();
             }
 
             if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
@@ -147,12 +147,12 @@ internal struct PingScheduler
                 if ( delay > Duration.Zero )
                 {
                     client.PingScheduler._continuation.Reset();
-                    client.MessageContextQueue.ResetOutgoingWriter( client, writerSource );
+                    client.WriterQueue.Release( client, writerSource );
                     continue;
                 }
 
                 traceId = client.GetTraceId();
-                responseSource = client.MessageContextQueue.AcquirePendingResponseSource();
+                responseSource = client.ResponseQueue.EnqueueSource();
             }
 
             using ( MessageBrokerClientTraceEvent.CreateScope( client, traceId, MessageBrokerClientTraceEventType.Ping ) )
@@ -169,8 +169,8 @@ internal struct PingScheduler
                     if ( exc is not null )
                         return;
 
-                    client.MessageContextQueue.ResetOutgoingWriter( client, writerSource );
-                    client.MessageContextQueue.ActivatePendingResponseSource( client, responseSource );
+                    client.WriterQueue.Release( client, writerSource );
+                    client.ResponseQueue.ActivateTimeout( client, responseSource );
                 }
 
                 var response = await responseSource.GetTask().ConfigureAwait( false );
@@ -193,7 +193,7 @@ internal struct PingScheduler
                     if ( exc is not null )
                         return;
 
-                    client.MessageContextQueue.ResetPendingResponseSource( responseSource );
+                    client.ResponseQueue.Release( responseSource );
                 }
 
                 if ( response.Header.GetClientEndpoint() != MessageBrokerClientEndpoint.Pong )

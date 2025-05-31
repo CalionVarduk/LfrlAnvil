@@ -114,7 +114,7 @@ internal struct MessageNotifications
     {
         foreach ( ref readonly var message in messages )
         {
-            var writerSource = client.MessageContextQueue.AcquireWriterSource();
+            var writerSource = client.WriterQueue.AcquireSource();
             client.MessageNotifications._messages.Enqueue( new Message( in message, writerSource ) );
         }
     }
@@ -204,7 +204,7 @@ internal struct MessageNotifications
                             if ( exc is not null )
                                 return;
 
-                            client.MessageContextQueue.ResetOutgoingWriter( client, message.WriterSource );
+                            client.WriterQueue.Release( client, message.WriterSource );
                         }
                     }
                     finally

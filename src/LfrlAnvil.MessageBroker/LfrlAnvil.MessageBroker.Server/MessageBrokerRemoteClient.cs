@@ -40,11 +40,12 @@ public sealed partial class MessageBrokerRemoteClient
     internal ReferenceStore<int, MessageBrokerChannelPublisherBinding> PublishersByChannelId;
     internal ReferenceStore<int, MessageBrokerChannelListenerBinding> ListenersByChannelId;
     internal ObjectStore<MessageBrokerQueue> QueuesByName;
+    internal WriterQueue WriterQueue;
+    internal RequestQueue RequestQueue;
     internal EventScheduler EventScheduler;
     internal PacketListener PacketListener;
     internal MessageNotifications MessageNotifications;
     internal RequestHandler RequestHandler;
-    internal MessageContextQueue MessageContextQueue;
     internal readonly MessageBrokerRemoteClientLogger Logger;
 
     private readonly ITimestampProvider _timestamps;
@@ -72,11 +73,12 @@ public sealed partial class MessageBrokerRemoteClient
         PublishersByChannelId = ReferenceStore<int, MessageBrokerChannelPublisherBinding>.Create();
         ListenersByChannelId = ReferenceStore<int, MessageBrokerChannelListenerBinding>.Create();
         QueuesByName = ObjectStore<MessageBrokerQueue>.Create( StringComparer.OrdinalIgnoreCase );
+        WriterQueue = WriterQueue.Create();
+        RequestQueue = RequestQueue.Create();
         EventScheduler = EventScheduler.Create();
         PacketListener = PacketListener.Create();
         MessageNotifications = MessageNotifications.Create();
         RequestHandler = RequestHandler.Create();
-        MessageContextQueue = MessageContextQueue.Create();
 
         Logger = Server.RemoteClientLoggerFactory?.Invoke( this ) ?? default;
         _timestamps = Server.TimestampsFactory( this );
@@ -633,6 +635,7 @@ public sealed partial class MessageBrokerRemoteClient
         Task? messageNotificationsTask;
         ValueTaskDelaySource? ownedDelaySource;
 
+        Chain<Exception> exceptions;
         using ( AcquireLock() )
         {
             ownedDelaySource = _delaySource.DiscardOwnedSource();
@@ -643,8 +646,12 @@ public sealed partial class MessageBrokerRemoteClient
             RequestHandler.Dispose();
             EventScheduler.Dispose();
             MessageNotifications.BeginDispose();
-            MessageContextQueue.Dispose();
+            WriterQueue.Dispose();
+            exceptions = RequestQueue.Dispose();
         }
+
+        foreach ( var exc in exceptions )
+            MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
 
         if ( eventSchedulerTask is not null )
             await eventSchedulerTask.ConfigureAwait( false );
@@ -691,7 +698,6 @@ public sealed partial class MessageBrokerRemoteClient
         }
 
         int discardedMessageCount;
-        Chain<Exception> exceptions;
         using ( AcquireLock() )
             (discardedMessageCount, exceptions) = MessageNotifications.EndDispose();
 

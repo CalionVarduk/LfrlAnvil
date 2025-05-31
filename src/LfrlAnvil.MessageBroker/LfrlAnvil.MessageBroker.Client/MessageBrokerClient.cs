@@ -39,9 +39,10 @@ namespace LfrlAnvil.MessageBroker.Client;
 /// </summary>
 public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
 {
+    internal WriterQueue WriterQueue;
+    internal ResponseQueue ResponseQueue;
     internal EventScheduler EventScheduler;
     internal PacketListener PacketListener;
-    internal MessageContextQueue MessageContextQueue;
     internal PingScheduler PingScheduler;
     internal MessageNotifications MessageNotifications;
     internal PublisherCollection PublisherCollection;
@@ -91,9 +92,10 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         _nextTraceId = 0;
 
         _delaySource = options.DelaySource is not null ? DelaySource.External( options.DelaySource ) : DelaySource.Owned();
+        WriterQueue = WriterQueue.Create();
+        ResponseQueue = ResponseQueue.Create();
         EventScheduler = EventScheduler.Create();
         PacketListener = PacketListener.Create();
-        MessageContextQueue = MessageContextQueue.Create();
         PingScheduler = PingScheduler.Create();
         MessageNotifications = MessageNotifications.Create();
         PublisherCollection = PublisherCollection.Create();
@@ -611,7 +613,8 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
             PingScheduler.Dispose();
             EventScheduler.Dispose();
             MessageNotifications.BeginDispose();
-            MessageContextQueue.Dispose();
+            WriterQueue.Dispose();
+            ResponseQueue.Dispose();
         }
 
         if ( eventSchedulerTask is not null )

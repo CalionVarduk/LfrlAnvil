@@ -218,7 +218,7 @@ internal struct EventScheduler
                 if ( client.EventScheduler._readerCancellation.IsOverdue( now ) )
                     client.EventScheduler.InvokeReaderCancellation();
 
-                client.MessageContextQueue.ProcessPendingResponseTimeouts( now );
+                client.ResponseQueue.ProcessTimeouts( now );
 
                 if ( client.EventScheduler._nextSendPingTimestamp <= now )
                     client.PingScheduler.SignalContinuation();
@@ -235,9 +235,9 @@ internal struct EventScheduler
         if ( client.PingScheduler.IsContinuationPending )
             next = next.Min( _nextSendPingTimestamp );
 
-        var nextResponseSource = client.MessageContextQueue.GetNextPendingResponse();
-        if ( nextResponseSource.Source is not null )
-            next = next.Min( nextResponseSource.Timeout );
+        var nextResponse = client.ResponseQueue.GetNext();
+        if ( nextResponse.Source is not null )
+            next = next.Min( nextResponse.Timeout );
 
         var delayUntilNextEvent = next - now;
         var delay = delayUntilNextEvent.Clamp( Duration.Zero, Defaults.Temporal.MaxTimeout );

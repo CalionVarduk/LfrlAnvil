@@ -20,39 +20,27 @@ using LfrlAnvil.Chrono;
 
 namespace LfrlAnvil.MessageBroker.Client.Internal;
 
-internal struct MessageContextQueue
+internal struct ResponseQueue
 {
-    private StackSlim<ManualResetValueTaskSource<bool>> _writerTokenSourceCache;
-    private StackSlim<ManualResetValueTaskSource<IncomingPacketToken>> _incomingPendingResponseSourceCache;
-    private QueueSlim<ManualResetValueTaskSource<bool>> _pendingOutgoingWriters;
+    private StackSlim<ManualResetValueTaskSource<IncomingPacketToken>> _responseCache;
     private QueueSlim<PendingResponseSource> _pendingResponses;
     private int _activePendingResponses;
 
-    private MessageContextQueue(int activePendingResponses)
+    private ResponseQueue(int activePendingResponses)
     {
-        _writerTokenSourceCache = StackSlim<ManualResetValueTaskSource<bool>>.Create();
-        _incomingPendingResponseSourceCache = StackSlim<ManualResetValueTaskSource<IncomingPacketToken>>.Create();
-        _pendingOutgoingWriters = QueueSlim<ManualResetValueTaskSource<bool>>.Create();
+        _responseCache = StackSlim<ManualResetValueTaskSource<IncomingPacketToken>>.Create();
         _pendingResponses = QueueSlim<PendingResponseSource>.Create();
         _activePendingResponses = activePendingResponses;
     }
 
     [Pure]
-    internal static MessageContextQueue Create()
+    internal static ResponseQueue Create()
     {
-        return new MessageContextQueue( 0 );
+        return new ResponseQueue( 0 );
     }
 
     internal void Dispose()
     {
-        foreach ( var source in _pendingOutgoingWriters )
-        {
-            if ( source.Status == ValueTaskSourceStatus.Pending )
-                source.SetResult( false );
-        }
-
-        _pendingOutgoingWriters = QueueSlim<ManualResetValueTaskSource<bool>>.Create();
-
         _activePendingResponses = 0;
         foreach ( var source in _pendingResponses )
         {
@@ -62,27 +50,13 @@ internal struct MessageContextQueue
         }
 
         _pendingResponses = QueueSlim<PendingResponseSource>.Create();
-        _writerTokenSourceCache = StackSlim<ManualResetValueTaskSource<bool>>.Create();
-        _incomingPendingResponseSourceCache = StackSlim<ManualResetValueTaskSource<IncomingPacketToken>>.Create();
+        _responseCache = StackSlim<ManualResetValueTaskSource<IncomingPacketToken>>.Create();
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ManualResetValueTaskSource<bool> AcquireWriterSource()
+    internal ManualResetValueTaskSource<IncomingPacketToken> EnqueueSource()
     {
-        if ( ! _writerTokenSourceCache.TryPop( out var result ) )
-            result = new ManualResetValueTaskSource<bool>();
-
-        if ( _pendingOutgoingWriters.IsEmpty )
-            result.SetResult( true );
-
-        _pendingOutgoingWriters.Enqueue( result );
-        return result;
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ManualResetValueTaskSource<IncomingPacketToken> AcquirePendingResponseSource()
-    {
-        if ( ! _incomingPendingResponseSourceCache.TryPop( out var result ) )
+        if ( ! _responseCache.TryPop( out var result ) )
             result = new ManualResetValueTaskSource<IncomingPacketToken>();
 
         _pendingResponses.Enqueue( new PendingResponseSource( result ) );
@@ -90,7 +64,7 @@ internal struct MessageContextQueue
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void ActivatePendingResponseSource(MessageBrokerClient client, ManualResetValueTaskSource<IncomingPacketToken> source)
+    internal void ActivateTimeout(MessageBrokerClient client, ManualResetValueTaskSource<IncomingPacketToken> source)
     {
         if ( source.Status != ValueTaskSourceStatus.Pending )
             return;
@@ -102,24 +76,7 @@ internal struct MessageContextQueue
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void ResetOutgoingWriter(MessageBrokerClient client, ManualResetValueTaskSource<bool> source)
-    {
-        Assume.Equals( source, _pendingOutgoingWriters.First() );
-
-        _pendingOutgoingWriters.Dequeue();
-        source.Reset();
-        _writerTokenSourceCache.Push( source );
-
-        client.EventScheduler.ResetWriteTimeout();
-        if ( _pendingOutgoingWriters.IsEmpty )
-            return;
-
-        var next = _pendingOutgoingWriters.First();
-        next.SetResult( true );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void NotifyPendingResponseSource(ManualResetValueTaskSource<IncomingPacketToken> source, IncomingPacketToken token)
+    internal void Signal(ManualResetValueTaskSource<IncomingPacketToken> source, IncomingPacketToken token)
     {
         Assume.False( _pendingResponses.IsEmpty );
         ref var first = ref _pendingResponses.First();
@@ -133,21 +90,21 @@ internal struct MessageContextQueue
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void ResetPendingResponseSource(ManualResetValueTaskSource<IncomingPacketToken> source)
+    internal void Release(ManualResetValueTaskSource<IncomingPacketToken> source)
     {
         source.Reset();
-        _incomingPendingResponseSourceCache.Push( source );
+        _responseCache.Push( source );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal PendingResponseSource GetNextPendingResponse()
+    internal PendingResponseSource GetNext()
     {
         return _pendingResponses.IsEmpty ? default : _pendingResponses.First();
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void ProcessPendingResponseTimeouts(Timestamp now)
+    internal void ProcessTimeouts(Timestamp now)
     {
         while ( ! _pendingResponses.IsEmpty )
         {

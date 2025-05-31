@@ -182,7 +182,7 @@ internal struct PacketListener
                 }
 
                 client.EventScheduler.ResetReadTimeout();
-                client.MessageContextQueue.EnqueueRequest( header, packetPoolToken, packetBuffer );
+                client.RequestQueue.Enqueue( header, packetPoolToken, packetBuffer );
                 client.RequestHandler.SignalContinuation();
             }
         }

@@ -41,10 +41,6 @@ MessageBroker:
     - since all operations at first validate e.g. client state and may throw
     - or Enqueue itself returns a Result<EnqueuedOperation>, which would allow the consumer to easily react to such a scenario
 - add some basic memory pool tracking & possibility to trim excess
-- exception messages as string templates (string.format)
-- refactor MessageContextQueue on both client and server side
-  - they outlived their usefulness, and are in need of some refactoring/splitting into different structs
-  - since now I have a better grasp on how they're used
 - add message's sender/stream name synchronization via notifications to the client
   - probably requires 64bit GlobalId for each such object
   - GlobalId must be sent with each relevant packet header (what about channels?)
@@ -82,6 +78,11 @@ Reactive:
 - timer: remove async start methods
   - simplifies interface
   - signals to the consumer that the underlying mechanism is not async & requires dedicated thread
+
+Core:
+
+- KeyedLock\<TKey\> class + token struct
+  - allows to acquire an exclusive lock on a specific key (async-only)
 
 ### Terminal
 
