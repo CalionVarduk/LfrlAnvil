@@ -42,7 +42,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     internal readonly Func<MessageBrokerRemoteClient, MessageBrokerRemoteClientLogger?>? RemoteClientLoggerFactory;
     internal readonly Func<MessageBrokerChannel, MessageBrokerChannelLogger?>? ChannelLoggerFactory;
     internal readonly Func<MessageBrokerStream, MessageBrokerStreamLogger?>? StreamLoggerFactory;
-    internal readonly Func<MessageBrokerQueue, MessageBrokerQueueEventHandler?>? QueueEventHandlerFactory;
+    internal readonly Func<MessageBrokerQueue, MessageBrokerQueueLogger?>? QueueLoggerFactory;
 
     internal readonly MessageBrokerRemoteClientStreamDecorator? StreamDecorator;
     internal readonly Func<MessageBrokerRemoteClient, ITimestampProvider> TimestampsFactory;
@@ -70,7 +70,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         RemoteClientLoggerFactory = options.ClientLoggerFactory;
         ChannelLoggerFactory = options.ChannelLoggerFactory;
         StreamLoggerFactory = options.StreamLoggerFactory;
-        QueueEventHandlerFactory = options.QueueEventHandlerFactory;
+        QueueLoggerFactory = options.QueueLoggerFactory;
         TimestampsFactory = options.TimestampsFactory ?? (static _ => TimestampProvider.Shared);
         DelaySourceFactory = options.DelaySourceFactory;
 

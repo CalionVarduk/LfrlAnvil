@@ -53,7 +53,7 @@ public class MessageBrokerStreamTests : TestsBase, IClassFixture<SharedResourceF
                                         endSource.Complete();
                                 }
                             },
-                            messageProcessing: e => messagesPerTrace[e.Source.TraceId] = e.MessageCount ) ) ) );
+                            processingMessages: e => messagesPerTrace[e.Source.TraceId] = e.MessageCount ) ) ) );
 
         await server.StartAsync();
 
@@ -243,7 +243,7 @@ public class MessageBrokerStreamTests : TestsBase, IClassFixture<SharedResourceF
                         (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:ProcessMessages] Stream = [1] 'c', TraceId = 2 (start)",
-                            "[MessageProcessing] Stream = [1] 'c', TraceId = 2, Channel = [1] 'c', MessageCount = 1",
+                            "[ProcessingMessages] Stream = [1] 'c', TraceId = 2, Channel = [1] 'c', MessageCount = 1",
                             "[MessageProcessed] Stream = [1] 'c', TraceId = 2, Client = [1] 'test', Channel = [1] 'c', MessageId = 0, Length = 1",
                             "[Trace:ProcessMessages] Stream = [1] 'c', TraceId = 2 (end)"
                         ] )
@@ -287,7 +287,7 @@ public class MessageBrokerStreamTests : TestsBase, IClassFixture<SharedResourceF
                                 else if ( e.Type == MessageBrokerStreamTraceEventType.PushMessage )
                                     enqueueEndSource.Complete();
                             },
-                            messageProcessing: e => messagesPerTrace[e.Source.TraceId] = e.MessageCount ) ) ) );
+                            processingMessages: e => messagesPerTrace[e.Source.TraceId] = e.MessageCount ) ) ) );
 
         await server.StartAsync();
 

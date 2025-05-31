@@ -6,13 +6,13 @@ using LfrlAnvil.MessageBroker.Server.Events;
 
 namespace LfrlAnvil.MessageBroker.Server.Tests.Helpers;
 
-public sealed class StreamEventLogger
+public sealed class QueueEventLogger
 {
     private readonly Dictionary<ulong, List<string>> _traces = new Dictionary<ulong, List<string>>();
 
-    public MessageBrokerStreamLogger GetLogger(MessageBrokerStreamLogger logger = default)
+    public MessageBrokerQueueLogger GetLogger(MessageBrokerQueueLogger logger = default)
     {
-        return MessageBrokerStreamLogger.Create(
+        return MessageBrokerQueueLogger.Create(
             traceStart: e =>
             {
                 Add( e.Source.TraceId, $"{e} (start)" );
@@ -23,35 +23,40 @@ public sealed class StreamEventLogger
                 Add( e.Source.TraceId, $"{e} (end)" );
                 logger.TraceEnd?.Invoke( e );
             },
-            serverTrace: e =>
-            {
-                Add( e.Source.TraceId, e.ToString() );
-                logger.ServerTrace?.Invoke( e );
-            },
             clientTrace: e =>
             {
                 Add( e.Source.TraceId, e.ToString() );
                 logger.ClientTrace?.Invoke( e );
+            },
+            streamTrace: e =>
+            {
+                Add( e.Source.TraceId, e.ToString() );
+                logger.StreamTrace?.Invoke( e );
             },
             created: e =>
             {
                 Add( e.Source.TraceId, e.ToString() );
                 logger.Created?.Invoke( e );
             },
-            publisherBound: e =>
+            listenerBound: e =>
             {
                 Add( e.Source.TraceId, e.ToString() );
-                logger.PublisherBound?.Invoke( e );
+                logger.ListenerBound?.Invoke( e );
             },
-            publisherUnbound: e =>
+            listenerUnbound: e =>
             {
                 Add( e.Source.TraceId, e.ToString() );
-                logger.PublisherUnbound?.Invoke( e );
+                logger.ListenerUnbound?.Invoke( e );
             },
-            messagePushed: e =>
+            enqueueingMessages: e =>
             {
                 Add( e.Source.TraceId, e.ToString() );
-                logger.MessagePushed?.Invoke( e );
+                logger.EnqueueingMessages?.Invoke( e );
+            },
+            messagesEnqueued: e =>
+            {
+                Add( e.Source.TraceId, e.ToString() );
+                logger.MessagesEnqueued?.Invoke( e );
             },
             processingMessages: e =>
             {

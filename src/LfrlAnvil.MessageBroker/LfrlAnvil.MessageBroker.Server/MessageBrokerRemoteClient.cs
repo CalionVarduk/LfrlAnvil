@@ -401,6 +401,7 @@ public sealed partial class MessageBrokerRemoteClient
         ref MessageBrokerChannelListenerBinding? listener,
         ref ulong channelTraceId,
         ref MessageBrokerQueue? queue,
+        ref ulong queueTraceId,
         ref bool queueCreated)
     {
         using ( channel.AcquireLock() )
@@ -447,6 +448,7 @@ public sealed partial class MessageBrokerRemoteClient
                     ListenersByChannelId.Add( channel.Id, listener );
                     queue.ListenersByChannelId.Add( channel.Id, listener );
                     channelTraceId = channel.GetTraceId();
+                    queueTraceId = queue.GetTraceId();
                 }
             }
             catch
@@ -485,6 +487,7 @@ public sealed partial class MessageBrokerRemoteClient
         ref MessageBrokerChannelListenerBinding? listener,
         ref ulong channelTraceId,
         ref MessageBrokerQueue? queue,
+        ref ulong queueTraceId,
         ref bool disposingChannel,
         ref bool disposingQueue)
     {
@@ -509,6 +512,7 @@ public sealed partial class MessageBrokerRemoteClient
                     disposingChannel = channel.TryDisposeByRemovingListenerUnsafe( Id );
                     disposingQueue = queue.TryDisposeByRemovingListenerUnsafe( channel.Id );
                     channelTraceId = channel.GetTraceId();
+                    queueTraceId = queue.GetTraceId();
                 }
             }
         }
@@ -657,32 +661,21 @@ public sealed partial class MessageBrokerRemoteClient
         MessageBrokerChannelPublisherBinding[] publishers;
         MessageBrokerChannelListenerBinding[] listeners;
         MessageBrokerQueue[] queues;
-        int discardedMessageCount;
-        Chain<Exception> exceptions;
-
+        Exception? exception;
         using ( AcquireLock() )
         {
             publishers = PublishersByChannelId.ClearAndExtract();
             listeners = ListenersByChannelId.ClearAndExtract();
             queues = QueuesByName.Clear();
-            (discardedMessageCount, exceptions) = MessageNotifications.EndDispose();
-            var exception = _tcp.TryDispose().Exception;
-            if ( exception is not null )
-                exceptions = exceptions.Extend( exception );
+            exception = _tcp.TryDispose().Exception;
         }
 
-        foreach ( var exc in exceptions )
-            MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
-
-        if ( discardedMessageCount > 0 )
-        {
-            var error = new MessageBrokerRemoteClientMessageException( this, null, Resources.MessagesDiscarded( discardedMessageCount ) );
-            MessageBrokerRemoteClientErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
-        }
+        if ( exception is not null )
+            MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exception ).Emit( Logger.Error );
 
         if ( serverDisposed )
         {
-            await Parallel.ForEachAsync( queues, (q, _) => q.OnServerDisposedAsync( traceId ) ).ConfigureAwait( false );
+            await Parallel.ForEachAsync( queues, (q, _) => q.OnClientDisconnectedAsync( traceId ) ).ConfigureAwait( false );
             foreach ( var publisher in publishers )
                 publisher.OnServerDisposed();
 
@@ -695,6 +688,20 @@ public sealed partial class MessageBrokerRemoteClient
             await Parallel.ForEachAsync( publishers, (p, _) => p.OnClientDisconnectedAsync( traceId ) ).ConfigureAwait( false );
             foreach ( var listener in listeners )
                 listener.OnClientDisconnected( traceId );
+        }
+
+        int discardedMessageCount;
+        Chain<Exception> exceptions;
+        using ( AcquireLock() )
+            (discardedMessageCount, exceptions) = MessageNotifications.EndDispose();
+
+        foreach ( var exc in exceptions )
+            MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
+
+        if ( discardedMessageCount > 0 )
+        {
+            var error = new MessageBrokerRemoteClientMessageException( this, null, Resources.MessagesDiscarded( discardedMessageCount ) );
+            MessageBrokerRemoteClientErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
         }
 
         using ( AcquireLock() )

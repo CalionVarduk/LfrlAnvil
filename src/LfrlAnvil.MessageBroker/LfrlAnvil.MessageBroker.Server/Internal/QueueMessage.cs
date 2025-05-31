@@ -57,18 +57,17 @@ internal readonly struct QueueMessage
     internal readonly MessageBrokerChannelListenerBinding Listener;
     internal readonly MemoryPoolToken<byte> PoolToken;
     internal readonly ReadOnlyMemory<byte> Packet;
+    internal int Length => Packet.Length - Protocol.PacketHeader.Length - Protocol.MessageNotificationHeader.Payload;
 
     [Pure]
     public override string ToString()
     {
-        return
-            $"Id = {Id}, Timestamp = {Timestamp}, Length = {Packet.Length - Protocol.PacketHeader.Length - Protocol.MessageNotificationHeader.Payload}, Publisher = ({Publisher}), Listener = ({Listener})";
+        return $"Id = {Id}, Timestamp = {Timestamp}, Length = {Length}, Publisher = ({Publisher}), Listener = ({Listener})";
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void Return()
+    internal Exception? Return()
     {
-        // TODO: handle exception (queue events refactor)
-        PoolToken.Return();
+        return PoolToken.Return();
     }
 }

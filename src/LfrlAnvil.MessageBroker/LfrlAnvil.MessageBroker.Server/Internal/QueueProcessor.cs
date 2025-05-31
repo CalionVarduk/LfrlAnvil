@@ -19,6 +19,7 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Sources;
 using LfrlAnvil.Async;
 using LfrlAnvil.MessageBroker.Server.Events;
+using LfrlAnvil.MessageBroker.Server.Exceptions;
 
 namespace LfrlAnvil.MessageBroker.Server.Internal;
 
@@ -44,35 +45,37 @@ internal struct QueueProcessor
     {
         while ( true )
         {
-            TaskStopReason stopReason;
             try
             {
-                stopReason = await RunCore( queue ).ConfigureAwait( false );
-            }
-            catch ( Exception exc )
-            {
-                queue.Emit( MessageBrokerQueueEvent.Unexpected( queue, exc ) );
-                stopReason = TaskStopReason.Error;
-            }
-
-            if ( stopReason == TaskStopReason.OwnerDisposed )
+                await RunCore( queue ).ConfigureAwait( false );
                 break;
-
-            try
-            {
-                using ( queue.AcquireLock() )
-                {
-                    if ( queue.ShouldCancel )
-                        break;
-
-                    queue.QueueProcessor.SignalContinuation();
-                }
-
-                await Task.Delay( TimeSpan.FromSeconds( 1 ) ).ConfigureAwait( false );
             }
             catch ( Exception exc )
             {
-                queue.Emit( MessageBrokerQueueEvent.Unexpected( queue, exc ) );
+                ulong traceId;
+                using ( queue.AcquireLock() )
+                    traceId = queue.GetTraceId();
+
+                using ( MessageBrokerQueueTraceEvent.CreateScope( queue, traceId, MessageBrokerQueueTraceEventType.Unexpected ) )
+                {
+                    MessageBrokerQueueErrorEvent.Create( queue, traceId, exc ).Emit( queue.Logger.Error );
+                    try
+                    {
+                        using ( queue.AcquireLock() )
+                        {
+                            if ( queue.ShouldCancel )
+                                break;
+
+                            queue.QueueProcessor.SignalContinuation();
+                        }
+
+                        await Task.Delay( TimeSpan.FromSeconds( 1 ) ).ConfigureAwait( false );
+                    }
+                    catch ( Exception exc2 )
+                    {
+                        MessageBrokerQueueErrorEvent.Create( queue, traceId, exc2 ).Emit( queue.Logger.Error );
+                    }
+                }
             }
         }
     }
@@ -104,23 +107,24 @@ internal struct QueueProcessor
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static async ValueTask<TaskStopReason> RunCore(MessageBrokerQueue queue)
+    private static async ValueTask RunCore(MessageBrokerQueue queue)
     {
         var buffer = ListSlim<QueueMessage>.Create( minCapacity: 16 );
         while ( true )
         {
             var @continue = await queue.QueueProcessor._continuation.GetTask().ConfigureAwait( false );
             if ( ! @continue )
-                return TaskStopReason.OwnerDisposed;
+                return;
 
             var disposed = false;
             while ( true )
             {
                 int dequeued;
+                ulong traceId;
                 using ( queue.AcquireLock() )
                 {
                     if ( queue.ShouldCancel )
-                        return TaskStopReason.OwnerDisposed;
+                        return;
 
                     dequeued = queue.CopyMessagesIntoUnsafe( ref buffer );
                     if ( dequeued == 0 )
@@ -132,41 +136,74 @@ internal struct QueueProcessor
 
                         break;
                     }
+
+                    traceId = queue.GetTraceId();
                 }
 
-                using ( queue.Client.AcquireLock() )
+                using ( MessageBrokerQueueTraceEvent.CreateScope( queue, traceId, MessageBrokerQueueTraceEventType.ProcessMessages ) )
                 {
-                    if ( queue.Client.ShouldCancel )
-                        return TaskStopReason.OwnerDisposed;
+                    MessageBrokerQueueProcessingMessagesEvent.Create( queue, traceId, buffer.Count, dequeued - buffer.Count )
+                        .Emit( queue.Logger.ProcessingMessages );
+
+                    if ( buffer.Count > 0 )
+                    {
+                        using ( AcquireActiveClientLock( queue, traceId, out var exc ) )
+                        {
+                            if ( exc is not null )
+                                return;
+
+                            MessageNotifications.EnqueueMessagesUnsafe( queue.Client, in buffer );
+                            queue.Client.MessageNotifications.SignalContinuation();
+                        }
+                    }
 
                     using ( queue.AcquireLock() )
-                    {
-                        if ( queue.ShouldCancel )
-                            return TaskStopReason.OwnerDisposed;
-
-                        MessageNotifications.EnqueueMessagesUnsafe( queue.Client, in buffer );
                         queue.DequeueMessagesUnsafe( dequeued );
-                        queue.Client.MessageNotifications.SignalContinuation();
-                    }
-                }
 
-                ClearBuffer( queue, ref buffer );
+                    ClearBuffer( queue, ref buffer, traceId );
+                }
             }
 
             if ( disposed )
             {
-                await queue.DisposeDueToLackOfReferencesAsync( ignoreProcessorTask: true ).ConfigureAwait( false );
-                return TaskStopReason.OwnerDisposed;
+                ulong traceId;
+                using ( queue.AcquireLock() )
+                    traceId = queue.GetTraceId();
+
+                using ( MessageBrokerQueueTraceEvent.CreateScope( queue, traceId, MessageBrokerQueueTraceEventType.Dispose ) )
+                    await queue.DisposeDueToLackOfReferencesAsync( ignoreProcessorTask: true, traceId ).ConfigureAwait( false );
+
+                return;
             }
         }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static void ClearBuffer(MessageBrokerQueue queue, ref ListSlim<QueueMessage> messages)
+    private static void ClearBuffer(MessageBrokerQueue queue, ref ListSlim<QueueMessage> messages, ulong traceId)
     {
         foreach ( ref readonly var message in messages )
-            queue.Emit( MessageBrokerQueueEvent.MessageDequeued( queue, message.Listener, message.Id ) );
+            MessageBrokerQueueMessageProcessedEvent.Create( message.Listener, traceId, message.Publisher, message.Id, message.Length )
+                .Emit( queue.Logger.MessageProcessed );
 
         messages.Clear();
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static ExclusiveLock AcquireActiveClientLock(
+        MessageBrokerQueue queue,
+        ulong traceId,
+        out MessageBrokerRemoteClientDisposedException? exception)
+    {
+        var @lock = queue.Client.AcquireLock();
+        if ( ! queue.Client.ShouldCancel )
+        {
+            exception = null;
+            return @lock;
+        }
+
+        @lock.Dispose();
+        exception = new MessageBrokerRemoteClientDisposedException( queue.Client );
+        MessageBrokerQueueErrorEvent.Create( queue, traceId, exception ).Emit( queue.Logger.Error );
+        return default;
     }
 }

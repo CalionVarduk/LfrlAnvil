@@ -1587,12 +1587,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                             },
                             disposing: _ => disposeContinuation.Complete(),
                             error: e => exception = e.Exception ) ) )
-                .SetQueueEventHandlerFactory(
-                    _ => e =>
-                    {
-                        if ( e.Type == MessageBrokerQueueEventType.MessageDequeued )
-                            pushContinuation.Complete();
-                    } ) );
+                .SetQueueLoggerFactory( _ => MessageBrokerQueueLogger.Create( messageProcessed: _ => pushContinuation.Complete() ) ) );
 
         await server.StartAsync();
 

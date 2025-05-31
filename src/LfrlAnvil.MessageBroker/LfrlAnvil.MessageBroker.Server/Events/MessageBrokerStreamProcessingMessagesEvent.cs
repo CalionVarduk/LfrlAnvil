@@ -20,9 +20,9 @@ namespace LfrlAnvil.MessageBroker.Server.Events;
 /// <summary>
 /// Represents an event emitted by <see cref="MessageBrokerStream"/> when starting to process a batch of channel messages.
 /// </summary>
-public readonly struct MessageBrokerStreamMessageProcessingEvent
+public readonly struct MessageBrokerStreamProcessingMessagesEvent
 {
-    private MessageBrokerStreamMessageProcessingEvent(
+    private MessageBrokerStreamProcessingMessagesEvent(
         MessageBrokerStream stream,
         ulong traceId,
         MessageBrokerChannel channel,
@@ -49,23 +49,23 @@ public readonly struct MessageBrokerStreamMessageProcessingEvent
     public int MessageCount { get; }
 
     /// <summary>
-    /// Returns a string representation of this <see cref="MessageBrokerStreamMessageProcessingEvent"/> instance.
+    /// Returns a string representation of this <see cref="MessageBrokerStreamProcessingMessagesEvent"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
-        return $"[MessageProcessing] {Source}, Channel = [{Channel.Id}] '{Channel.Name}', MessageCount = {MessageCount}";
+        return $"[ProcessingMessages] {Source}, Channel = [{Channel.Id}] '{Channel.Name}', MessageCount = {MessageCount}";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerStreamMessageProcessingEvent Create(
+    internal static MessageBrokerStreamProcessingMessagesEvent Create(
         MessageBrokerStream stream,
         ulong traceId,
         MessageBrokerChannel channel,
         int messageCount)
     {
-        return new MessageBrokerStreamMessageProcessingEvent( stream, traceId, channel, messageCount );
+        return new MessageBrokerStreamProcessingMessagesEvent( stream, traceId, channel, messageCount );
     }
 }

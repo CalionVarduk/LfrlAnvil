@@ -15,37 +15,37 @@
 namespace LfrlAnvil.MessageBroker.Server.Events;
 
 /// <summary>
-/// Defines available <see cref="MessageBrokerQueueEvent"/> types.
+/// Represents the type of a <see cref="MessageBrokerQueueTraceEvent"/>.
 /// </summary>
-public enum MessageBrokerQueueEventType : byte
+public enum MessageBrokerQueueTraceEventType : byte
 {
     /// <summary>
-    /// Specifies that the queue has encountered an unexpected error.
+    /// Specifies that trace is related to the queue listener binding.
     /// </summary>
-    Unexpected,
+    BindListener = 0,
 
     /// <summary>
-    /// Specifies that the queue instance has been created.
+    /// Specifies that trace is related to the queue listener unbinding.
     /// </summary>
-    Created,
+    UnbindListener = 1,
 
     /// <summary>
-    /// Specifies that a message has been enqueued in the queue.
+    /// Specifies that trace is related to a batch of messages being enqueued by a stream.
     /// </summary>
-    MessageEnqueued,
+    EnqueueMessages = 2,
 
     /// <summary>
-    /// Specifies that a message has been dequeued from the queue.
+    /// Specifies that trace is related to processing a batch of enqueued messages.
     /// </summary>
-    MessageDequeued,
+    ProcessMessages = 3,
 
     /// <summary>
-    /// Specifies that the queue is about to be disposed.
+    /// Specifies that trace is related to the queue disposal.
     /// </summary>
-    Disposing,
+    Dispose = 4,
 
     /// <summary>
-    /// Specifies that the queue has been disposed.
+    /// Specifies that trace is related to an unexpected occurrence in the queue e.g. an error.
     /// </summary>
-    Disposed
+    Unexpected = 5
 }

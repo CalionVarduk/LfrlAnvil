@@ -60,6 +60,13 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string QueueDisposed(int id, string name)
+    {
+        return $"Operation has been cancelled because queue [{id}] '{name}' is disposed.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string NotBoundAsPublisher(MessageBrokerChannel channel, MessageBrokerRemoteClient client)
     {
         return $"Client [{client.Id}] '{client.Name}' is not bound as publisher to channel [{channel.Id}] '{channel.Name}'.";
@@ -175,6 +182,13 @@ internal static class Resources
     internal static string StreamMessagesDiscarded(int count)
     {
         return $"{count} stored pending message(s) have been discarded due to server disposal.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string QueueMessagesDiscarded(int count)
+    {
+        return $"{count} enqueued message(s) have been discarded due to client disposal.";
     }
 
     [Pure]

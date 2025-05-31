@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.MessageBroker.Server.Events;
+using LfrlAnvil.MessageBroker.Server.Exceptions;
 using LfrlAnvil.MessageBroker.Server.Internal;
 using LfrlAnvil.MessageBroker.Server.Tests.Helpers;
 
@@ -24,8 +25,8 @@ public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFi
     public async Task MessageRequest_ShouldPropagateMessagesToListenersCorrectly(int prefetchHint)
     {
         var endSource = new SafeTaskCompletionSource( completionCount: 6 );
-        var logs = new EventLogger();
         var clientLogs = new ClientEventLogger();
+        var queueLogs = new QueueEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
@@ -40,7 +41,7 @@ public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFi
                                     or MessageBrokerRemoteClientTraceEventType.PushMessage )
                                     endSource.Complete();
                             } ) ) )
-                .SetQueueEventHandlerFactory( _ => logs.Add ) );
+                .SetQueueLoggerFactory( _ => queueLogs.GetLogger() ) );
 
         await server.StartAsync();
 
@@ -154,33 +155,18 @@ public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFi
                         "[AwaitPacket] Client = [1] 'test'",
                         "[AwaitPacket] Client = [1] 'test', Packet = (PushMessage, Length = 13)"
                     ] ),
-                logs.GetAllQueue()
-                    .TestContainsSequence(
-                    [
-                        "[1::'test'::'c'::2] [Created] by listener to [1::'c']",
-                        "[1::'test'::'c'::<ROOT>] [MessageEnqueued] MessageId = 0 due to listener to [1::'c']",
-                        "[1::'test'::'c'::<ROOT>] [MessageDequeued] MessageId = 0 due to listener to [1::'c']",
-                    ] ),
-                logs.GetAllQueue()
-                    .TestContainsSequence(
-                    [
-                        "[1::'test'::'c'::<ROOT>] [MessageEnqueued] MessageId = 1 due to listener to [1::'c']",
-                        "[1::'test'::'c'::<ROOT>] [MessageDequeued] MessageId = 1 due to listener to [1::'c']",
-                    ] ),
-                logs.GetAllQueue()
-                    .TestContainsSequence(
-                    [
-                        "[1::'test'::'c'::<ROOT>] [MessageEnqueued] MessageId = 2 due to listener to [1::'c']",
-                        "[1::'test'::'c'::<ROOT>] [MessageDequeued] MessageId = 2 due to listener to [1::'c']",
-                    ] ) )
+                queueLogs.GetAll().Count( t => t.Logs.Any( e => e.Contains( "[Trace:EnqueueMessages]" ) ) ).TestInRange( 1, 3 ),
+                queueLogs.GetAll().Count( t => t.Logs.Any( e => e.Contains( "[Trace:ProcessMessages]" ) ) ).TestInRange( 1, 3 ) )
             .Go();
     }
 
     [Fact]
     public async Task QueueProcessing_ShouldIgnoreMessagesTargetedToDisposedListeners()
     {
-        var endSource = new SafeTaskCompletionSource();
-        var logs = new EventLogger();
+        var pushContinuation = new SafeTaskCompletionSource();
+        var processContinuation = new SafeTaskCompletionSource( completionCount: 3 );
+        var endSource = new SafeTaskCompletionSource( completionCount: 3 );
+        var queueLogs = new QueueEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
@@ -188,18 +174,40 @@ public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFi
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
                 .SetClientLoggerFactory(
                     _ => MessageBrokerRemoteClientLogger.Create(
+                        traceStart: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessage && e.Source.TraceId > 2 )
+                                pushContinuation.Task.Wait();
+                        },
                         traceEnd: e =>
                         {
                             if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindListener )
+                            {
+                                processContinuation.Complete();
                                 endSource.Complete();
+                            }
                         } ) )
-                .SetQueueEventHandlerFactory(
-                    _ => e =>
-                    {
-                        logs.Add( e );
-                        if ( e.Type == MessageBrokerQueueEventType.MessageDequeued )
-                            endSource.Task.Wait();
-                    } ) );
+                .SetQueueLoggerFactory(
+                    _ => queueLogs.GetLogger(
+                        MessageBrokerQueueLogger.Create(
+                            traceStart: e =>
+                            {
+                                if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessages && e.Source.TraceId == 3 )
+                                    pushContinuation.Complete();
+                            },
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessages )
+                                {
+                                    processContinuation.Task.Wait();
+                                    endSource.Complete();
+                                }
+                            },
+                            messagesEnqueued: e =>
+                            {
+                                for ( var i = 0; i < e.MessageCount; ++i )
+                                    processContinuation.Complete();
+                            } ) ) ) );
 
         await server.StartAsync();
 
@@ -229,8 +237,6 @@ public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFi
             {
                 c.SendPushMessage( 1, [ 1 ] );
                 c.SendPushMessage( 1, [ 1, 2 ] );
-                c.SendPushMessage( 1, [ 1, 2, 3 ] );
-                c.ReadMessageAcceptedResponse();
                 c.ReadMessageAcceptedResponse();
                 c.ReadMessageAcceptedResponse();
             } );
@@ -244,22 +250,48 @@ public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFi
             } );
 
         await endSource.Task;
-        await endSource.Task;
 
-        Assertion.All(
-                logs.GetAllQueue()
-                    .TestContainsSequence(
-                    [
-                        "[2::'test2'::'c'::1] [Created] by listener to [1::'c']",
-                        "[2::'test2'::'c'::<ROOT>] [MessageEnqueued] MessageId = 0 due to listener to [1::'c']",
-                        "[2::'test2'::'c'::<ROOT>] [MessageDequeued] MessageId = 0 due to listener to [1::'c']"
-                    ] ),
-                logs.GetAllQueue()
-                    .TestContainsSequence(
-                    [
-                        "[2::'test2'::'c'::<ROOT>] [MessageEnqueued] MessageId = 1 due to listener to [1::'c']",
-                        "[2::'test2'::'c'::<ROOT>] [MessageEnqueued] MessageId = 2 due to listener to [1::'c']"
-                    ] ) )
+        queueLogs.GetAll()
+            .Skip( 2 )
+            .TestSequence(
+            [
+                (t, _) => t.Logs.TestSequence(
+                [
+                    "[Trace:EnqueueMessages] Client = [2] 'test2', Queue = [1] 'c', TraceId = 2 (start)",
+                    "[StreamTrace] Client = [2] 'test2', Queue = [1] 'c', TraceId = 2, Correlation = (Stream = [1] 'c', TraceId = 2)",
+                    "[EnqueueingMessages] Client = [2] 'test2', Queue = [1] 'c', TraceId = 2, MessageCount = 1",
+                    "[MessagesEnqueued] Client = [2] 'test2', Queue = [1] 'c', TraceId = 2, MessageCount = 1",
+                    "[Trace:EnqueueMessages] Client = [2] 'test2', Queue = [1] 'c', TraceId = 2 (end)"
+                ] ),
+                (t, _) => t.Logs.TestSequence(
+                [
+                    "[Trace:ProcessMessages] Client = [2] 'test2', Queue = [1] 'c', TraceId = 3 (start)",
+                    "[ProcessingMessages] Client = [2] 'test2', Queue = [1] 'c', TraceId = 3, MessageCount = 1, SkippedMessageCount = 0",
+                    "[MessageProcessed] Client = [2] 'test2', Queue = [1] 'c', TraceId = 3, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 0, Length = 1",
+                    "[Trace:ProcessMessages] Client = [2] 'test2', Queue = [1] 'c', TraceId = 3 (end)"
+                ] ),
+                (t, _) => t.Logs.TestSequence(
+                [
+                    "[Trace:EnqueueMessages] Client = [2] 'test2', Queue = [1] 'c', TraceId = 4 (start)",
+                    "[StreamTrace] Client = [2] 'test2', Queue = [1] 'c', TraceId = 4, Correlation = (Stream = [1] 'c', TraceId = 4)",
+                    "[EnqueueingMessages] Client = [2] 'test2', Queue = [1] 'c', TraceId = 4, MessageCount = 1",
+                    "[MessagesEnqueued] Client = [2] 'test2', Queue = [1] 'c', TraceId = 4, MessageCount = 1",
+                    "[Trace:EnqueueMessages] Client = [2] 'test2', Queue = [1] 'c', TraceId = 4 (end)"
+                ] ),
+                (t, _) => t.Logs.TestSequence(
+                [
+                    "[Trace:UnbindListener] Client = [2] 'test2', Queue = [1] 'c', TraceId = 5 (start)",
+                    "[ClientTrace] Client = [2] 'test2', Queue = [1] 'c', TraceId = 5, ClientTraceId = 4",
+                    "[ListenerUnbound] Client = [2] 'test2', Queue = [1] 'c', TraceId = 5, Channel = [1] 'c'",
+                    "[Trace:UnbindListener] Client = [2] 'test2', Queue = [1] 'c', TraceId = 5 (end)"
+                ] ),
+                (t, _) => t.Logs.TestSequence(
+                [
+                    "[Trace:ProcessMessages] Client = [2] 'test2', Queue = [1] 'c', TraceId = 6 (start)",
+                    "[ProcessingMessages] Client = [2] 'test2', Queue = [1] 'c', TraceId = 6, MessageCount = 0, SkippedMessageCount = 1",
+                    "[Trace:ProcessMessages] Client = [2] 'test2', Queue = [1] 'c', TraceId = 6 (end)"
+                ] )
+            ] )
             .Go();
     }
 
@@ -268,7 +300,7 @@ public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFi
     {
         var endSource = new SafeTaskCompletionSource();
         var listenerDisposedSource = new SafeTaskCompletionSource<MessageBrokerQueueState>();
-        var logs = new EventLogger();
+        var queueLogs = new QueueEventLogger();
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
@@ -277,15 +309,15 @@ public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFi
                 .SetClientLoggerFactory(
                     _ => MessageBrokerRemoteClientLogger.Create(
                         listenerUnbound: e => listenerDisposedSource.Complete( e.Listener.Queue.State ) ) )
-                .SetQueueEventHandlerFactory(
-                    _ => e =>
-                    {
-                        logs.Add( e );
-                        if ( e.Type == MessageBrokerQueueEventType.MessageDequeued )
-                            listenerDisposedSource.Task.Wait();
-                        else if ( e.Type == MessageBrokerQueueEventType.Disposed )
-                            endSource.Complete();
-                    } ) );
+                .SetQueueLoggerFactory(
+                    _ => queueLogs.GetLogger(
+                        MessageBrokerQueueLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerQueueTraceEventType.Dispose )
+                                    endSource.Complete();
+                            },
+                            messageProcessed: _ => listenerDisposedSource.Task.Wait() ) ) ) );
 
         await server.StartAsync();
 
@@ -330,19 +362,120 @@ public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFi
 
         Assertion.All(
                 queueStateOnListenerDisposed.TestEquals( MessageBrokerQueueState.Running ),
-                logs.GetAllQueue()
-                    .TestContainsSequence(
+                queueLogs.GetAll()
+                    .TakeLast( 1 )
+                    .TestSequence(
                     [
-                        "[2::'test2'::'c'::1] [Created] by listener to [1::'c']",
-                        "[2::'test2'::'c'::<ROOT>] [MessageEnqueued] MessageId = 0 due to listener to [1::'c']",
-                        "[2::'test2'::'c'::<ROOT>] [MessageDequeued] MessageId = 0 due to listener to [1::'c']",
-                    ] ),
-                logs.GetAllQueue()
-                    .TestContainsSequence(
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            $"[Trace:Dispose] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id} (start)",
+                            $"[Disposing] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id}",
+                            $"[Disposed] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id}",
+                            $"[Trace:Dispose] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id} (end)"
+                        ] )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task Disposal_ShouldDiscardEnqueuedMessages()
+    {
+        Exception? exception = null;
+        var pushContinuation = new SafeTaskCompletionSource();
+        var processContinuation = new SafeTaskCompletionSource( completionCount: 2 );
+        var endSource = new SafeTaskCompletionSource();
+        var queueLogs = new QueueEventLogger();
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => MessageBrokerRemoteClientLogger.Create(
+                        traceStart: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessage && e.Source.TraceId > 2 )
+                                pushContinuation.Task.Wait();
+                        },
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.Dispose && e.Source.Client.Id == 2 )
+                                endSource.Complete();
+                        } ) )
+                .SetQueueLoggerFactory(
+                    _ => queueLogs.GetLogger(
+                        MessageBrokerQueueLogger.Create(
+                            traceStart: e =>
+                            {
+                                if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessages && e.Source.TraceId == 2 )
+                                    pushContinuation.Complete();
+                            },
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessages && e.Source.TraceId == 2 )
+                                {
+                                    processContinuation.Task.Wait();
+                                    var __ = e.Source.Queue.Client.DisconnectAsync().AsTask();
+                                }
+                            },
+                            messagesEnqueued: e =>
+                            {
+                                for ( var i = 0; i < e.MessageCount; ++i )
+                                    processContinuation.Complete();
+                            },
+                            error: e => exception = e.Exception ) ) ) );
+
+        await server.StartAsync();
+
+        using var client1 = new ClientMock();
+        using var client2 = new ClientMock();
+        await client1.EstablishHandshake( server );
+        await client2.EstablishHandshake( server, "test2" );
+
+        await client1.GetTask(
+            c =>
+            {
+                c.SendBindPublisherRequest( "c" );
+                c.ReadPublisherBoundResponse();
+            } );
+
+        await client2.GetTask(
+            c =>
+            {
+                c.SendBindListenerRequest( "c", true );
+                c.ReadListenerBoundResponse();
+            } );
+
+        var queue = server.Clients.TryGetById( 2 )?.Queues.TryGetById( 1 );
+
+        await client1.GetTask(
+            c =>
+            {
+                c.SendPushMessage( 1, [ 1 ], confirm: false );
+                c.SendPushMessage( 1, [ 1, 2 ], confirm: false );
+            } );
+
+        await client2.GetTask( c => c.ReadMessageNotification( 1 ) );
+        await endSource.Task;
+
+        Assertion.All(
+                exception.TestType().Exact<MessageBrokerQueueException>( exc => exc.Queue.TestRefEquals( queue ) ),
+                queueLogs.GetAll()
+                    .TakeLast( 1 )
+                    .TestSequence(
                     [
-                        "[2::'test2'::'c'::<ROOT>] [MessageEnqueued] MessageId = 1 due to listener to [1::'c']",
-                        "[2::'test2'::'c'::<ROOT>] [Disposing]",
-                        "[2::'test2'::'c'::<ROOT>] [Disposed]"
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            $"[Trace:Dispose] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id} (start)",
+                            $"[ClientTrace] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id}, ClientTraceId = 3",
+                            $"[Disposing] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id}",
+                            $"""
+                             [Error] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id}
+                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerQueueException: 1 enqueued message(s) have been discarded due to client disposal.
+                             """,
+                            $"[Disposed] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id}",
+                            $"[Trace:Dispose] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id} (end)"
+                        ] )
                     ] ) )
             .Go();
     }

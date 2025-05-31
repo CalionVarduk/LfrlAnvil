@@ -137,6 +137,9 @@ internal struct MessageNotifications
                     if ( client.ShouldCancel )
                         return;
 
+                    // TODO: don't dequeue immediately
+                    // only when msg was actually sent
+                    // fix it when implementing acks, since msg after sending will have to be added to unacked msgs
                     if ( ! client.MessageNotifications._messages.TryDequeue( out message ) )
                     {
                         client.MessageNotifications._continuation.Reset();

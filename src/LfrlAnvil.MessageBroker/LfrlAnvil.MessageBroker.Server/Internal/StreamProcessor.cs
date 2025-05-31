@@ -141,15 +141,15 @@ internal struct StreamProcessor
 
                 using ( MessageBrokerStreamTraceEvent.CreateScope( stream, traceId, MessageBrokerStreamTraceEventType.ProcessMessages ) )
                 {
-                    MessageBrokerStreamMessageProcessingEvent.Create( stream, traceId, channel, buffer.Count )
-                        .Emit( stream.Logger.MessageProcessing );
+                    MessageBrokerStreamProcessingMessagesEvent.Create( stream, traceId, channel, buffer.Count )
+                        .Emit( stream.Logger.ProcessingMessages );
 
                     var listeners = channel.Listeners.GetAll();
                     foreach ( var listener in listeners )
                     {
                         try
                         {
-                            listener.Queue.PushMessages( listener, in buffer, traceId );
+                            listener.Queue.PushMessages( listener, in buffer, stream, traceId );
                         }
                         catch ( Exception exc )
                         {
