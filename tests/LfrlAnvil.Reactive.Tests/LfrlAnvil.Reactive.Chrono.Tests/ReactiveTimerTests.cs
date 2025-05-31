@@ -253,7 +253,7 @@ public class ReactiveTimerTests : TestsBase
     }
 
     [Fact]
-    public void Start_ShouldRunTimerOnTheCurrentThread()
+    public void Run_ShouldRunTimerOnTheCurrentThread()
     {
         var interval = Duration.FromTicks( 1 );
         var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + interval };
@@ -268,10 +268,9 @@ public class ReactiveTimerTests : TestsBase
         var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
         sut.Listen( listener );
 
-        var result = sut.Start();
+        sut.Run();
 
         Assertion.All(
-                result.TestTrue(),
                 sut.State.TestEquals( ReactiveTimerState.Idle ),
                 sut.IsDisposed.TestTrue(),
                 actualEvents.TestSequence( [ expectedEvent ] ) )
@@ -279,7 +278,7 @@ public class ReactiveTimerTests : TestsBase
     }
 
     [Fact]
-    public async Task Start_ShouldReturnFalse_WhenTimerIsAlreadyRunning()
+    public async Task Run_ThrowInvalidOperationException_WhenTimerIsAlreadyRunning()
     {
         var interval = Duration.FromMilliseconds( 15 );
         var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + interval };
@@ -287,35 +286,32 @@ public class ReactiveTimerTests : TestsBase
         timestampProvider.GetNow().Returns( timestamps );
         var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
 
-        var task = sut.StartAsync();
-        var state = sut.State;
-        var result = sut.Start();
+        var task = Task.Factory.StartNew( () => sut.Run() );
+        while ( sut.State != ReactiveTimerState.Running )
+            ;
+
+        var action = Lambda.Of( () => sut.Run() );
+        var assertion = action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Invoke();
         await task;
 
-        Assertion.All(
-                state.TestEquals( ReactiveTimerState.Running ),
-                result.TestFalse() )
-            .Go();
+        assertion.Go();
     }
 
     [Fact]
-    public void Start_ShouldReturnFalse_WhenTimerIsDisposed()
+    public void Run_ShouldThrowObjectDisposedException_WhenTimerIsDisposed()
     {
         var timestampProvider = Substitute.For<ITimestampProvider>();
         var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var sut = new ReactiveTimer( timestampProvider, interval );
         sut.Dispose();
 
-        var result = sut.Start();
+        var action = Lambda.Of( () => sut.Run() );
 
-        Assertion.All(
-                sut.State.TestEquals( ReactiveTimerState.Idle ),
-                result.TestFalse() )
-            .Go();
+        action.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ).Go();
     }
 
     [Fact]
-    public void Start_WithDelay_ShouldRunTimerOnTheCurrentThreadAndDelayTheFirstEvent()
+    public void Run_WithDelay_ShouldRunTimerOnTheCurrentThreadAndDelayTheFirstEvent()
     {
         var interval = Duration.FromTicks( 1 );
         var delay = Duration.FromTicks( 5 );
@@ -331,10 +327,9 @@ public class ReactiveTimerTests : TestsBase
         var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
         sut.Listen( listener );
 
-        var result = sut.Start( delay );
+        sut.Run( delay );
 
         Assertion.All(
-                result.TestTrue(),
                 sut.State.TestEquals( ReactiveTimerState.Idle ),
                 sut.IsDisposed.TestTrue(),
                 actualEvents.TestSequence( [ expectedEvent ] ) )
@@ -342,37 +337,37 @@ public class ReactiveTimerTests : TestsBase
     }
 
     [Fact]
-    public async Task Start_WithDelay_ShouldReturnFalse_WhenTimerIsAlreadyRunning()
+    public async Task Run_WithDelay_ShouldReturnFalse_WhenTimerIsAlreadyRunning()
     {
-        var interval = Duration.FromMilliseconds( 15 );
+        var interval = Duration.FromMilliseconds( 50 );
         var delay = Duration.FromTicks( 5 );
         var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + interval };
         var timestampProvider = Substitute.For<ITimestampProvider>();
         timestampProvider.GetNow().Returns( timestamps );
         var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
 
-        var task = sut.StartAsync();
-        var state = sut.State;
-        var result = sut.Start( delay );
+        var task = Task.Factory.StartNew( () => sut.Run() );
+        while ( sut.State != ReactiveTimerState.Running )
+            ;
+
+        var action = Lambda.Of( () => sut.Run( delay ) );
+        var assertion = action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Invoke();
         await task;
 
-        Assertion.All(
-                state.TestEquals( ReactiveTimerState.Running ),
-                result.TestFalse() )
-            .Go();
+        assertion.Go();
     }
 
     [Theory]
     [InlineData( -1 )]
     [InlineData( 0 )]
-    public void Start_WithDelay_ShouldThrowArgumentOutOfRangeException_WhenDelayIsLessThanOne(long ticks)
+    public void Run_WithDelay_ShouldThrowArgumentOutOfRangeException_WhenDelayIsLessThanOne(long ticks)
     {
         var timestampProvider = Substitute.For<ITimestampProvider>();
         var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var delay = Duration.FromTicks( ticks );
         var sut = new ReactiveTimer( timestampProvider, interval );
 
-        var action = Lambda.Of( () => sut.Start( delay ) );
+        var action = Lambda.Of( () => sut.Run( delay ) );
 
         action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
@@ -380,20 +375,20 @@ public class ReactiveTimerTests : TestsBase
     [Theory]
     [InlineData( int.MaxValue + 1L )]
     [InlineData( int.MaxValue + 2L )]
-    public void Start_WithDelay_ShouldThrowArgumentOutOfRangeException_WhenDelayIsTooLarge(long ms)
+    public void Run_WithDelay_ShouldThrowArgumentOutOfRangeException_WhenDelayIsTooLarge(long ms)
     {
         var timestampProvider = Substitute.For<ITimestampProvider>();
         var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var delay = Duration.FromMilliseconds( ms );
         var sut = new ReactiveTimer( timestampProvider, interval );
 
-        var action = Lambda.Of( () => sut.Start( delay ) );
+        var action = Lambda.Of( () => sut.Run( delay ) );
 
         action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
-    public void Start_WithDelay_ShouldReturnFalse_WhenTimerIsDisposed()
+    public void Run_WithDelay_ShouldReturnFalse_WhenTimerIsDisposed()
     {
         var timestampProvider = Substitute.For<ITimestampProvider>();
         var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
@@ -401,340 +396,9 @@ public class ReactiveTimerTests : TestsBase
         var sut = new ReactiveTimer( timestampProvider, interval );
         sut.Dispose();
 
-        var result = sut.Start( delay );
+        var action = Lambda.Of( () => sut.Run( delay ) );
 
-        Assertion.All(
-                sut.State.TestEquals( ReactiveTimerState.Idle ),
-                result.TestFalse() )
-            .Go();
-    }
-
-    [Fact]
-    public async Task StartAsync_ShouldRunTimerOnThreadPool()
-    {
-        var interval = Duration.FromMilliseconds( 15 );
-        var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + interval };
-
-        var expectedEvent = new WithInterval<long>( 0, timestamps[1], interval );
-        var actualEvents = new List<WithInterval<long>>();
-
-        var listener = EventListener.Create<WithInterval<long>>( actualEvents.Add );
-        var timestampProvider = Substitute.For<ITimestampProvider>();
-        timestampProvider.GetNow().Returns( timestamps );
-
-        var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
-        sut.Listen( listener );
-
-        var task = sut.StartAsync();
-        var state = sut.State;
-        await task;
-
-        Assertion.All(
-                state.TestEquals( ReactiveTimerState.Running ),
-                sut.State.TestEquals( ReactiveTimerState.Idle ),
-                sut.IsDisposed.TestTrue(),
-                actualEvents.TestSequence( [ expectedEvent ] ) )
-            .Go();
-    }
-
-    [Fact]
-    public async Task StartAsync_ShouldReturnCancelledTask_WhenTimerIsAlreadyRunning()
-    {
-        var interval = Duration.FromMilliseconds( 15 );
-        var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + interval };
-        var timestampProvider = Substitute.For<ITimestampProvider>();
-        timestampProvider.GetNow().Returns( timestamps );
-        var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
-
-        var task = sut.StartAsync();
-        var state = sut.State;
-        var result = sut.StartAsync();
-        var isCancelled = result.IsCanceled;
-        await task;
-
-        Assertion.All(
-                state.TestEquals( ReactiveTimerState.Running ),
-                isCancelled.TestTrue() )
-            .Go();
-    }
-
-    [Fact]
-    public void StartAsync_ShouldReturnCompletedTask_WhenTimerIsDisposed()
-    {
-        var timestampProvider = Substitute.For<ITimestampProvider>();
-        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
-        var sut = new ReactiveTimer( timestampProvider, interval );
-        sut.Dispose();
-
-        var result = sut.StartAsync();
-
-        Assertion.All(
-                sut.State.TestEquals( ReactiveTimerState.Idle ),
-                result.IsCompleted.TestTrue() )
-            .Go();
-    }
-
-    [Fact]
-    public async Task StartAsync_WithDelay_ShouldRunTimerOnThreadPoolAndDelayTheFirstEvent()
-    {
-        var interval = Duration.FromTicks( 1 );
-        var delay = Duration.FromMilliseconds( 15 );
-        var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + delay };
-
-        var expectedEvent = new WithInterval<long>( 0, timestamps[1], delay );
-        var actualEvents = new List<WithInterval<long>>();
-
-        var listener = EventListener.Create<WithInterval<long>>( actualEvents.Add );
-        var timestampProvider = Substitute.For<ITimestampProvider>();
-        timestampProvider.GetNow().Returns( timestamps );
-
-        var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
-        sut.Listen( listener );
-
-        var task = sut.StartAsync( delay );
-        var state = sut.State;
-        await task;
-
-        Assertion.All(
-                state.TestEquals( ReactiveTimerState.Running ),
-                sut.State.TestEquals( ReactiveTimerState.Idle ),
-                sut.IsDisposed.TestTrue(),
-                actualEvents.TestSequence( [ expectedEvent ] ) )
-            .Go();
-    }
-
-    [Fact]
-    public async Task StartAsync_WithDelay_ShouldReturnCancelledTask_WhenTimerIsAlreadyRunning()
-    {
-        var interval = Duration.FromMilliseconds( 15 );
-        var delay = Duration.FromTicks( 5 );
-        var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + interval };
-        var timestampProvider = Substitute.For<ITimestampProvider>();
-        timestampProvider.GetNow().Returns( timestamps );
-        var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
-
-        var task = sut.StartAsync();
-        var state = sut.State;
-        var result = sut.StartAsync( delay );
-        var isCancelled = result.IsCanceled;
-        await task;
-
-        Assertion.All(
-                state.TestEquals( ReactiveTimerState.Running ),
-                isCancelled.TestTrue() )
-            .Go();
-    }
-
-    [Theory]
-    [InlineData( -1 )]
-    [InlineData( 0 )]
-    public void StartAsync_WithDelay_ShouldThrowArgumentOutOfRangeException_WhenDelayIsLessThanOne(long ticks)
-    {
-        var timestampProvider = Substitute.For<ITimestampProvider>();
-        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
-        var delay = Duration.FromTicks( ticks );
-        var sut = new ReactiveTimer( timestampProvider, interval );
-
-        var action = Lambda.Of( () => sut.StartAsync( delay ) );
-
-        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
-    }
-
-    [Theory]
-    [InlineData( int.MaxValue + 1L )]
-    [InlineData( int.MaxValue + 2L )]
-    public void StartAsync_WithDelay_ShouldThrowArgumentOutOfRangeException_WhenDelayIsTooLarge(long ms)
-    {
-        var timestampProvider = Substitute.For<ITimestampProvider>();
-        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
-        var delay = Duration.FromMilliseconds( ms );
-        var sut = new ReactiveTimer( timestampProvider, interval );
-
-        var action = Lambda.Of( () => sut.StartAsync( delay ) );
-
-        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
-    }
-
-    [Fact]
-    public void StartAsync_WithDelay_ShouldReturnCompletedTask_WhenTimerIsDisposed()
-    {
-        var timestampProvider = Substitute.For<ITimestampProvider>();
-        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
-        var delay = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
-        var sut = new ReactiveTimer( timestampProvider, interval );
-        sut.Dispose();
-
-        var result = sut.StartAsync( delay );
-
-        Assertion.All(
-                sut.State.TestEquals( ReactiveTimerState.Idle ),
-                result.IsCompleted.TestTrue() )
-            .Go();
-    }
-
-    [Fact]
-    public async Task StartAsync_WithScheduler_ShouldRunTimerOnProvidedScheduler()
-    {
-        var scheduler = new SynchronousTaskScheduler();
-        var interval = Duration.FromMilliseconds( 15 );
-        var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + interval };
-
-        var expectedEvent = new WithInterval<long>( 0, timestamps[1], interval );
-        var actualEvents = new List<WithInterval<long>>();
-
-        var listener = EventListener.Create<WithInterval<long>>( actualEvents.Add );
-        var timestampProvider = Substitute.For<ITimestampProvider>();
-        timestampProvider.GetNow().Returns( timestamps );
-
-        var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
-        sut.Listen( listener );
-
-        await sut.StartAsync( scheduler );
-
-        Assertion.All(
-                sut.State.TestEquals( ReactiveTimerState.Idle ),
-                sut.IsDisposed.TestTrue(),
-                actualEvents.TestSequence( [ expectedEvent ] ) )
-            .Go();
-    }
-
-    [Fact]
-    public async Task StartAsync_WithScheduler_ShouldReturnCancelledTask_WhenTimerIsAlreadyRunning()
-    {
-        var scheduler = new SynchronousTaskScheduler();
-        var interval = Duration.FromMilliseconds( 15 );
-        var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + interval };
-        var timestampProvider = Substitute.For<ITimestampProvider>();
-        timestampProvider.GetNow().Returns( timestamps );
-        var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
-
-        var task = sut.StartAsync();
-        var state = sut.State;
-        var result = sut.StartAsync( scheduler );
-        var isCancelled = result.IsCanceled;
-        await task;
-
-        Assertion.All(
-                state.TestEquals( ReactiveTimerState.Running ),
-                isCancelled.TestTrue() )
-            .Go();
-    }
-
-    [Fact]
-    public void StartAsync_WithScheduler_ShouldReturnCompletedTask_WhenTimerIsDisposed()
-    {
-        var scheduler = new SynchronousTaskScheduler();
-        var timestampProvider = Substitute.For<ITimestampProvider>();
-        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
-        var sut = new ReactiveTimer( timestampProvider, interval );
-        sut.Dispose();
-
-        var result = sut.StartAsync( scheduler );
-
-        Assertion.All(
-                sut.State.TestEquals( ReactiveTimerState.Idle ),
-                result.IsCompleted.TestTrue() )
-            .Go();
-    }
-
-    [Fact]
-    public async Task StartAsync_WithSchedulerAndDelay_ShouldRunTimerOnProvidedSchedulerAndDelayTheFirstEvent()
-    {
-        var scheduler = new SynchronousTaskScheduler();
-        var interval = Duration.FromTicks( 1 );
-        var delay = Duration.FromMilliseconds( 15 );
-        var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + delay };
-
-        var expectedEvent = new WithInterval<long>( 0, timestamps[1], delay );
-        var actualEvents = new List<WithInterval<long>>();
-
-        var listener = EventListener.Create<WithInterval<long>>( actualEvents.Add );
-        var timestampProvider = Substitute.For<ITimestampProvider>();
-        timestampProvider.GetNow().Returns( timestamps );
-
-        var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
-        sut.Listen( listener );
-
-        await sut.StartAsync( scheduler, delay );
-
-        Assertion.All(
-                sut.State.TestEquals( ReactiveTimerState.Idle ),
-                sut.IsDisposed.TestTrue(),
-                actualEvents.TestSequence( [ expectedEvent ] ) )
-            .Go();
-    }
-
-    [Fact]
-    public async Task StartAsync_WithSchedulerAndDelay_ShouldReturnCancelledTask_WhenTimerIsAlreadyRunning()
-    {
-        var scheduler = new SynchronousTaskScheduler();
-        var interval = Duration.FromMilliseconds( 15 );
-        var delay = Duration.FromTicks( 5 );
-        var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + interval };
-        var timestampProvider = Substitute.For<ITimestampProvider>();
-        timestampProvider.GetNow().Returns( timestamps );
-        var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
-
-        var task = sut.StartAsync();
-        var state = sut.State;
-        var result = sut.StartAsync( scheduler, delay );
-        var isCancelled = result.IsCanceled;
-        await task;
-
-        Assertion.All(
-                state.TestEquals( ReactiveTimerState.Running ),
-                isCancelled.TestTrue() )
-            .Go();
-    }
-
-    [Theory]
-    [InlineData( -1 )]
-    [InlineData( 0 )]
-    public void StartAsync_WithSchedulerAndDelay_ShouldThrowArgumentOutOfRangeException_WhenDelayIsLessThanOne(long ticks)
-    {
-        var scheduler = new SynchronousTaskScheduler();
-        var timestampProvider = Substitute.For<ITimestampProvider>();
-        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
-        var delay = Duration.FromTicks( ticks );
-        var sut = new ReactiveTimer( timestampProvider, interval );
-
-        var action = Lambda.Of( () => sut.StartAsync( scheduler, delay ) );
-
-        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
-    }
-
-    [Theory]
-    [InlineData( int.MaxValue + 1L )]
-    [InlineData( int.MaxValue + 2L )]
-    public void StartAsync_WithSchedulerAndDelay_ShouldThrowArgumentOutOfRangeException_WhenDelayIsTooLarge(long ms)
-    {
-        var scheduler = new SynchronousTaskScheduler();
-        var timestampProvider = Substitute.For<ITimestampProvider>();
-        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
-        var delay = Duration.FromMilliseconds( ms );
-        var sut = new ReactiveTimer( timestampProvider, interval );
-
-        var action = Lambda.Of( () => sut.StartAsync( scheduler, delay ) );
-
-        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
-    }
-
-    [Fact]
-    public void StartAsync_WithSchedulerAndDelay_ShouldReturnCompletedTask_WhenTimerIsDisposed()
-    {
-        var scheduler = new SynchronousTaskScheduler();
-        var timestampProvider = Substitute.For<ITimestampProvider>();
-        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
-        var delay = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
-        var sut = new ReactiveTimer( timestampProvider, interval );
-        sut.Dispose();
-
-        var result = sut.StartAsync( scheduler, delay );
-
-        Assertion.All(
-                sut.State.TestEquals( ReactiveTimerState.Idle ),
-                result.IsCompleted.TestTrue() )
-            .Go();
+        action.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ).Go();
     }
 
     [Fact]
@@ -762,7 +426,7 @@ public class ReactiveTimerTests : TestsBase
         var sut = new ReactiveTimer( timestampProvider, interval, count: eventTimestamps.Count );
         sut.Listen( listener );
 
-        sut.Start();
+        sut.Run();
 
         Assertion.All(
                 sut.State.TestEquals( ReactiveTimerState.Idle ),
@@ -795,7 +459,7 @@ public class ReactiveTimerTests : TestsBase
         var sut = new ReactiveTimer( timestampProvider, interval, count: 4 );
         sut.Listen( listener );
 
-        sut.Start();
+        sut.Run();
 
         Assertion.All(
                 sut.State.TestEquals( ReactiveTimerState.Idle ),
@@ -825,7 +489,7 @@ public class ReactiveTimerTests : TestsBase
         var sut = new ReactiveTimer( timestampProvider, interval, count: 4 );
         sut.Listen( listener );
 
-        sut.Start();
+        sut.Run();
 
         Assertion.All(
                 sut.State.TestEquals( ReactiveTimerState.Idle ),
@@ -867,7 +531,7 @@ public class ReactiveTimerTests : TestsBase
         var sut = new ReactiveTimer( timestampProvider, interval, count: 6 );
         sut.Listen( listener );
 
-        sut.Start();
+        sut.Run();
 
         Assertion.All(
                 sut.State.TestEquals( ReactiveTimerState.Idle ),
@@ -909,7 +573,7 @@ public class ReactiveTimerTests : TestsBase
         var sut = new ReactiveTimer( timestampProvider, interval, count: 6 );
         sut.Listen( listener );
 
-        sut.Start();
+        sut.Run();
 
         Assertion.All(
                 sut.State.TestEquals( ReactiveTimerState.Idle ),
@@ -955,7 +619,7 @@ public class ReactiveTimerTests : TestsBase
         var sut = new ReactiveTimer( timestampProvider, interval, count: 5 );
         sut.Listen( listener );
 
-        sut.Start();
+        sut.Run();
 
         Assertion.All(
                 sut.State.TestEquals( ReactiveTimerState.Idle ),
@@ -983,7 +647,7 @@ public class ReactiveTimerTests : TestsBase
         var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
         sut.Listen( listener );
 
-        sut.Start();
+        sut.Run();
 
         Assertion.All(
                 sut.State.TestEquals( ReactiveTimerState.Idle ),
@@ -1033,8 +697,8 @@ public class ReactiveTimerTests : TestsBase
 
         sut.Listen( listener );
 
-        sut.Start();
-        sut.Start();
+        sut.Run();
+        sut.Run();
 
         Assertion.All(
                 sut.State.TestEquals( ReactiveTimerState.Idle ),
@@ -1077,7 +741,9 @@ public class ReactiveTimerTests : TestsBase
         var listener = Substitute.For<IEventListener<WithInterval<long>>>();
         var sut = new ReactiveTimer( timestampProvider, interval );
         sut.Listen( listener );
-        var task = sut.StartAsync();
+        var task = Task.Factory.StartNew( () => sut.Run() );
+        while ( sut.State != ReactiveTimerState.Running )
+            ;
 
         sut.Dispose();
         await task;
@@ -1097,7 +763,7 @@ public class ReactiveTimerTests : TestsBase
         var listener = Substitute.For<IEventListener<WithInterval<long>>>();
         var sut = new ReactiveTimer( timestampProvider, interval );
         sut.Listen( listener );
-        var task = sut.StartAsync();
+        var task = Task.Factory.StartNew( () => sut.Run() );
 
         await Task.Delay( 1 );
         var result = sut.Stop();
@@ -1135,7 +801,7 @@ public class ReactiveTimerTests : TestsBase
             } );
 
         sut.Listen( listener );
-        sut.Start();
+        sut.Run();
 
         Assertion.All(
                 sut.State.TestEquals( ReactiveTimerState.Idle ),

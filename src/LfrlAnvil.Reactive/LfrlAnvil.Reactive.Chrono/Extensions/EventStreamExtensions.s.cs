@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2025 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -120,7 +120,12 @@ public static class EventStreamExtensions
         Duration delay,
         Duration spinWaitDurationHint)
     {
-        var decorator = new EventListenerDelayDecorator<TEvent>( timestampProvider, delay, scheduler: null, spinWaitDurationHint );
+        var decorator = new EventListenerDelayDecorator<TEvent>(
+            timestampProvider,
+            delay,
+            taskFactory: Task.Factory,
+            spinWaitDurationHint );
+
         return source.Decorate( decorator );
     }
 
@@ -130,7 +135,7 @@ public static class EventStreamExtensions
     /// <param name="source">Source event stream.</param>
     /// <param name="timestampProvider">Timestamp provider to use for time tracking.</param>
     /// <param name="delay">Event delay.</param>
-    /// <param name="scheduler">Task scheduler.</param>
+    /// <param name="taskFactory">Task factory used for creating and underlying timer task.</param>
     /// <typeparam name="TEvent">Event type.</typeparam>
     /// <returns>Decorated <see cref="IEventStream{TEvent}"/> instance.</returns>
     /// <exception cref="ArgumentOutOfRangeException">
@@ -142,9 +147,9 @@ public static class EventStreamExtensions
         this IEventStream<TEvent> source,
         ITimestampProvider timestampProvider,
         Duration delay,
-        TaskScheduler scheduler)
+        TaskFactory taskFactory)
     {
-        return source.Delay( timestampProvider, delay, scheduler, ReactiveTimer.DefaultSpinWaitDurationHint );
+        return source.Delay( timestampProvider, delay, taskFactory, ReactiveTimer.DefaultSpinWaitDurationHint );
     }
 
     /// <summary>
@@ -153,7 +158,7 @@ public static class EventStreamExtensions
     /// <param name="source">Source event stream.</param>
     /// <param name="timestampProvider">Timestamp provider to use for time tracking.</param>
     /// <param name="delay">Event delay.</param>
-    /// <param name="scheduler">Task scheduler.</param>
+    /// <param name="taskFactory">Task factory used for creating and underlying timer task.</param>
     /// <param name="spinWaitDurationHint"><see cref="SpinWait"/> duration hint for the underlying timer.</param>
     /// <typeparam name="TEvent">Event type.</typeparam>
     /// <returns>Decorated <see cref="IEventStream{TEvent}"/> instance.</returns>
@@ -167,10 +172,10 @@ public static class EventStreamExtensions
         this IEventStream<TEvent> source,
         ITimestampProvider timestampProvider,
         Duration delay,
-        TaskScheduler scheduler,
+        TaskFactory taskFactory,
         Duration spinWaitDurationHint)
     {
-        var decorator = new EventListenerDelayDecorator<TEvent>( timestampProvider, delay, scheduler, spinWaitDurationHint );
+        var decorator = new EventListenerDelayDecorator<TEvent>( timestampProvider, delay, taskFactory, spinWaitDurationHint );
         return source.Decorate( decorator );
     }
 

@@ -12,13 +12,13 @@ public class EventListenerDelayDecoratorTests : TestsBase
     [Fact]
     public void Decorate_ShouldNotDisposeTheSubscriber()
     {
-        var scheduler = TaskScheduler.Current;
+        var taskFactory = new TaskFactory( TaskScheduler.Current );
         var delay = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var spinWaitDurationHint = Duration.FromTicks( Fixture.Create<uint>() );
         var timestampProvider = Substitute.For<ITimestampProvider>();
         var next = Substitute.For<IEventListener<WithInterval<int>>>();
         var subscriber = Substitute.For<IEventSubscriber>();
-        var sut = new EventListenerDelayDecorator<int>( timestampProvider, delay, scheduler, spinWaitDurationHint );
+        var sut = new EventListenerDelayDecorator<int>( timestampProvider, delay, taskFactory, spinWaitDurationHint );
 
         _ = sut.Decorate( next, subscriber );
 
@@ -47,7 +47,7 @@ public class EventListenerDelayDecoratorTests : TestsBase
         var sut = new EventListenerDelayDecorator<int>(
             timestampProvider,
             delay,
-            scheduler: null,
+            taskFactory: Task.Factory,
             ReactiveTimer.DefaultSpinWaitDurationHint );
 
         var listener = sut.Decorate( next, subscriber );
@@ -61,7 +61,7 @@ public class EventListenerDelayDecoratorTests : TestsBase
     [Fact]
     public void Decorate_WithScheduler_ShouldCreateListenerThatDelaysEmissionsOfEvents()
     {
-        var scheduler = new SynchronousTaskScheduler();
+        var taskFactory = new TaskFactory( new SynchronousTaskScheduler() );
         var sourceEvent = Fixture.Create<int>();
         var delay = Duration.FromMilliseconds( 1 );
         var timestampProvider = Substitute.For<ITimestampProvider>();
@@ -75,7 +75,7 @@ public class EventListenerDelayDecoratorTests : TestsBase
         var sut = new EventListenerDelayDecorator<int>(
             timestampProvider,
             delay,
-            scheduler,
+            taskFactory,
             ReactiveTimer.DefaultSpinWaitDurationHint );
 
         var listener = sut.Decorate( next, subscriber );
@@ -90,13 +90,13 @@ public class EventListenerDelayDecoratorTests : TestsBase
     [InlineData( DisposalSource.Subscriber )]
     public void Decorate_ShouldCreateListenerWhoseOnDisposeCallsNextOnDispose(DisposalSource source)
     {
-        var scheduler = TaskScheduler.Current;
+        var taskFactory = new TaskFactory( TaskScheduler.Current );
         var delay = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var spinWaitDurationHint = Duration.FromTicks( Fixture.Create<uint>() );
         var timestampProvider = Substitute.For<ITimestampProvider>();
         var next = Substitute.For<IEventListener<WithInterval<int>>>();
         var subscriber = Substitute.For<IEventSubscriber>();
-        var sut = new EventListenerDelayDecorator<int>( timestampProvider, delay, scheduler, spinWaitDurationHint );
+        var sut = new EventListenerDelayDecorator<int>( timestampProvider, delay, taskFactory, spinWaitDurationHint );
         var listener = sut.Decorate( next, subscriber );
 
         listener.OnDispose( source );
@@ -135,7 +135,7 @@ public class EventListenerDelayDecoratorTests : TestsBase
     [Fact]
     public void DelayExtension_WithScheduler_ShouldCreateListenerThatDelaysEmissionsOfEvents()
     {
-        var scheduler = new SynchronousTaskScheduler();
+        var taskFactory = new TaskFactory( new SynchronousTaskScheduler() );
         var sourceEvent = Fixture.Create<int>();
         var delay = Duration.FromMilliseconds( 1 );
         var timestampProvider = Substitute.For<ITimestampProvider>();
@@ -146,7 +146,7 @@ public class EventListenerDelayDecoratorTests : TestsBase
         var next = EventListener.Create<WithInterval<int>>( actualEvents.Add );
 
         var sut = new EventPublisher<int>();
-        var decorated = sut.Delay( timestampProvider, delay, scheduler );
+        var decorated = sut.Delay( timestampProvider, delay, taskFactory );
         decorated.Listen( next );
 
         sut.Publish( sourceEvent );

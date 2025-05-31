@@ -14,7 +14,7 @@ using LfrlAnvil.Reactive.Extensions;
 
     var timestampProvider = new PreciseTimestampProvider();
     var timer = new ReactiveTimer( timestampProvider, interval, Duration.FromMilliseconds( 1 ), long.MaxValue );
-    await RunTimer( timer, () => timer.StartAsync(), simDuration, "Chrono" );
+    await RunTimer( timer, () => Task.Factory.StartNew( () => timer.Run(), TaskCreationOptions.LongRunning ), simDuration, "Chrono" );
 }
 
 async Task RunTimer(IEventSource<WithInterval<long>> timer, Action starter, Duration duration, string name)

@@ -75,9 +75,6 @@ Reactive:
 
 - scheduler requires DelayValueTaskSource usage, with async MRE
   - also, add task container pooling
-- timer: remove async start methods
-  - simplifies interface
-  - signals to the consumer that the underlying mechanism is not async & requires dedicated thread
 
 Core:
 

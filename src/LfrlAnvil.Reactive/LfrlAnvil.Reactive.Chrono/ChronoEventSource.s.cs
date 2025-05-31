@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2025 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -100,7 +100,7 @@ public static class ChronoEventSource
         Duration spinWaitDurationHint,
         long count)
     {
-        return new IntervalEventSource( timestampProvider, interval, scheduler: null, spinWaitDurationHint, count );
+        return new IntervalEventSource( timestampProvider, interval, taskFactory: Task.Factory, spinWaitDurationHint, count );
     }
 
     /// <summary>
@@ -108,16 +108,16 @@ public static class ChronoEventSource
     /// </summary>
     /// <param name="timestampProvider">Timestamp provider used for time tracking.</param>
     /// <param name="interval">Interval between subsequent timer events.</param>
-    /// <param name="scheduler">Task scheduler.</param>
+    /// <param name="taskFactory">Task factory used for creating and underlying timer task.</param>
     /// <exception cref="ArgumentOutOfRangeException">
     /// When <paramref name="interval"/> is less than <b>1 tick</b> or greater than <see cref="Int32.MaxValue"/> milliseconds
     /// </exception>
     /// <returns>New <see cref="IntervalEventSource"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static IntervalEventSource Interval(ITimestampProvider timestampProvider, Duration interval, TaskScheduler scheduler)
+    public static IntervalEventSource Interval(ITimestampProvider timestampProvider, Duration interval, TaskFactory taskFactory)
     {
-        return Interval( timestampProvider, interval, scheduler, ReactiveTimer.DefaultSpinWaitDurationHint, count: long.MaxValue );
+        return Interval( timestampProvider, interval, taskFactory, ReactiveTimer.DefaultSpinWaitDurationHint, count: long.MaxValue );
     }
 
     /// <summary>
@@ -125,7 +125,7 @@ public static class ChronoEventSource
     /// </summary>
     /// <param name="timestampProvider">Timestamp provider used for time tracking.</param>
     /// <param name="interval">Interval between subsequent timer events.</param>
-    /// <param name="scheduler">Task scheduler.</param>
+    /// <param name="taskFactory">Task factory used for creating and underlying timer task.</param>
     /// <param name="count">Number of events underlying timers will emit in total. Equal to <see cref="Int64.MaxValue"/> by default.</param>
     /// <exception cref="ArgumentOutOfRangeException">
     /// When <paramref name="count"/> is less than <b>1</b>
@@ -137,10 +137,10 @@ public static class ChronoEventSource
     public static IntervalEventSource Interval(
         ITimestampProvider timestampProvider,
         Duration interval,
-        TaskScheduler scheduler,
+        TaskFactory taskFactory,
         long count)
     {
-        return Interval( timestampProvider, interval, scheduler, ReactiveTimer.DefaultSpinWaitDurationHint, count );
+        return Interval( timestampProvider, interval, taskFactory, ReactiveTimer.DefaultSpinWaitDurationHint, count );
     }
 
     /// <summary>
@@ -148,7 +148,7 @@ public static class ChronoEventSource
     /// </summary>
     /// <param name="timestampProvider">Timestamp provider used for time tracking.</param>
     /// <param name="interval">Interval between subsequent timer events.</param>
-    /// <param name="scheduler">Task scheduler.</param>
+    /// <param name="taskFactory">Task factory used for creating and underlying timer task.</param>
     /// <param name="spinWaitDurationHint"><see cref="SpinWait"/> duration hint for underlying timers.</param>
     /// <exception cref="ArgumentOutOfRangeException">
     /// When <paramref name="interval"/> is less than <b>1 tick</b> or greater than <see cref="Int32.MaxValue"/> milliseconds
@@ -160,10 +160,10 @@ public static class ChronoEventSource
     public static IntervalEventSource Interval(
         ITimestampProvider timestampProvider,
         Duration interval,
-        TaskScheduler scheduler,
+        TaskFactory taskFactory,
         Duration spinWaitDurationHint)
     {
-        return Interval( timestampProvider, interval, scheduler, spinWaitDurationHint, count: long.MaxValue );
+        return Interval( timestampProvider, interval, taskFactory, spinWaitDurationHint, count: long.MaxValue );
     }
 
     /// <summary>
@@ -171,7 +171,7 @@ public static class ChronoEventSource
     /// </summary>
     /// <param name="timestampProvider">Timestamp provider used for time tracking.</param>
     /// <param name="interval">Interval between subsequent timer events.</param>
-    /// <param name="scheduler">Task scheduler.</param>
+    /// <param name="taskFactory">Task factory used for creating and underlying timer task.</param>
     /// <param name="spinWaitDurationHint"><see cref="SpinWait"/> duration hint for underlying timers.</param>
     /// <param name="count">Number of events underlying timers will emit in total. Equal to <see cref="Int64.MaxValue"/> by default.</param>
     /// <exception cref="ArgumentOutOfRangeException">
@@ -185,11 +185,11 @@ public static class ChronoEventSource
     public static IntervalEventSource Interval(
         ITimestampProvider timestampProvider,
         Duration interval,
-        TaskScheduler scheduler,
+        TaskFactory taskFactory,
         Duration spinWaitDurationHint,
         long count)
     {
-        return new IntervalEventSource( timestampProvider, interval, scheduler, spinWaitDurationHint, count );
+        return new IntervalEventSource( timestampProvider, interval, taskFactory, spinWaitDurationHint, count );
     }
 
     /// <summary>
@@ -231,16 +231,16 @@ public static class ChronoEventSource
     /// </summary>
     /// <param name="timestampProvider">Timestamp provider used for time tracking.</param>
     /// <param name="timeout">Delay before timer event is emitted.</param>
-    /// <param name="scheduler">Task scheduler.</param>
+    /// <param name="taskFactory">Task factory used for creating and underlying timer task.</param>
     /// <exception cref="ArgumentOutOfRangeException">
     /// When <paramref name="timeout"/> is less than <b>1 tick</b> or greater than <see cref="Int32.MaxValue"/> milliseconds.
     /// </exception>
     /// <returns>New <see cref="IntervalEventSource"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static IntervalEventSource Timeout(ITimestampProvider timestampProvider, Duration timeout, TaskScheduler scheduler)
+    public static IntervalEventSource Timeout(ITimestampProvider timestampProvider, Duration timeout, TaskFactory taskFactory)
     {
-        return Timeout( timestampProvider, timeout, scheduler, ReactiveTimer.DefaultSpinWaitDurationHint );
+        return Timeout( timestampProvider, timeout, taskFactory, ReactiveTimer.DefaultSpinWaitDurationHint );
     }
 
     /// <summary>
@@ -248,7 +248,7 @@ public static class ChronoEventSource
     /// </summary>
     /// <param name="timestampProvider">Timestamp provider used for time tracking.</param>
     /// <param name="timeout">Delay before timer event is emitted.</param>
-    /// <param name="scheduler">Task scheduler.</param>
+    /// <param name="taskFactory">Task factory used for creating and underlying timer task.</param>
     /// <param name="spinWaitDurationHint"><see cref="SpinWait"/> duration hint for underlying timers.</param>
     /// <exception cref="ArgumentOutOfRangeException">
     /// When <paramref name="timeout"/> is less than <b>1 tick</b> or greater than <see cref="Int32.MaxValue"/> milliseconds
@@ -260,9 +260,9 @@ public static class ChronoEventSource
     public static IntervalEventSource Timeout(
         ITimestampProvider timestampProvider,
         Duration timeout,
-        TaskScheduler scheduler,
+        TaskFactory taskFactory,
         Duration spinWaitDurationHint)
     {
-        return Interval( timestampProvider, timeout, scheduler, spinWaitDurationHint, count: 1 );
+        return Interval( timestampProvider, timeout, taskFactory, spinWaitDurationHint, count: 1 );
     }
 }

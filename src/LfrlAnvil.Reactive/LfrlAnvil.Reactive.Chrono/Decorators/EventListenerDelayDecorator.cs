@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2025 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ public sealed class EventListenerDelayDecorator<TEvent> : IEventListenerDecorato
 {
     private readonly ITimestampProvider _timestampProvider;
     private readonly Duration _delay;
-    private readonly TaskScheduler? _scheduler;
+    private readonly TaskFactory _taskFactory;
     private readonly Duration _spinWaitDurationHint;
 
     /// <summary>
@@ -38,7 +38,7 @@ public sealed class EventListenerDelayDecorator<TEvent> : IEventListenerDecorato
     /// </summary>
     /// <param name="timestampProvider">Timestamp provider to use for time tracking.</param>
     /// <param name="delay">Event delay.</param>
-    /// <param name="scheduler">Optional task scheduler.</param>
+    /// <param name="taskFactory">Task factory used for creating and underlying timer task.</param>
     /// <param name="spinWaitDurationHint"><see cref="SpinWait"/> duration hint for the underlying timer.</param>
     /// <exception cref="ArgumentOutOfRangeException">
     /// When <paramref name="delay"/> is less than <b>1 tick</b> or greater than <see cref="Int32.MaxValue"/> milliseconds
@@ -47,7 +47,7 @@ public sealed class EventListenerDelayDecorator<TEvent> : IEventListenerDecorato
     public EventListenerDelayDecorator(
         ITimestampProvider timestampProvider,
         Duration delay,
-        TaskScheduler? scheduler,
+        TaskFactory? taskFactory,
         Duration spinWaitDurationHint)
     {
         Ensure.IsInRange( delay, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ) );
@@ -55,14 +55,14 @@ public sealed class EventListenerDelayDecorator<TEvent> : IEventListenerDecorato
 
         _timestampProvider = timestampProvider;
         _delay = delay;
-        _scheduler = scheduler;
+        _taskFactory = taskFactory ?? Task.Factory;
         _spinWaitDurationHint = spinWaitDurationHint;
     }
 
     /// <inheritdoc />
     public IEventListener<TEvent> Decorate(IEventListener<WithInterval<TEvent>> listener, IEventSubscriber subscriber)
     {
-        var timeout = new IntervalEventSource( _timestampProvider, _delay, _scheduler, _spinWaitDurationHint, count: 1 );
+        var timeout = new IntervalEventSource( _timestampProvider, _delay, _taskFactory, _spinWaitDurationHint, count: 1 );
         return new EventListener( listener, timeout );
     }
 
