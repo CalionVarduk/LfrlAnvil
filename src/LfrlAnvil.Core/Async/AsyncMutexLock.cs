@@ -21,21 +21,21 @@ namespace LfrlAnvil.Async;
 /// </summary>
 public readonly struct AsyncMutexLock : IDisposable
 {
-    private readonly AsyncMutex.Entry? _entry;
+    internal readonly AsyncMutex.Entry? Entry;
 
     internal AsyncMutexLock(AsyncMutex.Entry entry)
     {
-        _entry = entry;
+        Entry = entry;
     }
 
     /// <summary>
     /// Associated <see cref="AsyncMutex"/> instance.
     /// </summary>
-    public AsyncMutex? Mutex => _entry?.Mutex;
+    public AsyncMutex? Mutex => Entry?.Mutex;
 
     /// <inheritdoc/>
     public void Dispose()
     {
-        _entry?.Exit();
+        Entry?.Exit();
     }
 }

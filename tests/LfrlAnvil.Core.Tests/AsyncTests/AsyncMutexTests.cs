@@ -11,32 +11,32 @@ public class AsyncMutexTests : TestsBase
     public void Ctor_ShouldCreateNonAcquiredMutex()
     {
         var sut = new AsyncMutex();
-        Assertion.All( sut.Waiters.TestEquals( 0 ), sut.IsAcquired.TestFalse() ).Go();
+        Assertion.All( sut.Participants.TestEquals( 0 ) ).Go();
     }
 
     [Fact]
-    public async Task EnterAsync_ShouldReturnImmediately_ForFirstConsumer()
+    public async Task EnterAsync_ShouldReturnImmediately_ForFirstParticipant()
     {
         var sut = new AsyncMutex();
         var token = await sut.EnterAsync();
-        Assertion.All( token.Mutex.TestRefEquals( sut ), sut.Waiters.TestEquals( 0 ), sut.IsAcquired.TestTrue() ).Go();
+        Assertion.All( token.Mutex.TestRefEquals( sut ), sut.Participants.TestEquals( 1 ) ).Go();
     }
 
     [Fact]
-    public void EnterAsync_ShouldThrowOperationCanceledException_WhenFirstConsumerCancellationTokenIsCancelled()
+    public void EnterAsync_ShouldThrowOperationCanceledException_WhenFirstParticipantCancellationTokenIsCancelled()
     {
         var sut = new AsyncMutex();
         var action = Lambda.Of( async () => await sut.EnterAsync( new CancellationToken( canceled: true ) ) );
+
         action.Test(
                 exc => Assertion.All(
                     exc.TestType().AssignableTo<OperationCanceledException>(),
-                    sut.Waiters.TestEquals( 0 ),
-                    sut.IsAcquired.TestFalse() ) )
+                    sut.Participants.TestEquals( 0 ) ) )
             .Go();
     }
 
     [Fact]
-    public async Task EnterAsync_ShouldQueueUpWaitersCorrectly()
+    public async Task EnterAsync_ShouldQueueUpParticipantCorrectly()
     {
         var sut = new AsyncMutex();
         var token = await sut.EnterAsync();
@@ -45,11 +45,11 @@ public class AsyncMutexTests : TestsBase
         _ = Task.Run( async () => _ = await sut.EnterAsync() );
         await Task.Delay( 15 );
 
-        Assertion.All( token.Mutex.TestRefEquals( sut ), sut.Waiters.TestEquals( 2 ), sut.IsAcquired.TestTrue() ).Go();
+        Assertion.All( token.Mutex.TestRefEquals( sut ), sut.Participants.TestEquals( 3 ) ).Go();
     }
 
     [Fact]
-    public async Task EnterAsync_ShouldThrowOperationCanceledException_WhenWaiterCancels()
+    public async Task EnterAsync_ShouldThrowOperationCanceledException_WhenParticipantCancels()
     {
         var source = new CancellationTokenSource();
         var sut = new AsyncMutex();
@@ -64,22 +64,27 @@ public class AsyncMutexTests : TestsBase
                 await result;
             } );
 
-        var assertion = action.Test( exc => exc.TestType().AssignableTo<OperationCanceledException>() ).Invoke();
-        Assertion.All( assertion, token.Mutex.TestRefEquals( sut ), sut.Waiters.TestEquals( 1 ), sut.IsAcquired.TestTrue() ).Go();
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().AssignableTo<OperationCanceledException>(),
+                    token.Mutex.TestRefEquals( sut ),
+                    sut.Participants.TestEquals( 2 ) ) )
+            .Go();
     }
 
     [Fact]
-    public async Task TokenDispose_ShouldReleaseLock_WithoutWaiters()
+    public async Task LockDispose_ShouldReleaseLock_WithoutWaiters()
     {
         var sut = new AsyncMutex();
-        using ( await sut.EnterAsync() )
-            ;
+        var token = await sut.EnterAsync();
 
-        Assertion.All( sut.Waiters.TestEquals( 0 ), sut.IsAcquired.TestFalse() ).Go();
+        token.Dispose();
+
+        sut.Participants.TestEquals( 0 ).Go();
     }
 
     [Fact]
-    public async Task TokenDispose_ShouldNotifyNextWaiter()
+    public async Task LockDispose_ShouldNotifyNextWaiter()
     {
         var sut = new AsyncMutex();
         var first = await sut.EnterAsync();
@@ -93,11 +98,37 @@ public class AsyncMutexTests : TestsBase
         var token = await sut.EnterAsync();
         _ = sut.EnterAsync();
 
-        Assertion.All( token.Mutex.TestRefEquals( sut ), sut.Waiters.TestEquals( 1 ), sut.IsAcquired.TestTrue() ).Go();
+        Assertion.All( token.Mutex.TestRefEquals( sut ), sut.Participants.TestEquals( 2 ) ).Go();
     }
 
     [Fact]
-    public void TrimExcess_ShouldNotImpactWaiters()
+    public void LockDispose_ShouldNotThrow_ForDefault()
+    {
+        var token = default( AsyncMutexLock );
+        var action = Lambda.Of( () => token.Dispose() );
+        action.Test( exc => exc.TestNull() ).Go();
+    }
+
+    [Fact]
+    public async Task LockDispose_ShouldDoNothing_WhenCalledOnDisposedToken()
+    {
+        var sut = new AsyncMutex();
+        var first = await sut.EnterAsync();
+        _ = Task.Run(
+            async () =>
+            {
+                await Task.Delay( 15 );
+                first.Dispose();
+            } );
+
+        _ = await sut.EnterAsync();
+        var action = Lambda.Of( () => first.Dispose() );
+
+        action.Test( exc => Assertion.All( exc.TestNull(), sut.Participants.TestEquals( 1 ) ) ).Go();
+    }
+
+    [Fact]
+    public void TrimExcess_ShouldNotImpactParticipants()
     {
         var sut = new AsyncMutex();
         _ = sut.EnterAsync();
@@ -106,6 +137,6 @@ public class AsyncMutexTests : TestsBase
 
         sut.TrimExcess();
 
-        Assertion.All( sut.Waiters.TestEquals( 2 ), sut.IsAcquired.TestTrue() ).Go();
+        sut.Participants.TestEquals( 3 ).Go();
     }
 }

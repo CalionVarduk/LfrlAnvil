@@ -77,9 +77,7 @@ Reactive:
   - also, add task container pooling
 
 Core:
-
-- KeyedLock\<TKey\> class + token struct
-  - allows to acquire an exclusive lock on a specific key (async-only)
+- add async reader/writer lock
 
 ### Terminal
 

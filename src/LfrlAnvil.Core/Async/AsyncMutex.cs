@@ -24,10 +24,11 @@ namespace LfrlAnvil.Async;
 /// <summary>
 /// Represents a source of a fair asynchronous mutex primitive.
 /// </summary>
+/// <remarks>Lock is not reentrant.</remarks>
 public sealed class AsyncMutex
 {
     private readonly object _sync = new object();
-    private LinkedListSlim<Entry> _waiters;
+    private LinkedListSlim<Entry> _participants;
     private StackSlim<Entry> _entryCache;
 
     /// <summary>
@@ -35,34 +36,19 @@ public sealed class AsyncMutex
     /// </summary>
     public AsyncMutex()
     {
-        _waiters = LinkedListSlim<Entry>.Create();
+        _participants = LinkedListSlim<Entry>.Create();
         _entryCache = StackSlim<Entry>.Create();
     }
 
     /// <summary>
-    /// Returns the number of consumers waiting to acquire the lock.
+    /// Returns the total number of lock participants, which includes current lock holder and all waiters.
     /// </summary>
-    public int Waiters
+    public int Participants
     {
         get
         {
             using ( AcquireLock() )
-            {
-                var count = _waiters.Count;
-                return count > 0 ? count - 1 : 0;
-            }
-        }
-    }
-
-    /// <summary>
-    /// Specifies whether or not the lock is currently acquired.
-    /// </summary>
-    public bool IsAcquired
-    {
-        get
-        {
-            using ( AcquireLock() )
-                return ! _waiters.IsEmpty;
+                return _participants.Count;
         }
     }
 
@@ -87,8 +73,8 @@ public sealed class AsyncMutex
             if ( ! _entryCache.TryPop( out entry ) )
                 entry = new Entry( this );
 
-            entered = _waiters.IsEmpty;
-            entry.NodeId = _waiters.AddLast( entry );
+            entered = _participants.IsEmpty;
+            entry.NodeId = _participants.AddLast( entry );
             if ( ! entered )
             {
                 entry.CancellationTokenRegistration = cancellationToken.UnsafeRegister(
@@ -121,27 +107,28 @@ public sealed class AsyncMutex
     {
         using ( AcquireLock() )
         {
-            _waiters.ResetCapacity();
-            _entryCache.ResetCapacity();
+            _entryCache = StackSlim<Entry>.Create();
+            _participants.ResetCapacity();
         }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void Exit(Entry entry)
+    private bool Exit(Entry entry)
     {
         using ( AcquireLock() )
         {
-            if ( _waiters.First?.Index != entry.NodeId )
-                return;
+            if ( _participants.First?.Index != entry.NodeId )
+                return false;
 
-            _waiters.Remove( entry.NodeId );
+            _participants.Remove( entry.NodeId );
 
             entry.NodeId = -1;
             entry.Source.Reset();
             _entryCache.Push( entry );
 
-            var next = _waiters.First;
+            var next = _participants.First;
             next?.Value.Complete( true );
+            return true;
         }
     }
 
@@ -153,8 +140,8 @@ public sealed class AsyncMutex
             if ( entry.NodeId == -1 )
                 return;
 
-            var wasFirst = _waiters.First?.Index == entry.NodeId;
-            _waiters.Remove( entry.NodeId );
+            var wasFirst = _participants.First?.Index == entry.NodeId;
+            _participants.Remove( entry.NodeId );
 
             entry.NodeId = -1;
             entry.Source.Reset();
@@ -163,7 +150,7 @@ public sealed class AsyncMutex
             if ( ! wasFirst )
                 return;
 
-            var next = _waiters.First;
+            var next = _participants.First;
             next?.Value.Complete( true );
         }
     }
@@ -205,9 +192,9 @@ public sealed class AsyncMutex
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal void Exit()
+        internal bool Exit()
         {
-            Mutex.Exit( this );
+            return Mutex.Exit( this );
         }
     }
 }
