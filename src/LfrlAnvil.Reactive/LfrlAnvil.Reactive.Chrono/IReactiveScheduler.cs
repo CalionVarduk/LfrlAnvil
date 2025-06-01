@@ -16,7 +16,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Threading;
-using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
 
 namespace LfrlAnvil.Reactive.Chrono;
@@ -75,19 +74,6 @@ public interface IReactiveScheduler<TKey> : IDisposable
     /// Starts this scheduler synchronously. Does nothing when this scheduler has already been started.
     /// </summary>
     void Start();
-
-    /// <summary>
-    /// Starts this scheduler asynchronously.
-    /// </summary>
-    /// <param name="longRunning">
-    /// Specifies whether or not to explicitly use the <see cref="TaskCreationOptions.LongRunning"/> flag. Equal to <b>true</b> by default.
-    /// </param>
-    /// <param name="scheduler">Optional task scheduler.</param>
-    /// <returns>
-    /// New <see cref="Task"/> instance that completes when this scheduler is done
-    /// or <see cref="Task.CompletedTask"/> when this scheduler has already been started.
-    /// </returns>
-    Task StartAsync(bool longRunning = true, TaskScheduler? scheduler = null);
 
     /// <summary>
     /// Attempts to schedule the provided <paramref name="task"/>.

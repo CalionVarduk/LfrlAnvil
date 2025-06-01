@@ -17,7 +17,6 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Collections;
@@ -166,16 +165,6 @@ public class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
     {
         if ( _state.Write( ReactiveSchedulerState.Running, ReactiveSchedulerState.Created ) )
             RunCore();
-    }
-
-    /// <inheritdoc />
-    public Task StartAsync(bool longRunning = true, TaskScheduler? scheduler = null)
-    {
-        if ( ! _state.Write( ReactiveSchedulerState.Running, ReactiveSchedulerState.Created ) )
-            return Task.CompletedTask;
-
-        var taskFactory = scheduler is null ? Task.Factory : new TaskFactory( scheduler );
-        return longRunning ? taskFactory.StartNew( RunCore, TaskCreationOptions.LongRunning ) : taskFactory.StartNew( RunCore );
     }
 
     /// <inheritdoc />
