@@ -278,6 +278,7 @@ public sealed partial class MessageBrokerRemoteClient
                     name.Value,
                     handshakeHeader.MessageTimeout,
                     handshakeHeader.PingInterval,
+                    handshakeHeader.SynchronizeExternalObjectNames,
                     isClientLittleEndian )
                 .Emit( Logger.Handshaking );
 
@@ -291,6 +292,7 @@ public sealed partial class MessageBrokerRemoteClient
                 IsLittleEndian = isClientLittleEndian;
                 MessageTimeout = Server.AcceptableMessageTimeout.Clamp( handshakeHeader.MessageTimeout );
                 PingInterval = Server.AcceptablePingInterval.Clamp( handshakeHeader.PingInterval );
+                SynchronizeExternalObjectNames = handshakeHeader.SynchronizeExternalObjectNames;
                 MaxReadTimeout = MessageTimeout + PingInterval;
                 acceptedResponse = new Protocol.HandshakeAcceptedResponse( this );
             }

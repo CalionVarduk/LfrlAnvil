@@ -30,6 +30,11 @@ public enum MessageBrokerClientEndpoint : byte
     MessageNotification = 2,
 
     /// <summary>
+    /// Represents system notification sent by server.
+    /// </summary>
+    SystemNotification = 3,
+
+    /// <summary>
     /// Represents server's response to client's valid push message request.
     /// </summary>
     MessageAcceptedResponse = 4,

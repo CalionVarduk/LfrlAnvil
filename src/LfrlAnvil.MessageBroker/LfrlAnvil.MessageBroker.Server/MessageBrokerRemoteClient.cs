@@ -46,6 +46,7 @@ public sealed partial class MessageBrokerRemoteClient
     internal PacketListener PacketListener;
     internal MessageNotifications MessageNotifications;
     internal RequestHandler RequestHandler;
+    internal ExternalNameCache ExternalNameCache;
     internal readonly MessageBrokerRemoteClientLogger Logger;
 
     private readonly ITimestampProvider _timestamps;
@@ -67,6 +68,7 @@ public sealed partial class MessageBrokerRemoteClient
         MessageTimeout = server.HandshakeTimeout;
         MaxReadTimeout = MessageTimeout;
         PingInterval = Duration.Zero;
+        SynchronizeExternalObjectNames = false;
         _state = MessageBrokerRemoteClientState.Created;
         _nextTraceId = 0;
 
@@ -79,6 +81,7 @@ public sealed partial class MessageBrokerRemoteClient
         PacketListener = PacketListener.Create();
         MessageNotifications = MessageNotifications.Create();
         RequestHandler = RequestHandler.Create();
+        ExternalNameCache = ExternalNameCache.Create();
 
         Logger = Server.RemoteClientLoggerFactory?.Invoke( this ) ?? default;
         _timestamps = Server.TimestampsFactory( this );
@@ -122,6 +125,12 @@ public sealed partial class MessageBrokerRemoteClient
     /// </summary>
     /// <remarks>Value will be initialized during handshake with the remote client.</remarks>
     public Duration PingInterval { get; private set; }
+
+    /// <summary>
+    /// Specifies whether or not synchronization of external object names is enabled.
+    /// </summary>
+    /// <remarks>Value will be initialized during handshake with the remote client.</remarks>
+    public bool SynchronizeExternalObjectNames { get; private set; }
 
     /// <summary>
     /// The remote <see cref="IPEndPoint"/> of the remote client to which this client connects to.
@@ -711,7 +720,10 @@ public sealed partial class MessageBrokerRemoteClient
         }
 
         using ( AcquireLock() )
+        {
+            ExternalNameCache.Clear();
             _state = MessageBrokerRemoteClientState.Disposed;
+        }
 
         if ( ownedDelaySource is not null )
             await ownedDelaySource.TryDisposeAsync().ConfigureAwait( false );

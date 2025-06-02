@@ -27,6 +27,7 @@ internal static class Resources
     internal const string ClientNameAlreadyExists = "Client name already exists.";
     internal const string UnexpectedClientEndpoint = "Received unexpected client endpoint.";
     internal const string ClientNameLengthOutOfBounds = "Server found client's name length to be out of bounds.";
+    internal const string ExternalObjectNameSynchronizationIsDisabled = "External object name synchronization is disabled.";
 
     internal const string ExternalDelaySourceHasBeenDisposed
         = "Operation has been cancelled because external delay value task source has been disposed.";
@@ -102,6 +103,20 @@ internal static class Resources
     internal static string QueueIdIsNotPositive(int received)
     {
         return $"Expected queue ID to be greater than 0 but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string SenderIdIsNotPositive(int received)
+    {
+        return $"Expected sender ID to be greater than 0 but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string SenderIdEqualsClientId(int received)
+    {
+        return $"Expected sender ID {received} to not be equal to client's ID.";
     }
 
     [Pure]
@@ -234,6 +249,29 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string InvalidSenderNameLength(int length)
+    {
+        return
+            $"Expected sender name length to be in [{Defaults.NameLengthBounds.Min}, {Defaults.NameLengthBounds.Max}] range but found {length}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string InvalidStreamNameLength(int length)
+    {
+        return
+            $"Expected stream name length to be in [{Defaults.NameLengthBounds.Min}, {Defaults.NameLengthBounds.Max}] range but found {length}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string UnexpectedSystemNotificationType(MessageBrokerSystemNotificationType type)
+    {
+        return $"Received unexpected system notification type {GetType( type )}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string ClientPayloadRejected(string clientName, MessageBrokerServerEndpoint endpoint, Chain<string> errors)
     {
         var header = $"Server rejected an invalid {GetEndpoint( endpoint )} sent by client '{clientName}'.";
@@ -262,6 +300,13 @@ internal static class Resources
         where T : struct, Enum
     {
         return Enum.IsDefined( value ) ? value.ToString() : $"<unrecognized-endpoint-{value}>";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string GetType(MessageBrokerSystemNotificationType type)
+    {
+        return Enum.IsDefined( type ) ? type.ToString() : $"<unrecognized-type-{type}>";
     }
 
     [Pure]

@@ -273,6 +273,26 @@ internal sealed class ServerMock : IDisposable
         Send( buffer );
     }
 
+    internal void SendObjectNameNotification(MessageBrokerSystemNotificationType type, int objectId, string name, uint? payload = null)
+    {
+        var encodedName = TextEncoding.Prepare( name ).GetValueOrThrow();
+        var buffer = new byte[Protocol.PacketHeader.Length
+            + Protocol.SystemNotificationHeader.Length
+            + Protocol.ObjectNameNotificationHeader.Length
+            + encodedName.ByteCount];
+
+        var writer = new BinaryContractWriter( buffer );
+        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.SystemNotification );
+        writer.MoveWrite(
+            payload
+            ?? ( uint )(Protocol.SystemNotificationHeader.Length + Protocol.ObjectNameNotificationHeader.Length + encodedName.ByteCount) );
+
+        writer.MoveWrite( ( byte )type );
+        writer.MoveWrite( ( uint )objectId );
+        encodedName.Encode( writer.GetSpan( encodedName.ByteCount ) ).ThrowIfError();
+        Send( buffer );
+    }
+
     internal void SendHeader(MessageBrokerClientEndpoint endpoint, uint payload, bool reverseEndianness = false)
     {
         var buffer = new byte[Protocol.PacketHeader.Length];

@@ -36,6 +36,20 @@ public class DefaultsSynchronizationTests : TestsBase
     }
 
     [Fact]
+    public void SystemNotificationType()
+    {
+        var client = Enum.GetValues<MessageBrokerSystemNotificationType>()
+            .Order()
+            .Select( static v => KeyValuePair.Create( v.ToString(), ( int )v ) );
+
+        var server = Enum.GetValues<Server.Events.MessageBrokerSystemNotificationType>()
+            .Order()
+            .Select( static v => KeyValuePair.Create( v.ToString(), ( int )v ) );
+
+        client.TestSequence( server ).Go();
+    }
+
+    [Fact]
     public void ClientNameLength()
     {
         var client = Defaults.NameLengthBounds;

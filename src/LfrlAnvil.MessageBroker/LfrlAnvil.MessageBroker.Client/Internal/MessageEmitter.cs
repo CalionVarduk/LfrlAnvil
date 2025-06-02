@@ -27,13 +27,13 @@ namespace LfrlAnvil.MessageBroker.Client.Internal;
 internal struct MessageEmitter
 {
     private readonly ManualResetValueTaskSource<bool> _continuation;
-    private QueueSlim<Message> _messages;
+    private QueueSlim<Notification> _messages;
     private Task? _task;
 
     private MessageEmitter(ManualResetValueTaskSource<bool> continuation)
     {
         _continuation = continuation;
-        _messages = QueueSlim<Message>.Create();
+        _messages = QueueSlim<Notification>.Create();
     }
 
     [Pure]
@@ -133,19 +133,21 @@ internal struct MessageEmitter
     internal static void Enqueue(
         MessageBrokerListener listener,
         in Protocol.MessageNotificationHeader request,
+        in MessageBrokerExternalObject sender,
+        in MessageBrokerExternalObject stream,
         Timestamp receivedAt,
         MemoryPoolToken<byte> poolToken,
         ReadOnlyMemory<byte> data,
         ulong traceId)
     {
         listener.MessageEmitter._messages.Enqueue(
-            new Message(
+            new Notification(
                 listener,
                 request.MessageId,
                 request.EnqueuedAt,
                 receivedAt,
-                request.SenderId,
-                request.StreamId,
+                sender,
+                stream,
                 request.RetryAttempt,
                 request.RedeliveryAttempt,
                 data,
@@ -164,28 +166,30 @@ internal struct MessageEmitter
 
             while ( true )
             {
-                Message message;
+                Notification notification;
                 using ( listener.AcquireLock() )
                 {
                     if ( listener.ShouldCancel )
                         return;
 
-                    if ( ! listener.MessageEmitter._messages.TryDequeue( out message ) )
+                    if ( ! listener.MessageEmitter._messages.TryDequeue( out notification ) )
                     {
                         listener.MessageEmitter._continuation.Reset();
                         break;
                     }
                 }
 
-                Assume.Equals( listener, message.Args.Listener );
+                Assume.Equals( listener, notification.Args.Listener );
                 var cancellationToken = listener.CancellationSource.Token;
                 try
                 {
-                    await listener.Callback( message.Args, cancellationToken ).ConfigureAwait( false );
+                    await listener.Callback( notification.Args, cancellationToken ).ConfigureAwait( false );
                 }
                 catch ( Exception exc )
                 {
-                    MessageBrokerClientErrorEvent.Create( listener.Client, message.Args.TraceId, exc ).Emit( listener.Client.Logger.Error );
+                    MessageBrokerClientErrorEvent.Create( listener.Client, notification.Args.TraceId, exc )
+                        .Emit( listener.Client.Logger.Error );
+
                     if ( exc is not OperationCanceledException cancelExc || cancelExc.CancellationToken != cancellationToken )
                     {
                         // TODO: send NACK to server
@@ -195,29 +199,29 @@ internal struct MessageEmitter
                 {
                     MessageBrokerClientMessageProcessedEvent.Create(
                             listener,
-                            message.Args.TraceId,
-                            message.Args.StreamId,
-                            message.Args.MessageId )
+                            notification.Args.TraceId,
+                            notification.Args.Stream.Id,
+                            notification.Args.MessageId )
                         .Emit( listener.Client.Logger.MessageProcessed );
 
-                    message.PoolToken.Return( listener.Client, message.Args.TraceId );
+                    notification.PoolToken.Return( listener.Client, notification.Args.TraceId );
                     MessageBrokerClientTraceEvent
-                        .Create( listener.Client, message.Args.TraceId, MessageBrokerClientTraceEventType.MessageNotification )
+                        .Create( listener.Client, notification.Args.TraceId, MessageBrokerClientTraceEventType.MessageNotification )
                         .Emit( listener.Client.Logger.TraceEnd );
                 }
             }
         }
     }
 
-    private readonly struct Message
+    private readonly struct Notification
     {
-        internal Message(
+        internal Notification(
             MessageBrokerListener listener,
             ulong messageId,
             Timestamp enqueuedAt,
             Timestamp receivedAt,
-            int senderId,
-            int streamId,
+            MessageBrokerExternalObject sender,
+            MessageBrokerExternalObject stream,
             int retryAttempt,
             int redeliveryAttempt,
             ReadOnlyMemory<byte> data,
@@ -229,8 +233,8 @@ internal struct MessageEmitter
                 messageId,
                 enqueuedAt,
                 receivedAt,
-                senderId,
-                streamId,
+                sender,
+                stream,
                 retryAttempt,
                 redeliveryAttempt,
                 data,

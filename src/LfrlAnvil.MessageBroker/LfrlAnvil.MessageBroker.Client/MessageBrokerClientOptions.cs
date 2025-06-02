@@ -41,6 +41,9 @@ namespace LfrlAnvil.MessageBroker.Client;
 /// Amount of time that <see cref="MessageBrokerListener"/> instances will wait during their disposal
 /// for callbacks to complete before giving up. Equal to <b>15 seconds</b> by default.
 /// </param>
+/// <param name="SynchronizeExternalObjectNames">
+/// Specifies whether or not synchronization of external object names is enabled. Equal to <b>true</b> by default.
+/// </param>
 /// <param name="Timestamps"><see cref="Timestamp"/> provider.</param>
 /// <param name="DelaySource"><see cref="ValueTaskDelaySource"/> instance used for scheduling future events.</param>
 /// <param name="Logger"><see cref="MessageBrokerClientLogger"/> instance.</param>
@@ -52,6 +55,7 @@ public readonly record struct MessageBrokerClientOptions(
     Duration? DesiredMessageTimeout,
     Duration? DesiredPingInterval,
     Duration? ListenerDisposalTimeout,
+    bool? SynchronizeExternalObjectNames,
     ITimestampProvider? Timestamps,
     ValueTaskDelaySource? DelaySource,
     MessageBrokerClientLogger? Logger,
@@ -79,6 +83,7 @@ public readonly record struct MessageBrokerClientOptions(
             DesiredMessageTimeout,
             DesiredPingInterval,
             ListenerDisposalTimeout,
+            SynchronizeExternalObjectNames,
             Timestamps,
             DelaySource,
             Logger,
@@ -101,6 +106,7 @@ public readonly record struct MessageBrokerClientOptions(
             DesiredMessageTimeout,
             DesiredPingInterval,
             ListenerDisposalTimeout,
+            SynchronizeExternalObjectNames,
             Timestamps,
             DelaySource,
             Logger,
@@ -123,6 +129,7 @@ public readonly record struct MessageBrokerClientOptions(
             DesiredMessageTimeout,
             DesiredPingInterval,
             ListenerDisposalTimeout,
+            SynchronizeExternalObjectNames,
             Timestamps,
             DelaySource,
             Logger,
@@ -145,6 +152,7 @@ public readonly record struct MessageBrokerClientOptions(
             value,
             DesiredPingInterval,
             ListenerDisposalTimeout,
+            SynchronizeExternalObjectNames,
             Timestamps,
             DelaySource,
             Logger,
@@ -167,6 +175,7 @@ public readonly record struct MessageBrokerClientOptions(
             DesiredMessageTimeout,
             value,
             ListenerDisposalTimeout,
+            SynchronizeExternalObjectNames,
             Timestamps,
             DelaySource,
             Logger,
@@ -188,6 +197,30 @@ public readonly record struct MessageBrokerClientOptions(
             ConnectionTimeout,
             DesiredMessageTimeout,
             DesiredPingInterval,
+            value,
+            SynchronizeExternalObjectNames,
+            Timestamps,
+            DelaySource,
+            Logger,
+            StreamDecorator );
+    }
+
+    /// <summary>
+    /// Allows to change <see cref="SynchronizeExternalObjectNames"/>.
+    /// </summary>
+    /// <param name="value">New value</param>
+    /// <returns>New <see cref="MessageBrokerClientOptions"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public MessageBrokerClientOptions SetSynchronizeExternalObjectNames(bool? value)
+    {
+        return new MessageBrokerClientOptions(
+            Tcp,
+            MinMemoryPoolSegmentLength,
+            ConnectionTimeout,
+            DesiredMessageTimeout,
+            DesiredPingInterval,
+            ListenerDisposalTimeout,
             value,
             Timestamps,
             DelaySource,
@@ -211,6 +244,7 @@ public readonly record struct MessageBrokerClientOptions(
             DesiredMessageTimeout,
             DesiredPingInterval,
             ListenerDisposalTimeout,
+            SynchronizeExternalObjectNames,
             value,
             DelaySource,
             Logger,
@@ -233,6 +267,7 @@ public readonly record struct MessageBrokerClientOptions(
             DesiredMessageTimeout,
             DesiredPingInterval,
             ListenerDisposalTimeout,
+            SynchronizeExternalObjectNames,
             Timestamps,
             value,
             Logger,
@@ -255,6 +290,7 @@ public readonly record struct MessageBrokerClientOptions(
             DesiredMessageTimeout,
             DesiredPingInterval,
             ListenerDisposalTimeout,
+            SynchronizeExternalObjectNames,
             Timestamps,
             DelaySource,
             value,
@@ -277,6 +313,7 @@ public readonly record struct MessageBrokerClientOptions(
             DesiredMessageTimeout,
             DesiredPingInterval,
             ListenerDisposalTimeout,
+            SynchronizeExternalObjectNames,
             Timestamps,
             DelaySource,
             Logger,

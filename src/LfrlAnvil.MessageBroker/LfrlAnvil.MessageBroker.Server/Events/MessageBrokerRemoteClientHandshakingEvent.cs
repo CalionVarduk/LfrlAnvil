@@ -29,12 +29,14 @@ public readonly struct MessageBrokerRemoteClientHandshakingEvent
         string clientName,
         Duration desiredMessageTimeout,
         Duration desiredPingInterval,
+        bool synchronizeExternalObjectNames,
         bool isClientLittleEndian)
     {
         Source = MessageBrokerRemoteClientEventSource.Create( client, traceId );
         ClientName = clientName;
         DesiredMessageTimeout = desiredMessageTimeout;
         DesiredPingInterval = desiredPingInterval;
+        SynchronizeExternalObjectNames = synchronizeExternalObjectNames;
         IsClientLittleEndian = isClientLittleEndian;
     }
 
@@ -59,6 +61,11 @@ public readonly struct MessageBrokerRemoteClientHandshakingEvent
     public Duration DesiredPingInterval { get; }
 
     /// <summary>
+    /// Specifies whether or not the client enabled synchronization of external object names.
+    /// </summary>
+    public bool SynchronizeExternalObjectNames { get; }
+
+    /// <summary>
     /// Indicates client's endianness.
     /// </summary>
     public bool IsClientLittleEndian { get; }
@@ -71,7 +78,7 @@ public readonly struct MessageBrokerRemoteClientHandshakingEvent
     public override string ToString()
     {
         return
-            $"[Handshaking] {Source}, ClientName = '{ClientName}', DesiredMessageTimeout = {DesiredMessageTimeout}, DesiredPingInterval = {DesiredPingInterval}, IsClientLittleEndian = {IsClientLittleEndian}";
+            $"[Handshaking] {Source}, ClientName = '{ClientName}', DesiredMessageTimeout = {DesiredMessageTimeout}, DesiredPingInterval = {DesiredPingInterval}, SynchronizeExternalObjectNames = {SynchronizeExternalObjectNames}, IsClientLittleEndian = {IsClientLittleEndian}";
     }
 
     [Pure]
@@ -82,6 +89,7 @@ public readonly struct MessageBrokerRemoteClientHandshakingEvent
         string clientName,
         Duration desiredMessageTimeout,
         Duration desiredPingInterval,
+        bool synchronizeExternalObjectNames,
         bool isClientLittleEndian)
     {
         return new MessageBrokerRemoteClientHandshakingEvent(
@@ -90,6 +98,7 @@ public readonly struct MessageBrokerRemoteClientHandshakingEvent
             clientName,
             desiredMessageTimeout,
             desiredPingInterval,
+            synchronizeExternalObjectNames,
             isClientLittleEndian );
     }
 }

@@ -28,8 +28,8 @@ public readonly struct MessageBrokerListenerCallbackArgs
         ulong messageId,
         Timestamp enqueuedAt,
         Timestamp receivedAt,
-        int senderId,
-        int streamId,
+        MessageBrokerExternalObject sender,
+        MessageBrokerExternalObject stream,
         int retryAttempt,
         int redeliveryAttempt,
         ReadOnlyMemory<byte> data,
@@ -39,8 +39,8 @@ public readonly struct MessageBrokerListenerCallbackArgs
         MessageId = messageId;
         EnqueuedAt = enqueuedAt;
         ReceivedAt = receivedAt;
-        SenderId = senderId;
-        StreamId = streamId;
+        Sender = sender;
+        Stream = stream;
         RetryAttempt = retryAttempt;
         RedeliveryAttempt = redeliveryAttempt;
         Data = data;
@@ -68,14 +68,14 @@ public readonly struct MessageBrokerListenerCallbackArgs
     public Timestamp ReceivedAt { get; }
 
     /// <summary>
-    /// Identifier of the client that published this message.
+    /// Client that published this message.
     /// </summary>
-    public int SenderId { get; }
+    public MessageBrokerExternalObject Sender { get; }
 
     /// <summary>
-    /// Identifier of the server-side stream that handled this message.
+    /// Server-side stream that handled this message.
     /// </summary>
-    public int StreamId { get; }
+    public MessageBrokerExternalObject Stream { get; }
 
     /// <summary>
     /// Retry attempt number of this message.
@@ -111,6 +111,6 @@ public readonly struct MessageBrokerListenerCallbackArgs
     public override string ToString()
     {
         return
-            $"Listener = ({Listener}), Id = {MessageId}, Retry = {RetryAttempt}, Redelivery = {RedeliveryAttempt}, Length = {Data.Length}, EnqueuedAt = {EnqueuedAt}, ReceivedAt = {ReceivedAt}, Sender = {SenderId}, Stream = {StreamId}, TraceId = {TraceId}";
+            $"Listener = ({Listener}), Id = {MessageId}, Retry = {RetryAttempt}, Redelivery = {RedeliveryAttempt}, Length = {Data.Length}, EnqueuedAt = {EnqueuedAt}, ReceivedAt = {ReceivedAt}, Sender = ({Sender}), Stream = ({Stream}), TraceId = {TraceId}";
     }
 }

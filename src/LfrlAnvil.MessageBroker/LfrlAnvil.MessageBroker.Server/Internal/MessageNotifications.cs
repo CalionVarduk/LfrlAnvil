@@ -112,10 +112,32 @@ internal struct MessageNotifications
 
     internal static void EnqueueMessagesUnsafe(MessageBrokerRemoteClient client, in ListSlim<QueueMessage> messages)
     {
-        foreach ( ref readonly var message in messages )
+        if ( client.SynchronizeExternalObjectNames )
         {
-            var writerSource = client.WriterQueue.AcquireSource();
-            client.MessageNotifications._messages.Enqueue( new Message( in message, writerSource ) );
+            foreach ( ref readonly var message in messages )
+            {
+                var sender = message.Publisher.Client;
+                var senderName = NameNotification.Empty;
+                if ( client.ExternalNameCache.TryUpdate( client, sender ) )
+                    senderName = new NameNotification( client.WriterQueue.AcquireSource(), sender.Id, sender.Name );
+
+                var stream = message.Publisher.Stream;
+                var streamName = NameNotification.Empty;
+                if ( client.ExternalNameCache.TryUpdate( stream ) )
+                    streamName = new NameNotification( client.WriterQueue.AcquireSource(), stream.Id, stream.Name );
+
+                var writerSource = client.WriterQueue.AcquireSource();
+                client.MessageNotifications._messages.Enqueue( new Message( in message, writerSource, senderName, streamName ) );
+            }
+        }
+        else
+        {
+            foreach ( ref readonly var message in messages )
+            {
+                var writerSource = client.WriterQueue.AcquireSource();
+                client.MessageNotifications._messages.Enqueue(
+                    new Message( in message, writerSource, NameNotification.Empty, NameNotification.Empty ) );
+            }
         }
     }
 
@@ -167,6 +189,36 @@ internal struct MessageNotifications
 
                     try
                     {
+                        if ( message.SenderName.WriterSource is not null )
+                        {
+                            MessageBrokerRemoteClientSendingSenderNameEvent
+                                .Create( client, traceId, message.SenderName.Id, message.SenderName.Name )
+                                .Emit( client.Logger.SendingSenderName );
+
+                            if ( ! await SendObjectNameNotificationAsync(
+                                    client,
+                                    MessageBrokerSystemNotificationType.SenderName,
+                                    message.SenderName,
+                                    traceId )
+                                .ConfigureAwait( false ) )
+                                return;
+                        }
+
+                        if ( message.StreamName.WriterSource is not null )
+                        {
+                            MessageBrokerRemoteClientSendingStreamNameEvent
+                                .Create( client, traceId, message.StreamName.Id, message.StreamName.Name )
+                                .Emit( client.Logger.SendingStreamName );
+
+                            if ( ! await SendObjectNameNotificationAsync(
+                                    client,
+                                    MessageBrokerSystemNotificationType.StreamName,
+                                    message.StreamName,
+                                    traceId )
+                                .ConfigureAwait( false ) )
+                                return;
+                        }
+
                         if ( ! await message.WriterSource.GetTask().ConfigureAwait( false ) )
                         {
                             MessageBrokerRemoteClientErrorEvent.Create( client, traceId, client.DisposedException() )
@@ -216,15 +268,68 @@ internal struct MessageNotifications
         }
     }
 
+    private static async ValueTask<bool> SendObjectNameNotificationAsync(
+        MessageBrokerRemoteClient client,
+        MessageBrokerSystemNotificationType type,
+        NameNotification data,
+        ulong traceId)
+    {
+        Assume.IsNotNull( data.WriterSource );
+        var notification = new Protocol.ObjectNameNotification( type, data.Id, data.Name );
+        var token = client.MemoryPool.Rent( notification.Length, out var buffer ).EnableClearing();
+        try
+        {
+            notification.Serialize( buffer );
+            if ( ! await data.WriterSource.GetTask().ConfigureAwait( false ) )
+            {
+                MessageBrokerRemoteClientErrorEvent.Create( client, traceId, client.DisposedException() ).Emit( client.Logger.Error );
+                return false;
+            }
+
+            var writeResult = await client.WriteAsync( notification.Header, buffer, traceId ).ConfigureAwait( false );
+            if ( writeResult.Exception is not null )
+            {
+                using ( client.AcquireLock() )
+                    client.MessageNotifications._task = null;
+
+                await client.DisposeAsync( traceId ).ConfigureAwait( false );
+                return false;
+            }
+
+            MessageBrokerRemoteClientSystemNotificationSentEvent.Create( client, traceId, type )
+                .Emit( client.Logger.SystemNotificationSent );
+
+            using ( client.AcquireActiveLock( traceId, out var exc ) )
+            {
+                if ( exc is not null )
+                    return false;
+
+                client.WriterQueue.Release( client, data.WriterSource );
+            }
+        }
+        finally
+        {
+            token.Return( client, traceId );
+        }
+
+        return true;
+    }
+
     private readonly struct Message
     {
-        internal Message(in QueueMessage message, ManualResetValueTaskSource<bool> writerSource)
+        internal Message(
+            in QueueMessage message,
+            ManualResetValueTaskSource<bool> writerSource,
+            NameNotification senderName,
+            NameNotification streamName)
         {
             PacketHeader = message.PacketHeader;
             Publisher = message.Publisher;
             Listener = message.Listener;
             Id = message.Id;
             WriterSource = writerSource;
+            SenderName = senderName;
+            StreamName = streamName;
             PoolToken = message.PoolToken;
             Packet = message.Packet;
         }
@@ -234,6 +339,8 @@ internal struct MessageNotifications
         internal readonly MessageBrokerChannelListenerBinding Listener;
         internal readonly ulong Id;
         internal readonly ManualResetValueTaskSource<bool> WriterSource;
+        internal readonly NameNotification SenderName;
+        internal readonly NameNotification StreamName;
         internal readonly MemoryPoolToken<byte> PoolToken;
         internal readonly ReadOnlyMemory<byte> Packet;
 
@@ -243,6 +350,28 @@ internal struct MessageNotifications
         public override string ToString()
         {
             return $"Header = ({PacketHeader}), Id = {Id}, Publisher = ({Publisher}), Listener = ({Listener})";
+        }
+    }
+
+    private readonly struct NameNotification
+    {
+        internal static NameNotification Empty => new NameNotification( null, 0, string.Empty );
+
+        internal NameNotification(ManualResetValueTaskSource<bool>? writerSource, int id, string name)
+        {
+            WriterSource = writerSource;
+            Id = id;
+            Name = name;
+        }
+
+        internal readonly ManualResetValueTaskSource<bool>? WriterSource;
+        internal readonly int Id;
+        internal readonly string Name;
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"Id = {Id}, Name = '{Name}'";
         }
     }
 }

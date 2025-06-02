@@ -44,9 +44,10 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     internal EventScheduler EventScheduler;
     internal PacketListener PacketListener;
     internal PingScheduler PingScheduler;
-    internal MessageNotifications MessageNotifications;
+    internal NotificationHandler NotificationHandler;
     internal PublisherCollection PublisherCollection;
     internal ListenerCollection ListenerCollection;
+    internal ExternalNameCache ExternalNameCache;
     internal readonly MemoryPool<byte> MemoryPool;
     internal readonly MessageBrokerClientLogger Logger;
 
@@ -78,6 +79,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         MessageTimeout = Defaults.Temporal.GetActualTimeout( options.DesiredMessageTimeout );
         PingInterval = Defaults.Temporal.GetActualPingInterval( options.DesiredPingInterval );
         ListenerDisposalTimeout = Defaults.Temporal.GetActualTimeout( options.ListenerDisposalTimeout );
+        SynchronizeExternalObjectNames = options.SynchronizeExternalObjectNames ?? true;
         _streamDecorator = options.StreamDecorator;
         Logger = options.Logger ?? default;
         _timestamps = options.Timestamps ?? TimestampProvider.Shared;
@@ -97,9 +99,10 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         EventScheduler = EventScheduler.Create();
         PacketListener = PacketListener.Create();
         PingScheduler = PingScheduler.Create();
-        MessageNotifications = MessageNotifications.Create();
+        NotificationHandler = NotificationHandler.Create();
         PublisherCollection = PublisherCollection.Create();
         ListenerCollection = ListenerCollection.Create();
+        ExternalNameCache = ExternalNameCache.Create();
     }
 
     /// <summary>
@@ -146,6 +149,11 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     /// for callbacks to complete before giving up.
     /// </summary>
     public Duration ListenerDisposalTimeout { get; }
+
+    /// <summary>
+    /// Specifies whether or not synchronization of external object names is enabled.
+    /// </summary>
+    public bool SynchronizeExternalObjectNames { get; }
 
     /// <summary>
     /// The local <see cref="EndPoint"/> that this client is using for communications with the server.
@@ -341,7 +349,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
                 Assume.IsNotNull( stream );
                 var packetListenerTask = PacketListener.StartUnderlyingTask( this, stream );
                 var pingSchedulerTask = PingScheduler.StartUnderlyingTask( this );
-                var messageNotificationsTask = MessageNotifications.StartUnderlyingTask( this );
+                var messageNotificationsTask = NotificationHandler.StartUnderlyingTask( this );
                 using ( AcquireActiveLock( traceId, out var exc ) )
                 {
                     if ( exc is not null )
@@ -349,7 +357,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
 
                     PacketListener.SetUnderlyingTask( packetListenerTask );
                     PingScheduler.SetUnderlyingTask( pingSchedulerTask );
-                    MessageNotifications.SetUnderlyingTask( messageNotificationsTask );
+                    NotificationHandler.SetUnderlyingTask( messageNotificationsTask );
                 }
             }
             catch ( Exception exc )
@@ -609,10 +617,10 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
             eventSchedulerTask = EventScheduler.DiscardUnderlyingTask();
             pingSchedulerTask = PingScheduler.DiscardUnderlyingTask();
             packetListenerTask = PacketListener.DiscardUnderlyingTask();
-            messageNotificationsTask = MessageNotifications.DiscardUnderlyingTask();
+            messageNotificationsTask = NotificationHandler.DiscardUnderlyingTask();
             PingScheduler.Dispose();
             EventScheduler.Dispose();
-            MessageNotifications.BeginDispose();
+            NotificationHandler.BeginDispose();
             WriterQueue.Dispose();
             ResponseQueue.Dispose();
         }
@@ -637,7 +645,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         {
             PublisherCollection.Clear();
             listeners = ListenerCollection.Clear();
-            (discardedMessageCount, exceptions) = MessageNotifications.EndDispose();
+            (discardedMessageCount, exceptions) = NotificationHandler.EndDispose();
             var exception = _tcp.TryDispose().Exception;
             if ( exception is not null )
                 exceptions = exceptions.Extend( exception );
@@ -657,6 +665,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         using ( AcquireLock() )
         {
             _stream = null;
+            ExternalNameCache.Clear();
             _state = MessageBrokerClientState.Disposed;
         }
 

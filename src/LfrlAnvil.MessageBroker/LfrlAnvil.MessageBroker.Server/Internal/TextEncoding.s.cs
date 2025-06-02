@@ -26,6 +26,13 @@ internal static class TextEncoding
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static Result<EncodeableText> Prepare(string value)
+    {
+        return EncodeableText.Create( Instance, value );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static Result<string> Parse(ReadOnlyMemory<byte> value)
     {
         return Instance.Decode( value.Span );

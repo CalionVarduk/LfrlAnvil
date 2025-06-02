@@ -61,7 +61,7 @@ internal struct ListenerCollection
     internal static MessageBrokerListener? TryGetByChannelId(MessageBrokerClient client, int channelId)
     {
         using ( client.AcquireLock() )
-            return client.ListenerCollection._store.TryGetById( channelId );
+            return client.ListenerCollection.TryGetByChannelIdUnsafe( channelId );
     }
 
     [Pure]
@@ -70,6 +70,13 @@ internal struct ListenerCollection
     {
         using ( client.AcquireLock() )
             return client.ListenerCollection._store.TryGetByName( channelName );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal MessageBrokerListener? TryGetByChannelIdUnsafe(int channelId)
+    {
+        return _store.TryGetById( channelId );
     }
 
     internal static async ValueTask<Result<MessageBrokerBindListenerResult?>> BindAsync(

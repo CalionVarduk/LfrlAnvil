@@ -139,63 +139,9 @@ internal struct PacketListener
 
             var packetPoolToken = default( MemoryPoolToken<byte> );
             var packetBuffer = Memory<byte>.Empty;
-            if ( header.GetClientEndpoint() == MessageBrokerClientEndpoint.MessageNotification )
+            switch ( header.GetClientEndpoint() )
             {
-                var packetLength = Protocol.AssertPacketLength( client, header );
-                if ( packetLength.Exception is not null )
-                {
-                    MessageBrokerClientAwaitPacketEvent.Create( client, header, packetLength.Exception ).Emit( client.Logger.AwaitPacket );
-                    await DisposeClientAsync( client, packetPoolToken ).ConfigureAwait( false );
-                    return;
-                }
-
-                if ( packetLength.Value > 0 )
-                {
-                    packetPoolToken = client.MemoryPool.Rent( packetLength.Value, out packetBuffer ).EnableClearing();
-                    try
-                    {
-                        await stream.ReadExactlyAsync( packetBuffer, timeoutToken ).ConfigureAwait( false );
-                    }
-                    catch ( Exception exc )
-                    {
-                        MessageBrokerClientAwaitPacketEvent.Create( client, header, exc ).Emit( client.Logger.AwaitPacket );
-                        await DisposeClientAsync( client, packetPoolToken ).ConfigureAwait( false );
-                        return;
-                    }
-                }
-
-                using ( AcquireActiveLock( client, out var acquired ) )
-                {
-                    if ( ! acquired )
-                    {
-                        Return( client, packetPoolToken );
-                        return;
-                    }
-
-                    client.MessageNotifications.Enqueue( header, client.GetTimestamp(), packetPoolToken, packetBuffer );
-                    client.MessageNotifications.SignalContinuation();
-                }
-            }
-            else
-            {
-                PendingResponseSource target;
-                using ( AcquireActiveLock( client, out var acquired ) )
-                {
-                    if ( ! acquired )
-                        return;
-
-                    target = client.ResponseQueue.GetNext();
-                }
-
-                if ( target.Source is null )
-                {
-                    var error = Protocol.UnexpectedClientEndpointException( client, header );
-                    MessageBrokerClientAwaitPacketEvent.Create( client, header, error ).Emit( client.Logger.AwaitPacket );
-                    await DisposeClientAsync( client, packetPoolToken ).ConfigureAwait( false );
-                    return;
-                }
-
-                if ( header.GetClientEndpoint() != MessageBrokerClientEndpoint.Pong )
+                case MessageBrokerClientEndpoint.MessageNotification:
                 {
                     var packetLength = Protocol.AssertPacketLength( client, header );
                     if ( packetLength.Exception is not null )
@@ -221,17 +167,121 @@ internal struct PacketListener
                             return;
                         }
                     }
-                }
 
-                using ( AcquireActiveLock( client, out var acquired ) )
-                {
-                    if ( ! acquired )
+                    using ( AcquireActiveLock( client, out var acquired ) )
                     {
-                        Return( client, packetPoolToken );
+                        if ( ! acquired )
+                        {
+                            Return( client, packetPoolToken );
+                            return;
+                        }
+
+                        client.NotificationHandler.Enqueue( header, client.GetTimestamp(), packetPoolToken, packetBuffer );
+                        client.NotificationHandler.SignalContinuation();
+                    }
+
+                    break;
+                }
+                case MessageBrokerClientEndpoint.SystemNotification:
+                {
+                    var packetLength = Protocol.AssertPacketLength( client, header );
+                    if ( packetLength.Exception is not null )
+                    {
+                        MessageBrokerClientAwaitPacketEvent.Create( client, header, packetLength.Exception )
+                            .Emit( client.Logger.AwaitPacket );
+
+                        await DisposeClientAsync( client, packetPoolToken ).ConfigureAwait( false );
                         return;
                     }
 
-                    client.ResponseQueue.Signal( target.Source, IncomingPacketToken.Ok( header, packetPoolToken, packetBuffer ) );
+                    if ( packetLength.Value > 0 )
+                    {
+                        packetPoolToken = client.MemoryPool.Rent( packetLength.Value, out packetBuffer ).EnableClearing();
+                        try
+                        {
+                            await stream.ReadExactlyAsync( packetBuffer, timeoutToken ).ConfigureAwait( false );
+                        }
+                        catch ( Exception exc )
+                        {
+                            MessageBrokerClientAwaitPacketEvent.Create( client, header, exc ).Emit( client.Logger.AwaitPacket );
+                            await DisposeClientAsync( client, packetPoolToken ).ConfigureAwait( false );
+                            return;
+                        }
+                    }
+
+                    using ( AcquireActiveLock( client, out var acquired ) )
+                    {
+                        if ( ! acquired )
+                        {
+                            Return( client, packetPoolToken );
+                            return;
+                        }
+
+                        client.NotificationHandler.Enqueue( header, default, packetPoolToken, packetBuffer );
+                        client.NotificationHandler.SignalContinuation();
+                    }
+
+                    break;
+                }
+                default:
+                {
+                    PendingResponseSource target;
+                    using ( AcquireActiveLock( client, out var acquired ) )
+                    {
+                        if ( ! acquired )
+                            return;
+
+                        target = client.ResponseQueue.GetNext();
+                    }
+
+                    if ( target.Source is null )
+                    {
+                        var error = Protocol.UnexpectedClientEndpointException( client, header );
+                        MessageBrokerClientAwaitPacketEvent.Create( client, header, error ).Emit( client.Logger.AwaitPacket );
+                        await DisposeClientAsync( client, packetPoolToken ).ConfigureAwait( false );
+                        return;
+                    }
+
+                    if ( header.GetClientEndpoint() != MessageBrokerClientEndpoint.Pong )
+                    {
+                        var packetLength = Protocol.AssertPacketLength( client, header );
+                        if ( packetLength.Exception is not null )
+                        {
+                            MessageBrokerClientAwaitPacketEvent.Create( client, header, packetLength.Exception )
+                                .Emit( client.Logger.AwaitPacket );
+
+                            await DisposeClientAsync( client, packetPoolToken ).ConfigureAwait( false );
+                            return;
+                        }
+
+                        if ( packetLength.Value > 0 )
+                        {
+                            packetPoolToken = client.MemoryPool.Rent( packetLength.Value, out packetBuffer ).EnableClearing();
+                            try
+                            {
+                                await stream.ReadExactlyAsync( packetBuffer, timeoutToken ).ConfigureAwait( false );
+                            }
+                            catch ( Exception exc )
+                            {
+                                MessageBrokerClientAwaitPacketEvent.Create( client, header, exc ).Emit( client.Logger.AwaitPacket );
+                                await DisposeClientAsync( client, packetPoolToken ).ConfigureAwait( false );
+                                return;
+                            }
+                        }
+                    }
+
+                    using ( AcquireActiveLock( client, out var acquired ) )
+                    {
+                        if ( ! acquired )
+                        {
+                            Return( client, packetPoolToken );
+                            return;
+                        }
+
+                        client.ResponseQueue.Signal( target.Source, IncomingPacketToken.Ok( header, packetPoolToken, packetBuffer ) );
+                    }
+
+                    break;
                 }
             }
         }

@@ -119,6 +119,21 @@ public sealed class EventLogger
                 Add( e.Source.TraceId, e.ToString() );
                 logger.MessageProcessed?.Invoke( e );
             },
+            processingSystemNotification: e =>
+            {
+                Add( e.Source.TraceId, e.ToString() );
+                logger.ProcessingSystemNotification?.Invoke( e );
+            },
+            senderNameProcessed: e =>
+            {
+                Add( e.Source.TraceId, e.ToString() );
+                logger.SenderNameProcessed?.Invoke( e );
+            },
+            streamNameProcessed: e =>
+            {
+                Add( e.Source.TraceId, e.ToString() );
+                logger.StreamNameProcessed?.Invoke( e );
+            },
             disposing: e =>
             {
                 Add( e.Source.TraceId, e.ToString() );

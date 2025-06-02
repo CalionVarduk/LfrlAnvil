@@ -44,6 +44,9 @@ public readonly struct MessageBrokerClientLogger
         Action<MessageBrokerClientMessagePushedEvent>? messagePushed,
         Action<MessageBrokerClientProcessingMessageEvent>? processingMessage,
         Action<MessageBrokerClientMessageProcessedEvent>? messageProcessed,
+        Action<MessageBrokerClientProcessingSystemNotificationEvent>? processingSystemNotification,
+        Action<MessageBrokerClientSenderNameProcessedEvent>? senderNameProcessed,
+        Action<MessageBrokerClientStreamNameProcessedEvent>? streamNameProcessed,
         Action<MessageBrokerClientDisposingEvent>? disposing,
         Action<MessageBrokerClientDisposedEvent>? disposed,
         Action<MessageBrokerClientErrorEvent>? error)
@@ -69,6 +72,9 @@ public readonly struct MessageBrokerClientLogger
         MessagePushed = messagePushed;
         ProcessingMessage = processingMessage;
         MessageProcessed = messageProcessed;
+        ProcessingSystemNotification = processingSystemNotification;
+        SenderNameProcessed = senderNameProcessed;
+        StreamNameProcessed = streamNameProcessed;
         Disposing = disposing;
         Disposed = disposed;
         Error = error;
@@ -180,6 +186,21 @@ public readonly struct MessageBrokerClientLogger
     public readonly Action<MessageBrokerClientMessageProcessedEvent>? MessageProcessed;
 
     /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerClientProcessingSystemNotificationEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerClientProcessingSystemNotificationEvent>? ProcessingSystemNotification;
+
+    /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerClientSenderNameProcessedEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerClientSenderNameProcessedEvent>? SenderNameProcessed;
+
+    /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerClientStreamNameProcessedEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerClientStreamNameProcessedEvent>? StreamNameProcessed;
+
+    /// <summary>
     /// Optional callback for a <see cref="MessageBrokerClientDisposingEvent"/>.
     /// </summary>
     public readonly Action<MessageBrokerClientDisposingEvent>? Disposing;
@@ -218,6 +239,9 @@ public readonly struct MessageBrokerClientLogger
     /// <param name="messagePushed">Optional <see cref="MessagePushed"/> callback.</param>
     /// <param name="processingMessage">Optional <see cref="ProcessingMessage"/> callback.</param>
     /// <param name="messageProcessed">Optional <see cref="MessageProcessed"/> callback.</param>
+    /// <param name="processingSystemNotification">Optional <see cref="ProcessingSystemNotification"/> callback.</param>
+    /// <param name="senderNameProcessed">Optional <see cref="SenderNameProcessed"/> callback.</param>
+    /// <param name="streamNameProcessed">Optional <see cref="StreamNameProcessed"/> callback.</param>
     /// <param name="disposing">Optional <see cref="Disposing"/> callback.</param>
     /// <param name="disposed">Optional <see cref="Disposed"/> callback.</param>
     /// <param name="error">Optional <see cref="Error"/> callback.</param>
@@ -245,6 +269,9 @@ public readonly struct MessageBrokerClientLogger
         Action<MessageBrokerClientMessagePushedEvent>? messagePushed = null,
         Action<MessageBrokerClientProcessingMessageEvent>? processingMessage = null,
         Action<MessageBrokerClientMessageProcessedEvent>? messageProcessed = null,
+        Action<MessageBrokerClientProcessingSystemNotificationEvent>? processingSystemNotification = null,
+        Action<MessageBrokerClientSenderNameProcessedEvent>? senderNameProcessed = null,
+        Action<MessageBrokerClientStreamNameProcessedEvent>? streamNameProcessed = null,
         Action<MessageBrokerClientDisposingEvent>? disposing = null,
         Action<MessageBrokerClientDisposedEvent>? disposed = null,
         Action<MessageBrokerClientErrorEvent>? error = null)
@@ -271,6 +298,9 @@ public readonly struct MessageBrokerClientLogger
             messagePushed,
             processingMessage,
             messageProcessed,
+            processingSystemNotification,
+            senderNameProcessed,
+            streamNameProcessed,
             disposing,
             disposed,
             error );

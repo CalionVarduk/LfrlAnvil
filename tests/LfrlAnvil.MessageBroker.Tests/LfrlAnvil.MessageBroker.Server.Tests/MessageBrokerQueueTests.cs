@@ -22,7 +22,7 @@ public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFi
     [Theory]
     [InlineData( 1 )]
     [InlineData( 5 )]
-    public async Task MessageRequest_ShouldPropagateMessagesToListenersCorrectly(int prefetchHint)
+    public async Task MessageNotification_ShouldPropagateMessagesToListenersCorrectly(int prefetchHint)
     {
         var endSource = new SafeTaskCompletionSource( completionCount: 6 );
         var clientLogs = new ClientEventLogger();
@@ -145,6 +145,7 @@ public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFi
                             $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (end)"
                         ] )
                     ] ),
+                clientLogs.GetAll().Where( t => t.Logs.Any( e => e.Contains( "[Trace:SystemNotification]" ) ) ).TestEmpty(),
                 clientLogs.GetAllAwaitPacket()
                     .TestContainsContiguousSequence(
                     [
@@ -290,6 +291,308 @@ public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFi
                     "[Trace:ProcessMessages] Client = [2] 'test2', Queue = [1] 'c', TraceId = 6 (start)",
                     "[ProcessingMessages] Client = [2] 'test2', Queue = [1] 'c', TraceId = 6, MessageCount = 0, SkippedMessageCount = 1",
                     "[Trace:ProcessMessages] Client = [2] 'test2', Queue = [1] 'c', TraceId = 6 (end)"
+                ] )
+            ] )
+            .Go();
+    }
+
+    [Fact]
+    public async Task MessageNotification_ShouldBePrecededBySenderAndStreamNames_WhenTheyWereNotSent()
+    {
+        var endSource = new SafeTaskCompletionSource( completionCount: 2 );
+        var clientLogs = new ClientEventLogger();
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    c => c.Id == 1
+                        ? clientLogs.GetLogger(
+                            MessageBrokerRemoteClientLogger.Create(
+                                traceEnd: e =>
+                                {
+                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.MessageNotification )
+                                        endSource.Complete();
+                                } ) )
+                        : null ) );
+
+        await server.StartAsync();
+
+        using var client1 = new ClientMock();
+        await client1.EstablishHandshake( server, synchronizeExternalObjectNames: true );
+
+        using var client2 = new ClientMock();
+        await client2.EstablishHandshake( server, "test2" );
+
+        await client2.GetTask(
+            c =>
+            {
+                c.SendBindPublisherRequest( "c" );
+                c.ReadPublisherBoundResponse();
+            } );
+
+        await client1.GetTask(
+            c =>
+            {
+                c.SendBindListenerRequest( "c", true );
+                c.ReadListenerBoundResponse();
+            } );
+
+        await client2.GetTask(
+            c =>
+            {
+                c.SendPushMessage( 1, [ 1, 2 ], confirm: false );
+                c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
+            } );
+
+        await client1.GetTask(
+            c =>
+            {
+                c.ReadObjectNameSystemNotification(
+                    new Protocol.ObjectNameNotification( MessageBrokerSystemNotificationType.SenderName, 2, "test2" ) );
+
+                c.ReadObjectNameSystemNotification(
+                    new Protocol.ObjectNameNotification( MessageBrokerSystemNotificationType.StreamName, 1, "c" ) );
+
+                c.ReadMessageNotification( 2 );
+                c.ReadMessageNotification( 3 );
+            } );
+
+        await endSource.Task;
+
+        clientLogs.GetAll()
+            .Skip( 2 )
+            .TestSequence(
+            [
+                (t, _) => t.Logs.TestSequence(
+                [
+                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (start)",
+                    "[ProcessingMessage] Client = [1] 'test', TraceId = 2, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 2",
+                    "[SendingSenderName] Client = [1] 'test', TraceId = 2, Sender = [2] 'test2'",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 15)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 15)",
+                    "[SystemNotificationSent] Client = [1] 'test', TraceId = 2, Type = SenderName",
+                    "[SendingStreamName] Client = [1] 'test', TraceId = 2, Stream = [1] 'c'",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 11)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 11)",
+                    "[SystemNotificationSent] Client = [1] 'test', TraceId = 2, Type = StreamName",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 43)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 43)",
+                    "[MessageProcessed] Client = [1] 'test', TraceId = 2, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0",
+                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (end)"
+                ] ),
+                (t, _) => t.Logs.TestSequence(
+                [
+                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 3 (start)",
+                    "[ProcessingMessage] Client = [1] 'test', TraceId = 3, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 3",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 3, Packet = (MessageNotification, Length = 44)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 3, Packet = (MessageNotification, Length = 44)",
+                    "[MessageProcessed] Client = [1] 'test', TraceId = 3, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 1",
+                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 3 (end)"
+                ] )
+            ] )
+            .Go();
+    }
+
+    [Fact]
+    public async Task MessageNotification_ShouldOnlyBePrecededByStreamName_WhenClientSendsMessageToSelf()
+    {
+        var endSource = new SafeTaskCompletionSource();
+        var clientLogs = new ClientEventLogger();
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.MessageNotification )
+                                    endSource.Complete();
+                            } ) ) ) );
+
+        await server.StartAsync();
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server, synchronizeExternalObjectNames: true );
+        await client.GetTask(
+            c =>
+            {
+                c.SendBindPublisherRequest( "c" );
+                c.ReadPublisherBoundResponse();
+                c.SendBindListenerRequest( "c", true );
+                c.ReadListenerBoundResponse();
+                c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
+                c.ReadObjectNameSystemNotification(
+                    new Protocol.ObjectNameNotification( MessageBrokerSystemNotificationType.StreamName, 1, "c" ) );
+
+                c.ReadMessageNotification( 3 );
+            } );
+
+        await endSource.Task;
+
+        clientLogs.GetAll()
+            .Skip( 4 )
+            .TestSequence(
+            [
+                (t, _) => t.Logs.TestSequence(
+                [
+                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (start)",
+                    "[ProcessingMessage] Client = [1] 'test', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 3",
+                    "[SendingStreamName] Client = [1] 'test', TraceId = 4, Stream = [1] 'c'",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (SystemNotification, Length = 11)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (SystemNotification, Length = 11)",
+                    "[SystemNotificationSent] Client = [1] 'test', TraceId = 4, Type = StreamName",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 44)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 44)",
+                    "[MessageProcessed] Client = [1] 'test', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0",
+                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (end)"
+                ] )
+            ] )
+            .Go();
+    }
+
+    [Fact]
+    public async Task MessageNotification_ShouldBePrecededBySenderAndStreamNames_WhenTheyChange()
+    {
+        var disposalContinuation = new SafeTaskCompletionSource();
+        var endSource = new SafeTaskCompletionSource( completionCount: 2 );
+        var clientLogs = new ClientEventLogger();
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    c =>
+                    {
+                        if ( c.Id == 1 )
+                            return clientLogs.GetLogger(
+                                MessageBrokerRemoteClientLogger.Create(
+                                    traceEnd: e =>
+                                    {
+                                        if ( e.Type == MessageBrokerRemoteClientTraceEventType.MessageNotification )
+                                            endSource.Complete();
+                                    } ) );
+
+                        return MessageBrokerRemoteClientLogger.Create(
+                            disposed: _ =>
+                            {
+                                if ( ! disposalContinuation.Task.IsCompleted )
+                                    disposalContinuation.Complete();
+                            } );
+                    } ) );
+
+        await server.StartAsync();
+
+        using var client1 = new ClientMock();
+        await client1.EstablishHandshake( server, synchronizeExternalObjectNames: true );
+        await client1.GetTask(
+            c =>
+            {
+                c.SendBindListenerRequest( "c", true );
+                c.ReadListenerBoundResponse();
+            } );
+
+        using ( var client2 = new ClientMock() )
+        {
+            await client2.EstablishHandshake( server, "test2" );
+            await client2.GetTask(
+                c =>
+                {
+                    c.SendBindPublisherRequest( "c" );
+                    c.ReadPublisherBoundResponse();
+                } );
+
+            await client2.GetTask( c => c.SendPushMessage( 1, [ 1, 2 ], confirm: false ) );
+
+            await client1.GetTask(
+                c =>
+                {
+                    c.ReadObjectNameSystemNotification(
+                        new Protocol.ObjectNameNotification( MessageBrokerSystemNotificationType.SenderName, 2, "test2" ) );
+
+                    c.ReadObjectNameSystemNotification(
+                        new Protocol.ObjectNameNotification( MessageBrokerSystemNotificationType.StreamName, 1, "c" ) );
+
+                    c.ReadMessageNotification( 2 );
+                    c.SendUnbindListenerRequest( 1 );
+                    c.ReadListenerUnboundResponse();
+                } );
+        }
+
+        await disposalContinuation.Task;
+        await client1.GetTask(
+            c =>
+            {
+                c.SendBindListenerRequest( "d", true );
+                c.ReadListenerBoundResponse();
+            } );
+
+        using var client3 = new ClientMock();
+        await client3.EstablishHandshake( server, "test3" );
+        await client3.GetTask(
+            c =>
+            {
+                c.SendBindPublisherRequest( "d" );
+                c.ReadPublisherBoundResponse();
+                c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
+            } );
+
+        await client1.GetTask(
+            c =>
+            {
+                c.ReadObjectNameSystemNotification(
+                    new Protocol.ObjectNameNotification( MessageBrokerSystemNotificationType.SenderName, 2, "test3" ) );
+
+                c.ReadObjectNameSystemNotification(
+                    new Protocol.ObjectNameNotification( MessageBrokerSystemNotificationType.StreamName, 1, "d" ) );
+
+                c.ReadMessageNotification( 3 );
+            } );
+
+        await endSource.Task;
+
+        clientLogs.GetAll()
+            .Where( t => t.Logs.Any( e => e.Contains( "[Trace:MessageNotification]" ) ) )
+            .TestSequence(
+            [
+                (t, _) => t.Logs.TestSequence(
+                [
+                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (start)",
+                    "[ProcessingMessage] Client = [1] 'test', TraceId = 2, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 2",
+                    "[SendingSenderName] Client = [1] 'test', TraceId = 2, Sender = [2] 'test2'",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 15)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 15)",
+                    "[SystemNotificationSent] Client = [1] 'test', TraceId = 2, Type = SenderName",
+                    "[SendingStreamName] Client = [1] 'test', TraceId = 2, Stream = [1] 'c'",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 11)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 11)",
+                    "[SystemNotificationSent] Client = [1] 'test', TraceId = 2, Type = StreamName",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 43)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 43)",
+                    "[MessageProcessed] Client = [1] 'test', TraceId = 2, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0",
+                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (end)"
+                ] ),
+                (t, _) => t.Logs.TestSequence(
+                [
+                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 5 (start)",
+                    "[ProcessingMessage] Client = [1] 'test', TraceId = 5, Sender = [2] 'test3', Channel = [1] 'd', Stream = [1] 'd', Queue = [1] 'd', MessageId = 0, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 3",
+                    "[SendingSenderName] Client = [1] 'test', TraceId = 5, Sender = [2] 'test3'",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 5, Packet = (SystemNotification, Length = 15)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 5, Packet = (SystemNotification, Length = 15)",
+                    "[SystemNotificationSent] Client = [1] 'test', TraceId = 5, Type = SenderName",
+                    "[SendingStreamName] Client = [1] 'test', TraceId = 5, Stream = [1] 'd'",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 5, Packet = (SystemNotification, Length = 11)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 5, Packet = (SystemNotification, Length = 11)",
+                    "[SystemNotificationSent] Client = [1] 'test', TraceId = 5, Type = StreamName",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 5, Packet = (MessageNotification, Length = 44)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 5, Packet = (MessageNotification, Length = 44)",
+                    "[MessageProcessed] Client = [1] 'test', TraceId = 5, Sender = [2] 'test3', Channel = [1] 'd', Stream = [1] 'd', Queue = [1] 'd', MessageId = 0",
+                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 5 (end)"
                 ] )
             ] )
             .Go();

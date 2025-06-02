@@ -111,6 +111,7 @@ internal static class Protocol
         }
 
         internal bool IsClientLittleEndian => (Flags & 2) != 0;
+        internal bool SynchronizeExternalObjectNames => (Flags & 4) != 0;
 
         [Pure]
         public override string ToString()
@@ -824,6 +825,44 @@ internal static class Protocol
             writer.MoveWrite( unchecked( ( uint )StreamId ) );
             writer.MoveWrite( unchecked( ( uint )RetryAttempt ) );
             writer.Write( unchecked( ( uint )RedeliveryAttempt ) );
+        }
+    }
+
+    internal readonly struct ObjectNameNotification
+    {
+        internal readonly PacketHeader Header;
+        internal readonly MessageBrokerSystemNotificationType Type;
+        internal readonly int Id;
+        internal readonly EncodeableText Name;
+
+        internal ObjectNameNotification(MessageBrokerSystemNotificationType type, int id, string name)
+        {
+            Assume.True( type is MessageBrokerSystemNotificationType.SenderName or MessageBrokerSystemNotificationType.StreamName );
+            Type = type;
+            Id = id;
+            Name = TextEncoding.Prepare( name ).GetValueOrThrow();
+            Header = PacketHeader.Create(
+                MessageBrokerClientEndpoint.SystemNotification,
+                sizeof( byte ) + sizeof( uint ) + ( uint )Name.ByteCount );
+        }
+
+        internal int Length => PacketHeader.Length + unchecked( ( int )Header.Payload );
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"[{Header}] Type = {Type}, Id = {Id}, Name = ({Name})";
+        }
+
+        internal void Serialize(Memory<byte> target)
+        {
+            Assume.Equals( target.Length, Length );
+            var writer = new BinaryContractWriter( target.Span );
+            writer.MoveWrite( Header.EndpointCode );
+            writer.MoveWrite( Header.Payload );
+            writer.MoveWrite( ( byte )Type );
+            writer.MoveWrite( unchecked( ( uint )Id ) );
+            Name.Encode( writer.GetSpan( Name.ByteCount ) ).ThrowIfError();
         }
     }
 

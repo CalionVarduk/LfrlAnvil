@@ -39,7 +39,8 @@ public readonly struct MessageBrokerClientHandshakingEvent
     [Pure]
     public override string ToString()
     {
-        return $"[Handshaking] {Source}, MessageTimeout = {Source.Client.MessageTimeout}, PingInterval = {Source.Client.PingInterval}";
+        return
+            $"[Handshaking] {Source}, MessageTimeout = {Source.Client.MessageTimeout}, PingInterval = {Source.Client.PingInterval}, SynchronizeExternalObjectNames = {Source.Client.SynchronizeExternalObjectNames}";
     }
 
     [Pure]

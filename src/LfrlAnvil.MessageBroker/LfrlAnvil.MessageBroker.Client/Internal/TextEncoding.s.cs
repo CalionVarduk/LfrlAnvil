@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Text;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.MessageBroker.Client.Internal;
 
@@ -31,8 +33,8 @@ internal static class TextEncoding
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static int GetLength(EncodeableText text)
+    internal static Result<string> Parse(ReadOnlyMemory<byte> value)
     {
-        return sizeof( uint ) + text.ByteCount;
+        return Instance.Decode( value.Span );
     }
 }

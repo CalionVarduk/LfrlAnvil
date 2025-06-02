@@ -43,6 +43,9 @@ public readonly struct MessageBrokerRemoteClientLogger
         Action<MessageBrokerRemoteClientMessagePushedEvent>? messagePushed,
         Action<MessageBrokerRemoteClientProcessingMessageEvent>? processingMessage,
         Action<MessageBrokerRemoteClientMessageProcessedEvent>? messageProcessed,
+        Action<MessageBrokerRemoteClientSendingSenderNameEvent>? sendingSenderName,
+        Action<MessageBrokerRemoteClientSendingStreamNameEvent>? sendingStreamName,
+        Action<MessageBrokerRemoteClientSystemNotificationSentEvent>? systemNotificationSent,
         Action<MessageBrokerRemoteClientDisposingEvent>? disposing,
         Action<MessageBrokerRemoteClientDisposedEvent>? disposed,
         Action<MessageBrokerRemoteClientErrorEvent>? error)
@@ -67,6 +70,9 @@ public readonly struct MessageBrokerRemoteClientLogger
         MessagePushed = messagePushed;
         ProcessingMessage = processingMessage;
         MessageProcessed = messageProcessed;
+        SendingSenderName = sendingSenderName;
+        SendingStreamName = sendingStreamName;
+        SystemNotificationSent = systemNotificationSent;
         Disposing = disposing;
         Disposed = disposed;
         Error = error;
@@ -173,6 +179,21 @@ public readonly struct MessageBrokerRemoteClientLogger
     public readonly Action<MessageBrokerRemoteClientMessageProcessedEvent>? MessageProcessed;
 
     /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerRemoteClientSendingSenderNameEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerRemoteClientSendingSenderNameEvent>? SendingSenderName;
+
+    /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerRemoteClientSendingStreamNameEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerRemoteClientSendingStreamNameEvent>? SendingStreamName;
+
+    /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerRemoteClientSystemNotificationSentEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerRemoteClientSystemNotificationSentEvent>? SystemNotificationSent;
+
+    /// <summary>
     /// Optional callback for a <see cref="MessageBrokerRemoteClientDisposingEvent"/>.
     /// </summary>
     public readonly Action<MessageBrokerRemoteClientDisposingEvent>? Disposing;
@@ -210,6 +231,9 @@ public readonly struct MessageBrokerRemoteClientLogger
     /// <param name="messagePushed">Optional <see cref="MessagePushed"/> callback.</param>
     /// <param name="processingMessage">Optional <see cref="ProcessingMessage"/> callback.</param>
     /// <param name="messageProcessed">Optional <see cref="MessageProcessed"/> callback.</param>
+    /// <param name="sendingSenderName">Optional <see cref="SendingSenderName"/> callback.</param>
+    /// <param name="sendingStreamName">Optional <see cref="SendingStreamName"/> callback.</param>
+    /// <param name="systemNotificationSent">Optional <see cref="SystemNotificationSent"/> callback.</param>
     /// <param name="disposing">Optional <see cref="Disposing"/> callback.</param>
     /// <param name="disposed">Optional <see cref="Disposed"/> callback.</param>
     /// <param name="error">Optional <see cref="Error"/> callback.</param>
@@ -236,6 +260,9 @@ public readonly struct MessageBrokerRemoteClientLogger
         Action<MessageBrokerRemoteClientMessagePushedEvent>? messagePushed = null,
         Action<MessageBrokerRemoteClientProcessingMessageEvent>? processingMessage = null,
         Action<MessageBrokerRemoteClientMessageProcessedEvent>? messageProcessed = null,
+        Action<MessageBrokerRemoteClientSendingSenderNameEvent>? sendingSenderName = null,
+        Action<MessageBrokerRemoteClientSendingStreamNameEvent>? sendingStreamName = null,
+        Action<MessageBrokerRemoteClientSystemNotificationSentEvent>? systemNotificationSent = null,
         Action<MessageBrokerRemoteClientDisposingEvent>? disposing = null,
         Action<MessageBrokerRemoteClientDisposedEvent>? disposed = null,
         Action<MessageBrokerRemoteClientErrorEvent>? error = null)
@@ -261,6 +288,9 @@ public readonly struct MessageBrokerRemoteClientLogger
             messagePushed,
             processingMessage,
             messageProcessed,
+            sendingSenderName,
+            sendingStreamName,
+            systemNotificationSent,
             disposing,
             disposed,
             error );

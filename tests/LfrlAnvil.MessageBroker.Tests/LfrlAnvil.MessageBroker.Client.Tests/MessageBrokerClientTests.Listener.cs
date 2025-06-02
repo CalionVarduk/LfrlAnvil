@@ -1368,6 +1368,8 @@ public partial class MessageBrokerClientTests
 
                     s.Read( request );
                     s.SendListenerBoundResponse( true, true, 1, 1 );
+                    s.SendObjectNameNotification( MessageBrokerSystemNotificationType.SenderName, 2, "sender2" );
+                    s.SendObjectNameNotification( MessageBrokerSystemNotificationType.StreamName, 3, "stream3" );
                     s.SendMessageNotification( 1, 2, 1, 3, message, enqueuedAt, 4, 5 );
                 } );
 
@@ -1389,27 +1391,27 @@ public partial class MessageBrokerClientTests
                     args.EnqueuedAt.TestEquals( enqueuedAt ),
                     args.ReceivedAt.TestGreaterThanOrEqualTo( args.EnqueuedAt ),
                     args.MessageId.TestEquals( 1UL ),
-                    args.SenderId.TestEquals( 2 ),
-                    args.StreamId.TestEquals( 3 ),
+                    args.Sender.TestEquals( new MessageBrokerExternalObject( 2, "sender2" ) ),
+                    args.Stream.TestEquals( new MessageBrokerExternalObject( 3, "stream3" ) ),
                     args.RetryAttempt.TestEquals( 4 ),
                     args.RedeliveryAttempt.TestEquals( 5 ),
-                    args.TraceId.TestEquals( 2UL ),
+                    args.TraceId.TestEquals( 4UL ),
                     caughtMessage.TestSequence( message ),
                     args.ToString()
                         .TestEquals(
-                            $"Listener = ([1] 'test' => [1] 'foo' listener (using [1] 'foo' queue) (Bound)), Id = 1, Retry = 4, Redelivery = 5, Length = 4, EnqueuedAt = {args.EnqueuedAt}, ReceivedAt = {args.ReceivedAt}, Sender = 2, Stream = 3, TraceId = 2" ),
+                            $"Listener = ([1] 'test' => [1] 'foo' listener (using [1] 'foo' queue) (Bound)), Id = 1, Retry = 4, Redelivery = 5, Length = 4, EnqueuedAt = {args.EnqueuedAt}, ReceivedAt = {args.ReceivedAt}, Sender = (Id = 2, Name = 'sender2'), Stream = (Id = 3, Name = 'stream3'), TraceId = 4" ),
                     logs.GetAll()
-                        .Skip( 2 )
+                        .Skip( 4 )
                         .TestSequence(
                         [
                             (t, _) => t.Logs.TestSequence(
                             [
-                                "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (start)",
-                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 45)",
-                                "[ProcessingMessage] Client = [1] 'test', TraceId = 2, SenderId = 2, StreamId = 3, MessageId = 1, ChannelId = 1, RetryAttempt = 4, RedeliveryAttempt = 5, Length = 4",
-                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 45)",
-                                "[MessageProcessed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 3, MessageId = 1",
-                                "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (end)"
+                                "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (start)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 45)",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 4, SenderId = 2, StreamId = 3, MessageId = 1, ChannelId = 1, RetryAttempt = 4, RedeliveryAttempt = 5, Length = 4",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 45)",
+                                "[MessageProcessed] Client = [1] 'test', TraceId = 4, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 3, MessageId = 1",
+                                "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (end)"
                             ] )
                         ] ),
                     logs.GetAllAwaitPacket()
@@ -1474,7 +1476,11 @@ public partial class MessageBrokerClientTests
 
                     s.Read( request );
                     s.SendListenerBoundResponse( true, true, 1, 1 );
+                    s.SendObjectNameNotification( MessageBrokerSystemNotificationType.SenderName, 2, "sender2" );
+                    s.SendObjectNameNotification( MessageBrokerSystemNotificationType.StreamName, 1, "stream1" );
                     s.SendMessageNotification( 1, 2, 1, 1, message1 );
+                    s.SendObjectNameNotification( MessageBrokerSystemNotificationType.SenderName, 3, "sender3" );
+                    s.SendObjectNameNotification( MessageBrokerSystemNotificationType.StreamName, 2, "stream2" );
                     s.SendMessageNotification( 2, 3, 1, 2, message2 );
                 } );
 
@@ -1487,11 +1493,11 @@ public partial class MessageBrokerClientTests
                     {
                         await continuationSource.Task;
                         await Task.Delay( 15, ct );
-                        logs.Add( 2, "1st invocation" );
-                        logs.Add( 3, "1st invocation" );
+                        logs.Add( 4, "1st invocation" );
+                        logs.Add( 7, "1st invocation" );
                     }
                     else
-                        logs.Add( 3, "2nd invocation" );
+                        logs.Add( 7, "2nd invocation" );
 
                     invocationEndSource.Complete( (a, a.Data.ToArray()) );
                 } );
@@ -1506,16 +1512,115 @@ public partial class MessageBrokerClientTests
                     client.State.TestEquals( MessageBrokerClientState.Running ),
                     args1.Listener.TestRefEquals( listener ),
                     args1.MessageId.TestEquals( 1UL ),
-                    args1.SenderId.TestEquals( 2 ),
-                    args1.StreamId.TestEquals( 1 ),
-                    args1.TraceId.TestEquals( 2UL ),
+                    args1.Sender.TestEquals( new MessageBrokerExternalObject( 2, "sender2" ) ),
+                    args1.Stream.TestEquals( new MessageBrokerExternalObject( 1, "stream1" ) ),
+                    args1.TraceId.TestEquals( 4UL ),
                     caughtMessage1.TestSequence( message1 ),
                     args2.Listener.TestRefEquals( listener ),
                     args2.MessageId.TestEquals( 2UL ),
-                    args2.SenderId.TestEquals( 3 ),
-                    args2.StreamId.TestEquals( 2 ),
-                    args2.TraceId.TestEquals( 3UL ),
+                    args2.Sender.TestEquals( new MessageBrokerExternalObject( 3, "sender3" ) ),
+                    args2.Stream.TestEquals( new MessageBrokerExternalObject( 2, "stream2" ) ),
+                    args2.TraceId.TestEquals( 7UL ),
                     caughtMessage2.TestSequence( message2 ),
+                    logs.GetAll()
+                        .Where( t => t.Logs.Any( e => e.Contains( "[Trace:MessageNotification]" ) ) )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (start)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 45)",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 4, SenderId = 2, StreamId = 1, MessageId = 1, ChannelId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 4",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 45)",
+                                "1st invocation",
+                                "[MessageProcessed] Client = [1] 'test', TraceId = 4, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 1, MessageId = 1",
+                                "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (end)"
+                            ] ),
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:MessageNotification] Client = [1] 'test', TraceId = 7 (start)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 7, Packet = (MessageNotification, Length = 46)",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 7, SenderId = 3, StreamId = 2, MessageId = 2, ChannelId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 5",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 7, Packet = (MessageNotification, Length = 46)",
+                                "1st invocation",
+                                "2nd invocation",
+                                "[MessageProcessed] Client = [1] 'test', TraceId = 7, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 2, MessageId = 2",
+                                "[Trace:MessageNotification] Client = [1] 'test', TraceId = 7 (end)"
+                            ] )
+                        ] ),
+                    logs.GetAllAwaitPacket()
+                        .TestContainsSequence(
+                        [
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 45)",
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 46)"
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task MessageNotification_ShouldInvokeCallback_WhenServerIsTheSender()
+        {
+            var endSource = new SafeTaskCompletionSource<(MessageBrokerListenerCallbackArgs Args, byte[] Message)>();
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger( logs.GetLogger() ) );
+
+            var enqueuedAt = client.GetTimestamp();
+            var message = new byte[] { 1, 2, 3, 4 };
+
+            await server.EstablishHandshake( client );
+            var serverTask = server.GetTask(
+                s =>
+                {
+                    var request = new Protocol.BindListenerRequest(
+                        "foo",
+                        createChannelIfNotExists: true,
+                        queueName: null,
+                        prefetchHint: 1 );
+
+                    s.Read( request );
+                    s.SendListenerBoundResponse( true, true, 1, 1 );
+                    s.SendMessageNotification( 1, 0, 1, 0, message, enqueuedAt, 4, 5 );
+                } );
+
+            await client.Listeners.BindAsync(
+                "foo",
+                (a, _) =>
+                {
+                    endSource.Complete( (a, a.Data.ToArray()) );
+                    return ValueTask.CompletedTask;
+                } );
+
+            var listener = client.Listeners.TryGetByChannelId( 1 );
+            await serverTask;
+            var (args, caughtMessage) = await endSource.Task;
+
+            Assertion.All(
+                    client.State.TestEquals( MessageBrokerClientState.Running ),
+                    args.Listener.TestRefEquals( listener ),
+                    args.EnqueuedAt.TestEquals( enqueuedAt ),
+                    args.ReceivedAt.TestGreaterThanOrEqualTo( args.EnqueuedAt ),
+                    args.MessageId.TestEquals( 1UL ),
+                    args.Sender.TestEquals( new MessageBrokerExternalObject( 0 ) ),
+                    args.Stream.TestEquals( new MessageBrokerExternalObject( 0 ) ),
+                    args.RetryAttempt.TestEquals( 4 ),
+                    args.RedeliveryAttempt.TestEquals( 5 ),
+                    args.TraceId.TestEquals( 2UL ),
+                    caughtMessage.TestSequence( message ),
+                    args.ToString()
+                        .TestEquals(
+                            $"Listener = ([1] 'test' => [1] 'foo' listener (using [1] 'foo' queue) (Bound)), Id = 1, Retry = 4, Redelivery = 5, Length = 4, EnqueuedAt = {args.EnqueuedAt}, ReceivedAt = {args.ReceivedAt}, Sender = (Id = 0), Stream = (Id = 0), TraceId = 2" ),
                     logs.GetAll()
                         .Skip( 2 )
                         .TestSequence(
@@ -1524,31 +1629,17 @@ public partial class MessageBrokerClientTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 45)",
-                                "[ProcessingMessage] Client = [1] 'test', TraceId = 2, SenderId = 2, StreamId = 1, MessageId = 1, ChannelId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 4",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 2, SenderId = 0, StreamId = 0, MessageId = 1, ChannelId = 1, RetryAttempt = 4, RedeliveryAttempt = 5, Length = 4",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 45)",
-                                "1st invocation",
-                                "[MessageProcessed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 1, MessageId = 1",
+                                "[MessageProcessed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 0, MessageId = 1",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (end)"
-                            ] ),
-                            (t, _) => t.Logs.TestSequence(
-                            [
-                                "[Trace:MessageNotification] Client = [1] 'test', TraceId = 3 (start)",
-                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 3, Packet = (MessageNotification, Length = 46)",
-                                "[ProcessingMessage] Client = [1] 'test', TraceId = 3, SenderId = 3, StreamId = 2, MessageId = 2, ChannelId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 5",
-                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 3, Packet = (MessageNotification, Length = 46)",
-                                "1st invocation",
-                                "2nd invocation",
-                                "[MessageProcessed] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 2, MessageId = 2",
-                                "[Trace:MessageNotification] Client = [1] 'test', TraceId = 3 (end)"
                             ] )
                         ] ),
                     logs.GetAllAwaitPacket()
                         .TestContainsContiguousSequence(
                         [
                             "[AwaitPacket] Client = [1] 'test'",
-                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 45)",
-                            "[AwaitPacket] Client = [1] 'test'",
-                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 46)"
+                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 45)"
                         ] ) )
                 .Go();
         }

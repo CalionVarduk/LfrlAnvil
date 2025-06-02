@@ -102,7 +102,9 @@ internal static class Protocol
 
         internal HandshakeRequest(MessageBrokerClient client)
         {
-            Flags = ( byte )( /*(client.IsPersistent ? 1 : 0) |*/ (BitConverter.IsLittleEndian ? 2 : 0));
+            Flags = ( byte )( /*(client.IsPersistent ? 1 : 0) |*/
+                (BitConverter.IsLittleEndian ? 2 : 0) | (client.SynchronizeExternalObjectNames ? 4 : 0));
+
             MessageTimeout = client.MessageTimeout;
             PingInterval = client.PingInterval;
             ClientName = TextEncoding.Prepare( client.Name ).GetValueOrThrow();
@@ -1015,6 +1017,69 @@ internal static class Protocol
         }
     }
 
+    internal readonly struct SystemNotificationHeader
+    {
+        internal const int Length = sizeof( byte );
+        internal readonly MessageBrokerSystemNotificationType Type;
+
+        private SystemNotificationHeader(MessageBrokerSystemNotificationType type)
+        {
+            Type = type;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static SystemNotificationHeader Parse(ReadOnlyMemory<byte> source)
+        {
+            Assume.Equals( source.Length, Length );
+            var reader = new BinaryContractReader( source.Span );
+            var type = reader.ReadInt8();
+            return new SystemNotificationHeader( ( MessageBrokerSystemNotificationType )type );
+        }
+    }
+
+    internal readonly struct ObjectNameNotificationHeader
+    {
+        internal const int Length = sizeof( uint );
+        internal readonly int Id;
+
+        private ObjectNameNotificationHeader(int id)
+        {
+            Id = id;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static ObjectNameNotificationHeader Parse(ReadOnlyMemory<byte> source, bool reverseEndianness)
+        {
+            Assume.Equals( source.Length, Length );
+            var reader = new BinaryContractReader( source.Span );
+            var id = unchecked( ( int )reader.ReadInt32() );
+            return new ObjectNameNotificationHeader( reverseEndianness ? BinaryPrimitives.ReverseEndianness( id ) : id );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal Chain<string> StringifySenderErrors(int clientId)
+        {
+            var result = Chain<string>.Empty;
+            if ( Id <= 0 )
+                result = result.Extend( Resources.SenderIdIsNotPositive( Id ) );
+
+            if ( Id == clientId )
+                result = result.Extend( Resources.SenderIdEqualsClientId( Id ) );
+
+            return result;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal Chain<string> StringifyStreamErrors()
+        {
+            return Id <= 0 ? Chain.Create( Resources.StreamIdIsNotPositive( Id ) ) : Chain<string>.Empty;
+        }
+    }
+
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerClientRequestException RequestException(
@@ -1047,6 +1112,26 @@ internal static class Protocol
     internal static MessageBrokerClientProtocolException EndiannessPayloadException(MessageBrokerClient client, PacketHeader header)
     {
         return ProtocolException( client, header, Chain.Create( Resources.InvalidEndiannessPayload( header.Payload ) ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerClientProtocolException InvalidSenderNameLengthException(
+        MessageBrokerClient client,
+        PacketHeader header,
+        int length)
+    {
+        return ProtocolException( client, header, Chain.Create( Resources.InvalidSenderNameLength( length ) ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerClientProtocolException InvalidStreamNameLengthException(
+        MessageBrokerClient client,
+        PacketHeader header,
+        int length)
+    {
+        return ProtocolException( client, header, Chain.Create( Resources.InvalidStreamNameLength( length ) ) );
     }
 
     [Pure]

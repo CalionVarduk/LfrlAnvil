@@ -136,6 +136,11 @@ internal sealed class ClientMock : IDisposable
             MessageBrokerClientEndpoint.MessageNotification );
     }
 
+    internal byte[] ReadObjectNameSystemNotification(Protocol.ObjectNameNotification notification)
+    {
+        return AssertEndpoint( Read( notification.Length ), MessageBrokerClientEndpoint.SystemNotification );
+    }
+
     internal (byte[] Data, int Index) ReadAny(params (MessageBrokerClientEndpoint Endpoint, int Payload)[] expectations)
     {
         var header = Read( Protocol.PacketHeader.Length );
@@ -156,7 +161,12 @@ internal sealed class ClientMock : IDisposable
         }
     }
 
-    internal void SendHandshake(string name, Duration messageTimeout, Duration pingInterval, uint? payload = null)
+    internal void SendHandshake(
+        string name,
+        Duration messageTimeout,
+        Duration pingInterval,
+        bool synchronizeExternalObjectNames = false,
+        uint? payload = null)
     {
         var preparedName = EncodeableText.Create( TextEncoding.Instance, name ).GetValueOrThrow();
         var buffer = new byte[Protocol.PacketHeader.Length + Protocol.HandshakeRequestHeader.Length + preparedName.ByteCount];
@@ -174,7 +184,7 @@ internal sealed class ClientMock : IDisposable
         var writer = new BinaryContractWriter( buffer );
         writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.HandshakeRequest );
         writer.MoveWrite( payloadToSend );
-        writer.MoveWrite( ( byte )(BitConverter.IsLittleEndian ? 2 : 0) );
+        writer.MoveWrite( ( byte )((BitConverter.IsLittleEndian ? 2 : 0) | (synchronizeExternalObjectNames ? 4 : 0)) );
         writer.MoveWrite( messageTimeoutMs );
         writer.MoveWrite( pingIntervalMs );
         preparedName.Encode( writer.GetSpan( preparedName.ByteCount ) ).ThrowIfError();
@@ -310,13 +320,19 @@ internal sealed class ClientMock : IDisposable
         MessageBrokerServer server,
         string? name = null,
         Duration? messageTimeout = null,
-        Duration? pingInterval = null)
+        Duration? pingInterval = null,
+        bool synchronizeExternalObjectNames = false)
     {
         return Task.Factory.StartNew(
             () =>
             {
                 Connect( server.LocalEndPoint );
-                SendHandshake( name ?? "test", messageTimeout ?? Duration.FromSeconds( 1 ), pingInterval ?? Duration.FromSeconds( 10 ) );
+                SendHandshake(
+                    name ?? "test",
+                    messageTimeout ?? Duration.FromSeconds( 1 ),
+                    pingInterval ?? Duration.FromSeconds( 10 ),
+                    synchronizeExternalObjectNames );
+
                 ReadHandshakeAcceptedResponse();
                 SendConfirmHandshakeResponse();
             } );
