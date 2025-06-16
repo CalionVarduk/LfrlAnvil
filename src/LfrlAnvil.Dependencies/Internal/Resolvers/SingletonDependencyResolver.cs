@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2025 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ internal sealed class SingletonDependencyResolver : DependencyResolver
 
                 var disposer = DisposalStrategy.TryCreateDisposer( _instance );
                 if ( disposer is not null )
-                    rootScope.InternalDisposers.Add( disposer.Value );
+                    rootScope.InternalDisposers.Push( disposer.Value );
 
                 return _instance;
             }

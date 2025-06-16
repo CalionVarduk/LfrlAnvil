@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2025 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ internal class DependencyScope : IDependencyScope, IDisposable
         InternalContainer = container;
         InternalParentScope = parentScope;
         IsDisposed = false;
-        InternalDisposers = new List<DependencyDisposer>();
+        InternalDisposers = new Stack<DependencyDisposer>();
         ScopedInstancesByResolverId = new Dictionary<ulong, object>();
         InternalLocatorStore = DependencyLocatorStore.Create( container.KeyedResolversStore, container.GlobalResolvers, this );
         FirstChild = null;
@@ -64,7 +64,7 @@ internal class DependencyScope : IDependencyScope, IDisposable
     internal DependencyContainer InternalContainer { get; }
     internal DependencyScope? InternalParentScope { get; }
     internal DependencyLocatorStore InternalLocatorStore { get; }
-    internal List<DependencyDisposer> InternalDisposers { get; }
+    internal Stack<DependencyDisposer> InternalDisposers { get; }
     internal Dictionary<ulong, object> ScopedInstancesByResolverId { get; }
     internal ChildDependencyScope? FirstChild { get; private set; }
     internal ChildDependencyScope? LastChild { get; private set; }
@@ -174,7 +174,7 @@ internal class DependencyScope : IDependencyScope, IDisposable
         Assume.True( Lock.IsWriteLockHeld );
         var exceptions = Chain<OwnedDependencyDisposalException>.Empty;
 
-        foreach ( var disposer in InternalDisposers )
+        while ( InternalDisposers.TryPop( out var disposer ) )
         {
             var exception = disposer.TryDispose();
             if ( exception is not null )

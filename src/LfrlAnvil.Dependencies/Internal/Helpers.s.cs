@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2025 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -100,7 +100,7 @@ internal static class Helpers
 
         var disposer = resolver.DisposalStrategy.TryCreateDisposer( result );
         if ( disposer is not null )
-            scope.InternalDisposers.Add( disposer.Value );
+            scope.InternalDisposers.Push( disposer.Value );
 
         return result;
     }
@@ -120,7 +120,7 @@ internal static class Helpers
                 ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( scope ) ) );
             }
 
-            scope.InternalDisposers.Add( disposer.Value );
+            scope.InternalDisposers.Push( disposer.Value );
         }
     }
 
