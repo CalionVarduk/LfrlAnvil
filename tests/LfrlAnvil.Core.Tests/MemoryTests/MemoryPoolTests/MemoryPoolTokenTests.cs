@@ -1,4 +1,5 @@
-﻿using LfrlAnvil.Functional;
+﻿using System.Linq;
+using LfrlAnvil.Functional;
 using LfrlAnvil.Internal;
 using LfrlAnvil.Memory;
 
@@ -1026,6 +1027,40 @@ public class MemoryPoolTokenTests : TestsBase
         other = pool.Rent( 16 );
 
         other.AsSpan().TestSequence( [ 9, 10, 11, 1, 2, 3, 4, 5, 6, 7, 8, 12, 13, 14, 15, 16 ] ).Go();
+    }
+
+    [Fact]
+    public void
+        Dispose_ShouldReturnTokenToThePool_ForNodePrecededByFragmentedNodeInTheSameSegmentAndFollowedByFragmentedNodeInTheSameSegment_WithFragmentationIndexChange()
+    {
+        var pool = new MemoryPool<int>( 256 );
+        var _0 = pool.Rent( 6 );
+        Enumerable.Range( 0, 6 ).ToArray().CopyTo( _0.AsSpan() );
+        var _1 = pool.Rent( 7 );
+        Enumerable.Range( 6, 7 ).ToArray().CopyTo( _1.AsSpan() );
+        var _2 = pool.Rent( 8 );
+        Enumerable.Range( 13, 8 ).ToArray().CopyTo( _2.AsSpan() );
+        _0.SetLength( 1, true );
+        var _4 = pool.Rent( 13 );
+        Enumerable.Range( 21, 13 ).ToArray().CopyTo( _4.AsSpan() );
+        _4.Dispose();
+        _1.SetLength( 2, true );
+        _2.SetLength( 3, true );
+        var _5 = pool.Rent( 46 );
+        Enumerable.Range( 34, 33 ).ToArray().CopyTo( _5.AsSpan().Slice( 13 ) );
+        _0.Dispose();
+        _0 = pool.Rent( 47 );
+        Enumerable.Range( 67, 47 ).ToArray().CopyTo( _0.AsSpan() );
+        _5.Dispose();
+        _1.Dispose();
+        _0.Dispose();
+        _1 = pool.Rent( 48 );
+        _2.Dispose();
+        _1.Dispose();
+
+        var check = pool.Rent( 114 );
+
+        check.AsSpan().TestAll( (x, i) => x.TestEquals( i ) ).Go();
     }
 
     [Fact]

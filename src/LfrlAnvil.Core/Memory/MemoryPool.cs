@@ -990,6 +990,8 @@ public sealed class MemoryPool<T>
             else
             {
                 RemoveFromFragmentationHeap( nextFragmentationIndex.Value, next.Length );
+                Assume.NotEquals( prev.FragmentationIndex, NullableIndex.Null );
+                prevFragmentationIndex = prev.FragmentationIndex;
 
                 prev.Length += node.Length + next.Length;
                 prev.Next = next.Next;
