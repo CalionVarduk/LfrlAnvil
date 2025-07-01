@@ -61,7 +61,7 @@ public readonly struct MessageBrokerClientListenerBoundEvent
         var channelCreated = ChannelCreated ? " (created)" : string.Empty;
         var queueCreated = QueueCreated ? " (created)" : string.Empty;
         return
-            $"[ListenerBound] {Source}, Channel = [{Listener.ChannelId}] '{Listener.ChannelName}'{channelCreated}, Queue = [{Listener.QueueId}] '{Listener.QueueName}'{queueCreated}, PrefetchHint = {Listener.PrefetchHint}";
+            $"[ListenerBound] {Source}, Channel = [{Listener.ChannelId}] '{Listener.ChannelName}'{channelCreated}, Queue = [{Listener.QueueId}] '{Listener.QueueName}'{queueCreated}";
     }
 
     [Pure]

@@ -110,35 +110,42 @@ internal struct MessageNotifications
             _continuation.SetResult( true );
     }
 
-    internal static void EnqueueMessagesUnsafe(MessageBrokerRemoteClient client, in ListSlim<QueueMessage> messages)
+    internal static void EnqueueMessageUnsafe(
+        MessageBrokerRemoteClient client,
+        in QueueMessage message,
+        ResendIndex retryAttempt,
+        ResendIndex redeliveryAttempt,
+        ulong id,
+        int ackId,
+        MemoryPoolToken<byte> poolToken,
+        ReadOnlyMemory<byte> packet)
     {
+        var senderName = NameNotification.Empty;
+        var streamName = NameNotification.Empty;
         if ( client.SynchronizeExternalObjectNames )
         {
-            foreach ( ref readonly var message in messages )
-            {
-                var sender = message.Publisher.Client;
-                var senderName = NameNotification.Empty;
-                if ( client.ExternalNameCache.TryUpdate( client, sender ) )
-                    senderName = new NameNotification( client.WriterQueue.AcquireSource(), sender.Id, sender.Name );
+            var sender = message.Publisher.Client;
+            if ( client.ExternalNameCache.TryUpdate( client, sender ) )
+                senderName = new NameNotification( client.WriterQueue.AcquireSource(), sender.Id, sender.Name );
 
-                var stream = message.Publisher.Stream;
-                var streamName = NameNotification.Empty;
-                if ( client.ExternalNameCache.TryUpdate( stream ) )
-                    streamName = new NameNotification( client.WriterQueue.AcquireSource(), stream.Id, stream.Name );
+            var stream = message.Publisher.Stream;
+            if ( client.ExternalNameCache.TryUpdate( stream ) )
+                streamName = new NameNotification( client.WriterQueue.AcquireSource(), stream.Id, stream.Name );
+        }
 
-                var writerSource = client.WriterQueue.AcquireSource();
-                client.MessageNotifications._messages.Enqueue( new Message( in message, writerSource, senderName, streamName ) );
-            }
-        }
-        else
-        {
-            foreach ( ref readonly var message in messages )
-            {
-                var writerSource = client.WriterQueue.AcquireSource();
-                client.MessageNotifications._messages.Enqueue(
-                    new Message( in message, writerSource, NameNotification.Empty, NameNotification.Empty ) );
-            }
-        }
+        var writerSource = client.WriterQueue.AcquireSource();
+        client.MessageNotifications._messages.Enqueue(
+            new Message(
+                in message,
+                retryAttempt,
+                redeliveryAttempt,
+                id,
+                ackId,
+                poolToken,
+                packet,
+                writerSource,
+                senderName,
+                streamName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -159,9 +166,6 @@ internal struct MessageNotifications
                     if ( client.ShouldCancel )
                         return;
 
-                    // TODO: don't dequeue immediately
-                    // only when msg was actually sent
-                    // fix it when implementing acks, since msg after sending will have to be added to unacked msgs
                     if ( ! client.MessageNotifications._messages.TryDequeue( out message ) )
                     {
                         client.MessageNotifications._continuation.Reset();
@@ -182,8 +186,9 @@ internal struct MessageNotifications
                             traceId,
                             message.Publisher,
                             message.Id,
-                            0,
-                            0,
+                            message.AckId,
+                            message.RetryAttempt,
+                            message.RedeliveryAttempt,
                             message.Length )
                         .Emit( client.Logger.ProcessingMessage );
 
@@ -239,14 +244,21 @@ internal struct MessageNotifications
                             return;
                         }
 
-                        MessageBrokerRemoteClientMessageProcessedEvent.Create( message.Listener, traceId, message.Publisher, message.Id )
+                        MessageBrokerRemoteClientMessageProcessedEvent.Create(
+                                message.Listener,
+                                traceId,
+                                message.Publisher,
+                                message.Id,
+                                message.AckId,
+                                message.RetryAttempt,
+                                message.RedeliveryAttempt )
                             .Emit( client.Logger.MessageProcessed );
 
-                        if ( message.Listener.DecrementPrefetchCounter() )
+                        if ( message.AckId == 0 && message.Listener.DecrementPrefetchCounter() )
                         {
                             using ( message.Listener.Queue.AcquireLock() )
                             {
-                                if ( ! message.Listener.Queue.ShouldCancel )
+                                if ( ! message.Listener.Queue.ShouldCancel && ! message.Listener.Queue.MessageStore.IsEmpty )
                                     message.Listener.Queue.QueueProcessor.SignalContinuation();
                             }
                         }
@@ -319,37 +331,52 @@ internal struct MessageNotifications
     {
         internal Message(
             in QueueMessage message,
+            ResendIndex retryAttempt,
+            ResendIndex redeliveryAttempt,
+            ulong id,
+            int ackId,
+            MemoryPoolToken<byte> poolToken,
+            ReadOnlyMemory<byte> packet,
             ManualResetValueTaskSource<bool> writerSource,
             NameNotification senderName,
             NameNotification streamName)
         {
-            PacketHeader = message.PacketHeader;
             Publisher = message.Publisher;
             Listener = message.Listener;
-            Id = message.Id;
+            Id = id;
+            RetryAttempt = retryAttempt;
+            RedeliveryAttempt = redeliveryAttempt;
+            AckId = ackId;
             WriterSource = writerSource;
             SenderName = senderName;
             StreamName = streamName;
-            PoolToken = message.PoolToken;
-            Packet = message.Packet;
+            PoolToken = poolToken;
+            Packet = packet;
         }
 
-        internal readonly Protocol.PacketHeader PacketHeader;
         internal readonly MessageBrokerChannelPublisherBinding Publisher;
         internal readonly MessageBrokerChannelListenerBinding Listener;
         internal readonly ulong Id;
+        internal readonly ResendIndex RetryAttempt;
+        internal readonly ResendIndex RedeliveryAttempt;
+        internal readonly int AckId;
         internal readonly ManualResetValueTaskSource<bool> WriterSource;
         internal readonly NameNotification SenderName;
         internal readonly NameNotification StreamName;
         internal readonly MemoryPoolToken<byte> PoolToken;
         internal readonly ReadOnlyMemory<byte> Packet;
 
+        internal Protocol.PacketHeader PacketHeader => Protocol.PacketHeader.Create(
+            MessageBrokerClientEndpoint.MessageNotification,
+            ( uint )Packet.Length - Protocol.PacketHeader.Length );
+
         internal int Length => unchecked( Packet.Length - Protocol.PacketHeader.Length - Protocol.MessageNotificationHeader.Payload );
 
         [Pure]
         public override string ToString()
         {
-            return $"Header = ({PacketHeader}), Id = {Id}, Publisher = ({Publisher}), Listener = ({Listener})";
+            return
+                $"Header = ({PacketHeader}), Publisher = ({Publisher}), Listener = ({Listener}), Id = {Id}, AckId = {AckId}, Retry = {RetryAttempt}, Redelivery = {RedeliveryAttempt}";
         }
     }
 

@@ -17,7 +17,8 @@ using System;
 namespace LfrlAnvil.MessageBroker.Server.Exceptions;
 
 /// <summary>
-/// Represents an error related to a message broker channel publisher binding.
+/// Represents an exception thrown when <see cref="MessageBrokerChannelPublisherBinding"/> encountered an error
+/// or when <see cref="MessageBrokerRemoteClient"/> encountered an error related to publisher binding.
 /// </summary>
 public class MessageBrokerChannelPublisherBindingException : InvalidOperationException
 {
@@ -25,18 +26,15 @@ public class MessageBrokerChannelPublisherBindingException : InvalidOperationExc
     /// Creates a new <see cref="MessageBrokerChannelPublisherBindingException"/> instance.
     /// </summary>
     /// <param name="client"><see cref="MessageBrokerServer"/> instance that encountered this error.</param>
-    /// <param name="channel">Optional <see cref="MessageBrokerChannel"/> instance that encountered this error.</param>
     /// <param name="publisher">Optional <see cref="MessageBrokerChannelPublisherBinding"/> instance that encountered this error.</param>
-    /// <param name="message">Underlying error message.</param>
+    /// <param name="error">Encountered error.</param>
     public MessageBrokerChannelPublisherBindingException(
         MessageBrokerRemoteClient client,
-        MessageBrokerChannel? channel,
         MessageBrokerChannelPublisherBinding? publisher,
-        string message)
-        : base( message )
+        string error)
+        : base( error )
     {
         Client = client;
-        Channel = channel;
         Publisher = publisher;
     }
 
@@ -44,11 +42,6 @@ public class MessageBrokerChannelPublisherBindingException : InvalidOperationExc
     /// <see cref="MessageBrokerServer"/> instance that encountered this error.
     /// </summary>
     public MessageBrokerRemoteClient Client { get; }
-
-    /// <summary>
-    /// Optional <see cref="MessageBrokerChannel"/> instance that encountered this error.
-    /// </summary>
-    public MessageBrokerChannel? Channel { get; }
 
     /// <summary>
     /// Optional <see cref="MessageBrokerChannelPublisherBinding"/> instance that encountered this error.

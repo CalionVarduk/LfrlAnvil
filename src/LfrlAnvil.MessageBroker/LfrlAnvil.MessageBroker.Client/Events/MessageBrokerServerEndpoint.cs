@@ -50,6 +50,16 @@ public enum MessageBrokerServerEndpoint : byte
     UnbindListenerRequest = 6,
 
     /// <summary>
+    /// Represents message notification ACK sent by client.
+    /// </summary>
+    MessageNotificationAck = 7,
+
+    /// <summary>
+    /// Represents message notification negative ACK sent by client.
+    /// </summary>
+    MessageNotificationNack = 8,
+
+    /// <summary>
     /// Represents handshake request sent by client.
     /// </summary>
     HandshakeRequest = 254,

@@ -83,7 +83,9 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                         s.ToString().TestEquals( "[1] 'c' stream (Running)" ),
                         s.Publishers.Count.TestEquals( 1 ),
                         s.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding ) ] ),
-                        s.Publishers.TryGetByKey( 1, 1 ).TestRefEquals( binding ) ) ),
+                        s.Publishers.TryGetByKey( 1, 1 ).TestRefEquals( binding ),
+                        s.Messages.Count.TestEquals( 0 ),
+                        s.Messages.TryGetByKey( 0 ).TestNull() ) ),
                 remoteClient.TestNotNull(
                     c => Assertion.All(
                         "client",
@@ -111,9 +113,9 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                         (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
-                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 9)",
                             "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'c'",
-                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
+                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 9)",
                             "[PublisherBound] Client = [1] 'test', TraceId = 1, Channel = [1] 'c' (created), Stream = [1] 'c' (created)",
                             "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (PublisherBoundResponse, Length = 14)",
                             "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (PublisherBoundResponse, Length = 14)",
@@ -124,7 +126,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                     .TestContainsContiguousSequence(
                     [
                         "[AwaitPacket] Client = [1] 'test'",
-                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 11)"
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 9)"
                     ] ),
                 channelLogs.GetAll()
                     .TestSequence(
@@ -271,9 +273,9 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                         (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:BindPublisher] Client = [2] 'test2', TraceId = 1 (start)",
-                            "[ReadPacket:Received] Client = [2] 'test2', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
+                            "[ReadPacket:Received] Client = [2] 'test2', TraceId = 1, Packet = (BindPublisherRequest, Length = 9)",
                             "[BindingPublisher] Client = [2] 'test2', TraceId = 1, ChannelName = 'c'",
-                            "[ReadPacket:Accepted] Client = [2] 'test2', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
+                            "[ReadPacket:Accepted] Client = [2] 'test2', TraceId = 1, Packet = (BindPublisherRequest, Length = 9)",
                             "[PublisherBound] Client = [2] 'test2', TraceId = 1, Channel = [1] 'c', Stream = [1] 'c'",
                             "[SendPacket:Sending] Client = [2] 'test2', TraceId = 1, Packet = (PublisherBoundResponse, Length = 14)",
                             "[SendPacket:Sent] Client = [2] 'test2', TraceId = 1, Packet = (PublisherBoundResponse, Length = 14)",
@@ -284,7 +286,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                     .TestContainsContiguousSequence(
                     [
                         "[AwaitPacket] Client = [2] 'test2'",
-                        "[AwaitPacket] Client = [2] 'test2', Packet = (BindPublisherRequest, Length = 11)"
+                        "[AwaitPacket] Client = [2] 'test2', Packet = (BindPublisherRequest, Length = 9)"
                     ] ),
                 channelLogs.GetAll()
                     .Skip( 1 )
@@ -439,9 +441,9 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                         (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:BindPublisher] Client = [1] 'test', TraceId = 2 (start)",
-                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (BindPublisherRequest, Length = 12)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (BindPublisherRequest, Length = 10)",
                             "[BindingPublisher] Client = [1] 'test', TraceId = 2, ChannelName = 'd', StreamName = 'c'",
-                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (BindPublisherRequest, Length = 12)",
+                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (BindPublisherRequest, Length = 10)",
                             "[PublisherBound] Client = [1] 'test', TraceId = 2, Channel = [2] 'd' (created), Stream = [1] 'c'",
                             "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PublisherBoundResponse, Length = 14)",
                             "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PublisherBoundResponse, Length = 14)",
@@ -452,7 +454,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                     .TestContainsContiguousSequence(
                     [
                         "[AwaitPacket] Client = [1] 'test'",
-                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 12)"
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 10)"
                     ] ),
                 channelLogs.GetAll()
                     .TestSequence(
@@ -524,7 +526,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                         (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
-                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 9)",
                             "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'c'",
                             "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (end)"
                         ] ),
@@ -545,7 +547,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                     .TestContainsContiguousSequence(
                     [
                         "[AwaitPacket] Client = [1] 'test'",
-                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 11)"
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 9)"
                     ] ) )
             .Go();
     }
@@ -593,7 +595,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                         (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
-                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 9)",
                             "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'c'",
                             "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (end)"
                         ] ),
@@ -614,7 +616,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                     .TestContainsContiguousSequence(
                     [
                         "[AwaitPacket] Client = [1] 'test'",
-                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 11)"
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 9)"
                     ] ) )
             .Go();
     }
@@ -644,7 +646,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
         var remoteClient = server.Clients.TryGetById( 1 );
-        await client.GetTask( c => c.SendBindPublisherRequest( "c", payload: 4 ) );
+        await client.GetTask( c => c.SendBindPublisherRequest( "c", payload: 2 ) );
         await endSource.Task;
 
         Assertion.All(
@@ -658,11 +660,11 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                         (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
-                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 9)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 7)",
                             """
                             [Error] Client = [1] 'test', TraceId = 1
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid BindPublisherRequest from client [1] 'test'. Encountered 1 error(s):
-                            1. Expected header payload to be at least 5 but found 4.
+                            1. Expected header payload to be at least 3 but found 2.
                             """,
                             "[Disposing] Client = [1] 'test', TraceId = 1",
                             "[Disposed] Client = [1] 'test', TraceId = 1",
@@ -673,66 +675,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                     .TestContainsContiguousSequence(
                     [
                         "[AwaitPacket] Client = [1] 'test'",
-                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 9)"
-                    ] ) )
-            .Go();
-    }
-
-    [Fact]
-    public async Task Creation_ShouldDisposeClient_WhenClientSendsNegativeChannelNameLength()
-    {
-        var endSource = new SafeTaskCompletionSource();
-        var clientLogs = new ClientEventLogger();
-
-        await using var server = new MessageBrokerServer(
-            new IPEndPoint( IPAddress.Loopback, 0 ),
-            MessageBrokerServerOptions.Default
-                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
-                                    endSource.Complete();
-                            } ) ) ) );
-
-        await server.StartAsync();
-
-        using var client = new ClientMock();
-        await client.EstablishHandshake( server );
-        var remoteClient = server.Clients.TryGetById( 1 );
-        await client.GetTask( c => c.SendBindPublisherRequest( "c", channelNameLength: -1 ) );
-        await endSource.Task;
-
-        Assertion.All(
-                remoteClient.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Disposed ) ),
-                server.Clients.Count.TestEquals( 0 ),
-                server.Channels.Count.TestEquals( 0 ),
-                clientLogs.GetAll()
-                    .Skip( 1 )
-                    .TestSequence(
-                    [
-                        (t, _) => t.Logs.TestSequence(
-                        [
-                            "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
-                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
-                            """
-                            [Error] Client = [1] 'test', TraceId = 1
-                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid BindPublisherRequest from client [1] 'test'. Encountered 1 error(s):
-                            1. Expected binary channel name length to be in [0, 1] range but found -1.
-                            """,
-                            "[Disposing] Client = [1] 'test', TraceId = 1",
-                            "[Disposed] Client = [1] 'test', TraceId = 1",
-                            "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (end)"
-                        ] )
-                    ] ),
-                clientLogs.GetAllAwaitPacket()
-                    .TestContainsContiguousSequence(
-                    [
-                        "[AwaitPacket] Client = [1] 'test'",
-                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 11)"
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 7)"
                     ] ) )
             .Go();
     }
@@ -776,7 +719,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                         (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
-                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 13)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
                             """
                             [Error] Client = [1] 'test', TraceId = 1
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid BindPublisherRequest from client [1] 'test'. Encountered 1 error(s):
@@ -791,7 +734,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                     .TestContainsContiguousSequence(
                     [
                         "[AwaitPacket] Client = [1] 'test'",
-                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 13)"
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 11)"
                     ] ) )
             .Go();
     }
@@ -836,7 +779,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                         (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
-                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 10)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 8)",
                             """
                             [Error] Client = [1] 'test', TraceId = 1
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid BindPublisherRequest from client [1] 'test'. Encountered 1 error(s):
@@ -851,7 +794,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                     .TestContainsContiguousSequence(
                     [
                         "[AwaitPacket] Client = [1] 'test'",
-                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 10)"
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 8)"
                     ] ) )
             .Go();
     }
@@ -895,7 +838,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                         (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
-                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 523)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 521)",
                             """
                             [Error] Client = [1] 'test', TraceId = 1
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid BindPublisherRequest from client [1] 'test'. Encountered 1 error(s):
@@ -910,7 +853,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                     .TestContainsContiguousSequence(
                     [
                         "[AwaitPacket] Client = [1] 'test'",
-                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 523)"
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 521)"
                     ] ) )
             .Go();
     }
@@ -954,7 +897,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                         (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
-                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 524)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 522)",
                             """
                             [Error] Client = [1] 'test', TraceId = 1
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid BindPublisherRequest from client [1] 'test'. Encountered 1 error(s):
@@ -969,7 +912,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                     .TestContainsContiguousSequence(
                     [
                         "[AwaitPacket] Client = [1] 'test'",
-                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 524)"
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 522)"
                     ] ) )
             .Go();
     }
@@ -1017,10 +960,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
         Assertion.All(
                 exception.TestType()
                     .Exact<MessageBrokerChannelPublisherBindingException>(
-                        exc => Assertion.All(
-                            exc.Client.TestRefEquals( remoteClient ),
-                            exc.Channel.TestRefEquals( channel ),
-                            exc.Publisher.TestRefEquals( binding ) ) ),
+                        exc => Assertion.All( exc.Client.TestRefEquals( remoteClient ), exc.Publisher.TestRefEquals( binding ) ) ),
                 remoteClient.TestNotNull(
                     c => Assertion.All(
                         "client",
@@ -1042,7 +982,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                         (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:BindPublisher] Client = [1] 'test', TraceId = 2 (start)",
-                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (BindPublisherRequest, Length = 12)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (BindPublisherRequest, Length = 10)",
                             "[BindingPublisher] Client = [1] 'test', TraceId = 2, ChannelName = 'c', StreamName = 'd'",
                             """
                             [Error] Client = [1] 'test', TraceId = 2
@@ -1057,9 +997,9 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                     .TestContainsContiguousSequence(
                     [
                         "[AwaitPacket] Client = [1] 'test'",
-                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 11)",
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 9)",
                         "[AwaitPacket] Client = [1] 'test'",
-                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 12)"
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindPublisherRequest, Length = 10)"
                     ] ) )
             .Go();
     }
@@ -1927,10 +1867,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
         Assertion.All(
                 exception.TestType()
                     .Exact<MessageBrokerChannelPublisherBindingException>(
-                        exc => Assertion.All(
-                            exc.Client.TestRefEquals( remoteClient ),
-                            exc.Channel.TestNull(),
-                            exc.Publisher.TestNull() ) ),
+                        exc => Assertion.All( exc.Client.TestRefEquals( remoteClient ), exc.Publisher.TestNull() ) ),
                 remoteClient.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Running ) ),
                 server.Clients.Count.TestEquals( 1 ),
                 server.Clients.GetAll().TestSequence( [ (c, _) => c.TestRefEquals( remoteClient ) ] ),
@@ -2013,10 +1950,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
         Assertion.All(
                 exception.TestType()
                     .Exact<MessageBrokerChannelPublisherBindingException>(
-                        exc => Assertion.All(
-                            exc.Client.TestRefEquals( remoteClient2 ),
-                            exc.Channel.TestRefEquals( channel ),
-                            exc.Publisher.TestNull() ) ),
+                        exc => Assertion.All( exc.Client.TestRefEquals( remoteClient2 ), exc.Publisher.TestNull() ) ),
                 remoteClient1.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Running ) ),
                 remoteClient2.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Running ) ),
                 channel.TestNotNull(

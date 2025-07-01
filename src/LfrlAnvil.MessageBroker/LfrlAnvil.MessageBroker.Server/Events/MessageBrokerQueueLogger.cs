@@ -30,10 +30,13 @@ public readonly struct MessageBrokerQueueLogger
         Action<MessageBrokerQueueCreatedEvent>? created,
         Action<MessageBrokerQueueListenerBoundEvent>? listenerBound,
         Action<MessageBrokerQueueListenerUnboundEvent>? listenerUnbound,
-        Action<MessageBrokerQueueEnqueueingMessagesEvent>? enqueueingMessages,
-        Action<MessageBrokerQueueMessagesEnqueuedEvent>? messagesEnqueued,
-        Action<MessageBrokerQueueProcessingMessagesEvent>? processingMessages,
+        Action<MessageBrokerQueueEnqueueingMessageEvent>? enqueueingMessage,
+        Action<MessageBrokerQueueMessageEnqueuedEvent>? messageEnqueued,
+        Action<MessageBrokerQueueProcessingMessageEvent>? processingMessage,
         Action<MessageBrokerQueueMessageProcessedEvent>? messageProcessed,
+        Action<MessageBrokerQueueMessageDiscardedEvent>? messageDiscarded,
+        Action<MessageBrokerQueueAckProcessedEvent>? ackProcessed,
+        Action<MessageBrokerQueueNegativeAckProcessedEvent>? negativeAckProcessed,
         Action<MessageBrokerQueueDisposingEvent>? disposing,
         Action<MessageBrokerQueueDisposedEvent>? disposed,
         Action<MessageBrokerQueueErrorEvent>? error)
@@ -45,10 +48,13 @@ public readonly struct MessageBrokerQueueLogger
         Created = created;
         ListenerBound = listenerBound;
         ListenerUnbound = listenerUnbound;
-        EnqueueingMessages = enqueueingMessages;
-        MessagesEnqueued = messagesEnqueued;
-        ProcessingMessages = processingMessages;
+        EnqueueingMessage = enqueueingMessage;
+        MessageEnqueued = messageEnqueued;
+        ProcessingMessage = processingMessage;
         MessageProcessed = messageProcessed;
+        MessageDiscarded = messageDiscarded;
+        AckProcessed = ackProcessed;
+        NegativeAckProcessed = negativeAckProcessed;
         Disposing = disposing;
         Disposed = disposed;
         Error = error;
@@ -90,24 +96,39 @@ public readonly struct MessageBrokerQueueLogger
     public readonly Action<MessageBrokerQueueListenerUnboundEvent>? ListenerUnbound;
 
     /// <summary>
-    /// Optional callback for a <see cref="MessageBrokerQueueEnqueueingMessagesEvent"/>.
+    /// Optional callback for a <see cref="MessageBrokerQueueEnqueueingMessageEvent"/>.
     /// </summary>
-    public readonly Action<MessageBrokerQueueEnqueueingMessagesEvent>? EnqueueingMessages;
+    public readonly Action<MessageBrokerQueueEnqueueingMessageEvent>? EnqueueingMessage;
 
     /// <summary>
-    /// Optional callback for a <see cref="MessageBrokerQueueMessagesEnqueuedEvent"/>.
+    /// Optional callback for a <see cref="MessageBrokerQueueMessageEnqueuedEvent"/>.
     /// </summary>
-    public readonly Action<MessageBrokerQueueMessagesEnqueuedEvent>? MessagesEnqueued;
+    public readonly Action<MessageBrokerQueueMessageEnqueuedEvent>? MessageEnqueued;
 
     /// <summary>
-    /// Optional callback for a <see cref="MessageBrokerQueueProcessingMessagesEvent"/>.
+    /// Optional callback for a <see cref="MessageBrokerQueueProcessingMessageEvent"/>.
     /// </summary>
-    public readonly Action<MessageBrokerQueueProcessingMessagesEvent>? ProcessingMessages;
+    public readonly Action<MessageBrokerQueueProcessingMessageEvent>? ProcessingMessage;
 
     /// <summary>
     /// Optional callback for a <see cref="MessageBrokerQueueMessageProcessedEvent"/>.
     /// </summary>
     public readonly Action<MessageBrokerQueueMessageProcessedEvent>? MessageProcessed;
+
+    /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerQueueMessageDiscardedEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerQueueMessageDiscardedEvent>? MessageDiscarded;
+
+    /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerQueueAckProcessedEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerQueueAckProcessedEvent>? AckProcessed;
+
+    /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerQueueNegativeAckProcessedEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerQueueNegativeAckProcessedEvent>? NegativeAckProcessed;
 
     /// <summary>
     /// Optional callback for a <see cref="MessageBrokerQueueDisposingEvent"/>.
@@ -134,10 +155,13 @@ public readonly struct MessageBrokerQueueLogger
     /// <param name="created">Optional <see cref="Created"/> callback.</param>
     /// <param name="listenerBound">Optional <see cref="ListenerBound"/> callback.</param>
     /// <param name="listenerUnbound">Optional <see cref="ListenerUnbound"/> callback.</param>
-    /// <param name="enqueueingMessages">Optional <see cref="EnqueueingMessages"/> callback.</param>
-    /// <param name="messagesEnqueued">Optional <see cref="MessagesEnqueued"/> callback.</param>
-    /// <param name="processingMessages">Optional <see cref="ProcessingMessages"/> callback.</param>
+    /// <param name="enqueueingMessage">Optional <see cref="EnqueueingMessage"/> callback.</param>
+    /// <param name="messageEnqueued">Optional <see cref="MessageEnqueued"/> callback.</param>
+    /// <param name="processingMessage">Optional <see cref="ProcessingMessage"/> callback.</param>
     /// <param name="messageProcessed">Optional <see cref="MessageProcessed"/> callback.</param>
+    /// <param name="messageDiscarded">Optional <see cref="MessageDiscarded"/> callback.</param>
+    /// <param name="ackProcessed">Optional <see cref="AckProcessed"/> callback.</param>
+    /// <param name="negativeAckProcessed">Optional <see cref="NegativeAckProcessed"/> callback.</param>
     /// <param name="disposing">Optional <see cref="Disposing"/> callback.</param>
     /// <param name="disposed">Optional <see cref="Disposed"/> callback.</param>
     /// <param name="error">Optional <see cref="Error"/> callback.</param>
@@ -151,10 +175,13 @@ public readonly struct MessageBrokerQueueLogger
         Action<MessageBrokerQueueCreatedEvent>? created = null,
         Action<MessageBrokerQueueListenerBoundEvent>? listenerBound = null,
         Action<MessageBrokerQueueListenerUnboundEvent>? listenerUnbound = null,
-        Action<MessageBrokerQueueEnqueueingMessagesEvent>? enqueueingMessages = null,
-        Action<MessageBrokerQueueMessagesEnqueuedEvent>? messagesEnqueued = null,
-        Action<MessageBrokerQueueProcessingMessagesEvent>? processingMessages = null,
+        Action<MessageBrokerQueueEnqueueingMessageEvent>? enqueueingMessage = null,
+        Action<MessageBrokerQueueMessageEnqueuedEvent>? messageEnqueued = null,
+        Action<MessageBrokerQueueProcessingMessageEvent>? processingMessage = null,
         Action<MessageBrokerQueueMessageProcessedEvent>? messageProcessed = null,
+        Action<MessageBrokerQueueMessageDiscardedEvent>? messageDiscarded = null,
+        Action<MessageBrokerQueueAckProcessedEvent>? ackProcessed = null,
+        Action<MessageBrokerQueueNegativeAckProcessedEvent>? negativeAckProcessed = null,
         Action<MessageBrokerQueueDisposingEvent>? disposing = null,
         Action<MessageBrokerQueueDisposedEvent>? disposed = null,
         Action<MessageBrokerQueueErrorEvent>? error = null)
@@ -167,10 +194,13 @@ public readonly struct MessageBrokerQueueLogger
             created,
             listenerBound,
             listenerUnbound,
-            enqueueingMessages,
-            messagesEnqueued,
-            processingMessages,
+            enqueueingMessage,
+            messageEnqueued,
+            processingMessage,
             messageProcessed,
+            messageDiscarded,
+            ackProcessed,
+            negativeAckProcessed,
             disposing,
             disposed,
             error );

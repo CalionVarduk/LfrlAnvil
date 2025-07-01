@@ -17,29 +17,23 @@ using System;
 namespace LfrlAnvil.MessageBroker.Server.Exceptions;
 
 /// <summary>
-/// Represents an error encountered by <see cref="MessageBrokerServer"/> due to duplicated client names.
+/// Represents an exception thrown when <see cref="MessageBrokerServer"/> encountered an error.
 /// </summary>
-public class MessageBrokerServerDuplicateClientNameException : InvalidOperationException
+public class MessageBrokerServerException : InvalidOperationException
 {
     /// <summary>
-    /// Creates a new <see cref="MessageBrokerServerDuplicateClientNameException"/> instance.
+    /// Creates a new <see cref="MessageBrokerServerException"/> instance.
     /// </summary>
     /// <param name="server"><see cref="MessageBrokerServer"/> instance that encountered this error.</param>
-    /// <param name="clientName">Duplicate client name.</param>
-    public MessageBrokerServerDuplicateClientNameException(MessageBrokerServer server, string clientName)
-        : base( Resources.DuplicateClientName( clientName ) )
+    /// <param name="error">Encountered error.</param>
+    public MessageBrokerServerException(MessageBrokerServer server, string error)
+        : base( error )
     {
         Server = server;
-        ClientName = clientName;
     }
 
     /// <summary>
     /// <see cref="MessageBrokerServer"/> instance that encountered this error.
     /// </summary>
     public MessageBrokerServer Server { get; }
-
-    /// <summary>
-    /// Duplicate client name.
-    /// </summary>
-    public string ClientName { get; }
 }

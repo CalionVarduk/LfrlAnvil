@@ -12,62 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System;
 using System.Diagnostics.Contracts;
-using System.Runtime.CompilerServices;
-using LfrlAnvil.Chrono;
-using LfrlAnvil.Memory;
 
 namespace LfrlAnvil.MessageBroker.Server.Internal;
 
 internal readonly struct QueueMessage
 {
-    internal QueueMessage(in StreamMessage message, MessageBrokerChannelListenerBinding listener)
+    internal QueueMessage(MessageBrokerChannelPublisherBinding publisher, MessageBrokerChannelListenerBinding listener, int storeKey)
     {
-        Id = message.Id;
-        Timestamp = message.Timestamp;
-        Publisher = message.Publisher;
+        Publisher = publisher;
         Listener = listener;
-
-        PoolToken = Listener.Client.MemoryPool
-            .Rent( Protocol.PacketHeader.Length + Protocol.MessageNotificationHeader.Payload + message.Data.Length, out var data )
-            .EnableClearing( message.BufferClearEnabled );
-
-        var header = new Protocol.MessageNotificationHeader(
-            Id,
-            Timestamp,
-            Publisher.Client.Id,
-            Publisher.Channel.Id,
-            Publisher.Stream.Id,
-            0,
-            0,
-            message.Data.Length );
-
-        header.Serialize( data.Slice( 0, Protocol.PacketHeader.Length + Protocol.MessageNotificationHeader.Payload ) );
-        message.Data.CopyTo( data.Slice( Protocol.PacketHeader.Length + Protocol.MessageNotificationHeader.Payload ) );
-
-        PacketHeader = header.Header;
-        Packet = data;
+        StoreKey = storeKey;
     }
 
-    internal readonly Protocol.PacketHeader PacketHeader;
-    internal readonly ulong Id;
-    internal readonly Timestamp Timestamp;
     internal readonly MessageBrokerChannelPublisherBinding Publisher;
     internal readonly MessageBrokerChannelListenerBinding Listener;
-    internal readonly MemoryPoolToken<byte> PoolToken;
-    internal readonly ReadOnlyMemory<byte> Packet;
-    internal int Length => Packet.Length - Protocol.PacketHeader.Length - Protocol.MessageNotificationHeader.Payload;
+    internal readonly int StoreKey;
 
     [Pure]
     public override string ToString()
     {
-        return $"Id = {Id}, Timestamp = {Timestamp}, Length = {Length}, Publisher = ({Publisher}), Listener = ({Listener})";
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal Exception? Return()
-    {
-        return PoolToken.Return();
+        return $"Publisher = ({Publisher}), Listener = ({Listener}), StoreKey = {StoreKey}";
     }
 }

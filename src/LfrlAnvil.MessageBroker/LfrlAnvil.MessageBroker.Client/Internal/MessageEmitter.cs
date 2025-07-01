@@ -143,13 +143,14 @@ internal struct MessageEmitter
         listener.MessageEmitter._messages.Enqueue(
             new Notification(
                 listener,
+                request.AckId,
                 request.MessageId,
-                request.EnqueuedAt,
+                request.PushedAt,
                 receivedAt,
                 sender,
                 stream,
-                request.RetryAttempt,
-                request.RedeliveryAttempt,
+                request.Retry,
+                request.Redelivery,
                 data,
                 poolToken,
                 traceId ) );
@@ -190,9 +191,20 @@ internal struct MessageEmitter
                     MessageBrokerClientErrorEvent.Create( listener.Client, notification.Args.TraceId, exc )
                         .Emit( listener.Client.Logger.Error );
 
-                    if ( exc is not OperationCanceledException cancelExc || cancelExc.CancellationToken != cancellationToken )
+                    if ( (exc is not OperationCanceledException cancelExc || cancelExc.CancellationToken != cancellationToken)
+                        && notification.Args.Listener.AreAcksEnabled )
                     {
-                        // TODO: send NACK to server
+                        await ListenerCollection.SendNegativeMessageAckAsync(
+                                listener,
+                                notification.Args.AckId,
+                                notification.Args.Stream.Id,
+                                notification.Args.MessageId,
+                                notification.Args.RetryAttempt,
+                                notification.Args.RedeliveryAttempt,
+                                notification.Args.TraceId,
+                                MessageBrokerNegativeAck.Default,
+                                true )
+                            .ConfigureAwait( false );
                     }
                 }
                 finally
@@ -201,7 +213,9 @@ internal struct MessageEmitter
                             listener,
                             notification.Args.TraceId,
                             notification.Args.Stream.Id,
-                            notification.Args.MessageId )
+                            notification.Args.MessageId,
+                            notification.Args.RetryAttempt,
+                            notification.Args.RedeliveryAttempt )
                         .Emit( listener.Client.Logger.MessageProcessed );
 
                     notification.PoolToken.Return( listener.Client, notification.Args.TraceId );
@@ -217,26 +231,28 @@ internal struct MessageEmitter
     {
         internal Notification(
             MessageBrokerListener listener,
+            int ackId,
             ulong messageId,
-            Timestamp enqueuedAt,
+            Timestamp pushedAt,
             Timestamp receivedAt,
             MessageBrokerExternalObject sender,
             MessageBrokerExternalObject stream,
-            int retryAttempt,
-            int redeliveryAttempt,
+            ResendIndex retry,
+            ResendIndex redelivery,
             ReadOnlyMemory<byte> data,
             MemoryPoolToken<byte> poolToken,
             ulong traceId)
         {
             Args = new MessageBrokerListenerCallbackArgs(
                 listener,
+                ackId,
                 messageId,
-                enqueuedAt,
+                pushedAt,
                 receivedAt,
                 sender,
                 stream,
-                retryAttempt,
-                redeliveryAttempt,
+                retry,
+                redelivery,
                 data,
                 traceId );
 

@@ -84,14 +84,18 @@ internal struct ListenerCollection
         string channelName,
         string? queueName,
         MessageBrokerListenerCallback callback,
-        bool createChannelIfNotExists,
-        int prefetchHint)
+        MessageBrokerListenerOptions options,
+        bool createChannelIfNotExists)
     {
         Ensure.IsInRange( channelName.Length, Defaults.NameLengthBounds.Min, Defaults.NameLengthBounds.Max );
         if ( queueName is not null )
             Ensure.IsInRange( queueName.Length, Defaults.NameLengthBounds.Min, Defaults.NameLengthBounds.Max );
 
-        Ensure.IsGreaterThan( prefetchHint, 0 );
+        var prefetchHint = options.PrefetchHint;
+        var maxRetries = options.MaxRetries;
+        var retryDelay = options.RetryDelay;
+        var maxRedeliveries = options.MaxRedeliveries;
+        var minAckTimeout = options.MinAckTimeout;
 
         ulong traceId;
         bool reverseEndianness;
@@ -117,16 +121,29 @@ internal struct ListenerCollection
                     channelName,
                     queueName ?? channelName,
                     prefetchHint,
+                    maxRetries,
+                    retryDelay,
+                    maxRedeliveries,
+                    minAckTimeout,
                     createChannelIfNotExists )
                 .Emit( client.Logger.BindingListener );
 
             ManualResetValueTaskSource<IncomingPacketToken> responseSource;
             Protocol.BindListenerRequest request;
 
-            var poolToken = default( MemoryPoolToken<byte> );
+            var poolToken = MemoryPoolToken<byte>.Empty;
             try
             {
-                request = new Protocol.BindListenerRequest( channelName, queueName, prefetchHint, createChannelIfNotExists );
+                request = new Protocol.BindListenerRequest(
+                    channelName,
+                    queueName,
+                    prefetchHint,
+                    maxRetries,
+                    retryDelay,
+                    maxRedeliveries,
+                    minAckTimeout,
+                    createChannelIfNotExists );
+
                 poolToken = client.MemoryPool.Rent( request.Length, out var buffer ).EnableClearing();
                 request.Serialize( buffer, reverseEndianness );
 
@@ -239,6 +256,10 @@ internal struct ListenerCollection
                                 parsedResponse.QueueId,
                                 queueName ?? channelName,
                                 prefetchHint,
+                                maxRetries,
+                                retryDelay,
+                                maxRedeliveries,
+                                minAckTimeout,
                                 callback );
 
                             client.ListenerCollection._store.Add( parsedResponse.ChannelId, channelName, listener );
@@ -265,7 +286,7 @@ internal struct ListenerCollection
                         MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header )
                             .Emit( client.Logger.ReadPacket );
 
-                        var exception = Protocol.AssertPayload( client, response.Header, Protocol.ListenerBindFailureResponse.Length );
+                        var exception = Protocol.AssertPayload( client, response.Header, Protocol.BindListenerFailureResponse.Length );
                         if ( exception is not null )
                         {
                             MessageBrokerClientErrorEvent.Create( client, traceId, exception ).Emit( client.Logger.Error );
@@ -273,7 +294,7 @@ internal struct ListenerCollection
                             return exception;
                         }
 
-                        var parsedResponse = Protocol.ListenerBindFailureResponse.Parse( response.Data );
+                        var parsedResponse = Protocol.BindListenerFailureResponse.Parse( response.Data );
                         MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header )
                             .Emit( client.Logger.ReadPacket );
 
@@ -328,7 +349,7 @@ internal struct ListenerCollection
                 ManualResetValueTaskSource<IncomingPacketToken> responseSource;
                 Protocol.UnbindListenerRequest request;
 
-                var poolToken = default( MemoryPoolToken<byte> );
+                var poolToken = MemoryPoolToken<byte>.Empty;
                 try
                 {
                     request = new Protocol.UnbindListenerRequest( listener.ChannelId );
@@ -492,6 +513,263 @@ internal struct ListenerCollection
                 await endDispose.ConfigureAwait( false );
             }
         }
+    }
+
+    internal static async ValueTask<Result<bool>> SendMessageAckAsync(
+        MessageBrokerListener listener,
+        int ackId,
+        int streamId,
+        ulong messageId,
+        int retryAttempt,
+        int redeliveryAttempt,
+        ulong? messageTraceId)
+    {
+        Ensure.IsGreaterThan( ackId, 0 );
+        Ensure.IsGreaterThan( streamId, 0 );
+        Ensure.IsInRange( retryAttempt, 0, listener.MaxRetries );
+        Ensure.IsInRange( redeliveryAttempt, 0, listener.MaxRedeliveries );
+        if ( ! listener.AreAcksEnabled )
+            ExceptionThrower.Throw(
+                new MessageBrokerClientMessageException( listener.Client, listener, Resources.DisabledAcks( listener ) ) );
+
+        ulong traceId;
+        bool reverseEndianness;
+        var client = listener.Client;
+        using ( client.AcquireLock() )
+        {
+            if ( client.ShouldCancel )
+                ExceptionThrower.Throw( client.DisposedException() );
+
+            if ( listener.State != MessageBrokerListenerState.Bound )
+                return false;
+
+            reverseEndianness = BitConverter.IsLittleEndian != client.IsServerLittleEndian;
+            traceId = client.GetTraceId();
+        }
+
+        using ( MessageBrokerClientTraceEvent.CreateScope( client, traceId, MessageBrokerClientTraceEventType.Ack ) )
+        {
+            MessageBrokerClientAcknowledgingMessageEvent.Create(
+                    listener,
+                    traceId,
+                    ackId,
+                    streamId,
+                    messageId,
+                    retryAttempt,
+                    redeliveryAttempt,
+                    messageTraceId,
+                    null,
+                    false )
+                .Emit( client.Logger.AcknowledgingMessage );
+
+            var poolToken = MemoryPoolToken<byte>.Empty;
+            try
+            {
+                var request = new Protocol.MessageNotificationAck(
+                    listener.QueueId,
+                    ackId,
+                    streamId,
+                    messageId,
+                    retryAttempt,
+                    redeliveryAttempt );
+
+                poolToken = client.MemoryPool.Rent( Protocol.MessageNotificationAck.Length, out var buffer ).EnableClearing();
+                request.Serialize( buffer, reverseEndianness );
+
+                ManualResetValueTaskSource<bool> writerSource;
+                using ( client.AcquireActiveLock( traceId, out var exc ) )
+                {
+                    if ( exc is not null )
+                        return exc;
+
+                    writerSource = client.WriterQueue.AcquireSource();
+                }
+
+                if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
+                    return client.EmitError( client.DisposedException(), traceId );
+
+                using ( client.AcquireActiveLock( traceId, out var exc ) )
+                {
+                    if ( exc is not null )
+                        return exc;
+
+                    client.EventScheduler.PausePing();
+                }
+
+                var result = await client.WriteAsync( request.Header, buffer, traceId ).ConfigureAwait( false );
+                if ( result.Exception is not null )
+                {
+                    await client.DisposeAsync( traceId ).ConfigureAwait( false );
+                    return result.Exception;
+                }
+
+                MessageBrokerClientMessageAcknowledgedEvent.Create(
+                        listener,
+                        traceId,
+                        ackId,
+                        streamId,
+                        messageId,
+                        retryAttempt,
+                        redeliveryAttempt,
+                        messageTraceId,
+                        false )
+                    .Emit( client.Logger.MessageAcknowledged );
+
+                using ( client.AcquireActiveLock( traceId, out var exc ) )
+                {
+                    if ( exc is not null )
+                        return exc;
+
+                    client.WriterQueue.Release( client, writerSource );
+                    client.EventScheduler.SchedulePing( client );
+                }
+            }
+            catch ( Exception exc )
+            {
+                MessageBrokerClientErrorEvent.Create( client, traceId, exc ).Emit( client.Logger.Error );
+                await client.DisposeAsync( traceId ).ConfigureAwait( false );
+                return exc;
+            }
+            finally
+            {
+                poolToken.Return( client, traceId );
+            }
+        }
+
+        return true;
+    }
+
+    internal static async ValueTask<Result<bool>> SendNegativeMessageAckAsync(
+        MessageBrokerListener listener,
+        int ackId,
+        int streamId,
+        ulong messageId,
+        int retryAttempt,
+        int redeliveryAttempt,
+        ulong? messageTraceId,
+        MessageBrokerNegativeAck nack,
+        bool automatic)
+    {
+        Ensure.IsGreaterThan( ackId, 0 );
+        Ensure.IsGreaterThan( streamId, 0 );
+        Ensure.IsInRange( retryAttempt, 0, listener.MaxRetries );
+        Ensure.IsInRange( redeliveryAttempt, 0, listener.MaxRedeliveries );
+        if ( ! listener.AreAcksEnabled )
+            ExceptionThrower.Throw(
+                new MessageBrokerClientMessageException( listener.Client, listener, Resources.DisabledAcks( listener ) ) );
+
+        ulong traceId;
+        bool reverseEndianness;
+        var client = listener.Client;
+        using ( client.AcquireLock() )
+        {
+            if ( client.ShouldCancel )
+            {
+                if ( automatic )
+                    return false;
+
+                ExceptionThrower.Throw( client.DisposedException() );
+            }
+
+            if ( listener.State != MessageBrokerListenerState.Bound )
+                return false;
+
+            reverseEndianness = BitConverter.IsLittleEndian != client.IsServerLittleEndian;
+            traceId = client.GetTraceId();
+        }
+
+        using ( MessageBrokerClientTraceEvent.CreateScope( client, traceId, MessageBrokerClientTraceEventType.NegativeAck ) )
+        {
+            MessageBrokerClientAcknowledgingMessageEvent.Create(
+                    listener,
+                    traceId,
+                    ackId,
+                    streamId,
+                    messageId,
+                    retryAttempt,
+                    redeliveryAttempt,
+                    messageTraceId,
+                    nack,
+                    automatic )
+                .Emit( client.Logger.AcknowledgingMessage );
+
+            var poolToken = MemoryPoolToken<byte>.Empty;
+            try
+            {
+                var request = new Protocol.MessageNotificationNegativeAck(
+                    listener.QueueId,
+                    ackId,
+                    streamId,
+                    messageId,
+                    retryAttempt,
+                    redeliveryAttempt,
+                    nack.SkipRetry,
+                    nack.RetryDelay );
+
+                poolToken = client.MemoryPool.Rent( Protocol.MessageNotificationNegativeAck.Length, out var buffer ).EnableClearing();
+                request.Serialize( buffer, reverseEndianness );
+
+                ManualResetValueTaskSource<bool> writerSource;
+                using ( client.AcquireActiveLock( traceId, out var exc ) )
+                {
+                    if ( exc is not null )
+                        return exc;
+
+                    writerSource = client.WriterQueue.AcquireSource();
+                }
+
+                if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
+                    return client.EmitError( client.DisposedException(), traceId );
+
+                using ( client.AcquireActiveLock( traceId, out var exc ) )
+                {
+                    if ( exc is not null )
+                        return exc;
+
+                    client.EventScheduler.PausePing();
+                }
+
+                var result = await client.WriteAsync( request.Header, buffer, traceId ).ConfigureAwait( false );
+                if ( result.Exception is not null )
+                {
+                    await client.DisposeAsync( traceId ).ConfigureAwait( false );
+                    return result.Exception;
+                }
+
+                MessageBrokerClientMessageAcknowledgedEvent.Create(
+                        listener,
+                        traceId,
+                        ackId,
+                        streamId,
+                        messageId,
+                        retryAttempt,
+                        redeliveryAttempt,
+                        messageTraceId,
+                        true )
+                    .Emit( client.Logger.MessageAcknowledged );
+
+                using ( client.AcquireActiveLock( traceId, out var exc ) )
+                {
+                    if ( exc is not null )
+                        return exc;
+
+                    client.WriterQueue.Release( client, writerSource );
+                    client.EventScheduler.SchedulePing( client );
+                }
+            }
+            catch ( Exception exc )
+            {
+                MessageBrokerClientErrorEvent.Create( client, traceId, exc ).Emit( client.Logger.Error );
+                await client.DisposeAsync( traceId ).ConfigureAwait( false );
+                return exc;
+            }
+            finally
+            {
+                poolToken.Return( client, traceId );
+            }
+        }
+
+        return true;
     }
 
     internal MessageBrokerListener[] Clear()

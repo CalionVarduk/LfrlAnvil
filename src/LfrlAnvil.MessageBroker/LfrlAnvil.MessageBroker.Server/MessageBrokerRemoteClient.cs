@@ -39,7 +39,7 @@ public sealed partial class MessageBrokerRemoteClient
     internal readonly MemoryPool<byte> MemoryPool;
     internal ReferenceStore<int, MessageBrokerChannelPublisherBinding> PublishersByChannelId;
     internal ReferenceStore<int, MessageBrokerChannelListenerBinding> ListenersByChannelId;
-    internal ObjectStore<MessageBrokerQueue> QueuesByName;
+    internal ObjectStore<MessageBrokerQueue> QueueStore;
     internal WriterQueue WriterQueue;
     internal RequestQueue RequestQueue;
     internal EventScheduler EventScheduler;
@@ -51,6 +51,7 @@ public sealed partial class MessageBrokerRemoteClient
 
     private readonly ITimestampProvider _timestamps;
     private readonly TcpClient _tcp;
+    private readonly TaskCompletionSource _disconnected;
     private DelaySource _delaySource;
     private Stream _stream;
     private MessageBrokerRemoteClientState _state;
@@ -69,12 +70,13 @@ public sealed partial class MessageBrokerRemoteClient
         MaxReadTimeout = MessageTimeout;
         PingInterval = Duration.Zero;
         SynchronizeExternalObjectNames = false;
+        _disconnected = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
         _state = MessageBrokerRemoteClientState.Created;
         _nextTraceId = 0;
 
         PublishersByChannelId = ReferenceStore<int, MessageBrokerChannelPublisherBinding>.Create();
         ListenersByChannelId = ReferenceStore<int, MessageBrokerChannelListenerBinding>.Create();
-        QueuesByName = ObjectStore<MessageBrokerQueue>.Create( StringComparer.OrdinalIgnoreCase );
+        QueueStore = ObjectStore<MessageBrokerQueue>.Create( StringComparer.OrdinalIgnoreCase );
         WriterQueue = WriterQueue.Create();
         RequestQueue = RequestQueue.Create();
         EventScheduler = EventScheduler.Create();
@@ -221,13 +223,22 @@ public sealed partial class MessageBrokerRemoteClient
     /// <returns>A task that represents the asynchronous disconnect operation.</returns>
     public async ValueTask DisconnectAsync()
     {
-        ulong traceId;
+        var traceId = 0UL;
+        var disposalState = MessageBrokerRemoteClientState.Created;
         using ( AcquireLock() )
         {
             if ( ! TryBeginDispose() )
-                return;
+                disposalState = _state;
+            else
+                traceId = GetTraceId();
+        }
 
-            traceId = GetTraceId();
+        if ( disposalState >= MessageBrokerRemoteClientState.Disposing )
+        {
+            if ( disposalState == MessageBrokerRemoteClientState.Disposing )
+                await _disconnected.Task.ConfigureAwait( false );
+
+            return;
         }
 
         using ( MessageBrokerRemoteClientTraceEvent.CreateScope( this, traceId, MessageBrokerRemoteClientTraceEventType.Dispose ) )
@@ -236,13 +247,22 @@ public sealed partial class MessageBrokerRemoteClient
 
     internal async ValueTask OnServerDisposedAsync(ulong serverTraceId)
     {
-        ulong traceId;
+        var traceId = 0UL;
+        var disposalState = MessageBrokerRemoteClientState.Created;
         using ( AcquireLock() )
         {
             if ( ! TryBeginDispose() )
-                return;
+                disposalState = _state;
+            else
+                traceId = GetTraceId();
+        }
 
-            traceId = GetTraceId();
+        if ( disposalState >= MessageBrokerRemoteClientState.Disposing )
+        {
+            if ( disposalState == MessageBrokerRemoteClientState.Disposing )
+                await _disconnected.Task.ConfigureAwait( false );
+
+            return;
         }
 
         using ( MessageBrokerRemoteClientTraceEvent.CreateScope( this, traceId, MessageBrokerRemoteClientTraceEventType.Dispose ) )
@@ -299,7 +319,7 @@ public sealed partial class MessageBrokerRemoteClient
         }
     }
 
-    internal Protocol.BindPublisherFailureResponse.Reasons BindPublisherUnsafe(
+    internal BindResult BindPublisherUnsafe(
         MessageBrokerChannel channel,
         bool channelCreated,
         string streamName,
@@ -312,14 +332,14 @@ public sealed partial class MessageBrokerRemoteClient
         using ( channel.AcquireLock() )
         {
             if ( channel.ShouldCancel )
-                return Protocol.BindPublisherFailureResponse.Reasons.Cancelled;
+                return BindResult.ChannelDisposed;
 
             var token = channel.PublishersByClientId.GetOrAddNull( Id );
             if ( token.Exists )
             {
                 publisher = token.GetObject();
                 stream = publisher.Stream;
-                return Protocol.BindPublisherFailureResponse.Reasons.AlreadyBound;
+                return BindResult.AlreadyBound;
             }
 
             try
@@ -333,7 +353,7 @@ public sealed partial class MessageBrokerRemoteClient
                         if ( channelCreated )
                             ChannelCollection.RemoveUnsafe( channel );
 
-                        return Protocol.BindPublisherFailureResponse.Reasons.Cancelled;
+                        return BindResult.ParentDisposed;
                     }
 
                     try
@@ -363,10 +383,10 @@ public sealed partial class MessageBrokerRemoteClient
             }
         }
 
-        return Protocol.BindPublisherFailureResponse.Reasons.None;
+        return BindResult.Success;
     }
 
-    internal Protocol.UnbindPublisherFailureResponse.Reasons BeginUnbindPublisherUnsafe(
+    internal UnbindResult BeginUnbindPublisherUnsafe(
         MessageBrokerChannel channel,
         ref MessageBrokerChannelPublisherBinding? publisher,
         ref ulong channelTraceId,
@@ -377,19 +397,22 @@ public sealed partial class MessageBrokerRemoteClient
     {
         using ( channel.AcquireLock() )
         {
-            if ( channel.ShouldCancel || ! PublishersByChannelId.TryGet( channel.Id, out publisher ) )
-                return Protocol.UnbindPublisherFailureResponse.Reasons.NotBound;
+            if ( channel.ShouldCancel )
+                return UnbindResult.ChannelDisposed;
+
+            if ( ! PublishersByChannelId.TryGet( channel.Id, out publisher ) )
+                return UnbindResult.NotBound;
 
             stream = publisher.Stream;
             using ( stream.AcquireLock() )
             {
                 if ( stream.ShouldCancel )
-                    return Protocol.UnbindPublisherFailureResponse.Reasons.NotBound;
+                    return UnbindResult.ParentDisposed;
 
                 using ( publisher.AcquireLock() )
                 {
                     if ( publisher.ShouldCancel )
-                        return Protocol.UnbindPublisherFailureResponse.Reasons.NotBound;
+                        return UnbindResult.BindingDisposed;
 
                     publisher.BeginDisposingUnsafe();
                     PublishersByChannelId.Remove( channel.Id );
@@ -401,14 +424,14 @@ public sealed partial class MessageBrokerRemoteClient
             }
         }
 
-        return Protocol.UnbindPublisherFailureResponse.Reasons.None;
+        return UnbindResult.Success;
     }
 
-    internal Protocol.BindListenerFailureResponse.Reasons BindListenerUnsafe(
+    internal BindResult BindListenerUnsafe(
         MessageBrokerChannel channel,
         bool channelCreated,
         string queueName,
-        int prefetchHint,
+        in Protocol.BindListenerRequestHeader header,
         ref MessageBrokerChannelListenerBinding? listener,
         ref ulong channelTraceId,
         ref MessageBrokerQueue? queue,
@@ -418,14 +441,14 @@ public sealed partial class MessageBrokerRemoteClient
         using ( channel.AcquireLock() )
         {
             if ( channel.ShouldCancel )
-                return Protocol.BindListenerFailureResponse.Reasons.Cancelled;
+                return BindResult.ChannelDisposed;
 
             var token = channel.ListenersByClientId.GetOrAddNull( Id );
             if ( token.Exists )
             {
                 listener = token.GetObject();
                 queue = listener.Queue;
-                return Protocol.BindListenerFailureResponse.Reasons.AlreadyBound;
+                return BindResult.AlreadyBound;
             }
 
             try
@@ -439,19 +462,30 @@ public sealed partial class MessageBrokerRemoteClient
                         if ( channelCreated )
                             ChannelCollection.RemoveUnsafe( channel );
 
-                        return Protocol.BindListenerFailureResponse.Reasons.Cancelled;
+                        return BindResult.ParentDisposed;
                     }
+
+                    if ( queueCreated )
+                        EventScheduler.AddQueue( queue );
 
                     try
                     {
                         listener = token.SetObject(
                             ref channel.ListenersByClientId,
-                            new MessageBrokerChannelListenerBinding( this, channel, queue, prefetchHint ) );
+                            new MessageBrokerChannelListenerBinding(
+                                this,
+                                channel,
+                                queue,
+                                header.PrefetchHint,
+                                header.MaxRetries,
+                                header.RetryDelay,
+                                header.MaxRedeliveries,
+                                header.MinAckTimeout ) );
                     }
                     catch
                     {
                         if ( queueCreated )
-                            QueuesByName.Remove( queue.Id, queue.Name );
+                            QueueStore.Remove( queue.Id, queue.Name );
 
                         throw;
                     }
@@ -469,31 +503,10 @@ public sealed partial class MessageBrokerRemoteClient
             }
         }
 
-        return Protocol.BindListenerFailureResponse.Reasons.None;
+        return BindResult.Success;
     }
 
-    private MessageBrokerQueue RegisterQueue(string name, out bool created)
-    {
-        var token = QueuesByName.GetOrAddNull( name );
-        if ( token.Exists )
-        {
-            created = false;
-            return token.GetObject();
-        }
-
-        try
-        {
-            created = true;
-            return token.SetObject( ref QueuesByName, new MessageBrokerQueue( this, token.Id, name ) );
-        }
-        catch
-        {
-            token.Revert( ref QueuesByName, name );
-            throw;
-        }
-    }
-
-    internal Protocol.UnbindListenerFailureResponse.Reasons BeginUnbindListenerUnsafe(
+    internal UnbindResult BeginUnbindListenerUnsafe(
         MessageBrokerChannel channel,
         ref MessageBrokerChannelListenerBinding? listener,
         ref ulong channelTraceId,
@@ -504,19 +517,22 @@ public sealed partial class MessageBrokerRemoteClient
     {
         using ( channel.AcquireLock() )
         {
-            if ( channel.ShouldCancel || ! ListenersByChannelId.TryGet( channel.Id, out listener ) )
-                return Protocol.UnbindListenerFailureResponse.Reasons.NotBound;
+            if ( channel.ShouldCancel )
+                return UnbindResult.ChannelDisposed;
+
+            if ( ! ListenersByChannelId.TryGet( channel.Id, out listener ) )
+                return UnbindResult.NotBound;
 
             queue = listener.Queue;
             using ( queue.AcquireLock() )
             {
                 if ( queue.ShouldCancel )
-                    return Protocol.UnbindListenerFailureResponse.Reasons.NotBound;
+                    return UnbindResult.ParentDisposed;
 
                 using ( listener.AcquireLock() )
                 {
                     if ( listener.ShouldCancel )
-                        return Protocol.UnbindListenerFailureResponse.Reasons.NotBound;
+                        return UnbindResult.BindingDisposed;
 
                     listener.BeginDisposingUnsafe();
                     ListenersByChannelId.Remove( channel.Id );
@@ -528,7 +544,7 @@ public sealed partial class MessageBrokerRemoteClient
             }
         }
 
-        return Protocol.UnbindListenerFailureResponse.Reasons.None;
+        return UnbindResult.Success;
     }
 
     [Pure]
@@ -682,7 +698,7 @@ public sealed partial class MessageBrokerRemoteClient
         {
             publishers = PublishersByChannelId.ClearAndExtract();
             listeners = ListenersByChannelId.ClearAndExtract();
-            queues = QueuesByName.Clear();
+            queues = QueueStore.Clear();
             exception = _tcp.TryDispose().Exception;
         }
 
@@ -691,7 +707,7 @@ public sealed partial class MessageBrokerRemoteClient
 
         if ( serverDisposed )
         {
-            await Parallel.ForEachAsync( queues, (q, _) => q.OnClientDisconnectedAsync( traceId ) ).ConfigureAwait( false );
+            await Parallel.ForEachAsync( queues, (q, _) => q.OnServerDisposedAsync( traceId ) ).ConfigureAwait( false );
             foreach ( var publisher in publishers )
                 publisher.OnServerDisposed();
 
@@ -715,7 +731,7 @@ public sealed partial class MessageBrokerRemoteClient
 
         if ( discardedMessageCount > 0 )
         {
-            var error = new MessageBrokerRemoteClientMessageException( this, null, Resources.MessagesDiscarded( discardedMessageCount ) );
+            var error = new MessageBrokerRemoteClientException( this, Resources.MessagesDiscarded( discardedMessageCount ) );
             MessageBrokerRemoteClientErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
         }
 
@@ -736,5 +752,28 @@ public sealed partial class MessageBrokerRemoteClient
         }
 
         MessageBrokerRemoteClientDisposedEvent.Create( this, traceId ).Emit( Logger.Disposed );
+        if ( ! _disconnected.Task.IsCompleted )
+            _disconnected.SetResult();
+    }
+
+    private MessageBrokerQueue RegisterQueue(string name, out bool created)
+    {
+        var token = QueueStore.GetOrAddNull( name );
+        if ( token.Exists )
+        {
+            created = false;
+            return token.GetObject();
+        }
+
+        try
+        {
+            created = true;
+            return token.SetObject( ref QueueStore, new MessageBrokerQueue( this, token.Id, name ) );
+        }
+        catch
+        {
+            token.Revert( ref QueueStore, name );
+            throw;
+        }
     }
 }

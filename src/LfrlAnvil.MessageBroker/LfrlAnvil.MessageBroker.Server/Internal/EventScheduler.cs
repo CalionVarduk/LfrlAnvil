@@ -31,6 +31,7 @@ internal struct EventScheduler
     private TimeoutEntry _writerCancellation;
     private TimeoutEntry _readerCancellation;
     private Timestamp _nextEventTimestamp;
+    private QueueEventHeap _queueHeap;
     private Task? _task;
 
     private EventScheduler(TimeoutEntry cancellation)
@@ -39,6 +40,7 @@ internal struct EventScheduler
         _writerCancellation = cancellation;
         _readerCancellation = _writerCancellation;
         _nextEventTimestamp = _writerCancellation.Timestamp;
+        _queueHeap = QueueEventHeap.Create();
         _task = null;
     }
 
@@ -84,6 +86,7 @@ internal struct EventScheduler
         _writerCancellation = _writerCancellation.Cancel();
         _readerCancellation = _readerCancellation.Cancel();
         _nextEventTimestamp = _writerCancellation.Timestamp;
+        _queueHeap.Clear();
     }
 
     internal void SetUnderlyingTask(Task task)
@@ -143,6 +146,26 @@ internal struct EventScheduler
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void AddQueue(MessageBrokerQueue queue)
+    {
+        _queueHeap.Add( queue );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void UpdateQueue(MessageBrokerQueue queue)
+    {
+        var timestamp = _queueHeap.Update( queue );
+        if ( _nextEventTimestamp > timestamp )
+            _reset.Set();
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void RemoveQueue(MessageBrokerQueue queue)
+    {
+        _queueHeap.Remove( queue );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static async ValueTask<Exception?> RunCore(MessageBrokerRemoteClient client)
     {
         Duration delay;
@@ -176,6 +199,7 @@ internal struct EventScheduler
                 if ( client.EventScheduler._readerCancellation.IsOverdue( now ) )
                     client.EventScheduler.InvokeReaderCancellation();
 
+                client.EventScheduler._queueHeap.Process( now );
                 delay = client.EventScheduler.UpdateNextEventTimestamp( now );
             }
         }
@@ -185,6 +209,8 @@ internal struct EventScheduler
     private Duration UpdateNextEventTimestamp(Timestamp now)
     {
         var next = _writerCancellation.Timestamp.Min( _readerCancellation.Timestamp );
+        if ( _queueHeap.TryGetNextTimestamp( out var timestamp ) )
+            next = next.Min( timestamp );
 
         var delayUntilNextEvent = next - now;
         var delay = delayUntilNextEvent.Clamp( Duration.Zero, Defaults.Temporal.MaxTimeout );

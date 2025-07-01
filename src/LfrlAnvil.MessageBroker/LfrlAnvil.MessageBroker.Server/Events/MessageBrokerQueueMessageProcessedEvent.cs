@@ -14,6 +14,7 @@
 
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Chrono;
 
 namespace LfrlAnvil.MessageBroker.Server.Events;
 
@@ -27,13 +28,19 @@ public readonly struct MessageBrokerQueueMessageProcessedEvent
         ulong traceId,
         MessageBrokerChannelPublisherBinding publisher,
         ulong messageId,
-        int length)
+        int ackId,
+        Timestamp ackExpiresAt,
+        int length,
+        bool messageDataRemoved)
     {
         Source = MessageBrokerQueueEventSource.Create( listener.Queue, traceId );
-        Publisher = publisher;
         Listener = listener;
+        Publisher = publisher;
         MessageId = messageId;
+        AckId = ackId;
+        AckExpiresAt = ackExpiresAt;
         Length = length;
+        MessageDataRemoved = messageDataRemoved;
     }
 
     /// <summary>
@@ -42,14 +49,14 @@ public readonly struct MessageBrokerQueueMessageProcessedEvent
     public MessageBrokerQueueEventSource Source { get; }
 
     /// <summary>
+    /// <see cref="MessageBrokerChannelPublisherBinding"/> that received the message.
+    /// </summary>
+    public MessageBrokerChannelListenerBinding Listener { get; }
+
+    /// <summary>
     /// <see cref="MessageBrokerChannelPublisherBinding"/> that pushed the message.
     /// </summary>
     public MessageBrokerChannelPublisherBinding Publisher { get; }
-
-    /// <summary>
-    /// <see cref="MessageBrokerChannelPublisherBinding"/> that handled the message.
-    /// </summary>
-    public MessageBrokerChannelListenerBinding Listener { get; }
 
     /// <summary>
     /// Unique id of the message.
@@ -57,9 +64,25 @@ public readonly struct MessageBrokerQueueMessageProcessedEvent
     public ulong MessageId { get; }
 
     /// <summary>
+    /// Id of the pending ACK associated with the message.
+    /// </summary>
+    public int AckId { get; }
+
+    /// <summary>
+    /// Moment of pending ACK expiration.
+    /// </summary>
+    public Timestamp AckExpiresAt { get; }
+
+    /// <summary>
     /// Message length.
     /// </summary>
     public int Length { get; }
+
+    /// <summary>
+    /// Specifies whether or not the data of the message has been removed from the stream's message store
+    /// due to no longer being referenced.
+    /// </summary>
+    public bool MessageDataRemoved { get; }
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerQueueMessageProcessedEvent"/> instance.
@@ -68,8 +91,10 @@ public readonly struct MessageBrokerQueueMessageProcessedEvent
     [Pure]
     public override string ToString()
     {
+        var ack = AckId > 0 ? $", Ack = (Id = {AckId}, ExpiresAt = {AckExpiresAt})" : string.Empty;
+        var messageDataRemoved = AckId == 0 ? $", MessageDataRemoved = {MessageDataRemoved}" : string.Empty;
         return
-            $"[MessageProcessed] {Source}, Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', Channel = [{Publisher.Channel.Id}] '{Publisher.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', MessageId = {MessageId}, Length = {Length}";
+            $"[MessageProcessed] {Source}, Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', MessageId = {MessageId}{ack}{messageDataRemoved}, Length = {Length}";
     }
 
     [Pure]
@@ -79,8 +104,19 @@ public readonly struct MessageBrokerQueueMessageProcessedEvent
         ulong traceId,
         MessageBrokerChannelPublisherBinding publisher,
         ulong messageId,
-        int length)
+        int ackId,
+        Timestamp ackExpiresAt,
+        int length,
+        bool messageDataRemoved)
     {
-        return new MessageBrokerQueueMessageProcessedEvent( listener, traceId, publisher, messageId, length );
+        return new MessageBrokerQueueMessageProcessedEvent(
+            listener,
+            traceId,
+            publisher,
+            messageId,
+            ackId,
+            ackExpiresAt,
+            length,
+            messageDataRemoved );
     }
 }

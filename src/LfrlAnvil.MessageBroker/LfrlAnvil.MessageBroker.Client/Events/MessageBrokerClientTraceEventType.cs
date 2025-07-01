@@ -60,17 +60,27 @@ public enum MessageBrokerClientTraceEventType : byte
     MessageNotification = 7,
 
     /// <summary>
+    /// Specifies that trace is related to the client sending a message notification ACK to the server.
+    /// </summary>
+    Ack = 8,
+
+    /// <summary>
+    /// Specifies that trace is related to the client sending a negative message notification ACK to the server.
+    /// </summary>
+    NegativeAck = 9,
+
+    /// <summary>
     /// Specifies that trace is related to the client receiving system notification from the server.
     /// </summary>
-    SystemNotification = 8,
+    SystemNotification = 10,
 
     /// <summary>
     /// Specifies that trace is related to the client disposal.
     /// </summary>
-    Dispose = 9,
+    Dispose = 11,
 
     /// <summary>
     /// Specifies that trace is related to an unexpected occurrence in the client e.g. an error.
     /// </summary>
-    Unexpected = 10
+    Unexpected = 12
 }

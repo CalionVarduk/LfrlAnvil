@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
+using LfrlAnvil.Chrono;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Exceptions;
 using LfrlAnvil.MessageBroker.Server.Internal;
@@ -31,10 +31,11 @@ public sealed class MessageBrokerQueue
 {
     internal ReferenceStore<int, MessageBrokerChannelListenerBinding> ListenersByChannelId;
     internal QueueProcessor QueueProcessor;
+    internal QueueMessageStore MessageStore;
     internal readonly MessageBrokerQueueLogger Logger;
-    private readonly object _sync = new object();
-    private QueueSlim<QueueMessage> _messages;
+    internal int EventHeapIndex;
     private MessageBrokerQueueState _state;
+    private readonly object _sync = new object();
     private ulong _nextTraceId;
 
     internal MessageBrokerQueue(MessageBrokerRemoteClient client, int id, string name)
@@ -42,10 +43,11 @@ public sealed class MessageBrokerQueue
         Client = client;
         Id = id;
         Name = name;
+        EventHeapIndex = -1;
         _state = MessageBrokerQueueState.Running;
         _nextTraceId = 0;
         ListenersByChannelId = ReferenceStore<int, MessageBrokerChannelListenerBinding>.Create();
-        _messages = QueueSlim<QueueMessage>.Create();
+        MessageStore = QueueMessageStore.Create();
         QueueProcessor = QueueProcessor.Create();
         Logger = Client.Server.QueueLoggerFactory?.Invoke( this ) ?? default;
         QueueProcessor.SetUnderlyingTask( QueueProcessor.StartUnderlyingTask( this ) );
@@ -84,6 +86,11 @@ public sealed class MessageBrokerQueue
     /// </summary>
     public MessageBrokerQueueListenerCollection Listeners => new MessageBrokerQueueListenerCollection( this );
 
+    /// <summary>
+    /// Collection of messages stored in this queue.
+    /// </summary>
+    public MessageBrokerQueueMessageCollection Messages => new MessageBrokerQueueMessageCollection( this );
+
     internal bool ShouldCancel => _state >= MessageBrokerQueueState.Disposing;
 
     /// <summary>
@@ -97,9 +104,10 @@ public sealed class MessageBrokerQueue
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void PushMessages(
+    internal bool PushMessage(
         MessageBrokerChannelListenerBinding listener,
-        in ListSlim<StreamMessage> messages,
+        int messageStoreKey,
+        in StreamMessage message,
         MessageBrokerStream stream,
         ulong streamTraceId)
     {
@@ -107,61 +115,160 @@ public sealed class MessageBrokerQueue
         using ( AcquireLock() )
         {
             if ( ShouldCancel )
-                return;
+                return false;
 
             traceId = GetTraceId();
         }
 
-        using ( MessageBrokerQueueTraceEvent.CreateScope( this, traceId, MessageBrokerQueueTraceEventType.EnqueueMessages ) )
+        using ( MessageBrokerQueueTraceEvent.CreateScope( this, traceId, MessageBrokerQueueTraceEventType.EnqueueMessage ) )
         {
             MessageBrokerQueueStreamTraceEvent.Create( this, traceId, stream, streamTraceId ).Emit( Logger.StreamTrace );
-            MessageBrokerQueueEnqueueingMessagesEvent.Create( this, traceId, messages.Count ).Emit( Logger.EnqueueingMessages );
+            MessageBrokerQueueEnqueueingMessageEvent.Create(
+                    listener,
+                    traceId,
+                    message.Publisher,
+                    message.Id,
+                    messageStoreKey,
+                    message.Data.Length )
+                .Emit( Logger.EnqueueingMessage );
 
             using ( AcquireActiveLock( traceId, out var exc ) )
             {
                 if ( exc is not null )
-                    return;
+                    return false;
 
-                foreach ( ref readonly var message in messages )
-                    _messages.Enqueue( new QueueMessage( in message, listener ) );
-
+                MessageStore.Enqueue( message.Publisher, listener, messageStoreKey );
                 QueueProcessor.SignalContinuation();
             }
 
-            MessageBrokerQueueMessagesEnqueuedEvent.Create( this, traceId, messages.Count ).Emit( Logger.MessagesEnqueued );
+            MessageBrokerQueueMessageEnqueuedEvent.Create( listener, traceId, message.Publisher, message.Id )
+                .Emit( Logger.MessageEnqueued );
         }
+
+        return true;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal int CopyMessagesIntoUnsafe(ref ListSlim<QueueMessage> buffer)
+    internal AckResult HandleAck(
+        int ackId,
+        int streamId,
+        ulong messageId,
+        int retryAttempt,
+        int redeliveryAttempt,
+        ref QueueMessage message,
+        ref ulong traceId,
+        ref bool disposing)
     {
-        Assume.True( buffer.IsEmpty );
-        Assume.IsGreaterThan( buffer.Capacity, 0 );
-        if ( _messages.IsEmpty )
-            return 0;
+        using ( AcquireLock() )
+        {
+            if ( ShouldCancel )
+                return AckResult.QueueDisposed;
 
-        var discarded = 0;
-        var queueSlice = _messages.AsMemory();
+            ref var entry = ref MessageStore.GetUnackedRef( ackId );
+            if ( Unsafe.IsNullRef( ref entry ) || entry.Message.Publisher.Stream.Id != streamId || entry.MessageId != messageId )
+                return AckResult.MessageNotFound;
 
-        if ( ! CopyMessagesInto( queueSlice.First.Span, ref buffer, ref discarded ) )
-            CopyMessagesInto( queueSlice.Second.Span, ref buffer, ref discarded );
+            message = entry.Message;
+            if ( entry.RetryAttempt != retryAttempt || entry.RedeliveryAttempt != redeliveryAttempt )
+                return AckResult.MessageVersionNotFound;
 
-        return discarded + buffer.Count;
+            MessageStore.RemoveUnacked( ackId );
+            disposing = TryDisposeDueToPotentiallyEmptyStoreUnsafe();
+            if ( message.Listener.DecrementPrefetchCounter() && ! MessageStore.IsEmpty )
+                QueueProcessor.SignalContinuation();
+
+            traceId = GetTraceId();
+        }
+
+        return AckResult.Success;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void DequeueMessagesUnsafe(int count)
+    internal AckResult HandleNegativeAck(
+        int ackId,
+        int streamId,
+        ulong messageId,
+        int retryAttempt,
+        int redeliveryAttempt,
+        bool noRetry,
+        Duration? explicitDelay,
+        ref QueueMessage message,
+        ref Duration delay,
+        ref ulong traceId,
+        ref bool disposing)
     {
-        // TODO: discarded messages are not returned to the pool
-        // fix when implementing ack/nack + stream message store
-        _messages.DequeueRange( count );
+        using ( AcquireLock() )
+        {
+            if ( ShouldCancel )
+                return AckResult.QueueDisposed;
+
+            ref var info = ref MessageStore.GetUnackedRef( ackId );
+            if ( Unsafe.IsNullRef( ref info ) || info.Message.Publisher.Stream.Id != streamId || info.MessageId != messageId )
+                return AckResult.MessageNotFound;
+
+            message = info.Message;
+            if ( info.RetryAttempt != retryAttempt || info.RedeliveryAttempt != redeliveryAttempt )
+                return AckResult.MessageVersionNotFound;
+
+            if ( noRetry || retryAttempt >= message.Listener.MaxRetries )
+            {
+                MessageStore.RemoveUnacked( ackId );
+                disposing = TryDisposeDueToPotentiallyEmptyStoreUnsafe();
+                if ( message.Listener.DecrementPrefetchCounter() && ! MessageStore.IsEmpty )
+                    QueueProcessor.SignalContinuation();
+
+                // TODO: potential move to dead-letter
+            }
+            else
+            {
+                delay = explicitDelay ?? message.Listener.RetryDelay;
+                MessageStore.ScheduleRetry( message, retryAttempt, redeliveryAttempt, delay );
+                MessageStore.RemoveUnacked( ackId );
+                message.Listener.DecrementPrefetchCounter();
+                QueueProcessor.SignalContinuation();
+            }
+
+            traceId = GetTraceId();
+        }
+
+        return AckResult.Success;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool RemoveFromStreamMessageStore(QueueMessage message, ulong traceId)
+    {
+        bool removed;
+        Result<bool> result;
+        using ( message.Publisher.Stream.AcquireLock() )
+        {
+            result = message.Publisher.Stream.MessageStore.DecrementRefCount(
+                message.StoreKey,
+                out removed );
+
+            if ( removed && message.Publisher.Stream.MessageStore.IsEmpty && ! message.Publisher.Stream.ShouldCancel )
+                message.Publisher.Stream.StreamProcessor.SignalContinuation();
+        }
+
+        if ( result.Exception is not null )
+            MessageBrokerQueueErrorEvent.Create( this, traceId, result.Exception ).Emit( Logger.Error );
+
+        if ( ! result.Value )
+        {
+            var error = new MessageBrokerQueueException(
+                this,
+                Resources.MessageDataNotFound( message.Publisher.Stream, message.StoreKey ) );
+
+            MessageBrokerQueueErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
+        }
+
+        return removed;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal bool TryDisposeByRemovingListenerUnsafe(int channelId)
     {
         ListenersByChannelId.Remove( channelId );
-        if ( ListenersByChannelId.Count > 0 || ! _messages.IsEmpty )
+        if ( ListenersByChannelId.Count > 0 || ! MessageStore.IsEmpty )
             return false;
 
         _state = MessageBrokerQueueState.Disposing;
@@ -169,62 +276,25 @@ public sealed class MessageBrokerQueue
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool TryDisposeDueToPotentiallyEmptyQueueUnsafe()
+    internal bool TryDisposeDueToPotentiallyEmptyStoreUnsafe()
     {
-        if ( ListenersByChannelId.Count > 0 || ! _messages.IsEmpty )
+        if ( ListenersByChannelId.Count > 0 || ! MessageStore.IsEmpty )
             return false;
 
         _state = MessageBrokerQueueState.Disposing;
         return true;
     }
 
-    internal async ValueTask OnClientDisconnectedAsync(ulong clientTraceId)
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal ValueTask OnClientDisconnectedAsync(ulong clientTraceId)
     {
-        ulong traceId;
-        using ( AcquireLock() )
-        {
-            if ( ShouldCancel )
-                return;
+        return DisposeAsync( clientTraceId, true );
+    }
 
-            _state = MessageBrokerQueueState.Disposing;
-            traceId = GetTraceId();
-        }
-
-        using ( MessageBrokerQueueTraceEvent.CreateScope( this, traceId, MessageBrokerQueueTraceEventType.Dispose ) )
-        {
-            MessageBrokerQueueClientTraceEvent.Create( this, traceId, clientTraceId ).Emit( Logger.ClientTrace );
-            MessageBrokerQueueDisposingEvent.Create( this, traceId ).Emit( Logger.Disposing );
-
-            Task? processorTask;
-            using ( AcquireLock() )
-            {
-                ListenersByChannelId.Clear();
-                processorTask = QueueProcessor.DiscardUnderlyingTask();
-                QueueProcessor.Dispose();
-            }
-
-            if ( processorTask is not null )
-                await processorTask.ConfigureAwait( false );
-
-            int discardedMessageCount;
-            Chain<Exception> exceptions;
-            using ( AcquireLock() )
-                (discardedMessageCount, exceptions) = ClearMessages();
-
-            foreach ( var exc in exceptions )
-                MessageBrokerQueueErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
-
-            if ( discardedMessageCount > 0 )
-            {
-                var error = new MessageBrokerQueueException( this, Resources.QueueMessagesDiscarded( discardedMessageCount ) );
-                MessageBrokerQueueErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
-            }
-
-            using ( AcquireLock() )
-                _state = MessageBrokerQueueState.Disposed;
-
-            MessageBrokerQueueDisposedEvent.Create( this, traceId ).Emit( Logger.Disposed );
-        }
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal ValueTask OnServerDisposedAsync(ulong clientTraceId)
+    {
+        return DisposeAsync( clientTraceId, false );
     }
 
     internal async ValueTask DisposeDueToLackOfReferencesAsync(bool ignoreProcessorTask, ulong traceId)
@@ -236,7 +306,7 @@ public sealed class MessageBrokerQueue
         using ( AcquireLock() )
         {
             Assume.Equals( ListenersByChannelId.Count, 0 );
-            Assume.True( _messages.IsEmpty );
+            Assume.True( MessageStore.IsEmpty );
 
             processorTask = QueueProcessor.DiscardUnderlyingTask();
             if ( ignoreProcessorTask )
@@ -251,7 +321,10 @@ public sealed class MessageBrokerQueue
         using ( Client.AcquireLock() )
         {
             if ( ! Client.ShouldCancel )
-                Client.QueuesByName.Remove( Id, Name );
+            {
+                Client.QueueStore.Remove( Id, Name );
+                Client.EventScheduler.RemoveQueue( this );
+            }
         }
 
         using ( AcquireLock() )
@@ -288,39 +361,53 @@ public sealed class MessageBrokerQueue
         return unchecked( _nextTraceId++ );
     }
 
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static bool CopyMessagesInto(ReadOnlySpan<QueueMessage> source, ref ListSlim<QueueMessage> target, ref int discarded)
+    private async ValueTask DisposeAsync(ulong clientTraceId, bool decrementMessageRefCount)
     {
-        const int maxDiscarded = 128;
-        foreach ( ref readonly var message in source )
+        ulong traceId;
+        using ( AcquireLock() )
         {
-            if ( message.Listener.TryIncrementPrefetchCounter( out var disposed ) )
+            if ( ShouldCancel )
+                return;
+
+            _state = MessageBrokerQueueState.Disposing;
+            traceId = GetTraceId();
+        }
+
+        using ( MessageBrokerQueueTraceEvent.CreateScope( this, traceId, MessageBrokerQueueTraceEventType.Dispose ) )
+        {
+            MessageBrokerQueueClientTraceEvent.Create( this, traceId, clientTraceId ).Emit( Logger.ClientTrace );
+            MessageBrokerQueueDisposingEvent.Create( this, traceId ).Emit( Logger.Disposing );
+
+            Task? processorTask;
+            using ( AcquireLock() )
             {
-                target.Add( message );
-                if ( target.Count >= target.Capacity )
-                    return true;
+                ListenersByChannelId.Clear();
+                processorTask = QueueProcessor.DiscardUnderlyingTask();
+                QueueProcessor.Dispose();
             }
-            else if ( ! disposed || ++discarded >= maxDiscarded )
-                return true;
+
+            if ( processorTask is not null )
+                await processorTask.ConfigureAwait( false );
+
+            int discardedMessageCount;
+            if ( decrementMessageRefCount )
+                discardedMessageCount = QueueMessageStore.ClearAndRelease( this, traceId );
+            else
+            {
+                using ( AcquireLock() )
+                    discardedMessageCount = MessageStore.Clear();
+            }
+
+            if ( discardedMessageCount > 0 )
+            {
+                var error = new MessageBrokerQueueException( this, Resources.QueueMessagesDiscarded( discardedMessageCount ) );
+                MessageBrokerQueueErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
+            }
+
+            using ( AcquireLock() )
+                _state = MessageBrokerQueueState.Disposed;
+
+            MessageBrokerQueueDisposedEvent.Create( this, traceId ).Emit( Logger.Disposed );
         }
-
-        return false;
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private (int DiscardedMessageCount, Chain<Exception> Exceptions) ClearMessages()
-    {
-        var discardedMessageCount = _messages.Count;
-        var exceptions = Chain<Exception>.Empty;
-
-        foreach ( ref readonly var message in _messages )
-        {
-            var exc = message.Return();
-            if ( exc is not null )
-                exceptions = exceptions.Extend( exc );
-        }
-
-        _messages = QueueSlim<QueueMessage>.Create();
-        return (discardedMessageCount, exceptions);
     }
 }

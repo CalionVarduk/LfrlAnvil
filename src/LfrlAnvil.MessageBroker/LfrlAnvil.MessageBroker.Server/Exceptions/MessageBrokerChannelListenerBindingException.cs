@@ -17,7 +17,8 @@ using System;
 namespace LfrlAnvil.MessageBroker.Server.Exceptions;
 
 /// <summary>
-/// Represents an error related to a message broker channel listener binding.
+/// Represents an exception thrown when <see cref="MessageBrokerChannelListenerBinding"/> encountered an error
+/// or when <see cref="MessageBrokerRemoteClient"/> encountered an error related to listener binding.
 /// </summary>
 public sealed class MessageBrokerChannelListenerBindingException : InvalidOperationException
 {
@@ -25,18 +26,15 @@ public sealed class MessageBrokerChannelListenerBindingException : InvalidOperat
     /// Creates a new <see cref="MessageBrokerChannelListenerBindingException"/> instance.
     /// </summary>
     /// <param name="client"><see cref="MessageBrokerServer"/> instance that encountered this error.</param>
-    /// <param name="channel">Optional <see cref="MessageBrokerChannel"/> instance that encountered this error.</param>
     /// <param name="listener">Optional <see cref="MessageBrokerChannelListenerBinding"/> instance that encountered this error.</param>
-    /// <param name="message">Underlying error message.</param>
+    /// <param name="error">Encountered error.</param>
     public MessageBrokerChannelListenerBindingException(
         MessageBrokerRemoteClient client,
-        MessageBrokerChannel? channel,
         MessageBrokerChannelListenerBinding? listener,
-        string message)
-        : base( message )
+        string error)
+        : base( error )
     {
         Client = client;
-        Channel = channel;
         Listener = listener;
     }
 
@@ -44,11 +42,6 @@ public sealed class MessageBrokerChannelListenerBindingException : InvalidOperat
     /// <see cref="MessageBrokerServer"/> instance that encountered this error.
     /// </summary>
     public MessageBrokerRemoteClient Client { get; }
-
-    /// <summary>
-    /// Optional <see cref="MessageBrokerChannel"/> instance that encountered this error.
-    /// </summary>
-    public MessageBrokerChannel? Channel { get; }
 
     /// <summary>
     /// Optional <see cref="MessageBrokerChannelListenerBinding"/> instance that encountered this error.

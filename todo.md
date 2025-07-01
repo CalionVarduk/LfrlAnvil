@@ -32,31 +32,11 @@ Sql:
 MessageBroker:
 
 - refactor packet read/write & payload error emitting? there's a lot of copy-pasta (wait for packet batching)
-- separate synchronous enqueue-write operation from asynchronous write-and-wait-for-response operation
-    - consumption example: client.Enqueue(...).WaitForResponseAsync()
-    - make sure that Enqueue already starts the underlying process
-    - so that fire-and-forget misuse won't cause the whole write queue to be blocked
-    - or, explain that this is a low-level API, and any issues caused by misuse are on the consumer
-    - in that case, there may have to exist some sort of TryEnqueue method
-    - since all operations at first validate e.g. client state and may throw
-    - or Enqueue itself returns a Result<EnqueuedOperation>, which would allow the consumer to easily react to such a scenario
 - add some basic memory pool tracking & possibility to trim excess
-- message ack/nack, followed by redelivery (with config via listener), followed by retry (with config via listener)
-- custom (network) stream interface, that is capable of leveraging Socket's send method with multiple buffer segments
-  - server-side only, for now
-  - must support: read to single buffer, write single buffer, write two buffers
-  - custom decorators can be defined to extend the behavior
-  - add some sort of system.io.stream compatibility adapter, but this will force using 'write single buffer' method
-    - by copying two buffers into one
-  - this is to combat message copying from stream to subscribers
-    - since this may cause impractically large memory usage for large messages + lots of subscribers
-  - OVERRIDE: for now, track single message buffer on the stream-side and count references for it
-    - copy it on-demand (during request send) for each subscription
-    - subscriptions don't allocate their own separate copy when receiving msg from stream
-    - this makes it so that only one message instance is semi-permanently allocated
-    - while other buffer-copies are temporary and quite short-lived
-    - stream message ref counting will have to be done, sooner or later, so might as well do it now
-    - with that, it should be easier/less-finicky than the dedicated stream interface
+- perform logger delegate null checks explicitly before creating events/exceptions
+- minimize events as much as possible
+  - the idea is that each trace contains a full story, but individual events don't
+  - shorten some names e.g. RetryAttempt => Retry, RedeliveryAttempt => Redelivery, MessageStoreKey => StoreKey, etc.
 
 Reactive:
 
@@ -78,24 +58,23 @@ project idea:
 ### MessageBroker: Messages
 
 - Add possibility for a client to publish a message to a channel
-    - messages must be propagated to all channel subscribers
-        - each message header contains a msg-id (unique within channel), a timestamp (moved-to-channel), client(publisher)-id
     - it must be relatively safe, no loss of data etc.:
         - client sends message
             - \[stage 2\] client can limit target clients by providing their ids, by default all subscribed clients are notified
             - hard max route count is 128
             - route can either be a client id (if known by the consumer) or client name
-        - server moves message to channel's storage
-        - server immediately responds with ack/nack (ack contains message id - uint64)
-        - server propagates message from channel to all subscribers (channel's task loop)
+            - UPDATE:
+              - a separate routing request will be sent to the server
+              - right before sending the actual message
+              - server will cache the routing data until next message arrives
+              - routing data can contain a collection of target identifiers
+              - they can either be an id or a name
+              - the size limit will be the max packet size
         - \[stage 2\] subscriber moves message to un-acked messages collection
-        - subscriber notifies remote client's task loop that there is message to send
-        - remote client sends message to client
-        - client receives message and is notified of it through its local subscription instance
         - \[stage 2\] client needs to respond with ack/nack (not immediately)
             - message headers get additional re-send-no (starts from 0) & re-delivery-no (starts from 0) fields
             - ack notifies the server that message was processed & removes it from waiting-for-ack messages collection
-            - nack notifies the serve that message processing failed in a controlled manner
+            - nack notifies the server that message processing failed in a controlled manner
                 - subscribers can configure max re-send count & max re-delivery count & default re-send delay
                 - nack can specify whether or not to re-send the message (if subscriber allows), true by default
                 - nack can specify custom re-send delay
@@ -104,7 +83,8 @@ project idea:
             - server attempts to re-deliver the message, as long as subscriber's max re-delivery allows
         - \[stage 3\] messages that reached max re-send or re-delivery count are moved by the server to subscriber's dead letter collection
             - it can be queried by client-side subscriber instances (fetching dequeues from dead-letter permanently)
-            - should be possible to configure max number of dead-letter entries (either channel or subscriber config)
+            - should be possible to configure max number of dead-letter entries and their TTL (either channel or subscriber config)
+            - dead-letter entries create a copy of the message and decrement ref-counter on the stream side
     - note on server's lack of ack/nack to client's message send:
         - if this is due to client's disposal, then client could instead wait for server's responses before fully disposing
             - in this state, client must be seen as disposed to new consumers (no sending of messages etc.)

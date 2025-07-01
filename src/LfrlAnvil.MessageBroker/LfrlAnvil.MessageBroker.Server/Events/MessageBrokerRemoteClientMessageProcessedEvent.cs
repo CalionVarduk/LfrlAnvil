@@ -14,6 +14,7 @@
 
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.MessageBroker.Server.Internal;
 
 namespace LfrlAnvil.MessageBroker.Server.Events;
 
@@ -23,16 +24,25 @@ namespace LfrlAnvil.MessageBroker.Server.Events;
 /// </summary>
 public readonly struct MessageBrokerRemoteClientMessageProcessedEvent
 {
+    private readonly ResendIndex _retryAttempt;
+    private readonly ResendIndex _redeliveryAttempt;
+
     private MessageBrokerRemoteClientMessageProcessedEvent(
         MessageBrokerChannelListenerBinding listener,
         ulong traceId,
         MessageBrokerChannelPublisherBinding publisher,
-        ulong messageId)
+        ulong messageId,
+        int ackId,
+        ResendIndex retryAttempt,
+        ResendIndex redeliveryAttempt)
     {
         Source = MessageBrokerRemoteClientEventSource.Create( listener.Client, traceId );
         Listener = listener;
         Publisher = publisher;
         MessageId = messageId;
+        AckId = ackId;
+        _retryAttempt = retryAttempt;
+        _redeliveryAttempt = redeliveryAttempt;
     }
 
     /// <summary>
@@ -41,7 +51,7 @@ public readonly struct MessageBrokerRemoteClientMessageProcessedEvent
     public MessageBrokerRemoteClientEventSource Source { get; }
 
     /// <summary>
-    /// <see cref="MessageBrokerChannelListenerBinding"/> that processed the message.
+    /// <see cref="MessageBrokerChannelListenerBinding"/> that received the message.
     /// </summary>
     public MessageBrokerChannelListenerBinding Listener { get; }
 
@@ -56,14 +66,43 @@ public readonly struct MessageBrokerRemoteClientMessageProcessedEvent
     public ulong MessageId { get; }
 
     /// <summary>
+    /// Id of the pending ACK associated with the message.
+    /// </summary>
+    /// <remarks>ACK is expected only when value is greater than <b>0</b>.</remarks>
+    public int AckId { get; }
+
+    /// <summary>
+    /// Retry attempt number of this message.
+    /// </summary>
+    public int RetryAttempt => _retryAttempt.Value;
+
+    /// <summary>
+    /// Specifies whether or not this message is a retry.
+    /// </summary>
+    public bool IsRetry => _retryAttempt.IsActive;
+
+    /// <summary>
+    /// Redelivery attempt number of this message.
+    /// </summary>
+    public int RedeliveryAttempt => _redeliveryAttempt.Value;
+
+    /// <summary>
+    /// Specifies whether or not this message is a redelivery.
+    /// </summary>
+    public bool IsRedelivery => _redeliveryAttempt.IsActive;
+
+    /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerRemoteClientMessageProcessedEvent"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
+        var ackId = AckId > 0 ? $", AckId = {AckId}" : string.Empty;
+        var isRetry = IsRetry ? " (active)" : string.Empty;
+        var isRedelivery = IsRedelivery ? " (active)" : string.Empty;
         return
-            $"[MessageProcessed] {Source}, Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', Queue = [{Listener.Queue.Id}] '{Listener.Queue.Name}', MessageId = {MessageId}";
+            $"[MessageProcessed] {Source}, Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', Queue = [{Listener.Queue.Id}] '{Listener.Queue.Name}'{ackId}, MessageId = {MessageId}, RetryAttempt = {RetryAttempt}{isRetry}, RedeliveryAttempt = {RedeliveryAttempt}{isRedelivery}";
     }
 
     [Pure]
@@ -72,8 +111,18 @@ public readonly struct MessageBrokerRemoteClientMessageProcessedEvent
         MessageBrokerChannelListenerBinding listener,
         ulong traceId,
         MessageBrokerChannelPublisherBinding publisher,
-        ulong messageId)
+        ulong messageId,
+        int ackId,
+        ResendIndex retryAttempt,
+        ResendIndex redeliveryAttempt)
     {
-        return new MessageBrokerRemoteClientMessageProcessedEvent( listener, traceId, publisher, messageId );
+        return new MessageBrokerRemoteClientMessageProcessedEvent(
+            listener,
+            traceId,
+            publisher,
+            messageId,
+            ackId,
+            retryAttempt,
+            redeliveryAttempt );
     }
 }

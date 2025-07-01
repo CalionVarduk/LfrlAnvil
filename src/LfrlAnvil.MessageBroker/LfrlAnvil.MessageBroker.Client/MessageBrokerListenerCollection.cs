@@ -84,12 +84,9 @@ public readonly struct MessageBrokerListenerCollection
     /// Optional unique name of the queue that will store pending messages to this client server-side.
     /// Equal to the provided <paramref name="channelName"/> by default.
     /// </param>
+    /// <param name="options">Optional creation options. Equal to <see cref="MessageBrokerListenerOptions.Default"/> by default.</param>
     /// <param name="createChannelIfNotExists">
     /// Specifies whether or not the server should create the channel if it does not exist yet. Equal to <b>true</b> by default.
-    /// </param>
-    /// <param name="prefetchHint">
-    /// Specifies how many messages intended for the created listener can be sent by the server to this client at the same time.
-    /// Equal to <b>1</b> by default.
     /// </param>
     /// <returns>
     /// A task that represents the operation, which returns a <see cref="Result{T}"/> instance,
@@ -97,7 +94,7 @@ public readonly struct MessageBrokerListenerCollection
     /// </returns>
     /// <exception cref="ArgumentOutOfRangeException">
     /// When <paramref name="channelName"/> or <paramref name="queueName"/> (if not <b>null</b>) length
-    /// is less than <b>1</b> or greater than <b>512</b>, or when <paramref name="prefetchHint"/> is less than <b>1</b>.
+    /// is less than <b>1</b> or greater than <b>512</b>.
     /// </exception>
     /// <exception cref="MessageBrokerClientDisposedException">When client has already been disposed.</exception>
     /// <exception cref="MessageBrokerClientStateException">
@@ -111,10 +108,10 @@ public readonly struct MessageBrokerListenerCollection
     public ValueTask<Result<MessageBrokerBindListenerResult?>> BindAsync(
         string channelName,
         MessageBrokerListenerCallback callback,
+        MessageBrokerListenerOptions options = default,
         string? queueName = null,
-        bool createChannelIfNotExists = true,
-        int prefetchHint = 1)
+        bool createChannelIfNotExists = true)
     {
-        return ListenerCollection.BindAsync( _client, channelName, queueName, callback, createChannelIfNotExists, prefetchHint );
+        return ListenerCollection.BindAsync( _client, channelName, queueName, callback, options, createChannelIfNotExists );
     }
 }

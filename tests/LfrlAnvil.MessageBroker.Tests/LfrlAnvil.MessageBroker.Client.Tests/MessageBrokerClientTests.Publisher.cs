@@ -99,8 +99,8 @@ public partial class MessageBrokerClientTests
                             [
                                 "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
                                 $"[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = '{channelName}', StreamName = '{streamName}'",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 16)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 16)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 14)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 14)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (PublisherBoundResponse, Length = 14)",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (PublisherBoundResponse, Length = 14)",
                                 $"[PublisherBound] Client = [1] 'test', TraceId = 1, Channel = [1] '{channelName}'{(channelCreated ? " (created)" : string.Empty)}, Stream = [2] '{streamName}'{(streamCreated ? " (created)" : string.Empty)}",
@@ -303,8 +303,8 @@ public partial class MessageBrokerClientTests
                             [
                                 "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
                                 "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', StreamName = 'foo'",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 13)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 13)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 1
                                 LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Server failed to respond to 'test' client's BindPublisherRequest in the specified amount of time (1000 milliseconds).
@@ -397,8 +397,8 @@ public partial class MessageBrokerClientTests
                             [
                                 "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
                                 "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', StreamName = 'foo'",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 13)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 13)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (PublisherBoundResponse, Length = 14)",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 1
@@ -465,8 +465,8 @@ public partial class MessageBrokerClientTests
                             [
                                 "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
                                 "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', StreamName = 'foo'",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 13)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 13)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (PublisherBoundResponse, Length = 13)",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 1
@@ -532,8 +532,8 @@ public partial class MessageBrokerClientTests
                             [
                                 "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
                                 "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', StreamName = 'foo'",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 13)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 13)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherFailureResponse, Length = 6)",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherFailureResponse, Length = 6)",
                                 """
@@ -599,8 +599,8 @@ public partial class MessageBrokerClientTests
                             [
                                 "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
                                 "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', StreamName = 'foo'",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 13)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 13)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherFailureResponse, Length = 5)",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 1
@@ -666,8 +666,8 @@ public partial class MessageBrokerClientTests
                             [
                                 "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
                                 "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', StreamName = 'foo'",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 13)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 13)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 1
                                 LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Client 'test' received an invalid <unrecognized-endpoint-0> from the server. Encountered 1 error(s):
@@ -903,7 +903,7 @@ public partial class MessageBrokerClientTests
         [Fact]
         public async Task UnbindAsync_ShouldReturnError_WhenClientIsDisposedBeforeServerResponds()
         {
-            var channelBound = Ref.Create( false );
+            var channelBound = Atomic.Create( false );
             var endSource = new SafeTaskCompletionSource<Task>();
             using var server = new ServerMock();
             var remoteEndPoint = server.Start();
@@ -919,10 +919,7 @@ public partial class MessageBrokerClientTests
                         MessageBrokerClientLogger.Create(
                             sendPacket: e =>
                             {
-                                bool bound;
-                                lock ( channelBound )
-                                    bound = channelBound.Value;
-
+                                var bound = channelBound.Value;
                                 if ( bound
                                     && e.Type == MessageBrokerClientSendPacketEventType.Sending
                                     && e.Packet.Endpoint == MessageBrokerServerEndpoint.Ping )
@@ -941,8 +938,7 @@ public partial class MessageBrokerClientTests
             await client.Publishers.BindAsync( "foo" );
             await serverTask;
             var publisher = client.Publishers.TryGetByChannelId( 1 );
-            lock ( channelBound )
-                channelBound.Value = true;
+            channelBound.Value = true;
 
             var result = Result.Create( default( MessageBrokerUnbindPublisherResult ) );
             if ( publisher is not null )
@@ -1884,7 +1880,7 @@ public partial class MessageBrokerClientTests
         [Fact]
         public async Task PushAsync_ShouldReturnError_WhenClientIsDisposedBeforeServerResponds()
         {
-            var publisherBound = Ref.Create( false );
+            var publisherBound = Atomic.Create( false );
             var endSource = new SafeTaskCompletionSource<Task>();
             using var server = new ServerMock();
             var remoteEndPoint = server.Start();
@@ -1901,10 +1897,7 @@ public partial class MessageBrokerClientTests
                             sendPacket:
                             e =>
                             {
-                                bool bound;
-                                lock ( publisherBound )
-                                    bound = publisherBound.Value;
-
+                                var bound = publisherBound.Value;
                                 if ( bound
                                     && e.Type == MessageBrokerClientSendPacketEventType.Sending
                                     && e.Packet.Endpoint == MessageBrokerServerEndpoint.Ping )
@@ -1923,8 +1916,7 @@ public partial class MessageBrokerClientTests
             await client.Publishers.BindAsync( "foo" );
             await serverTask;
             var publisher = client.Publishers.TryGetByChannelId( 1 );
-            lock ( publisherBound )
-                publisherBound.Value = true;
+            publisherBound.Value = true;
 
             var result = Result.Create( default( MessageBrokerPushResult ) );
             if ( publisher is not null )

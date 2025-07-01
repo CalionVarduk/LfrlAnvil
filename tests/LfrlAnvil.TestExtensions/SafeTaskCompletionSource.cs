@@ -20,7 +20,7 @@ public sealed class SafeTaskCompletionSource
         _completionCount = Math.Max( completionCount, 1 );
         _base = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
         _cancellationSource = new CancellationTokenSource();
-        _cancellationTimeout = timeout ?? TimeSpan.FromSeconds( 5 );
+        _cancellationTimeout = timeout ?? TimeSpan.FromSeconds( 15 );
         _registration = _cancellationSource.Token.Register( (_, ct) => _base.SetException( new OperationCanceledException( ct ) ), null );
     }
 
@@ -72,7 +72,7 @@ public sealed class SafeTaskCompletionSource<T>
         _completionCount = Math.Max( completionCount, 1 );
         _base = new TaskCompletionSource<T>( TaskCreationOptions.RunContinuationsAsynchronously );
         _cancellationSource = new CancellationTokenSource();
-        _cancellationTimeout = timeout ?? TimeSpan.FromSeconds( 5 );
+        _cancellationTimeout = timeout ?? TimeSpan.FromSeconds( 15 );
         _registration = _cancellationSource.Token.Register( (_, ct) => _base.SetException( new OperationCanceledException( ct ) ), null );
     }
 

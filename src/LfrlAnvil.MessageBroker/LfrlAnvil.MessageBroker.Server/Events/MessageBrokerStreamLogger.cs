@@ -31,7 +31,7 @@ public readonly struct MessageBrokerStreamLogger
         Action<MessageBrokerStreamPublisherBoundEvent>? publisherBound,
         Action<MessageBrokerStreamPublisherUnboundEvent>? publisherUnbound,
         Action<MessageBrokerStreamMessagePushedEvent>? messagePushed,
-        Action<MessageBrokerStreamProcessingMessagesEvent>? processingMessages,
+        Action<MessageBrokerStreamProcessingMessageEvent>? processingMessage,
         Action<MessageBrokerStreamMessageProcessedEvent>? messageProcessed,
         Action<MessageBrokerStreamDisposingEvent>? disposing,
         Action<MessageBrokerStreamDisposedEvent>? disposed,
@@ -45,7 +45,7 @@ public readonly struct MessageBrokerStreamLogger
         PublisherBound = publisherBound;
         PublisherUnbound = publisherUnbound;
         MessagePushed = messagePushed;
-        ProcessingMessages = processingMessages;
+        ProcessingMessage = processingMessage;
         MessageProcessed = messageProcessed;
         Disposing = disposing;
         Disposed = disposed;
@@ -93,9 +93,9 @@ public readonly struct MessageBrokerStreamLogger
     public readonly Action<MessageBrokerStreamMessagePushedEvent>? MessagePushed;
 
     /// <summary>
-    /// Optional callback for a <see cref="MessageBrokerStreamProcessingMessagesEvent"/>.
+    /// Optional callback for a <see cref="MessageBrokerStreamProcessingMessageEvent"/>.
     /// </summary>
-    public readonly Action<MessageBrokerStreamProcessingMessagesEvent>? ProcessingMessages;
+    public readonly Action<MessageBrokerStreamProcessingMessageEvent>? ProcessingMessage;
 
     /// <summary>
     /// Optional callback for a <see cref="MessageBrokerStreamMessageProcessedEvent"/>.
@@ -128,7 +128,7 @@ public readonly struct MessageBrokerStreamLogger
     /// <param name="publisherBound">Optional <see cref="PublisherBound"/> callback.</param>
     /// <param name="publisherUnbound">Optional <see cref="PublisherUnbound"/> callback.</param>
     /// <param name="messagePushed">Optional <see cref="MessagePushed"/> callback.</param>
-    /// <param name="processingMessages">Optional <see cref="ProcessingMessages"/> callback.</param>
+    /// <param name="processingMessage">Optional <see cref="ProcessingMessage"/> callback.</param>
     /// <param name="messageProcessed">Optional <see cref="MessageProcessed"/> callback.</param>
     /// <param name="disposing">Optional <see cref="Disposing"/> callback.</param>
     /// <param name="disposed">Optional <see cref="Disposed"/> callback.</param>
@@ -144,7 +144,7 @@ public readonly struct MessageBrokerStreamLogger
         Action<MessageBrokerStreamPublisherBoundEvent>? publisherBound = null,
         Action<MessageBrokerStreamPublisherUnboundEvent>? publisherUnbound = null,
         Action<MessageBrokerStreamMessagePushedEvent>? messagePushed = null,
-        Action<MessageBrokerStreamProcessingMessagesEvent>? processingMessages = null,
+        Action<MessageBrokerStreamProcessingMessageEvent>? processingMessage = null,
         Action<MessageBrokerStreamMessageProcessedEvent>? messageProcessed = null,
         Action<MessageBrokerStreamDisposingEvent>? disposing = null,
         Action<MessageBrokerStreamDisposedEvent>? disposed = null,
@@ -159,7 +159,7 @@ public readonly struct MessageBrokerStreamLogger
             publisherBound,
             publisherUnbound,
             messagePushed,
-            processingMessages,
+            processingMessage,
             messageProcessed,
             disposing,
             disposed,

@@ -140,7 +140,7 @@ internal struct PacketListener
 
             MessageBrokerRemoteClientAwaitPacketEvent.Create( client, header ).Emit( client.Logger.AwaitPacket );
 
-            var packetPoolToken = default( MemoryPoolToken<byte> );
+            var packetPoolToken = MemoryPoolToken<byte>.Empty;
             var packetBuffer = Memory<byte>.Empty;
             if ( header.GetServerEndpoint() != MessageBrokerServerEndpoint.Ping )
             {

@@ -1,8 +1,11 @@
-﻿using System.Linq;
+﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Async;
+using LfrlAnvil.Diagnostics;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Exceptions;
 using LfrlAnvil.MessageBroker.Server.Internal;
@@ -10,7 +13,7 @@ using LfrlAnvil.MessageBroker.Server.Tests.Helpers;
 
 namespace LfrlAnvil.MessageBroker.Server.Tests;
 
-public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFixture>
+public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFixture>
 {
     private readonly ValueTaskDelaySource _sharedDelaySource;
 
@@ -22,9 +25,12 @@ public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFi
     [Theory]
     [InlineData( 1 )]
     [InlineData( 5 )]
-    public async Task MessageNotification_ShouldPropagateMessagesToListenersCorrectly(int prefetchHint)
+    public async Task MessageNotification_ShouldPropagateMessagesToListenersCorrectly(short prefetchHint)
     {
-        var endSource = new SafeTaskCompletionSource( completionCount: 6 );
+        var endSource = new SafeTaskCompletionSource( completionCount: 9 );
+        var storeKeyByMessageId = new ConcurrentDictionary<ulong, int>();
+        var dataRemovedByMessageId = new ConcurrentDictionary<ulong, bool>();
+        var streamTraceIdsByQueueTraceId = new ConcurrentDictionary<ulong, ulong>();
         var clientLogs = new ClientEventLogger();
         var queueLogs = new QueueEventLogger();
         await using var server = new MessageBrokerServer(
@@ -41,7 +47,18 @@ public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFi
                                     or MessageBrokerRemoteClientTraceEventType.PushMessage )
                                     endSource.Complete();
                             } ) ) )
-                .SetQueueLoggerFactory( _ => queueLogs.GetLogger() ) );
+                .SetQueueLoggerFactory(
+                    _ => queueLogs.GetLogger(
+                        MessageBrokerQueueLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
+                                    endSource.Complete();
+                            },
+                            streamTrace: e => streamTraceIdsByQueueTraceId[e.Source.TraceId] = e.Correlation.TraceId,
+                            messageProcessed: e => dataRemovedByMessageId[e.MessageId] = e.MessageDataRemoved ) ) )
+                .SetStreamLoggerFactory(
+                    _ => MessageBrokerStreamLogger.Create( messagePushed: e => storeKeyByMessageId[e.MessageId] = e.MessageStoreKey ) ) );
 
         await server.StartAsync();
 
@@ -121,27 +138,27 @@ public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFi
                         [
                             $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (start)",
                             $"[ProcessingMessage] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 1",
-                            $"[SendPacket:Sending] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 42)",
-                            $"[SendPacket:Sent] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 42)",
-                            $"[MessageProcessed] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0",
+                            $"[SendPacket:Sending] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 46)",
+                            $"[SendPacket:Sent] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 46)",
+                            $"[MessageProcessed] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, RetryAttempt = 0, RedeliveryAttempt = 0",
                             $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (end)"
                         ] ),
                         (t, _) => t.Logs.TestSequence(
                         [
                             $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (start)",
                             $"[ProcessingMessage] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 2",
-                            $"[SendPacket:Sending] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 43)",
-                            $"[SendPacket:Sent] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 43)",
-                            $"[MessageProcessed] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 1",
+                            $"[SendPacket:Sending] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 47)",
+                            $"[SendPacket:Sent] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 47)",
+                            $"[MessageProcessed] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0",
                             $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (end)"
                         ] ),
                         (t, _) => t.Logs.TestSequence(
                         [
                             $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (start)",
                             $"[ProcessingMessage] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 2, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 3",
-                            $"[SendPacket:Sending] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 44)",
-                            $"[SendPacket:Sent] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 44)",
-                            $"[MessageProcessed] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 2",
+                            $"[SendPacket:Sending] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 48)",
+                            $"[SendPacket:Sent] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 48)",
+                            $"[MessageProcessed] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 2, RetryAttempt = 0, RedeliveryAttempt = 0",
                             $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (end)"
                         ] )
                     ] ),
@@ -156,8 +173,61 @@ public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFi
                         "[AwaitPacket] Client = [1] 'test'",
                         "[AwaitPacket] Client = [1] 'test', Packet = (PushMessage, Length = 13)"
                     ] ),
-                queueLogs.GetAll().Count( t => t.Logs.Any( e => e.Contains( "[Trace:EnqueueMessages]" ) ) ).TestInRange( 1, 3 ),
-                queueLogs.GetAll().Count( t => t.Logs.Any( e => e.Contains( "[Trace:ProcessMessages]" ) ) ).TestInRange( 1, 3 ) )
+                queueLogs.GetAll()
+                    .Where( t => t.Logs.Any( e => e.Contains( "[Trace:EnqueueMessage]" ) ) )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            $"[Trace:EnqueueMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id} (start)",
+                            $"[StreamTrace] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id}, Correlation = (Stream = [1] 'c', TraceId = {streamTraceIdsByQueueTraceId.GetValueOrDefault( t.Id )})",
+                            $"[EnqueueingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id}, Channel = [1] 'c', Sender = [1] 'test', MessageId = 0, MessageStoreKey = {storeKeyByMessageId.GetValueOrDefault( 0UL )}, Length = 1",
+                            $"[MessageEnqueued] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id}, Channel = [1] 'c', Sender = [1] 'test', MessageId = 0",
+                            $"[Trace:EnqueueMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id} (end)"
+                        ] ),
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            $"[Trace:EnqueueMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id} (start)",
+                            $"[StreamTrace] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id}, Correlation = (Stream = [1] 'c', TraceId = {streamTraceIdsByQueueTraceId.GetValueOrDefault( t.Id )})",
+                            $"[EnqueueingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id}, Channel = [1] 'c', Sender = [1] 'test', MessageId = 1, MessageStoreKey = {storeKeyByMessageId.GetValueOrDefault( 1UL )}, Length = 2",
+                            $"[MessageEnqueued] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id}, Channel = [1] 'c', Sender = [1] 'test', MessageId = 1",
+                            $"[Trace:EnqueueMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id} (end)"
+                        ] ),
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            $"[Trace:EnqueueMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id} (start)",
+                            $"[StreamTrace] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id}, Correlation = (Stream = [1] 'c', TraceId = {streamTraceIdsByQueueTraceId.GetValueOrDefault( t.Id )})",
+                            $"[EnqueueingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id}, Channel = [1] 'c', Sender = [1] 'test', MessageId = 2, MessageStoreKey = {storeKeyByMessageId.GetValueOrDefault( 2UL )}, Length = 3",
+                            $"[MessageEnqueued] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id}, Channel = [1] 'c', Sender = [1] 'test', MessageId = 2",
+                            $"[Trace:EnqueueMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id} (end)"
+                        ] )
+                    ] ),
+                queueLogs.GetAll()
+                    .Where( t => t.Logs.Any( e => e.Contains( "[Trace:ProcessMessage]" ) ) )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            $"[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id} (start)",
+                            $"[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageStoreKey = {storeKeyByMessageId.GetValueOrDefault( 0UL )}, RetryAttempt = 0, RedeliveryAttempt = 0",
+                            $"[MessageProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 0, MessageDataRemoved = {dataRemovedByMessageId.GetValueOrDefault( 0UL )}, Length = 1",
+                            $"[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id} (end)"
+                        ] ),
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            $"[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id} (start)",
+                            $"[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageStoreKey = {storeKeyByMessageId.GetValueOrDefault( 1UL )}, RetryAttempt = 0, RedeliveryAttempt = 0",
+                            $"[MessageProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 1, MessageDataRemoved = {dataRemovedByMessageId.GetValueOrDefault( 1UL )}, Length = 2",
+                            $"[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id} (end)"
+                        ] ),
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            $"[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id} (start)",
+                            $"[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageStoreKey = {storeKeyByMessageId.GetValueOrDefault( 2UL )}, RetryAttempt = 0, RedeliveryAttempt = 0",
+                            $"[MessageProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 2, MessageDataRemoved = {dataRemovedByMessageId.GetValueOrDefault( 2UL )}, Length = 3",
+                            $"[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id} (end)"
+                        ] )
+                    ] ) )
             .Go();
     }
 
@@ -166,6 +236,11 @@ public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFi
     {
         var pushContinuation = new SafeTaskCompletionSource();
         var processContinuation = new SafeTaskCompletionSource( completionCount: 3 );
+        var storeKeyByMessageId = new ConcurrentDictionary<ulong, int>();
+        var dataRemovedByMessageId = new ConcurrentDictionary<ulong, bool>();
+        var dataRemovedByStoreKey = new ConcurrentDictionary<int, bool>();
+        var firstPushStarted = Atomic.Create( false );
+        var firstProcessStarted = Atomic.Create( false );
         var endSource = new SafeTaskCompletionSource( completionCount: 3 );
         var queueLogs = new QueueEventLogger();
         await using var server = new MessageBrokerServer(
@@ -177,8 +252,13 @@ public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFi
                     _ => MessageBrokerRemoteClientLogger.Create(
                         traceStart: e =>
                         {
-                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessage && e.Source.TraceId > 2 )
-                                pushContinuation.Task.Wait();
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessage )
+                            {
+                                if ( ! firstPushStarted.Value )
+                                    firstPushStarted.Value = true;
+                                else
+                                    pushContinuation.Task.Wait();
+                            }
                         },
                         traceEnd: e =>
                         {
@@ -193,22 +273,26 @@ public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFi
                         MessageBrokerQueueLogger.Create(
                             traceStart: e =>
                             {
-                                if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessages && e.Source.TraceId == 3 )
+                                if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage && ! firstProcessStarted.Value )
+                                {
+                                    firstProcessStarted.Value = true;
                                     pushContinuation.Complete();
+                                }
                             },
                             traceEnd: e =>
                             {
-                                if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessages )
+                                if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
                                 {
                                     processContinuation.Task.Wait();
                                     endSource.Complete();
                                 }
-                            },
-                            messagesEnqueued: e =>
-                            {
-                                for ( var i = 0; i < e.MessageCount; ++i )
+                                else if ( e.Type == MessageBrokerQueueTraceEventType.EnqueueMessage )
                                     processContinuation.Complete();
-                            } ) ) ) );
+                            },
+                            messageProcessed: e => dataRemovedByMessageId[e.MessageId] = e.MessageDataRemoved,
+                            messageDiscarded: e => dataRemovedByStoreKey[e.StoreKey] = e.MessageDataRemoved ) ) )
+                .SetStreamLoggerFactory(
+                    _ => MessageBrokerStreamLogger.Create( messagePushed: e => storeKeyByMessageId[e.MessageId] = e.MessageStoreKey ) ) );
 
         await server.StartAsync();
 
@@ -254,43 +338,37 @@ public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFi
 
         queueLogs.GetAll()
             .Skip( 2 )
+            .Where( t => ! t.Logs.Any( l => l.Contains( "[Trace:UnbindListener]" ) ) )
             .TestSequence(
             [
                 (t, _) => t.Logs.TestSequence(
                 [
-                    "[Trace:EnqueueMessages] Client = [2] 'test2', Queue = [1] 'c', TraceId = 2 (start)",
+                    "[Trace:EnqueueMessage] Client = [2] 'test2', Queue = [1] 'c', TraceId = 2 (start)",
                     "[StreamTrace] Client = [2] 'test2', Queue = [1] 'c', TraceId = 2, Correlation = (Stream = [1] 'c', TraceId = 2)",
-                    "[EnqueueingMessages] Client = [2] 'test2', Queue = [1] 'c', TraceId = 2, MessageCount = 1",
-                    "[MessagesEnqueued] Client = [2] 'test2', Queue = [1] 'c', TraceId = 2, MessageCount = 1",
-                    "[Trace:EnqueueMessages] Client = [2] 'test2', Queue = [1] 'c', TraceId = 2 (end)"
+                    $"[EnqueueingMessage] Client = [2] 'test2', Queue = [1] 'c', TraceId = 2, Channel = [1] 'c', Sender = [1] 'test', MessageId = 0, MessageStoreKey = {storeKeyByMessageId.GetValueOrDefault( 0UL )}, Length = 1",
+                    "[MessageEnqueued] Client = [2] 'test2', Queue = [1] 'c', TraceId = 2, Channel = [1] 'c', Sender = [1] 'test', MessageId = 0",
+                    "[Trace:EnqueueMessage] Client = [2] 'test2', Queue = [1] 'c', TraceId = 2 (end)"
                 ] ),
                 (t, _) => t.Logs.TestSequence(
                 [
-                    "[Trace:ProcessMessages] Client = [2] 'test2', Queue = [1] 'c', TraceId = 3 (start)",
-                    "[ProcessingMessages] Client = [2] 'test2', Queue = [1] 'c', TraceId = 3, MessageCount = 1, SkippedMessageCount = 0",
-                    "[MessageProcessed] Client = [2] 'test2', Queue = [1] 'c', TraceId = 3, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 0, Length = 1",
-                    "[Trace:ProcessMessages] Client = [2] 'test2', Queue = [1] 'c', TraceId = 3 (end)"
+                    "[Trace:ProcessMessage] Client = [2] 'test2', Queue = [1] 'c', TraceId = 3 (start)",
+                    $"[ProcessingMessage] Client = [2] 'test2', Queue = [1] 'c', TraceId = 3, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageStoreKey = {storeKeyByMessageId.GetValueOrDefault( 0UL )}, RetryAttempt = 0, RedeliveryAttempt = 0",
+                    $"[MessageProcessed] Client = [2] 'test2', Queue = [1] 'c', TraceId = 3, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 0, MessageDataRemoved = {dataRemovedByMessageId.GetValueOrDefault( 0UL )}, Length = 1",
+                    "[Trace:ProcessMessage] Client = [2] 'test2', Queue = [1] 'c', TraceId = 3 (end)"
                 ] ),
                 (t, _) => t.Logs.TestSequence(
                 [
-                    "[Trace:EnqueueMessages] Client = [2] 'test2', Queue = [1] 'c', TraceId = 4 (start)",
-                    "[StreamTrace] Client = [2] 'test2', Queue = [1] 'c', TraceId = 4, Correlation = (Stream = [1] 'c', TraceId = 4)",
-                    "[EnqueueingMessages] Client = [2] 'test2', Queue = [1] 'c', TraceId = 4, MessageCount = 1",
-                    "[MessagesEnqueued] Client = [2] 'test2', Queue = [1] 'c', TraceId = 4, MessageCount = 1",
-                    "[Trace:EnqueueMessages] Client = [2] 'test2', Queue = [1] 'c', TraceId = 4 (end)"
+                    $"[Trace:EnqueueMessage] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id} (start)",
+                    $"[StreamTrace] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id}, Correlation = (Stream = [1] 'c', TraceId = 4)",
+                    $"[EnqueueingMessage] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id}, Channel = [1] 'c', Sender = [1] 'test', MessageId = 1, MessageStoreKey = {storeKeyByMessageId.GetValueOrDefault( 1UL )}, Length = 2",
+                    $"[MessageEnqueued] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id}, Channel = [1] 'c', Sender = [1] 'test', MessageId = 1",
+                    $"[Trace:EnqueueMessage] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id} (end)"
                 ] ),
                 (t, _) => t.Logs.TestSequence(
                 [
-                    "[Trace:UnbindListener] Client = [2] 'test2', Queue = [1] 'c', TraceId = 5 (start)",
-                    "[ClientTrace] Client = [2] 'test2', Queue = [1] 'c', TraceId = 5, ClientTraceId = 4",
-                    "[ListenerUnbound] Client = [2] 'test2', Queue = [1] 'c', TraceId = 5, Channel = [1] 'c'",
-                    "[Trace:UnbindListener] Client = [2] 'test2', Queue = [1] 'c', TraceId = 5 (end)"
-                ] ),
-                (t, _) => t.Logs.TestSequence(
-                [
-                    "[Trace:ProcessMessages] Client = [2] 'test2', Queue = [1] 'c', TraceId = 6 (start)",
-                    "[ProcessingMessages] Client = [2] 'test2', Queue = [1] 'c', TraceId = 6, MessageCount = 0, SkippedMessageCount = 1",
-                    "[Trace:ProcessMessages] Client = [2] 'test2', Queue = [1] 'c', TraceId = 6 (end)"
+                    $"[Trace:ProcessMessage] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id} (start)",
+                    $"[MessageDiscarded] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Reason = DisposedPending, StoreKey = {storeKeyByMessageId.GetValueOrDefault( 1UL )}, Retry = 0, Redelivery = 0, MessageDataRemoved = {dataRemovedByStoreKey.GetValueOrDefault( storeKeyByMessageId.GetValueOrDefault( 1UL ) )}",
+                    $"[Trace:ProcessMessage] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id} (end)"
                 ] )
             ] )
             .Go();
@@ -377,18 +455,18 @@ public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFi
                     "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 11)",
                     "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 11)",
                     "[SystemNotificationSent] Client = [1] 'test', TraceId = 2, Type = StreamName",
-                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 43)",
-                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 43)",
-                    "[MessageProcessed] Client = [1] 'test', TraceId = 2, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 47)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 47)",
+                    "[MessageProcessed] Client = [1] 'test', TraceId = 2, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, RetryAttempt = 0, RedeliveryAttempt = 0",
                     "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (end)"
                 ] ),
                 (t, _) => t.Logs.TestSequence(
                 [
                     "[Trace:MessageNotification] Client = [1] 'test', TraceId = 3 (start)",
                     "[ProcessingMessage] Client = [1] 'test', TraceId = 3, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 3",
-                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 3, Packet = (MessageNotification, Length = 44)",
-                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 3, Packet = (MessageNotification, Length = 44)",
-                    "[MessageProcessed] Client = [1] 'test', TraceId = 3, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 1",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 3, Packet = (MessageNotification, Length = 48)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 3, Packet = (MessageNotification, Length = 48)",
+                    "[MessageProcessed] Client = [1] 'test', TraceId = 3, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0",
                     "[Trace:MessageNotification] Client = [1] 'test', TraceId = 3 (end)"
                 ] )
             ] )
@@ -446,9 +524,9 @@ public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFi
                     "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (SystemNotification, Length = 11)",
                     "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (SystemNotification, Length = 11)",
                     "[SystemNotificationSent] Client = [1] 'test', TraceId = 4, Type = StreamName",
-                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 44)",
-                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 44)",
-                    "[MessageProcessed] Client = [1] 'test', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 48)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 48)",
+                    "[MessageProcessed] Client = [1] 'test', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, RetryAttempt = 0, RedeliveryAttempt = 0",
                     "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (end)"
                 ] )
             ] )
@@ -461,6 +539,7 @@ public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFi
         var disposalContinuation = new SafeTaskCompletionSource();
         var endSource = new SafeTaskCompletionSource( completionCount: 2 );
         var clientLogs = new ClientEventLogger();
+        var isDisposed = Atomic.Create( false );
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
@@ -481,8 +560,11 @@ public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFi
                         return MessageBrokerRemoteClientLogger.Create(
                             disposed: _ =>
                             {
-                                if ( ! disposalContinuation.Task.IsCompleted )
+                                if ( ! isDisposed.Value )
+                                {
+                                    isDisposed.Value = true;
                                     disposalContinuation.Complete();
+                                }
                             } );
                     } ) );
 
@@ -572,9 +654,9 @@ public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFi
                     "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 11)",
                     "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 11)",
                     "[SystemNotificationSent] Client = [1] 'test', TraceId = 2, Type = StreamName",
-                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 43)",
-                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 43)",
-                    "[MessageProcessed] Client = [1] 'test', TraceId = 2, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 47)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 47)",
+                    "[MessageProcessed] Client = [1] 'test', TraceId = 2, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, RetryAttempt = 0, RedeliveryAttempt = 0",
                     "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (end)"
                 ] ),
                 (t, _) => t.Logs.TestSequence(
@@ -589,9 +671,9 @@ public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFi
                     "[SendPacket:Sending] Client = [1] 'test', TraceId = 5, Packet = (SystemNotification, Length = 11)",
                     "[SendPacket:Sent] Client = [1] 'test', TraceId = 5, Packet = (SystemNotification, Length = 11)",
                     "[SystemNotificationSent] Client = [1] 'test', TraceId = 5, Type = StreamName",
-                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 5, Packet = (MessageNotification, Length = 44)",
-                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 5, Packet = (MessageNotification, Length = 44)",
-                    "[MessageProcessed] Client = [1] 'test', TraceId = 5, Sender = [2] 'test3', Channel = [1] 'd', Stream = [1] 'd', Queue = [1] 'd', MessageId = 0",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 5, Packet = (MessageNotification, Length = 48)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 5, Packet = (MessageNotification, Length = 48)",
+                    "[MessageProcessed] Client = [1] 'test', TraceId = 5, Sender = [2] 'test3', Channel = [1] 'd', Stream = [1] 'd', Queue = [1] 'd', MessageId = 0, RetryAttempt = 0, RedeliveryAttempt = 0",
                     "[Trace:MessageNotification] Client = [1] 'test', TraceId = 5 (end)"
                 ] )
             ] )
@@ -681,13 +763,128 @@ public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFi
     }
 
     [Fact]
+    public async Task QueueProcessing_ShouldLogLackOfMessageDataInStream()
+    {
+        Exception? exception = null;
+        MessageBrokerStream? stream = null;
+        var endSource = new SafeTaskCompletionSource();
+        var readMessageSource = new SafeTaskCompletionSource();
+        var continuation = new SafeTaskCompletionSource();
+        var queueLogs = new QueueEventLogger();
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetQueueLoggerFactory(
+                    _ => queueLogs.GetLogger(
+                        MessageBrokerQueueLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
+                                    endSource.Complete();
+                            },
+                            processingMessage: e =>
+                            {
+                                readMessageSource.Complete();
+                                continuation.Task.Wait();
+                                if ( stream is not null )
+                                {
+                                    using ( stream.AcquireLock() )
+                                        stream.MessageStore.DecrementRefCount( e.MessageStoreKey, out var _ );
+                                }
+                            },
+                            error: e => exception = e.Exception ) ) ) );
+
+        await server.StartAsync();
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server );
+
+        await client.GetTask(
+            c =>
+            {
+                c.SendBindPublisherRequest( "c" );
+                c.ReadPublisherBoundResponse();
+                c.SendBindListenerRequest( "c", false );
+                c.ReadListenerBoundResponse();
+            } );
+
+        var minPushedAt = TimestampProvider.Shared.GetNow();
+        var remoteClient = server.Clients.TryGetById( 1 );
+        var queue = remoteClient?.Queues.TryGetById( 1 );
+        var publisher = remoteClient?.Publishers.TryGetByChannelId( 1 );
+        var listener = remoteClient?.Listeners.TryGetByChannelId( 1 );
+        stream = server.Streams.TryGetById( 1 );
+
+        await client.GetTask( c => c.SendPushMessage( 1, [ 1 ], confirm: false ) );
+        await readMessageSource.Task;
+
+        var pendingCount = queue?.Messages.Pending.Count ?? 0;
+        var messageCount = stream?.Messages.Count ?? 0;
+        var pendingMessage = queue?.Messages.Pending.TryPeekAt( 0 );
+        var message = pendingMessage?.TryGetMessage();
+
+        continuation.Complete();
+        await endSource.Task;
+
+        Assertion.All(
+                exception.TestType().Exact<MessageBrokerQueueException>( e => e.Queue.TestRefEquals( queue ) ),
+                stream.TestNotNull( s => s.Messages.Count.TestEquals( 0 ) ),
+                queue.TestNotNull(
+                    q => Assertion.All( q.State.TestEquals( MessageBrokerQueueState.Running ), q.Messages.Pending.Count.TestEquals( 0 ) ) ),
+                pendingCount.TestEquals( 1 ),
+                messageCount.TestEquals( 1 ),
+                message.TestNotNull(
+                    m => Assertion.All(
+                        "message",
+                        m.Publisher.TestRefEquals( publisher ),
+                        m.Length.TestEquals( MemorySize.FromBytes( 1 ) ),
+                        m.Id.TestEquals( 0UL ),
+                        m.PushedAt.TestGreaterThanOrEqualTo( minPushedAt ),
+                        m.StoreKey.TestEquals( 0 ),
+                        m.RefCount.TestInRange( 1, 2 ),
+                        m.ToString()
+                            .TestEquals(
+                                $"Publisher = ([1] 'test' => [1] 'c' publisher binding (using [1] 'c' stream) (Running)), Length = 1 B, Id = 0, PushedAt = {m.PushedAt}, StoreKey = 0, RefCount = {m.RefCount}" ) ) ),
+                pendingMessage.TestNotNull(
+                    m => Assertion.All(
+                        "pendingMessage",
+                        m.Publisher.TestRefEquals( publisher ),
+                        m.Listener.TestRefEquals( listener ),
+                        m.StoreKey.TestEquals( 0 ),
+                        m.ToString()
+                            .TestEquals(
+                                "Publisher = ([1] 'test' => [1] 'c' publisher binding (using [1] 'c' stream) (Running)), Listener = ([1] 'test' => [1] 'c' listener binding (using [1] 'c' queue) (Running)), StoreKey = 0" ) ) ),
+                queueLogs.GetAll()
+                    .Skip( 2 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2 (start)",
+                            "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageStoreKey = 0, RetryAttempt = 0, RedeliveryAttempt = 0",
+                            """
+                            [Error] Client = [1] 'test', Queue = [1] 'c', TraceId = 2
+                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerQueueException: Stream [1] 'c' does not have a message related to 0 store key.
+                            """,
+                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2 (end)"
+                        ] )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
     public async Task Disposal_ShouldDiscardEnqueuedMessages()
     {
         Exception? exception = null;
         var pushContinuation = new SafeTaskCompletionSource();
         var processContinuation = new SafeTaskCompletionSource( completionCount: 2 );
-        var endSource = new SafeTaskCompletionSource();
+        var endSource = new SafeTaskCompletionSource<Task>();
         var queueLogs = new QueueEventLogger();
+        var firstPushStarted = Atomic.Create( false );
+        var firstProcessStarted = Atomic.Create( false );
+        var firstProcessEnded = Atomic.Create( false );
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default
@@ -697,33 +894,34 @@ public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFi
                     _ => MessageBrokerRemoteClientLogger.Create(
                         traceStart: e =>
                         {
-                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessage && e.Source.TraceId > 2 )
-                                pushContinuation.Task.Wait();
-                        },
-                        traceEnd: e =>
-                        {
-                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.Dispose && e.Source.Client.Id == 2 )
-                                endSource.Complete();
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessage )
+                            {
+                                if ( ! firstPushStarted.Value )
+                                    firstPushStarted.Value = true;
+                                else
+                                    pushContinuation.Task.Wait();
+                            }
                         } ) )
                 .SetQueueLoggerFactory(
                     _ => queueLogs.GetLogger(
                         MessageBrokerQueueLogger.Create(
                             traceStart: e =>
                             {
-                                if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessages && e.Source.TraceId == 2 )
+                                if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage && ! firstProcessStarted.Value )
+                                {
+                                    firstProcessStarted.Value = true;
                                     pushContinuation.Complete();
+                                }
                             },
                             traceEnd: e =>
                             {
-                                if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessages && e.Source.TraceId == 2 )
+                                if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage && ! firstProcessEnded.Value )
                                 {
+                                    firstProcessEnded.Value = true;
                                     processContinuation.Task.Wait();
-                                    var __ = e.Source.Queue.Client.DisconnectAsync().AsTask();
+                                    endSource.Complete( e.Source.Queue.Client.DisconnectAsync().AsTask() );
                                 }
-                            },
-                            messagesEnqueued: e =>
-                            {
-                                for ( var i = 0; i < e.MessageCount; ++i )
+                                else if ( e.Type == MessageBrokerQueueTraceEventType.EnqueueMessage )
                                     processContinuation.Complete();
                             },
                             error: e => exception = e.Exception ) ) ) );
@@ -758,8 +956,7 @@ public class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedResourceFi
                 c.SendPushMessage( 1, [ 1, 2 ], confirm: false );
             } );
 
-        await client2.GetTask( c => c.ReadMessageNotification( 1 ) );
-        await endSource.Task;
+        await endSource.Task.Unwrap();
 
         Assertion.All(
                 exception.TestType().Exact<MessageBrokerQueueException>( exc => exc.Queue.TestRefEquals( queue ) ),

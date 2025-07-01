@@ -27,12 +27,16 @@ public readonly struct MessageBrokerStreamMessageProcessedEvent
         MessageBrokerChannelPublisherBinding publisher,
         ulong traceId,
         ulong messageId,
-        int length)
+        int length,
+        int failures,
+        bool discarded)
     {
         Source = MessageBrokerStreamEventSource.Create( publisher.Stream, traceId );
         Publisher = publisher;
         MessageId = messageId;
         Length = length;
+        Failures = failures;
+        Discarded = discarded;
     }
 
     /// <summary>
@@ -56,6 +60,16 @@ public readonly struct MessageBrokerStreamMessageProcessedEvent
     public int Length { get; }
 
     /// <summary>
+    /// Number of listeners that failed to accept the message.
+    /// </summary>
+    public int Failures { get; }
+
+    /// <summary>
+    /// Specifies whether or not the message was discarded because no listener has accepted it.
+    /// </summary>
+    public bool Discarded { get; }
+
+    /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerStreamMessageProcessedEvent"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
@@ -63,7 +77,7 @@ public readonly struct MessageBrokerStreamMessageProcessedEvent
     public override string ToString()
     {
         return
-            $"[MessageProcessed] {Source}, Client = [{Publisher.Client.Id}] '{Publisher.Client.Name}', Channel = [{Publisher.Channel.Id}] '{Publisher.Channel.Name}', MessageId = {MessageId}, Length = {Length}";
+            $"[MessageProcessed] {Source}, Channel = [{Publisher.Channel.Id}] '{Publisher.Channel.Name}', Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', MessageId = {MessageId}, Length = {Length}, Failures = {Failures}, Discarded = {Discarded}";
     }
 
     [Pure]
@@ -72,8 +86,10 @@ public readonly struct MessageBrokerStreamMessageProcessedEvent
         MessageBrokerChannelPublisherBinding publisher,
         ulong traceId,
         ulong messageId,
-        int length)
+        int length,
+        int failures,
+        bool discarded)
     {
-        return new MessageBrokerStreamMessageProcessedEvent( publisher, traceId, messageId, length );
+        return new MessageBrokerStreamMessageProcessedEvent( publisher, traceId, messageId, length, failures, discarded );
     }
 }

@@ -32,12 +32,11 @@ public sealed class MessageBrokerStream
 {
     internal ReferenceStore<Pair<int, int>, MessageBrokerChannelPublisherBinding> PublishersByClientChannelIdPair;
     internal StreamProcessor StreamProcessor;
+    internal StreamMessageStore MessageStore;
     internal readonly MessageBrokerStreamLogger Logger;
 
     private readonly object _sync = new object();
-    private QueueSlim<StreamMessage> _messages;
     private MessageBrokerStreamState _state;
-    private ulong _nextMessageId;
     private ulong _nextTraceId;
 
     internal MessageBrokerStream(MessageBrokerServer server, int id, string name)
@@ -45,12 +44,11 @@ public sealed class MessageBrokerStream
         Server = server;
         Id = id;
         Name = name;
-        _nextMessageId = 0;
         _nextTraceId = 0;
         _state = MessageBrokerStreamState.Running;
-        _messages = QueueSlim<StreamMessage>.Create();
         PublishersByClientChannelIdPair = ReferenceStore<Pair<int, int>, MessageBrokerChannelPublisherBinding>.Create();
         StreamProcessor = StreamProcessor.Create();
+        MessageStore = StreamMessageStore.Create();
         Logger = server.StreamLoggerFactory?.Invoke( this ) ?? default;
         StreamProcessor.SetUnderlyingTask( StreamProcessor.StartUnderlyingTask( this ) );
     }
@@ -89,6 +87,11 @@ public sealed class MessageBrokerStream
     /// </summary>
     public MessageBrokerStreamPublisherCollection Publishers => new MessageBrokerStreamPublisherCollection( this );
 
+    /// <summary>
+    /// Collection of messages stored in this stream.
+    /// </summary>
+    public MessageBrokerStreamMessageCollection Messages => new MessageBrokerStreamMessageCollection( this );
+
     internal bool ShouldCancel => _state >= MessageBrokerStreamState.Disposing;
 
     /// <summary>
@@ -102,70 +105,39 @@ public sealed class MessageBrokerStream
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal Protocol.MessageRejectedResponse.Reasons PushMessage(
+    internal PushMessageResult PushMessage(
         MessageBrokerChannelPublisherBinding publisher,
         MemoryPoolToken<byte> token,
         ReadOnlyMemory<byte> data,
-        ref ulong? messageId,
+        ref ulong messageId,
+        ref int messageStoreKey,
         ref ulong streamTraceId)
     {
         using ( AcquireLock() )
         {
             if ( ShouldCancel )
-                return Protocol.MessageRejectedResponse.Reasons.Cancelled;
+                return PushMessageResult.StreamDisposed;
 
-            ulong id;
             using ( publisher.AcquireLock() )
             {
                 if ( publisher.ShouldCancel )
-                    return Protocol.MessageRejectedResponse.Reasons.Cancelled;
+                    return PushMessageResult.BindingDisposed;
 
-                id = unchecked( _nextMessageId++ );
-                _messages.Enqueue( new StreamMessage( id, publisher.Client.GetTimestamp(), publisher, token, data ) );
+                messageId = MessageStore.Add( publisher, token, data, out messageStoreKey );
             }
 
-            messageId = id;
             streamTraceId = GetTraceId();
             StreamProcessor.SignalContinuation();
         }
 
-        return Protocol.MessageRejectedResponse.Reasons.None;
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal MessageBrokerChannel? CopyMessagesIntoUnsafe(ref ListSlim<StreamMessage> buffer)
-    {
-        Assume.True( buffer.IsEmpty );
-        Assume.IsGreaterThan( buffer.Capacity, 0 );
-        if ( _messages.IsEmpty )
-            return null;
-
-        var queueSlice = _messages.AsMemory();
-        if ( queueSlice.Length > buffer.Capacity )
-            queueSlice = queueSlice.Slice( 0, buffer.Capacity );
-
-        var firstSlice = queueSlice.First.Span;
-        var firstMessage = firstSlice[0];
-        var channel = firstMessage.Publisher.Channel;
-        buffer.Add( firstMessage );
-
-        if ( ! CopyMessagesInto( firstSlice.Slice( 1 ), ref buffer, channel ) )
-            CopyMessagesInto( queueSlice.Second.Span, ref buffer, channel );
-
-        return channel;
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void DequeueMessagesUnsafe(int count)
-    {
-        _messages.DequeueRange( count );
+        return PushMessageResult.Success;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal bool TryDisposeByRemovingPublisherUnsafe(int clientId, int channelId)
     {
         PublishersByClientChannelIdPair.Remove( new Pair<int, int>( clientId, channelId ) );
-        if ( PublishersByClientChannelIdPair.Count > 0 || ! _messages.IsEmpty )
+        if ( PublishersByClientChannelIdPair.Count > 0 || ! MessageStore.IsEmpty )
             return false;
 
         _state = MessageBrokerStreamState.Disposing;
@@ -173,10 +145,9 @@ public sealed class MessageBrokerStream
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool TryDisposeDueToEmptyQueueUnsafe()
+    internal bool TryDisposeDueToEmptyMessageStoreUnsafe()
     {
-        Assume.True( _messages.IsEmpty );
-        if ( PublishersByClientChannelIdPair.Count > 0 )
+        if ( ! MessageStore.IsEmpty || PublishersByClientChannelIdPair.Count > 0 )
             return false;
 
         _state = MessageBrokerStreamState.Disposing;
@@ -207,7 +178,7 @@ public sealed class MessageBrokerStream
 
                 if ( PublishersByClientChannelIdPair.Remove( new Pair<int, int>( client.Id, channel.Id ), out publisher )
                     && PublishersByClientChannelIdPair.Count == 0
-                    && _messages.IsEmpty )
+                    && MessageStore.IsEmpty )
                 {
                     dispose = true;
                     _state = MessageBrokerStreamState.Disposing;
@@ -258,7 +229,7 @@ public sealed class MessageBrokerStream
             int discardedMessageCount;
             Chain<Exception> exceptions;
             using ( AcquireLock() )
-                (discardedMessageCount, exceptions) = ClearMessages();
+                (discardedMessageCount, exceptions) = MessageStore.ClearPending();
 
             foreach ( var exc in exceptions )
                 MessageBrokerStreamErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
@@ -285,13 +256,14 @@ public sealed class MessageBrokerStream
         using ( AcquireLock() )
         {
             Assume.Equals( PublishersByClientChannelIdPair.Count, 0 );
-            Assume.True( _messages.IsEmpty );
+            Assume.True( MessageStore.IsEmpty );
 
             processorTask = StreamProcessor.DiscardUnderlyingTask();
             if ( ignoreProcessorTask )
                 processorTask = null;
 
             StreamProcessor.Dispose();
+            MessageStore.Clear();
         }
 
         if ( processorTask is not null )
@@ -305,6 +277,29 @@ public sealed class MessageBrokerStream
             _state = MessageBrokerStreamState.Disposed;
 
         MessageBrokerStreamDisposedEvent.Create( this, traceId ).Emit( Logger.Disposed );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void ClearMessageStore()
+    {
+        Assume.IsGreaterThanOrEqualTo( State, MessageBrokerStreamState.Disposing );
+
+        Chain<Exception> exceptions;
+        using ( AcquireLock() )
+            exceptions = MessageStore.Clear();
+
+        if ( exceptions.Count == 0 )
+            return;
+
+        ulong traceId;
+        using ( AcquireLock() )
+            traceId = GetTraceId();
+
+        using ( MessageBrokerStreamTraceEvent.CreateScope( this, traceId, MessageBrokerStreamTraceEventType.Unexpected ) )
+        {
+            foreach ( var exc in exceptions )
+                MessageBrokerStreamErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
+        }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -333,40 +328,5 @@ public sealed class MessageBrokerStream
     internal ulong GetTraceId()
     {
         return unchecked( _nextTraceId++ );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static bool CopyMessagesInto(
-        ReadOnlySpan<StreamMessage> source,
-        ref ListSlim<StreamMessage> target,
-        MessageBrokerChannel channel)
-    {
-        foreach ( ref readonly var message in source )
-        {
-            Assume.IsLessThan( target.Count, target.Capacity );
-            if ( ! ReferenceEquals( channel, message.Publisher.Channel ) )
-                return true;
-
-            target.Add( message );
-        }
-
-        return false;
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private (int DiscardedMessageCount, Chain<Exception> Exceptions) ClearMessages()
-    {
-        var discardedMessageCount = _messages.Count;
-        var exceptions = Chain<Exception>.Empty;
-
-        foreach ( ref readonly var message in _messages )
-        {
-            var exc = message.Return();
-            if ( exc is not null )
-                exceptions = exceptions.Extend( exc );
-        }
-
-        _messages = QueueSlim<StreamMessage>.Create();
-        return (discardedMessageCount, exceptions);
     }
 }

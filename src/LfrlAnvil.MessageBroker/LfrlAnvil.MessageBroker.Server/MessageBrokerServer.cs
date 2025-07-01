@@ -366,6 +366,8 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
             channel.OnServerDisposed( traceId );
 
         await Parallel.ForEachAsync( clients, (c, _) => c.OnServerDisposedAsync( traceId ) ).ConfigureAwait( false );
+        foreach ( var stream in streams )
+            stream.ClearMessageStore();
 
         if ( clientListenerTask is not null )
             await clientListenerTask.ConfigureAwait( false );

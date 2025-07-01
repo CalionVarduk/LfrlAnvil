@@ -105,7 +105,7 @@ internal struct PublisherCollection
             ManualResetValueTaskSource<IncomingPacketToken> responseSource;
             Protocol.BindPublisherRequest request;
 
-            var poolToken = default( MemoryPoolToken<byte> );
+            var poolToken = MemoryPoolToken<byte>.Empty;
             try
             {
                 request = new Protocol.BindPublisherRequest( channelName, streamName );
@@ -305,7 +305,7 @@ internal struct PublisherCollection
             ManualResetValueTaskSource<IncomingPacketToken> responseSource;
             Protocol.UnbindPublisherRequest request;
 
-            var poolToken = default( MemoryPoolToken<byte> );
+            var poolToken = MemoryPoolToken<byte>.Empty;
             try
             {
                 request = new Protocol.UnbindPublisherRequest( publisher.ChannelId );

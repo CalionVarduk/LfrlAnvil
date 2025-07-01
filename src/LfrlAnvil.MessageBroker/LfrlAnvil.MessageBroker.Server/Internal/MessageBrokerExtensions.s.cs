@@ -52,11 +52,11 @@ internal static class MessageBrokerExtensions
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static void SetLength(this MemoryPoolToken<byte> token, int length, out Memory<byte> data)
+    internal static void SetLength(this MemoryPoolToken<byte> token, int length, out Memory<byte> data, bool trimStart = false)
     {
         using ( token.AcquireLock() )
         {
-            token.SetLength( length );
+            token.SetLength( length, trimStart );
             data = token.AsMemory();
         }
     }

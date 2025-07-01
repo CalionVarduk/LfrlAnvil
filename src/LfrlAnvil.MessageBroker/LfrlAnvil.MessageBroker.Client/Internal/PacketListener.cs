@@ -137,7 +137,7 @@ internal struct PacketListener
 
             MessageBrokerClientAwaitPacketEvent.Create( client, header ).Emit( client.Logger.AwaitPacket );
 
-            var packetPoolToken = default( MemoryPoolToken<byte> );
+            var packetPoolToken = MemoryPoolToken<byte>.Empty;
             var packetBuffer = Memory<byte>.Empty;
             switch ( header.GetClientEndpoint() )
             {

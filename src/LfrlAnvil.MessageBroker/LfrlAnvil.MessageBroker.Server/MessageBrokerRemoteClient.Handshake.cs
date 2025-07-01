@@ -119,7 +119,7 @@ public sealed partial class MessageBrokerRemoteClient
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private async ValueTask<Result> EstablishHandshakeAsync(ulong traceId)
     {
-        var poolToken = default( MemoryPoolToken<byte> );
+        var poolToken = MemoryPoolToken<byte>.Empty;
         try
         {
             using ( AcquireActiveLock( traceId, out var exc ) )
@@ -316,7 +316,7 @@ public sealed partial class MessageBrokerRemoteClient
 
         if ( ! registration.Value )
         {
-            var error = new MessageBrokerServerDuplicateClientNameException( Server, name.Value );
+            var error = new MessageBrokerServerException( Server, Resources.DuplicateClientName( name.Value ) );
             var result = new ReadHandshakeResult(
                 Buffer: buffer,
                 RejectedResponse: new Protocol.HandshakeRejectedResponse( Protocol.HandshakeRejectedResponse.Reasons.NameAlreadyExists ),

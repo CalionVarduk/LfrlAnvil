@@ -52,6 +52,19 @@ internal ref struct BinaryContractWriter
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void Write(ushort value)
+    {
+        Unsafe.WriteUnaligned( ref _first, value );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void MoveWrite(ushort value)
+    {
+        Write( value );
+        Move( sizeof( ushort ) );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void Write(uint value)
     {
         Unsafe.WriteUnaligned( ref _first, value );

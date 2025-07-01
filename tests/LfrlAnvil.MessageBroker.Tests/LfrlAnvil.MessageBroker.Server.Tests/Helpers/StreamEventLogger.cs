@@ -53,10 +53,10 @@ public sealed class StreamEventLogger
                 Add( e.Source.TraceId, e.ToString() );
                 logger.MessagePushed?.Invoke( e );
             },
-            processingMessages: e =>
+            processingMessage: e =>
             {
                 Add( e.Source.TraceId, e.ToString() );
-                logger.ProcessingMessages?.Invoke( e );
+                logger.ProcessingMessage?.Invoke( e );
             },
             messageProcessed: e =>
             {

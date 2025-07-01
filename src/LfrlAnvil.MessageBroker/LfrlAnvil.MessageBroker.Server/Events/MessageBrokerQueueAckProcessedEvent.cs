@@ -18,15 +18,15 @@ using System.Runtime.CompilerServices;
 namespace LfrlAnvil.MessageBroker.Server.Events;
 
 /// <summary>
-/// Represents an event emitted by <see cref="MessageBrokerQueue"/> when starting to process a batch of enqueued messages.
+/// Represents an event emitted by <see cref="MessageBrokerQueue"/> after a message notification ACK has been processed.
 /// </summary>
-public readonly struct MessageBrokerQueueProcessingMessagesEvent
+public readonly struct MessageBrokerQueueAckProcessedEvent
 {
-    private MessageBrokerQueueProcessingMessagesEvent(MessageBrokerQueue queue, ulong traceId, int messageCount, int skippedMessageCount)
+    private MessageBrokerQueueAckProcessedEvent(MessageBrokerQueue queue, ulong traceId, int ackId, bool messageDataRemoved)
     {
         Source = MessageBrokerQueueEventSource.Create( queue, traceId );
-        MessageCount = messageCount;
-        SkippedMessageCount = skippedMessageCount;
+        AckId = ackId;
+        MessageDataRemoved = messageDataRemoved;
     }
 
     /// <summary>
@@ -35,33 +35,31 @@ public readonly struct MessageBrokerQueueProcessingMessagesEvent
     public MessageBrokerQueueEventSource Source { get; }
 
     /// <summary>
-    /// Number of messages to process.
+    /// Id of the processed ACK.
     /// </summary>
-    public int MessageCount { get; }
+    public int AckId { get; }
 
     /// <summary>
-    /// Number of messages skipped due to disposed listeners.
+    /// Specifies whether or not the data of the message has been removed from the stream's message store
+    /// due to no longer being referenced.
     /// </summary>
-    public int SkippedMessageCount { get; }
+    public bool MessageDataRemoved { get; }
 
     /// <summary>
-    /// Returns a string representation of this <see cref="MessageBrokerQueueProcessingMessagesEvent"/> instance.
+    /// Returns a string representation of this <see cref="MessageBrokerQueueAckProcessedEvent"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
-        return $"[ProcessingMessages] {Source}, MessageCount = {MessageCount}, SkippedMessageCount = {SkippedMessageCount}";
+        var messageDataRemoved = AckId == 0 ? $", MessageDataRemoved = {MessageDataRemoved}" : string.Empty;
+        return $"[AckProcessed] {Source}, AckId = {AckId}{messageDataRemoved}";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerQueueProcessingMessagesEvent Create(
-        MessageBrokerQueue queue,
-        ulong traceId,
-        int messageCount,
-        int skippedMessageCount)
+    internal static MessageBrokerQueueAckProcessedEvent Create(MessageBrokerQueue queue, ulong traceId, int ackId, bool messageDataRemoved)
     {
-        return new MessageBrokerQueueProcessingMessagesEvent( queue, traceId, messageCount, skippedMessageCount );
+        return new MessageBrokerQueueAckProcessedEvent( queue, traceId, ackId, messageDataRemoved );
     }
 }

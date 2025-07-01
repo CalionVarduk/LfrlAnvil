@@ -43,6 +43,9 @@ public readonly struct MessageBrokerRemoteClientLogger
         Action<MessageBrokerRemoteClientMessagePushedEvent>? messagePushed,
         Action<MessageBrokerRemoteClientProcessingMessageEvent>? processingMessage,
         Action<MessageBrokerRemoteClientMessageProcessedEvent>? messageProcessed,
+        Action<MessageBrokerRemoteClientProcessingAckEvent>? processingAck,
+        Action<MessageBrokerRemoteClientProcessingNegativeAckEvent>? processingNegativeAck,
+        Action<MessageBrokerRemoteClientAckProcessedEvent>? ackProcessed,
         Action<MessageBrokerRemoteClientSendingSenderNameEvent>? sendingSenderName,
         Action<MessageBrokerRemoteClientSendingStreamNameEvent>? sendingStreamName,
         Action<MessageBrokerRemoteClientSystemNotificationSentEvent>? systemNotificationSent,
@@ -70,6 +73,9 @@ public readonly struct MessageBrokerRemoteClientLogger
         MessagePushed = messagePushed;
         ProcessingMessage = processingMessage;
         MessageProcessed = messageProcessed;
+        ProcessingAck = processingAck;
+        ProcessingNegativeAck = processingNegativeAck;
+        AckProcessed = ackProcessed;
         SendingSenderName = sendingSenderName;
         SendingStreamName = sendingStreamName;
         SystemNotificationSent = systemNotificationSent;
@@ -179,6 +185,21 @@ public readonly struct MessageBrokerRemoteClientLogger
     public readonly Action<MessageBrokerRemoteClientMessageProcessedEvent>? MessageProcessed;
 
     /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerRemoteClientProcessingAckEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerRemoteClientProcessingAckEvent>? ProcessingAck;
+
+    /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerRemoteClientProcessingNegativeAckEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerRemoteClientProcessingNegativeAckEvent>? ProcessingNegativeAck;
+
+    /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerRemoteClientAckProcessedEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerRemoteClientAckProcessedEvent>? AckProcessed;
+
+    /// <summary>
     /// Optional callback for a <see cref="MessageBrokerRemoteClientSendingSenderNameEvent"/>.
     /// </summary>
     public readonly Action<MessageBrokerRemoteClientSendingSenderNameEvent>? SendingSenderName;
@@ -231,6 +252,9 @@ public readonly struct MessageBrokerRemoteClientLogger
     /// <param name="messagePushed">Optional <see cref="MessagePushed"/> callback.</param>
     /// <param name="processingMessage">Optional <see cref="ProcessingMessage"/> callback.</param>
     /// <param name="messageProcessed">Optional <see cref="MessageProcessed"/> callback.</param>
+    /// <param name="processingAck">Optional <see cref="ProcessingAck"/> callback.</param>
+    /// <param name="processingNegativeAck">Optional <see cref="ProcessingNegativeAck"/> callback.</param>
+    /// <param name="ackProcessed">Optional <see cref="AckProcessed"/> callback.</param>
     /// <param name="sendingSenderName">Optional <see cref="SendingSenderName"/> callback.</param>
     /// <param name="sendingStreamName">Optional <see cref="SendingStreamName"/> callback.</param>
     /// <param name="systemNotificationSent">Optional <see cref="SystemNotificationSent"/> callback.</param>
@@ -260,6 +284,9 @@ public readonly struct MessageBrokerRemoteClientLogger
         Action<MessageBrokerRemoteClientMessagePushedEvent>? messagePushed = null,
         Action<MessageBrokerRemoteClientProcessingMessageEvent>? processingMessage = null,
         Action<MessageBrokerRemoteClientMessageProcessedEvent>? messageProcessed = null,
+        Action<MessageBrokerRemoteClientProcessingAckEvent>? processingAck = null,
+        Action<MessageBrokerRemoteClientProcessingNegativeAckEvent>? processingNegativeAck = null,
+        Action<MessageBrokerRemoteClientAckProcessedEvent>? ackProcessed = null,
         Action<MessageBrokerRemoteClientSendingSenderNameEvent>? sendingSenderName = null,
         Action<MessageBrokerRemoteClientSendingStreamNameEvent>? sendingStreamName = null,
         Action<MessageBrokerRemoteClientSystemNotificationSentEvent>? systemNotificationSent = null,
@@ -288,6 +315,9 @@ public readonly struct MessageBrokerRemoteClientLogger
             messagePushed,
             processingMessage,
             messageProcessed,
+            processingAck,
+            processingNegativeAck,
+            ackProcessed,
             sendingSenderName,
             sendingStreamName,
             systemNotificationSent,

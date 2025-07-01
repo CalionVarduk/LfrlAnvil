@@ -30,22 +30,32 @@ public enum MessageBrokerQueueTraceEventType : byte
     UnbindListener = 1,
 
     /// <summary>
-    /// Specifies that trace is related to a batch of messages being enqueued by a stream.
+    /// Specifies that trace is related to a message being enqueued by a stream.
     /// </summary>
-    EnqueueMessages = 2,
+    EnqueueMessage = 2,
 
     /// <summary>
-    /// Specifies that trace is related to processing a batch of enqueued messages.
+    /// Specifies that trace is related to processing of an enqueued message.
     /// </summary>
-    ProcessMessages = 3,
+    ProcessMessage = 3,
+
+    /// <summary>
+    /// Specifies that trace is related to a message notification ACK.
+    /// </summary>
+    Ack = 4,
+
+    /// <summary>
+    /// Specifies that trace is related to a negative message notification ACK.
+    /// </summary>
+    NegativeAck = 5,
 
     /// <summary>
     /// Specifies that trace is related to the queue disposal.
     /// </summary>
-    Dispose = 4,
+    Dispose = 6,
 
     /// <summary>
     /// Specifies that trace is related to an unexpected occurrence in the queue e.g. an error.
     /// </summary>
-    Unexpected = 5
+    Unexpected = 7
 }

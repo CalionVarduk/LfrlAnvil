@@ -18,6 +18,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
+using LfrlAnvil.Chrono;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.MessageBroker.Client.Events;
 using LfrlAnvil.MessageBroker.Client.Exceptions;
@@ -40,7 +41,11 @@ public sealed class MessageBrokerListener
         string channelName,
         int queueId,
         string queueName,
-        int prefetchHint,
+        short prefetchHint,
+        int maxRetries,
+        Duration retryDelay,
+        int maxRedeliveries,
+        Duration minAckTimeout,
         MessageBrokerListenerCallback callback)
     {
         Client = client;
@@ -49,6 +54,10 @@ public sealed class MessageBrokerListener
         QueueId = queueId;
         QueueName = queueName;
         PrefetchHint = prefetchHint;
+        MaxRetries = maxRetries;
+        RetryDelay = retryDelay;
+        MaxRedeliveries = maxRedeliveries;
+        MinAckTimeout = minAckTimeout;
         Callback = callback;
         _state = MessageBrokerListenerState.Bound;
         CancellationSource = new CancellationTokenSource();
@@ -84,7 +93,45 @@ public sealed class MessageBrokerListener
     /// <summary>
     /// Specifies how many messages intended for this listener can be sent by the server to the <see cref="Client"/> at the same time.
     /// </summary>
-    public int PrefetchHint { get; }
+    /// <remarks>
+    /// This is a max potential value. Actual value is dependant on all listeners attached to the queue
+    /// and all of its currently pending messages.
+    /// </remarks>
+    public short PrefetchHint { get; }
+
+    /// <summary>
+    /// Specifies how many times the server will attempt to automatically send a message notification retry
+    /// when the <see cref="Client"/> responds with a negative ACK, before giving up.
+    /// </summary>
+    /// <remarks>Retries are disabled when value is equal <b>0</b>.</remarks>
+    public int MaxRetries { get; }
+
+    /// <summary>
+    /// Specifies the delay between the server successfully processing negative ACK sent by the <see cref="Client"/>
+    /// and the server sending a message notification retry.
+    /// </summary>
+    public Duration RetryDelay { get; }
+
+    /// <summary>
+    /// Specifies how many times the server will attempt to automatically send a message notification redelivery
+    /// when the <see cref="Client"/> fails to respond with either an ACK or a negative ACK in time (see <see cref="MinAckTimeout"/>),
+    /// before giving up.
+    /// </summary>
+    /// <remarks>Redelivery are disabled when value is equal <b>0</b>.</remarks>
+    public int MaxRedeliveries { get; }
+
+    /// <summary>
+    /// Specifies the minimum amount of time that the server will wait for the <see cref="Client"/> to send either an ACK or a negative ACK
+    /// before attempting a message notification redelivery.
+    /// Actual ACK timeout may be different due to the state of the queue and other listeners bound to it.
+    /// </summary>
+    public Duration MinAckTimeout { get; }
+
+    /// <summary>
+    /// Specifies whether or not the <see cref="Client"/> is expected to send ACK or negative ACK to the server
+    /// in order to confirm message notification.
+    /// </summary>
+    public bool AreAcksEnabled => MinAckTimeout > Duration.Zero;
 
     /// <summary>
     /// Callback invoked when this listener receives a message from the server.
@@ -133,6 +180,92 @@ public sealed class MessageBrokerListener
     public ValueTask<Result<MessageBrokerUnbindListenerResult>> UnbindAsync()
     {
         return ListenerCollection.UnbindAsync( this );
+    }
+
+    /// <summary>
+    /// Attempts to send a message notification ACK.
+    /// </summary>
+    /// <param name="ackId">Id of the pending ACK associated with the message.</param>
+    /// <param name="streamId">Unique id of the server-side stream that handled the message.</param>
+    /// <param name="messageId">Unique message id.</param>
+    /// <param name="retryAttempt">Retry attempt number of the message.</param>
+    /// <param name="redeliveryAttempt">Redelivery attempt number of the message.</param>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// When <paramref name="ackId"/> is less than or equal to <b>0</b>
+    /// or when <paramref name="streamId"/> is less than or equal to <b>0</b>
+    /// or when <paramref name="retryAttempt"/> is less than <b>0</b> or greater than the listener's <see cref="MaxRetries"/>
+    /// or when <paramref name="redeliveryAttempt"/> is less than <b>0</b> or greater than the listener's <see cref="MaxRedeliveries"/>.
+    /// </exception>
+    /// <exception cref="MessageBrokerClientDisposedException">When client has already been disposed.</exception>
+    /// <exception cref="MessageBrokerClientMessageException">When ACKs are not enabled for this listener.</exception>
+    /// <returns>
+    /// A task that represents the operation, which returns a <see cref="Result{T}"/> instance,
+    /// with underlying <see cref="bool"/> result. If the result is equal to <b>true</b>, then ACK sending was successful,
+    /// otherwise the listener was no longer bound to the channel.
+    /// </returns>
+    /// <remarks>
+    /// Unexpected errors encountered during ACK sending attempt will cause the client to be automatically disposed.
+    /// Returned <see cref="Result{T}"/> will only be valid when either the client has successfully sent the ACK to the server,
+    /// or the listener is already locally ubound from the channel, which will cancel the request to the server.
+    /// </remarks>
+    public ValueTask<Result<bool>> SendMessageAckAsync(
+        int ackId,
+        int streamId,
+        ulong messageId,
+        int retryAttempt,
+        int redeliveryAttempt)
+    {
+        return ListenerCollection.SendMessageAckAsync( this, ackId, streamId, messageId, retryAttempt, redeliveryAttempt, null );
+    }
+
+    /// <summary>
+    /// Attempts to send a negative message notification ACK.
+    /// </summary>
+    /// <param name="ackId">Id of the pending ACK associated with the message.</param>
+    /// <param name="streamId">Unique id of the server-side stream that handled the message.</param>
+    /// <param name="messageId">Unique message id.</param>
+    /// <param name="retryAttempt">Retry attempt number of the message.</param>
+    /// <param name="redeliveryAttempt">Redelivery attempt number of the message.</param>
+    /// <param name="nack">
+    /// Optional <see cref="MessageBrokerNegativeAck"/> instance that allows to modify the ACK.
+    /// Equal to <see cref="MessageBrokerNegativeAck.Default"/> by default.
+    /// </param>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// When <paramref name="ackId"/> is less than or equal to <b>0</b>
+    /// or when <paramref name="streamId"/> is less than or equal to <b>0</b>
+    /// or when <paramref name="retryAttempt"/> is less than <b>0</b> or greater than the listener's <see cref="MaxRetries"/>
+    /// or when <paramref name="redeliveryAttempt"/> is less than <b>0</b> or greater than the listener's <see cref="MaxRedeliveries"/>.
+    /// </exception>
+    /// <exception cref="MessageBrokerClientDisposedException">When client has already been disposed.</exception>
+    /// <exception cref="MessageBrokerClientMessageException">When ACKs are not enabled for this listener.</exception>
+    /// <returns>
+    /// A task that represents the operation, which returns a <see cref="Result{T}"/> instance,
+    /// with underlying <see cref="bool"/> result. If the result is equal to <b>true</b>, then ACK sending was successful,
+    /// otherwise the listener was no longer bound to the channel.
+    /// </returns>
+    /// <remarks>
+    /// Unexpected errors encountered during ACK sending attempt will cause the client to be automatically disposed.
+    /// Returned <see cref="Result{T}"/> will only be valid when either the client has successfully sent the ACK to the server,
+    /// or the listener is already locally ubound from the channel, which will cancel the request to the server.
+    /// </remarks>
+    public ValueTask<Result<bool>> SendNegativeMessageAckAsync(
+        int ackId,
+        int streamId,
+        ulong messageId,
+        int retryAttempt,
+        int redeliveryAttempt,
+        MessageBrokerNegativeAck nack = default)
+    {
+        return ListenerCollection.SendNegativeMessageAckAsync(
+            this,
+            ackId,
+            streamId,
+            messageId,
+            retryAttempt,
+            redeliveryAttempt,
+            null,
+            nack,
+            false );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

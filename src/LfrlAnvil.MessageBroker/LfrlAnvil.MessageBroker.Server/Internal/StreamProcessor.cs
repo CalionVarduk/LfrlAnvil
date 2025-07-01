@@ -108,7 +108,6 @@ internal struct StreamProcessor
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static async ValueTask RunCore(MessageBrokerStream stream)
     {
-        var buffer = ListSlim<StreamMessage>.Create( minCapacity: 16 );
         while ( true )
         {
             var @continue = await stream.StreamProcessor._continuation.GetTask().ConfigureAwait( false );
@@ -118,17 +117,17 @@ internal struct StreamProcessor
             var disposed = false;
             while ( true )
             {
+                int key;
+                StreamMessage message;
                 ulong traceId;
-                MessageBrokerChannel? channel;
                 using ( stream.AcquireLock() )
                 {
                     if ( stream.ShouldCancel )
                         return;
 
-                    channel = stream.CopyMessagesIntoUnsafe( ref buffer );
-                    if ( channel is null )
+                    if ( ! stream.MessageStore.TryPeekPending( out key, out message ) )
                     {
-                        if ( stream.TryDisposeDueToEmptyQueueUnsafe() )
+                        if ( stream.TryDisposeDueToEmptyMessageStoreUnsafe() )
                             disposed = true;
                         else
                             stream.StreamProcessor._continuation.Reset();
@@ -139,28 +138,53 @@ internal struct StreamProcessor
                     traceId = stream.GetTraceId();
                 }
 
-                using ( MessageBrokerStreamTraceEvent.CreateScope( stream, traceId, MessageBrokerStreamTraceEventType.ProcessMessages ) )
+                using ( MessageBrokerStreamTraceEvent.CreateScope( stream, traceId, MessageBrokerStreamTraceEventType.ProcessMessage ) )
                 {
-                    MessageBrokerStreamProcessingMessagesEvent.Create( stream, traceId, channel, buffer.Count )
-                        .Emit( stream.Logger.ProcessingMessages );
+                    var failures = 0;
+                    var listeners = message.Publisher.Channel.Listeners.GetAll();
+                    MessageBrokerStreamProcessingMessageEvent.Create(
+                            message.Publisher,
+                            traceId,
+                            message.Id,
+                            message.Data.Length,
+                            listeners )
+                        .Emit( stream.Logger.ProcessingMessage );
 
-                    var listeners = channel.Listeners.GetAll();
-                    foreach ( var listener in listeners )
+                    if ( listeners.Count > 0 )
                     {
-                        try
+                        using ( stream.AcquireLock() )
+                            stream.MessageStore.IncreaseRefCount( key, listeners.Count );
+
+                        foreach ( var listener in listeners )
                         {
-                            listener.Queue.PushMessages( listener, in buffer, stream, traceId );
-                        }
-                        catch ( Exception exc )
-                        {
-                            MessageBrokerStreamErrorEvent.Create( stream, traceId, exc ).Emit( stream.Logger.Error );
+                            try
+                            {
+                                if ( ! listener.Queue.PushMessage( listener, key, in message, stream, traceId ) )
+                                    ++failures;
+                            }
+                            catch ( Exception exc )
+                            {
+                                ++failures;
+                                MessageBrokerStreamErrorEvent.Create( stream, traceId, exc ).Emit( stream.Logger.Error );
+                            }
                         }
                     }
 
+                    Result<bool> result;
                     using ( stream.AcquireLock() )
-                        stream.DequeueMessagesUnsafe( buffer.Count );
+                        result = stream.MessageStore.DequeuePending( failures );
 
-                    ClearBuffer( stream, ref buffer, traceId );
+                    if ( result.Exception is not null )
+                        MessageBrokerStreamErrorEvent.Create( stream, traceId, result.Exception ).Emit( stream.Logger.Error );
+
+                    MessageBrokerStreamMessageProcessedEvent.Create(
+                            message.Publisher,
+                            traceId,
+                            message.Id,
+                            message.Data.Length,
+                            failures,
+                            result.Value )
+                        .Emit( stream.Logger.MessageProcessed );
                 }
             }
 
@@ -176,21 +200,5 @@ internal struct StreamProcessor
                 return;
             }
         }
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static void ClearBuffer(MessageBrokerStream stream, ref ListSlim<StreamMessage> messages, ulong traceId)
-    {
-        foreach ( ref readonly var message in messages )
-        {
-            MessageBrokerStreamMessageProcessedEvent.Create( message.Publisher, traceId, message.Id, message.Data.Length )
-                .Emit( stream.Logger.MessageProcessed );
-
-            var exc = message.Return();
-            if ( exc is not null )
-                MessageBrokerStreamErrorEvent.Create( stream, traceId, exc ).Emit( stream.Logger.Error );
-        }
-
-        messages.Clear();
     }
 }

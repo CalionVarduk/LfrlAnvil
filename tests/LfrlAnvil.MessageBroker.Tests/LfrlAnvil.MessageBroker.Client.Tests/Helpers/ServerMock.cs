@@ -43,8 +43,8 @@ internal sealed class ServerMock : IDisposable
         lock ( _listener )
         {
             _client = _listener.AcceptTcpClient();
-            _client.ReceiveTimeout = ChronoConstants.MillisecondsPerSecond * 5;
-            _client.SendTimeout = ChronoConstants.MillisecondsPerSecond * 5;
+            _client.ReceiveTimeout = ChronoConstants.MillisecondsPerSecond * 15;
+            _client.SendTimeout = ChronoConstants.MillisecondsPerSecond * 15;
             _client.NoDelay = true;
             if ( RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) )
                 _client.Client.SetSocketOption( SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true );
@@ -69,6 +69,18 @@ internal sealed class ServerMock : IDisposable
     internal byte[] ReadUnbindListenerRequest()
     {
         return AssertEndpoint( Read( Protocol.UnbindListenerRequest.Length ), MessageBrokerServerEndpoint.UnbindListenerRequest );
+    }
+
+    internal byte[] ReadMessageNotificationAck()
+    {
+        return AssertEndpoint( Read( Protocol.MessageNotificationAck.Length ), MessageBrokerServerEndpoint.MessageNotificationAck );
+    }
+
+    internal byte[] ReadMessageNotificationNegativeAck()
+    {
+        return AssertEndpoint(
+            Read( Protocol.MessageNotificationNegativeAck.Length ),
+            MessageBrokerServerEndpoint.MessageNotificationNack );
     }
 
     internal byte[] ReadPushMessage(int length)
@@ -198,11 +210,11 @@ internal sealed class ServerMock : IDisposable
 
     internal void SendBindListenerFailureResponse(bool channelDoesNotExist, bool clientAlreadyBound, bool cancelled, uint? payload = null)
     {
-        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.ListenerBindFailureResponse.Length];
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.BindListenerFailureResponse.Length];
         var writer = new BinaryContractWriter( buffer );
         writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.BindListenerFailureResponse );
-        writer.MoveWrite( payload ?? Protocol.ListenerBindFailureResponse.Length );
-        writer.Write( ( byte )((channelDoesNotExist ? 1 : 0) | (clientAlreadyBound ? 2 : 0) | (cancelled ? 4 : 0)) );
+        writer.MoveWrite( payload ?? Protocol.BindListenerFailureResponse.Length );
+        writer.Write( ( byte )((clientAlreadyBound ? 1 : 0) | (cancelled ? 2 : 0) | (channelDoesNotExist ? 4 : 0)) );
 
         Send( buffer );
     }
@@ -248,13 +260,16 @@ internal sealed class ServerMock : IDisposable
     }
 
     internal void SendMessageNotification(
+        int ackId,
         ulong messageId,
         int senderId,
         int channelId,
         int streamId,
         byte[] data,
-        Timestamp? enqueuedAt = null,
+        Timestamp? pushedAt = null,
+        bool isRetry = false,
         int? retryAttempt = null,
+        bool isRedelivery = false,
         int? redeliveryAttempt = null,
         uint? payload = null)
     {
@@ -262,13 +277,14 @@ internal sealed class ServerMock : IDisposable
         var writer = new BinaryContractWriter( buffer );
         writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.MessageNotification );
         writer.MoveWrite( payload ?? ( uint )(Protocol.MessageNotificationHeader.Length + data.Length) );
-        writer.MoveWrite( messageId );
-        writer.MoveWrite( ( ulong )(enqueuedAt ?? new Timestamp( DateTime.UtcNow )).UnixEpochTicks );
-        writer.MoveWrite( ( uint )senderId );
-        writer.MoveWrite( ( uint )channelId );
+        writer.MoveWrite( ( uint )ackId );
         writer.MoveWrite( ( uint )streamId );
-        writer.MoveWrite( ( uint? )retryAttempt ?? 0 );
-        writer.MoveWrite( ( uint? )redeliveryAttempt ?? 0 );
+        writer.MoveWrite( messageId );
+        writer.MoveWrite( ( uint )(retryAttempt ?? 0) | (isRetry ? 1U << 31 : 0) );
+        writer.MoveWrite( ( uint )(redeliveryAttempt ?? 0) | (isRedelivery ? 1U << 31 : 0) );
+        writer.MoveWrite( ( uint )channelId );
+        writer.MoveWrite( ( uint )senderId );
+        writer.MoveWrite( ( ulong )(pushedAt ?? new Timestamp( DateTime.UtcNow )).UnixEpochTicks );
         data.AsSpan().CopyTo( writer.GetSpan( data.Length ) );
         Send( buffer );
     }

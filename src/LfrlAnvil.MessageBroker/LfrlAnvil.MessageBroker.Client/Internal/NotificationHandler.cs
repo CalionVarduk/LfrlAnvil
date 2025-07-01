@@ -253,12 +253,13 @@ internal struct NotificationHandler
                     MessageBrokerClientProcessingMessageEvent.Create(
                             client,
                             traceId,
+                            request.AckId,
                             request.SenderId,
                             request.StreamId,
                             request.MessageId,
                             request.ChannelId,
-                            request.RetryAttempt,
-                            request.RedeliveryAttempt,
+                            request.Retry,
+                            request.Redelivery,
                             data.Length )
                         .Emit( client.Logger.ProcessingMessage );
 
@@ -281,6 +282,18 @@ internal struct NotificationHandler
                             client,
                             null,
                             Resources.ListenerDoesNotExist( request.ChannelId ) );
+
+                        MessageBrokerClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+                        continue;
+                    }
+
+                    errors = request.StringifyListenerErrors( listener );
+                    if ( errors.Count > 0 )
+                    {
+                        var error = new MessageBrokerClientMessageException(
+                            client,
+                            listener,
+                            Resources.InvalidMessageParameters( listener, errors ) );
 
                         MessageBrokerClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
                         continue;

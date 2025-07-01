@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -48,20 +49,14 @@ public partial class MessageBrokerClientTests
 
             var channelName = "foo";
             var queueName = "bar";
-            var bindRequest = new Protocol.BindListenerRequest(
-                channelName,
-                createChannelIfNotExists: true,
-                queueName: queueName,
-                prefetchHint: 1 );
-
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( bindRequest );
+                    s.Read( GetBindListenerRequest( channelName, queueName: queueName ) );
                     s.SendListenerBoundResponse( channelCreated, queueCreated, 1, 2 );
                 } );
 
-            var result = await client.Listeners.BindAsync( channelName, callback, queueName );
+            var result = await client.Listeners.BindAsync( channelName, callback, queueName: queueName );
             await serverTask;
 
             Assertion.All(
@@ -94,7 +89,12 @@ public partial class MessageBrokerClientTests
                                 listener.ChannelName.TestEquals( channelName ),
                                 listener.QueueId.TestEquals( 2 ),
                                 listener.QueueName.TestEquals( queueName ),
-                                listener.PrefetchHint.TestEquals( 1 ),
+                                listener.PrefetchHint.TestEquals( ( short )1 ),
+                                listener.MaxRetries.TestEquals( 0 ),
+                                listener.RetryDelay.TestEquals( Duration.Zero ),
+                                listener.MaxRedeliveries.TestEquals( 0 ),
+                                listener.MinAckTimeout.TestEquals( MessageBrokerListenerOptions.DefaultMinAckTimeout ),
+                                listener.AreAcksEnabled.TestTrue(),
                                 listener.Callback.TestRefEquals( callback ),
                                 listener.State.TestEquals( MessageBrokerListenerState.Bound ),
                                 listener.ToString()
@@ -107,12 +107,198 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
-                                $"[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = '{channelName}', QueueName = '{queueName}', PrefetchHint = 1, CreateChannelIfNotExists = True",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 20)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 20)",
+                                $"[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = '{channelName}', QueueName = '{queueName}', PrefetchHint = 1, MaxRetries = 0, MaxRedeliveries = 0, MinAckTimeout = 600 second(s), CreateChannelIfNotExists = True",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 32)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 32)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (ListenerBoundResponse, Length = 14)",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (ListenerBoundResponse, Length = 14)",
-                                $"[ListenerBound] Client = [1] 'test', TraceId = 1, Channel = [1] '{channelName}'{(channelCreated ? " (created)" : string.Empty)}, Queue = [2] '{queueName}'{(queueCreated ? " (created)" : string.Empty)}, PrefetchHint = 1",
+                                $"[ListenerBound] Client = [1] 'test', TraceId = 1, Channel = [1] '{channelName}'{(channelCreated ? " (created)" : string.Empty)}, Queue = [2] '{queueName}'{(queueCreated ? " (created)" : string.Empty)}",
+                                "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (end)"
+                            ] )
+                        ] ),
+                    logs.GetAllAwaitPacket()
+                        .TestContainsContiguousSequence(
+                        [
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (ListenerBoundResponse, Length = 14)"
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task BindAsync_ShouldCreateListenerCorrectly_WithRetriesAndRedeliveriesEnabled()
+        {
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+            MessageBrokerListenerCallback callback = (_, _) => ValueTask.CompletedTask;
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger( logs.GetLogger() ) );
+
+            await server.EstablishHandshake( client );
+
+            var channelName = "foo";
+            var serverTask = server.GetTask(
+                s =>
+                {
+                    s.Read( GetBindListenerRequest( channelName ) );
+                    s.SendListenerBoundResponse( false, false, 1, 2 );
+                } );
+
+            var result = await client.Listeners.BindAsync(
+                channelName,
+                callback,
+                MessageBrokerListenerOptions.Default.SetRetryPolicy( 3 ).SetMaxRedeliveries( 4 ).SetPrefetchHint( 5 ) );
+
+            await serverTask;
+
+            Assertion.All(
+                    result.Exception.TestNull(),
+                    result.Value.TestNotNull(
+                        r => Assertion.All(
+                            "result.Value",
+                            r.AlreadyBound.TestFalse(),
+                            r.ChannelCreated.TestFalse(),
+                            r.QueueCreated.TestFalse(),
+                            r.Listener.TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ),
+                            r.ToString()
+                                .TestEquals( $"[1] 'test' => [1] '{channelName}' listener (using [2] '{channelName}' queue) (Bound)" ) ) ),
+                    client.Listeners.Count.TestEquals( 1 ),
+                    client.Listeners.GetAll().TestSequence( [ (c, _) => c.TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ) ] ),
+                    client.Listeners.TryGetByChannelName( channelName ).TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ),
+                    client.Listeners.TryGetByChannelId( 1 )
+                        .TestNotNull(
+                            listener => Assertion.All(
+                                "listener",
+                                listener.Client.TestRefEquals( client ),
+                                listener.ChannelId.TestEquals( 1 ),
+                                listener.ChannelName.TestEquals( channelName ),
+                                listener.QueueId.TestEquals( 2 ),
+                                listener.QueueName.TestEquals( channelName ),
+                                listener.PrefetchHint.TestEquals( ( short )5 ),
+                                listener.MaxRetries.TestEquals( 3 ),
+                                listener.RetryDelay.TestEquals( MessageBrokerListenerOptions.DefaultRetryDelay ),
+                                listener.MaxRedeliveries.TestEquals( 4 ),
+                                listener.MinAckTimeout.TestEquals( MessageBrokerListenerOptions.DefaultMinAckTimeout ),
+                                listener.AreAcksEnabled.TestTrue(),
+                                listener.Callback.TestRefEquals( callback ),
+                                listener.State.TestEquals( MessageBrokerListenerState.Bound ),
+                                listener.ToString()
+                                    .TestEquals(
+                                        $"[1] 'test' => [1] '{channelName}' listener (using [2] '{channelName}' queue) (Bound)" ) ) ),
+                    logs.GetAll()
+                        .Skip( 1 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
+                                $"[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', QueueName = 'foo', PrefetchHint = 5, MaxRetries = 3, RetryDelay = 30 second(s), MaxRedeliveries = 4, MinAckTimeout = 600 second(s), CreateChannelIfNotExists = True",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 29)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 29)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (ListenerBoundResponse, Length = 14)",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (ListenerBoundResponse, Length = 14)",
+                                $"[ListenerBound] Client = [1] 'test', TraceId = 1, Channel = [1] '{channelName}', Queue = [2] '{channelName}'",
+                                "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (end)"
+                            ] )
+                        ] ),
+                    logs.GetAllAwaitPacket()
+                        .TestContainsContiguousSequence(
+                        [
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (ListenerBoundResponse, Length = 14)"
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task BindAsync_ShouldCreateListenerCorrectly_WithAcksDisabled()
+        {
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+            MessageBrokerListenerCallback callback = (_, _) => ValueTask.CompletedTask;
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger( logs.GetLogger() ) );
+
+            await server.EstablishHandshake( client );
+
+            var channelName = "foo";
+            var serverTask = server.GetTask(
+                s =>
+                {
+                    s.Read( GetBindListenerRequest( channelName ) );
+                    s.SendListenerBoundResponse( false, false, 1, 2 );
+                } );
+
+            var result = await client.Listeners.BindAsync(
+                channelName,
+                callback,
+                MessageBrokerListenerOptions.Default.EnableAcks( false ) );
+
+            await serverTask;
+
+            Assertion.All(
+                    result.Exception.TestNull(),
+                    result.Value.TestNotNull(
+                        r => Assertion.All(
+                            "result.Value",
+                            r.AlreadyBound.TestFalse(),
+                            r.ChannelCreated.TestFalse(),
+                            r.QueueCreated.TestFalse(),
+                            r.Listener.TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ),
+                            r.ToString()
+                                .TestEquals( $"[1] 'test' => [1] '{channelName}' listener (using [2] '{channelName}' queue) (Bound)" ) ) ),
+                    client.Listeners.Count.TestEquals( 1 ),
+                    client.Listeners.GetAll().TestSequence( [ (c, _) => c.TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ) ] ),
+                    client.Listeners.TryGetByChannelName( channelName ).TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ),
+                    client.Listeners.TryGetByChannelId( 1 )
+                        .TestNotNull(
+                            listener => Assertion.All(
+                                "listener",
+                                listener.Client.TestRefEquals( client ),
+                                listener.ChannelId.TestEquals( 1 ),
+                                listener.ChannelName.TestEquals( channelName ),
+                                listener.QueueId.TestEquals( 2 ),
+                                listener.QueueName.TestEquals( channelName ),
+                                listener.PrefetchHint.TestEquals( ( short )1 ),
+                                listener.MaxRetries.TestEquals( 0 ),
+                                listener.RetryDelay.TestEquals( Duration.Zero ),
+                                listener.MaxRedeliveries.TestEquals( 0 ),
+                                listener.MinAckTimeout.TestEquals( Duration.Zero ),
+                                listener.AreAcksEnabled.TestFalse(),
+                                listener.Callback.TestRefEquals( callback ),
+                                listener.State.TestEquals( MessageBrokerListenerState.Bound ),
+                                listener.ToString()
+                                    .TestEquals(
+                                        $"[1] 'test' => [1] '{channelName}' listener (using [2] '{channelName}' queue) (Bound)" ) ) ),
+                    logs.GetAll()
+                        .Skip( 1 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
+                                $"[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = '{channelName}', QueueName = '{channelName}', PrefetchHint = 1, MaxRetries = 0, MaxRedeliveries = 0, MinAckTimeout = <disabled>, CreateChannelIfNotExists = True",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 29)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 29)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (ListenerBoundResponse, Length = 14)",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (ListenerBoundResponse, Length = 14)",
+                                $"[ListenerBound] Client = [1] 'test', TraceId = 1, Channel = [1] '{channelName}', Queue = [2] '{channelName}'",
                                 "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (end)"
                             ] )
                         ] ),
@@ -142,16 +328,10 @@ public partial class MessageBrokerClientTests
             await server.EstablishHandshake( client );
 
             var channelName = "foo";
-            var bindRequest = new Protocol.BindListenerRequest(
-                channelName,
-                createChannelIfNotExists: true,
-                queueName: null,
-                prefetchHint: 1 );
-
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( bindRequest );
+                    s.Read( GetBindListenerRequest( channelName ) );
                     s.SendListenerBoundResponse( true, true, 1, 1 );
                 } );
 
@@ -196,16 +376,10 @@ public partial class MessageBrokerClientTests
             await server.EstablishHandshake( client );
 
             var channelName = "foo";
-            var bindRequest = new Protocol.BindListenerRequest(
-                channelName,
-                createChannelIfNotExists: true,
-                queueName: null,
-                prefetchHint: 1 );
-
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( bindRequest );
+                    s.Read( GetBindListenerRequest( channelName ) );
                     s.SendListenerBoundResponse( true, true, 1, 1 );
                 } );
 
@@ -233,7 +407,7 @@ public partial class MessageBrokerClientTests
         public void BindAsync_ShouldThrowArgumentOutOfRangeException_WhenQueueNameIsNotNullAndEmpty()
         {
             using var client = new MessageBrokerClient( new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
-            var action = Lambda.Of( () => client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask, string.Empty ) );
+            var action = Lambda.Of( () => client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask, queueName: string.Empty ) );
             action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
         }
 
@@ -251,15 +425,7 @@ public partial class MessageBrokerClientTests
         {
             var name = new string( 'x', 513 );
             using var client = new MessageBrokerClient( new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
-            var action = Lambda.Of( () => client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask, name ) );
-            action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
-        }
-
-        [Fact]
-        public void BindAsync_ShouldThrowArgumentOutOfRangeException_WhenPrefetchHintIsLessThanOne()
-        {
-            using var client = new MessageBrokerClient( new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
-            var action = Lambda.Of( () => client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask, prefetchHint: 0 ) );
+            var action = Lambda.Of( () => client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask, queueName: name ) );
             action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
         }
 
@@ -332,9 +498,9 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
-                                "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', QueueName = 'foo', PrefetchHint = 1, CreateChannelIfNotExists = True",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 17)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 17)",
+                                "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', QueueName = 'foo', PrefetchHint = 1, MaxRetries = 0, MaxRedeliveries = 0, MinAckTimeout = 600 second(s), CreateChannelIfNotExists = True",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 29)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 29)",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 1
                                 LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Server failed to respond to 'test' client's BindListenerRequest in the specified amount of time (1000 milliseconds).
@@ -398,17 +564,10 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-
-            var bindRequest = new Protocol.BindListenerRequest(
-                "foo",
-                createChannelIfNotExists: true,
-                queueName: null,
-                prefetchHint: 1 );
-
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( bindRequest );
+                    s.Read( GetBindListenerRequest( "foo" ) );
                     s.SendListenerBoundResponse( true, true, channelId: 0, queueId: -1 );
                 } );
 
@@ -430,9 +589,9 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
-                                "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', QueueName = 'foo', PrefetchHint = 1, CreateChannelIfNotExists = True",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 17)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 17)",
+                                "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', QueueName = 'foo', PrefetchHint = 1, MaxRetries = 0, MaxRedeliveries = 0, MinAckTimeout = 600 second(s), CreateChannelIfNotExists = True",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 29)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 29)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (ListenerBoundResponse, Length = 14)",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 1
@@ -471,17 +630,10 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-
-            var bindRequest = new Protocol.BindListenerRequest(
-                "foo",
-                createChannelIfNotExists: true,
-                queueName: null,
-                prefetchHint: 1 );
-
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( bindRequest );
+                    s.Read( GetBindListenerRequest( "foo" ) );
                     s.SendListenerBoundResponse( true, true, 1, 1, payload: 8 );
                 } );
 
@@ -503,9 +655,9 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
-                                "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', QueueName = 'foo', PrefetchHint = 1, CreateChannelIfNotExists = True",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 17)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 17)",
+                                "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', QueueName = 'foo', PrefetchHint = 1, MaxRetries = 0, MaxRedeliveries = 0, MinAckTimeout = 600 second(s), CreateChannelIfNotExists = True",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 29)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 29)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (ListenerBoundResponse, Length = 13)",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 1
@@ -543,17 +695,10 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-
-            var bindRequest = new Protocol.BindListenerRequest(
-                "foo",
-                createChannelIfNotExists: true,
-                queueName: null,
-                prefetchHint: 1 );
-
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( bindRequest );
+                    s.Read( GetBindListenerRequest( "foo" ) );
                     s.SendBindListenerFailureResponse( true, true, true );
                 } );
 
@@ -575,9 +720,9 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
-                                "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', QueueName = 'foo', PrefetchHint = 1, CreateChannelIfNotExists = True",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 17)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 17)",
+                                "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', QueueName = 'foo', PrefetchHint = 1, MaxRetries = 0, MaxRedeliveries = 0, MinAckTimeout = 600 second(s), CreateChannelIfNotExists = True",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 29)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 29)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerFailureResponse, Length = 6)",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (BindListenerFailureResponse, Length = 6)",
                                 """
@@ -616,17 +761,10 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-
-            var bindRequest = new Protocol.BindListenerRequest(
-                "foo",
-                createChannelIfNotExists: true,
-                queueName: null,
-                prefetchHint: 1 );
-
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( bindRequest );
+                    s.Read( GetBindListenerRequest( "foo" ) );
                     s.SendBindListenerFailureResponse( true, true, true, payload: 0 );
                 } );
 
@@ -648,9 +786,9 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
-                                "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', QueueName = 'foo', PrefetchHint = 1, CreateChannelIfNotExists = True",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 17)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 17)",
+                                "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', QueueName = 'foo', PrefetchHint = 1, MaxRetries = 0, MaxRedeliveries = 0, MinAckTimeout = 600 second(s), CreateChannelIfNotExists = True",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 29)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 29)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerFailureResponse, Length = 5)",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 1
@@ -688,17 +826,10 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-
-            var bindRequest = new Protocol.BindListenerRequest(
-                "foo",
-                createChannelIfNotExists: true,
-                queueName: null,
-                prefetchHint: 1 );
-
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( bindRequest );
+                    s.Read( GetBindListenerRequest( "foo" ) );
                     s.Send( [ 0, 0, 0, 0, 0 ] );
                 } );
 
@@ -720,9 +851,9 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
-                                "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', QueueName = 'foo', PrefetchHint = 1, CreateChannelIfNotExists = True",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 17)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 17)",
+                                "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', QueueName = 'foo', PrefetchHint = 1, MaxRetries = 0, MaxRedeliveries = 0, MinAckTimeout = 600 second(s), CreateChannelIfNotExists = True",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 29)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 29)",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 1
                                 LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Client 'test' received an invalid <unrecognized-endpoint-0> from the server. Encountered 1 error(s):
@@ -765,16 +896,10 @@ public partial class MessageBrokerClientTests
             var channelId = 1;
             var channelName = "foo";
             await server.EstablishHandshake( client );
-            var bindRequest = new Protocol.BindListenerRequest(
-                channelName,
-                createChannelIfNotExists: true,
-                queueName: null,
-                prefetchHint: 1 );
-
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( bindRequest );
+                    s.Read( GetBindListenerRequest( channelName ) );
                     s.SendListenerBoundResponse( true, true, channelId, 2 );
                     s.ReadUnbindListenerRequest();
                     s.SendListenerUnboundResponse( channelRemoved, queueRemoved );
@@ -844,19 +969,12 @@ public partial class MessageBrokerClientTests
                     .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySource( _sharedDelaySource ) );
 
-            await server.EstablishHandshake( client );
-
             var channelName = "foo";
-            var bindRequest = new Protocol.BindListenerRequest(
-                channelName,
-                createChannelIfNotExists: true,
-                queueName: null,
-                prefetchHint: 1 );
-
+            await server.EstablishHandshake( client );
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( bindRequest );
+                    s.Read( GetBindListenerRequest( channelName ) );
                     s.SendListenerBoundResponse( true, true, 1, 1 );
                     s.ReadUnbindListenerRequest();
                     s.SendListenerUnboundResponse( true, true );
@@ -885,7 +1003,19 @@ public partial class MessageBrokerClientTests
         public async Task UnbindAsync_ShouldThrowMessageBrokerClientDisposedException_WhenClientIsDisposed()
         {
             var client = new MessageBrokerClient( new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
-            var listener = new MessageBrokerListener( client, 1, "foo", 1, "foo", 1, (_, _) => ValueTask.CompletedTask );
+            var listener = new MessageBrokerListener(
+                client,
+                1,
+                "foo",
+                1,
+                "foo",
+                1,
+                0,
+                Duration.Zero,
+                0,
+                MessageBrokerListenerOptions.DefaultMinAckTimeout,
+                (_, _) => ValueTask.CompletedTask );
+
             await client.DisposeAsync();
 
             Exception? exception = null;
@@ -921,13 +1051,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.BindListenerRequest(
-                        "foo",
-                        createChannelIfNotExists: true,
-                        queueName: null,
-                        prefetchHint: 1 );
-
-                    s.Read( request );
+                    s.Read( GetBindListenerRequest( "foo" ) );
                     s.SendListenerBoundResponse( true, true, 1, 1 );
                 } );
 
@@ -972,7 +1096,7 @@ public partial class MessageBrokerClientTests
         [Fact]
         public async Task UnbindAsync_ShouldReturnError_WhenClientIsDisposedBeforeServerResponds()
         {
-            var listenerBound = Ref.Create( false );
+            var listenerBound = Atomic.Create( false );
             var endSource = new SafeTaskCompletionSource<Task>();
             using var server = new ServerMock();
             var remoteEndPoint = server.Start();
@@ -988,10 +1112,7 @@ public partial class MessageBrokerClientTests
                         MessageBrokerClientLogger.Create(
                             traceStart: e =>
                             {
-                                bool bound;
-                                lock ( listenerBound )
-                                    bound = listenerBound.Value;
-
+                                var bound = listenerBound.Value;
                                 if ( bound && e.Type == MessageBrokerClientTraceEventType.Ping )
                                     endSource.Complete( e.Source.Client.DisposeAsync().AsTask() );
                             } ) ) );
@@ -1000,21 +1121,14 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.BindListenerRequest(
-                        "foo",
-                        createChannelIfNotExists: true,
-                        queueName: null,
-                        prefetchHint: 1 );
-
-                    s.Read( request );
+                    s.Read( GetBindListenerRequest( "foo" ) );
                     s.SendListenerBoundResponse( true, true, 1, 1 );
                 } );
 
             await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             await serverTask;
             var listener = client.Listeners.TryGetByChannelId( 1 );
-            lock ( listenerBound )
-                listenerBound.Value = true;
+            listenerBound.Value = true;
 
             var result = Result.Create( default( MessageBrokerUnbindListenerResult ) );
             if ( listener is not null )
@@ -1045,13 +1159,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.BindListenerRequest(
-                        "foo",
-                        createChannelIfNotExists: true,
-                        queueName: null,
-                        prefetchHint: 1 );
-
-                    s.Read( request );
+                    s.Read( GetBindListenerRequest( "foo" ) );
                     s.SendListenerBoundResponse( true, true, 1, 1 );
                     s.ReadUnbindListenerRequest();
                     s.SendListenerUnboundResponse( true, true, payload: 0 );
@@ -1123,13 +1231,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.BindListenerRequest(
-                        "foo",
-                        createChannelIfNotExists: true,
-                        queueName: null,
-                        prefetchHint: 1 );
-
-                    s.Read( request );
+                    s.Read( GetBindListenerRequest( "foo" ) );
                     s.SendListenerBoundResponse( true, true, 1, 1 );
                     s.ReadUnbindListenerRequest();
                     s.SendUnbindListenerFailureResponse( true );
@@ -1201,13 +1303,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.BindListenerRequest(
-                        "foo",
-                        createChannelIfNotExists: true,
-                        queueName: null,
-                        prefetchHint: 1 );
-
-                    s.Read( request );
+                    s.Read( GetBindListenerRequest( "foo" ) );
                     s.SendListenerBoundResponse( true, true, 1, 1 );
                     s.ReadUnbindListenerRequest();
                     s.SendUnbindListenerFailureResponse( true, payload: 0 );
@@ -1279,13 +1375,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.BindListenerRequest(
-                        "foo",
-                        createChannelIfNotExists: true,
-                        queueName: null,
-                        prefetchHint: 1 );
-
-                    s.Read( request );
+                    s.Read( GetBindListenerRequest( "foo" ) );
                     s.SendListenerBoundResponse( true, true, 1, 1 );
                     s.ReadUnbindListenerRequest();
                     s.Send( [ 0, 0, 0, 0, 0 ] );
@@ -1353,24 +1443,18 @@ public partial class MessageBrokerClientTests
                     .SetDelaySource( _sharedDelaySource )
                     .SetLogger( logs.GetLogger() ) );
 
-            var enqueuedAt = client.GetTimestamp();
+            var pushedAt = client.GetTimestamp();
             var message = new byte[] { 1, 2, 3, 4 };
 
             await server.EstablishHandshake( client );
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.BindListenerRequest(
-                        "foo",
-                        createChannelIfNotExists: true,
-                        queueName: null,
-                        prefetchHint: 1 );
-
-                    s.Read( request );
+                    s.Read( GetBindListenerRequest( "foo" ) );
                     s.SendListenerBoundResponse( true, true, 1, 1 );
                     s.SendObjectNameNotification( MessageBrokerSystemNotificationType.SenderName, 2, "sender2" );
                     s.SendObjectNameNotification( MessageBrokerSystemNotificationType.StreamName, 3, "stream3" );
-                    s.SendMessageNotification( 1, 2, 1, 3, message, enqueuedAt, 4, 5 );
+                    s.SendMessageNotification( 1, 1, 2, 1, 3, message, pushedAt, true, 4, false, 5 );
                 } );
 
             await client.Listeners.BindAsync(
@@ -1379,7 +1463,8 @@ public partial class MessageBrokerClientTests
                 {
                     endSource.Complete( (a, a.Data.ToArray()) );
                     return ValueTask.CompletedTask;
-                } );
+                },
+                MessageBrokerListenerOptions.Default.SetRetryPolicy( 5 ).SetMaxRedeliveries( 5 ) );
 
             var listener = client.Listeners.TryGetByChannelId( 1 );
             await serverTask;
@@ -1388,18 +1473,22 @@ public partial class MessageBrokerClientTests
             Assertion.All(
                     client.State.TestEquals( MessageBrokerClientState.Running ),
                     args.Listener.TestRefEquals( listener ),
-                    args.EnqueuedAt.TestEquals( enqueuedAt ),
-                    args.ReceivedAt.TestGreaterThanOrEqualTo( args.EnqueuedAt ),
+                    args.PushedAt.TestEquals( pushedAt ),
+                    args.ReceivedAt.TestGreaterThanOrEqualTo( args.PushedAt ),
+                    args.AckId.TestEquals( 1 ),
                     args.MessageId.TestEquals( 1UL ),
                     args.Sender.TestEquals( new MessageBrokerExternalObject( 2, "sender2" ) ),
                     args.Stream.TestEquals( new MessageBrokerExternalObject( 3, "stream3" ) ),
+                    args.IsFirst.TestFalse(),
+                    args.IsRetry.TestTrue(),
                     args.RetryAttempt.TestEquals( 4 ),
+                    args.IsRedelivery.TestFalse(),
                     args.RedeliveryAttempt.TestEquals( 5 ),
                     args.TraceId.TestEquals( 4UL ),
                     caughtMessage.TestSequence( message ),
                     args.ToString()
                         .TestEquals(
-                            $"Listener = ([1] 'test' => [1] 'foo' listener (using [1] 'foo' queue) (Bound)), Id = 1, Retry = 4, Redelivery = 5, Length = 4, EnqueuedAt = {args.EnqueuedAt}, ReceivedAt = {args.ReceivedAt}, Sender = (Id = 2, Name = 'sender2'), Stream = (Id = 3, Name = 'stream3'), TraceId = 4" ),
+                            $"Listener = ([1] 'test' => [1] 'foo' listener (using [1] 'foo' queue) (Bound)), Stream = (Id = 3, Name = 'stream3'), AckId = 1, Id = 1, Retry = 4 (active), Redelivery = 5, Length = 4, PushedAt = {args.PushedAt}, ReceivedAt = {args.ReceivedAt}, Sender = (Id = 2, Name = 'sender2'), TraceId = 4" ),
                     logs.GetAll()
                         .Skip( 4 )
                         .TestSequence(
@@ -1407,10 +1496,10 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (start)",
-                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 45)",
-                                "[ProcessingMessage] Client = [1] 'test', TraceId = 4, SenderId = 2, StreamId = 3, MessageId = 1, ChannelId = 1, RetryAttempt = 4, RedeliveryAttempt = 5, Length = 4",
-                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 45)",
-                                "[MessageProcessed] Client = [1] 'test', TraceId = 4, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 3, MessageId = 1",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 49)",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 4, AckId = 1, StreamId = 3, MessageId = 1, RetryAttempt = 4 (active), RedeliveryAttempt = 5, ChannelId = 1, SenderId = 2, Length = 4",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 49)",
+                                "[MessageProcessed] Client = [1] 'test', TraceId = 4, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 3, MessageId = 1, RetryAttempt = 4, RedeliveryAttempt = 5",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (end)"
                             ] )
                         ] ),
@@ -1418,7 +1507,7 @@ public partial class MessageBrokerClientTests
                         .TestContainsContiguousSequence(
                         [
                             "[AwaitPacket] Client = [1] 'test'",
-                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 45)"
+                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 49)"
                         ] ) )
                 .Go();
         }
@@ -1468,20 +1557,14 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.BindListenerRequest(
-                        "foo",
-                        createChannelIfNotExists: true,
-                        queueName: null,
-                        prefetchHint: 1 );
-
-                    s.Read( request );
+                    s.Read( GetBindListenerRequest( "foo" ) );
                     s.SendListenerBoundResponse( true, true, 1, 1 );
                     s.SendObjectNameNotification( MessageBrokerSystemNotificationType.SenderName, 2, "sender2" );
                     s.SendObjectNameNotification( MessageBrokerSystemNotificationType.StreamName, 1, "stream1" );
-                    s.SendMessageNotification( 1, 2, 1, 1, message1 );
+                    s.SendMessageNotification( 1, 1, 2, 1, 1, message1 );
                     s.SendObjectNameNotification( MessageBrokerSystemNotificationType.SenderName, 3, "sender3" );
                     s.SendObjectNameNotification( MessageBrokerSystemNotificationType.StreamName, 2, "stream2" );
-                    s.SendMessageNotification( 2, 3, 1, 2, message2 );
+                    s.SendMessageNotification( 2, 2, 3, 1, 2, message2 );
                 } );
 
             await client.Listeners.BindAsync(
@@ -1511,13 +1594,17 @@ public partial class MessageBrokerClientTests
             Assertion.All(
                     client.State.TestEquals( MessageBrokerClientState.Running ),
                     args1.Listener.TestRefEquals( listener ),
+                    args1.AckId.TestEquals( 1 ),
                     args1.MessageId.TestEquals( 1UL ),
+                    args1.IsFirst.TestTrue(),
                     args1.Sender.TestEquals( new MessageBrokerExternalObject( 2, "sender2" ) ),
                     args1.Stream.TestEquals( new MessageBrokerExternalObject( 1, "stream1" ) ),
                     args1.TraceId.TestEquals( 4UL ),
                     caughtMessage1.TestSequence( message1 ),
                     args2.Listener.TestRefEquals( listener ),
+                    args2.AckId.TestEquals( 2 ),
                     args2.MessageId.TestEquals( 2UL ),
+                    args2.IsFirst.TestTrue(),
                     args2.Sender.TestEquals( new MessageBrokerExternalObject( 3, "sender3" ) ),
                     args2.Stream.TestEquals( new MessageBrokerExternalObject( 2, "stream2" ) ),
                     args2.TraceId.TestEquals( 7UL ),
@@ -1529,22 +1616,22 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (start)",
-                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 45)",
-                                "[ProcessingMessage] Client = [1] 'test', TraceId = 4, SenderId = 2, StreamId = 1, MessageId = 1, ChannelId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 4",
-                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 45)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 49)",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 4, AckId = 1, StreamId = 1, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, ChannelId = 1, SenderId = 2, Length = 4",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 49)",
                                 "1st invocation",
-                                "[MessageProcessed] Client = [1] 'test', TraceId = 4, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 1, MessageId = 1",
+                                "[MessageProcessed] Client = [1] 'test', TraceId = 4, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 1, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (end)"
                             ] ),
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 7 (start)",
-                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 7, Packet = (MessageNotification, Length = 46)",
-                                "[ProcessingMessage] Client = [1] 'test', TraceId = 7, SenderId = 3, StreamId = 2, MessageId = 2, ChannelId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 5",
-                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 7, Packet = (MessageNotification, Length = 46)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 7, Packet = (MessageNotification, Length = 50)",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 7, AckId = 2, StreamId = 2, MessageId = 2, RetryAttempt = 0, RedeliveryAttempt = 0, ChannelId = 1, SenderId = 3, Length = 5",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 7, Packet = (MessageNotification, Length = 50)",
                                 "1st invocation",
                                 "2nd invocation",
-                                "[MessageProcessed] Client = [1] 'test', TraceId = 7, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 2, MessageId = 2",
+                                "[MessageProcessed] Client = [1] 'test', TraceId = 7, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 2, MessageId = 2, RetryAttempt = 0, RedeliveryAttempt = 0",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 7 (end)"
                             ] )
                         ] ),
@@ -1552,17 +1639,18 @@ public partial class MessageBrokerClientTests
                         .TestContainsSequence(
                         [
                             "[AwaitPacket] Client = [1] 'test'",
-                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 45)",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 49)",
                             "[AwaitPacket] Client = [1] 'test'",
-                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 46)"
+                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 50)"
                         ] ) )
                 .Go();
         }
 
         [Fact]
-        public async Task MessageNotification_ShouldInvokeCallback_WhenServerIsTheSender()
+        public async Task MessageNotification_WhoseCallbackThrows_ShouldBeLoggedAndNegativeAckShouldBeSentAutomatically()
         {
-            var endSource = new SafeTaskCompletionSource<(MessageBrokerListenerCallbackArgs Args, byte[] Message)>();
+            var endSource = new SafeTaskCompletionSource( completionCount: 2 );
+            var exception = new Exception( "foo" );
             var logs = new EventLogger();
             using var server = new ServerMock();
             var remoteEndPoint = server.Start();
@@ -1574,65 +1662,64 @@ public partial class MessageBrokerClientTests
                     .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
                     .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySource( _sharedDelaySource )
-                    .SetLogger( logs.GetLogger() ) );
-
-            var enqueuedAt = client.GetTimestamp();
-            var message = new byte[] { 1, 2, 3, 4 };
+                    .SetLogger(
+                        logs.GetLogger(
+                            MessageBrokerClientLogger.Create(
+                                traceEnd: e =>
+                                {
+                                    if ( e.Type is MessageBrokerClientTraceEventType.MessageNotification
+                                        or MessageBrokerClientTraceEventType.NegativeAck )
+                                        endSource.Complete();
+                                } ) ) ) );
 
             await server.EstablishHandshake( client );
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.BindListenerRequest(
-                        "foo",
-                        createChannelIfNotExists: true,
-                        queueName: null,
-                        prefetchHint: 1 );
-
-                    s.Read( request );
+                    s.Read( GetBindListenerRequest( "foo" ) );
                     s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.SendMessageNotification( 1, 0, 1, 0, message, enqueuedAt, 4, 5 );
+                    s.SendMessageNotification( 1, 1, 2, 1, 1, [ ] );
+                    s.ReadMessageNotificationNegativeAck();
                 } );
 
-            await client.Listeners.BindAsync(
-                "foo",
-                (a, _) =>
-                {
-                    endSource.Complete( (a, a.Data.ToArray()) );
-                    return ValueTask.CompletedTask;
-                } );
-
-            var listener = client.Listeners.TryGetByChannelId( 1 );
+            await client.Listeners.BindAsync( "foo", (_, _) => throw exception );
             await serverTask;
-            var (args, caughtMessage) = await endSource.Task;
+            var listener = client.Listeners.TryGetByChannelId( 1 );
+            await endSource.Task;
 
             Assertion.All(
                     client.State.TestEquals( MessageBrokerClientState.Running ),
-                    args.Listener.TestRefEquals( listener ),
-                    args.EnqueuedAt.TestEquals( enqueuedAt ),
-                    args.ReceivedAt.TestGreaterThanOrEqualTo( args.EnqueuedAt ),
-                    args.MessageId.TestEquals( 1UL ),
-                    args.Sender.TestEquals( new MessageBrokerExternalObject( 0 ) ),
-                    args.Stream.TestEquals( new MessageBrokerExternalObject( 0 ) ),
-                    args.RetryAttempt.TestEquals( 4 ),
-                    args.RedeliveryAttempt.TestEquals( 5 ),
-                    args.TraceId.TestEquals( 2UL ),
-                    caughtMessage.TestSequence( message ),
-                    args.ToString()
-                        .TestEquals(
-                            $"Listener = ([1] 'test' => [1] 'foo' listener (using [1] 'foo' queue) (Bound)), Id = 1, Retry = 4, Redelivery = 5, Length = 4, EnqueuedAt = {args.EnqueuedAt}, ReceivedAt = {args.ReceivedAt}, Sender = (Id = 0), Stream = (Id = 0), TraceId = 2" ),
+                    listener.TestNotNull( l => l.State.TestEquals( MessageBrokerListenerState.Bound ) ),
                     logs.GetAll()
                         .Skip( 2 )
                         .TestSequence(
                         [
                             (t, _) => t.Logs.TestSequence(
                             [
-                                "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (start)",
-                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 45)",
-                                "[ProcessingMessage] Client = [1] 'test', TraceId = 2, SenderId = 0, StreamId = 0, MessageId = 1, ChannelId = 1, RetryAttempt = 4, RedeliveryAttempt = 5, Length = 4",
-                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 45)",
-                                "[MessageProcessed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 0, MessageId = 1",
-                                "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (end)"
+                                (e, _) => e.TestEquals( "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (start)" ),
+                                (e, _) => e.TestEquals(
+                                    "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 45)" ),
+                                (e, _) => e.TestEquals(
+                                    "[ProcessingMessage] Client = [1] 'test', TraceId = 2, AckId = 1, StreamId = 1, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, ChannelId = 1, SenderId = 2, Length = 0" ),
+                                (e, _) => e.TestEquals(
+                                    "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 45)" ),
+                                (e, _) => e.TestStartsWith(
+                                    """
+                                    [Error] Client = [1] 'test', TraceId = 2
+                                    System.Exception: foo
+                                    """ ),
+                                (e, _) => e.TestEquals(
+                                    "[MessageProcessed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 1, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0" ),
+                                (e, _) => e.TestEquals( "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (end)" )
+                            ] ),
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:NegativeAck] Client = [1] 'test', TraceId = 3 (start)",
+                                "[AcknowledgingMessage] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 1, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, MessageTraceId = 2, NACK = (SkipRetry = False, IsAutomatic = True)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 3, Packet = (MessageNotificationNack, Length = 38)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 3, Packet = (MessageNotificationNack, Length = 38)",
+                                "[MessageAcknowledged] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 1, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, MessageTraceId = 2, NACK = True",
+                                "[Trace:NegativeAck] Client = [1] 'test', TraceId = 3 (end)"
                             ] )
                         ] ),
                     logs.GetAllAwaitPacket()
@@ -1645,7 +1732,7 @@ public partial class MessageBrokerClientTests
         }
 
         [Fact]
-        public async Task MessageNotification_WhoseCallbackThrows_ShouldBeLogged()
+        public async Task MessageNotification_WhoseCallbackThrows_ShouldOnlyBeLogged_WhenAcksAreDisabled()
         {
             var endSource = new SafeTaskCompletionSource();
             var exception = new Exception( "foo" );
@@ -1673,18 +1760,12 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.BindListenerRequest(
-                        "foo",
-                        createChannelIfNotExists: true,
-                        queueName: null,
-                        prefetchHint: 1 );
-
-                    s.Read( request );
+                    s.Read( GetBindListenerRequest( "foo" ) );
                     s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.SendMessageNotification( 1, 2, 1, 1, [ ] );
+                    s.SendMessageNotification( 0, 1, 2, 1, 1, [ ] );
                 } );
 
-            await client.Listeners.BindAsync( "foo", (_, _) => throw exception );
+            await client.Listeners.BindAsync( "foo", (_, _) => throw exception, MessageBrokerListenerOptions.Default.EnableAcks( false ) );
             await serverTask;
             var listener = client.Listeners.TryGetByChannelId( 1 );
             await endSource.Task;
@@ -1700,18 +1781,18 @@ public partial class MessageBrokerClientTests
                             [
                                 (e, _) => e.TestEquals( "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (start)" ),
                                 (e, _) => e.TestEquals(
-                                    "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 41)" ),
+                                    "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 45)" ),
                                 (e, _) => e.TestEquals(
-                                    "[ProcessingMessage] Client = [1] 'test', TraceId = 2, SenderId = 2, StreamId = 1, MessageId = 1, ChannelId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 0" ),
+                                    "[ProcessingMessage] Client = [1] 'test', TraceId = 2, StreamId = 1, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, ChannelId = 1, SenderId = 2, Length = 0" ),
                                 (e, _) => e.TestEquals(
-                                    "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 41)" ),
+                                    "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 45)" ),
                                 (e, _) => e.TestStartsWith(
                                     """
                                     [Error] Client = [1] 'test', TraceId = 2
                                     System.Exception: foo
                                     """ ),
                                 (e, _) => e.TestEquals(
-                                    "[MessageProcessed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 1, MessageId = 1" ),
+                                    "[MessageProcessed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 1, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0" ),
                                 (e, _) => e.TestEquals( "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (end)" )
                             ] )
                         ] ),
@@ -1719,7 +1800,7 @@ public partial class MessageBrokerClientTests
                         .TestContainsContiguousSequence(
                         [
                             "[AwaitPacket] Client = [1] 'test'",
-                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 41)"
+                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 45)"
                         ] ) )
                 .Go();
         }
@@ -1752,15 +1833,9 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.BindListenerRequest(
-                        "foo",
-                        createChannelIfNotExists: true,
-                        queueName: null,
-                        prefetchHint: 1 );
-
-                    s.Read( request );
+                    s.Read( GetBindListenerRequest( "foo" ) );
                     s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.SendMessageNotification( 1, 2, 1, 1, [ 1 ], payload: 35 );
+                    s.SendMessageNotification( 1, 1, 2, 1, 1, [ 1 ], payload: 39 );
                 } );
 
             await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
@@ -1776,11 +1851,11 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (start)",
-                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 40)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 44)",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 2
                                 LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Client 'test' received an invalid MessageNotification from the server. Encountered 1 error(s):
-                                1. Expected header payload to be at least 36 but found 35.
+                                1. Expected header payload to be at least 40 but found 39.
                                 """,
                                 "[Disposing] Client = [1] 'test', TraceId = 2",
                                 "[Disposed] Client = [1] 'test', TraceId = 2",
@@ -1791,13 +1866,72 @@ public partial class MessageBrokerClientTests
                         .TestContainsContiguousSequence(
                         [
                             "[AwaitPacket] Client = [1] 'test'",
-                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 40)"
+                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 44)"
                         ] ) )
                 .Go();
         }
 
-        [Fact]
-        public async Task MessageNotification_WithInvalidProperties_ShouldDisposeClient()
+        [Theory]
+        [InlineData(
+            true,
+            0,
+            true,
+            0,
+            """
+            Encountered 7 error(s):
+            1. Expected ACK ID to not be negative but found -1.
+            2. Expected stream ID to be greater than 0 but found -3.
+            3. Message notification cannot be marked as both a retry and a redelivery.
+            4. Expected retry attempt to be greater than 0 but found 0.
+            5. Expected redelivery attempt to be greater than 0 but found 0.
+            6. Expected channel ID to be greater than 0 but found 0.
+            7. Expected sender ID to be greater than 0 but found -2.
+            """ )]
+        [InlineData(
+            true,
+            0,
+            false,
+            0,
+            """
+            Encountered 5 error(s):
+            1. Expected ACK ID to not be negative but found -1.
+            2. Expected stream ID to be greater than 0 but found -3.
+            3. Expected retry attempt to be greater than 0 but found 0.
+            4. Expected channel ID to be greater than 0 but found 0.
+            5. Expected sender ID to be greater than 0 but found -2.
+            """ )]
+        [InlineData(
+            false,
+            0,
+            true,
+            0,
+            """
+            Encountered 5 error(s):
+            1. Expected ACK ID to not be negative but found -1.
+            2. Expected stream ID to be greater than 0 but found -3.
+            3. Expected redelivery attempt to be greater than 0 but found 0.
+            4. Expected channel ID to be greater than 0 but found 0.
+            5. Expected sender ID to be greater than 0 but found -2.
+            """ )]
+        [InlineData(
+            false,
+            1,
+            false,
+            1,
+            """
+            Encountered 5 error(s):
+            1. Expected ACK ID to not be negative but found -1.
+            2. Expected stream ID to be greater than 0 but found -3.
+            3. Message notification with retry attempt 1 and redelivery attempt 1 is not marked as either a retry or a redelivery.
+            4. Expected channel ID to be greater than 0 but found 0.
+            5. Expected sender ID to be greater than 0 but found -2.
+            """ )]
+        public async Task MessageNotification_WithInvalidProperties_ShouldDisposeClient(
+            bool isRetry,
+            int retryAttempt,
+            bool isRedelivery,
+            int redeliveryAttempt,
+            string expectedError)
         {
             var endSource = new SafeTaskCompletionSource();
             var logs = new EventLogger();
@@ -1824,15 +1958,19 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.BindListenerRequest(
-                        "foo",
-                        createChannelIfNotExists: true,
-                        queueName: null,
-                        prefetchHint: 1 );
-
-                    s.Read( request );
+                    s.Read( GetBindListenerRequest( "foo" ) );
                     s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.SendMessageNotification( 0, -2, 0, -3, [ 1 ], retryAttempt: -4, redeliveryAttempt: -5 );
+                    s.SendMessageNotification(
+                        -1,
+                        0,
+                        -2,
+                        0,
+                        -3,
+                        [ 1 ],
+                        isRetry: isRetry,
+                        retryAttempt: retryAttempt,
+                        isRedelivery: isRedelivery,
+                        redeliveryAttempt: redeliveryAttempt );
                 } );
 
             await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
@@ -1848,16 +1986,11 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (start)",
-                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 42)",
-                                """
-                                [Error] Client = [1] 'test', TraceId = 2
-                                LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Client 'test' received an invalid MessageNotification from the server. Encountered 5 error(s):
-                                1. Expected sender ID to not be negative but found -2.
-                                2. Expected channel ID to be greater than 0 but found 0.
-                                3. Expected stream ID to not be negative but found -3.
-                                4. Expected retry attempt to not be negative but found -4.
-                                5. Expected redelivery attempt to not be negative but found -5.
-                                """,
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 46)",
+                                $"""
+                                 [Error] Client = [1] 'test', TraceId = 2
+                                 LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Client 'test' received an invalid MessageNotification from the server. {expectedError}
+                                 """,
                                 "[Disposing] Client = [1] 'test', TraceId = 2",
                                 "[Disposed] Client = [1] 'test', TraceId = 2",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (end)"
@@ -1867,7 +2000,157 @@ public partial class MessageBrokerClientTests
                         .TestContainsContiguousSequence(
                         [
                             "[AwaitPacket] Client = [1] 'test'",
-                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 42)"
+                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 46)"
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task MessageNotification_WithInvalidListenerProperties_ShouldBeIgnored()
+        {
+            var endSource = new SafeTaskCompletionSource();
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger(
+                        logs.GetLogger(
+                            MessageBrokerClientLogger.Create(
+                                traceEnd: e =>
+                                {
+                                    if ( e.Type == MessageBrokerClientTraceEventType.MessageNotification )
+                                        endSource.Complete();
+                                } ) ) ) );
+
+            await server.EstablishHandshake( client );
+            var serverTask = server.GetTask(
+                s =>
+                {
+                    s.Read( GetBindListenerRequest( "foo" ) );
+                    s.SendListenerBoundResponse( true, true, 1, 1 );
+                    s.SendMessageNotification(
+                        0,
+                        0,
+                        2,
+                        1,
+                        1,
+                        [ 1 ],
+                        isRetry: true,
+                        retryAttempt: 2,
+                        isRedelivery: false,
+                        redeliveryAttempt: 3 );
+                } );
+
+            await client.Listeners.BindAsync(
+                "foo",
+                (_, _) => ValueTask.CompletedTask,
+                MessageBrokerListenerOptions.Default.SetRetryPolicy( 1 ).SetMaxRedeliveries( 2 ) );
+
+            await serverTask;
+            await endSource.Task;
+
+            Assertion.All(
+                    client.State.TestEquals( MessageBrokerClientState.Running ),
+                    logs.GetAll()
+                        .Skip( 2 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (start)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 46)",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 2, StreamId = 1, MessageId = 0, RetryAttempt = 2 (active), RedeliveryAttempt = 3, ChannelId = 1, SenderId = 2, Length = 1",
+                                """
+                                [Error] Client = [1] 'test', TraceId = 2
+                                LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientMessageException: Client [1] 'test' received an invalid message notification through channel [1] 'foo'. Encountered 3 error(s):
+                                1. Expected ACK ID to be greater than 0 because listener has ACKs enabled.
+                                2. Retry attempt 2 exceeds listener's 1 max retries.
+                                3. Redelivery attempt 3 exceeds listener's 2 max redeliveries.
+                                """,
+                                "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (end)"
+                            ] )
+                        ] ),
+                    logs.GetAllAwaitPacket()
+                        .TestContainsContiguousSequence(
+                        [
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 46)"
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task MessageNotification_WithInvalidListenerProperties_ShouldBeIgnored_WhenAcksAreDisabled()
+        {
+            var endSource = new SafeTaskCompletionSource();
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger(
+                        logs.GetLogger(
+                            MessageBrokerClientLogger.Create(
+                                traceEnd: e =>
+                                {
+                                    if ( e.Type == MessageBrokerClientTraceEventType.MessageNotification )
+                                        endSource.Complete();
+                                } ) ) ) );
+
+            await server.EstablishHandshake( client );
+            var serverTask = server.GetTask(
+                s =>
+                {
+                    s.Read( GetBindListenerRequest( "foo" ) );
+                    s.SendListenerBoundResponse( true, true, 1, 1 );
+                    s.SendMessageNotification( 1, 0, 2, 1, 1, [ 1 ] );
+                } );
+
+            await client.Listeners.BindAsync(
+                "foo",
+                (_, _) => ValueTask.CompletedTask,
+                MessageBrokerListenerOptions.Default.EnableAcks( false ) );
+
+            await serverTask;
+            await endSource.Task;
+
+            Assertion.All(
+                    client.State.TestEquals( MessageBrokerClientState.Running ),
+                    logs.GetAll()
+                        .Skip( 2 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (start)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 46)",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 2, AckId = 1, StreamId = 1, MessageId = 0, RetryAttempt = 0, RedeliveryAttempt = 0, ChannelId = 1, SenderId = 2, Length = 1",
+                                """
+                                [Error] Client = [1] 'test', TraceId = 2
+                                LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientMessageException: Client [1] 'test' received an invalid message notification through channel [1] 'foo'. Encountered 1 error(s):
+                                1. Expected ACK ID to be equal to 0 because listener has ACKs disabled.
+                                """,
+                                "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (end)"
+                            ] )
+                        ] ),
+                    logs.GetAllAwaitPacket()
+                        .TestContainsContiguousSequence(
+                        [
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 46)"
                         ] ) )
                 .Go();
         }
@@ -1897,7 +2180,7 @@ public partial class MessageBrokerClientTests
                                 } ) ) ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask( s => { s.SendMessageNotification( 1, 1, 1, 1, [ 1, 2, 3, 4 ] ); } );
+            var serverTask = server.GetTask( s => { s.SendMessageNotification( 1, 1, 1, 1, 1, [ 1, 2, 3, 4 ] ); } );
 
             await serverTask;
             await endSource.Task;
@@ -1911,8 +2194,8 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 1 (start)",
-                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (MessageNotification, Length = 45)",
-                                "[ProcessingMessage] Client = [1] 'test', TraceId = 1, SenderId = 1, StreamId = 1, MessageId = 1, ChannelId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 4",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (MessageNotification, Length = 49)",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 1, AckId = 1, StreamId = 1, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, ChannelId = 1, SenderId = 1, Length = 4",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 1
                                 LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientMessageException: Listener for channel with ID 1 does not exist.
@@ -1924,7 +2207,7 @@ public partial class MessageBrokerClientTests
                         .TestContainsContiguousSequence(
                         [
                             "[AwaitPacket] Client = [1] 'test'",
-                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 45)"
+                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 49)"
                         ] ) )
                 .Go();
         }
@@ -1987,17 +2270,11 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.BindListenerRequest(
-                        "foo",
-                        createChannelIfNotExists: true,
-                        queueName: null,
-                        prefetchHint: 1 );
-
-                    s.Read( request );
+                    s.Read( GetBindListenerRequest( "foo" ) );
                     s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.SendMessageNotification( 1, 2, 1, 1, [ 1, 2 ] );
-                    s.SendMessageNotification( 2, 2, 1, 1, [ 3, 4, 5 ] );
-                    s.SendMessageNotification( 3, 2, 1, 1, [ 6, 7, 8, 9 ] );
+                    s.SendMessageNotification( 1, 1, 2, 1, 1, [ 1, 2 ] );
+                    s.SendMessageNotification( 2, 2, 2, 1, 1, [ 3, 4, 5 ] );
+                    s.SendMessageNotification( 3, 3, 2, 1, 1, [ 6, 7, 8, 9 ] );
                 } );
 
             var bindResult = await client.Listeners.BindAsync(
@@ -2033,25 +2310,25 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (start)",
-                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 43)",
-                                "[ProcessingMessage] Client = [1] 'test', TraceId = 2, SenderId = 2, StreamId = 1, MessageId = 1, ChannelId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 2",
-                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 43)",
-                                "[MessageProcessed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 1, MessageId = 1",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 47)",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 2, AckId = 1, StreamId = 1, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, ChannelId = 1, SenderId = 2, Length = 2",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 47)",
+                                "[MessageProcessed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 1, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (end)"
                             ] ),
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 3 (start)",
-                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 3, Packet = (MessageNotification, Length = 44)",
-                                "[ProcessingMessage] Client = [1] 'test', TraceId = 3, SenderId = 2, StreamId = 1, MessageId = 2, ChannelId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 3",
-                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 3, Packet = (MessageNotification, Length = 44)"
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 3, Packet = (MessageNotification, Length = 48)",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 3, AckId = 2, StreamId = 1, MessageId = 2, RetryAttempt = 0, RedeliveryAttempt = 0, ChannelId = 1, SenderId = 2, Length = 3",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 3, Packet = (MessageNotification, Length = 48)"
                             ] ),
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (start)",
-                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 45)",
-                                "[ProcessingMessage] Client = [1] 'test', TraceId = 4, SenderId = 2, StreamId = 1, MessageId = 3, ChannelId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 4",
-                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 45)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 49)",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 4, AckId = 3, StreamId = 1, MessageId = 3, RetryAttempt = 0, RedeliveryAttempt = 0, ChannelId = 1, SenderId = 2, Length = 4",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 49)",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 4
                                 LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientMessageException: Listener for channel with ID 1 does not exist.
@@ -2082,11 +2359,11 @@ public partial class MessageBrokerClientTests
                         .TestContainsContiguousSequence(
                         [
                             "[AwaitPacket] Client = [1] 'test'",
-                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 43)",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 47)",
                             "[AwaitPacket] Client = [1] 'test'",
-                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 44)",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 48)",
                             "[AwaitPacket] Client = [1] 'test'",
-                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 45)",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 49)",
                             "[AwaitPacket] Client = [1] 'test'",
                             "[AwaitPacket] Client = [1] 'test', Packet = (ListenerUnboundResponse, Length = 6)"
                         ] ) )
@@ -2150,8 +2427,8 @@ public partial class MessageBrokerClientTests
             await server.GetTask(
                 s =>
                 {
-                    s.SendMessageNotification( 1, 2, 1, 1, [ 1, 2 ] );
-                    s.SendMessageNotification( 2, 2, 1, 1, [ 3, 4, 5 ] );
+                    s.SendMessageNotification( 1, 1, 2, 1, 1, [ 1, 2 ] );
+                    s.SendMessageNotification( 1, 2, 2, 1, 1, [ 3, 4, 5 ] );
                 } );
 
             await endSource.Task;
@@ -2168,8 +2445,8 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 1 (start)",
-                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (MessageNotification, Length = 43)",
-                                "[ProcessingMessage] Client = [1] 'test', TraceId = 1, SenderId = 2, StreamId = 1, MessageId = 1, ChannelId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 2",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (MessageNotification, Length = 47)",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 1, AckId = 1, StreamId = 1, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, ChannelId = 1, SenderId = 2, Length = 2",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 1
                                 LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientMessageException: Listener for channel with ID 1 does not exist.
@@ -2192,9 +2469,9 @@ public partial class MessageBrokerClientTests
                         .TestContainsContiguousSequence(
                         [
                             "[AwaitPacket] Client = [1] 'test'",
-                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 43)",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 47)",
                             "[AwaitPacket] Client = [1] 'test'",
-                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 44)"
+                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 48)"
                         ] ) )
                 .Go();
         }
@@ -2219,15 +2496,9 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.BindListenerRequest(
-                        "foo",
-                        createChannelIfNotExists: true,
-                        queueName: null,
-                        prefetchHint: 1 );
-
-                    s.Read( request );
+                    s.Read( GetBindListenerRequest( "foo" ) );
                     s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.SendMessageNotification( 1, 2, 1, 1, [ 1, 2, 3, 4 ] );
+                    s.SendMessageNotification( 1, 1, 2, 1, 1, [ 1, 2, 3, 4 ] );
                 } );
 
             await client.Listeners.BindAsync(
@@ -2278,15 +2549,9 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.BindListenerRequest(
-                        "foo",
-                        createChannelIfNotExists: true,
-                        queueName: null,
-                        prefetchHint: 1 );
-
-                    s.Read( request );
+                    s.Read( GetBindListenerRequest( "foo" ) );
                     s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.SendMessageNotification( 1, 2, 1, 1, [ 1, 2, 3, 4 ] );
+                    s.SendMessageNotification( 1, 1, 2, 1, 1, [ 1, 2, 3, 4 ] );
                 } );
 
             await client.Listeners.BindAsync(
@@ -2379,15 +2644,9 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.BindListenerRequest(
-                        "foo",
-                        createChannelIfNotExists: true,
-                        queueName: null,
-                        prefetchHint: 1 );
-
-                    s.Read( request );
+                    s.Read( GetBindListenerRequest( "foo" ) );
                     s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.SendMessageNotification( 1, 2, 1, 1, [ 1, 2, 3, 4 ] );
+                    s.SendMessageNotification( 1, 1, 2, 1, 1, [ 1, 2, 3, 4 ] );
                 } );
 
             await client.Listeners.BindAsync(
@@ -2445,6 +2704,28 @@ public partial class MessageBrokerClientTests
                             "[AwaitPacket] Client = [1] 'test', Packet = (ListenerUnboundResponse, Length = 6)"
                         ] ) )
                 .Go();
+        }
+
+        [Pure]
+        private static Protocol.BindListenerRequest GetBindListenerRequest(
+            string channelName,
+            string? queueName = null,
+            short prefetchHint = 1,
+            int maxRetries = 0,
+            Duration retryDelay = default,
+            int maxRedeliveries = 0,
+            Duration? minAckTimeout = null,
+            bool createChannelIfNotExists = true)
+        {
+            return new Protocol.BindListenerRequest(
+                channelName,
+                queueName,
+                prefetchHint,
+                maxRetries,
+                retryDelay,
+                maxRedeliveries,
+                minAckTimeout ?? MessageBrokerListenerOptions.DefaultMinAckTimeout,
+                createChannelIfNotExists );
         }
     }
 }

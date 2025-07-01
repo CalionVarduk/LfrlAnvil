@@ -36,7 +36,7 @@ public readonly struct MessageBrokerRemoteClientQueueCollection
         get
         {
             using ( _client.AcquireLock() )
-                return _client.QueuesByName.Count;
+                return _client.QueueStore.Count;
         }
     }
 
@@ -48,7 +48,7 @@ public readonly struct MessageBrokerRemoteClientQueueCollection
     public ReadOnlyArray<MessageBrokerQueue> GetAll()
     {
         using ( _client.AcquireLock() )
-            return _client.QueuesByName.GetAll();
+            return _client.QueueStore.GetAll();
     }
 
     /// <summary>
@@ -63,7 +63,7 @@ public readonly struct MessageBrokerRemoteClientQueueCollection
     public MessageBrokerQueue? TryGetById(int id)
     {
         using ( _client.AcquireLock() )
-            return _client.QueuesByName.TryGetById( id );
+            return _client.QueueStore.TryGetById( id );
     }
 
     /// <summary>
@@ -78,6 +78,6 @@ public readonly struct MessageBrokerRemoteClientQueueCollection
     public MessageBrokerQueue? TryGetByName(string name)
     {
         using ( _client.AcquireLock() )
-            return _client.QueuesByName.TryGetByName( name );
+            return _client.QueueStore.TryGetByName( name );
     }
 }

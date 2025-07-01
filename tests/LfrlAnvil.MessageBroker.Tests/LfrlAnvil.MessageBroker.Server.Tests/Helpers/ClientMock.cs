@@ -20,8 +20,8 @@ internal sealed class ClientMock : IDisposable
     internal ClientMock()
     {
         _client.NoDelay = true;
-        _client.SendTimeout = ChronoConstants.MillisecondsPerSecond * 5;
-        _client.ReceiveTimeout = ChronoConstants.MillisecondsPerSecond * 5;
+        _client.SendTimeout = ChronoConstants.MillisecondsPerSecond * 15;
+        _client.ReceiveTimeout = ChronoConstants.MillisecondsPerSecond * 15;
     }
 
     public void Dispose()
@@ -212,7 +212,7 @@ internal sealed class ClientMock : IDisposable
     internal void SendBindPublisherRequest(
         string channelName,
         string? streamName = null,
-        int? channelNameLength = null,
+        short? channelNameLength = null,
         uint? payload = null)
     {
         var preparedChannelName = EncodeableText.Create( TextEncoding.Instance, channelName ).GetValueOrThrow();
@@ -229,7 +229,7 @@ internal sealed class ClientMock : IDisposable
             ?? ( uint )(Protocol.BindPublisherRequestHeader.Length + preparedChannelName.ByteCount + preparedStreamName.ByteCount) );
 
         writer.MoveWrite( 0 );
-        writer.MoveWrite( ( uint )(channelNameLength ?? preparedChannelName.ByteCount) );
+        writer.MoveWrite( ( ushort )(channelNameLength ?? preparedChannelName.ByteCount) );
         preparedChannelName.Encode( writer.GetSpan( preparedChannelName.ByteCount ) ).ThrowIfError();
         writer.Move( preparedChannelName.ByteCount );
         preparedStreamName.Encode( writer.GetSpan( preparedStreamName.ByteCount ) ).ThrowIfError();
@@ -250,9 +250,13 @@ internal sealed class ClientMock : IDisposable
     internal void SendBindListenerRequest(
         string channelName,
         bool createChannelIfNotExists,
-        int? prefetchHint = null,
+        short? prefetchHint = null,
+        int? maxRetries = null,
+        Duration? retryDelay = null,
+        int? maxRedeliveries = null,
+        Duration? minAckTimeout = null,
         string? queueName = null,
-        int? channelNameLength = null,
+        short? channelNameLength = null,
         uint? payload = null)
     {
         var preparedChannelName = EncodeableText.Create( TextEncoding.Instance, channelName ).GetValueOrThrow();
@@ -268,8 +272,12 @@ internal sealed class ClientMock : IDisposable
             payload ?? ( uint )(Protocol.BindListenerRequestHeader.Length + preparedChannelName.ByteCount + preparedQueueName.ByteCount) );
 
         writer.MoveWrite( ( byte )(createChannelIfNotExists ? 1 : 0) );
-        writer.MoveWrite( ( uint )(prefetchHint ?? 1) );
-        writer.MoveWrite( ( uint )(channelNameLength ?? preparedChannelName.ByteCount) );
+        writer.MoveWrite( ( ushort )(prefetchHint ?? 1) );
+        writer.MoveWrite( ( uint )(maxRetries ?? 0) );
+        writer.MoveWrite( ( uint )(retryDelay?.FullMilliseconds ?? 0) );
+        writer.MoveWrite( ( uint )(maxRedeliveries ?? 0) );
+        writer.MoveWrite( ( uint )(minAckTimeout?.FullMilliseconds ?? 0) );
+        writer.MoveWrite( ( ushort )(channelNameLength ?? preparedChannelName.ByteCount) );
         preparedChannelName.Encode( writer.GetSpan( preparedChannelName.ByteCount ) ).ThrowIfError();
         writer.Move( preparedChannelName.ByteCount );
         preparedQueueName.Encode( writer.GetSpan( preparedQueueName.ByteCount ) ).ThrowIfError();
@@ -296,6 +304,55 @@ internal sealed class ClientMock : IDisposable
         writer.MoveWrite( ( byte )(confirm ? 1 : 0) );
         writer.MoveWrite( ( uint )channelId );
         data.AsSpan().CopyTo( writer.GetSpan( data.Length ) );
+        Send( buffer );
+    }
+
+    internal void SendMessageNotificationAck(
+        int queueId,
+        int ackId,
+        int streamId,
+        ulong messageId,
+        int retryAttempt = 0,
+        int redeliveryAttempt = 0,
+        uint? payload = null)
+    {
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.MessageNotificationAck.Length];
+        var writer = new BinaryContractWriter( buffer );
+        writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.MessageNotificationAck );
+        writer.MoveWrite( payload ?? Protocol.MessageNotificationAck.Length );
+        writer.MoveWrite( ( uint )queueId );
+        writer.MoveWrite( ( uint )ackId );
+        writer.MoveWrite( ( uint )streamId );
+        writer.MoveWrite( messageId );
+        writer.MoveWrite( ( uint )retryAttempt );
+        writer.Write( ( uint )redeliveryAttempt );
+        Send( buffer );
+    }
+
+    internal void SendMessageNotificationNegativeAck(
+        int queueId,
+        int ackId,
+        int streamId,
+        ulong messageId,
+        int retryAttempt = 0,
+        int redeliveryAttempt = 0,
+        bool noRetry = false,
+        bool hasExplicitDelay = false,
+        Duration? explicitDelay = null,
+        uint? payload = null)
+    {
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.MessageNotificationNegativeAck.Length];
+        var writer = new BinaryContractWriter( buffer );
+        writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.MessageNotificationNack );
+        writer.MoveWrite( payload ?? Protocol.MessageNotificationNegativeAck.Length );
+        writer.MoveWrite( ( byte )((noRetry ? 1 : 0) | (hasExplicitDelay ? 2 : 0)) );
+        writer.MoveWrite( ( uint )queueId );
+        writer.MoveWrite( ( uint )ackId );
+        writer.MoveWrite( ( uint )streamId );
+        writer.MoveWrite( messageId );
+        writer.MoveWrite( ( uint )retryAttempt );
+        writer.MoveWrite( ( uint )redeliveryAttempt );
+        writer.Write( ( uint )(explicitDelay?.FullMilliseconds ?? 0) );
         Send( buffer );
     }
 

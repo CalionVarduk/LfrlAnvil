@@ -14,6 +14,7 @@
 
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.MessageBroker.Client.Internal;
 
 namespace LfrlAnvil.MessageBroker.Client.Events;
 
@@ -23,24 +24,29 @@ namespace LfrlAnvil.MessageBroker.Client.Events;
 /// </summary>
 public readonly struct MessageBrokerClientProcessingMessageEvent
 {
+    private readonly ResendIndex _retry;
+    private readonly ResendIndex _redelivery;
+
     private MessageBrokerClientProcessingMessageEvent(
         MessageBrokerClient client,
         ulong traceId,
+        int ackId,
         int senderId,
         int streamId,
         ulong messageId,
         int channelId,
-        int retryAttempt,
-        int redeliveryAttempt,
+        ResendIndex retry,
+        ResendIndex redelivery,
         int length)
     {
         Source = MessageBrokerClientEventSource.Create( client, traceId );
+        AckId = ackId;
         SenderId = senderId;
         StreamId = streamId;
         MessageId = messageId;
         ChannelId = channelId;
-        RetryAttempt = retryAttempt;
-        RedeliveryAttempt = redeliveryAttempt;
+        _retry = retry;
+        _redelivery = redelivery;
         Length = length;
     }
 
@@ -48,6 +54,12 @@ public readonly struct MessageBrokerClientProcessingMessageEvent
     /// Event source.
     /// </summary>
     public MessageBrokerClientEventSource Source { get; }
+
+    /// <summary>
+    /// Id of the pending ACK associated with the message.
+    /// </summary>
+    /// <remarks>ACK is expected only when value is greater than <b>0</b>.</remarks>
+    public int AckId { get; }
 
     /// <summary>
     /// Identifier of the client that published this message.
@@ -70,19 +82,29 @@ public readonly struct MessageBrokerClientProcessingMessageEvent
     public int ChannelId { get; }
 
     /// <summary>
+    /// Message length.
+    /// </summary>
+    public int Length { get; }
+
+    /// <summary>
     /// Retry attempt number of this message.
     /// </summary>
-    public int RetryAttempt { get; }
+    public int RetryAttempt => _retry.Value;
+
+    /// <summary>
+    /// Specifies whether or not this is a retry of the message.
+    /// </summary>
+    public bool IsRetry => _retry.IsActive;
 
     /// <summary>
     /// Redelivery attempt number of this message.
     /// </summary>
-    public int RedeliveryAttempt { get; }
+    public int RedeliveryAttempt => _redelivery.Value;
 
     /// <summary>
-    /// Message length.
+    /// Specifies whether or not this is a redelivery of the message.
     /// </summary>
-    public int Length { get; }
+    public bool IsRedelivery => _redelivery.IsActive;
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerClientProcessingMessageEvent"/> instance.
@@ -91,8 +113,11 @@ public readonly struct MessageBrokerClientProcessingMessageEvent
     [Pure]
     public override string ToString()
     {
+        var ackId = AckId > 0 ? $", AckId = {AckId}" : string.Empty;
+        var isRetry = IsRetry ? " (active)" : string.Empty;
+        var isRedelivery = IsRedelivery ? " (active)" : string.Empty;
         return
-            $"[ProcessingMessage] {Source}, SenderId = {SenderId}, StreamId = {StreamId}, MessageId = {MessageId}, ChannelId = {ChannelId}, RetryAttempt = {RetryAttempt}, RedeliveryAttempt = {RedeliveryAttempt}, Length = {Length}";
+            $"[ProcessingMessage] {Source}{ackId}, StreamId = {StreamId}, MessageId = {MessageId}, RetryAttempt = {RetryAttempt}{isRetry}, RedeliveryAttempt = {RedeliveryAttempt}{isRedelivery}, ChannelId = {ChannelId}, SenderId = {SenderId}, Length = {Length}";
     }
 
     [Pure]
@@ -100,23 +125,25 @@ public readonly struct MessageBrokerClientProcessingMessageEvent
     internal static MessageBrokerClientProcessingMessageEvent Create(
         MessageBrokerClient client,
         ulong traceId,
+        int ackId,
         int senderId,
         int streamId,
         ulong messageId,
         int channelId,
-        int retryAttempt,
-        int redeliveryAttempt,
+        ResendIndex retry,
+        ResendIndex redelivery,
         int length)
     {
         return new MessageBrokerClientProcessingMessageEvent(
             client,
             traceId,
+            ackId,
             senderId,
             streamId,
             messageId,
             channelId,
-            retryAttempt,
-            redeliveryAttempt,
+            retry,
+            redelivery,
             length );
     }
 }

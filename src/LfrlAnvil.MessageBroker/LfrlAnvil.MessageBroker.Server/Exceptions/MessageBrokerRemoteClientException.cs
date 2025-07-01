@@ -17,30 +17,23 @@ using System;
 namespace LfrlAnvil.MessageBroker.Server.Exceptions;
 
 /// <summary>
-/// Represents an exception thrown when something went wrong with message notification handling.
+/// Represents an exception thrown when <see cref="MessageBrokerRemoteClient"/> encountered an error.
 /// </summary>
-public sealed class MessageBrokerRemoteClientMessageException : InvalidOperationException
+public sealed class MessageBrokerRemoteClientException : InvalidOperationException
 {
     /// <summary>
-    /// Creates a new <see cref="MessageBrokerRemoteClientMessageException"/> instance.
+    /// Creates a new <see cref="MessageBrokerRemoteClientException"/> instance.
     /// </summary>
     /// <param name="client"><see cref="MessageBrokerRemoteClient"/> that encountered this error.</param>
-    /// <param name="queue">Optional <see cref="MessageBrokerQueue"/> that encountered this error.</param>
     /// <param name="error">Encountered error.</param>
-    public MessageBrokerRemoteClientMessageException(MessageBrokerRemoteClient client, MessageBrokerQueue? queue, string error)
+    public MessageBrokerRemoteClientException(MessageBrokerRemoteClient client, string error)
         : base( error )
     {
         Client = client;
-        Queue = queue;
     }
 
     /// <summary>
     /// <see cref="MessageBrokerRemoteClient"/> that encountered this error.
     /// </summary>
     public MessageBrokerRemoteClient Client { get; }
-
-    /// <summary>
-    /// Optional <see cref="MessageBrokerQueue"/> that encountered this error.
-    /// </summary>
-    public MessageBrokerQueue? Queue { get; }
 }

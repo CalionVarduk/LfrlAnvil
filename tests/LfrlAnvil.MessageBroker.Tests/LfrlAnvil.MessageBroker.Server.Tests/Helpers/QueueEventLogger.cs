@@ -48,25 +48,40 @@ public sealed class QueueEventLogger
                 Add( e.Source.TraceId, e.ToString() );
                 logger.ListenerUnbound?.Invoke( e );
             },
-            enqueueingMessages: e =>
+            enqueueingMessage: e =>
             {
                 Add( e.Source.TraceId, e.ToString() );
-                logger.EnqueueingMessages?.Invoke( e );
+                logger.EnqueueingMessage?.Invoke( e );
             },
-            messagesEnqueued: e =>
+            messageEnqueued: e =>
             {
                 Add( e.Source.TraceId, e.ToString() );
-                logger.MessagesEnqueued?.Invoke( e );
+                logger.MessageEnqueued?.Invoke( e );
             },
-            processingMessages: e =>
+            processingMessage: e =>
             {
                 Add( e.Source.TraceId, e.ToString() );
-                logger.ProcessingMessages?.Invoke( e );
+                logger.ProcessingMessage?.Invoke( e );
             },
             messageProcessed: e =>
             {
                 Add( e.Source.TraceId, e.ToString() );
                 logger.MessageProcessed?.Invoke( e );
+            },
+            messageDiscarded: e =>
+            {
+                Add( e.Source.TraceId, e.ToString() );
+                logger.MessageDiscarded?.Invoke( e );
+            },
+            ackProcessed: e =>
+            {
+                Add( e.Source.TraceId, e.ToString() );
+                logger.AckProcessed?.Invoke( e );
+            },
+            negativeAckProcessed: e =>
+            {
+                Add( e.Source.TraceId, e.ToString() );
+                logger.NegativeAckProcessed?.Invoke( e );
             },
             disposing: e =>
             {

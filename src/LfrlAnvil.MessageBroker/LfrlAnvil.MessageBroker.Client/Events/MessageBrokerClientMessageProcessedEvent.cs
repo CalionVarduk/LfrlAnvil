@@ -23,12 +23,20 @@ namespace LfrlAnvil.MessageBroker.Client.Events;
 /// </summary>
 public readonly struct MessageBrokerClientMessageProcessedEvent
 {
-    private MessageBrokerClientMessageProcessedEvent(MessageBrokerListener listener, ulong traceId, int streamId, ulong messageId)
+    private MessageBrokerClientMessageProcessedEvent(
+        MessageBrokerListener listener,
+        ulong traceId,
+        int streamId,
+        ulong messageId,
+        int retryAttempt,
+        int redeliveryAttempt)
     {
         Source = MessageBrokerClientEventSource.Create( listener.Client, traceId );
         Listener = listener;
         StreamId = streamId;
         MessageId = messageId;
+        RetryAttempt = retryAttempt;
+        RedeliveryAttempt = redeliveryAttempt;
     }
 
     /// <summary>
@@ -52,6 +60,16 @@ public readonly struct MessageBrokerClientMessageProcessedEvent
     public ulong MessageId { get; }
 
     /// <summary>
+    /// Retry attempt number of the message.
+    /// </summary>
+    public int RetryAttempt { get; }
+
+    /// <summary>
+    /// Redelivery attempt number of the message.
+    /// </summary>
+    public int RedeliveryAttempt { get; }
+
+    /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerClientMessageProcessedEvent"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
@@ -59,7 +77,7 @@ public readonly struct MessageBrokerClientMessageProcessedEvent
     public override string ToString()
     {
         return
-            $"[MessageProcessed] {Source}, Channel = [{Listener.ChannelId}] '{Listener.ChannelName}', Queue = [{Listener.QueueId}] '{Listener.QueueName}', StreamId = {StreamId}, MessageId = {MessageId}";
+            $"[MessageProcessed] {Source}, Channel = [{Listener.ChannelId}] '{Listener.ChannelName}', Queue = [{Listener.QueueId}] '{Listener.QueueName}', StreamId = {StreamId}, MessageId = {MessageId}, RetryAttempt = {RetryAttempt}, RedeliveryAttempt = {RedeliveryAttempt}";
     }
 
     [Pure]
@@ -68,8 +86,10 @@ public readonly struct MessageBrokerClientMessageProcessedEvent
         MessageBrokerListener listener,
         ulong traceId,
         int streamId,
-        ulong messageId)
+        ulong messageId,
+        int retryAttempt,
+        int redeliveryAttempt)
     {
-        return new MessageBrokerClientMessageProcessedEvent( listener, traceId, streamId, messageId );
+        return new MessageBrokerClientMessageProcessedEvent( listener, traceId, streamId, messageId, retryAttempt, redeliveryAttempt );
     }
 }

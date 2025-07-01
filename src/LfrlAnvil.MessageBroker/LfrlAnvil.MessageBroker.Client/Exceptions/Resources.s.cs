@@ -28,6 +28,9 @@ internal static class Resources
     internal const string UnexpectedClientEndpoint = "Received unexpected client endpoint.";
     internal const string ClientNameLengthOutOfBounds = "Server found client's name length to be out of bounds.";
     internal const string ExternalObjectNameSynchronizationIsDisabled = "External object name synchronization is disabled.";
+    internal const string MessageCannotBeBothRetryAndRedelivery = "Message notification cannot be marked as both a retry and a redelivery.";
+    internal const string ListenerExpectsAckId = "Expected ACK ID to be greater than 0 because listener has ACKs enabled.";
+    internal const string ListenerDoesNotExpectAckId = "Expected ACK ID to be equal to 0 because listener has ACKs disabled.";
 
     internal const string ExternalDelaySourceHasBeenDisposed
         = "Operation has been cancelled because external delay value task source has been disposed.";
@@ -121,30 +124,31 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string SenderIdIsNegative(int received)
+    internal static string AckIdIsNegative(int received)
     {
-        return $"Expected sender ID to not be negative but found {received}.";
+        return $"Expected ACK ID to not be negative but found {received}.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string StreamIdIsNegative(int received)
+    internal static string RetryAttemptIsNotPositive(int received)
     {
-        return $"Expected stream ID to not be negative but found {received}.";
+        return $"Expected retry attempt to be greater than 0 but found {received}.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string RetryAttemptIsNegative(int received)
+    internal static string RedeliveryAttemptIsNotPositive(int received)
     {
-        return $"Expected retry attempt to not be negative but found {received}.";
+        return $"Expected redelivery attempt to be greater than 0 but found {received}.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string RedeliveryAttemptIsNegative(int received)
+    internal static string MissingNonZeroMessageResendAttemptMarker(int retryAttempt, int redeliveryAttempt)
     {
-        return $"Expected redelivery attempt to not be negative but found {received}.";
+        return
+            $"Message notification with retry attempt {retryAttempt} and redelivery attempt {redeliveryAttempt} is not marked as either a retry or a redelivery.";
     }
 
     [Pure]
@@ -152,6 +156,38 @@ internal static class Resources
     internal static string ListenerDoesNotExist(int channelId)
     {
         return $"Listener for channel with ID {channelId} does not exist.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string MaxRetriesExceeded(MessageBrokerListener listener, int received)
+    {
+        return $"Retry attempt {received} exceeds listener's {listener.MaxRetries} max retries.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string MaxRedeliveriesExceeded(MessageBrokerListener listener, int received)
+    {
+        return $"Redelivery attempt {received} exceeds listener's {listener.MaxRedeliveries} max redeliveries.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string InvalidMessageParameters(MessageBrokerListener listener, Chain<string> errors)
+    {
+        Assume.IsGreaterThan( errors.Count, 0 );
+        var reasons = string.Join( Environment.NewLine, errors.Select( static (e, i) => $"{i + 1}. {e}" ) );
+        return
+            $"Client [{listener.Client.Id}] '{listener.Client.Name}' received an invalid message notification through channel [{listener.ChannelId}] '{listener.ChannelName}'. Encountered {errors.Count} error(s):{Environment.NewLine}{reasons}";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string DisabledAcks(MessageBrokerListener listener)
+    {
+        return
+            $"Client [{listener.Client.Id}] '{listener.Client.Name}' cannot send an ACK to the server because listener for a channel [{listener.ChannelId}] '{listener.ChannelName}' has them disabled.";
     }
 
     [Pure]

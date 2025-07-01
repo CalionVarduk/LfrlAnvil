@@ -31,7 +31,7 @@ public sealed partial class MessageBrokerClient
     {
         MessageBrokerClientHandshakingEvent.Create( this, traceId ).Emit( Logger.Handshaking );
 
-        var poolToken = default( MemoryPoolToken<byte> );
+        var poolToken = MemoryPoolToken<byte>.Empty;
         try
         {
             Memory<byte> buffer;

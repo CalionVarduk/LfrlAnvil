@@ -114,6 +114,21 @@ public sealed class ClientEventLogger
                 Add( e.Source.TraceId, e.ToString() );
                 logger.MessageProcessed?.Invoke( e );
             },
+            processingAck: e =>
+            {
+                Add( e.Source.TraceId, e.ToString() );
+                logger.ProcessingAck?.Invoke( e );
+            },
+            processingNegativeAck: e =>
+            {
+                Add( e.Source.TraceId, e.ToString() );
+                logger.ProcessingNegativeAck?.Invoke( e );
+            },
+            ackProcessed: e =>
+            {
+                Add( e.Source.TraceId, e.ToString() );
+                logger.AckProcessed?.Invoke( e );
+            },
             sendingSenderName: e =>
             {
                 Add( e.Source.TraceId, e.ToString() );

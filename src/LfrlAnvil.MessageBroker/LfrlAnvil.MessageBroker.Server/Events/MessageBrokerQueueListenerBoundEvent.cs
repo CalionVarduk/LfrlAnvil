@@ -52,8 +52,7 @@ public readonly struct MessageBrokerQueueListenerBoundEvent
     public override string ToString()
     {
         var channelCreated = ChannelCreated ? " (created)" : string.Empty;
-        return
-            $"[ListenerBound] {Source}, Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}'{channelCreated}, PrefetchHint = {Listener.PrefetchHint}";
+        return $"[ListenerBound] {Source}, Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}'{channelCreated}";
     }
 
     [Pure]

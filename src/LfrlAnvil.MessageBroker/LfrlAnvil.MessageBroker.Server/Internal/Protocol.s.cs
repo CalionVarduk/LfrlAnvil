@@ -243,7 +243,7 @@ internal static class Protocol
 
     internal readonly struct BindPublisherRequestHeader
     {
-        internal const int Length = sizeof( byte ) + sizeof( uint );
+        internal const int Length = sizeof( byte ) + sizeof( ushort );
         internal readonly byte Flags;
         internal readonly int ChannelNameLength;
 
@@ -268,7 +268,7 @@ internal static class Protocol
             var reader = new BinaryContractReader( source.Span );
             var flags = reader.MoveReadInt8();
             Assume.Equals( flags, 0 );
-            var channelNameLength = unchecked( ( int )reader.ReadInt32() );
+            var channelNameLength = ( int )reader.ReadInt16();
 
             return new BindPublisherRequestHeader( flags, channelNameLength );
         }
@@ -278,7 +278,7 @@ internal static class Protocol
         internal Chain<string> StringifyErrors(int packetLength)
         {
             var maxChannelNameLength = packetLength - Length;
-            return ChannelNameLength < 0 || ChannelNameLength > maxChannelNameLength
+            return ChannelNameLength > maxChannelNameLength
                 ? Chain.Create( Resources.InvalidBinaryChannelNameLength( ChannelNameLength, maxChannelNameLength ) )
                 : Chain<string>.Empty;
         }
@@ -320,22 +320,15 @@ internal static class Protocol
 
     internal readonly struct BindPublisherFailureResponse
     {
-        [Flags]
-        internal enum Reasons : byte
-        {
-            None = 0,
-            AlreadyBound = 1,
-            Cancelled = 2
-        }
-
         internal const int Payload = sizeof( byte );
         internal readonly PacketHeader Header;
         internal readonly byte Flags;
 
-        internal BindPublisherFailureResponse(Reasons reasons)
+        internal BindPublisherFailureResponse(BindResult result)
         {
+            Assume.IsInRange( result, BindResult.AlreadyBound, BindResult.ParentDisposed );
             Header = PacketHeader.Create( MessageBrokerClientEndpoint.BindPublisherFailureResponse, Payload );
-            Flags = ( byte )reasons;
+            Flags = result == BindResult.ParentDisposed ? ( byte )BindResult.ChannelDisposed : ( byte )result;
         }
 
         [Pure]
@@ -418,21 +411,15 @@ internal static class Protocol
 
     internal readonly struct UnbindPublisherFailureResponse
     {
-        [Flags]
-        internal enum Reasons : byte
-        {
-            None = 0,
-            NotBound = 1
-        }
-
         internal const int Payload = sizeof( byte );
         internal readonly PacketHeader Header;
         internal readonly byte Flags;
 
-        internal UnbindPublisherFailureResponse(Reasons reasons)
+        internal UnbindPublisherFailureResponse(UnbindResult result)
         {
+            Assume.IsInRange( result, UnbindResult.NotBound, UnbindResult.BindingDisposed );
             Header = PacketHeader.Create( MessageBrokerClientEndpoint.UnbindPublisherFailureResponse, Payload );
-            Flags = ( byte )reasons;
+            Flags = ( byte )UnbindResult.NotBound;
         }
 
         [Pure]
@@ -453,15 +440,30 @@ internal static class Protocol
 
     internal readonly struct BindListenerRequestHeader
     {
-        internal const int Length = sizeof( byte ) + sizeof( uint ) * 2;
+        internal const int Length = sizeof( byte ) + sizeof( ushort ) * 2 + sizeof( uint ) * 4;
         internal readonly byte Flags;
-        internal readonly int PrefetchHint;
+        internal readonly short PrefetchHint;
+        internal readonly int MaxRetries;
+        internal readonly Duration RetryDelay;
+        internal readonly int MaxRedeliveries;
+        internal readonly Duration MinAckTimeout;
         internal readonly int ChannelNameLength;
 
-        private BindListenerRequestHeader(byte flags, int prefetchHint, int channelNameLength)
+        private BindListenerRequestHeader(
+            byte flags,
+            short prefetchHint,
+            int maxRetries,
+            Duration retryDelay,
+            int maxRedeliveries,
+            Duration minAckTimeout,
+            int channelNameLength)
         {
             Flags = flags;
             PrefetchHint = prefetchHint;
+            MaxRetries = maxRetries;
+            RetryDelay = retryDelay;
+            MaxRedeliveries = maxRedeliveries;
+            MinAckTimeout = minAckTimeout;
             ChannelNameLength = channelNameLength;
         }
 
@@ -470,7 +472,8 @@ internal static class Protocol
         [Pure]
         public override string ToString()
         {
-            return $"Flags = {Flags}, PrefetchHint = {PrefetchHint}, ChannelNameLength = {ChannelNameLength}";
+            return
+                $"Flags = {Flags}, PrefetchHint = {PrefetchHint}, MaxRetries = {MaxRetries}, RetryDelay = {RetryDelay}, MaxRedeliveries = {MaxRedeliveries}, MinAckTimeout = {MinAckTimeout}, ChannelNameLength = {ChannelNameLength}";
         }
 
         [Pure]
@@ -480,9 +483,20 @@ internal static class Protocol
             Assume.Equals( source.Length, Length );
             var reader = new BinaryContractReader( source.Span );
             var flags = reader.MoveReadInt8();
-            var prefetchHint = unchecked( ( int )reader.MoveReadInt32() );
-            var channelNameLength = unchecked( ( int )reader.ReadInt32() );
-            return new BindListenerRequestHeader( flags, prefetchHint, channelNameLength );
+            var prefetchHint = unchecked( ( short )reader.MoveReadInt16() );
+            var maxRetries = unchecked( ( int )reader.MoveReadInt32() );
+            var retryDelay = Duration.FromMilliseconds( unchecked( ( int )reader.MoveReadInt32() ) );
+            var maxRedeliveries = unchecked( ( int )reader.MoveReadInt32() );
+            var minAckTimeout = Duration.FromMilliseconds( unchecked( ( int )reader.MoveReadInt32() ) );
+            var channelNameLength = ( int )reader.ReadInt16();
+            return new BindListenerRequestHeader(
+                flags,
+                prefetchHint,
+                maxRetries,
+                retryDelay,
+                maxRedeliveries,
+                minAckTimeout,
+                channelNameLength );
         }
 
         [Pure]
@@ -492,11 +506,27 @@ internal static class Protocol
             var errors = Chain<string>.Empty;
             var maxChannelNameLength = packetLength - Length;
 
-            if ( ChannelNameLength < 0 || ChannelNameLength > maxChannelNameLength )
+            if ( ChannelNameLength > maxChannelNameLength )
                 errors = errors.Extend( Resources.InvalidBinaryChannelNameLength( ChannelNameLength, maxChannelNameLength ) );
 
             if ( PrefetchHint < 1 )
                 errors = errors.Extend( Resources.InvalidPrefetchHint( PrefetchHint ) );
+
+            if ( MaxRetries < 0 )
+                errors = errors.Extend( Resources.MaxRetriesIsNegative( MaxRetries ) );
+
+            if ( RetryDelay < Duration.Zero )
+                errors = errors.Extend( Resources.RetryDelayIsNegative( RetryDelay ) );
+            else if ( RetryDelay > Duration.Zero && MaxRetries == 0 )
+                errors = errors.Extend( Resources.DisabledRetryDelayIsNotZero( RetryDelay ) );
+
+            if ( MaxRedeliveries < 0 )
+                errors = errors.Extend( Resources.MaxRedeliveriesIsNegative( MaxRedeliveries ) );
+
+            if ( MinAckTimeout < Duration.Zero )
+                errors = errors.Extend( Resources.MinAckTimeoutIsNegative( MinAckTimeout ) );
+            else if ( MinAckTimeout == Duration.Zero && (MaxRetries > 0 || MaxRedeliveries > 0) )
+                errors = errors.Extend( Resources.EnabledMinAckTimeoutIsNotPositive( MinAckTimeout ) );
 
             return errors;
         }
@@ -538,23 +568,15 @@ internal static class Protocol
 
     internal readonly struct BindListenerFailureResponse
     {
-        [Flags]
-        internal enum Reasons : byte
-        {
-            None = 0,
-            ChannelDoesNotExist = 1,
-            AlreadyBound = 2,
-            Cancelled = 4
-        }
-
         internal const int Payload = sizeof( byte );
         internal readonly PacketHeader Header;
         internal readonly byte Flags;
 
-        internal BindListenerFailureResponse(Reasons reasons)
+        internal BindListenerFailureResponse(BindResult result)
         {
+            Assume.IsInRange( result, BindResult.AlreadyBound, BindResult.ChannelDoesNotExist );
             Header = PacketHeader.Create( MessageBrokerClientEndpoint.BindListenerFailureResponse, Payload );
-            Flags = ( byte )reasons;
+            Flags = result == BindResult.ParentDisposed ? ( byte )BindResult.ChannelDisposed : ( byte )result;
         }
 
         [Pure]
@@ -637,21 +659,15 @@ internal static class Protocol
 
     internal readonly struct UnbindListenerFailureResponse
     {
-        [Flags]
-        internal enum Reasons : byte
-        {
-            None = 0,
-            NotBound = 1
-        }
-
         internal const int Payload = sizeof( byte );
         internal readonly PacketHeader Header;
         internal readonly byte Flags;
 
-        internal UnbindListenerFailureResponse(Reasons reasons)
+        internal UnbindListenerFailureResponse(UnbindResult result)
         {
+            Assume.IsInRange( result, UnbindResult.NotBound, UnbindResult.BindingDisposed );
             Header = PacketHeader.Create( MessageBrokerClientEndpoint.UnbindListenerFailureResponse, Payload );
-            Flags = ( byte )reasons;
+            Flags = ( byte )UnbindResult.NotBound;
         }
 
         [Pure]
@@ -739,22 +755,15 @@ internal static class Protocol
 
     internal readonly struct MessageRejectedResponse
     {
-        [Flags]
-        internal enum Reasons : byte
-        {
-            None = 0,
-            NotBound = 1,
-            Cancelled = 2
-        }
-
         internal const int Payload = sizeof( byte );
         internal readonly PacketHeader Header;
         internal readonly byte Flags;
 
-        internal MessageRejectedResponse(Reasons reasons)
+        internal MessageRejectedResponse(PushMessageResult result)
         {
+            Assume.IsInRange( result, PushMessageResult.NotBound, PushMessageResult.BindingDisposed );
             Header = PacketHeader.Create( MessageBrokerClientEndpoint.MessageRejectedResponse, Payload );
-            Flags = ( byte )reasons;
+            Flags = result == PushMessageResult.BindingDisposed ? ( byte )PushMessageResult.StreamDisposed : ( byte )result;
         }
 
         [Pure]
@@ -775,41 +784,44 @@ internal static class Protocol
 
     internal readonly struct MessageNotificationHeader
     {
-        internal const int Payload = sizeof( ulong ) * 2 + sizeof( uint ) * 5;
+        internal const int Payload = sizeof( ulong ) * 2 + sizeof( uint ) * 6;
         internal readonly PacketHeader Header;
-        internal readonly ulong MessageId;
-        internal readonly Timestamp EnqueuedAt;
-        internal readonly int SenderId;
-        internal readonly int ChannelId;
+        internal readonly int AckId;
         internal readonly int StreamId;
-        internal readonly int RetryAttempt;
-        internal readonly int RedeliveryAttempt;
+        internal readonly ulong MessageId;
+        internal readonly ResendIndex RetryAttempt;
+        internal readonly ResendIndex RedeliveryAttempt;
+        internal readonly int ChannelId;
+        internal readonly int SenderId;
+        internal readonly Timestamp PushedAt;
 
         internal MessageNotificationHeader(
-            ulong messageId,
-            Timestamp enqueuedAt,
-            int senderId,
-            int channelId,
+            int ackId,
             int streamId,
-            int retryAttempt,
-            int redeliveryAttempt,
+            ResendIndex retryAttempt,
+            ResendIndex redeliveryAttempt,
+            ulong messageId,
+            int channelId,
+            int senderId,
+            Timestamp pushedAt,
             int length)
         {
             Header = PacketHeader.Create( MessageBrokerClientEndpoint.MessageNotification, unchecked( Payload + ( uint )length ) );
-            MessageId = messageId;
-            EnqueuedAt = enqueuedAt;
-            SenderId = senderId;
-            ChannelId = channelId;
+            AckId = ackId;
             StreamId = streamId;
+            MessageId = messageId;
             RetryAttempt = retryAttempt;
             RedeliveryAttempt = redeliveryAttempt;
+            ChannelId = channelId;
+            SenderId = senderId;
+            PushedAt = pushedAt;
         }
 
         [Pure]
         public override string ToString()
         {
             return
-                $"[{Header}] MessageId = {MessageId}, EnqueuedAt = {EnqueuedAt}, SenderId = {SenderId}, ChannelId = {ChannelId}, StreamId = {StreamId}, RetryAttempt = {RetryAttempt}, RedeliveryAttempt = {RedeliveryAttempt}";
+                $"[{Header}] AckId = {AckId}, StreamId = {StreamId}, MessageId = {MessageId}, RetryAttempt = {RetryAttempt}, RedeliveryAttempt = {RedeliveryAttempt}, ChannelId = {ChannelId}, SenderId = {SenderId}, PushedAt = {PushedAt}";
         }
 
         internal void Serialize(Memory<byte> target)
@@ -818,13 +830,14 @@ internal static class Protocol
             var writer = new BinaryContractWriter( target.Span );
             writer.MoveWrite( Header.EndpointCode );
             writer.MoveWrite( Header.Payload );
-            writer.MoveWrite( MessageId );
-            writer.MoveWrite( unchecked( ( ulong )EnqueuedAt.UnixEpochTicks ) );
-            writer.MoveWrite( unchecked( ( uint )SenderId ) );
-            writer.MoveWrite( unchecked( ( uint )ChannelId ) );
+            writer.MoveWrite( unchecked( ( uint )AckId ) );
             writer.MoveWrite( unchecked( ( uint )StreamId ) );
-            writer.MoveWrite( unchecked( ( uint )RetryAttempt ) );
-            writer.Write( unchecked( ( uint )RedeliveryAttempt ) );
+            writer.MoveWrite( MessageId );
+            writer.MoveWrite( RetryAttempt.Data );
+            writer.MoveWrite( RedeliveryAttempt.Data );
+            writer.MoveWrite( unchecked( ( uint )ChannelId ) );
+            writer.MoveWrite( unchecked( ( uint )SenderId ) );
+            writer.Write( unchecked( ( ulong )PushedAt.UnixEpochTicks ) );
         }
     }
 
@@ -863,6 +876,168 @@ internal static class Protocol
             writer.MoveWrite( ( byte )Type );
             writer.MoveWrite( unchecked( ( uint )Id ) );
             Name.Encode( writer.GetSpan( Name.ByteCount ) ).ThrowIfError();
+        }
+    }
+
+    internal readonly struct MessageNotificationAck
+    {
+        internal const int Length = sizeof( uint ) * 5 + sizeof( ulong );
+        internal readonly int QueueId;
+        internal readonly int AckId;
+        internal readonly int StreamId;
+        internal readonly ulong MessageId;
+        internal readonly int RetryAttempt;
+        internal readonly int RedeliveryAttempt;
+
+        private MessageNotificationAck(int queueId, int ackId, int streamId, ulong messageId, int retryAttempt, int redeliveryAttempt)
+        {
+            QueueId = queueId;
+            AckId = ackId;
+            StreamId = streamId;
+            MessageId = messageId;
+            RetryAttempt = retryAttempt;
+            RedeliveryAttempt = redeliveryAttempt;
+        }
+
+        [Pure]
+        public override string ToString()
+        {
+            return
+                $"QueueId = {QueueId}, AckId = {AckId}, StreamId = {StreamId}, MessageId = {MessageId}, RetryAttempt = {RetryAttempt}, RedeliveryAttempt = {RedeliveryAttempt}";
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static MessageNotificationAck Parse(ReadOnlyMemory<byte> source)
+        {
+            Assume.Equals( source.Length, Length );
+            var reader = new BinaryContractReader( source.Span );
+            var queueId = unchecked( ( int )reader.MoveReadInt32() );
+            var ackId = unchecked( ( int )reader.MoveReadInt32() );
+            var streamId = unchecked( ( int )reader.MoveReadInt32() );
+            var messageId = reader.MoveReadInt64();
+            var retryAttempt = unchecked( ( int )reader.MoveReadInt32() );
+            var redeliveryAttempt = unchecked( ( int )reader.ReadInt32() );
+            return new MessageNotificationAck( queueId, ackId, streamId, messageId, retryAttempt, redeliveryAttempt );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal Chain<string> StringifyErrors()
+        {
+            var result = Chain<string>.Empty;
+            if ( QueueId <= 0 )
+                result = result.Extend( Resources.QueueIdIsNotPositive( QueueId ) );
+
+            if ( AckId <= 0 )
+                result = result.Extend( Resources.AckIdIsNotPositive( AckId ) );
+
+            if ( StreamId <= 0 )
+                result = result.Extend( Resources.StreamIdIsNotPositive( StreamId ) );
+
+            if ( RetryAttempt < 0 )
+                result = result.Extend( Resources.RetryAttemptIsNegative( RetryAttempt ) );
+
+            if ( RedeliveryAttempt < 0 )
+                result = result.Extend( Resources.RedeliveryAttemptIsNegative( RedeliveryAttempt ) );
+
+            return result;
+        }
+    }
+
+    internal readonly struct MessageNotificationNegativeAck
+    {
+        internal const int Length = sizeof( byte ) + sizeof( uint ) * 6 + sizeof( ulong );
+        internal readonly byte Flags;
+        internal readonly int QueueId;
+        internal readonly int AckId;
+        internal readonly int StreamId;
+        internal readonly ulong MessageId;
+        internal readonly int RetryAttempt;
+        internal readonly int RedeliveryAttempt;
+        internal readonly Duration ExplicitDelay;
+
+        private MessageNotificationNegativeAck(
+            byte flags,
+            int queueId,
+            int ackId,
+            int streamId,
+            ulong messageId,
+            int retryAttempt,
+            int redeliveryAttempt,
+            Duration explicitDelay)
+        {
+            Flags = flags;
+            QueueId = queueId;
+            AckId = ackId;
+            StreamId = streamId;
+            MessageId = messageId;
+            RetryAttempt = retryAttempt;
+            RedeliveryAttempt = redeliveryAttempt;
+            ExplicitDelay = explicitDelay;
+        }
+
+        internal bool NoRetry => (Flags & 1) != 0;
+        internal bool HasExplicitDelay => (Flags & 2) != 0;
+
+        [Pure]
+        public override string ToString()
+        {
+            return
+                $"Flags = {Flags}, QueueId = {QueueId}, AckId = {AckId}, StreamId = {StreamId}, MessageId = {MessageId}, RetryAttempt = {RetryAttempt}, RedeliveryAttempt = {RedeliveryAttempt}, ExplicitDelay = {ExplicitDelay}";
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static MessageNotificationNegativeAck Parse(ReadOnlyMemory<byte> source)
+        {
+            Assume.Equals( source.Length, Length );
+            var reader = new BinaryContractReader( source.Span );
+            var flags = reader.MoveReadInt8();
+            var queueId = unchecked( ( int )reader.MoveReadInt32() );
+            var ackId = unchecked( ( int )reader.MoveReadInt32() );
+            var streamId = unchecked( ( int )reader.MoveReadInt32() );
+            var messageId = reader.MoveReadInt64();
+            var retryAttempt = unchecked( ( int )reader.MoveReadInt32() );
+            var redeliveryAttempt = unchecked( ( int )reader.MoveReadInt32() );
+            var explicitDelay = Duration.FromMilliseconds( unchecked( ( int )reader.ReadInt32() ) );
+            return new MessageNotificationNegativeAck(
+                flags,
+                queueId,
+                ackId,
+                streamId,
+                messageId,
+                retryAttempt,
+                redeliveryAttempt,
+                explicitDelay );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal Chain<string> StringifyErrors()
+        {
+            var result = Chain<string>.Empty;
+            if ( QueueId <= 0 )
+                result = result.Extend( Resources.QueueIdIsNotPositive( QueueId ) );
+
+            if ( AckId <= 0 )
+                result = result.Extend( Resources.AckIdIsNotPositive( AckId ) );
+
+            if ( StreamId <= 0 )
+                result = result.Extend( Resources.StreamIdIsNotPositive( StreamId ) );
+
+            if ( RetryAttempt < 0 )
+                result = result.Extend( Resources.RetryAttemptIsNegative( RetryAttempt ) );
+
+            if ( RedeliveryAttempt < 0 )
+                result = result.Extend( Resources.RedeliveryAttemptIsNegative( RedeliveryAttempt ) );
+
+            if ( ExplicitDelay < Duration.Zero )
+                result = result.Extend( Resources.ExplicitDelayIsNegative( ExplicitDelay ) );
+            else if ( ExplicitDelay > Duration.Zero && (NoRetry || ! HasExplicitDelay) )
+                result = result.Extend( Resources.DisabledExplicitDelayIsNotZero( ExplicitDelay ) );
+
+            return result;
         }
     }
 

@@ -35,9 +35,9 @@ public enum MessageBrokerStreamTraceEventType : byte
     PushMessage = 2,
 
     /// <summary>
-    /// Specifies that trace is related to processing a batch of messages.
+    /// Specifies that trace is related to processing a message.
     /// </summary>
-    ProcessMessages = 3,
+    ProcessMessage = 3,
 
     /// <summary>
     /// Specifies that trace is related to the stream disposal.

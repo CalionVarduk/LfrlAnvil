@@ -67,6 +67,22 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string PublisherDisposed(MessageBrokerRemoteClient client, MessageBrokerChannel channel)
+    {
+        return
+            $"Operation has been cancelled because publisher binding between client [{client.Id}] '{client.Name}' and channel [{channel.Id}] '{channel.Name}' is disposed.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string ListenerDisposed(MessageBrokerRemoteClient client, MessageBrokerChannel channel)
+    {
+        return
+            $"Operation has been cancelled because listener binding between client [{client.Id}] '{client.Name}' and channel [{channel.Id}] '{channel.Name}' is disposed.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string NotBoundAsPublisher(MessageBrokerChannel channel, MessageBrokerRemoteClient client)
     {
         return $"Client [{client.Id}] '{client.Name}' is not bound as publisher to channel [{channel.Id}] '{channel.Name}'.";
@@ -193,9 +209,100 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string InvalidPrefetchHint(int value)
+    internal static string InvalidPrefetchHint(short value)
     {
         return $"Expected prefetch hint to be greater than 0 but found {value}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string MaxRetriesIsNegative(int received)
+    {
+        return $"Expected max retries to not be negative but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string RetryDelayIsNegative(Duration received)
+    {
+        return $"Expected retry delay to not be negative but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string DisabledRetryDelayIsNotZero(Duration received)
+    {
+        return $"Expected disabled retry delay to be equal to 0 but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string MaxRedeliveriesIsNegative(int received)
+    {
+        return $"Expected max redeliveries to not be negative but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string MinAckTimeoutIsNegative(Duration received)
+    {
+        return $"Expected min ACK timeout to not be negative but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string EnabledMinAckTimeoutIsNotPositive(Duration received)
+    {
+        return $"Expected enabled min ACK timeout to be greater than 0 but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string QueueIdIsNotPositive(int received)
+    {
+        return $"Expected queue ID to be greater than 0 but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string StreamIdIsNotPositive(int received)
+    {
+        return $"Expected stream ID to be greater than 0 but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string AckIdIsNotPositive(int received)
+    {
+        return $"Expected ACK ID to be greater than 0 but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string RetryAttemptIsNegative(int received)
+    {
+        return $"Expected retry attempt to not be negative but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string RedeliveryAttemptIsNegative(int received)
+    {
+        return $"Expected redelivery attempt to not be negative but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string ExplicitDelayIsNegative(Duration received)
+    {
+        return $"Expected explicit delay to not be negative but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string DisabledExplicitDelayIsNotZero(Duration received)
+    {
+        return $"Expected disabled explicit delay to be equal to 0 found {received}.";
     }
 
     [Pure]
@@ -214,60 +321,98 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string FailedToCreatePublisher(
-        int clientId,
-        string clientName,
-        int channelId,
-        string channelName,
-        Protocol.BindPublisherFailureResponse.Reasons reason)
+    internal static string PublisherAlreadyBound(MessageBrokerChannelPublisherBinding publisher)
     {
-        Assume.NotEquals( reason, Protocol.BindPublisherFailureResponse.Reasons.None );
-        var reasonText = reason == Protocol.BindPublisherFailureResponse.Reasons.AlreadyBound
-            ? "it is already bound as a publisher to it"
-            : "the publisher binding process was cancelled";
-
         return
-            $"Client [{clientId}] '{clientName}' could not be bound as a publisher to channel [{channelId}] '{channelName}' because {reasonText}.";
+            $"Client [{publisher.Client.Id}] '{publisher.Client.Name}' could not be bound as a publisher to channel [{publisher.Channel.Id}] '{publisher.Channel.Name}' because it is already bound as a publisher to it.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string FailedToUnbindPublisherFromChannel(int clientId, string clientName, int channelId, string channelName)
+    internal static string PublisherNotBound(MessageBrokerRemoteClient client, MessageBrokerChannel channel)
     {
         return
-            $"Client [{clientId}] '{clientName}' could not be unbound as a publisher from channel [{channelId}] '{channelName}' because it is not bound as a publisher to it.";
+            $"Client [{client.Id}] '{client.Name}' could not be unbound as a publisher from channel [{channel.Id}] '{channel.Name}' because it is not bound as a publisher to it.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string FailedToUnbindPublisherFromNonExistingChannel(int clientId, string clientName, int channelId)
+    internal static string ListenerAlreadyBound(MessageBrokerChannelListenerBinding listener)
     {
         return
-            $"Client [{clientId}] '{clientName}' could not be unbound as a publisher from non-existing channel with ID {channelId}.";
+            $"Client [{listener.Client.Id}] '{listener.Client.Name}' could not be bound as a listener to channel [{listener.Channel.Id}] '{listener.Channel.Name}' because it is already bound as a listener to it.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string FailedToUnbindListenerFromChannel(int clientId, string clientName, int channelId, string channelName)
+    internal static string ListenerNotBound(MessageBrokerRemoteClient client, MessageBrokerChannel channel)
     {
         return
-            $"Client [{clientId}] '{clientName}' could not be unbound as a listener from channel [{channelId}] '{channelName}' because it is not bound as a listener to it.";
+            $"Client [{client.Id}] '{client.Name}' could not be unbound as a listener from channel [{channel.Id}] '{channel.Name}' because it is not bound as a listener to it.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string FailedToUnbindListenerFromNonExistingChannel(int clientId, string clientName, int channelId)
+    internal static string CannotUnbindPublisherFromNonExistingChannel(MessageBrokerRemoteClient client, int channelId)
     {
-        return
-            $"Client [{clientId}] '{clientName}' could not be unbound as a listener from non-existing channel with ID {channelId}.";
+        return $"Client [{client.Id}] '{client.Name}' could not be unbound as a publisher from non-existing channel with ID {channelId}.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string FailedToPushMessageToUnboundChannel(int clientId, string clientName, int channelId)
+    internal static string CannotBindAsListenerToNonExistingChannel(MessageBrokerRemoteClient client, string channelName)
+    {
+        return $"Client [{client.Id}] '{client.Name}' could not be bound as a listener to a non-existing channel '{channelName}'.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string CannotUnbindListenerFromNonExistingChannel(MessageBrokerRemoteClient client, int channelId)
+    {
+        return $"Client [{client.Id}] '{client.Name}' could not be unbound as a listener from non-existing channel with ID {channelId}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string PublisherNotBound(MessageBrokerRemoteClient client, int channelId)
     {
         return
-            $"Client [{clientId}] '{clientName}' could not push message to channel with ID {channelId} because it is not bound as a publisher to it.";
+            $"Client [{client.Id}] '{client.Name}' could not push message to channel with ID {channelId} because it is not bound as a publisher to it.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string QueueNotFound(MessageBrokerRemoteClient client, int queueId)
+    {
+        return $"Client [{client.Id}] '{client.Name}' could not process a message ACK for non-existing queue with ID {queueId}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string MessageNotFound(MessageBrokerQueue queue, int ackId, int streamId, ulong messageId)
+    {
+        return
+            $"Queue [{queue.Id}] '{queue.Name}' for client [{queue.Client.Id}] '{queue.Client.Name}' could not process a (ack ID: {ackId}, stream ID: {streamId}, message ID: {messageId}) message ACK because the message does not exist.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string MessageDataNotFound(MessageBrokerStream stream, int key)
+    {
+        return $"Stream [{stream.Id}] '{stream.Name}' does not have a message related to {key} store key.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string MessageVersionNotFound(
+        MessageBrokerQueue queue,
+        int streamId,
+        ulong messageId,
+        int retryAttempt,
+        int redeliveryAttempt)
+    {
+        return
+            $"Queue [{queue.Id}] '{queue.Name}' for client [{queue.Client.Id}] '{queue.Client.Name}' could not process a (stream ID: {streamId}, message ID: {messageId}) message ACK because its (retry attempt: {retryAttempt}, redelivery attempt: {redeliveryAttempt}) version does not exist.";
     }
 
     [Pure]
@@ -276,28 +421,6 @@ internal static class Resources
     {
         return
             $"Client [{clientId}] '{clientName}' failed to send a request to the server in the specified amount of time ({timeout.FullMilliseconds} milliseconds).";
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string FailedToCreateListenerBinding(
-        int clientId,
-        string clientName,
-        int? channelId,
-        string channelName,
-        Protocol.BindListenerFailureResponse.Reasons reason)
-    {
-        Assume.NotEquals( reason, Protocol.BindListenerFailureResponse.Reasons.None );
-        var reasonText = reason switch
-        {
-            Protocol.BindListenerFailureResponse.Reasons.ChannelDoesNotExist => "channel does not exist",
-            Protocol.BindListenerFailureResponse.Reasons.AlreadyBound => "it is already bound as a listener to it",
-            _ => "the listener binding process was cancelled"
-        };
-
-        var channelIdText = channelId is null ? string.Empty : $"[{channelId.Value}] ";
-        return
-            $"Client [{clientId}] '{clientName}' could not be bound as a listener to channel {channelIdText}'{channelName}' because {reasonText}.";
     }
 
     [Pure]

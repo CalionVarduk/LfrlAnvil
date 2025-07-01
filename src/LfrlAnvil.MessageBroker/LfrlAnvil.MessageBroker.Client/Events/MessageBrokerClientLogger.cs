@@ -44,6 +44,8 @@ public readonly struct MessageBrokerClientLogger
         Action<MessageBrokerClientMessagePushedEvent>? messagePushed,
         Action<MessageBrokerClientProcessingMessageEvent>? processingMessage,
         Action<MessageBrokerClientMessageProcessedEvent>? messageProcessed,
+        Action<MessageBrokerClientAcknowledgingMessageEvent>? acknowledgingMessage,
+        Action<MessageBrokerClientMessageAcknowledgedEvent>? messageAcknowledged,
         Action<MessageBrokerClientProcessingSystemNotificationEvent>? processingSystemNotification,
         Action<MessageBrokerClientSenderNameProcessedEvent>? senderNameProcessed,
         Action<MessageBrokerClientStreamNameProcessedEvent>? streamNameProcessed,
@@ -72,6 +74,8 @@ public readonly struct MessageBrokerClientLogger
         MessagePushed = messagePushed;
         ProcessingMessage = processingMessage;
         MessageProcessed = messageProcessed;
+        AcknowledgingMessage = acknowledgingMessage;
+        MessageAcknowledged = messageAcknowledged;
         ProcessingSystemNotification = processingSystemNotification;
         SenderNameProcessed = senderNameProcessed;
         StreamNameProcessed = streamNameProcessed;
@@ -186,6 +190,16 @@ public readonly struct MessageBrokerClientLogger
     public readonly Action<MessageBrokerClientMessageProcessedEvent>? MessageProcessed;
 
     /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerClientAcknowledgingMessageEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerClientAcknowledgingMessageEvent>? AcknowledgingMessage;
+
+    /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerClientMessageAcknowledgedEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerClientMessageAcknowledgedEvent>? MessageAcknowledged;
+
+    /// <summary>
     /// Optional callback for a <see cref="MessageBrokerClientProcessingSystemNotificationEvent"/>.
     /// </summary>
     public readonly Action<MessageBrokerClientProcessingSystemNotificationEvent>? ProcessingSystemNotification;
@@ -239,6 +253,8 @@ public readonly struct MessageBrokerClientLogger
     /// <param name="messagePushed">Optional <see cref="MessagePushed"/> callback.</param>
     /// <param name="processingMessage">Optional <see cref="ProcessingMessage"/> callback.</param>
     /// <param name="messageProcessed">Optional <see cref="MessageProcessed"/> callback.</param>
+    /// <param name="acknowledgingMessage">Optional <see cref="AcknowledgingMessage"/> callback.</param>
+    /// <param name="messageAcknowledged">Optional <see cref="MessageAcknowledged"/> callback.</param>
     /// <param name="processingSystemNotification">Optional <see cref="ProcessingSystemNotification"/> callback.</param>
     /// <param name="senderNameProcessed">Optional <see cref="SenderNameProcessed"/> callback.</param>
     /// <param name="streamNameProcessed">Optional <see cref="StreamNameProcessed"/> callback.</param>
@@ -269,6 +285,8 @@ public readonly struct MessageBrokerClientLogger
         Action<MessageBrokerClientMessagePushedEvent>? messagePushed = null,
         Action<MessageBrokerClientProcessingMessageEvent>? processingMessage = null,
         Action<MessageBrokerClientMessageProcessedEvent>? messageProcessed = null,
+        Action<MessageBrokerClientAcknowledgingMessageEvent>? acknowledgingMessage = null,
+        Action<MessageBrokerClientMessageAcknowledgedEvent>? messageAcknowledged = null,
         Action<MessageBrokerClientProcessingSystemNotificationEvent>? processingSystemNotification = null,
         Action<MessageBrokerClientSenderNameProcessedEvent>? senderNameProcessed = null,
         Action<MessageBrokerClientStreamNameProcessedEvent>? streamNameProcessed = null,
@@ -298,6 +316,8 @@ public readonly struct MessageBrokerClientLogger
             messagePushed,
             processingMessage,
             messageProcessed,
+            acknowledgingMessage,
+            messageAcknowledged,
             processingSystemNotification,
             senderNameProcessed,
             streamNameProcessed,

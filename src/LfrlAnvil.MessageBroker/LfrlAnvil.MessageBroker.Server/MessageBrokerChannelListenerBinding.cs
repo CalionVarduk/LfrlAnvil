@@ -15,6 +15,7 @@
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Async;
+using LfrlAnvil.Chrono;
 
 namespace LfrlAnvil.MessageBroker.Server;
 
@@ -31,14 +32,26 @@ public sealed class MessageBrokerChannelListenerBinding
         MessageBrokerRemoteClient client,
         MessageBrokerChannel channel,
         MessageBrokerQueue queue,
-        int prefetchHint)
+        int prefetchHint,
+        int maxRetries,
+        Duration retryDelay,
+        int maxRedeliveries,
+        Duration minAckTimeout)
     {
         Assume.IsGreaterThan( prefetchHint, 0 );
+        Assume.IsGreaterThanOrEqualTo( maxRetries, 0 );
+        Assume.IsGreaterThanOrEqualTo( retryDelay, Duration.Zero );
+        Assume.IsGreaterThanOrEqualTo( maxRedeliveries, 0 );
+        Assume.IsGreaterThanOrEqualTo( minAckTimeout, Duration.Zero );
         Client = client;
         Channel = channel;
         Queue = queue;
         _state = MessageBrokerChannelListenerBindingState.Running;
         PrefetchHint = prefetchHint;
+        MaxRetries = maxRetries;
+        RetryDelay = retryDelay;
+        MaxRedeliveries = maxRedeliveries;
+        MinAckTimeout = minAckTimeout;
         _prefetchCounter = new InterlockedInt32( 0 );
     }
 
@@ -58,9 +71,42 @@ public sealed class MessageBrokerChannelListenerBinding
     public MessageBrokerQueue Queue { get; }
 
     /// <summary>
-    /// Specifies how many messages can this listener send to the <see cref="Client"/> at the same time.
+    /// Specifies how many messages intended for this listener can be sent by the <see cref="Queue"/>
+    /// to the <see cref="Client"/> at the same time.
     /// </summary>
     public int PrefetchHint { get; }
+
+    /// <summary>
+    /// Specifies how many times the <see cref="Queue"/> will attempt to automatically send a message notification retry
+    /// when the <see cref="Client"/> responds with a negative ACK, before giving up.
+    /// </summary>
+    public int MaxRetries { get; }
+
+    /// <summary>
+    /// Specifies the delay between the <see cref="Queue"/> successfully processing negative ACK sent by the <see cref="Client"/>
+    /// and the <see cref="Queue"/> sending a message notification retry.
+    /// </summary>
+    public Duration RetryDelay { get; }
+
+    /// <summary>
+    /// Specifies how many times the <see cref="Queue"/> will attempt to automatically send a message notification redelivery
+    /// when the <see cref="Client"/> fails to respond with either an ACK or a negative ACK in time (see <see cref="MinAckTimeout"/>),
+    /// before giving up.
+    /// </summary>
+    public int MaxRedeliveries { get; }
+
+    /// <summary>
+    /// Specifies the minimum amount of time that the <see cref="Queue"/> will wait for the <see cref="Client"/>
+    /// to send either an ACK or a negative ACK before attempting a message notification redelivery.
+    /// Actual ACK timeout may be different due to the state of the <see cref="Queue"/> and other listeners bound to it.
+    /// </summary>
+    public Duration MinAckTimeout { get; }
+
+    /// <summary>
+    /// Specifies whether or not the <see cref="Client"/> is expected to send ACK or negative ACK to the <see cref="Queue"/>
+    /// in order to confirm message notification.
+    /// </summary>
+    public bool AreAcksEnabled => MinAckTimeout > Duration.Zero;
 
     /// <summary>
     /// Current listener's state.
@@ -126,6 +172,20 @@ public sealed class MessageBrokerChannelListenerBinding
         while ( ! _prefetchCounter.Write( unchecked( current - 1 ), current ) );
 
         return current >= PrefetchHint;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool CanConsumePrefetchCounter()
+    {
+        return _prefetchCounter.Value < PrefetchHint;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool CanSendRedelivery()
+    {
+        return _prefetchCounter.Value >= 0;
     }
 
     internal void OnServerDisposed()

@@ -14,7 +14,6 @@
 
 using System;
 using System.Diagnostics.Contracts;
-using System.Runtime.CompilerServices;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Memory;
 
@@ -22,37 +21,29 @@ namespace LfrlAnvil.MessageBroker.Server.Internal;
 
 internal readonly struct StreamMessage
 {
-    private readonly MemoryPoolToken<byte> _poolToken;
-
     internal StreamMessage(
-        ulong id,
-        Timestamp timestamp,
         MessageBrokerChannelPublisherBinding publisher,
+        ulong id,
+        Timestamp pushedAt,
         MemoryPoolToken<byte> poolToken,
         ReadOnlyMemory<byte> data)
     {
-        Id = id;
-        Timestamp = timestamp;
         Publisher = publisher;
-        _poolToken = poolToken;
+        Id = id;
+        PushedAt = pushedAt;
+        PoolToken = poolToken;
         Data = data;
     }
 
-    internal readonly ulong Id;
-    internal readonly Timestamp Timestamp;
     internal readonly MessageBrokerChannelPublisherBinding Publisher;
+    internal readonly ulong Id;
+    internal readonly Timestamp PushedAt;
+    internal readonly MemoryPoolToken<byte> PoolToken;
     internal readonly ReadOnlyMemory<byte> Data;
-    internal bool BufferClearEnabled => _poolToken.Clear;
 
     [Pure]
     public override string ToString()
     {
-        return $"Id = {Id}, Timestamp = {Timestamp}, Length = {Data.Length}, Publisher = ({Publisher})";
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal Exception? Return()
-    {
-        return _poolToken.Return();
+        return $"Publisher = ({Publisher}), Id = {Id}, PushedAt = {PushedAt}, Length = {Data.Length}";
     }
 }

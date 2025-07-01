@@ -14,6 +14,7 @@
 
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Chrono;
 
 namespace LfrlAnvil.MessageBroker.Client.Events;
 
@@ -27,13 +28,21 @@ public readonly struct MessageBrokerClientBindingListenerEvent
         ulong traceId,
         string channelName,
         string queueName,
-        int prefetchHint,
+        short prefetchHint,
+        int maxRetries,
+        Duration retryDelay,
+        int maxRedeliveries,
+        Duration minAckTimeout,
         bool createChannelIfNotExists)
     {
         Source = MessageBrokerClientEventSource.Create( client, traceId );
         ChannelName = channelName;
         QueueName = queueName;
         PrefetchHint = prefetchHint;
+        MaxRetries = maxRetries;
+        RetryDelay = retryDelay;
+        MaxRedeliveries = maxRedeliveries;
+        MinAckTimeout = minAckTimeout;
         CreateChannelIfNotExists = createChannelIfNotExists;
     }
 
@@ -55,12 +64,37 @@ public readonly struct MessageBrokerClientBindingListenerEvent
     /// <summary>
     /// Listener's prefetch hint.
     /// </summary>
-    public int PrefetchHint { get; }
+    public short PrefetchHint { get; }
 
     /// <summary>
-    ///
+    /// Listener's max retries count.
+    /// </summary>
+    public int MaxRetries { get; }
+
+    /// <summary>
+    /// Listener's retry delay.
+    /// </summary>
+    public Duration RetryDelay { get; }
+
+    /// <summary>
+    /// Listener's max redeliveries count.
+    /// </summary>
+    public int MaxRedeliveries { get; }
+
+    /// <summary>
+    /// Listener's min ACK timeout.
+    /// </summary>
+    public Duration MinAckTimeout { get; }
+
+    /// <summary>
+    /// Specifies whether or not the server should create the channel if it does not exist yet.
     /// </summary>
     public bool CreateChannelIfNotExists { get; }
+
+    /// <summary>
+    /// Specifies whether or not the listener has ACKs enabled.
+    /// </summary>
+    public bool AreAcksEnabled => MinAckTimeout > Duration.Zero;
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerClientBindingListenerEvent"/> instance.
@@ -69,8 +103,10 @@ public readonly struct MessageBrokerClientBindingListenerEvent
     [Pure]
     public override string ToString()
     {
+        var retries = $", MaxRetries = {MaxRetries}{(MaxRetries > 0 ? $", RetryDelay = {RetryDelay}" : string.Empty)}";
+        var minAckTimeout = AreAcksEnabled ? $"MinAckTimeout = {MinAckTimeout}" : "MinAckTimeout = <disabled>";
         return
-            $"[BindingListener] {Source}, ChannelName = '{ChannelName}', QueueName = '{QueueName}', PrefetchHint = {PrefetchHint}, CreateChannelIfNotExists = {CreateChannelIfNotExists}";
+            $"[BindingListener] {Source}, ChannelName = '{ChannelName}', QueueName = '{QueueName}', PrefetchHint = {PrefetchHint}{retries}, MaxRedeliveries = {MaxRedeliveries}, {minAckTimeout}, CreateChannelIfNotExists = {CreateChannelIfNotExists}";
     }
 
     [Pure]
@@ -80,7 +116,11 @@ public readonly struct MessageBrokerClientBindingListenerEvent
         ulong traceId,
         string channelName,
         string queueName,
-        int prefetchHint,
+        short prefetchHint,
+        int maxRetries,
+        Duration retryDelay,
+        int maxRedeliveries,
+        Duration minAckTimeout,
         bool createChannelIfNotExists)
     {
         return new MessageBrokerClientBindingListenerEvent(
@@ -89,6 +129,10 @@ public readonly struct MessageBrokerClientBindingListenerEvent
             channelName,
             queueName,
             prefetchHint,
+            maxRetries,
+            retryDelay,
+            maxRedeliveries,
+            minAckTimeout,
             createChannelIfNotExists );
     }
 }
