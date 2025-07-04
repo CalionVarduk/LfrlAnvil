@@ -131,24 +131,23 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string RetryAttemptIsNotPositive(int received)
+    internal static string RetryIsNotPositive(int received)
     {
-        return $"Expected retry attempt to be greater than 0 but found {received}.";
+        return $"Expected retry to be greater than 0 but found {received}.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string RedeliveryAttemptIsNotPositive(int received)
+    internal static string RedeliveryIsNotPositive(int received)
     {
-        return $"Expected redelivery attempt to be greater than 0 but found {received}.";
+        return $"Expected redelivery to be greater than 0 but found {received}.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string MissingNonZeroMessageResendAttemptMarker(int retryAttempt, int redeliveryAttempt)
+    internal static string MissingNonZeroMessageResendAttemptMarker(int retry, int redelivery)
     {
-        return
-            $"Message notification with retry attempt {retryAttempt} and redelivery attempt {redeliveryAttempt} is not marked as either a retry or a redelivery.";
+        return $"Message notification with retry {retry} and redelivery {redelivery} is not marked as either a retry or a redelivery.";
     }
 
     [Pure]
@@ -162,14 +161,14 @@ internal static class Resources
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string MaxRetriesExceeded(MessageBrokerListener listener, int received)
     {
-        return $"Retry attempt {received} exceeds listener's {listener.MaxRetries} max retries.";
+        return $"Retry {received} exceeds listener's {listener.MaxRetries} max retries.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string MaxRedeliveriesExceeded(MessageBrokerListener listener, int received)
     {
-        return $"Redelivery attempt {received} exceeds listener's {listener.MaxRedeliveries} max redeliveries.";
+        return $"Redelivery {received} exceeds listener's {listener.MaxRedeliveries} max redeliveries.";
     }
 
     [Pure]

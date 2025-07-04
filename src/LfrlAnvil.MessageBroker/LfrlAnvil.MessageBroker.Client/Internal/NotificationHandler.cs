@@ -62,7 +62,9 @@ internal struct NotificationHandler
 
             using ( MessageBrokerClientTraceEvent.CreateScope( client, traceId, MessageBrokerClientTraceEventType.Unexpected ) )
             {
-                MessageBrokerClientErrorEvent.Create( client, traceId, exc ).Emit( client.Logger.Error );
+                if ( client.Logger.Error is { } error )
+                    error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
+
                 await client.DisposeAsync( traceId ).ConfigureAwait( false );
             }
         }
@@ -76,7 +78,7 @@ internal struct NotificationHandler
             _continuation.SetResult( false );
     }
 
-    internal (int DiscardedMessageCount, Chain<Exception> Exceptions) EndDispose()
+    internal (int DiscardedMessageCount, Chain<Exception> Exceptions) EndDispose(bool extractExceptions)
     {
         var discardedMessageCount = _notifications.Count;
         var exceptions = Chain<Exception>.Empty;
@@ -87,7 +89,7 @@ internal struct NotificationHandler
                 --discardedMessageCount;
 
             var exc = message.PoolToken.Return();
-            if ( exc is not null )
+            if ( exc is not null && extractExceptions )
                 exceptions = exceptions.Extend( exc );
         }
 
@@ -166,8 +168,9 @@ internal struct NotificationHandler
                             traceId,
                             MessageBrokerClientTraceEventType.SystemNotification ) )
                         {
-                            MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, notification.Header )
-                                .Emit( client.Logger.ReadPacket );
+                            if ( client.Logger.ReadPacket is { } readPacket )
+                                readPacket.Emit(
+                                    MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, notification.Header ) );
 
                             var exception = Protocol.AssertMinPayload(
                                 client,
@@ -176,7 +179,9 @@ internal struct NotificationHandler
 
                             if ( exception is not null )
                             {
-                                MessageBrokerClientErrorEvent.Create( client, traceId, exception ).Emit( client.Logger.Error );
+                                if ( client.Logger.Error is { } error )
+                                    error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
+
                                 await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
                                 return;
                             }
@@ -184,8 +189,9 @@ internal struct NotificationHandler
                             var requestHeader = Protocol.SystemNotificationHeader.Parse(
                                 notification.Data.Slice( 0, Protocol.SystemNotificationHeader.Length ) );
 
-                            MessageBrokerClientProcessingSystemNotificationEvent.Create( client, traceId, requestHeader.Type )
-                                .Emit( client.Logger.ProcessingSystemNotification );
+                            if ( client.Logger.ProcessingSystemNotification is { } processingSystemNotification )
+                                processingSystemNotification.Emit(
+                                    MessageBrokerClientProcessingSystemNotificationEvent.Create( client, traceId, requestHeader.Type ) );
 
                             var valid = requestHeader.Type switch
                             {
@@ -220,18 +226,21 @@ internal struct NotificationHandler
                 Assume.Equals( notification.Header.GetClientEndpoint(), MessageBrokerClientEndpoint.MessageNotification );
 
                 var failed = true;
-                MessageBrokerClientTraceEvent.Create( client, traceId, MessageBrokerClientTraceEventType.MessageNotification )
-                    .Emit( client.Logger.TraceStart );
+                if ( client.Logger.TraceStart is { } traceStart )
+                    traceStart.Emit(
+                        MessageBrokerClientTraceEvent.Create( client, traceId, MessageBrokerClientTraceEventType.MessageNotification ) );
 
                 try
                 {
-                    MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, notification.Header )
-                        .Emit( client.Logger.ReadPacket );
+                    var readPacket = client.Logger.ReadPacket;
+                    readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, notification.Header ) );
 
                     var exception = Protocol.AssertMinPayload( client, notification.Header, Protocol.MessageNotificationHeader.Length );
                     if ( exception is not null )
                     {
-                        MessageBrokerClientErrorEvent.Create( client, traceId, exception ).Emit( client.Logger.Error );
+                        if ( client.Logger.Error is { } error )
+                            error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
+
                         await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
                         return;
                     }
@@ -243,25 +252,30 @@ internal struct NotificationHandler
                     var errors = request.StringifyErrors();
                     if ( errors.Count > 0 )
                     {
-                        var error = Protocol.ProtocolException( client, notification.Header, errors );
-                        MessageBrokerClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+                        if ( client.Logger.Error is { } error )
+                        {
+                            var exc = Protocol.ProtocolException( client, notification.Header, errors );
+                            error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
+                        }
+
                         await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
                         return;
                     }
 
                     var data = notification.Data.Slice( Protocol.MessageNotificationHeader.Length );
-                    MessageBrokerClientProcessingMessageEvent.Create(
-                            client,
-                            traceId,
-                            request.AckId,
-                            request.SenderId,
-                            request.StreamId,
-                            request.MessageId,
-                            request.ChannelId,
-                            request.Retry,
-                            request.Redelivery,
-                            data.Length )
-                        .Emit( client.Logger.ProcessingMessage );
+                    if ( client.Logger.ProcessingMessage is { } processingMessage )
+                        processingMessage.Emit(
+                            MessageBrokerClientProcessingMessageEvent.Create(
+                                client,
+                                traceId,
+                                request.AckId,
+                                request.SenderId,
+                                request.StreamId,
+                                request.MessageId,
+                                request.ChannelId,
+                                request.Retry,
+                                request.Redelivery,
+                                data.Length ) );
 
                     MessageBrokerListener? listener;
                     var sender = new MessageBrokerExternalObject( request.SenderId );
@@ -278,29 +292,36 @@ internal struct NotificationHandler
 
                     if ( listener is null )
                     {
-                        var error = new MessageBrokerClientMessageException(
-                            client,
-                            null,
-                            Resources.ListenerDoesNotExist( request.ChannelId ) );
+                        if ( client.Logger.Error is { } error )
+                        {
+                            var exc = new MessageBrokerClientMessageException(
+                                client,
+                                null,
+                                Resources.ListenerDoesNotExist( request.ChannelId ) );
 
-                        MessageBrokerClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+                            error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
+                        }
+
                         continue;
                     }
 
                     errors = request.StringifyListenerErrors( listener );
                     if ( errors.Count > 0 )
                     {
-                        var error = new MessageBrokerClientMessageException(
-                            client,
-                            listener,
-                            Resources.InvalidMessageParameters( listener, errors ) );
+                        if ( client.Logger.Error is { } error )
+                        {
+                            var exc = new MessageBrokerClientMessageException(
+                                client,
+                                listener,
+                                Resources.InvalidMessageParameters( listener, errors ) );
 
-                        MessageBrokerClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+                            error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
+                        }
+
                         continue;
                     }
 
-                    MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, notification.Header )
-                        .Emit( client.Logger.ReadPacket );
+                    readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, notification.Header ) );
 
                     bool cancel;
                     using ( listener.AcquireLock() )
@@ -325,12 +346,15 @@ internal struct NotificationHandler
 
                     if ( cancel )
                     {
-                        var error = new MessageBrokerClientMessageException(
-                            client,
-                            listener,
-                            Resources.ListenerDoesNotExist( request.ChannelId ) );
+                        if ( client.Logger.Error is { } error )
+                        {
+                            var exc = new MessageBrokerClientMessageException(
+                                client,
+                                listener,
+                                Resources.ListenerDoesNotExist( request.ChannelId ) );
 
-                        MessageBrokerClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+                            error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
+                        }
                     }
                 }
                 finally
@@ -338,8 +362,12 @@ internal struct NotificationHandler
                     if ( failed )
                     {
                         notification.PoolToken.Return( client, traceId );
-                        MessageBrokerClientTraceEvent.Create( client, traceId, MessageBrokerClientTraceEventType.MessageNotification )
-                            .Emit( client.Logger.TraceEnd );
+                        if ( client.Logger.TraceEnd is { } traceEnd )
+                            traceEnd.Emit(
+                                MessageBrokerClientTraceEvent.Create(
+                                    client,
+                                    traceId,
+                                    MessageBrokerClientTraceEventType.MessageNotification ) );
                     }
                 }
             }
@@ -354,12 +382,16 @@ internal struct NotificationHandler
     {
         if ( ! client.SynchronizeExternalObjectNames )
         {
-            var error = Protocol.ProtocolException(
-                client,
-                notification.Header,
-                Chain.Create( Resources.ExternalObjectNameSynchronizationIsDisabled ) );
+            if ( client.Logger.Error is { } error )
+            {
+                var exc = Protocol.ProtocolException(
+                    client,
+                    notification.Header,
+                    Chain.Create( Resources.ExternalObjectNameSynchronizationIsDisabled ) );
 
-            MessageBrokerClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+                error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
+            }
+
             await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
             return false;
         }
@@ -371,7 +403,9 @@ internal struct NotificationHandler
 
         if ( exception is not null )
         {
-            MessageBrokerClientErrorEvent.Create( client, traceId, exception ).Emit( client.Logger.Error );
+            if ( client.Logger.Error is { } error )
+                error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
+
             await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
             return false;
         }
@@ -384,8 +418,12 @@ internal struct NotificationHandler
         var requestErrors = parsedRequest.StringifySenderErrors( client.Id );
         if ( requestErrors.Count > 0 )
         {
-            var error = Protocol.ProtocolException( client, notification.Header, requestErrors );
-            MessageBrokerClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+            if ( client.Logger.Error is { } error )
+            {
+                var exc = Protocol.ProtocolException( client, notification.Header, requestErrors );
+                error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
+            }
+
             await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
             return false;
         }
@@ -393,7 +431,9 @@ internal struct NotificationHandler
         var name = TextEncoding.Parse( data.Slice( Protocol.ObjectNameNotificationHeader.Length ) );
         if ( name.Exception is not null )
         {
-            MessageBrokerClientErrorEvent.Create( client, traceId, name.Exception ).Emit( client.Logger.Error );
+            if ( client.Logger.Error is { } error )
+                error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, name.Exception ) );
+
             await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
             return false;
         }
@@ -401,8 +441,12 @@ internal struct NotificationHandler
         Assume.IsNotNull( name.Value );
         if ( ! Defaults.NameLengthBounds.Contains( name.Value.Length ) )
         {
-            var error = Protocol.InvalidSenderNameLengthException( client, notification.Header, name.Value.Length );
-            MessageBrokerClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+            if ( client.Logger.Error is { } error )
+            {
+                var exc = Protocol.InvalidSenderNameLengthException( client, notification.Header, name.Value.Length );
+                error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
+            }
+
             await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
             return false;
         }
@@ -416,9 +460,12 @@ internal struct NotificationHandler
             prev = client.ExternalNameCache.SetSender( parsedRequest.Id, name.Value );
         }
 
-        MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, notification.Header ).Emit( client.Logger.ReadPacket );
-        MessageBrokerClientSenderNameProcessedEvent.Create( client, traceId, parsedRequest.Id, prev, name.Value )
-            .Emit( client.Logger.SenderNameProcessed );
+        if ( client.Logger.ReadPacket is { } readPacket )
+            readPacket.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, notification.Header ) );
+
+        if ( client.Logger.SenderNameProcessed is { } senderNameProcessed )
+            senderNameProcessed.Emit(
+                MessageBrokerClientSenderNameProcessedEvent.Create( client, traceId, parsedRequest.Id, prev, name.Value ) );
 
         return true;
     }
@@ -431,12 +478,16 @@ internal struct NotificationHandler
     {
         if ( ! client.SynchronizeExternalObjectNames )
         {
-            var error = Protocol.ProtocolException(
-                client,
-                notification.Header,
-                Chain.Create( Resources.ExternalObjectNameSynchronizationIsDisabled ) );
+            if ( client.Logger.Error is { } error )
+            {
+                var exc = Protocol.ProtocolException(
+                    client,
+                    notification.Header,
+                    Chain.Create( Resources.ExternalObjectNameSynchronizationIsDisabled ) );
 
-            MessageBrokerClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+                error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
+            }
+
             await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
             return false;
         }
@@ -448,7 +499,9 @@ internal struct NotificationHandler
 
         if ( exception is not null )
         {
-            MessageBrokerClientErrorEvent.Create( client, traceId, exception ).Emit( client.Logger.Error );
+            if ( client.Logger.Error is { } error )
+                error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
+
             await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
             return false;
         }
@@ -461,8 +514,12 @@ internal struct NotificationHandler
         var requestErrors = parsedRequest.StringifyStreamErrors();
         if ( requestErrors.Count > 0 )
         {
-            var error = Protocol.ProtocolException( client, notification.Header, requestErrors );
-            MessageBrokerClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+            if ( client.Logger.Error is { } error )
+            {
+                var exc = Protocol.ProtocolException( client, notification.Header, requestErrors );
+                error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
+            }
+
             await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
             return false;
         }
@@ -470,7 +527,9 @@ internal struct NotificationHandler
         var name = TextEncoding.Parse( data.Slice( Protocol.ObjectNameNotificationHeader.Length ) );
         if ( name.Exception is not null )
         {
-            MessageBrokerClientErrorEvent.Create( client, traceId, name.Exception ).Emit( client.Logger.Error );
+            if ( client.Logger.Error is { } error )
+                error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, name.Exception ) );
+
             await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
             return false;
         }
@@ -478,8 +537,12 @@ internal struct NotificationHandler
         Assume.IsNotNull( name.Value );
         if ( ! Defaults.NameLengthBounds.Contains( name.Value.Length ) )
         {
-            var error = Protocol.InvalidStreamNameLengthException( client, notification.Header, name.Value.Length );
-            MessageBrokerClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+            if ( client.Logger.Error is { } error )
+            {
+                var exc = Protocol.InvalidStreamNameLengthException( client, notification.Header, name.Value.Length );
+                error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
+            }
+
             await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
             return false;
         }
@@ -493,9 +556,12 @@ internal struct NotificationHandler
             prev = client.ExternalNameCache.SetStream( parsedRequest.Id, name.Value );
         }
 
-        MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, notification.Header ).Emit( client.Logger.ReadPacket );
-        MessageBrokerClientStreamNameProcessedEvent.Create( client, traceId, parsedRequest.Id, prev, name.Value )
-            .Emit( client.Logger.StreamNameProcessed );
+        if ( client.Logger.ReadPacket is { } readPacket )
+            readPacket.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, notification.Header ) );
+
+        if ( client.Logger.StreamNameProcessed is { } streamNameProcessed )
+            streamNameProcessed.Emit(
+                MessageBrokerClientStreamNameProcessedEvent.Create( client, traceId, parsedRequest.Id, prev, name.Value ) );
 
         return true;
     }
@@ -506,8 +572,12 @@ internal struct NotificationHandler
         MessageBrokerSystemNotificationType type,
         ulong traceId)
     {
-        var error = Protocol.ProtocolException( client, header, Chain.Create( Resources.UnexpectedSystemNotificationType( type ) ) );
-        MessageBrokerClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+        if ( client.Logger.Error is { } error )
+        {
+            var exc = Protocol.ProtocolException( client, header, Chain.Create( Resources.UnexpectedSystemNotificationType( type ) ) );
+            error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
+        }
+
         await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
         return false;
     }

@@ -22,13 +22,12 @@ namespace LfrlAnvil.MessageBroker.Client.Events;
 /// </summary>
 public readonly struct MessageBrokerClientListenerUnboundEvent
 {
-    private readonly byte _state;
-
     private MessageBrokerClientListenerUnboundEvent(MessageBrokerListener listener, ulong traceId, bool channelRemoved, bool queueRemoved)
     {
         Source = MessageBrokerClientEventSource.Create( listener.Client, traceId );
         Listener = listener;
-        _state = ( byte )((channelRemoved ? 1 : 0) | (queueRemoved ? 2 : 0));
+        ChannelRemoved = channelRemoved;
+        QueueRemoved = queueRemoved;
     }
 
     /// <summary>
@@ -44,12 +43,12 @@ public readonly struct MessageBrokerClientListenerUnboundEvent
     /// <summary>
     /// Specifies whether or not the channel has been removed by the server.
     /// </summary>
-    public bool ChannelRemoved => (_state & 1) != 0;
+    public bool ChannelRemoved { get; }
 
     /// <summary>
     /// Specifies whether or not the queue has been removed by the server.
     /// </summary>
-    public bool QueueRemoved => (_state & 2) != 0;
+    public bool QueueRemoved { get; }
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerClientListenerUnboundEvent"/> instance.

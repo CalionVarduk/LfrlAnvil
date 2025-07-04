@@ -658,8 +658,8 @@ public class MessageTests : TestsBase, IClassFixture<SharedResourceFixture>
         ulong Id,
         MessageBrokerExternalObject Sender,
         MessageBrokerExternalObject Stream,
-        int RetryAttempt,
-        int RedeliveryAttempt,
+        int Retry,
+        int Redelivery,
         string Data
     )
     {
@@ -671,8 +671,8 @@ public class MessageTests : TestsBase, IClassFixture<SharedResourceFixture>
                 args.MessageId,
                 args.Sender,
                 args.Stream,
-                args.RetryAttempt,
-                args.RedeliveryAttempt,
+                args.Retry,
+                args.Redelivery,
                 GetData( args.Data.ToArray() ) );
         }
 

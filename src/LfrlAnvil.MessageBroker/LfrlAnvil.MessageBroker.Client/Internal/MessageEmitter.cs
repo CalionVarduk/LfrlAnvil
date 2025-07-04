@@ -63,7 +63,9 @@ internal struct MessageEmitter
                     traceId,
                     MessageBrokerClientTraceEventType.Unexpected ) )
                 {
-                    MessageBrokerClientErrorEvent.Create( listener.Client, traceId, exc ).Emit( listener.Client.Logger.Error );
+                    var error = listener.Client.Logger.Error;
+                    error?.Emit( MessageBrokerClientErrorEvent.Create( listener.Client, traceId, exc ) );
+
                     try
                     {
                         using ( listener.AcquireLock() )
@@ -78,7 +80,7 @@ internal struct MessageEmitter
                     }
                     catch ( Exception exc2 )
                     {
-                        MessageBrokerClientErrorEvent.Create( listener.Client, traceId, exc2 ).Emit( listener.Client.Logger.Error );
+                        error?.Emit( MessageBrokerClientErrorEvent.Create( listener.Client, traceId, exc2 ) );
                     }
                 }
             }
@@ -93,7 +95,7 @@ internal struct MessageEmitter
             _continuation.SetResult( false );
     }
 
-    internal (int DiscardedMessageCount, Chain<Exception> Exceptions) EndDispose()
+    internal (int DiscardedMessageCount, Chain<Exception> Exceptions) EndDispose(bool extractExceptions)
     {
         var discardedMessageCount = _messages.Count;
         var exceptions = Chain<Exception>.Empty;
@@ -101,7 +103,7 @@ internal struct MessageEmitter
         foreach ( ref readonly var message in _messages )
         {
             var exc = message.PoolToken.Return();
-            if ( exc is not null )
+            if ( exc is not null && extractExceptions )
                 exceptions = exceptions.Extend( exc );
         }
 
@@ -188,8 +190,8 @@ internal struct MessageEmitter
                 }
                 catch ( Exception exc )
                 {
-                    MessageBrokerClientErrorEvent.Create( listener.Client, notification.Args.TraceId, exc )
-                        .Emit( listener.Client.Logger.Error );
+                    if ( listener.Client.Logger.Error is { } error )
+                        error.Emit( MessageBrokerClientErrorEvent.Create( listener.Client, notification.Args.TraceId, exc ) );
 
                     if ( (exc is not OperationCanceledException cancelExc || cancelExc.CancellationToken != cancellationToken)
                         && notification.Args.Listener.AreAcksEnabled )
@@ -199,8 +201,8 @@ internal struct MessageEmitter
                                 notification.Args.AckId,
                                 notification.Args.Stream.Id,
                                 notification.Args.MessageId,
-                                notification.Args.RetryAttempt,
-                                notification.Args.RedeliveryAttempt,
+                                notification.Args.Retry,
+                                notification.Args.Redelivery,
                                 notification.Args.TraceId,
                                 MessageBrokerNegativeAck.Default,
                                 true )
@@ -209,19 +211,23 @@ internal struct MessageEmitter
                 }
                 finally
                 {
-                    MessageBrokerClientMessageProcessedEvent.Create(
-                            listener,
-                            notification.Args.TraceId,
-                            notification.Args.Stream.Id,
-                            notification.Args.MessageId,
-                            notification.Args.RetryAttempt,
-                            notification.Args.RedeliveryAttempt )
-                        .Emit( listener.Client.Logger.MessageProcessed );
+                    if ( listener.Client.Logger.MessageProcessed is { } messageProcessed )
+                        messageProcessed.Emit(
+                            MessageBrokerClientMessageProcessedEvent.Create(
+                                listener,
+                                notification.Args.TraceId,
+                                notification.Args.Stream.Id,
+                                notification.Args.MessageId,
+                                notification.Args.Retry,
+                                notification.Args.Redelivery ) );
 
                     notification.PoolToken.Return( listener.Client, notification.Args.TraceId );
-                    MessageBrokerClientTraceEvent
-                        .Create( listener.Client, notification.Args.TraceId, MessageBrokerClientTraceEventType.MessageNotification )
-                        .Emit( listener.Client.Logger.TraceEnd );
+                    if ( listener.Client.Logger.TraceEnd is { } traceEnd )
+                        traceEnd.Emit(
+                            MessageBrokerClientTraceEvent.Create(
+                                listener.Client,
+                                notification.Args.TraceId,
+                                MessageBrokerClientTraceEventType.MessageNotification ) );
                 }
             }
         }
@@ -237,8 +243,8 @@ internal struct MessageEmitter
             Timestamp receivedAt,
             MessageBrokerExternalObject sender,
             MessageBrokerExternalObject stream,
-            ResendIndex retry,
-            ResendIndex redelivery,
+            Int31BoolPair retry,
+            Int31BoolPair redelivery,
             ReadOnlyMemory<byte> data,
             MemoryPoolToken<byte> poolToken,
             ulong traceId)

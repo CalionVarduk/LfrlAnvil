@@ -190,6 +190,8 @@ public class SystemNotificationTests : TestsBase, IClassFixture<SharedResourceFi
     public async Task SenderName_ShouldDisposeClient_WhenInitialPayloadIsInvalid()
     {
         var endSource = new SafeTaskCompletionSource();
+        var awaitContinuation = new SafeTaskCompletionSource();
+        var doneAwaitCount = Atomic.Create( 0 );
         var logs = new EventLogger();
         using var server = new ServerMock();
         var remoteEndPoint = server.Start();
@@ -208,7 +210,18 @@ public class SystemNotificationTests : TestsBase, IClassFixture<SharedResourceFi
                             {
                                 if ( e.Type == MessageBrokerClientTraceEventType.SystemNotification )
                                     endSource.Complete();
-                            } ) ) ) );
+                            },
+                            awaitPacket: e =>
+                            {
+                                if ( e.Packet is not null || e.Exception is not null )
+                                    return;
+
+                                if ( doneAwaitCount.Value < 2 )
+                                    ++doneAwaitCount.Value;
+                                else
+                                    awaitContinuation.Task.Wait();
+                            },
+                            disposing: _ => awaitContinuation.Complete() ) ) ) );
 
         await server.EstablishHandshake( client );
         await server.GetTask( s => s.SendObjectNameNotification( MessageBrokerSystemNotificationType.SenderName, 2, "foo", payload: 0 ) );
@@ -714,6 +727,8 @@ public class SystemNotificationTests : TestsBase, IClassFixture<SharedResourceFi
     public async Task StreamName_ShouldDisposeClient_WhenInitialPayloadIsInvalid()
     {
         var endSource = new SafeTaskCompletionSource();
+        var awaitContinuation = new SafeTaskCompletionSource();
+        var doneAwaitCount = Atomic.Create( 0 );
         var logs = new EventLogger();
         using var server = new ServerMock();
         var remoteEndPoint = server.Start();
@@ -732,7 +747,18 @@ public class SystemNotificationTests : TestsBase, IClassFixture<SharedResourceFi
                             {
                                 if ( e.Type == MessageBrokerClientTraceEventType.SystemNotification )
                                     endSource.Complete();
-                            } ) ) ) );
+                            },
+                            awaitPacket: e =>
+                            {
+                                if ( e.Packet is not null || e.Exception is not null )
+                                    return;
+
+                                if ( doneAwaitCount.Value < 2 )
+                                    ++doneAwaitCount.Value;
+                                else
+                                    awaitContinuation.Task.Wait();
+                            },
+                            disposing: _ => awaitContinuation.Complete() ) ) ) );
 
         await server.EstablishHandshake( client );
         await server.GetTask( s => s.SendObjectNameNotification( MessageBrokerSystemNotificationType.StreamName, 1, "foo", payload: 0 ) );

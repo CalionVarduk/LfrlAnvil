@@ -22,8 +22,6 @@ namespace LfrlAnvil.MessageBroker.Client.Events;
 /// </summary>
 public readonly struct MessageBrokerClientPublisherUnboundEvent
 {
-    private readonly byte _state;
-
     private MessageBrokerClientPublisherUnboundEvent(
         MessageBrokerPublisher publisher,
         ulong traceId,
@@ -32,7 +30,8 @@ public readonly struct MessageBrokerClientPublisherUnboundEvent
     {
         Source = MessageBrokerClientEventSource.Create( publisher.Client, traceId );
         Publisher = publisher;
-        _state = ( byte )((channelRemoved ? 1 : 0) | (streamRemoved ? 2 : 0));
+        ChannelRemoved = channelRemoved;
+        StreamRemoved = streamRemoved;
     }
 
     /// <summary>
@@ -48,12 +47,12 @@ public readonly struct MessageBrokerClientPublisherUnboundEvent
     /// <summary>
     /// Specifies whether or not the channel has been removed by the server.
     /// </summary>
-    public bool ChannelRemoved => (_state & 1) != 0;
+    public bool ChannelRemoved { get; }
 
     /// <summary>
     /// Specifies whether or not the stream has been removed by the server.
     /// </summary>
-    public bool StreamRemoved => (_state & 2) != 0;
+    public bool StreamRemoved { get; }
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerClientPublisherUnboundEvent"/> instance.

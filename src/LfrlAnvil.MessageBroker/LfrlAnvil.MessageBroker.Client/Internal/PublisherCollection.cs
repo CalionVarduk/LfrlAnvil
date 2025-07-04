@@ -99,8 +99,9 @@ internal struct PublisherCollection
 
         using ( MessageBrokerClientTraceEvent.CreateScope( client, traceId, MessageBrokerClientTraceEventType.BindPublisher ) )
         {
-            MessageBrokerClientBindingPublisherEvent.Create( client, traceId, channelName, streamName ?? channelName )
-                .Emit( client.Logger.BindingPublisher );
+            if ( client.Logger.BindingPublisher is { } bindingPublisher )
+                bindingPublisher.Emit(
+                    MessageBrokerClientBindingPublisherEvent.Create( client, traceId, channelName, streamName ?? channelName ) );
 
             ManualResetValueTaskSource<IncomingPacketToken> responseSource;
             Protocol.BindPublisherRequest request;
@@ -152,7 +153,9 @@ internal struct PublisherCollection
             }
             catch ( Exception exc )
             {
-                MessageBrokerClientErrorEvent.Create( client, traceId, exc ).Emit( client.Logger.Error );
+                if ( client.Logger.Error is { } error )
+                    error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
+
                 await client.DisposeAsync( traceId ).ConfigureAwait( false );
                 return exc;
             }
@@ -169,10 +172,12 @@ internal struct PublisherCollection
                     if ( response.Type == IncomingPacketToken.Result.Disposed )
                         return client.EmitError( client.DisposedException(), traceId );
 
-                    var error = new MessageBrokerClientResponseTimeoutException( client, request.Header.GetServerEndpoint() );
-                    MessageBrokerClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+                    var exception = new MessageBrokerClientResponseTimeoutException( client, request.Header.GetServerEndpoint() );
+                    if ( client.Logger.Error is { } error )
+                        error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
+
                     await client.DisposeAsync( traceId ).ConfigureAwait( false );
-                    return error;
+                    return exception;
                 }
 
                 using ( client.AcquireActiveLock( traceId, out var exc ) )
@@ -187,13 +192,15 @@ internal struct PublisherCollection
                 {
                     case MessageBrokerClientEndpoint.PublisherBoundResponse:
                     {
-                        MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header )
-                            .Emit( client.Logger.ReadPacket );
+                        var readPacket = client.Logger.ReadPacket;
+                        readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header ) );
 
                         var exception = Protocol.AssertPayload( client, response.Header, Protocol.PublisherBoundResponse.Length );
                         if ( exception is not null )
                         {
-                            MessageBrokerClientErrorEvent.Create( client, traceId, exception ).Emit( client.Logger.Error );
+                            if ( client.Logger.Error is { } error )
+                                error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
+
                             await client.DisposeAsync( traceId ).ConfigureAwait( false );
                             return exception;
                         }
@@ -228,34 +235,35 @@ internal struct PublisherCollection
                                 parsedResponse.StreamCreated );
                         }
 
-                        MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header )
-                            .Emit( client.Logger.ReadPacket );
+                        readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header ) );
 
-                        MessageBrokerClientPublisherBoundEvent.Create(
-                                bindResult.Publisher,
-                                traceId,
-                                parsedResponse.ChannelCreated,
-                                parsedResponse.StreamCreated )
-                            .Emit( client.Logger.PublisherBound );
+                        if ( client.Logger.PublisherBound is { } publisherBound )
+                            publisherBound.Emit(
+                                MessageBrokerClientPublisherBoundEvent.Create(
+                                    bindResult.Publisher,
+                                    traceId,
+                                    parsedResponse.ChannelCreated,
+                                    parsedResponse.StreamCreated ) );
 
                         return bindResult;
                     }
                     case MessageBrokerClientEndpoint.BindPublisherFailureResponse:
                     {
-                        MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header )
-                            .Emit( client.Logger.ReadPacket );
+                        var readPacket = client.Logger.ReadPacket;
+                        readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header ) );
 
                         var exception = Protocol.AssertPayload( client, response.Header, Protocol.BindPublisherFailureResponse.Length );
                         if ( exception is not null )
                         {
-                            MessageBrokerClientErrorEvent.Create( client, traceId, exception ).Emit( client.Logger.Error );
+                            if ( client.Logger.Error is { } error )
+                                error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
+
                             await client.DisposeAsync( traceId ).ConfigureAwait( false );
                             return exception;
                         }
 
                         var parsedResponse = Protocol.BindPublisherFailureResponse.Parse( response.Data );
-                        MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header )
-                            .Emit( client.Logger.ReadPacket );
+                        readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header ) );
 
                         return client.EmitError(
                             Protocol.RequestException( client, request.Header, parsedResponse.StringifyErrors( channelName ) ),
@@ -271,7 +279,9 @@ internal struct PublisherCollection
             }
             catch ( Exception exc )
             {
-                MessageBrokerClientErrorEvent.Create( client, traceId, exc ).Emit( client.Logger.Error );
+                if ( client.Logger.Error is { } error )
+                    error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
+
                 await client.DisposeAsync( traceId ).ConfigureAwait( false );
                 return exc;
             }
@@ -301,7 +311,9 @@ internal struct PublisherCollection
 
         using ( MessageBrokerClientTraceEvent.CreateScope( client, traceId, MessageBrokerClientTraceEventType.UnbindPublisher ) )
         {
-            MessageBrokerClientUnbindingPublisherEvent.Create( publisher, traceId ).Emit( client.Logger.UnbindingPublisher );
+            if ( client.Logger.UnbindingPublisher is { } unbindingPublisher )
+                unbindingPublisher.Emit( MessageBrokerClientUnbindingPublisherEvent.Create( publisher, traceId ) );
+
             ManualResetValueTaskSource<IncomingPacketToken> responseSource;
             Protocol.UnbindPublisherRequest request;
 
@@ -352,7 +364,9 @@ internal struct PublisherCollection
             }
             catch ( Exception exc )
             {
-                MessageBrokerClientErrorEvent.Create( client, traceId, exc ).Emit( client.Logger.Error );
+                if ( client.Logger.Error is { } error )
+                    error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
+
                 await client.DisposeAsync( traceId ).ConfigureAwait( false );
                 return exc;
             }
@@ -369,10 +383,12 @@ internal struct PublisherCollection
                     if ( response.Type == IncomingPacketToken.Result.Disposed )
                         return client.EmitError( client.DisposedException(), traceId );
 
-                    var error = new MessageBrokerClientResponseTimeoutException( client, request.Header.GetServerEndpoint() );
-                    MessageBrokerClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+                    var exception = new MessageBrokerClientResponseTimeoutException( client, request.Header.GetServerEndpoint() );
+                    if ( client.Logger.Error is { } error )
+                        error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
+
                     await client.DisposeAsync( traceId ).ConfigureAwait( false );
-                    return error;
+                    return exception;
                 }
 
                 using ( client.AcquireActiveLock( traceId, out var exc ) )
@@ -387,13 +403,15 @@ internal struct PublisherCollection
                 {
                     case MessageBrokerClientEndpoint.PublisherUnboundResponse:
                     {
-                        MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header )
-                            .Emit( client.Logger.ReadPacket );
+                        var readPacket = client.Logger.ReadPacket;
+                        readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header ) );
 
                         var exception = Protocol.AssertPayload( client, response.Header, Protocol.PublisherUnboundResponse.Length );
                         if ( exception is not null )
                         {
-                            MessageBrokerClientErrorEvent.Create( client, traceId, exception ).Emit( client.Logger.Error );
+                            if ( client.Logger.Error is { } error )
+                                error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
+
                             await client.DisposeAsync( traceId ).ConfigureAwait( false );
                             return exception;
                         }
@@ -408,34 +426,34 @@ internal struct PublisherCollection
                             client.PublisherCollection._store.Remove( publisher.ChannelId, publisher.ChannelName );
                         }
 
-                        MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header )
-                            .Emit( client.Logger.ReadPacket );
-
-                        MessageBrokerClientPublisherUnboundEvent.Create(
-                                publisher,
-                                traceId,
-                                parsedResponse.ChannelRemoved,
-                                parsedResponse.StreamRemoved )
-                            .Emit( client.Logger.PublisherUnbound );
+                        readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header ) );
+                        if ( client.Logger.PublisherUnbound is { } publisherUnbound )
+                            publisherUnbound.Emit(
+                                MessageBrokerClientPublisherUnboundEvent.Create(
+                                    publisher,
+                                    traceId,
+                                    parsedResponse.ChannelRemoved,
+                                    parsedResponse.StreamRemoved ) );
 
                         return MessageBrokerUnbindPublisherResult.Create( parsedResponse.ChannelRemoved, parsedResponse.StreamRemoved );
                     }
                     case MessageBrokerClientEndpoint.UnbindPublisherFailureResponse:
                     {
-                        MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header )
-                            .Emit( client.Logger.ReadPacket );
+                        var readPacket = client.Logger.ReadPacket;
+                        readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header ) );
 
                         var exception = Protocol.AssertPayload( client, response.Header, Protocol.UnbindPublisherFailureResponse.Length );
                         if ( exception is not null )
                         {
-                            MessageBrokerClientErrorEvent.Create( client, traceId, exception ).Emit( client.Logger.Error );
+                            if ( client.Logger.Error is { } error )
+                                error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
+
                             await client.DisposeAsync( traceId ).ConfigureAwait( false );
                             return exception;
                         }
 
                         var parsedResponse = Protocol.UnbindPublisherFailureResponse.Parse( response.Data );
-                        MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header )
-                            .Emit( client.Logger.ReadPacket );
+                        readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header ) );
 
                         return client.EmitError(
                             Protocol.RequestException( client, request.Header, parsedResponse.StringifyErrors( publisher ) ),
@@ -451,7 +469,9 @@ internal struct PublisherCollection
             }
             catch ( Exception exc )
             {
-                MessageBrokerClientErrorEvent.Create( client, traceId, exc ).Emit( client.Logger.Error );
+                if ( client.Logger.Error is { } error )
+                    error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
+
                 await client.DisposeAsync( traceId ).ConfigureAwait( false );
                 return exc;
             }
@@ -483,8 +503,9 @@ internal struct PublisherCollection
         {
             var buffer = context.Data;
             var messageLength = unchecked( buffer.Length - Protocol.PushMessageHeader.Length );
-            MessageBrokerClientPushingMessageEvent.Create( client, traceId, context.Publisher, messageLength, confirm )
-                .Emit( client.Logger.PushingMessage );
+            if ( client.Logger.PushingMessage is { } pushingMessage )
+                pushingMessage.Emit(
+                    MessageBrokerClientPushingMessageEvent.Create( client, traceId, context.Publisher, messageLength, confirm ) );
 
             ManualResetValueTaskSource<IncomingPacketToken>? responseSource = null;
             Protocol.PushMessageHeader request;
@@ -537,15 +558,17 @@ internal struct PublisherCollection
             }
             catch ( Exception exc )
             {
-                MessageBrokerClientErrorEvent.Create( client, traceId, exc ).Emit( client.Logger.Error );
+                if ( client.Logger.Error is { } error )
+                    error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
+
                 await client.DisposeAsync( traceId ).ConfigureAwait( false );
                 return exc;
             }
 
             if ( responseSource is null )
             {
-                MessageBrokerClientMessagePushedEvent.Create( client, traceId, context.Publisher, messageLength )
-                    .Emit( client.Logger.MessagePushed );
+                if ( client.Logger.MessagePushed is { } messagePushed )
+                    messagePushed.Emit( MessageBrokerClientMessagePushedEvent.Create( client, traceId, context.Publisher, messageLength ) );
 
                 return MessageBrokerPushResult.CreateUnconfirmed();
             }
@@ -558,10 +581,12 @@ internal struct PublisherCollection
                     if ( response.Type == IncomingPacketToken.Result.Disposed )
                         return client.EmitError( client.DisposedException(), traceId );
 
-                    var error = new MessageBrokerClientResponseTimeoutException( client, request.Header.GetServerEndpoint() );
-                    MessageBrokerClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+                    var exception = new MessageBrokerClientResponseTimeoutException( client, request.Header.GetServerEndpoint() );
+                    if ( client.Logger.Error is { } error )
+                        error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
+
                     await client.DisposeAsync( traceId ).ConfigureAwait( false );
-                    return error;
+                    return exception;
                 }
 
                 using ( client.AcquireActiveLock( traceId, out var exc ) )
@@ -576,43 +601,49 @@ internal struct PublisherCollection
                 {
                     case MessageBrokerClientEndpoint.MessageAcceptedResponse:
                     {
-                        MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header )
-                            .Emit( client.Logger.ReadPacket );
+                        var readPacket = client.Logger.ReadPacket;
+                        readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header ) );
 
                         var exception = Protocol.AssertPayload( client, response.Header, Protocol.MessageAcceptedResponse.Length );
                         if ( exception is not null )
                         {
-                            MessageBrokerClientErrorEvent.Create( client, traceId, exception ).Emit( client.Logger.Error );
+                            if ( client.Logger.Error is { } error )
+                                error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
+
                             await client.DisposeAsync( traceId ).ConfigureAwait( false );
                             return exception;
                         }
 
                         var parsedResponse = Protocol.MessageAcceptedResponse.Parse( response.Data, reverseEndianness );
-                        MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header )
-                            .Emit( client.Logger.ReadPacket );
-
-                        MessageBrokerClientMessagePushedEvent
-                            .Create( client, traceId, context.Publisher, messageLength, parsedResponse.Id )
-                            .Emit( client.Logger.MessagePushed );
+                        readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header ) );
+                        if ( client.Logger.MessagePushed is { } messagePushed )
+                            messagePushed.Emit(
+                                MessageBrokerClientMessagePushedEvent.Create(
+                                    client,
+                                    traceId,
+                                    context.Publisher,
+                                    messageLength,
+                                    parsedResponse.Id ) );
 
                         return MessageBrokerPushResult.Create( parsedResponse.Id );
                     }
                     case MessageBrokerClientEndpoint.MessageRejectedResponse:
                     {
-                        MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header )
-                            .Emit( client.Logger.ReadPacket );
+                        var readPacket = client.Logger.ReadPacket;
+                        readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header ) );
 
                         var exception = Protocol.AssertPayload( client, response.Header, Protocol.MessageRejectedResponse.Length );
                         if ( exception is not null )
                         {
-                            MessageBrokerClientErrorEvent.Create( client, traceId, exception ).Emit( client.Logger.Error );
+                            if ( client.Logger.Error is { } error )
+                                error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
+
                             await client.DisposeAsync( traceId ).ConfigureAwait( false );
                             return exception;
                         }
 
                         var parsedResponse = Protocol.MessageRejectedResponse.Parse( response.Data );
-                        MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header )
-                            .Emit( client.Logger.ReadPacket );
+                        readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header ) );
 
                         return client.EmitError(
                             Protocol.RequestException( client, request.Header, parsedResponse.StringifyErrors( context.Publisher ) ),
@@ -628,7 +659,9 @@ internal struct PublisherCollection
             }
             catch ( Exception exc )
             {
-                MessageBrokerClientErrorEvent.Create( client, traceId, exc ).Emit( client.Logger.Error );
+                if ( client.Logger.Error is { } error )
+                    error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
+
                 await client.DisposeAsync( traceId ).ConfigureAwait( false );
                 return exc;
             }

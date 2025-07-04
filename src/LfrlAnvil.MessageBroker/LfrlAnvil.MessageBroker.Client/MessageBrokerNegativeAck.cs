@@ -29,7 +29,7 @@ public readonly struct MessageBrokerNegativeAck
     /// </summary>
     public static MessageBrokerNegativeAck Default => new MessageBrokerNegativeAck( false, null );
 
-    private MessageBrokerNegativeAck(bool skipRetry, Duration? retryDelay)
+    internal MessageBrokerNegativeAck(bool skipRetry, Duration? retryDelay)
     {
         SkipRetry = skipRetry;
         RetryDelay = retryDelay;

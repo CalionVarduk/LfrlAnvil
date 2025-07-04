@@ -188,13 +188,13 @@ public sealed class MessageBrokerListener
     /// <param name="ackId">Id of the pending ACK associated with the message.</param>
     /// <param name="streamId">Unique id of the server-side stream that handled the message.</param>
     /// <param name="messageId">Unique message id.</param>
-    /// <param name="retryAttempt">Retry attempt number of the message.</param>
-    /// <param name="redeliveryAttempt">Redelivery attempt number of the message.</param>
+    /// <param name="retry">Retry attempt of the message.</param>
+    /// <param name="redelivery">Redelivery number of the message.</param>
     /// <exception cref="ArgumentOutOfRangeException">
     /// When <paramref name="ackId"/> is less than or equal to <b>0</b>
     /// or when <paramref name="streamId"/> is less than or equal to <b>0</b>
-    /// or when <paramref name="retryAttempt"/> is less than <b>0</b> or greater than the listener's <see cref="MaxRetries"/>
-    /// or when <paramref name="redeliveryAttempt"/> is less than <b>0</b> or greater than the listener's <see cref="MaxRedeliveries"/>.
+    /// or when <paramref name="retry"/> is less than <b>0</b> or greater than the listener's <see cref="MaxRetries"/>
+    /// or when <paramref name="redelivery"/> is less than <b>0</b> or greater than the listener's <see cref="MaxRedeliveries"/>.
     /// </exception>
     /// <exception cref="MessageBrokerClientDisposedException">When client has already been disposed.</exception>
     /// <exception cref="MessageBrokerClientMessageException">When ACKs are not enabled for this listener.</exception>
@@ -208,14 +208,9 @@ public sealed class MessageBrokerListener
     /// Returned <see cref="Result{T}"/> will only be valid when either the client has successfully sent the ACK to the server,
     /// or the listener is already locally ubound from the channel, which will cancel the request to the server.
     /// </remarks>
-    public ValueTask<Result<bool>> SendMessageAckAsync(
-        int ackId,
-        int streamId,
-        ulong messageId,
-        int retryAttempt,
-        int redeliveryAttempt)
+    public ValueTask<Result<bool>> SendMessageAckAsync(int ackId, int streamId, ulong messageId, int retry, int redelivery)
     {
-        return ListenerCollection.SendMessageAckAsync( this, ackId, streamId, messageId, retryAttempt, redeliveryAttempt, null );
+        return ListenerCollection.SendMessageAckAsync( this, ackId, streamId, messageId, retry, redelivery, null );
     }
 
     /// <summary>
@@ -224,8 +219,8 @@ public sealed class MessageBrokerListener
     /// <param name="ackId">Id of the pending ACK associated with the message.</param>
     /// <param name="streamId">Unique id of the server-side stream that handled the message.</param>
     /// <param name="messageId">Unique message id.</param>
-    /// <param name="retryAttempt">Retry attempt number of the message.</param>
-    /// <param name="redeliveryAttempt">Redelivery attempt number of the message.</param>
+    /// <param name="retry">Retry attempt of the message.</param>
+    /// <param name="redelivery">Redelivery attempt of the message.</param>
     /// <param name="nack">
     /// Optional <see cref="MessageBrokerNegativeAck"/> instance that allows to modify the ACK.
     /// Equal to <see cref="MessageBrokerNegativeAck.Default"/> by default.
@@ -233,8 +228,8 @@ public sealed class MessageBrokerListener
     /// <exception cref="ArgumentOutOfRangeException">
     /// When <paramref name="ackId"/> is less than or equal to <b>0</b>
     /// or when <paramref name="streamId"/> is less than or equal to <b>0</b>
-    /// or when <paramref name="retryAttempt"/> is less than <b>0</b> or greater than the listener's <see cref="MaxRetries"/>
-    /// or when <paramref name="redeliveryAttempt"/> is less than <b>0</b> or greater than the listener's <see cref="MaxRedeliveries"/>.
+    /// or when <paramref name="retry"/> is less than <b>0</b> or greater than the listener's <see cref="MaxRetries"/>
+    /// or when <paramref name="redelivery"/> is less than <b>0</b> or greater than the listener's <see cref="MaxRedeliveries"/>.
     /// </exception>
     /// <exception cref="MessageBrokerClientDisposedException">When client has already been disposed.</exception>
     /// <exception cref="MessageBrokerClientMessageException">When ACKs are not enabled for this listener.</exception>
@@ -252,8 +247,8 @@ public sealed class MessageBrokerListener
         int ackId,
         int streamId,
         ulong messageId,
-        int retryAttempt,
-        int redeliveryAttempt,
+        int retry,
+        int redelivery,
         MessageBrokerNegativeAck nack = default)
     {
         return ListenerCollection.SendNegativeMessageAckAsync(
@@ -261,8 +256,8 @@ public sealed class MessageBrokerListener
             ackId,
             streamId,
             messageId,
-            retryAttempt,
-            redeliveryAttempt,
+            retry,
+            redelivery,
             null,
             nack,
             false );
@@ -313,13 +308,14 @@ public sealed class MessageBrokerListener
             MessageEmitter.BeginDispose();
         }
 
+        var error = Client.Logger.Error;
         try
         {
             await CancellationSource.CancelAsync().ConfigureAwait( false );
         }
         catch ( Exception exc )
         {
-            MessageBrokerClientErrorEvent.Create( Client, traceId, exc ).Emit( Client.Logger.Error );
+            error?.Emit( MessageBrokerClientErrorEvent.Create( Client, traceId, exc ) );
         }
 
         CancellationSource.TryDispose();
@@ -332,26 +328,29 @@ public sealed class MessageBrokerListener
             }
             catch ( Exception exc )
             {
-                MessageBrokerClientErrorEvent.Create( Client, traceId, exc ).Emit( Client.Logger.Error );
+                error?.Emit( MessageBrokerClientErrorEvent.Create( Client, traceId, exc ) );
             }
         }
 
         int discardedMessageCount;
         Chain<Exception> exceptions;
         using ( AcquireLock() )
-            (discardedMessageCount, exceptions) = MessageEmitter.EndDispose();
+            (discardedMessageCount, exceptions) = MessageEmitter.EndDispose( error is not null );
 
         foreach ( var exc in exceptions )
-            MessageBrokerClientErrorEvent.Create( Client, traceId, exc ).Emit( Client.Logger.Error );
+        {
+            Assume.IsNotNull( error );
+            error.Emit( MessageBrokerClientErrorEvent.Create( Client, traceId, exc ) );
+        }
 
         if ( discardedMessageCount > 0 )
         {
-            var error = new MessageBrokerClientMessageException(
+            var exc = new MessageBrokerClientMessageException(
                 Client,
                 this,
                 Resources.MessagesDiscarded( ChannelId, ChannelName, discardedMessageCount ) );
 
-            MessageBrokerClientErrorEvent.Create( Client, traceId, error ).Emit( Client.Logger.Error );
+            error?.Emit( MessageBrokerClientErrorEvent.Create( Client, traceId, exc ) );
         }
 
         using ( AcquireLock() )

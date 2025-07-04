@@ -26,8 +26,8 @@ namespace LfrlAnvil.MessageBroker.Client;
 /// </summary>
 public readonly struct MessageBrokerListenerCallbackArgs
 {
-    private readonly ResendIndex _retry;
-    private readonly ResendIndex _redelivery;
+    private readonly Int31BoolPair _retry;
+    private readonly Int31BoolPair _redelivery;
 
     internal MessageBrokerListenerCallbackArgs(
         MessageBrokerListener listener,
@@ -37,8 +37,8 @@ public readonly struct MessageBrokerListenerCallbackArgs
         Timestamp receivedAt,
         MessageBrokerExternalObject sender,
         MessageBrokerExternalObject stream,
-        ResendIndex retry,
-        ResendIndex redelivery,
+        Int31BoolPair retry,
+        Int31BoolPair redelivery,
         ReadOnlyMemory<byte> data,
         ulong traceId)
     {
@@ -103,29 +103,29 @@ public readonly struct MessageBrokerListenerCallbackArgs
     public ulong TraceId { get; }
 
     /// <summary>
-    /// Retry attempt number of this message.
+    /// Retry attempt of this message.
     /// </summary>
     /// <remarks>Retries are initiated by sending NACK response to the server.</remarks>
-    public int RetryAttempt => _retry.Value;
+    public int Retry => _retry.IntValue;
 
     /// <summary>
     /// Specifies whether or not this message is a retry.
     /// </summary>
-    public bool IsRetry => _retry.IsActive;
+    public bool IsRetry => _retry.BoolValue;
 
     /// <summary>
-    /// Redelivery attempt number of this message.
+    /// Redelivery attempt of this message.
     /// </summary>
     /// <remarks>
     /// Redeliveries are initiated automatically by the server
     /// when clients fail to respond with either ACK or negative ACK in time.
     /// </remarks>
-    public int RedeliveryAttempt => _redelivery.Value;
+    public int Redelivery => _redelivery.IntValue;
 
     /// <summary>
     /// Specifies whether or not this message is a redelivery.
     /// </summary>
-    public bool IsRedelivery => _redelivery.IsActive;
+    public bool IsRedelivery => _redelivery.BoolValue;
 
     /// <summary>
     /// Specifies whether or not this message is not a retry and not a redelivery.
@@ -143,7 +143,7 @@ public readonly struct MessageBrokerListenerCallbackArgs
         var isRetry = IsRetry ? " (active)" : string.Empty;
         var isRedelivery = IsRedelivery ? " (active)" : string.Empty;
         return
-            $"Listener = ({Listener}), Stream = ({Stream}){ackId}, Id = {MessageId}, Retry = {RetryAttempt}{isRetry}, Redelivery = {RedeliveryAttempt}{isRedelivery}, Length = {Data.Length}, PushedAt = {PushedAt}, ReceivedAt = {ReceivedAt}, Sender = ({Sender}), TraceId = {TraceId}";
+            $"Listener = ({Listener}), Stream = ({Stream}){ackId}, Id = {MessageId}, Retry = {Retry}{isRetry}, Redelivery = {Redelivery}{isRedelivery}, Length = {Data.Length}, PushedAt = {PushedAt}, ReceivedAt = {ReceivedAt}, Sender = ({Sender}), TraceId = {TraceId}";
     }
 
     /// <summary>
@@ -163,14 +163,7 @@ public readonly struct MessageBrokerListenerCallbackArgs
     /// </remarks>
     public ValueTask<Result<bool>> AckAsync()
     {
-        return ListenerCollection.SendMessageAckAsync(
-            Listener,
-            AckId,
-            Stream.Id,
-            MessageId,
-            RetryAttempt,
-            RedeliveryAttempt,
-            TraceId );
+        return ListenerCollection.SendMessageAckAsync( Listener, AckId, Stream.Id, MessageId, Retry, Redelivery, TraceId );
     }
 
     /// <summary>
@@ -199,8 +192,8 @@ public readonly struct MessageBrokerListenerCallbackArgs
             AckId,
             Stream.Id,
             MessageId,
-            RetryAttempt,
-            RedeliveryAttempt,
+            Retry,
+            Redelivery,
             TraceId,
             nack,
             false );

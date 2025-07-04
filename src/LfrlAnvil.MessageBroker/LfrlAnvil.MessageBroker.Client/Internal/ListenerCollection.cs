@@ -115,18 +115,19 @@ internal struct ListenerCollection
 
         using ( MessageBrokerClientTraceEvent.CreateScope( client, traceId, MessageBrokerClientTraceEventType.BindListener ) )
         {
-            MessageBrokerClientBindingListenerEvent.Create(
-                    client,
-                    traceId,
-                    channelName,
-                    queueName ?? channelName,
-                    prefetchHint,
-                    maxRetries,
-                    retryDelay,
-                    maxRedeliveries,
-                    minAckTimeout,
-                    createChannelIfNotExists )
-                .Emit( client.Logger.BindingListener );
+            if ( client.Logger.BindingListener is { } bindingListener )
+                bindingListener.Emit(
+                    MessageBrokerClientBindingListenerEvent.Create(
+                        client,
+                        traceId,
+                        channelName,
+                        queueName ?? channelName,
+                        prefetchHint,
+                        maxRetries,
+                        retryDelay,
+                        maxRedeliveries,
+                        minAckTimeout,
+                        createChannelIfNotExists ) );
 
             ManualResetValueTaskSource<IncomingPacketToken> responseSource;
             Protocol.BindListenerRequest request;
@@ -187,7 +188,9 @@ internal struct ListenerCollection
             }
             catch ( Exception exc )
             {
-                MessageBrokerClientErrorEvent.Create( client, traceId, exc ).Emit( client.Logger.Error );
+                if ( client.Logger.Error is { } error )
+                    error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
+
                 await client.DisposeAsync( traceId ).ConfigureAwait( false );
                 return exc;
             }
@@ -204,10 +207,12 @@ internal struct ListenerCollection
                     if ( response.Type == IncomingPacketToken.Result.Disposed )
                         return client.EmitError( client.DisposedException(), traceId );
 
-                    var error = new MessageBrokerClientResponseTimeoutException( client, request.Header.GetServerEndpoint() );
-                    MessageBrokerClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+                    var exception = new MessageBrokerClientResponseTimeoutException( client, request.Header.GetServerEndpoint() );
+                    if ( client.Logger.Error is { } error )
+                        error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
+
                     await client.DisposeAsync( traceId ).ConfigureAwait( false );
-                    return error;
+                    return exception;
                 }
 
                 using ( client.AcquireActiveLock( traceId, out var exc ) )
@@ -222,13 +227,15 @@ internal struct ListenerCollection
                 {
                     case MessageBrokerClientEndpoint.ListenerBoundResponse:
                     {
-                        MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header )
-                            .Emit( client.Logger.ReadPacket );
+                        var readPacket = client.Logger.ReadPacket;
+                        readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header ) );
 
                         var exception = Protocol.AssertPayload( client, response.Header, Protocol.ListenerBoundResponse.Length );
                         if ( exception is not null )
                         {
-                            MessageBrokerClientErrorEvent.Create( client, traceId, exception ).Emit( client.Logger.Error );
+                            if ( client.Logger.Error is { } error )
+                                error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
+
                             await client.DisposeAsync( traceId ).ConfigureAwait( false );
                             return exception;
                         }
@@ -269,34 +276,34 @@ internal struct ListenerCollection
                                 parsedResponse.QueueCreated );
                         }
 
-                        MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header )
-                            .Emit( client.Logger.ReadPacket );
-
-                        MessageBrokerClientListenerBoundEvent.Create(
-                                bindResult.Listener,
-                                traceId,
-                                parsedResponse.ChannelCreated,
-                                parsedResponse.QueueCreated )
-                            .Emit( client.Logger.ListenerBound );
+                        readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header ) );
+                        if ( client.Logger.ListenerBound is { } listenerBound )
+                            listenerBound.Emit(
+                                MessageBrokerClientListenerBoundEvent.Create(
+                                    bindResult.Listener,
+                                    traceId,
+                                    parsedResponse.ChannelCreated,
+                                    parsedResponse.QueueCreated ) );
 
                         return bindResult;
                     }
                     case MessageBrokerClientEndpoint.BindListenerFailureResponse:
                     {
-                        MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header )
-                            .Emit( client.Logger.ReadPacket );
+                        var readPacket = client.Logger.ReadPacket;
+                        readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header ) );
 
                         var exception = Protocol.AssertPayload( client, response.Header, Protocol.BindListenerFailureResponse.Length );
                         if ( exception is not null )
                         {
-                            MessageBrokerClientErrorEvent.Create( client, traceId, exception ).Emit( client.Logger.Error );
+                            if ( client.Logger.Error is { } error )
+                                error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
+
                             await client.DisposeAsync( traceId ).ConfigureAwait( false );
                             return exception;
                         }
 
                         var parsedResponse = Protocol.BindListenerFailureResponse.Parse( response.Data );
-                        MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header )
-                            .Emit( client.Logger.ReadPacket );
+                        readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header ) );
 
                         return client.EmitError(
                             Protocol.RequestException( client, request.Header, parsedResponse.StringifyErrors( channelName ) ),
@@ -312,7 +319,9 @@ internal struct ListenerCollection
             }
             catch ( Exception exc )
             {
-                MessageBrokerClientErrorEvent.Create( client, traceId, exc ).Emit( client.Logger.Error );
+                if ( client.Logger.Error is { } error )
+                    error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
+
                 await client.DisposeAsync( traceId ).ConfigureAwait( false );
                 return exc;
             }
@@ -342,7 +351,9 @@ internal struct ListenerCollection
 
         using ( MessageBrokerClientTraceEvent.CreateScope( client, traceId, MessageBrokerClientTraceEventType.UnbindListener ) )
         {
-            MessageBrokerClientUnbindingListenerEvent.Create( listener, traceId ).Emit( client.Logger.UnbindingListener );
+            if ( client.Logger.UnbindingListener is { } unbindingListener )
+                unbindingListener.Emit( MessageBrokerClientUnbindingListenerEvent.Create( listener, traceId ) );
+
             var endDispose = listener.EndDisposingAsync( traceId );
             try
             {
@@ -396,7 +407,9 @@ internal struct ListenerCollection
                 }
                 catch ( Exception exc )
                 {
-                    MessageBrokerClientErrorEvent.Create( client, traceId, exc ).Emit( client.Logger.Error );
+                    if ( client.Logger.Error is { } error )
+                        error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
+
                     await client.DisposeAsync( traceId ).ConfigureAwait( false );
                     return exc;
                 }
@@ -413,10 +426,12 @@ internal struct ListenerCollection
                         if ( response.Type == IncomingPacketToken.Result.Disposed )
                             return client.EmitError( client.DisposedException(), traceId );
 
-                        var error = new MessageBrokerClientResponseTimeoutException( client, request.Header.GetServerEndpoint() );
-                        MessageBrokerClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+                        var exception = new MessageBrokerClientResponseTimeoutException( client, request.Header.GetServerEndpoint() );
+                        if ( client.Logger.Error is { } error )
+                            error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
+
                         await client.DisposeAsync( traceId ).ConfigureAwait( false );
-                        return error;
+                        return exception;
                     }
 
                     using ( client.AcquireActiveLock( traceId, out var exc ) )
@@ -431,13 +446,15 @@ internal struct ListenerCollection
                     {
                         case MessageBrokerClientEndpoint.ListenerUnboundResponse:
                         {
-                            MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header )
-                                .Emit( client.Logger.ReadPacket );
+                            var readPacket = client.Logger.ReadPacket;
+                            readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header ) );
 
                             var exception = Protocol.AssertPayload( client, response.Header, Protocol.ListenerUnboundResponse.Length );
                             if ( exception is not null )
                             {
-                                MessageBrokerClientErrorEvent.Create( client, traceId, exception ).Emit( client.Logger.Error );
+                                if ( client.Logger.Error is { } error )
+                                    error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
+
                                 await client.DisposeAsync( traceId ).ConfigureAwait( false );
                                 return exception;
                             }
@@ -452,22 +469,21 @@ internal struct ListenerCollection
                                 client.ListenerCollection._store.Remove( listener.ChannelId, listener.ChannelName );
                             }
 
-                            MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header )
-                                .Emit( client.Logger.ReadPacket );
-
-                            MessageBrokerClientListenerUnboundEvent.Create(
-                                    listener,
-                                    traceId,
-                                    parsedResponse.ChannelRemoved,
-                                    parsedResponse.QueueRemoved )
-                                .Emit( client.Logger.ListenerUnbound );
+                            readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header ) );
+                            if ( client.Logger.ListenerUnbound is { } listenerUnbound )
+                                listenerUnbound.Emit(
+                                    MessageBrokerClientListenerUnboundEvent.Create(
+                                        listener,
+                                        traceId,
+                                        parsedResponse.ChannelRemoved,
+                                        parsedResponse.QueueRemoved ) );
 
                             return MessageBrokerUnbindListenerResult.Create( parsedResponse.ChannelRemoved, parsedResponse.QueueRemoved );
                         }
                         case MessageBrokerClientEndpoint.UnbindListenerFailureResponse:
                         {
-                            MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header )
-                                .Emit( client.Logger.ReadPacket );
+                            var readPacket = client.Logger.ReadPacket;
+                            readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header ) );
 
                             var exception = Protocol.AssertPayload(
                                 client,
@@ -476,14 +492,15 @@ internal struct ListenerCollection
 
                             if ( exception is not null )
                             {
-                                MessageBrokerClientErrorEvent.Create( client, traceId, exception ).Emit( client.Logger.Error );
+                                if ( client.Logger.Error is { } error )
+                                    error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
+
                                 await client.DisposeAsync( traceId ).ConfigureAwait( false );
                                 return exception;
                             }
 
                             var parsedResponse = Protocol.UnbindListenerFailureResponse.Parse( response.Data );
-                            MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header )
-                                .Emit( client.Logger.ReadPacket );
+                            readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header ) );
 
                             return client.EmitError(
                                 Protocol.RequestException( client, request.Header, parsedResponse.StringifyErrors( listener ) ),
@@ -499,7 +516,9 @@ internal struct ListenerCollection
                 }
                 catch ( Exception exc )
                 {
-                    MessageBrokerClientErrorEvent.Create( client, traceId, exc ).Emit( client.Logger.Error );
+                    if ( client.Logger.Error is { } error )
+                        error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
+
                     await client.DisposeAsync( traceId ).ConfigureAwait( false );
                     return exc;
                 }
@@ -520,14 +539,14 @@ internal struct ListenerCollection
         int ackId,
         int streamId,
         ulong messageId,
-        int retryAttempt,
-        int redeliveryAttempt,
+        int retry,
+        int redelivery,
         ulong? messageTraceId)
     {
         Ensure.IsGreaterThan( ackId, 0 );
         Ensure.IsGreaterThan( streamId, 0 );
-        Ensure.IsInRange( retryAttempt, 0, listener.MaxRetries );
-        Ensure.IsInRange( redeliveryAttempt, 0, listener.MaxRedeliveries );
+        Ensure.IsInRange( retry, 0, listener.MaxRetries );
+        Ensure.IsInRange( redelivery, 0, listener.MaxRedeliveries );
         if ( ! listener.AreAcksEnabled )
             ExceptionThrower.Throw(
                 new MessageBrokerClientMessageException( listener.Client, listener, Resources.DisabledAcks( listener ) ) );
@@ -549,18 +568,19 @@ internal struct ListenerCollection
 
         using ( MessageBrokerClientTraceEvent.CreateScope( client, traceId, MessageBrokerClientTraceEventType.Ack ) )
         {
-            MessageBrokerClientAcknowledgingMessageEvent.Create(
-                    listener,
-                    traceId,
-                    ackId,
-                    streamId,
-                    messageId,
-                    retryAttempt,
-                    redeliveryAttempt,
-                    messageTraceId,
-                    null,
-                    false )
-                .Emit( client.Logger.AcknowledgingMessage );
+            if ( client.Logger.AcknowledgingMessage is { } acknowledgingMessage )
+                acknowledgingMessage.Emit(
+                    MessageBrokerClientAcknowledgingMessageEvent.Create(
+                        listener,
+                        traceId,
+                        ackId,
+                        streamId,
+                        messageId,
+                        retry,
+                        redelivery,
+                        messageTraceId,
+                        null,
+                        false ) );
 
             var poolToken = MemoryPoolToken<byte>.Empty;
             try
@@ -570,8 +590,8 @@ internal struct ListenerCollection
                     ackId,
                     streamId,
                     messageId,
-                    retryAttempt,
-                    redeliveryAttempt );
+                    retry,
+                    redelivery );
 
                 poolToken = client.MemoryPool.Rent( Protocol.MessageNotificationAck.Length, out var buffer ).EnableClearing();
                 request.Serialize( buffer, reverseEndianness );
@@ -603,17 +623,17 @@ internal struct ListenerCollection
                     return result.Exception;
                 }
 
-                MessageBrokerClientMessageAcknowledgedEvent.Create(
-                        listener,
-                        traceId,
-                        ackId,
-                        streamId,
-                        messageId,
-                        retryAttempt,
-                        redeliveryAttempt,
-                        messageTraceId,
-                        false )
-                    .Emit( client.Logger.MessageAcknowledged );
+                if ( client.Logger.MessageAcknowledged is { } messageAcknowledged )
+                    messageAcknowledged.Emit(
+                        MessageBrokerClientMessageAcknowledgedEvent.Create(
+                            listener,
+                            traceId,
+                            ackId,
+                            streamId,
+                            messageId,
+                            retry,
+                            redelivery,
+                            false ) );
 
                 using ( client.AcquireActiveLock( traceId, out var exc ) )
                 {
@@ -626,7 +646,9 @@ internal struct ListenerCollection
             }
             catch ( Exception exc )
             {
-                MessageBrokerClientErrorEvent.Create( client, traceId, exc ).Emit( client.Logger.Error );
+                if ( client.Logger.Error is { } error )
+                    error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
+
                 await client.DisposeAsync( traceId ).ConfigureAwait( false );
                 return exc;
             }
@@ -644,16 +666,16 @@ internal struct ListenerCollection
         int ackId,
         int streamId,
         ulong messageId,
-        int retryAttempt,
-        int redeliveryAttempt,
+        int retry,
+        int redelivery,
         ulong? messageTraceId,
         MessageBrokerNegativeAck nack,
         bool automatic)
     {
         Ensure.IsGreaterThan( ackId, 0 );
         Ensure.IsGreaterThan( streamId, 0 );
-        Ensure.IsInRange( retryAttempt, 0, listener.MaxRetries );
-        Ensure.IsInRange( redeliveryAttempt, 0, listener.MaxRedeliveries );
+        Ensure.IsInRange( retry, 0, listener.MaxRetries );
+        Ensure.IsInRange( redelivery, 0, listener.MaxRedeliveries );
         if ( ! listener.AreAcksEnabled )
             ExceptionThrower.Throw(
                 new MessageBrokerClientMessageException( listener.Client, listener, Resources.DisabledAcks( listener ) ) );
@@ -680,18 +702,19 @@ internal struct ListenerCollection
 
         using ( MessageBrokerClientTraceEvent.CreateScope( client, traceId, MessageBrokerClientTraceEventType.NegativeAck ) )
         {
-            MessageBrokerClientAcknowledgingMessageEvent.Create(
-                    listener,
-                    traceId,
-                    ackId,
-                    streamId,
-                    messageId,
-                    retryAttempt,
-                    redeliveryAttempt,
-                    messageTraceId,
-                    nack,
-                    automatic )
-                .Emit( client.Logger.AcknowledgingMessage );
+            if ( client.Logger.AcknowledgingMessage is { } acknowledgingMessage )
+                acknowledgingMessage.Emit(
+                    MessageBrokerClientAcknowledgingMessageEvent.Create(
+                        listener,
+                        traceId,
+                        ackId,
+                        streamId,
+                        messageId,
+                        retry,
+                        redelivery,
+                        messageTraceId,
+                        nack,
+                        automatic ) );
 
             var poolToken = MemoryPoolToken<byte>.Empty;
             try
@@ -701,8 +724,8 @@ internal struct ListenerCollection
                     ackId,
                     streamId,
                     messageId,
-                    retryAttempt,
-                    redeliveryAttempt,
+                    retry,
+                    redelivery,
                     nack.SkipRetry,
                     nack.RetryDelay );
 
@@ -736,17 +759,17 @@ internal struct ListenerCollection
                     return result.Exception;
                 }
 
-                MessageBrokerClientMessageAcknowledgedEvent.Create(
-                        listener,
-                        traceId,
-                        ackId,
-                        streamId,
-                        messageId,
-                        retryAttempt,
-                        redeliveryAttempt,
-                        messageTraceId,
-                        true )
-                    .Emit( client.Logger.MessageAcknowledged );
+                if ( client.Logger.MessageAcknowledged is { } messageAcknowledged )
+                    messageAcknowledged.Emit(
+                        MessageBrokerClientMessageAcknowledgedEvent.Create(
+                            listener,
+                            traceId,
+                            ackId,
+                            streamId,
+                            messageId,
+                            retry,
+                            redelivery,
+                            true ) );
 
                 using ( client.AcquireActiveLock( traceId, out var exc ) )
                 {
@@ -759,7 +782,9 @@ internal struct ListenerCollection
             }
             catch ( Exception exc )
             {
-                MessageBrokerClientErrorEvent.Create( client, traceId, exc ).Emit( client.Logger.Error );
+                if ( client.Logger.Error is { } error )
+                    error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
+
                 await client.DisposeAsync( traceId ).ConfigureAwait( false );
                 return exc;
             }

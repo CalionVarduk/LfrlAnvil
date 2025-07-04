@@ -1481,9 +1481,9 @@ public partial class MessageBrokerClientTests
                     args.Stream.TestEquals( new MessageBrokerExternalObject( 3, "stream3" ) ),
                     args.IsFirst.TestFalse(),
                     args.IsRetry.TestTrue(),
-                    args.RetryAttempt.TestEquals( 4 ),
+                    args.Retry.TestEquals( 4 ),
                     args.IsRedelivery.TestFalse(),
-                    args.RedeliveryAttempt.TestEquals( 5 ),
+                    args.Redelivery.TestEquals( 5 ),
                     args.TraceId.TestEquals( 4UL ),
                     caughtMessage.TestSequence( message ),
                     args.ToString()
@@ -1497,9 +1497,9 @@ public partial class MessageBrokerClientTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 49)",
-                                "[ProcessingMessage] Client = [1] 'test', TraceId = 4, AckId = 1, StreamId = 3, MessageId = 1, RetryAttempt = 4 (active), RedeliveryAttempt = 5, ChannelId = 1, SenderId = 2, Length = 4",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 4, AckId = 1, StreamId = 3, MessageId = 1, Retry = 4 (active), Redelivery = 5, ChannelId = 1, SenderId = 2, Length = 4",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 49)",
-                                "[MessageProcessed] Client = [1] 'test', TraceId = 4, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 3, MessageId = 1, RetryAttempt = 4, RedeliveryAttempt = 5",
+                                "[MessageProcessed] Client = [1] 'test', TraceId = 4, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 3, MessageId = 1, Retry = 4, Redelivery = 5",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (end)"
                             ] )
                         ] ),
@@ -1617,21 +1617,21 @@ public partial class MessageBrokerClientTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 49)",
-                                "[ProcessingMessage] Client = [1] 'test', TraceId = 4, AckId = 1, StreamId = 1, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, ChannelId = 1, SenderId = 2, Length = 4",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 4, AckId = 1, StreamId = 1, MessageId = 1, Retry = 0, Redelivery = 0, ChannelId = 1, SenderId = 2, Length = 4",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 49)",
                                 "1st invocation",
-                                "[MessageProcessed] Client = [1] 'test', TraceId = 4, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 1, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0",
+                                "[MessageProcessed] Client = [1] 'test', TraceId = 4, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 1, MessageId = 1, Retry = 0, Redelivery = 0",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (end)"
                             ] ),
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 7 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 7, Packet = (MessageNotification, Length = 50)",
-                                "[ProcessingMessage] Client = [1] 'test', TraceId = 7, AckId = 2, StreamId = 2, MessageId = 2, RetryAttempt = 0, RedeliveryAttempt = 0, ChannelId = 1, SenderId = 3, Length = 5",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 7, AckId = 2, StreamId = 2, MessageId = 2, Retry = 0, Redelivery = 0, ChannelId = 1, SenderId = 3, Length = 5",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 7, Packet = (MessageNotification, Length = 50)",
                                 "1st invocation",
                                 "2nd invocation",
-                                "[MessageProcessed] Client = [1] 'test', TraceId = 7, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 2, MessageId = 2, RetryAttempt = 0, RedeliveryAttempt = 0",
+                                "[MessageProcessed] Client = [1] 'test', TraceId = 7, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 2, MessageId = 2, Retry = 0, Redelivery = 0",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 7 (end)"
                             ] )
                         ] ),
@@ -1700,7 +1700,7 @@ public partial class MessageBrokerClientTests
                                 (e, _) => e.TestEquals(
                                     "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 45)" ),
                                 (e, _) => e.TestEquals(
-                                    "[ProcessingMessage] Client = [1] 'test', TraceId = 2, AckId = 1, StreamId = 1, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, ChannelId = 1, SenderId = 2, Length = 0" ),
+                                    "[ProcessingMessage] Client = [1] 'test', TraceId = 2, AckId = 1, StreamId = 1, MessageId = 1, Retry = 0, Redelivery = 0, ChannelId = 1, SenderId = 2, Length = 0" ),
                                 (e, _) => e.TestEquals(
                                     "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 45)" ),
                                 (e, _) => e.TestStartsWith(
@@ -1709,16 +1709,16 @@ public partial class MessageBrokerClientTests
                                     System.Exception: foo
                                     """ ),
                                 (e, _) => e.TestEquals(
-                                    "[MessageProcessed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 1, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0" ),
+                                    "[MessageProcessed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 1, MessageId = 1, Retry = 0, Redelivery = 0" ),
                                 (e, _) => e.TestEquals( "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (end)" )
                             ] ),
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:NegativeAck] Client = [1] 'test', TraceId = 3 (start)",
-                                "[AcknowledgingMessage] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 1, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, MessageTraceId = 2, NACK = (SkipRetry = False, IsAutomatic = True)",
+                                "[AcknowledgingMessage] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 1, MessageId = 1, Retry = 0, Redelivery = 0, MessageTraceId = 2, NACK = (SkipRetry = False, IsAutomatic = True)",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 3, Packet = (MessageNotificationNack, Length = 38)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 3, Packet = (MessageNotificationNack, Length = 38)",
-                                "[MessageAcknowledged] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 1, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, MessageTraceId = 2, NACK = True",
+                                "[MessageAcknowledged] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 1, MessageId = 1, Retry = 0, Redelivery = 0, IsNack = True",
                                 "[Trace:NegativeAck] Client = [1] 'test', TraceId = 3 (end)"
                             ] )
                         ] ),
@@ -1783,7 +1783,7 @@ public partial class MessageBrokerClientTests
                                 (e, _) => e.TestEquals(
                                     "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 45)" ),
                                 (e, _) => e.TestEquals(
-                                    "[ProcessingMessage] Client = [1] 'test', TraceId = 2, StreamId = 1, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, ChannelId = 1, SenderId = 2, Length = 0" ),
+                                    "[ProcessingMessage] Client = [1] 'test', TraceId = 2, StreamId = 1, MessageId = 1, Retry = 0, Redelivery = 0, ChannelId = 1, SenderId = 2, Length = 0" ),
                                 (e, _) => e.TestEquals(
                                     "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 45)" ),
                                 (e, _) => e.TestStartsWith(
@@ -1792,7 +1792,7 @@ public partial class MessageBrokerClientTests
                                     System.Exception: foo
                                     """ ),
                                 (e, _) => e.TestEquals(
-                                    "[MessageProcessed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 1, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0" ),
+                                    "[MessageProcessed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 1, MessageId = 1, Retry = 0, Redelivery = 0" ),
                                 (e, _) => e.TestEquals( "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (end)" )
                             ] )
                         ] ),
@@ -1882,8 +1882,8 @@ public partial class MessageBrokerClientTests
             1. Expected ACK ID to not be negative but found -1.
             2. Expected stream ID to be greater than 0 but found -3.
             3. Message notification cannot be marked as both a retry and a redelivery.
-            4. Expected retry attempt to be greater than 0 but found 0.
-            5. Expected redelivery attempt to be greater than 0 but found 0.
+            4. Expected retry to be greater than 0 but found 0.
+            5. Expected redelivery to be greater than 0 but found 0.
             6. Expected channel ID to be greater than 0 but found 0.
             7. Expected sender ID to be greater than 0 but found -2.
             """ )]
@@ -1896,7 +1896,7 @@ public partial class MessageBrokerClientTests
             Encountered 5 error(s):
             1. Expected ACK ID to not be negative but found -1.
             2. Expected stream ID to be greater than 0 but found -3.
-            3. Expected retry attempt to be greater than 0 but found 0.
+            3. Expected retry to be greater than 0 but found 0.
             4. Expected channel ID to be greater than 0 but found 0.
             5. Expected sender ID to be greater than 0 but found -2.
             """ )]
@@ -1909,7 +1909,7 @@ public partial class MessageBrokerClientTests
             Encountered 5 error(s):
             1. Expected ACK ID to not be negative but found -1.
             2. Expected stream ID to be greater than 0 but found -3.
-            3. Expected redelivery attempt to be greater than 0 but found 0.
+            3. Expected redelivery to be greater than 0 but found 0.
             4. Expected channel ID to be greater than 0 but found 0.
             5. Expected sender ID to be greater than 0 but found -2.
             """ )]
@@ -1922,7 +1922,7 @@ public partial class MessageBrokerClientTests
             Encountered 5 error(s):
             1. Expected ACK ID to not be negative but found -1.
             2. Expected stream ID to be greater than 0 but found -3.
-            3. Message notification with retry attempt 1 and redelivery attempt 1 is not marked as either a retry or a redelivery.
+            3. Message notification with retry 1 and redelivery 1 is not marked as either a retry or a redelivery.
             4. Expected channel ID to be greater than 0 but found 0.
             5. Expected sender ID to be greater than 0 but found -2.
             """ )]
@@ -2066,13 +2066,13 @@ public partial class MessageBrokerClientTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 46)",
-                                "[ProcessingMessage] Client = [1] 'test', TraceId = 2, StreamId = 1, MessageId = 0, RetryAttempt = 2 (active), RedeliveryAttempt = 3, ChannelId = 1, SenderId = 2, Length = 1",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 2, StreamId = 1, MessageId = 0, Retry = 2 (active), Redelivery = 3, ChannelId = 1, SenderId = 2, Length = 1",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 2
                                 LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientMessageException: Client [1] 'test' received an invalid message notification through channel [1] 'foo'. Encountered 3 error(s):
                                 1. Expected ACK ID to be greater than 0 because listener has ACKs enabled.
-                                2. Retry attempt 2 exceeds listener's 1 max retries.
-                                3. Redelivery attempt 3 exceeds listener's 2 max redeliveries.
+                                2. Retry 2 exceeds listener's 1 max retries.
+                                3. Redelivery 3 exceeds listener's 2 max redeliveries.
                                 """,
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (end)"
                             ] )
@@ -2137,7 +2137,7 @@ public partial class MessageBrokerClientTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 46)",
-                                "[ProcessingMessage] Client = [1] 'test', TraceId = 2, AckId = 1, StreamId = 1, MessageId = 0, RetryAttempt = 0, RedeliveryAttempt = 0, ChannelId = 1, SenderId = 2, Length = 1",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 2, AckId = 1, StreamId = 1, MessageId = 0, Retry = 0, Redelivery = 0, ChannelId = 1, SenderId = 2, Length = 1",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 2
                                 LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientMessageException: Client [1] 'test' received an invalid message notification through channel [1] 'foo'. Encountered 1 error(s):
@@ -2195,7 +2195,7 @@ public partial class MessageBrokerClientTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 1 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (MessageNotification, Length = 49)",
-                                "[ProcessingMessage] Client = [1] 'test', TraceId = 1, AckId = 1, StreamId = 1, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, ChannelId = 1, SenderId = 1, Length = 4",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 1, AckId = 1, StreamId = 1, MessageId = 1, Retry = 0, Redelivery = 0, ChannelId = 1, SenderId = 1, Length = 4",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 1
                                 LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientMessageException: Listener for channel with ID 1 does not exist.
@@ -2311,23 +2311,23 @@ public partial class MessageBrokerClientTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 47)",
-                                "[ProcessingMessage] Client = [1] 'test', TraceId = 2, AckId = 1, StreamId = 1, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, ChannelId = 1, SenderId = 2, Length = 2",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 2, AckId = 1, StreamId = 1, MessageId = 1, Retry = 0, Redelivery = 0, ChannelId = 1, SenderId = 2, Length = 2",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 47)",
-                                "[MessageProcessed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 1, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0",
+                                "[MessageProcessed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 1, MessageId = 1, Retry = 0, Redelivery = 0",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (end)"
                             ] ),
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 3 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 3, Packet = (MessageNotification, Length = 48)",
-                                "[ProcessingMessage] Client = [1] 'test', TraceId = 3, AckId = 2, StreamId = 1, MessageId = 2, RetryAttempt = 0, RedeliveryAttempt = 0, ChannelId = 1, SenderId = 2, Length = 3",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 3, AckId = 2, StreamId = 1, MessageId = 2, Retry = 0, Redelivery = 0, ChannelId = 1, SenderId = 2, Length = 3",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 3, Packet = (MessageNotification, Length = 48)"
                             ] ),
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 49)",
-                                "[ProcessingMessage] Client = [1] 'test', TraceId = 4, AckId = 3, StreamId = 1, MessageId = 3, RetryAttempt = 0, RedeliveryAttempt = 0, ChannelId = 1, SenderId = 2, Length = 4",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 4, AckId = 3, StreamId = 1, MessageId = 3, Retry = 0, Redelivery = 0, ChannelId = 1, SenderId = 2, Length = 4",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 49)",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 4
@@ -2446,7 +2446,7 @@ public partial class MessageBrokerClientTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 1 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (MessageNotification, Length = 47)",
-                                "[ProcessingMessage] Client = [1] 'test', TraceId = 1, AckId = 1, StreamId = 1, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, ChannelId = 1, SenderId = 2, Length = 2",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 1, AckId = 1, StreamId = 1, MessageId = 1, Retry = 0, Redelivery = 0, ChannelId = 1, SenderId = 2, Length = 2",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 1
                                 LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientMessageException: Listener for channel with ID 1 does not exist.

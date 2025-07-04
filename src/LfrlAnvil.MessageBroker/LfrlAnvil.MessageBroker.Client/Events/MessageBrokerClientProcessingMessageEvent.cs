@@ -24,8 +24,8 @@ namespace LfrlAnvil.MessageBroker.Client.Events;
 /// </summary>
 public readonly struct MessageBrokerClientProcessingMessageEvent
 {
-    private readonly ResendIndex _retry;
-    private readonly ResendIndex _redelivery;
+    private readonly Int31BoolPair _retry;
+    private readonly Int31BoolPair _redelivery;
 
     private MessageBrokerClientProcessingMessageEvent(
         MessageBrokerClient client,
@@ -35,8 +35,8 @@ public readonly struct MessageBrokerClientProcessingMessageEvent
         int streamId,
         ulong messageId,
         int channelId,
-        ResendIndex retry,
-        ResendIndex redelivery,
+        Int31BoolPair retry,
+        Int31BoolPair redelivery,
         int length)
     {
         Source = MessageBrokerClientEventSource.Create( client, traceId );
@@ -87,24 +87,24 @@ public readonly struct MessageBrokerClientProcessingMessageEvent
     public int Length { get; }
 
     /// <summary>
-    /// Retry attempt number of this message.
+    /// Retry attempt of this message.
     /// </summary>
-    public int RetryAttempt => _retry.Value;
+    public int Retry => _retry.IntValue;
 
     /// <summary>
     /// Specifies whether or not this is a retry of the message.
     /// </summary>
-    public bool IsRetry => _retry.IsActive;
+    public bool IsRetry => _retry.BoolValue;
 
     /// <summary>
-    /// Redelivery attempt number of this message.
+    /// Redelivery attempt of this message.
     /// </summary>
-    public int RedeliveryAttempt => _redelivery.Value;
+    public int Redelivery => _redelivery.IntValue;
 
     /// <summary>
     /// Specifies whether or not this is a redelivery of the message.
     /// </summary>
-    public bool IsRedelivery => _redelivery.IsActive;
+    public bool IsRedelivery => _redelivery.BoolValue;
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerClientProcessingMessageEvent"/> instance.
@@ -117,7 +117,7 @@ public readonly struct MessageBrokerClientProcessingMessageEvent
         var isRetry = IsRetry ? " (active)" : string.Empty;
         var isRedelivery = IsRedelivery ? " (active)" : string.Empty;
         return
-            $"[ProcessingMessage] {Source}{ackId}, StreamId = {StreamId}, MessageId = {MessageId}, RetryAttempt = {RetryAttempt}{isRetry}, RedeliveryAttempt = {RedeliveryAttempt}{isRedelivery}, ChannelId = {ChannelId}, SenderId = {SenderId}, Length = {Length}";
+            $"[ProcessingMessage] {Source}{ackId}, StreamId = {StreamId}, MessageId = {MessageId}, Retry = {Retry}{isRetry}, Redelivery = {Redelivery}{isRedelivery}, ChannelId = {ChannelId}, SenderId = {SenderId}, Length = {Length}";
     }
 
     [Pure]
@@ -130,8 +130,8 @@ public readonly struct MessageBrokerClientProcessingMessageEvent
         int streamId,
         ulong messageId,
         int channelId,
-        ResendIndex retry,
-        ResendIndex redelivery,
+        Int31BoolPair retry,
+        Int31BoolPair redelivery,
         int length)
     {
         return new MessageBrokerClientProcessingMessageEvent(

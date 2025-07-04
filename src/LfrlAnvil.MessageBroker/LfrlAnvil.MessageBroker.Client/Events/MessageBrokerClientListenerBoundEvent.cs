@@ -22,13 +22,12 @@ namespace LfrlAnvil.MessageBroker.Client.Events;
 /// </summary>
 public readonly struct MessageBrokerClientListenerBoundEvent
 {
-    private readonly byte _state;
-
     private MessageBrokerClientListenerBoundEvent(MessageBrokerListener listener, ulong traceId, bool channelCreated, bool queueCreated)
     {
         Source = MessageBrokerClientEventSource.Create( listener.Client, traceId );
         Listener = listener;
-        _state = ( byte )((channelCreated ? 1 : 0) | (queueCreated ? 2 : 0));
+        ChannelCreated = channelCreated;
+        QueueCreated = queueCreated;
     }
 
     /// <summary>
@@ -44,12 +43,12 @@ public readonly struct MessageBrokerClientListenerBoundEvent
     /// <summary>
     /// Specifies whether or not a new channel has been created by the server.
     /// </summary>
-    public bool ChannelCreated => (_state & 1) != 0;
+    public bool ChannelCreated { get; }
 
     /// <summary>
     /// Specifies whether or not a new queue has been created by the server.
     /// </summary>
-    public bool QueueCreated => (_state & 2) != 0;
+    public bool QueueCreated { get; }
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerClientListenerBoundEvent"/> instance.

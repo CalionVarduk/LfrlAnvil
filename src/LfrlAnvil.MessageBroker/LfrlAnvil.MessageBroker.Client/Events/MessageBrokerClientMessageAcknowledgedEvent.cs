@@ -14,6 +14,7 @@
 
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.MessageBroker.Client.Internal;
 
 namespace LfrlAnvil.MessageBroker.Client.Events;
 
@@ -22,26 +23,25 @@ namespace LfrlAnvil.MessageBroker.Client.Events;
 /// </summary>
 public readonly struct MessageBrokerClientMessageAcknowledgedEvent
 {
+    private readonly Int31BoolPair _data1;
+    private readonly int _redelivery;
+
     private MessageBrokerClientMessageAcknowledgedEvent(
         MessageBrokerListener listener,
         ulong traceId,
         int ackId,
         int streamId,
         ulong messageId,
-        int retryAttempt,
-        int redeliveryAttempt,
-        ulong? messageTraceId,
-        bool isNack)
+        Int31BoolPair data1,
+        int redelivery)
     {
         Source = MessageBrokerClientEventSource.Create( listener.Client, traceId );
         Listener = listener;
         AckId = ackId;
         StreamId = streamId;
         MessageId = messageId;
-        RetryAttempt = retryAttempt;
-        RedeliveryAttempt = redeliveryAttempt;
-        MessageTraceId = messageTraceId;
-        IsNack = isNack;
+        _data1 = data1;
+        _redelivery = redelivery;
     }
 
     /// <summary>
@@ -70,24 +70,19 @@ public readonly struct MessageBrokerClientMessageAcknowledgedEvent
     public ulong MessageId { get; }
 
     /// <summary>
-    /// Retry attempt number of the message.
+    /// Retry attempt of the message.
     /// </summary>
-    public int RetryAttempt { get; }
+    public int Retry => _data1.IntValue;
 
     /// <summary>
-    /// Redelivery attempt number of the message.
+    /// Redelivery attempt of the message.
     /// </summary>
-    public int RedeliveryAttempt { get; }
-
-    /// <summary>
-    /// Optional trace id of the client event that relates to receiving message notification from the server.
-    /// </summary>
-    public ulong? MessageTraceId { get; }
+    public int Redelivery => _redelivery;
 
     /// <summary>
     /// Specifies whether or not this ACK was negative.
     /// </summary>
-    public bool IsNack { get; }
+    public bool IsNack => _data1.BoolValue;
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerClientMessageAcknowledgedEvent"/> instance.
@@ -96,9 +91,8 @@ public readonly struct MessageBrokerClientMessageAcknowledgedEvent
     [Pure]
     public override string ToString()
     {
-        var messageTraceId = MessageTraceId is not null ? $", MessageTraceId = {MessageTraceId.Value}" : string.Empty;
         return
-            $"[MessageAcknowledged] {Source}, Channel = [{Listener.ChannelId}] '{Listener.ChannelName}', Queue = [{Listener.QueueId}] '{Listener.QueueName}', AckId = {AckId}, StreamId = {StreamId}, MessageId = {MessageId}, RetryAttempt = {RetryAttempt}, RedeliveryAttempt = {RedeliveryAttempt}{messageTraceId}, NACK = {IsNack}";
+            $"[MessageAcknowledged] {Source}, Channel = [{Listener.ChannelId}] '{Listener.ChannelName}', Queue = [{Listener.QueueId}] '{Listener.QueueName}', AckId = {AckId}, StreamId = {StreamId}, MessageId = {MessageId}, Retry = {Retry}, Redelivery = {Redelivery}, IsNack = {IsNack}";
     }
 
     [Pure]
@@ -109,9 +103,8 @@ public readonly struct MessageBrokerClientMessageAcknowledgedEvent
         int ackId,
         int streamId,
         ulong messageId,
-        int retryAttempt,
-        int redeliveryAttempt,
-        ulong? messageTraceId,
+        int retry,
+        int redelivery,
         bool isNack)
     {
         return new MessageBrokerClientMessageAcknowledgedEvent(
@@ -120,9 +113,7 @@ public readonly struct MessageBrokerClientMessageAcknowledgedEvent
             ackId,
             streamId,
             messageId,
-            retryAttempt,
-            redeliveryAttempt,
-            messageTraceId,
-            isNack );
+            Int31BoolPair.GetData( retry, isNack ),
+            redelivery );
     }
 }

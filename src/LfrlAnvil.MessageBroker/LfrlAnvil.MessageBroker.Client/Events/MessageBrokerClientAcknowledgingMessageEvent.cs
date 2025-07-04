@@ -14,6 +14,8 @@
 
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Chrono;
+using LfrlAnvil.MessageBroker.Client.Internal;
 
 namespace LfrlAnvil.MessageBroker.Client.Events;
 
@@ -22,28 +24,36 @@ namespace LfrlAnvil.MessageBroker.Client.Events;
 /// </summary>
 public readonly struct MessageBrokerClientAcknowledgingMessageEvent
 {
+    private const ulong NackExistsMask = 1UL << 63;
+    private const ulong NackSkipRetryMask = 1UL << 62;
+    private const ulong NackDelayExistsMask = 1UL << 61;
+    private const ulong NackDelayMask = NackDelayExistsMask - 1;
+
+    private readonly Int31BoolPair _data1;
+    private readonly Int31BoolPair _data2;
+    private readonly ulong _messageTraceId;
+    private readonly ulong _nackData;
+
     private MessageBrokerClientAcknowledgingMessageEvent(
         MessageBrokerListener listener,
         ulong traceId,
         int ackId,
         int streamId,
         ulong messageId,
-        int retryAttempt,
-        int redeliveryAttempt,
-        ulong? messageTraceId,
-        MessageBrokerNegativeAck? nack,
-        bool isAutomatic)
+        Int31BoolPair data1,
+        Int31BoolPair data2,
+        ulong messageTraceId,
+        ulong nackData)
     {
         Source = MessageBrokerClientEventSource.Create( listener.Client, traceId );
         Listener = listener;
         AckId = ackId;
         StreamId = streamId;
         MessageId = messageId;
-        RetryAttempt = retryAttempt;
-        RedeliveryAttempt = redeliveryAttempt;
-        MessageTraceId = messageTraceId;
-        Nack = nack;
-        IsAutomatic = isAutomatic;
+        _data1 = data1;
+        _data2 = data2;
+        _messageTraceId = messageTraceId;
+        _nackData = nackData;
     }
 
     /// <summary>
@@ -72,31 +82,35 @@ public readonly struct MessageBrokerClientAcknowledgingMessageEvent
     public ulong MessageId { get; }
 
     /// <summary>
-    /// Retry attempt number of the message.
+    /// Optional <see cref="MessageBrokerNegativeAck"/> instance.
     /// </summary>
-    public int RetryAttempt { get; }
+    /// <remarks><b>null</b> value means that this event relates to an ACK, otherwise it relates to a negative ACK.</remarks>
+    public MessageBrokerNegativeAck? Nack => (_nackData & NackExistsMask) != 0
+        ? new MessageBrokerNegativeAck(
+            (_nackData & NackSkipRetryMask) != 0,
+            (_nackData & NackDelayExistsMask) != 0 ? Duration.FromTicks( unchecked( ( long )(_nackData & NackDelayMask) ) ) : null )
+        : null;
 
     /// <summary>
-    /// Redelivery attempt number of the message.
+    /// Retry attempt of the message.
     /// </summary>
-    public int RedeliveryAttempt { get; }
+    public int Retry => _data1.IntValue;
+
+    /// <summary>
+    /// Redelivery attempt of the message.
+    /// </summary>
+    public int Redelivery => _data2.IntValue;
 
     /// <summary>
     /// Optional trace id of the client event that relates to receiving message notification from the server.
     /// </summary>
-    public ulong? MessageTraceId { get; }
-
-    /// <summary>
-    /// Optional <see cref="MessageBrokerNegativeAck"/> instance.
-    /// </summary>
-    /// <remarks><b>null</b> value means that this event relates to an ACK, otherwise it relates to a negative ACK.</remarks>
-    public MessageBrokerNegativeAck? Nack { get; }
+    public ulong? MessageTraceId => _data2.BoolValue ? _messageTraceId : null;
 
     /// <summary>
     /// Specifies whether or not this ACK was initialized automatically by the client.
     /// </summary>
     /// <remarks>Applies only if <see cref="Nack"/> is not <b>null</b>.</remarks>
-    public bool IsAutomatic { get; }
+    public bool IsAutomatic => _data1.BoolValue;
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerClientAcknowledgingMessageEvent"/> instance.
@@ -105,13 +119,15 @@ public readonly struct MessageBrokerClientAcknowledgingMessageEvent
     [Pure]
     public override string ToString()
     {
-        var messageTraceId = MessageTraceId is not null ? $", MessageTraceId = {MessageTraceId.Value}" : string.Empty;
-        var nack = Nack is not null
-            ? $", NACK = (SkipRetry = {Nack.Value.SkipRetry}{(Nack.Value.RetryDelay is not null ? $", RetryDelay = {Nack.Value.RetryDelay.Value}" : string.Empty)}, IsAutomatic = {IsAutomatic})"
+        var messageTraceIdValue = MessageTraceId;
+        var nackValue = Nack;
+        var messageTraceId = messageTraceIdValue is not null ? $", MessageTraceId = {messageTraceIdValue.Value}" : string.Empty;
+        var nack = nackValue is not null
+            ? $", NACK = (SkipRetry = {nackValue.Value.SkipRetry}{(nackValue.Value.RetryDelay is not null ? $", RetryDelay = {nackValue.Value.RetryDelay.Value}" : string.Empty)}, IsAutomatic = {IsAutomatic})"
             : string.Empty;
 
         return
-            $"[AcknowledgingMessage] {Source}, Channel = [{Listener.ChannelId}] '{Listener.ChannelName}', Queue = [{Listener.QueueId}] '{Listener.QueueName}', AckId = {AckId}, StreamId = {StreamId}, MessageId = {MessageId}, RetryAttempt = {RetryAttempt}, RedeliveryAttempt = {RedeliveryAttempt}{messageTraceId}{nack}";
+            $"[AcknowledgingMessage] {Source}, Channel = [{Listener.ChannelId}] '{Listener.ChannelName}', Queue = [{Listener.QueueId}] '{Listener.QueueName}', AckId = {AckId}, StreamId = {StreamId}, MessageId = {MessageId}, Retry = {Retry}, Redelivery = {Redelivery}{messageTraceId}{nack}";
     }
 
     [Pure]
@@ -122,22 +138,31 @@ public readonly struct MessageBrokerClientAcknowledgingMessageEvent
         int ackId,
         int streamId,
         ulong messageId,
-        int retryAttempt,
-        int redeliveryAttempt,
+        int retry,
+        int redelivery,
         ulong? messageTraceId,
         MessageBrokerNegativeAck? nack,
         bool isAutomatic)
     {
+        var nackData = 0UL;
+        if ( nack is not null )
+        {
+            nackData |= NackExistsMask;
+            nackData |= nack.Value.SkipRetry ? NackSkipRetryMask : 0;
+            nackData |= nack.Value.RetryDelay is not null
+                ? unchecked( ( ulong )nack.Value.RetryDelay.Value.Ticks | NackDelayExistsMask )
+                : 0;
+        }
+
         return new MessageBrokerClientAcknowledgingMessageEvent(
             listener,
             traceId,
             ackId,
             streamId,
             messageId,
-            retryAttempt,
-            redeliveryAttempt,
-            messageTraceId,
-            nack,
-            isAutomatic );
+            Int31BoolPair.GetData( retry, isAutomatic ),
+            Int31BoolPair.GetData( redelivery, messageTraceId is not null ),
+            messageTraceId ?? 0,
+            nackData );
     }
 }

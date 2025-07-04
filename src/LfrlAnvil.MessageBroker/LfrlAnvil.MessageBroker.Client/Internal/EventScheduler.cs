@@ -75,7 +75,9 @@ internal struct EventScheduler
 
         using ( MessageBrokerClientTraceEvent.CreateScope( client, traceId, MessageBrokerClientTraceEventType.Unexpected ) )
         {
-            MessageBrokerClientErrorEvent.Create( client, traceId, exception ).Emit( client.Logger.Error );
+            if ( client.Logger.Error is { } error )
+                error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
+
             await client.DisposeAsync( traceId ).ConfigureAwait( false );
         }
     }

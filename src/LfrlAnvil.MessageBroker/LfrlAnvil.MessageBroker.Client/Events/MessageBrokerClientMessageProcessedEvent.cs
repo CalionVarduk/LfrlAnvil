@@ -28,15 +28,15 @@ public readonly struct MessageBrokerClientMessageProcessedEvent
         ulong traceId,
         int streamId,
         ulong messageId,
-        int retryAttempt,
-        int redeliveryAttempt)
+        int retry,
+        int redelivery)
     {
         Source = MessageBrokerClientEventSource.Create( listener.Client, traceId );
         Listener = listener;
         StreamId = streamId;
         MessageId = messageId;
-        RetryAttempt = retryAttempt;
-        RedeliveryAttempt = redeliveryAttempt;
+        Retry = retry;
+        Redelivery = redelivery;
     }
 
     /// <summary>
@@ -60,14 +60,14 @@ public readonly struct MessageBrokerClientMessageProcessedEvent
     public ulong MessageId { get; }
 
     /// <summary>
-    /// Retry attempt number of the message.
+    /// Retry attempt of the message.
     /// </summary>
-    public int RetryAttempt { get; }
+    public int Retry { get; }
 
     /// <summary>
-    /// Redelivery attempt number of the message.
+    /// Redelivery attempt of the message.
     /// </summary>
-    public int RedeliveryAttempt { get; }
+    public int Redelivery { get; }
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerClientMessageProcessedEvent"/> instance.
@@ -77,7 +77,7 @@ public readonly struct MessageBrokerClientMessageProcessedEvent
     public override string ToString()
     {
         return
-            $"[MessageProcessed] {Source}, Channel = [{Listener.ChannelId}] '{Listener.ChannelName}', Queue = [{Listener.QueueId}] '{Listener.QueueName}', StreamId = {StreamId}, MessageId = {MessageId}, RetryAttempt = {RetryAttempt}, RedeliveryAttempt = {RedeliveryAttempt}";
+            $"[MessageProcessed] {Source}, Channel = [{Listener.ChannelId}] '{Listener.ChannelName}', Queue = [{Listener.QueueId}] '{Listener.QueueName}', StreamId = {StreamId}, MessageId = {MessageId}, Retry = {Retry}, Redelivery = {Redelivery}";
     }
 
     [Pure]
@@ -87,9 +87,9 @@ public readonly struct MessageBrokerClientMessageProcessedEvent
         ulong traceId,
         int streamId,
         ulong messageId,
-        int retryAttempt,
-        int redeliveryAttempt)
+        int retry,
+        int redelivery)
     {
-        return new MessageBrokerClientMessageProcessedEvent( listener, traceId, streamId, messageId, retryAttempt, redeliveryAttempt );
+        return new MessageBrokerClientMessageProcessedEvent( listener, traceId, streamId, messageId, retry, redelivery );
     }
 }

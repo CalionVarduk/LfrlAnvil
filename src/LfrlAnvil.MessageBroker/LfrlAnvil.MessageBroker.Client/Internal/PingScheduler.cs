@@ -61,7 +61,9 @@ internal struct PingScheduler
 
             using ( MessageBrokerClientTraceEvent.CreateScope( client, traceId, MessageBrokerClientTraceEventType.Unexpected ) )
             {
-                MessageBrokerClientErrorEvent.Create( client, traceId, exc ).Emit( client.Logger.Error );
+                if ( client.Logger.Error is { } error )
+                    error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
+
                 await client.DisposeAsync( traceId ).ConfigureAwait( false );
             }
         }
@@ -176,14 +178,15 @@ internal struct PingScheduler
                 var response = await responseSource.GetTask().ConfigureAwait( false );
                 if ( response.Type != IncomingPacketToken.Result.Ok )
                 {
+                    var error = client.Logger.Error;
                     if ( response.Type == IncomingPacketToken.Result.Disposed )
                     {
-                        MessageBrokerClientErrorEvent.Create( client, traceId, client.DisposedException() ).Emit( client.Logger.Error );
+                        error?.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, client.DisposedException() ) );
                         return;
                     }
 
-                    var error = new MessageBrokerClientResponseTimeoutException( client, request.GetServerEndpoint() );
-                    MessageBrokerClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+                    var exc = new MessageBrokerClientResponseTimeoutException( client, request.GetServerEndpoint() );
+                    error?.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
                     await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
                     return;
                 }
@@ -203,17 +206,22 @@ internal struct PingScheduler
                     return;
                 }
 
-                MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header ).Emit( client.Logger.ReadPacket );
+                var readPacket = client.Logger.ReadPacket;
+                readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header ) );
 
                 if ( response.Header.Payload != Protocol.Endianness.VerificationPayload )
                 {
-                    var error = Protocol.EndiannessPayloadException( client, response.Header );
-                    MessageBrokerClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+                    if ( client.Logger.Error is { } error )
+                    {
+                        var exc = Protocol.EndiannessPayloadException( client, response.Header );
+                        error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
+                    }
+
                     await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
                     return;
                 }
 
-                MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header ).Emit( client.Logger.ReadPacket );
+                readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header ) );
             }
 
             using ( client.AcquireLock() )

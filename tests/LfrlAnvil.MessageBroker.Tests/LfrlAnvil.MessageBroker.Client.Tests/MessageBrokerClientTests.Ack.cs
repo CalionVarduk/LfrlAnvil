@@ -74,18 +74,18 @@ public partial class MessageBrokerClientTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 48)",
-                                "[ProcessingMessage] Client = [1] 'test', TraceId = 2, AckId = 1, StreamId = 3, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, ChannelId = 1, SenderId = 2, Length = 3",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 2, AckId = 1, StreamId = 3, MessageId = 1, Retry = 0, Redelivery = 0, ChannelId = 1, SenderId = 2, Length = 3",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 48)",
-                                "[MessageProcessed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 3, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0",
+                                "[MessageProcessed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 3, MessageId = 1, Retry = 0, Redelivery = 0",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (end)"
                             ] ),
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:Ack] Client = [1] 'test', TraceId = 3 (start)",
-                                "[AcknowledgingMessage] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 3, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, MessageTraceId = 2",
+                                "[AcknowledgingMessage] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 3, MessageId = 1, Retry = 0, Redelivery = 0, MessageTraceId = 2",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 3, Packet = (MessageNotificationAck, Length = 33)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 3, Packet = (MessageNotificationAck, Length = 33)",
-                                "[MessageAcknowledged] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 3, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, MessageTraceId = 2, NACK = False",
+                                "[MessageAcknowledged] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 3, MessageId = 1, Retry = 0, Redelivery = 0, IsNack = False",
                                 "[Trace:Ack] Client = [1] 'test', TraceId = 3 (end)"
                             ] )
                         ] ),
@@ -146,10 +146,10 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:Ack] Client = [1] 'test', TraceId = 2 (start)",
-                                "[AcknowledgingMessage] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 2, MessageId = 3, RetryAttempt = 1, RedeliveryAttempt = 1",
+                                "[AcknowledgingMessage] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 2, MessageId = 3, Retry = 1, Redelivery = 1",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (MessageNotificationAck, Length = 33)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (MessageNotificationAck, Length = 33)",
-                                "[MessageAcknowledged] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 2, MessageId = 3, RetryAttempt = 1, RedeliveryAttempt = 1, NACK = False",
+                                "[MessageAcknowledged] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 2, MessageId = 3, Retry = 1, Redelivery = 1, IsNack = False",
                                 "[Trace:Ack] Client = [1] 'test', TraceId = 2 (end)"
                             ] )
                         ] ) )
@@ -386,18 +386,18 @@ public partial class MessageBrokerClientTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 48)",
-                                "[ProcessingMessage] Client = [1] 'test', TraceId = 2, AckId = 1, StreamId = 3, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, ChannelId = 1, SenderId = 2, Length = 3",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 2, AckId = 1, StreamId = 3, MessageId = 1, Retry = 0, Redelivery = 0, ChannelId = 1, SenderId = 2, Length = 3",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 48)",
-                                "[MessageProcessed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 3, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0",
+                                "[MessageProcessed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 3, MessageId = 1, Retry = 0, Redelivery = 0",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (end)"
                             ] ),
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:NegativeAck] Client = [1] 'test', TraceId = 3 (start)",
-                                "[AcknowledgingMessage] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 3, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, MessageTraceId = 2, NACK = (SkipRetry = False, IsAutomatic = False)",
+                                "[AcknowledgingMessage] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 3, MessageId = 1, Retry = 0, Redelivery = 0, MessageTraceId = 2, NACK = (SkipRetry = False, IsAutomatic = False)",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 3, Packet = (MessageNotificationNack, Length = 38)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 3, Packet = (MessageNotificationNack, Length = 38)",
-                                "[MessageAcknowledged] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 3, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, MessageTraceId = 2, NACK = True",
+                                "[MessageAcknowledged] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 3, MessageId = 1, Retry = 0, Redelivery = 0, IsNack = True",
                                 "[Trace:NegativeAck] Client = [1] 'test', TraceId = 3 (end)"
                             ] )
                         ] ),
@@ -458,10 +458,10 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:NegativeAck] Client = [1] 'test', TraceId = 2 (start)",
-                                "[AcknowledgingMessage] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 2, MessageId = 3, RetryAttempt = 1, RedeliveryAttempt = 1, NACK = (SkipRetry = True, IsAutomatic = False)",
+                                "[AcknowledgingMessage] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 2, MessageId = 3, Retry = 1, Redelivery = 1, NACK = (SkipRetry = True, IsAutomatic = False)",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (MessageNotificationNack, Length = 38)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (MessageNotificationNack, Length = 38)",
-                                "[MessageAcknowledged] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 2, MessageId = 3, RetryAttempt = 1, RedeliveryAttempt = 1, NACK = True",
+                                "[MessageAcknowledged] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 2, MessageId = 3, Retry = 1, Redelivery = 1, IsNack = True",
                                 "[Trace:NegativeAck] Client = [1] 'test', TraceId = 2 (end)"
                             ] )
                         ] ) )
@@ -522,10 +522,10 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:NegativeAck] Client = [1] 'test', TraceId = 2 (start)",
-                                "[AcknowledgingMessage] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 2, MessageId = 3, RetryAttempt = 2, RedeliveryAttempt = 2, NACK = (SkipRetry = False, RetryDelay = 3 second(s), IsAutomatic = False)",
+                                "[AcknowledgingMessage] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 2, MessageId = 3, Retry = 2, Redelivery = 2, NACK = (SkipRetry = False, RetryDelay = 3 second(s), IsAutomatic = False)",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (MessageNotificationNack, Length = 38)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (MessageNotificationNack, Length = 38)",
-                                "[MessageAcknowledged] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 2, MessageId = 3, RetryAttempt = 2, RedeliveryAttempt = 2, NACK = True",
+                                "[MessageAcknowledged] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 2, MessageId = 3, Retry = 2, Redelivery = 2, IsNack = True",
                                 "[Trace:NegativeAck] Client = [1] 'test', TraceId = 2 (end)"
                             ] )
                         ] ) )

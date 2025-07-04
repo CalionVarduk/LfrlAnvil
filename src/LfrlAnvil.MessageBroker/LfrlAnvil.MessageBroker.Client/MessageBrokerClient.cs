@@ -267,7 +267,9 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
             }
             catch ( Exception exc )
             {
-                MessageBrokerClientErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
+                if ( Logger.Error is { } error )
+                    error.Emit( MessageBrokerClientErrorEvent.Create( this, traceId, exc ) );
+
                 throw;
             }
 
@@ -285,7 +287,9 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
             }
             catch ( Exception exc )
             {
-                MessageBrokerClientErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
+                if ( Logger.Error is { } error )
+                    error.Emit( MessageBrokerClientErrorEvent.Create( this, traceId, exc ) );
+
                 if ( exc is MessageBrokerClientStateException )
                     throw;
 
@@ -306,7 +310,9 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
             }
             catch ( Exception exc )
             {
-                MessageBrokerClientErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
+                if ( Logger.Error is { } error )
+                    error.Emit( MessageBrokerClientErrorEvent.Create( this, traceId, exc ) );
+
                 await DisposeAsync( traceId ).ConfigureAwait( false );
                 return exc;
             }
@@ -362,7 +368,9 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
             }
             catch ( Exception exc )
             {
-                MessageBrokerClientErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
+                if ( Logger.Error is { } error )
+                    error.Emit( MessageBrokerClientErrorEvent.Create( this, traceId, exc ) );
+
                 await DisposeAsync( traceId ).ConfigureAwait( false );
                 return exc;
             }
@@ -389,7 +397,9 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
 
         @lock.Dispose();
         exception = DisposedException();
-        MessageBrokerClientErrorEvent.Create( this, traceId, exception ).Emit( Logger.Error );
+        if ( Logger.Error is { } error )
+            error.Emit( MessageBrokerClientErrorEvent.Create( this, traceId, exception ) );
+
         return default;
     }
 
@@ -431,7 +441,10 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         }
 
         using ( MessageBrokerClientTraceEvent.CreateScope( this, traceId, MessageBrokerClientTraceEventType.Unexpected ) )
-            MessageBrokerClientErrorEvent.Create( this, traceId, exception ).Emit( Logger.Error );
+        {
+            if ( Logger.Error is { } error )
+                error.Emit( MessageBrokerClientErrorEvent.Create( this, traceId, exception ) );
+        }
     }
 
     [Pure]
@@ -449,7 +462,8 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
 
     internal async ValueTask<Result> WriteAsync(Protocol.PacketHeader header, ReadOnlyMemory<byte> data, ulong traceId)
     {
-        MessageBrokerClientSendPacketEvent.CreateSending( this, traceId, header ).Emit( Logger.SendPacket );
+        var sendPacket = Logger.SendPacket;
+        sendPacket?.Emit( MessageBrokerClientSendPacketEvent.CreateSending( this, traceId, header ) );
 
         Stream? stream;
         CancellationToken timeoutToken;
@@ -479,13 +493,14 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
             return EmitError( exc, traceId );
         }
 
-        MessageBrokerClientSendPacketEvent.CreateSent( this, traceId, header ).Emit( Logger.SendPacket );
+        sendPacket?.Emit( MessageBrokerClientSendPacketEvent.CreateSent( this, traceId, header ) );
         return Result.Valid;
     }
 
     private async ValueTask<Result> ConnectToServerAsync(ulong traceId, CancellationToken cancellationToken)
     {
-        MessageBrokerClientConnectingEvent.Create( this, traceId ).Emit( Logger.Connecting );
+        if ( Logger.Connecting is { } connecting )
+            connecting.Emit( MessageBrokerClientConnectingEvent.Create( this, traceId ) );
 
         try
         {
@@ -530,7 +545,9 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
             return EmitError( exc, traceId );
         }
 
-        MessageBrokerClientConnectedEvent.Create( this, traceId ).Emit( Logger.Connected );
+        if ( Logger.Connected is { } connected )
+            connected.Emit( MessageBrokerClientConnectedEvent.Create( this, traceId ) );
+
         return Result.Valid;
     }
 
@@ -543,7 +560,9 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         }
         catch ( Exception exc )
         {
-            MessageBrokerClientErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
+            if ( Logger.Error is { } error )
+                error.Emit( MessageBrokerClientErrorEvent.Create( this, traceId, exc ) );
+
             await DisposeAsync( traceId ).ConfigureAwait( false );
             throw;
         }
@@ -567,7 +586,9 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal Exception EmitError(Exception exception, ulong traceId)
     {
-        MessageBrokerClientErrorEvent.Create( this, traceId, exception ).Emit( Logger.Error );
+        if ( Logger.Error is { } error )
+            error.Emit( MessageBrokerClientErrorEvent.Create( this, traceId, exception ) );
+
         return exception;
     }
 
@@ -602,7 +623,8 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
 
     internal async ValueTask DisposeAsyncCore(ulong traceId)
     {
-        MessageBrokerClientDisposingEvent.Create( this, traceId ).Emit( Logger.Disposing );
+        if ( Logger.Disposing is { } disposing )
+            disposing.Emit( MessageBrokerClientDisposingEvent.Create( this, traceId ) );
 
         Task? eventSchedulerTask;
         Task? pingSchedulerTask;
@@ -637,6 +659,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         if ( messageNotificationsTask is not null )
             await messageNotificationsTask.ConfigureAwait( false );
 
+        var error = Logger.Error;
         MessageBrokerListener[] listeners;
         int discardedMessageCount;
         Chain<Exception> exceptions;
@@ -645,19 +668,22 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         {
             PublisherCollection.Clear();
             listeners = ListenerCollection.Clear();
-            (discardedMessageCount, exceptions) = NotificationHandler.EndDispose();
+            (discardedMessageCount, exceptions) = NotificationHandler.EndDispose( error is not null );
             var exception = _tcp.TryDispose().Exception;
-            if ( exception is not null )
+            if ( exception is not null && error is not null )
                 exceptions = exceptions.Extend( exception );
         }
 
         foreach ( var exc in exceptions )
-            MessageBrokerClientErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
-
-        if ( discardedMessageCount > 0 )
         {
-            var error = new MessageBrokerClientMessageException( this, null, Resources.MessagesDiscarded( discardedMessageCount ) );
-            MessageBrokerClientErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
+            Assume.IsNotNull( error );
+            error.Emit( MessageBrokerClientErrorEvent.Create( this, traceId, exc ) );
+        }
+
+        if ( discardedMessageCount > 0 && error is not null )
+        {
+            var exc = new MessageBrokerClientMessageException( this, null, Resources.MessagesDiscarded( discardedMessageCount ) );
+            error.Emit( MessageBrokerClientErrorEvent.Create( this, traceId, exc ) );
         }
 
         await Parallel.ForEachAsync( listeners, (l, _) => l.OnClientDisposedAsync( traceId ) ).ConfigureAwait( false );
@@ -672,6 +698,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         if ( ownedDelaySource is not null )
             await ownedDelaySource.TryDisposeAsync().ConfigureAwait( false );
 
-        MessageBrokerClientDisposedEvent.Create( this, traceId ).Emit( Logger.Disposed );
+        if ( Logger.Disposed is { } disposed )
+            disposed.Emit( MessageBrokerClientDisposedEvent.Create( this, traceId ) );
     }
 }

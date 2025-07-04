@@ -57,7 +57,9 @@ internal struct PacketListener
 
             using ( MessageBrokerClientTraceEvent.CreateScope( client, traceId, MessageBrokerClientTraceEventType.Unexpected ) )
             {
-                MessageBrokerClientErrorEvent.Create( client, traceId, exc ).Emit( client.Logger.Error );
+                if ( client.Logger.Error is { } error )
+                    error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
+
                 await client.DisposeAsync( traceId ).ConfigureAwait( false );
             }
         }
@@ -90,10 +92,11 @@ internal struct PacketListener
             reverseEndianness = client.IsServerLittleEndian != BitConverter.IsLittleEndian;
         }
 
+        var awaitPacket = client.Logger.AwaitPacket;
         var buffer = new byte[Protocol.PacketHeader.Length].AsMemory();
         while ( true )
         {
-            MessageBrokerClientAwaitPacketEvent.Create( client ).Emit( client.Logger.AwaitPacket );
+            awaitPacket?.Emit( MessageBrokerClientAwaitPacketEvent.Create( client ) );
 
             Protocol.PacketHeader header;
             var timeoutToken = default( CancellationToken );
@@ -112,7 +115,7 @@ internal struct PacketListener
             }
             catch ( Exception exc )
             {
-                MessageBrokerClientAwaitPacketEvent.Create( client, exc ).Emit( client.Logger.AwaitPacket );
+                awaitPacket?.Emit( MessageBrokerClientAwaitPacketEvent.Create( client, exc ) );
 
                 ulong traceId;
                 var isCancelException = exc is OperationCanceledException cancelExc && cancelExc.CancellationToken == timeoutToken;
@@ -135,7 +138,7 @@ internal struct PacketListener
                 return;
             }
 
-            MessageBrokerClientAwaitPacketEvent.Create( client, header ).Emit( client.Logger.AwaitPacket );
+            awaitPacket?.Emit( MessageBrokerClientAwaitPacketEvent.Create( client, header ) );
 
             var packetPoolToken = MemoryPoolToken<byte>.Empty;
             var packetBuffer = Memory<byte>.Empty;
@@ -146,9 +149,7 @@ internal struct PacketListener
                     var packetLength = Protocol.AssertPacketLength( client, header );
                     if ( packetLength.Exception is not null )
                     {
-                        MessageBrokerClientAwaitPacketEvent.Create( client, header, packetLength.Exception )
-                            .Emit( client.Logger.AwaitPacket );
-
+                        awaitPacket?.Emit( MessageBrokerClientAwaitPacketEvent.Create( client, header, packetLength.Exception ) );
                         await DisposeClientAsync( client, packetPoolToken ).ConfigureAwait( false );
                         return;
                     }
@@ -162,7 +163,7 @@ internal struct PacketListener
                         }
                         catch ( Exception exc )
                         {
-                            MessageBrokerClientAwaitPacketEvent.Create( client, header, exc ).Emit( client.Logger.AwaitPacket );
+                            awaitPacket?.Emit( MessageBrokerClientAwaitPacketEvent.Create( client, header, exc ) );
                             await DisposeClientAsync( client, packetPoolToken ).ConfigureAwait( false );
                             return;
                         }
@@ -187,9 +188,7 @@ internal struct PacketListener
                     var packetLength = Protocol.AssertPacketLength( client, header );
                     if ( packetLength.Exception is not null )
                     {
-                        MessageBrokerClientAwaitPacketEvent.Create( client, header, packetLength.Exception )
-                            .Emit( client.Logger.AwaitPacket );
-
+                        awaitPacket?.Emit( MessageBrokerClientAwaitPacketEvent.Create( client, header, packetLength.Exception ) );
                         await DisposeClientAsync( client, packetPoolToken ).ConfigureAwait( false );
                         return;
                     }
@@ -203,7 +202,7 @@ internal struct PacketListener
                         }
                         catch ( Exception exc )
                         {
-                            MessageBrokerClientAwaitPacketEvent.Create( client, header, exc ).Emit( client.Logger.AwaitPacket );
+                            awaitPacket?.Emit( MessageBrokerClientAwaitPacketEvent.Create( client, header, exc ) );
                             await DisposeClientAsync( client, packetPoolToken ).ConfigureAwait( false );
                             return;
                         }
@@ -237,7 +236,7 @@ internal struct PacketListener
                     if ( target.Source is null )
                     {
                         var error = Protocol.UnexpectedClientEndpointException( client, header );
-                        MessageBrokerClientAwaitPacketEvent.Create( client, header, error ).Emit( client.Logger.AwaitPacket );
+                        awaitPacket?.Emit( MessageBrokerClientAwaitPacketEvent.Create( client, header, error ) );
                         await DisposeClientAsync( client, packetPoolToken ).ConfigureAwait( false );
                         return;
                     }
@@ -247,9 +246,7 @@ internal struct PacketListener
                         var packetLength = Protocol.AssertPacketLength( client, header );
                         if ( packetLength.Exception is not null )
                         {
-                            MessageBrokerClientAwaitPacketEvent.Create( client, header, packetLength.Exception )
-                                .Emit( client.Logger.AwaitPacket );
-
+                            awaitPacket?.Emit( MessageBrokerClientAwaitPacketEvent.Create( client, header, packetLength.Exception ) );
                             await DisposeClientAsync( client, packetPoolToken ).ConfigureAwait( false );
                             return;
                         }
@@ -263,7 +260,7 @@ internal struct PacketListener
                             }
                             catch ( Exception exc )
                             {
-                                MessageBrokerClientAwaitPacketEvent.Create( client, header, exc ).Emit( client.Logger.AwaitPacket );
+                                awaitPacket?.Emit( MessageBrokerClientAwaitPacketEvent.Create( client, header, exc ) );
                                 await DisposeClientAsync( client, packetPoolToken ).ConfigureAwait( false );
                                 return;
                             }
@@ -308,8 +305,8 @@ internal struct PacketListener
     private static void Return(MessageBrokerClient client, MemoryPoolToken<byte> poolToken)
     {
         var exc = poolToken.Return();
-        if ( exc is not null )
-            MessageBrokerClientAwaitPacketEvent.Create( client, exc ).Emit( client.Logger.AwaitPacket );
+        if ( exc is not null && client.Logger.AwaitPacket is { } awaitPacket )
+            awaitPacket.Emit( MessageBrokerClientAwaitPacketEvent.Create( client, exc ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -323,7 +320,9 @@ internal struct PacketListener
         }
 
         @lock.Dispose();
-        MessageBrokerClientAwaitPacketEvent.Create( client, client.DisposedException() ).Emit( client.Logger.AwaitPacket );
+        if ( client.Logger.AwaitPacket is { } awaitPacket )
+            awaitPacket.Emit( MessageBrokerClientAwaitPacketEvent.Create( client, client.DisposedException() ) );
+
         acquired = false;
         return default;
     }

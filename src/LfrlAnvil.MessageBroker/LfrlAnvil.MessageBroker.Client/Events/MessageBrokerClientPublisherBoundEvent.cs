@@ -22,8 +22,6 @@ namespace LfrlAnvil.MessageBroker.Client.Events;
 /// </summary>
 public readonly struct MessageBrokerClientPublisherBoundEvent
 {
-    private readonly byte _state;
-
     private MessageBrokerClientPublisherBoundEvent(
         MessageBrokerPublisher publisher,
         ulong traceId,
@@ -32,7 +30,8 @@ public readonly struct MessageBrokerClientPublisherBoundEvent
     {
         Source = MessageBrokerClientEventSource.Create( publisher.Client, traceId );
         Publisher = publisher;
-        _state = ( byte )((channelCreated ? 1 : 0) | (streamCreated ? 2 : 0));
+        ChannelCreated = channelCreated;
+        StreamCreated = streamCreated;
     }
 
     /// <summary>
@@ -48,12 +47,12 @@ public readonly struct MessageBrokerClientPublisherBoundEvent
     /// <summary>
     /// Specifies whether or not a new channel has been created by the server.
     /// </summary>
-    public bool ChannelCreated => (_state & 1) != 0;
+    public bool ChannelCreated { get; }
 
     /// <summary>
     /// Specifies whether or not a new stream has been created by the server.
     /// </summary>
-    public bool StreamCreated => (_state & 2) != 0;
+    public bool StreamCreated { get; }
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerClientPublisherBoundEvent"/> instance.
