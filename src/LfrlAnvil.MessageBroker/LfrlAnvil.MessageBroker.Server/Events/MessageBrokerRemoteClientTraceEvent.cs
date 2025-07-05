@@ -69,7 +69,9 @@ public readonly struct MessageBrokerRemoteClientTraceEvent
     internal static Scope CreateScope(MessageBrokerRemoteClient client, ulong traceId, MessageBrokerRemoteClientTraceEventType type)
     {
         var result = new Scope( client, traceId, type );
-        result.Event.Emit( client.Logger.TraceStart );
+        if ( client.Logger.TraceStart is { } traceStart )
+            traceStart.Emit( result.Event );
+
         return result;
     }
 
@@ -85,7 +87,8 @@ public readonly struct MessageBrokerRemoteClientTraceEvent
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public void Dispose()
         {
-            Event.Emit( Event.Source.Client.Logger.TraceEnd );
+            if ( Event.Source.Client.Logger.TraceEnd is { } traceEnd )
+                traceEnd.Emit( Event );
         }
     }
 }

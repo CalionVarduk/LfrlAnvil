@@ -279,16 +279,16 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string RetryAttemptIsNegative(int received)
+    internal static string RetryIsNegative(int received)
     {
-        return $"Expected retry attempt to not be negative but found {received}.";
+        return $"Expected retry to not be negative but found {received}.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string RedeliveryAttemptIsNegative(int received)
+    internal static string RedeliveryIsNegative(int received)
     {
-        return $"Expected redelivery attempt to not be negative but found {received}.";
+        return $"Expected redelivery to not be negative but found {received}.";
     }
 
     [Pure]
@@ -397,30 +397,25 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string MessageDataNotFound(MessageBrokerStream stream, int key)
+    internal static string MessageDataNotFound(MessageBrokerStream stream, int storeKey)
     {
-        return $"Stream [{stream.Id}] '{stream.Name}' does not have a message related to {key} store key.";
+        return $"Stream [{stream.Id}] '{stream.Name}' does not have a message related to store key {storeKey}.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string MessageVersionNotFound(
-        MessageBrokerQueue queue,
-        int streamId,
-        ulong messageId,
-        int retryAttempt,
-        int redeliveryAttempt)
+    internal static string MessageVersionNotFound(MessageBrokerQueue queue, int streamId, ulong messageId, int retry, int redelivery)
     {
         return
-            $"Queue [{queue.Id}] '{queue.Name}' for client [{queue.Client.Id}] '{queue.Client.Name}' could not process a (stream ID: {streamId}, message ID: {messageId}) message ACK because its (retry attempt: {retryAttempt}, redelivery attempt: {redeliveryAttempt}) version does not exist.";
+            $"Queue [{queue.Id}] '{queue.Name}' for client [{queue.Client.Id}] '{queue.Client.Name}' could not process a (stream ID: {streamId}, message ID: {messageId}) message ACK because its (retry: {retry}, redelivery: {redelivery}) version does not exist.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string RequestTimeout(int clientId, string clientName, Duration timeout)
+    internal static string RequestTimeout(MessageBrokerRemoteClient client)
     {
         return
-            $"Client [{clientId}] '{clientName}' failed to send a request to the server in the specified amount of time ({timeout.FullMilliseconds} milliseconds).";
+            $"Client [{client.Id}] '{client.Name}' failed to send a request to the server in the specified amount of time ({client.MaxReadTimeout.FullMilliseconds} milliseconds).";
     }
 
     [Pure]

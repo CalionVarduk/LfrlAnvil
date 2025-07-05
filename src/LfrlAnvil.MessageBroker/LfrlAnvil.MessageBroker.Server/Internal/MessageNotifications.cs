@@ -60,7 +60,9 @@ internal struct MessageNotifications
 
             using ( MessageBrokerRemoteClientTraceEvent.CreateScope( client, traceId, MessageBrokerRemoteClientTraceEventType.Unexpected ) )
             {
-                MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ).Emit( client.Logger.Error );
+                if ( client.Logger.Error is { } error )
+                    error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
+
                 await client.DisposeAsync( traceId ).ConfigureAwait( false );
             }
         }
@@ -74,7 +76,7 @@ internal struct MessageNotifications
             _continuation.SetResult( false );
     }
 
-    internal (int DiscardedMessageCount, Chain<Exception> Exceptions) EndDispose()
+    internal (int DiscardedMessageCount, Chain<Exception> Exceptions) EndDispose(bool extractExceptions)
     {
         var discardedMessageCount = _messages.Count;
         var exceptions = Chain<Exception>.Empty;
@@ -82,7 +84,7 @@ internal struct MessageNotifications
         foreach ( ref readonly var message in _messages )
         {
             var exc = message.PoolToken.Return();
-            if ( exc is not null )
+            if ( exc is not null && extractExceptions )
                 exceptions = exceptions.Extend( exc );
         }
 
@@ -113,8 +115,8 @@ internal struct MessageNotifications
     internal static void EnqueueMessageUnsafe(
         MessageBrokerRemoteClient client,
         in QueueMessage message,
-        ResendIndex retryAttempt,
-        ResendIndex redeliveryAttempt,
+        Int31BoolPair retry,
+        Int31BoolPair redelivery,
         ulong id,
         int ackId,
         MemoryPoolToken<byte> poolToken,
@@ -135,17 +137,7 @@ internal struct MessageNotifications
 
         var writerSource = client.WriterQueue.AcquireSource();
         client.MessageNotifications._messages.Enqueue(
-            new Message(
-                in message,
-                retryAttempt,
-                redeliveryAttempt,
-                id,
-                ackId,
-                poolToken,
-                packet,
-                writerSource,
-                senderName,
-                streamName ) );
+            new Message( in message, retry, redelivery, id, ackId, poolToken, packet, writerSource, senderName, streamName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -181,24 +173,29 @@ internal struct MessageNotifications
                     traceId,
                     MessageBrokerRemoteClientTraceEventType.MessageNotification ) )
                 {
-                    MessageBrokerRemoteClientProcessingMessageEvent.Create(
-                            message.Listener,
-                            traceId,
-                            message.Publisher,
-                            message.Id,
-                            message.AckId,
-                            message.RetryAttempt,
-                            message.RedeliveryAttempt,
-                            message.Length )
-                        .Emit( client.Logger.ProcessingMessage );
+                    if ( client.Logger.ProcessingMessage is { } processingMessage )
+                        processingMessage.Emit(
+                            MessageBrokerRemoteClientProcessingMessageEvent.Create(
+                                message.Listener,
+                                traceId,
+                                message.Publisher,
+                                message.MessageId,
+                                message.AckId,
+                                message.Retry,
+                                message.Redelivery,
+                                message.Length ) );
 
                     try
                     {
                         if ( message.SenderName.WriterSource is not null )
                         {
-                            MessageBrokerRemoteClientSendingSenderNameEvent
-                                .Create( client, traceId, message.SenderName.Id, message.SenderName.Name )
-                                .Emit( client.Logger.SendingSenderName );
+                            if ( client.Logger.SendingSenderName is { } sendingSenderName )
+                                sendingSenderName.Emit(
+                                    MessageBrokerRemoteClientSendingSenderNameEvent.Create(
+                                        client,
+                                        traceId,
+                                        message.SenderName.Id,
+                                        message.SenderName.Name ) );
 
                             if ( ! await SendObjectNameNotificationAsync(
                                     client,
@@ -211,9 +208,13 @@ internal struct MessageNotifications
 
                         if ( message.StreamName.WriterSource is not null )
                         {
-                            MessageBrokerRemoteClientSendingStreamNameEvent
-                                .Create( client, traceId, message.StreamName.Id, message.StreamName.Name )
-                                .Emit( client.Logger.SendingStreamName );
+                            if ( client.Logger.SendingStreamName is { } sendingStreamName )
+                                sendingStreamName.Emit(
+                                    MessageBrokerRemoteClientSendingStreamNameEvent.Create(
+                                        client,
+                                        traceId,
+                                        message.StreamName.Id,
+                                        message.StreamName.Name ) );
 
                             if ( ! await SendObjectNameNotificationAsync(
                                     client,
@@ -226,8 +227,8 @@ internal struct MessageNotifications
 
                         if ( ! await message.WriterSource.GetTask().ConfigureAwait( false ) )
                         {
-                            MessageBrokerRemoteClientErrorEvent.Create( client, traceId, client.DisposedException() )
-                                .Emit( client.Logger.Error );
+                            if ( client.Logger.Error is { } error )
+                                error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, client.DisposedException() ) );
 
                             return;
                         }
@@ -244,15 +245,16 @@ internal struct MessageNotifications
                             return;
                         }
 
-                        MessageBrokerRemoteClientMessageProcessedEvent.Create(
-                                message.Listener,
-                                traceId,
-                                message.Publisher,
-                                message.Id,
-                                message.AckId,
-                                message.RetryAttempt,
-                                message.RedeliveryAttempt )
-                            .Emit( client.Logger.MessageProcessed );
+                        if ( client.Logger.MessageProcessed is { } messageProcessed )
+                            messageProcessed.Emit(
+                                MessageBrokerRemoteClientMessageProcessedEvent.Create(
+                                    message.Listener,
+                                    traceId,
+                                    message.Publisher,
+                                    message.MessageId,
+                                    message.AckId,
+                                    message.Retry,
+                                    message.Redelivery ) );
 
                         if ( message.AckId == 0 && message.Listener.DecrementPrefetchCounter() )
                         {
@@ -294,7 +296,9 @@ internal struct MessageNotifications
             notification.Serialize( buffer );
             if ( ! await data.WriterSource.GetTask().ConfigureAwait( false ) )
             {
-                MessageBrokerRemoteClientErrorEvent.Create( client, traceId, client.DisposedException() ).Emit( client.Logger.Error );
+                if ( client.Logger.Error is { } error )
+                    error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, client.DisposedException() ) );
+
                 return false;
             }
 
@@ -308,8 +312,8 @@ internal struct MessageNotifications
                 return false;
             }
 
-            MessageBrokerRemoteClientSystemNotificationSentEvent.Create( client, traceId, type )
-                .Emit( client.Logger.SystemNotificationSent );
+            if ( client.Logger.SystemNotificationSent is { } systemNotificationSent )
+                systemNotificationSent.Emit( MessageBrokerRemoteClientSystemNotificationSentEvent.Create( client, traceId, type ) );
 
             using ( client.AcquireActiveLock( traceId, out var exc ) )
             {
@@ -331,9 +335,9 @@ internal struct MessageNotifications
     {
         internal Message(
             in QueueMessage message,
-            ResendIndex retryAttempt,
-            ResendIndex redeliveryAttempt,
-            ulong id,
+            Int31BoolPair retry,
+            Int31BoolPair redelivery,
+            ulong messageId,
             int ackId,
             MemoryPoolToken<byte> poolToken,
             ReadOnlyMemory<byte> packet,
@@ -343,9 +347,9 @@ internal struct MessageNotifications
         {
             Publisher = message.Publisher;
             Listener = message.Listener;
-            Id = id;
-            RetryAttempt = retryAttempt;
-            RedeliveryAttempt = redeliveryAttempt;
+            MessageId = messageId;
+            Retry = retry;
+            Redelivery = redelivery;
             AckId = ackId;
             WriterSource = writerSource;
             SenderName = senderName;
@@ -356,9 +360,9 @@ internal struct MessageNotifications
 
         internal readonly MessageBrokerChannelPublisherBinding Publisher;
         internal readonly MessageBrokerChannelListenerBinding Listener;
-        internal readonly ulong Id;
-        internal readonly ResendIndex RetryAttempt;
-        internal readonly ResendIndex RedeliveryAttempt;
+        internal readonly ulong MessageId;
+        internal readonly Int31BoolPair Retry;
+        internal readonly Int31BoolPair Redelivery;
         internal readonly int AckId;
         internal readonly ManualResetValueTaskSource<bool> WriterSource;
         internal readonly NameNotification SenderName;
@@ -376,7 +380,7 @@ internal struct MessageNotifications
         public override string ToString()
         {
             return
-                $"Header = ({PacketHeader}), Publisher = ({Publisher}), Listener = ({Listener}), Id = {Id}, AckId = {AckId}, Retry = {RetryAttempt}, Redelivery = {RedeliveryAttempt}";
+                $"Header = ({PacketHeader}), Publisher = ({Publisher}), Listener = ({Listener}), MessageId = {MessageId}, AckId = {AckId}, Retry = ({Retry}), Redelivery = ({Redelivery})";
         }
     }
 

@@ -30,12 +30,12 @@ public readonly struct MessageBrokerQueueNegativeAckProcessedEvent
         ulong traceId,
         int ackId,
         Duration delay,
-        bool messageDataRemoved)
+        bool messageRemoved)
     {
         _delay = delay;
         Source = MessageBrokerQueueEventSource.Create( queue, traceId );
         AckId = ackId;
-        MessageDataRemoved = messageDataRemoved;
+        MessageRemoved = messageRemoved;
     }
 
     /// <summary>
@@ -52,7 +52,7 @@ public readonly struct MessageBrokerQueueNegativeAckProcessedEvent
     /// Specifies whether or not the data of the message has been removed from the stream's message store
     /// due to no longer being referenced.
     /// </summary>
-    public bool MessageDataRemoved { get; }
+    public bool MessageRemoved { get; }
 
     /// <summary>
     /// Delay to the next retry attempt.
@@ -66,7 +66,7 @@ public readonly struct MessageBrokerQueueNegativeAckProcessedEvent
     [Pure]
     public override string ToString()
     {
-        var delay = _delay >= Duration.Zero ? $", Delay = {_delay}" : $", MessageDataRemoved = {MessageDataRemoved}";
+        var delay = Delay is not null ? $", Delay = {Delay.Value}" : $", MessageRemoved = {MessageRemoved}";
         return $"[NegativeAckProcessed] {Source}, AckId = {AckId}{delay}";
     }
 
@@ -77,8 +77,8 @@ public readonly struct MessageBrokerQueueNegativeAckProcessedEvent
         ulong traceId,
         int ackId,
         Duration delay,
-        bool messageDataRemoved)
+        bool messageRemoved)
     {
-        return new MessageBrokerQueueNegativeAckProcessedEvent( queue, traceId, ackId, delay, messageDataRemoved );
+        return new MessageBrokerQueueNegativeAckProcessedEvent( queue, traceId, ackId, delay, messageRemoved );
     }
 }

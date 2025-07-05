@@ -24,12 +24,9 @@ namespace LfrlAnvil.MessageBroker.Server.Internal;
 internal static class MessageBrokerExtensions
 {
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static void Emit<T>(this T @event, Action<T>? emitter)
+    internal static void Emit<T>(this Action<T> emitter, T @event)
         where T : struct
     {
-        if ( emitter is null )
-            return;
-
         try
         {
             emitter( @event );
@@ -72,8 +69,8 @@ internal static class MessageBrokerExtensions
     internal static void Return(this MemoryPoolToken<byte> token, MessageBrokerRemoteClient client, ulong traceId)
     {
         var exception = token.Return();
-        if ( exception is not null )
-            MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exception ).Emit( client.Logger.Error );
+        if ( exception is not null && client.Logger.Error is { } error )
+            error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exception ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

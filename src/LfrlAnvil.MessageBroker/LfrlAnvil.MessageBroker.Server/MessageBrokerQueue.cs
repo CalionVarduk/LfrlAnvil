@@ -106,7 +106,7 @@ public sealed class MessageBrokerQueue
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal bool PushMessage(
         MessageBrokerChannelListenerBinding listener,
-        int messageStoreKey,
+        int storeKey,
         in StreamMessage message,
         MessageBrokerStream stream,
         ulong streamTraceId)
@@ -122,27 +122,30 @@ public sealed class MessageBrokerQueue
 
         using ( MessageBrokerQueueTraceEvent.CreateScope( this, traceId, MessageBrokerQueueTraceEventType.EnqueueMessage ) )
         {
-            MessageBrokerQueueStreamTraceEvent.Create( this, traceId, stream, streamTraceId ).Emit( Logger.StreamTrace );
-            MessageBrokerQueueEnqueueingMessageEvent.Create(
-                    listener,
-                    traceId,
-                    message.Publisher,
-                    message.Id,
-                    messageStoreKey,
-                    message.Data.Length )
-                .Emit( Logger.EnqueueingMessage );
+            if ( Logger.StreamTrace is { } streamTrace )
+                streamTrace.Emit( MessageBrokerQueueStreamTraceEvent.Create( this, traceId, stream, streamTraceId ) );
+
+            if ( Logger.EnqueueingMessage is { } enqueueingMessage )
+                enqueueingMessage.Emit(
+                    MessageBrokerQueueEnqueueingMessageEvent.Create(
+                        listener,
+                        traceId,
+                        message.Publisher,
+                        message.Id,
+                        storeKey,
+                        message.Data.Length ) );
 
             using ( AcquireActiveLock( traceId, out var exc ) )
             {
                 if ( exc is not null )
                     return false;
 
-                MessageStore.Enqueue( message.Publisher, listener, messageStoreKey );
+                MessageStore.Enqueue( message.Publisher, listener, storeKey );
                 QueueProcessor.SignalContinuation();
             }
 
-            MessageBrokerQueueMessageEnqueuedEvent.Create( listener, traceId, message.Publisher, message.Id )
-                .Emit( Logger.MessageEnqueued );
+            if ( Logger.MessageEnqueued is { } messageEnqueued )
+                messageEnqueued.Emit( MessageBrokerQueueMessageEnqueuedEvent.Create( listener, traceId, message.Publisher, message.Id ) );
         }
 
         return true;
@@ -153,8 +156,8 @@ public sealed class MessageBrokerQueue
         int ackId,
         int streamId,
         ulong messageId,
-        int retryAttempt,
-        int redeliveryAttempt,
+        int retry,
+        int redelivery,
         ref QueueMessage message,
         ref ulong traceId,
         ref bool disposing)
@@ -169,7 +172,7 @@ public sealed class MessageBrokerQueue
                 return AckResult.MessageNotFound;
 
             message = entry.Message;
-            if ( entry.RetryAttempt != retryAttempt || entry.RedeliveryAttempt != redeliveryAttempt )
+            if ( entry.Retry != retry || entry.Redelivery != redelivery )
                 return AckResult.MessageVersionNotFound;
 
             MessageStore.RemoveUnacked( ackId );
@@ -188,8 +191,8 @@ public sealed class MessageBrokerQueue
         int ackId,
         int streamId,
         ulong messageId,
-        int retryAttempt,
-        int redeliveryAttempt,
+        int retry,
+        int redelivery,
         bool noRetry,
         Duration? explicitDelay,
         ref QueueMessage message,
@@ -207,10 +210,10 @@ public sealed class MessageBrokerQueue
                 return AckResult.MessageNotFound;
 
             message = info.Message;
-            if ( info.RetryAttempt != retryAttempt || info.RedeliveryAttempt != redeliveryAttempt )
+            if ( info.Retry != retry || info.Redelivery != redelivery )
                 return AckResult.MessageVersionNotFound;
 
-            if ( noRetry || retryAttempt >= message.Listener.MaxRetries )
+            if ( noRetry || retry >= message.Listener.MaxRetries )
             {
                 MessageStore.RemoveUnacked( ackId );
                 disposing = TryDisposeDueToPotentiallyEmptyStoreUnsafe();
@@ -222,7 +225,7 @@ public sealed class MessageBrokerQueue
             else
             {
                 delay = explicitDelay ?? message.Listener.RetryDelay;
-                MessageStore.ScheduleRetry( message, retryAttempt, redeliveryAttempt, delay );
+                MessageStore.ScheduleRetry( message, retry, redelivery, delay );
                 MessageStore.RemoveUnacked( ackId );
                 message.Listener.DecrementPrefetchCounter();
                 QueueProcessor.SignalContinuation();
@@ -249,16 +252,17 @@ public sealed class MessageBrokerQueue
                 message.Publisher.Stream.StreamProcessor.SignalContinuation();
         }
 
+        var error = Logger.Error;
         if ( result.Exception is not null )
-            MessageBrokerQueueErrorEvent.Create( this, traceId, result.Exception ).Emit( Logger.Error );
+            error?.Emit( MessageBrokerQueueErrorEvent.Create( this, traceId, result.Exception ) );
 
-        if ( ! result.Value )
+        if ( ! result.Value && error is not null )
         {
-            var error = new MessageBrokerQueueException(
+            var exc = new MessageBrokerQueueException(
                 this,
                 Resources.MessageDataNotFound( message.Publisher.Stream, message.StoreKey ) );
 
-            MessageBrokerQueueErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
+            error.Emit( MessageBrokerQueueErrorEvent.Create( this, traceId, exc ) );
         }
 
         return removed;
@@ -300,7 +304,8 @@ public sealed class MessageBrokerQueue
     internal async ValueTask DisposeDueToLackOfReferencesAsync(bool ignoreProcessorTask, ulong traceId)
     {
         Assume.Equals( State, MessageBrokerQueueState.Disposing );
-        MessageBrokerQueueDisposingEvent.Create( this, traceId ).Emit( Logger.Disposing );
+        if ( Logger.Disposing is { } disposing )
+            disposing.Emit( MessageBrokerQueueDisposingEvent.Create( this, traceId ) );
 
         Task? processorTask;
         using ( AcquireLock() )
@@ -330,7 +335,8 @@ public sealed class MessageBrokerQueue
         using ( AcquireLock() )
             _state = MessageBrokerQueueState.Disposed;
 
-        MessageBrokerQueueDisposedEvent.Create( this, traceId ).Emit( Logger.Disposed );
+        if ( Logger.Disposed is { } disposed )
+            disposed.Emit( MessageBrokerQueueDisposedEvent.Create( this, traceId ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -351,7 +357,9 @@ public sealed class MessageBrokerQueue
 
         @lock.Dispose();
         exception = new MessageBrokerQueueDisposedException( this );
-        MessageBrokerQueueErrorEvent.Create( this, traceId, exception ).Emit( Logger.Error );
+        if ( Logger.Error is { } error )
+            error.Emit( MessageBrokerQueueErrorEvent.Create( this, traceId, exception ) );
+
         return default;
     }
 
@@ -375,8 +383,11 @@ public sealed class MessageBrokerQueue
 
         using ( MessageBrokerQueueTraceEvent.CreateScope( this, traceId, MessageBrokerQueueTraceEventType.Dispose ) )
         {
-            MessageBrokerQueueClientTraceEvent.Create( this, traceId, clientTraceId ).Emit( Logger.ClientTrace );
-            MessageBrokerQueueDisposingEvent.Create( this, traceId ).Emit( Logger.Disposing );
+            if ( Logger.ClientTrace is { } clientTrace )
+                clientTrace.Emit( MessageBrokerQueueClientTraceEvent.Create( this, traceId, clientTraceId ) );
+
+            if ( Logger.Disposing is { } disposing )
+                disposing.Emit( MessageBrokerQueueDisposingEvent.Create( this, traceId ) );
 
             Task? processorTask;
             using ( AcquireLock() )
@@ -398,16 +409,17 @@ public sealed class MessageBrokerQueue
                     discardedMessageCount = MessageStore.Clear();
             }
 
-            if ( discardedMessageCount > 0 )
+            if ( discardedMessageCount > 0 && Logger.Error is { } error )
             {
-                var error = new MessageBrokerQueueException( this, Resources.QueueMessagesDiscarded( discardedMessageCount ) );
-                MessageBrokerQueueErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
+                var exc = new MessageBrokerQueueException( this, Resources.QueueMessagesDiscarded( discardedMessageCount ) );
+                error.Emit( MessageBrokerQueueErrorEvent.Create( this, traceId, exc ) );
             }
 
             using ( AcquireLock() )
                 _state = MessageBrokerQueueState.Disposed;
 
-            MessageBrokerQueueDisposedEvent.Create( this, traceId ).Emit( Logger.Disposed );
+            if ( Logger.Disposed is { } disposed )
+                disposed.Emit( MessageBrokerQueueDisposedEvent.Create( this, traceId ) );
         }
     }
 }

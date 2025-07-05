@@ -33,10 +33,6 @@ MessageBroker:
 
 - refactor packet read/write & payload error emitting? there's a lot of copy-pasta (wait for packet batching)
 - add some basic memory pool tracking & possibility to trim excess
-- perform logger delegate null checks explicitly before creating events/exceptions
-- minimize events as much as possible
-  - the idea is that each trace contains a full story, but individual events don't
-  - shorten some names e.g. RetryAttempt => Retry, RedeliveryAttempt => Redelivery, MessageStoreKey => StoreKey, etc.
 
 Reactive:
 

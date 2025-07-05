@@ -23,23 +23,23 @@ namespace LfrlAnvil.MessageBroker.Server.Events;
 /// </summary>
 public readonly struct MessageBrokerQueueProcessingMessageEvent
 {
-    private readonly ResendIndex _retryAttempt;
-    private readonly ResendIndex _redeliveryAttempt;
+    private readonly Int31BoolPair _retry;
+    private readonly Int31BoolPair _redelivery;
 
     private MessageBrokerQueueProcessingMessageEvent(
         MessageBrokerChannelListenerBinding listener,
         ulong traceId,
         MessageBrokerChannelPublisherBinding publisher,
-        int messageStoreKey,
-        ResendIndex retryAttempt,
-        ResendIndex redeliveryAttempt)
+        int storeKey,
+        Int31BoolPair retry,
+        Int31BoolPair redelivery)
     {
         Source = MessageBrokerQueueEventSource.Create( listener.Queue, traceId );
         Listener = listener;
         Publisher = publisher;
-        MessageStoreKey = messageStoreKey;
-        _retryAttempt = retryAttempt;
-        _redeliveryAttempt = redeliveryAttempt;
+        StoreKey = storeKey;
+        _retry = retry;
+        _redelivery = redelivery;
     }
 
     /// <summary>
@@ -60,27 +60,27 @@ public readonly struct MessageBrokerQueueProcessingMessageEvent
     /// <summary>
     /// Key of the stream's message store entry associated with the message.
     /// </summary>
-    public int MessageStoreKey { get; }
+    public int StoreKey { get; }
 
     /// <summary>
     /// Specifies whether or not this message is a retry.
     /// </summary>
-    public bool IsRetry => _retryAttempt.IsActive;
+    public bool IsRetry => _retry.BoolValue;
 
     /// <summary>
     /// Retry attempt number of this message.
     /// </summary>
-    public int RetryAttempt => _retryAttempt.Value;
+    public int Retry => _retry.IntValue;
 
     /// <summary>
     /// Specifies whether or not this message is a redelivery.
     /// </summary>
-    public bool IsRedelivery => _redeliveryAttempt.IsActive;
+    public bool IsRedelivery => _redelivery.BoolValue;
 
     /// <summary>
     /// Redelivery attempt number of this message.
     /// </summary>
-    public int RedeliveryAttempt => _redeliveryAttempt.Value;
+    public int Redelivery => _redelivery.IntValue;
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerQueueProcessingMessageEvent"/> instance.
@@ -92,7 +92,7 @@ public readonly struct MessageBrokerQueueProcessingMessageEvent
         var isRetry = IsRetry ? " (active)" : string.Empty;
         var isRedelivery = IsRedelivery ? " (active)" : string.Empty;
         return
-            $"[ProcessingMessage] {Source}, Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', MessageStoreKey = {MessageStoreKey}, RetryAttempt = {RetryAttempt}{isRetry}, RedeliveryAttempt = {RedeliveryAttempt}{isRedelivery}";
+            $"[ProcessingMessage] {Source}, Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', StoreKey = {StoreKey}, Retry = {Retry}{isRetry}, Redelivery = {Redelivery}{isRedelivery}";
     }
 
     [Pure]
@@ -101,16 +101,10 @@ public readonly struct MessageBrokerQueueProcessingMessageEvent
         MessageBrokerChannelListenerBinding listener,
         ulong traceId,
         MessageBrokerChannelPublisherBinding publisher,
-        int messageStoreKey,
-        ResendIndex retryAttempt,
-        ResendIndex redeliveryAttempt)
+        int storeKey,
+        Int31BoolPair retry,
+        Int31BoolPair redelivery)
     {
-        return new MessageBrokerQueueProcessingMessageEvent(
-            listener,
-            traceId,
-            publisher,
-            messageStoreKey,
-            retryAttempt,
-            redeliveryAttempt );
+        return new MessageBrokerQueueProcessingMessageEvent( listener, traceId, publisher, storeKey, retry, redelivery );
     }
 }

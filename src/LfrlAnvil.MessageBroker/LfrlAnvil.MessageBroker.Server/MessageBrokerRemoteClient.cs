@@ -224,18 +224,17 @@ public sealed partial class MessageBrokerRemoteClient
     public async ValueTask DisconnectAsync()
     {
         var traceId = 0UL;
-        var disposalState = MessageBrokerRemoteClientState.Created;
+        MessageBrokerRemoteClientState state;
         using ( AcquireLock() )
         {
-            if ( ! TryBeginDispose() )
-                disposalState = _state;
-            else
+            state = _state;
+            if ( TryBeginDispose() )
                 traceId = GetTraceId();
         }
 
-        if ( disposalState >= MessageBrokerRemoteClientState.Disposing )
+        if ( state >= MessageBrokerRemoteClientState.Disposing )
         {
-            if ( disposalState == MessageBrokerRemoteClientState.Disposing )
+            if ( state == MessageBrokerRemoteClientState.Disposing )
                 await _disconnected.Task.ConfigureAwait( false );
 
             return;
@@ -248,18 +247,17 @@ public sealed partial class MessageBrokerRemoteClient
     internal async ValueTask OnServerDisposedAsync(ulong serverTraceId)
     {
         var traceId = 0UL;
-        var disposalState = MessageBrokerRemoteClientState.Created;
+        MessageBrokerRemoteClientState state;
         using ( AcquireLock() )
         {
-            if ( ! TryBeginDispose() )
-                disposalState = _state;
-            else
+            state = _state;
+            if ( TryBeginDispose() )
                 traceId = GetTraceId();
         }
 
-        if ( disposalState >= MessageBrokerRemoteClientState.Disposing )
+        if ( state >= MessageBrokerRemoteClientState.Disposing )
         {
-            if ( disposalState == MessageBrokerRemoteClientState.Disposing )
+            if ( state == MessageBrokerRemoteClientState.Disposing )
                 await _disconnected.Task.ConfigureAwait( false );
 
             return;
@@ -267,7 +265,9 @@ public sealed partial class MessageBrokerRemoteClient
 
         using ( MessageBrokerRemoteClientTraceEvent.CreateScope( this, traceId, MessageBrokerRemoteClientTraceEventType.Dispose ) )
         {
-            MessageBrokerRemoteClientServerTraceEvent.Create( this, traceId, serverTraceId ).Emit( Logger.ServerTrace );
+            if ( Logger.ServerTrace is { } serverTrace )
+                serverTrace.Emit( MessageBrokerRemoteClientServerTraceEvent.Create( this, traceId, serverTraceId ) );
+
             await DisposeAsyncCore( traceId, serverDisposed: true ).ConfigureAwait( false );
         }
     }
@@ -279,10 +279,12 @@ public sealed partial class MessageBrokerRemoteClient
             traceId = GetTraceId();
 
         var failed = true;
-        MessageBrokerRemoteClientTraceEvent.Create( this, traceId, MessageBrokerRemoteClientTraceEventType.Start )
-            .Emit( Logger.TraceStart );
+        if ( Logger.TraceStart is { } traceStart )
+            traceStart.Emit( MessageBrokerRemoteClientTraceEvent.Create( this, traceId, MessageBrokerRemoteClientTraceEventType.Start ) );
 
-        MessageBrokerRemoteClientServerTraceEvent.Create( this, traceId, serverTraceId ).Emit( Logger.ServerTrace );
+        if ( Logger.ServerTrace is { } serverTrace )
+            serverTrace.Emit( MessageBrokerRemoteClientServerTraceEvent.Create( this, traceId, serverTraceId ) );
+
         try
         {
             using ( AcquireActiveLock( traceId, out var exc ) )
@@ -308,14 +310,15 @@ public sealed partial class MessageBrokerRemoteClient
         }
         catch ( Exception exc )
         {
-            MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
+            if ( Logger.Error is { } error )
+                error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
+
             await DisposeAsync( traceId ).ConfigureAwait( false );
         }
         finally
         {
-            if ( failed )
-                MessageBrokerRemoteClientTraceEvent.Create( this, traceId, MessageBrokerRemoteClientTraceEventType.Start )
-                    .Emit( Logger.TraceEnd );
+            if ( failed && Logger.TraceEnd is { } traceEnd )
+                traceEnd.Emit( MessageBrokerRemoteClientTraceEvent.Create( this, traceId, MessageBrokerRemoteClientTraceEventType.Start ) );
         }
     }
 
@@ -572,7 +575,9 @@ public sealed partial class MessageBrokerRemoteClient
 
         @lock.Dispose();
         exception = DisposedException();
-        MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exception ).Emit( Logger.Error );
+        if ( Logger.Error is { } error )
+            error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exception ) );
+
         return default;
     }
 
@@ -584,7 +589,8 @@ public sealed partial class MessageBrokerRemoteClient
 
     internal async ValueTask<Result> WriteAsync(Protocol.PacketHeader header, ReadOnlyMemory<byte> data, ulong traceId)
     {
-        MessageBrokerRemoteClientSendPacketEvent.CreateSending( this, traceId, header ).Emit( Logger.SendPacket );
+        var sendPacket = Logger.SendPacket;
+        sendPacket?.Emit( MessageBrokerRemoteClientSendPacketEvent.CreateSending( this, traceId, header ) );
         try
         {
             CancellationToken timeoutToken;
@@ -603,7 +609,7 @@ public sealed partial class MessageBrokerRemoteClient
             return EmitError( exc, traceId );
         }
 
-        MessageBrokerRemoteClientSendPacketEvent.CreateSent( this, traceId, header ).Emit( Logger.SendPacket );
+        sendPacket?.Emit( MessageBrokerRemoteClientSendPacketEvent.CreateSent( this, traceId, header ) );
         return Result.Valid;
     }
 
@@ -617,7 +623,9 @@ public sealed partial class MessageBrokerRemoteClient
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal Exception EmitError(Exception exception, ulong traceId)
     {
-        MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exception ).Emit( Logger.Error );
+        if ( Logger.Error is { } error )
+            error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exception ) );
+
         return exception;
     }
 
@@ -652,108 +660,123 @@ public sealed partial class MessageBrokerRemoteClient
 
     internal async ValueTask DisposeAsyncCore(ulong traceId, bool serverDisposed = false)
     {
-        MessageBrokerRemoteClientDisposingEvent.Create( this, traceId ).Emit( Logger.Disposing );
-
-        Task? eventSchedulerTask;
-        Task? requestHandlerTask;
-        Task? packetListenerTask;
-        Task? messageNotificationsTask;
-        ValueTaskDelaySource? ownedDelaySource;
-
-        Chain<Exception> exceptions;
-        using ( AcquireLock() )
+        try
         {
-            ownedDelaySource = _delaySource.DiscardOwnedSource();
-            eventSchedulerTask = EventScheduler.DiscardUnderlyingTask();
-            requestHandlerTask = RequestHandler.DiscardUnderlyingTask();
-            packetListenerTask = PacketListener.DiscardUnderlyingTask();
-            messageNotificationsTask = MessageNotifications.DiscardUnderlyingTask();
-            RequestHandler.Dispose();
-            EventScheduler.Dispose();
-            MessageNotifications.BeginDispose();
-            WriterQueue.Dispose();
-            exceptions = RequestQueue.Dispose();
+            if ( Logger.Disposing is { } disposing )
+                disposing.Emit( MessageBrokerRemoteClientDisposingEvent.Create( this, traceId ) );
+
+            Task? eventSchedulerTask;
+            Task? requestHandlerTask;
+            Task? packetListenerTask;
+            Task? messageNotificationsTask;
+            ValueTaskDelaySource? ownedDelaySource;
+
+            var error = Logger.Error;
+            Chain<Exception> exceptions;
+            using ( AcquireLock() )
+            {
+                ownedDelaySource = _delaySource.DiscardOwnedSource();
+                eventSchedulerTask = EventScheduler.DiscardUnderlyingTask();
+                requestHandlerTask = RequestHandler.DiscardUnderlyingTask();
+                packetListenerTask = PacketListener.DiscardUnderlyingTask();
+                messageNotificationsTask = MessageNotifications.DiscardUnderlyingTask();
+                RequestHandler.Dispose();
+                EventScheduler.Dispose();
+                MessageNotifications.BeginDispose();
+                WriterQueue.Dispose();
+                exceptions = RequestQueue.Dispose( error is not null );
+            }
+
+            foreach ( var exc in exceptions )
+            {
+                Assume.IsNotNull( error );
+                error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
+            }
+
+            if ( eventSchedulerTask is not null )
+                await eventSchedulerTask.ConfigureAwait( false );
+
+            if ( requestHandlerTask is not null )
+                await requestHandlerTask.ConfigureAwait( false );
+
+            if ( packetListenerTask is not null )
+                await packetListenerTask.ConfigureAwait( false );
+
+            if ( messageNotificationsTask is not null )
+                await messageNotificationsTask.ConfigureAwait( false );
+
+            MessageBrokerChannelPublisherBinding[] publishers;
+            MessageBrokerChannelListenerBinding[] listeners;
+            MessageBrokerQueue[] queues;
+            Exception? exception;
+            using ( AcquireLock() )
+            {
+                publishers = PublishersByChannelId.ClearAndExtract();
+                listeners = ListenersByChannelId.ClearAndExtract();
+                queues = QueueStore.Clear();
+                exception = _tcp.TryDispose().Exception;
+            }
+
+            if ( exception is not null )
+                error?.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exception ) );
+
+            if ( serverDisposed )
+            {
+                await Parallel.ForEachAsync( queues, (q, _) => q.OnServerDisposedAsync( traceId ) ).ConfigureAwait( false );
+                foreach ( var publisher in publishers )
+                    publisher.OnServerDisposed();
+
+                foreach ( var listener in listeners )
+                    listener.OnServerDisposed();
+            }
+            else
+            {
+                await Parallel.ForEachAsync( queues, (q, _) => q.OnClientDisconnectedAsync( traceId ) ).ConfigureAwait( false );
+                await Parallel.ForEachAsync( publishers, (p, _) => p.OnClientDisconnectedAsync( traceId ) ).ConfigureAwait( false );
+                foreach ( var listener in listeners )
+                    listener.OnClientDisconnected( traceId );
+            }
+
+            int discardedMessageCount;
+            using ( AcquireLock() )
+                (discardedMessageCount, exceptions) = MessageNotifications.EndDispose( error is not null );
+
+            foreach ( var exc in exceptions )
+            {
+                Assume.IsNotNull( error );
+                error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
+            }
+
+            if ( discardedMessageCount > 0 && error is not null )
+            {
+                var exc = new MessageBrokerRemoteClientException( this, Resources.MessagesDiscarded( discardedMessageCount ) );
+                error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
+            }
+
+            using ( AcquireLock() )
+            {
+                ExternalNameCache.Clear();
+                _state = MessageBrokerRemoteClientState.Disposed;
+            }
+
+            if ( ownedDelaySource is not null )
+                await ownedDelaySource.TryDisposeAsync().ConfigureAwait( false );
+
+            if ( ! serverDisposed )
+            {
+                var removeException = RemoteClientCollection.Remove( this ).Exception;
+                if ( removeException is not null )
+                    error?.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, removeException ) );
+            }
+
+            if ( Logger.Disposed is { } disposed )
+                disposed.Emit( MessageBrokerRemoteClientDisposedEvent.Create( this, traceId ) );
         }
-
-        foreach ( var exc in exceptions )
-            MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
-
-        if ( eventSchedulerTask is not null )
-            await eventSchedulerTask.ConfigureAwait( false );
-
-        if ( requestHandlerTask is not null )
-            await requestHandlerTask.ConfigureAwait( false );
-
-        if ( packetListenerTask is not null )
-            await packetListenerTask.ConfigureAwait( false );
-
-        if ( messageNotificationsTask is not null )
-            await messageNotificationsTask.ConfigureAwait( false );
-
-        MessageBrokerChannelPublisherBinding[] publishers;
-        MessageBrokerChannelListenerBinding[] listeners;
-        MessageBrokerQueue[] queues;
-        Exception? exception;
-        using ( AcquireLock() )
+        finally
         {
-            publishers = PublishersByChannelId.ClearAndExtract();
-            listeners = ListenersByChannelId.ClearAndExtract();
-            queues = QueueStore.Clear();
-            exception = _tcp.TryDispose().Exception;
+            if ( ! _disconnected.Task.IsCompleted )
+                _disconnected.SetResult();
         }
-
-        if ( exception is not null )
-            MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exception ).Emit( Logger.Error );
-
-        if ( serverDisposed )
-        {
-            await Parallel.ForEachAsync( queues, (q, _) => q.OnServerDisposedAsync( traceId ) ).ConfigureAwait( false );
-            foreach ( var publisher in publishers )
-                publisher.OnServerDisposed();
-
-            foreach ( var listener in listeners )
-                listener.OnServerDisposed();
-        }
-        else
-        {
-            await Parallel.ForEachAsync( queues, (q, _) => q.OnClientDisconnectedAsync( traceId ) ).ConfigureAwait( false );
-            await Parallel.ForEachAsync( publishers, (p, _) => p.OnClientDisconnectedAsync( traceId ) ).ConfigureAwait( false );
-            foreach ( var listener in listeners )
-                listener.OnClientDisconnected( traceId );
-        }
-
-        int discardedMessageCount;
-        using ( AcquireLock() )
-            (discardedMessageCount, exceptions) = MessageNotifications.EndDispose();
-
-        foreach ( var exc in exceptions )
-            MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
-
-        if ( discardedMessageCount > 0 )
-        {
-            var error = new MessageBrokerRemoteClientException( this, Resources.MessagesDiscarded( discardedMessageCount ) );
-            MessageBrokerRemoteClientErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
-        }
-
-        using ( AcquireLock() )
-        {
-            ExternalNameCache.Clear();
-            _state = MessageBrokerRemoteClientState.Disposed;
-        }
-
-        if ( ownedDelaySource is not null )
-            await ownedDelaySource.TryDisposeAsync().ConfigureAwait( false );
-
-        if ( ! serverDisposed )
-        {
-            var removeException = RemoteClientCollection.Remove( this ).Exception;
-            if ( removeException is not null )
-                MessageBrokerRemoteClientErrorEvent.Create( this, traceId, removeException ).Emit( Logger.Error );
-        }
-
-        MessageBrokerRemoteClientDisposedEvent.Create( this, traceId ).Emit( Logger.Disposed );
-        if ( ! _disconnected.Task.IsCompleted )
-            _disconnected.SetResult();
     }
 
     private MessageBrokerQueue RegisterQueue(string name, out bool created)

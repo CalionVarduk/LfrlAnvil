@@ -28,8 +28,8 @@ public readonly struct MessageBrokerRemoteClientAckProcessedEvent
         MessageBrokerChannelPublisherBinding publisher,
         int ackId,
         ulong messageId,
-        int retryAttempt,
-        int redeliveryAttempt,
+        int retry,
+        int redelivery,
         bool isNack)
     {
         Source = MessageBrokerRemoteClientEventSource.Create( listener.Client, traceId );
@@ -37,8 +37,8 @@ public readonly struct MessageBrokerRemoteClientAckProcessedEvent
         Publisher = publisher;
         AckId = ackId;
         MessageId = messageId;
-        RetryAttempt = retryAttempt;
-        RedeliveryAttempt = redeliveryAttempt;
+        Retry = retry;
+        Redelivery = redelivery;
         IsNack = isNack;
     }
 
@@ -58,24 +58,24 @@ public readonly struct MessageBrokerRemoteClientAckProcessedEvent
     public MessageBrokerChannelPublisherBinding Publisher { get; }
 
     /// <summary>
-    /// Id of the ACK associated with the message.
-    /// </summary>
-    public int AckId { get; }
-
-    /// <summary>
     /// Unique id of the message.
     /// </summary>
     public ulong MessageId { get; }
 
     /// <summary>
+    /// Id of the ACK associated with the message.
+    /// </summary>
+    public int AckId { get; }
+
+    /// <summary>
     /// Retry attempt of the message.
     /// </summary>
-    public int RetryAttempt { get; }
+    public int Retry { get; }
 
     /// <summary>
     /// Redelivery attempt of the message.
     /// </summary>
-    public int RedeliveryAttempt { get; }
+    public int Redelivery { get; }
 
     /// <summary>
     /// Specifies whether or not the ACK is negative.
@@ -90,7 +90,7 @@ public readonly struct MessageBrokerRemoteClientAckProcessedEvent
     public override string ToString()
     {
         return
-            $"[AckProcessed] {Source}, Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', Channel = [{Publisher.Channel.Id}] '{Publisher.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', Queue = [{Listener.Queue.Id}] '{Listener.Queue.Name}', AckId = {AckId}, MessageId = {MessageId}, RetryAttempt = {RetryAttempt}, RedeliveryAttempt = {RedeliveryAttempt}, NACK = {IsNack}";
+            $"[AckProcessed] {Source}, Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', Channel = [{Publisher.Channel.Id}] '{Publisher.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', Queue = [{Listener.Queue.Id}] '{Listener.Queue.Name}', AckId = {AckId}, MessageId = {MessageId}, Retry = {Retry}, Redelivery = {Redelivery}, IsNack = {IsNack}";
     }
 
     [Pure]
@@ -101,18 +101,10 @@ public readonly struct MessageBrokerRemoteClientAckProcessedEvent
         MessageBrokerChannelPublisherBinding publisher,
         int ackId,
         ulong messageId,
-        int retryAttempt,
-        int redeliveryAttempt,
+        int retry,
+        int redelivery,
         bool isNack)
     {
-        return new MessageBrokerRemoteClientAckProcessedEvent(
-            listener,
-            traceId,
-            publisher,
-            ackId,
-            messageId,
-            retryAttempt,
-            redeliveryAttempt,
-            isNack );
+        return new MessageBrokerRemoteClientAckProcessedEvent( listener, traceId, publisher, ackId, messageId, retry, redelivery, isNack );
     }
 }

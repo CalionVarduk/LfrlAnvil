@@ -37,16 +37,14 @@ internal struct QueueRetryHeap
         return new QueueRetryHeap( 0 );
     }
 
-    internal void Add(QueueMessage message, int retryAttempt, int redeliveryAttempt, Duration delay)
+    internal void Add(QueueMessage message, int retry, int redelivery, Duration delay)
     {
         Assume.IsGreaterThanOrEqualTo( delay, Duration.Zero );
-        Assume.IsInRange( retryAttempt, 0, message.Listener.MaxRetries - 1 );
-        Assume.IsGreaterThanOrEqualTo( redeliveryAttempt, 0 );
+        Assume.IsInRange( retry, 0, message.Listener.MaxRetries - 1 );
+        Assume.IsGreaterThanOrEqualTo( redelivery, 0 );
 
         var index = _entries.Count;
-        _entries.Add(
-            new Entry( message, unchecked( retryAttempt + 1 ), redeliveryAttempt, message.Listener.Client.GetTimestamp() + delay ) );
-
+        _entries.Add( new Entry( message, unchecked( retry + 1 ), redelivery, message.Listener.Client.GetTimestamp() + delay ) );
         FixUp( index );
     }
 
@@ -127,23 +125,23 @@ internal struct QueueRetryHeap
 
     internal readonly struct Entry
     {
-        internal Entry(QueueMessage message, int retryAttempt, int redeliveryAttempt, Timestamp sendAt)
+        internal Entry(QueueMessage message, int retry, int redelivery, Timestamp sendAt)
         {
             Message = message;
-            RetryAttempt = retryAttempt;
-            RedeliveryAttempt = redeliveryAttempt;
+            Retry = retry;
+            Redelivery = redelivery;
             SendAt = sendAt;
         }
 
         internal readonly QueueMessage Message;
-        internal readonly int RetryAttempt;
-        internal readonly int RedeliveryAttempt;
+        internal readonly int Retry;
+        internal readonly int Redelivery;
         internal readonly Timestamp SendAt;
 
         [Pure]
         public override string ToString()
         {
-            return $"Message = ({Message}), Retry = {RetryAttempt}, Redelivery = {RedeliveryAttempt}, SendAt = {SendAt}";
+            return $"Message = ({Message}), Retry = {Retry}, Redelivery = {Redelivery}, SendAt = {SendAt}";
         }
     }
 }

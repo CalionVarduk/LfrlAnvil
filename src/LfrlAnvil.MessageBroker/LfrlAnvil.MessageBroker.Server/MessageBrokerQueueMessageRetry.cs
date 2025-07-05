@@ -26,15 +26,15 @@ public readonly struct MessageBrokerQueueMessageRetry
         MessageBrokerChannelPublisherBinding publisher,
         MessageBrokerChannelListenerBinding listener,
         int storeKey,
-        int retryAttempt,
-        int redeliveryAttempt,
+        int retry,
+        int redelivery,
         Timestamp sendAt)
     {
         Publisher = publisher;
         Listener = listener;
         StoreKey = storeKey;
-        RetryAttempt = retryAttempt;
-        RedeliveryAttempt = redeliveryAttempt;
+        Retry = retry;
+        Redelivery = redelivery;
         SendAt = sendAt;
     }
 
@@ -56,12 +56,12 @@ public readonly struct MessageBrokerQueueMessageRetry
     /// <summary>
     /// Retry attempt of this message.
     /// </summary>
-    public int RetryAttempt { get; }
+    public int Retry { get; }
 
     /// <summary>
     /// Redelivery attempt of this message.
     /// </summary>
-    public int RedeliveryAttempt { get; }
+    public int Redelivery { get; }
 
     /// <summary>
     /// Moment in time when this retry will be activated.
@@ -89,6 +89,6 @@ public readonly struct MessageBrokerQueueMessageRetry
     public override string ToString()
     {
         return
-            $"Publisher = ({Publisher}), Listener = ({Listener}), StoreKey = {StoreKey}, Retry = {RetryAttempt}, Redelivery = {RedeliveryAttempt}, SendAt = {SendAt}";
+            $"Publisher = ({Publisher}), Listener = ({Listener}), StoreKey = {StoreKey}, Retry = {Retry}, Redelivery = {Redelivery}, SendAt = {SendAt}";
     }
 }

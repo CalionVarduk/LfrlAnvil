@@ -22,8 +22,6 @@ namespace LfrlAnvil.MessageBroker.Server.Events;
 /// </summary>
 public readonly struct MessageBrokerRemoteClientListenerBoundEvent
 {
-    private readonly byte _state;
-
     private MessageBrokerRemoteClientListenerBoundEvent(
         MessageBrokerChannelListenerBinding listener,
         ulong traceId,
@@ -32,7 +30,8 @@ public readonly struct MessageBrokerRemoteClientListenerBoundEvent
     {
         Source = MessageBrokerRemoteClientEventSource.Create( listener.Client, traceId );
         Listener = listener;
-        _state = ( byte )((channelCreated ? 1 : 0) | (queueCreated ? 2 : 0));
+        ChannelCreated = channelCreated;
+        QueueCreated = queueCreated;
     }
 
     /// <summary>
@@ -48,12 +47,12 @@ public readonly struct MessageBrokerRemoteClientListenerBoundEvent
     /// <summary>
     /// Specifies whether or not creation of the channel bound to the <see cref="Listener"/> was part of the binding operation.
     /// </summary>
-    public bool ChannelCreated => (_state & 1) != 0;
+    public bool ChannelCreated { get; }
 
     /// <summary>
     /// Specifies whether or not creation of the queue bound to the <see cref="Listener"/> was part of the binding operation.
     /// </summary>
-    public bool QueueCreated => (_state & 2) != 0;
+    public bool QueueCreated { get; }
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerRemoteClientListenerBoundEvent"/> instance.

@@ -96,8 +96,8 @@ public readonly struct MessageBrokerQueueUnackedMessageCollection
             entry.Message.Listener,
             entry.Message.StoreKey,
             entry.MessageId,
-            entry.RetryAttempt,
-            entry.RedeliveryAttempt,
+            entry.Retry,
+            entry.Redelivery,
             entry.ExpiresAt );
     }
 }

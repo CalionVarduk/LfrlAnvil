@@ -56,7 +56,9 @@ internal struct ClientListener
 
             using ( MessageBrokerServerTraceEvent.CreateScope( server, traceId, MessageBrokerServerTraceEventType.Unexpected ) )
             {
-                MessageBrokerServerErrorEvent.Create( server, traceId, exc ).Emit( server.Logger.Error );
+                if ( server.Logger.Error is { } error )
+                    error.Emit( MessageBrokerServerErrorEvent.Create( server, traceId, exc ) );
+
                 await server.DisposeAsync( traceId ).ConfigureAwait( false );
             }
         }
@@ -80,10 +82,11 @@ internal struct ClientListener
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static async ValueTask RunCore(MessageBrokerServer server, TcpListener listener)
     {
+        var awaitClient = server.Logger.AwaitClient;
         while ( true )
         {
             ulong traceId;
-            MessageBrokerServerAwaitClientEvent.Create( server ).Emit( server.Logger.AwaitClient );
+            awaitClient?.Emit( MessageBrokerServerAwaitClientEvent.Create( server ) );
 
             TcpClient tcp;
             try
@@ -92,7 +95,7 @@ internal struct ClientListener
             }
             catch ( Exception exc )
             {
-                MessageBrokerServerAwaitClientEvent.Create( server, exc ).Emit( server.Logger.AwaitClient );
+                awaitClient?.Emit( MessageBrokerServerAwaitClientEvent.Create( server, exc ) );
 
                 using ( server.AcquireLock() )
                 {
@@ -120,7 +123,7 @@ internal struct ClientListener
             }
 
             if ( endPoint is not null )
-                MessageBrokerServerAwaitClientEvent.Create( server, endPoint ).Emit( server.Logger.AwaitClient );
+                awaitClient?.Emit( MessageBrokerServerAwaitClientEvent.Create( server, endPoint ) );
 
             using ( server.AcquireLock() )
                 traceId = server.GetTraceId();

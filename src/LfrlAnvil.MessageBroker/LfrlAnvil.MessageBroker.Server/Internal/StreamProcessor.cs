@@ -57,7 +57,8 @@ internal struct StreamProcessor
 
                 using ( MessageBrokerStreamTraceEvent.CreateScope( stream, traceId, MessageBrokerStreamTraceEventType.Unexpected ) )
                 {
-                    MessageBrokerStreamErrorEvent.Create( stream, traceId, exc ).Emit( stream.Logger.Error );
+                    var error = stream.Logger.Error;
+                    error?.Emit( MessageBrokerStreamErrorEvent.Create( stream, traceId, exc ) );
                     try
                     {
                         using ( stream.AcquireLock() )
@@ -72,7 +73,7 @@ internal struct StreamProcessor
                     }
                     catch ( Exception exc2 )
                     {
-                        MessageBrokerStreamErrorEvent.Create( stream, traceId, exc2 ).Emit( stream.Logger.Error );
+                        error?.Emit( MessageBrokerStreamErrorEvent.Create( stream, traceId, exc2 ) );
                     }
                 }
             }
@@ -117,7 +118,7 @@ internal struct StreamProcessor
             var disposed = false;
             while ( true )
             {
-                int key;
+                int storeKey;
                 StreamMessage message;
                 ulong traceId;
                 using ( stream.AcquireLock() )
@@ -125,7 +126,7 @@ internal struct StreamProcessor
                     if ( stream.ShouldCancel )
                         return;
 
-                    if ( ! stream.MessageStore.TryPeekPending( out key, out message ) )
+                    if ( ! stream.MessageStore.TryPeekPending( out storeKey, out message ) )
                     {
                         if ( stream.TryDisposeDueToEmptyMessageStoreUnsafe() )
                             disposed = true;
@@ -142,30 +143,32 @@ internal struct StreamProcessor
                 {
                     var failures = 0;
                     var listeners = message.Publisher.Channel.Listeners.GetAll();
-                    MessageBrokerStreamProcessingMessageEvent.Create(
-                            message.Publisher,
-                            traceId,
-                            message.Id,
-                            message.Data.Length,
-                            listeners )
-                        .Emit( stream.Logger.ProcessingMessage );
+                    if ( stream.Logger.ProcessingMessage is { } processingMessage )
+                        processingMessage.Emit(
+                            MessageBrokerStreamProcessingMessageEvent.Create(
+                                message.Publisher,
+                                traceId,
+                                message.Id,
+                                message.Data.Length,
+                                listeners ) );
 
+                    var error = stream.Logger.Error;
                     if ( listeners.Count > 0 )
                     {
                         using ( stream.AcquireLock() )
-                            stream.MessageStore.IncreaseRefCount( key, listeners.Count );
+                            stream.MessageStore.IncreaseRefCount( storeKey, listeners.Count );
 
                         foreach ( var listener in listeners )
                         {
                             try
                             {
-                                if ( ! listener.Queue.PushMessage( listener, key, in message, stream, traceId ) )
+                                if ( ! listener.Queue.PushMessage( listener, storeKey, in message, stream, traceId ) )
                                     ++failures;
                             }
                             catch ( Exception exc )
                             {
                                 ++failures;
-                                MessageBrokerStreamErrorEvent.Create( stream, traceId, exc ).Emit( stream.Logger.Error );
+                                error?.Emit( MessageBrokerStreamErrorEvent.Create( stream, traceId, exc ) );
                             }
                         }
                     }
@@ -175,16 +178,17 @@ internal struct StreamProcessor
                         result = stream.MessageStore.DequeuePending( failures );
 
                     if ( result.Exception is not null )
-                        MessageBrokerStreamErrorEvent.Create( stream, traceId, result.Exception ).Emit( stream.Logger.Error );
+                        error?.Emit( MessageBrokerStreamErrorEvent.Create( stream, traceId, result.Exception ) );
 
-                    MessageBrokerStreamMessageProcessedEvent.Create(
-                            message.Publisher,
-                            traceId,
-                            message.Id,
-                            message.Data.Length,
-                            failures,
-                            result.Value )
-                        .Emit( stream.Logger.MessageProcessed );
+                    if ( stream.Logger.MessageProcessed is { } messageProcessed )
+                        messageProcessed.Emit(
+                            MessageBrokerStreamMessageProcessedEvent.Create(
+                                message.Publisher,
+                                traceId,
+                                message.Id,
+                                message.Data.Length,
+                                failures,
+                                result.Value ) );
                 }
             }
 

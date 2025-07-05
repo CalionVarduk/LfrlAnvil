@@ -77,14 +77,14 @@ public readonly struct MessageBrokerRemoteClientBindingListenerEvent
     public Duration RetryDelay { get; }
 
     /// <summary>
-    /// Listener's max redeliveries count.
-    /// </summary>
-    public int MaxRedeliveries { get; }
-
-    /// <summary>
     /// Listener's min ACK timeout.
     /// </summary>
     public Duration MinAckTimeout { get; }
+
+    /// <summary>
+    /// Listener's max redeliveries count.
+    /// </summary>
+    public int MaxRedeliveries { get; }
 
     /// <summary>
     /// Specifies whether or not the client requested channel creation if it doesn't exist.

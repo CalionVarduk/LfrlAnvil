@@ -29,16 +29,16 @@ public readonly struct MessageBrokerRemoteClientProcessingAckEvent
         int ackId,
         int streamId,
         ulong messageId,
-        int retryAttempt,
-        int redeliveryAttempt)
+        int retry,
+        int redelivery)
     {
         Source = MessageBrokerRemoteClientEventSource.Create( client, traceId );
         QueueId = queueId;
         AckId = ackId;
         StreamId = streamId;
         MessageId = messageId;
-        RetryAttempt = retryAttempt;
-        RedeliveryAttempt = redeliveryAttempt;
+        Retry = retry;
+        Redelivery = redelivery;
     }
 
     /// <summary>
@@ -69,12 +69,12 @@ public readonly struct MessageBrokerRemoteClientProcessingAckEvent
     /// <summary>
     /// Retry attempt of the message.
     /// </summary>
-    public int RetryAttempt { get; }
+    public int Retry { get; }
 
     /// <summary>
     /// Redelivery attempt of the message.
     /// </summary>
-    public int RedeliveryAttempt { get; }
+    public int Redelivery { get; }
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerRemoteClientProcessingAckEvent"/> instance.
@@ -84,7 +84,7 @@ public readonly struct MessageBrokerRemoteClientProcessingAckEvent
     public override string ToString()
     {
         return
-            $"[ProcessingAck] {Source}, QueueId = {QueueId}, AckId = {AckId}, StreamId = {StreamId}, MessageId = {MessageId}, RetryAttempt = {RetryAttempt}, RedeliveryAttempt = {RedeliveryAttempt}";
+            $"[ProcessingAck] {Source}, QueueId = {QueueId}, AckId = {AckId}, StreamId = {StreamId}, MessageId = {MessageId}, Retry = {Retry}, Redelivery = {Redelivery}";
     }
 
     [Pure]
@@ -96,17 +96,9 @@ public readonly struct MessageBrokerRemoteClientProcessingAckEvent
         int ackId,
         int streamId,
         ulong messageId,
-        int retryAttempt,
-        int redeliveryAttempt)
+        int retry,
+        int redelivery)
     {
-        return new MessageBrokerRemoteClientProcessingAckEvent(
-            client,
-            traceId,
-            queueId,
-            ackId,
-            streamId,
-            messageId,
-            retryAttempt,
-            redeliveryAttempt );
+        return new MessageBrokerRemoteClientProcessingAckEvent( client, traceId, queueId, ackId, streamId, messageId, retry, redelivery );
     }
 }

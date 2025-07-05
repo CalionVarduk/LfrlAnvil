@@ -22,8 +22,6 @@ namespace LfrlAnvil.MessageBroker.Server.Events;
 /// </summary>
 public readonly struct MessageBrokerRemoteClientPublisherBoundEvent
 {
-    private readonly byte _state;
-
     private MessageBrokerRemoteClientPublisherBoundEvent(
         MessageBrokerChannelPublisherBinding publisher,
         ulong traceId,
@@ -32,7 +30,8 @@ public readonly struct MessageBrokerRemoteClientPublisherBoundEvent
     {
         Source = MessageBrokerRemoteClientEventSource.Create( publisher.Client, traceId );
         Publisher = publisher;
-        _state = ( byte )((channelCreated ? 1 : 0) | (streamCreated ? 2 : 0));
+        ChannelCreated = channelCreated;
+        StreamCreated = streamCreated;
     }
 
     /// <summary>
@@ -48,12 +47,12 @@ public readonly struct MessageBrokerRemoteClientPublisherBoundEvent
     /// <summary>
     /// Specifies whether or not creation of the channel bound to the <see cref="Publisher"/> was part of the binding operation.
     /// </summary>
-    public bool ChannelCreated => (_state & 1) != 0;
+    public bool ChannelCreated { get; }
 
     /// <summary>
     /// Specifies whether or not creation of the stream bound to the <see cref="Publisher"/> was part of the binding operation.
     /// </summary>
-    public bool StreamCreated => (_state & 2) != 0;
+    public bool StreamCreated { get; }
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerRemoteClientPublisherBoundEvent"/> instance.

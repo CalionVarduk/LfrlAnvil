@@ -789,8 +789,8 @@ internal static class Protocol
         internal readonly int AckId;
         internal readonly int StreamId;
         internal readonly ulong MessageId;
-        internal readonly ResendIndex RetryAttempt;
-        internal readonly ResendIndex RedeliveryAttempt;
+        internal readonly Int31BoolPair Retry;
+        internal readonly Int31BoolPair Redelivery;
         internal readonly int ChannelId;
         internal readonly int SenderId;
         internal readonly Timestamp PushedAt;
@@ -798,8 +798,8 @@ internal static class Protocol
         internal MessageNotificationHeader(
             int ackId,
             int streamId,
-            ResendIndex retryAttempt,
-            ResendIndex redeliveryAttempt,
+            Int31BoolPair retry,
+            Int31BoolPair redelivery,
             ulong messageId,
             int channelId,
             int senderId,
@@ -810,8 +810,8 @@ internal static class Protocol
             AckId = ackId;
             StreamId = streamId;
             MessageId = messageId;
-            RetryAttempt = retryAttempt;
-            RedeliveryAttempt = redeliveryAttempt;
+            Retry = retry;
+            Redelivery = redelivery;
             ChannelId = channelId;
             SenderId = senderId;
             PushedAt = pushedAt;
@@ -821,7 +821,7 @@ internal static class Protocol
         public override string ToString()
         {
             return
-                $"[{Header}] AckId = {AckId}, StreamId = {StreamId}, MessageId = {MessageId}, RetryAttempt = {RetryAttempt}, RedeliveryAttempt = {RedeliveryAttempt}, ChannelId = {ChannelId}, SenderId = {SenderId}, PushedAt = {PushedAt}";
+                $"[{Header}] AckId = {AckId}, StreamId = {StreamId}, MessageId = {MessageId}, Retry = ({Retry}), Redelivery = ({Redelivery}), ChannelId = {ChannelId}, SenderId = {SenderId}, PushedAt = {PushedAt}";
         }
 
         internal void Serialize(Memory<byte> target)
@@ -833,8 +833,8 @@ internal static class Protocol
             writer.MoveWrite( unchecked( ( uint )AckId ) );
             writer.MoveWrite( unchecked( ( uint )StreamId ) );
             writer.MoveWrite( MessageId );
-            writer.MoveWrite( RetryAttempt.Data );
-            writer.MoveWrite( RedeliveryAttempt.Data );
+            writer.MoveWrite( Retry.Data );
+            writer.MoveWrite( Redelivery.Data );
             writer.MoveWrite( unchecked( ( uint )ChannelId ) );
             writer.MoveWrite( unchecked( ( uint )SenderId ) );
             writer.Write( unchecked( ( ulong )PushedAt.UnixEpochTicks ) );
@@ -886,24 +886,24 @@ internal static class Protocol
         internal readonly int AckId;
         internal readonly int StreamId;
         internal readonly ulong MessageId;
-        internal readonly int RetryAttempt;
-        internal readonly int RedeliveryAttempt;
+        internal readonly int Retry;
+        internal readonly int Redelivery;
 
-        private MessageNotificationAck(int queueId, int ackId, int streamId, ulong messageId, int retryAttempt, int redeliveryAttempt)
+        private MessageNotificationAck(int queueId, int ackId, int streamId, ulong messageId, int retry, int redelivery)
         {
             QueueId = queueId;
             AckId = ackId;
             StreamId = streamId;
             MessageId = messageId;
-            RetryAttempt = retryAttempt;
-            RedeliveryAttempt = redeliveryAttempt;
+            Retry = retry;
+            Redelivery = redelivery;
         }
 
         [Pure]
         public override string ToString()
         {
             return
-                $"QueueId = {QueueId}, AckId = {AckId}, StreamId = {StreamId}, MessageId = {MessageId}, RetryAttempt = {RetryAttempt}, RedeliveryAttempt = {RedeliveryAttempt}";
+                $"QueueId = {QueueId}, AckId = {AckId}, StreamId = {StreamId}, MessageId = {MessageId}, Retry = {Retry}, Redelivery = {Redelivery}";
         }
 
         [Pure]
@@ -916,9 +916,9 @@ internal static class Protocol
             var ackId = unchecked( ( int )reader.MoveReadInt32() );
             var streamId = unchecked( ( int )reader.MoveReadInt32() );
             var messageId = reader.MoveReadInt64();
-            var retryAttempt = unchecked( ( int )reader.MoveReadInt32() );
-            var redeliveryAttempt = unchecked( ( int )reader.ReadInt32() );
-            return new MessageNotificationAck( queueId, ackId, streamId, messageId, retryAttempt, redeliveryAttempt );
+            var retry = unchecked( ( int )reader.MoveReadInt32() );
+            var redelivery = unchecked( ( int )reader.ReadInt32() );
+            return new MessageNotificationAck( queueId, ackId, streamId, messageId, retry, redelivery );
         }
 
         [Pure]
@@ -935,11 +935,11 @@ internal static class Protocol
             if ( StreamId <= 0 )
                 result = result.Extend( Resources.StreamIdIsNotPositive( StreamId ) );
 
-            if ( RetryAttempt < 0 )
-                result = result.Extend( Resources.RetryAttemptIsNegative( RetryAttempt ) );
+            if ( Retry < 0 )
+                result = result.Extend( Resources.RetryIsNegative( Retry ) );
 
-            if ( RedeliveryAttempt < 0 )
-                result = result.Extend( Resources.RedeliveryAttemptIsNegative( RedeliveryAttempt ) );
+            if ( Redelivery < 0 )
+                result = result.Extend( Resources.RedeliveryIsNegative( Redelivery ) );
 
             return result;
         }
@@ -953,8 +953,8 @@ internal static class Protocol
         internal readonly int AckId;
         internal readonly int StreamId;
         internal readonly ulong MessageId;
-        internal readonly int RetryAttempt;
-        internal readonly int RedeliveryAttempt;
+        internal readonly int Retry;
+        internal readonly int Redelivery;
         internal readonly Duration ExplicitDelay;
 
         private MessageNotificationNegativeAck(
@@ -963,8 +963,8 @@ internal static class Protocol
             int ackId,
             int streamId,
             ulong messageId,
-            int retryAttempt,
-            int redeliveryAttempt,
+            int retry,
+            int redelivery,
             Duration explicitDelay)
         {
             Flags = flags;
@@ -972,8 +972,8 @@ internal static class Protocol
             AckId = ackId;
             StreamId = streamId;
             MessageId = messageId;
-            RetryAttempt = retryAttempt;
-            RedeliveryAttempt = redeliveryAttempt;
+            Retry = retry;
+            Redelivery = redelivery;
             ExplicitDelay = explicitDelay;
         }
 
@@ -984,7 +984,7 @@ internal static class Protocol
         public override string ToString()
         {
             return
-                $"Flags = {Flags}, QueueId = {QueueId}, AckId = {AckId}, StreamId = {StreamId}, MessageId = {MessageId}, RetryAttempt = {RetryAttempt}, RedeliveryAttempt = {RedeliveryAttempt}, ExplicitDelay = {ExplicitDelay}";
+                $"Flags = {Flags}, QueueId = {QueueId}, AckId = {AckId}, StreamId = {StreamId}, MessageId = {MessageId}, Retry = {Retry}, Redelivery = {Redelivery}, ExplicitDelay = {ExplicitDelay}";
         }
 
         [Pure]
@@ -998,8 +998,8 @@ internal static class Protocol
             var ackId = unchecked( ( int )reader.MoveReadInt32() );
             var streamId = unchecked( ( int )reader.MoveReadInt32() );
             var messageId = reader.MoveReadInt64();
-            var retryAttempt = unchecked( ( int )reader.MoveReadInt32() );
-            var redeliveryAttempt = unchecked( ( int )reader.MoveReadInt32() );
+            var retry = unchecked( ( int )reader.MoveReadInt32() );
+            var redelivery = unchecked( ( int )reader.MoveReadInt32() );
             var explicitDelay = Duration.FromMilliseconds( unchecked( ( int )reader.ReadInt32() ) );
             return new MessageNotificationNegativeAck(
                 flags,
@@ -1007,8 +1007,8 @@ internal static class Protocol
                 ackId,
                 streamId,
                 messageId,
-                retryAttempt,
-                redeliveryAttempt,
+                retry,
+                redelivery,
                 explicitDelay );
         }
 
@@ -1026,11 +1026,11 @@ internal static class Protocol
             if ( StreamId <= 0 )
                 result = result.Extend( Resources.StreamIdIsNotPositive( StreamId ) );
 
-            if ( RetryAttempt < 0 )
-                result = result.Extend( Resources.RetryAttemptIsNegative( RetryAttempt ) );
+            if ( Retry < 0 )
+                result = result.Extend( Resources.RetryIsNegative( Retry ) );
 
-            if ( RedeliveryAttempt < 0 )
-                result = result.Extend( Resources.RedeliveryAttemptIsNegative( RedeliveryAttempt ) );
+            if ( Redelivery < 0 )
+                result = result.Extend( Resources.RedeliveryIsNegative( Redelivery ) );
 
             if ( ExplicitDelay < Duration.Zero )
                 result = result.Extend( Resources.ExplicitDelayIsNegative( ExplicitDelay ) );

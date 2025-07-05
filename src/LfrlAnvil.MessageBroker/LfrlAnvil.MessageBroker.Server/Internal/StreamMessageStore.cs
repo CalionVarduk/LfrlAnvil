@@ -154,7 +154,7 @@ internal struct StreamMessageStore
         return true;
     }
 
-    internal (int DiscardedMessageCount, Chain<Exception> Exceptions) ClearPending()
+    internal (int DiscardedMessageCount, Chain<Exception> Exceptions) ClearPending(bool extractExceptions)
     {
         var discardedMessageCount = 0;
         var exceptions = Chain<Exception>.Empty;
@@ -169,7 +169,7 @@ internal struct StreamMessageStore
                 if ( --entry.RefCount <= 0 )
                 {
                     var exc = entry.Message.PoolToken.Return();
-                    if ( exc is not null )
+                    if ( exc is not null && extractExceptions )
                         exceptions = exceptions.Extend( exc );
 
                     _store.Remove( node.Value.Index );

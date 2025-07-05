@@ -59,8 +59,8 @@ public readonly struct MessageBrokerQueueMessageRetriesCollection
                 first.Message.Publisher,
                 first.Message.Listener,
                 first.Message.StoreKey,
-                first.RetryAttempt,
-                first.RedeliveryAttempt,
+                first.Retry,
+                first.Redelivery,
                 first.SendAt );
         }
     }

@@ -34,6 +34,7 @@ internal readonly struct Int31BoolPair
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static uint GetData(int intValue, bool boolValue)
     {
+        Assume.IsGreaterThanOrEqualTo( intValue, 0 );
         return unchecked( ( uint )intValue | (boolValue ? BoolValueMask : 0) );
     }
 

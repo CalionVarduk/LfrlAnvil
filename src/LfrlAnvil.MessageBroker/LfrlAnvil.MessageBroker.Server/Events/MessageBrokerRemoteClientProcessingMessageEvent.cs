@@ -23,8 +23,8 @@ namespace LfrlAnvil.MessageBroker.Server.Events;
 /// </summary>
 public readonly struct MessageBrokerRemoteClientProcessingMessageEvent
 {
-    private readonly ResendIndex _retryAttempt;
-    private readonly ResendIndex _redeliveryAttempt;
+    private readonly Int31BoolPair _retry;
+    private readonly Int31BoolPair _redelivery;
 
     private MessageBrokerRemoteClientProcessingMessageEvent(
         MessageBrokerChannelListenerBinding listener,
@@ -32,8 +32,8 @@ public readonly struct MessageBrokerRemoteClientProcessingMessageEvent
         MessageBrokerChannelPublisherBinding publisher,
         ulong messageId,
         int ackId,
-        ResendIndex retryAttempt,
-        ResendIndex redeliveryAttempt,
+        Int31BoolPair retry,
+        Int31BoolPair redelivery,
         int length)
     {
         Source = MessageBrokerRemoteClientEventSource.Create( listener.Client, traceId );
@@ -41,8 +41,8 @@ public readonly struct MessageBrokerRemoteClientProcessingMessageEvent
         Publisher = publisher;
         MessageId = messageId;
         AckId = ackId;
-        _retryAttempt = retryAttempt;
-        _redeliveryAttempt = redeliveryAttempt;
+        _retry = retry;
+        _redelivery = redelivery;
         Length = length;
     }
 
@@ -77,24 +77,24 @@ public readonly struct MessageBrokerRemoteClientProcessingMessageEvent
     public int Length { get; }
 
     /// <summary>
-    /// Retry attempt number of this message.
+    /// Retry attempt of this message.
     /// </summary>
-    public int RetryAttempt => _retryAttempt.Value;
+    public int Retry => _retry.IntValue;
 
     /// <summary>
     /// Specifies whether or not this message is a retry.
     /// </summary>
-    public bool IsRetry => _retryAttempt.IsActive;
+    public bool IsRetry => _retry.BoolValue;
 
     /// <summary>
-    /// Redelivery attempt number of this message.
+    /// Redelivery attempt of this message.
     /// </summary>
-    public int RedeliveryAttempt => _redeliveryAttempt.Value;
+    public int Redelivery => _redelivery.IntValue;
 
     /// <summary>
     /// Specifies whether or not this message is a redelivery.
     /// </summary>
-    public bool IsRedelivery => _redeliveryAttempt.IsActive;
+    public bool IsRedelivery => _redelivery.BoolValue;
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerRemoteClientProcessingMessageEvent"/> instance.
@@ -107,7 +107,7 @@ public readonly struct MessageBrokerRemoteClientProcessingMessageEvent
         var isRetry = IsRetry ? " (active)" : string.Empty;
         var isRedelivery = IsRedelivery ? " (active)" : string.Empty;
         return
-            $"[ProcessingMessage] {Source}, Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', Queue = [{Listener.Queue.Id}] '{Listener.Queue.Name}'{ack}, MessageId = {MessageId}, RetryAttempt = {RetryAttempt}{isRetry}, RedeliveryAttempt = {RedeliveryAttempt}{isRedelivery}, Length = {Length}";
+            $"[ProcessingMessage] {Source}, Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', Queue = [{Listener.Queue.Id}] '{Listener.Queue.Name}'{ack}, MessageId = {MessageId}, Retry = {Retry}{isRetry}, Redelivery = {Redelivery}{isRedelivery}, Length = {Length}";
     }
 
     [Pure]
@@ -118,8 +118,8 @@ public readonly struct MessageBrokerRemoteClientProcessingMessageEvent
         MessageBrokerChannelPublisherBinding publisher,
         ulong messageId,
         int ackId,
-        ResendIndex retryAttempt,
-        ResendIndex redeliveryAttempt,
+        Int31BoolPair retry,
+        Int31BoolPair redelivery,
         int length)
     {
         return new MessageBrokerRemoteClientProcessingMessageEvent(
@@ -128,8 +128,8 @@ public readonly struct MessageBrokerRemoteClientProcessingMessageEvent
             publisher,
             messageId,
             ackId,
-            retryAttempt,
-            redeliveryAttempt,
+            retry,
+            redelivery,
             length );
     }
 }

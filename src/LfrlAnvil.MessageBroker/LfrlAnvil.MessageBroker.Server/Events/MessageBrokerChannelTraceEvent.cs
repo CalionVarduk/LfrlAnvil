@@ -66,7 +66,9 @@ public readonly struct MessageBrokerChannelTraceEvent
     internal static Scope CreateScope(MessageBrokerChannel channel, ulong traceId, MessageBrokerChannelTraceEventType type)
     {
         var result = new Scope( channel, traceId, type );
-        result.Event.Emit( channel.Logger.TraceStart );
+        if ( channel.Logger.TraceStart is { } traceStart )
+            traceStart.Emit( result.Event );
+
         return result;
     }
 
@@ -82,7 +84,8 @@ public readonly struct MessageBrokerChannelTraceEvent
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public void Dispose()
         {
-            Event.Emit( Event.Source.Channel.Logger.TraceEnd );
+            if ( Event.Source.Channel.Logger.TraceEnd is { } traceEnd )
+                traceEnd.Emit( Event );
         }
     }
 }

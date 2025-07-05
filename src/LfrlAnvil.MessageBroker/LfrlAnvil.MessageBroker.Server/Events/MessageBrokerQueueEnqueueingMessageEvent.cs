@@ -27,14 +27,14 @@ public readonly struct MessageBrokerQueueEnqueueingMessageEvent
         ulong traceId,
         MessageBrokerChannelPublisherBinding publisher,
         ulong messageId,
-        int messageStoreKey,
+        int storeKey,
         int length)
     {
         Source = MessageBrokerQueueEventSource.Create( listener.Queue, traceId );
         Listener = listener;
         Publisher = publisher;
         MessageId = messageId;
-        MessageStoreKey = messageStoreKey;
+        StoreKey = storeKey;
         Length = length;
     }
 
@@ -61,7 +61,7 @@ public readonly struct MessageBrokerQueueEnqueueingMessageEvent
     /// <summary>
     /// Key of the stream's message store entry associated with the message.
     /// </summary>
-    public int MessageStoreKey { get; }
+    public int StoreKey { get; }
 
     /// <summary>
     /// Message length.
@@ -76,7 +76,7 @@ public readonly struct MessageBrokerQueueEnqueueingMessageEvent
     public override string ToString()
     {
         return
-            $"[EnqueueingMessage] {Source}, Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', MessageId = {MessageId}, MessageStoreKey = {MessageStoreKey}, Length = {Length}";
+            $"[EnqueueingMessage] {Source}, Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', MessageId = {MessageId}, StoreKey = {StoreKey}, Length = {Length}";
     }
 
     [Pure]
@@ -86,9 +86,9 @@ public readonly struct MessageBrokerQueueEnqueueingMessageEvent
         ulong traceId,
         MessageBrokerChannelPublisherBinding publisher,
         ulong messageId,
-        int messageStoreKey,
+        int storeKey,
         int length)
     {
-        return new MessageBrokerQueueEnqueueingMessageEvent( listener, traceId, publisher, messageId, messageStoreKey, length );
+        return new MessageBrokerQueueEnqueueingMessageEvent( listener, traceId, publisher, messageId, storeKey, length );
     }
 }

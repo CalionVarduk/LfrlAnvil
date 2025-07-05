@@ -27,7 +27,7 @@ public class MessageBrokerRemoteClientRequestTimeoutException : OperationCancele
     /// </summary>
     /// <param name="client"><see cref="MessageBrokerRemoteClient"/> that encountered request timeout.</param>
     public MessageBrokerRemoteClientRequestTimeoutException(MessageBrokerRemoteClient client)
-        : base( Resources.RequestTimeout( client.Id, client.Name, client.MessageTimeout ), new CancellationToken( canceled: true ) )
+        : base( Resources.RequestTimeout( client ), new CancellationToken( canceled: true ) )
     {
         Client = client;
     }

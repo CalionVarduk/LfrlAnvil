@@ -108,15 +108,19 @@ internal struct RemoteClientCollection
                 }
             }
 
-            MessageBrokerServerClientAcceptedEvent.Create( server, traceId, client ).Emit( server.Logger.ClientAccepted );
+            if ( server.Logger.ClientAccepted is { } clientAccepted )
+                clientAccepted.Emit( MessageBrokerServerClientAcceptedEvent.Create( server, traceId, client ) );
+
             return client;
         }
         catch ( Exception exc )
         {
-            MessageBrokerServerErrorEvent.Create( server, traceId, exc ).Emit( server.Logger.Error );
+            var error = server.Logger.Error;
+            error?.Emit( MessageBrokerServerErrorEvent.Create( server, traceId, exc ) );
+
             var exception = tcp.TryDispose().Exception;
-            if ( exception is not null )
-                MessageBrokerServerErrorEvent.Create( server, traceId, exception ).Emit( server.Logger.Error );
+            if ( exception is not null && error is not null )
+                error.Emit( MessageBrokerServerErrorEvent.Create( server, traceId, exception ) );
 
             return exc;
         }

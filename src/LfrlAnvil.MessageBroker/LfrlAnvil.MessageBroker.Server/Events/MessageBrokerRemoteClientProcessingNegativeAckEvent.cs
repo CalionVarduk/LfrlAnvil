@@ -23,6 +23,10 @@ namespace LfrlAnvil.MessageBroker.Server.Events;
 /// </summary>
 public readonly struct MessageBrokerRemoteClientProcessingNegativeAckEvent
 {
+    private readonly Duration _explicitDelay;
+    private readonly int _streamId;
+    private readonly byte _flags;
+
     private MessageBrokerRemoteClientProcessingNegativeAckEvent(
         MessageBrokerRemoteClient client,
         ulong traceId,
@@ -30,20 +34,20 @@ public readonly struct MessageBrokerRemoteClientProcessingNegativeAckEvent
         int ackId,
         int streamId,
         ulong messageId,
-        int retryAttempt,
-        int redeliveryAttempt,
-        bool noRetry,
-        Duration? explicitDelay)
+        int retry,
+        int redelivery,
+        Duration explicitDelay,
+        byte flags)
     {
         Source = MessageBrokerRemoteClientEventSource.Create( client, traceId );
         QueueId = queueId;
         AckId = ackId;
-        StreamId = streamId;
+        _streamId = streamId;
         MessageId = messageId;
-        RetryAttempt = retryAttempt;
-        RedeliveryAttempt = redeliveryAttempt;
-        NoRetry = noRetry;
-        ExplicitDelay = explicitDelay;
+        Retry = retry;
+        Redelivery = redelivery;
+        _explicitDelay = explicitDelay;
+        _flags = flags;
     }
 
     /// <summary>
@@ -62,11 +66,6 @@ public readonly struct MessageBrokerRemoteClientProcessingNegativeAckEvent
     public int AckId { get; }
 
     /// <summary>
-    /// Unique id of the stream that owns the message.
-    /// </summary>
-    public int StreamId { get; }
-
-    /// <summary>
     /// Unique id of the message.
     /// </summary>
     public ulong MessageId { get; }
@@ -74,22 +73,27 @@ public readonly struct MessageBrokerRemoteClientProcessingNegativeAckEvent
     /// <summary>
     /// Retry attempt of the message.
     /// </summary>
-    public int RetryAttempt { get; }
+    public int Retry { get; }
 
     /// <summary>
     /// Redelivery attempt of the message.
     /// </summary>
-    public int RedeliveryAttempt { get; }
+    public int Redelivery { get; }
+
+    /// <summary>
+    /// Unique id of the stream that owns the message.
+    /// </summary>
+    public int StreamId => _streamId;
 
     /// <summary>
     /// Specifies whether or not the client requested to not send retries for the message.
     /// </summary>
-    public bool NoRetry { get; }
+    public bool NoRetry => (_flags & 1) != 0;
 
     /// <summary>
     /// Specifies explicit retry delay requested by the client.
     /// </summary>
-    public Duration? ExplicitDelay { get; }
+    public Duration? ExplicitDelay => (_flags & 2) != 0 ? _explicitDelay : null;
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerRemoteClientProcessingNegativeAckEvent"/> instance.
@@ -100,7 +104,7 @@ public readonly struct MessageBrokerRemoteClientProcessingNegativeAckEvent
     {
         var explicitDelay = ExplicitDelay is not null ? $", ExplicitDelay = {ExplicitDelay.Value}" : string.Empty;
         return
-            $"[ProcessingNegativeAck] {Source}, QueueId = {QueueId}, AckId = {AckId}, StreamId = {StreamId}, MessageId = {MessageId}, RetryAttempt = {RetryAttempt}, RedeliveryAttempt = {RedeliveryAttempt}, NoRetry = {NoRetry}{explicitDelay}";
+            $"[ProcessingNegativeAck] {Source}, QueueId = {QueueId}, AckId = {AckId}, StreamId = {StreamId}, MessageId = {MessageId}, Retry = {Retry}, Redelivery = {Redelivery}, NoRetry = {NoRetry}{explicitDelay}";
     }
 
     [Pure]
@@ -112,8 +116,8 @@ public readonly struct MessageBrokerRemoteClientProcessingNegativeAckEvent
         int ackId,
         int streamId,
         ulong messageId,
-        int retryAttempt,
-        int redeliveryAttempt,
+        int retry,
+        int redelivery,
         bool noRetry,
         Duration? explicitDelay)
     {
@@ -124,9 +128,9 @@ public readonly struct MessageBrokerRemoteClientProcessingNegativeAckEvent
             ackId,
             streamId,
             messageId,
-            retryAttempt,
-            redeliveryAttempt,
-            noRetry,
-            explicitDelay );
+            retry,
+            redelivery,
+            explicitDelay ?? Duration.Zero,
+            ( byte )((noRetry ? 1 : 0) | (explicitDelay is not null ? 2 : 0)) );
     }
 }

@@ -17,38 +17,45 @@ using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.MessageBroker.Server.Internal;
 
-internal readonly struct ResendIndex
+internal readonly struct Int31BoolPair
 {
-    private const uint ActiveMask = 1U << 31;
+    private const uint BoolValueMask = 1U << 31;
     internal readonly uint Data;
 
-    private ResendIndex(uint data)
+    private Int31BoolPair(uint data)
     {
         Data = data;
     }
 
-    internal int Value => unchecked( ( int )Data & int.MaxValue );
-    internal bool IsActive => (Data & ActiveMask) != 0;
+    internal int IntValue => unchecked( ( int )Data & int.MaxValue );
+    internal bool BoolValue => (Data & BoolValueMask) != 0;
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static ResendIndex Create(int value)
+    internal static uint GetData(int value)
     {
         Assume.IsGreaterThanOrEqualTo( value, 0 );
-        return new ResendIndex( unchecked( ( uint )value ) );
+        return unchecked( ( uint )value );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static ResendIndex CreateActive(int value)
+    internal static uint GetActiveData(int value)
     {
         Assume.IsGreaterThanOrEqualTo( value, 0 );
-        return new ResendIndex( unchecked( ( uint )value | ActiveMask ) );
+        return unchecked( ( uint )value | BoolValueMask );
     }
 
     [Pure]
     public override string ToString()
     {
-        return $"{Value}{(IsActive ? " (active)" : string.Empty)}";
+        return $"Int = {IntValue}, Bool = {BoolValue}";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static implicit operator Int31BoolPair(uint data)
+    {
+        return new Int31BoolPair( data );
     }
 }

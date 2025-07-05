@@ -22,11 +22,11 @@ namespace LfrlAnvil.MessageBroker.Server.Events;
 /// </summary>
 public readonly struct MessageBrokerQueueAckProcessedEvent
 {
-    private MessageBrokerQueueAckProcessedEvent(MessageBrokerQueue queue, ulong traceId, int ackId, bool messageDataRemoved)
+    private MessageBrokerQueueAckProcessedEvent(MessageBrokerQueue queue, ulong traceId, int ackId, bool messageRemoved)
     {
         Source = MessageBrokerQueueEventSource.Create( queue, traceId );
         AckId = ackId;
-        MessageDataRemoved = messageDataRemoved;
+        MessageRemoved = messageRemoved;
     }
 
     /// <summary>
@@ -43,7 +43,7 @@ public readonly struct MessageBrokerQueueAckProcessedEvent
     /// Specifies whether or not the data of the message has been removed from the stream's message store
     /// due to no longer being referenced.
     /// </summary>
-    public bool MessageDataRemoved { get; }
+    public bool MessageRemoved { get; }
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerQueueAckProcessedEvent"/> instance.
@@ -52,14 +52,13 @@ public readonly struct MessageBrokerQueueAckProcessedEvent
     [Pure]
     public override string ToString()
     {
-        var messageDataRemoved = AckId == 0 ? $", MessageDataRemoved = {MessageDataRemoved}" : string.Empty;
-        return $"[AckProcessed] {Source}, AckId = {AckId}{messageDataRemoved}";
+        return $"[AckProcessed] {Source}, AckId = {AckId}, MessageRemoved = {MessageRemoved}";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerQueueAckProcessedEvent Create(MessageBrokerQueue queue, ulong traceId, int ackId, bool messageDataRemoved)
+    internal static MessageBrokerQueueAckProcessedEvent Create(MessageBrokerQueue queue, ulong traceId, int ackId, bool messageRemoved)
     {
-        return new MessageBrokerQueueAckProcessedEvent( queue, traceId, ackId, messageDataRemoved );
+        return new MessageBrokerQueueAckProcessedEvent( queue, traceId, ackId, messageRemoved );
     }
 }

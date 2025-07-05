@@ -1386,7 +1386,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                             "[SendPacket:Sent] Client = [1] 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 18)",
                             """
                             [Error] Client = [1] 'test', TraceId = 0
-                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientRequestTimeoutException: Client [1] 'test' failed to send a request to the server in the specified amount of time (100 milliseconds).
+                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientRequestTimeoutException: Client [1] 'test' failed to send a request to the server in the specified amount of time (10100 milliseconds).
                             """,
                             "[Disposing] Client = [1] 'test', TraceId = 0",
                             "[Disposed] Client = [1] 'test', TraceId = 0",
@@ -1652,16 +1652,16 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                         (t, _) => t.Logs.TestSequence(
                         [
                             $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (start)",
-                            $"[ProcessingMessage] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 1",
+                            $"[ProcessingMessage] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0, Length = 1",
                             $"[SendPacket:Sending] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 46)",
                             $"[SendPacket:Sent] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 46)",
-                            $"[MessageProcessed] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, RetryAttempt = 0, RedeliveryAttempt = 0",
+                            $"[MessageProcessed] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0",
                             $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (end)"
                         ] ),
                         (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:MessageNotification] Client = [1] 'test', TraceId = 8 (start)",
-                            "[ProcessingMessage] Client = [1] 'test', TraceId = 8, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 1, RetryAttempt = 0, RedeliveryAttempt = 0, Length = 2",
+                            "[ProcessingMessage] Client = [1] 'test', TraceId = 8, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 1, Retry = 0, Redelivery = 0, Length = 2",
                             "[SendPacket:Sending] Client = [1] 'test', TraceId = 8, Packet = (MessageNotification, Length = 47)",
                             """
                             [Error] Client = [1] 'test', TraceId = 8

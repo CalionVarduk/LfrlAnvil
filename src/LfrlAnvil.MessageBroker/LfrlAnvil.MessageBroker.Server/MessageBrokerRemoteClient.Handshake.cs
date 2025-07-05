@@ -77,7 +77,9 @@ public sealed partial class MessageBrokerRemoteClient
                 }
                 catch ( Exception exc )
                 {
-                    MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
+                    if ( Logger.Error is { } error )
+                        error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
+
                     using ( AcquireLock() )
                         PacketListener.SetUnderlyingTask( null );
 
@@ -85,8 +87,9 @@ public sealed partial class MessageBrokerRemoteClient
                 }
                 finally
                 {
-                    MessageBrokerRemoteClientTraceEvent.Create( this, traceId, MessageBrokerRemoteClientTraceEventType.Start )
-                        .Emit( Logger.TraceEnd );
+                    if ( Logger.TraceEnd is { } traceEnd )
+                        traceEnd.Emit(
+                            MessageBrokerRemoteClientTraceEvent.Create( this, traceId, MessageBrokerRemoteClientTraceEventType.Start ) );
                 }
             } );
     }
@@ -188,7 +191,8 @@ public sealed partial class MessageBrokerRemoteClient
         Memory<byte> buffer,
         ulong traceId)
     {
-        MessageBrokerRemoteClientAwaitPacketEvent.Create( this ).Emit( Logger.AwaitPacket );
+        var awaitPacket = Logger.AwaitPacket;
+        awaitPacket?.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( this ) );
 
         Protocol.PacketHeader header;
         var timeoutToken = default( CancellationToken );
@@ -212,17 +216,20 @@ public sealed partial class MessageBrokerRemoteClient
         {
             if ( exc is OperationCanceledException cancelExc && cancelExc.CancellationToken == timeoutToken )
             {
-                var error = new MessageBrokerRemoteClientRequestTimeoutException( this );
-                MessageBrokerRemoteClientErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
-                return error;
+                var timeoutException = new MessageBrokerRemoteClientRequestTimeoutException( this );
+                if ( Logger.Error is { } error )
+                    error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, timeoutException ) );
+
+                return timeoutException;
             }
 
-            MessageBrokerRemoteClientAwaitPacketEvent.Create( this, exc ).Emit( Logger.AwaitPacket );
+            awaitPacket?.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( this, exc ) );
             return exc;
         }
 
-        MessageBrokerRemoteClientAwaitPacketEvent.Create( this, header ).Emit( Logger.AwaitPacket );
-        MessageBrokerRemoteClientReadPacketEvent.CreateReceived( this, traceId, header ).Emit( Logger.ReadPacket );
+        var readPacket = Logger.ReadPacket;
+        awaitPacket?.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( this, header ) );
+        readPacket?.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateReceived( this, traceId, header ) );
 
         if ( header.GetServerEndpoint() != MessageBrokerServerEndpoint.HandshakeRequest )
             return HandleUnexpectedEndpoint( header, traceId );
@@ -254,33 +261,38 @@ public sealed partial class MessageBrokerRemoteClient
                         Protocol.HandshakeRejectedResponse.Reasons.NameDecodingFailure ),
                     IsClientLittleEndian: isClientLittleEndian );
 
-                MessageBrokerRemoteClientErrorEvent.Create( this, traceId, name.Exception ).Emit( Logger.Error );
+                if ( Logger.Error is { } error )
+                    error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, name.Exception ) );
+
                 return Result.Error( name.Exception, result );
             }
 
             Assume.IsNotNull( name.Value );
             if ( ! Defaults.NameLengthBounds.Contains( name.Value.Length ) )
             {
-                var error = Protocol.InvalidNameLengthException( this, header, name.Value.Length );
+                var exc = Protocol.InvalidNameLengthException( this, header, name.Value.Length );
                 var result = new ReadHandshakeResult(
                     Buffer: buffer,
                     RejectedResponse: new Protocol.HandshakeRejectedResponse(
                         Protocol.HandshakeRejectedResponse.Reasons.InvalidNameLength ),
                     IsClientLittleEndian: isClientLittleEndian );
 
-                MessageBrokerRemoteClientErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
-                return Result.Error( error, result );
+                if ( Logger.Error is { } error )
+                    error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
+
+                return Result.Error( exc, result );
             }
 
-            MessageBrokerRemoteClientHandshakingEvent.Create(
-                    this,
-                    traceId,
-                    name.Value,
-                    handshakeHeader.MessageTimeout,
-                    handshakeHeader.PingInterval,
-                    handshakeHeader.SynchronizeExternalObjectNames,
-                    isClientLittleEndian )
-                .Emit( Logger.Handshaking );
+            if ( Logger.Handshaking is { } handshaking )
+                handshaking.Emit(
+                    MessageBrokerRemoteClientHandshakingEvent.Create(
+                        this,
+                        traceId,
+                        name.Value,
+                        handshakeHeader.MessageTimeout,
+                        handshakeHeader.PingInterval,
+                        handshakeHeader.SynchronizeExternalObjectNames,
+                        isClientLittleEndian ) );
 
             using ( AcquireActiveLock( traceId, out var exc ) )
             {
@@ -301,12 +313,14 @@ public sealed partial class MessageBrokerRemoteClient
         {
             if ( exc is OperationCanceledException cancelExc && cancelExc.CancellationToken == timeoutToken )
             {
-                var error = new MessageBrokerRemoteClientRequestTimeoutException( this );
-                MessageBrokerRemoteClientErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
-                return error;
+                var timeoutException = new MessageBrokerRemoteClientRequestTimeoutException( this );
+                if ( Logger.Error is { } error )
+                    error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, timeoutException ) );
+
+                return timeoutException;
             }
 
-            MessageBrokerRemoteClientAwaitPacketEvent.Create( this, exc ).Emit( Logger.AwaitPacket );
+            awaitPacket?.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( this, exc ) );
             return exc;
         }
 
@@ -316,17 +330,19 @@ public sealed partial class MessageBrokerRemoteClient
 
         if ( ! registration.Value )
         {
-            var error = new MessageBrokerServerException( Server, Resources.DuplicateClientName( name.Value ) );
+            var exc = new MessageBrokerServerException( Server, Resources.DuplicateClientName( name.Value ) );
             var result = new ReadHandshakeResult(
                 Buffer: buffer,
                 RejectedResponse: new Protocol.HandshakeRejectedResponse( Protocol.HandshakeRejectedResponse.Reasons.NameAlreadyExists ),
                 IsClientLittleEndian: isClientLittleEndian );
 
-            MessageBrokerRemoteClientErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
-            return Result.Error( error, result );
+            if ( Logger.Error is { } error )
+                error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
+
+            return Result.Error( exc, result );
         }
 
-        MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( this, traceId, header ).Emit( Logger.ReadPacket );
+        readPacket?.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( this, traceId, header ) );
         return new ReadHandshakeResult( Buffer: buffer, AcceptedResponse: acceptedResponse, IsClientLittleEndian: isClientLittleEndian );
     }
 
@@ -375,7 +391,8 @@ public sealed partial class MessageBrokerRemoteClient
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private async ValueTask<Result> ReadConfirmHandshakeResponseAsync(Memory<byte> buffer, ulong traceId)
     {
-        MessageBrokerRemoteClientAwaitPacketEvent.Create( this ).Emit( Logger.AwaitPacket );
+        var awaitPacket = Logger.AwaitPacket;
+        awaitPacket?.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( this ) );
 
         Protocol.PacketHeader header;
         var timeoutToken = default( CancellationToken );
@@ -398,17 +415,20 @@ public sealed partial class MessageBrokerRemoteClient
         {
             if ( exc is OperationCanceledException cancelExc && cancelExc.CancellationToken == timeoutToken )
             {
-                var error = new MessageBrokerRemoteClientRequestTimeoutException( this );
-                MessageBrokerRemoteClientErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
-                return error;
+                var exception = new MessageBrokerRemoteClientRequestTimeoutException( this );
+                if ( Logger.Error is { } error )
+                    error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exception ) );
+
+                return exception;
             }
 
-            MessageBrokerRemoteClientAwaitPacketEvent.Create( this, exc ).Emit( Logger.AwaitPacket );
+            awaitPacket?.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( this, exc ) );
             return exc;
         }
 
-        MessageBrokerRemoteClientAwaitPacketEvent.Create( this, header ).Emit( Logger.AwaitPacket );
-        MessageBrokerRemoteClientReadPacketEvent.CreateReceived( this, traceId, header ).Emit( Logger.ReadPacket );
+        var readPacket = Logger.ReadPacket;
+        awaitPacket?.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( this, header ) );
+        readPacket?.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateReceived( this, traceId, header ) );
 
         if ( header.GetServerEndpoint() != MessageBrokerServerEndpoint.ConfirmHandshakeResponse )
             return HandleUnexpectedEndpoint( header, traceId );
@@ -416,8 +436,10 @@ public sealed partial class MessageBrokerRemoteClient
         if ( header.Payload != Protocol.Endianness.VerificationPayload )
             return EmitError( Protocol.EndiannessPayloadException( this, header ), traceId );
 
-        MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( this, traceId, header ).Emit( Logger.ReadPacket );
-        MessageBrokerRemoteClientHandshakeEstablishedEvent.Create( this, traceId ).Emit( Logger.HandshakeEstablished );
+        readPacket?.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( this, traceId, header ) );
+        if ( Logger.HandshakeEstablished is { } handshakeEstablished )
+            handshakeEstablished.Emit( MessageBrokerRemoteClientHandshakeEstablishedEvent.Create( this, traceId ) );
+
         return Result.Valid;
     }
 

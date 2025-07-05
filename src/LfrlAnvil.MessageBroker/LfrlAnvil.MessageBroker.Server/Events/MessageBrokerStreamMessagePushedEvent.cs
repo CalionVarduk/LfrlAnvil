@@ -27,13 +27,13 @@ public readonly struct MessageBrokerStreamMessagePushedEvent
         MessageBrokerChannelPublisherBinding publisher,
         ulong traceId,
         ulong messageId,
-        int messageStoreKey,
+        int storeKey,
         int length)
     {
         Source = MessageBrokerStreamEventSource.Create( publisher.Stream, traceId );
         Publisher = publisher;
         MessageId = messageId;
-        MessageStoreKey = messageStoreKey;
+        StoreKey = storeKey;
         Length = length;
     }
 
@@ -55,7 +55,7 @@ public readonly struct MessageBrokerStreamMessagePushedEvent
     /// <summary>
     /// Key of the stream's message store entry associated with the message.
     /// </summary>
-    public int MessageStoreKey { get; }
+    public int StoreKey { get; }
 
     /// <summary>
     /// Message length.
@@ -70,7 +70,7 @@ public readonly struct MessageBrokerStreamMessagePushedEvent
     public override string ToString()
     {
         return
-            $"[MessagePushed] {Source}, Client = [{Publisher.Client.Id}] '{Publisher.Client.Name}', Channel = [{Publisher.Channel.Id}] '{Publisher.Channel.Name}', MessageId = {MessageId}, MessageStoreKey = {MessageStoreKey}, Length = {Length}";
+            $"[MessagePushed] {Source}, Client = [{Publisher.Client.Id}] '{Publisher.Client.Name}', Channel = [{Publisher.Channel.Id}] '{Publisher.Channel.Name}', MessageId = {MessageId}, StoreKey = {StoreKey}, Length = {Length}";
     }
 
     [Pure]
@@ -79,9 +79,9 @@ public readonly struct MessageBrokerStreamMessagePushedEvent
         MessageBrokerChannelPublisherBinding publisher,
         ulong traceId,
         ulong messageId,
-        int messageStoreKey,
+        int storeKey,
         int length)
     {
-        return new MessageBrokerStreamMessagePushedEvent( publisher, traceId, messageId, messageStoreKey, length );
+        return new MessageBrokerStreamMessagePushedEvent( publisher, traceId, messageId, storeKey, length );
     }
 }

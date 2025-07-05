@@ -60,7 +60,8 @@ internal struct QueueProcessor
 
                 using ( MessageBrokerQueueTraceEvent.CreateScope( queue, traceId, MessageBrokerQueueTraceEventType.Unexpected ) )
                 {
-                    MessageBrokerQueueErrorEvent.Create( queue, traceId, exc ).Emit( queue.Logger.Error );
+                    var error = queue.Logger.Error;
+                    error?.Emit( MessageBrokerQueueErrorEvent.Create( queue, traceId, exc ) );
                     try
                     {
                         using ( queue.AcquireLock() )
@@ -75,7 +76,7 @@ internal struct QueueProcessor
                     }
                     catch ( Exception exc2 )
                     {
-                        MessageBrokerQueueErrorEvent.Create( queue, traceId, exc2 ).Emit( queue.Logger.Error );
+                        error?.Emit( MessageBrokerQueueErrorEvent.Create( queue, traceId, exc2 ) );
                     }
                 }
             }
@@ -122,10 +123,10 @@ internal struct QueueProcessor
             while ( true )
             {
                 ulong traceId;
-                QueueMessage message;
-                QueueMessageStore.MessageType messageType;
-                int retryAttempt;
-                int lastRedeliveryAttempt;
+                var message = default( QueueMessage );
+                var messageType = QueueMessageStore.MessageType.Pending;
+                var retryNo = 0;
+                var lastRedeliveryNo = 0;
                 bool hasMessage;
                 using ( queue.AcquireLock() )
                 {
@@ -135,10 +136,10 @@ internal struct QueueProcessor
                     hasMessage = queue.MessageStore.TryPeekNext(
                         queue.Client.GetTimestamp(),
                         ref discardedBuffer,
-                        out message,
-                        out messageType,
-                        out retryAttempt,
-                        out lastRedeliveryAttempt );
+                        ref message,
+                        ref messageType,
+                        ref retryNo,
+                        ref lastRedeliveryNo );
 
                     if ( ! hasMessage && discardedBuffer.Count == 0 )
                     {
@@ -159,56 +160,58 @@ internal struct QueueProcessor
                     if ( ! hasMessage )
                         continue;
 
-                    ResendIndex retry;
-                    ResendIndex redelivery;
+                    Int31BoolPair retry;
+                    Int31BoolPair redelivery;
                     switch ( messageType )
                     {
                         case QueueMessageStore.MessageType.Pending:
-                            retry = ResendIndex.Create( 0 );
-                            redelivery = ResendIndex.Create( 0 );
+                            retry = Int31BoolPair.GetData( 0 );
+                            redelivery = Int31BoolPair.GetData( 0 );
                             break;
                         case QueueMessageStore.MessageType.Retry:
-                            retry = ResendIndex.CreateActive( retryAttempt );
-                            redelivery = ResendIndex.Create( lastRedeliveryAttempt );
+                            retry = Int31BoolPair.GetActiveData( retryNo );
+                            redelivery = Int31BoolPair.GetData( lastRedeliveryNo );
                             break;
                         default:
                         {
-                            if ( lastRedeliveryAttempt >= message.Listener.MaxRedeliveries )
+                            if ( lastRedeliveryNo >= message.Listener.MaxRedeliveries )
                             {
                                 message.Listener.DecrementPrefetchCounter();
                                 using ( queue.AcquireLock() )
                                     queue.MessageStore.Dequeue( QueueMessageStore.MessageType.Redelivery );
 
-                                var messageDataRemoved = queue.RemoveFromStreamMessageStore( message, traceId );
-                                MessageBrokerQueueMessageDiscardedEvent.Create(
-                                        message.Listener,
-                                        traceId,
-                                        message.Publisher,
-                                        message.StoreKey,
-                                        retryAttempt,
-                                        lastRedeliveryAttempt,
-                                        messageDataRemoved,
-                                        MessageBrokerQueueDiscardMessageReason.MaxRedeliveriesReached )
-                                    .Emit( queue.Logger.MessageDiscarded );
+                                var messageRemoved = queue.RemoveFromStreamMessageStore( message, traceId );
+                                if ( queue.Logger.MessageDiscarded is { } messageDiscarded )
+                                    messageDiscarded.Emit(
+                                        MessageBrokerQueueMessageDiscardedEvent.Create(
+                                            message.Listener,
+                                            traceId,
+                                            message.Publisher,
+                                            message.StoreKey,
+                                            retryNo,
+                                            lastRedeliveryNo,
+                                            messageRemoved,
+                                            MessageBrokerQueueDiscardMessageReason.MaxRedeliveriesReached ) );
 
                                 // TODO: potential move to dead-letter
                                 continue;
                             }
 
-                            retry = ResendIndex.Create( retryAttempt );
-                            redelivery = ResendIndex.CreateActive( unchecked( lastRedeliveryAttempt + 1 ) );
+                            retry = Int31BoolPair.GetData( retryNo );
+                            redelivery = Int31BoolPair.GetActiveData( unchecked( lastRedeliveryNo + 1 ) );
                             break;
                         }
                     }
 
-                    MessageBrokerQueueProcessingMessageEvent.Create(
-                            message.Listener,
-                            traceId,
-                            message.Publisher,
-                            message.StoreKey,
-                            retry,
-                            redelivery )
-                        .Emit( queue.Logger.ProcessingMessage );
+                    if ( queue.Logger.ProcessingMessage is { } processingMessage )
+                        processingMessage.Emit(
+                            MessageBrokerQueueProcessingMessageEvent.Create(
+                                message.Listener,
+                                traceId,
+                                message.Publisher,
+                                message.StoreKey,
+                                retry,
+                                redelivery ) );
 
                     bool messageDataExists;
                     StreamMessage streamMessage;
@@ -220,11 +223,15 @@ internal struct QueueProcessor
                         using ( queue.AcquireLock() )
                             queue.MessageStore.Dequeue( messageType );
 
-                        var error = new MessageBrokerQueueException(
-                            queue,
-                            Resources.MessageDataNotFound( message.Publisher.Stream, message.StoreKey ) );
+                        if ( queue.Logger.Error is { } error )
+                        {
+                            var exc = new MessageBrokerQueueException(
+                                queue,
+                                Resources.MessageDataNotFound( message.Publisher.Stream, message.StoreKey ) );
 
-                        MessageBrokerQueueErrorEvent.Create( queue, traceId, error ).Emit( queue.Logger.Error );
+                            error.Emit( MessageBrokerQueueErrorEvent.Create( queue, traceId, exc ) );
+                        }
+
                         continue;
                     }
 
@@ -240,8 +247,8 @@ internal struct QueueProcessor
                                 ackId = queue.MessageStore.AddUnacked(
                                     message,
                                     streamMessage.Id,
-                                    retryAttempt,
-                                    redelivery.Value,
+                                    retryNo,
+                                    redelivery.IntValue,
                                     out ackExpiresAt );
                         }
 
@@ -295,25 +302,25 @@ internal struct QueueProcessor
                             }
 
                             var exc = poolToken.Return();
-                            if ( exc is not null )
-                                MessageBrokerQueueErrorEvent.Create( queue, traceId, exc ).Emit( queue.Logger.Error );
+                            if ( exc is not null && queue.Logger.Error is { } error )
+                                error.Emit( MessageBrokerQueueErrorEvent.Create( queue, traceId, exc ) );
                         }
                         else
                         {
                             using ( queue.AcquireLock() )
                                 queue.MessageStore.Dequeue( messageType );
 
-                            var messageDataRemoved = ackId == 0 && queue.RemoveFromStreamMessageStore( message, traceId );
-                            MessageBrokerQueueMessageProcessedEvent.Create(
-                                    message.Listener,
-                                    traceId,
-                                    message.Publisher,
-                                    streamMessage.Id,
-                                    ackId,
-                                    ackExpiresAt,
-                                    streamMessage.Data.Length,
-                                    messageDataRemoved )
-                                .Emit( queue.Logger.MessageProcessed );
+                            var messageRemoved = ackId == 0 && queue.RemoveFromStreamMessageStore( message, traceId );
+                            if ( queue.Logger.MessageProcessed is { } messageProcessed )
+                                messageProcessed.Emit(
+                                    MessageBrokerQueueMessageProcessedEvent.Create(
+                                        message.Listener,
+                                        traceId,
+                                        message.Publisher,
+                                        streamMessage.Id,
+                                        ackId,
+                                        messageRemoved,
+                                        ackExpiresAt ) );
                         }
                     }
                 }
@@ -347,24 +354,26 @@ internal struct QueueProcessor
         {
             try
             {
-                var messageDataRemoved = queue.RemoveFromStreamMessageStore(
+                var messageRemoved = queue.RemoveFromStreamMessageStore(
                     new QueueMessage( message.Publisher, message.Listener, message.StoreKey ),
                     traceId );
 
-                MessageBrokerQueueMessageDiscardedEvent.Create(
-                        message.Listener,
-                        traceId,
-                        message.Publisher,
-                        message.StoreKey,
-                        message.Retry,
-                        message.Redelivery,
-                        messageDataRemoved,
-                        message.Reason )
-                    .Emit( queue.Logger.MessageDiscarded );
+                if ( queue.Logger.MessageDiscarded is { } messageDiscarded )
+                    messageDiscarded.Emit(
+                        MessageBrokerQueueMessageDiscardedEvent.Create(
+                            message.Listener,
+                            traceId,
+                            message.Publisher,
+                            message.StoreKey,
+                            message.Retry,
+                            message.Redelivery,
+                            messageRemoved,
+                            message.Reason ) );
             }
             catch ( Exception exc )
             {
-                MessageBrokerQueueErrorEvent.Create( queue, traceId, exc ).Emit( queue.Logger.Error );
+                if ( queue.Logger.Error is { } error )
+                    error.Emit( MessageBrokerQueueErrorEvent.Create( queue, traceId, exc ) );
             }
         }
 
@@ -386,7 +395,9 @@ internal struct QueueProcessor
 
         @lock.Dispose();
         exception = new MessageBrokerRemoteClientDisposedException( queue.Client );
-        MessageBrokerQueueErrorEvent.Create( queue, traceId, exception ).Emit( queue.Logger.Error );
+        if ( queue.Logger.Error is { } error )
+            error.Emit( MessageBrokerQueueErrorEvent.Create( queue, traceId, exception ) );
+
         return default;
     }
 }

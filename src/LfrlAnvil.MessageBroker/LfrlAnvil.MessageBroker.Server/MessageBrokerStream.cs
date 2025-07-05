@@ -110,7 +110,7 @@ public sealed class MessageBrokerStream
         MemoryPoolToken<byte> token,
         ReadOnlyMemory<byte> data,
         ref ulong messageId,
-        ref int messageStoreKey,
+        ref int storeKey,
         ref ulong streamTraceId)
     {
         using ( AcquireLock() )
@@ -123,7 +123,7 @@ public sealed class MessageBrokerStream
                 if ( publisher.ShouldCancel )
                     return PushMessageResult.BindingDisposed;
 
-                messageId = MessageStore.Add( publisher, token, data, out messageStoreKey );
+                messageId = MessageStore.Add( publisher, token, data, out storeKey );
             }
 
             streamTraceId = GetTraceId();
@@ -167,7 +167,8 @@ public sealed class MessageBrokerStream
 
         using ( MessageBrokerStreamTraceEvent.CreateScope( this, traceId, MessageBrokerStreamTraceEventType.UnbindPublisher ) )
         {
-            MessageBrokerStreamClientTraceEvent.Create( this, traceId, client, clientTraceId ).Emit( Logger.ClientTrace );
+            if ( Logger.ClientTrace is { } clientTrace )
+                clientTrace.Emit( MessageBrokerStreamClientTraceEvent.Create( this, traceId, client, clientTraceId ) );
 
             var dispose = false;
             MessageBrokerChannelPublisherBinding? publisher;
@@ -187,12 +188,18 @@ public sealed class MessageBrokerStream
 
             if ( publisher is null )
             {
-                var error = new MessageBrokerStreamException( this, Resources.NotBoundAsPublisher( this, client, channel ) );
-                MessageBrokerStreamErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
+                if ( Logger.Error is { } error )
+                {
+                    var exc = new MessageBrokerStreamException( this, Resources.NotBoundAsPublisher( this, client, channel ) );
+                    error.Emit( MessageBrokerStreamErrorEvent.Create( this, traceId, exc ) );
+                }
+
                 return;
             }
 
-            MessageBrokerStreamPublisherUnboundEvent.Create( publisher, traceId, channelRemoved: false ).Emit( Logger.PublisherUnbound );
+            if ( Logger.PublisherUnbound is { } publisherUnbound )
+                publisherUnbound.Emit( MessageBrokerStreamPublisherUnboundEvent.Create( publisher, traceId, channelRemoved: false ) );
+
             if ( dispose )
                 await DisposeDueToLackOfReferencesAsync( ignoreProcessorTask: false, traceId ).ConfigureAwait( false );
         }
@@ -212,8 +219,11 @@ public sealed class MessageBrokerStream
 
         using ( MessageBrokerStreamTraceEvent.CreateScope( this, traceId, MessageBrokerStreamTraceEventType.Dispose ) )
         {
-            MessageBrokerStreamServerTraceEvent.Create( this, traceId, serverTraceId ).Emit( Logger.ServerTrace );
-            MessageBrokerStreamDisposingEvent.Create( this, traceId ).Emit( Logger.Disposing );
+            if ( Logger.ServerTrace is { } serverTrace )
+                serverTrace.Emit( MessageBrokerStreamServerTraceEvent.Create( this, traceId, serverTraceId ) );
+
+            if ( Logger.Disposing is { } disposing )
+                disposing.Emit( MessageBrokerStreamDisposingEvent.Create( this, traceId ) );
 
             Task? processorTask;
             using ( AcquireLock() )
@@ -226,31 +236,37 @@ public sealed class MessageBrokerStream
             if ( processorTask is not null )
                 await processorTask.ConfigureAwait( false );
 
+            var error = Logger.Error;
             int discardedMessageCount;
             Chain<Exception> exceptions;
             using ( AcquireLock() )
-                (discardedMessageCount, exceptions) = MessageStore.ClearPending();
+                (discardedMessageCount, exceptions) = MessageStore.ClearPending( error is not null );
 
             foreach ( var exc in exceptions )
-                MessageBrokerStreamErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
-
-            if ( discardedMessageCount > 0 )
             {
-                var error = new MessageBrokerStreamException( this, Resources.StreamMessagesDiscarded( discardedMessageCount ) );
-                MessageBrokerStreamErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
+                Assume.IsNotNull( error );
+                error.Emit( MessageBrokerStreamErrorEvent.Create( this, traceId, exc ) );
+            }
+
+            if ( discardedMessageCount > 0 && error is not null )
+            {
+                var exc = new MessageBrokerStreamException( this, Resources.StreamMessagesDiscarded( discardedMessageCount ) );
+                error.Emit( MessageBrokerStreamErrorEvent.Create( this, traceId, exc ) );
             }
 
             using ( AcquireLock() )
                 _state = MessageBrokerStreamState.Disposed;
 
-            MessageBrokerStreamDisposedEvent.Create( this, traceId ).Emit( Logger.Disposed );
+            if ( Logger.Disposed is { } disposed )
+                disposed.Emit( MessageBrokerStreamDisposedEvent.Create( this, traceId ) );
         }
     }
 
     internal async ValueTask DisposeDueToLackOfReferencesAsync(bool ignoreProcessorTask, ulong traceId)
     {
         Assume.Equals( State, MessageBrokerStreamState.Disposing );
-        MessageBrokerStreamDisposingEvent.Create( this, traceId ).Emit( Logger.Disposing );
+        if ( Logger.Disposing is { } disposing )
+            disposing.Emit( MessageBrokerStreamDisposingEvent.Create( this, traceId ) );
 
         Task? processorTask;
         using ( AcquireLock() )
@@ -270,13 +286,14 @@ public sealed class MessageBrokerStream
             await processorTask.ConfigureAwait( false );
 
         var exc = StreamCollection.Remove( this ).Exception;
-        if ( exc is not null )
-            MessageBrokerStreamErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
+        if ( exc is not null && Logger.Error is { } error )
+            error.Emit( MessageBrokerStreamErrorEvent.Create( this, traceId, exc ) );
 
         using ( AcquireLock() )
             _state = MessageBrokerStreamState.Disposed;
 
-        MessageBrokerStreamDisposedEvent.Create( this, traceId ).Emit( Logger.Disposed );
+        if ( Logger.Disposed is { } disposed )
+            disposed.Emit( MessageBrokerStreamDisposedEvent.Create( this, traceId ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -297,8 +314,11 @@ public sealed class MessageBrokerStream
 
         using ( MessageBrokerStreamTraceEvent.CreateScope( this, traceId, MessageBrokerStreamTraceEventType.Unexpected ) )
         {
-            foreach ( var exc in exceptions )
-                MessageBrokerStreamErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
+            if ( Logger.Error is { } error )
+            {
+                foreach ( var exc in exceptions )
+                    error.Emit( MessageBrokerStreamErrorEvent.Create( this, traceId, exc ) );
+            }
         }
     }
 
@@ -320,7 +340,9 @@ public sealed class MessageBrokerStream
 
         @lock.Dispose();
         exception = new MessageBrokerStreamDisposedException( this );
-        MessageBrokerStreamErrorEvent.Create( this, traceId, exception ).Emit( Logger.Error );
+        if ( Logger.Error is { } error )
+            error.Emit( MessageBrokerStreamErrorEvent.Create( this, traceId, exception ) );
+
         return default;
     }
 

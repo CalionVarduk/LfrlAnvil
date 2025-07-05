@@ -130,7 +130,8 @@ public sealed class MessageBrokerChannel
 
         using ( MessageBrokerChannelTraceEvent.CreateScope( this, traceId, MessageBrokerChannelTraceEventType.UnbindPublisher ) )
         {
-            MessageBrokerChannelClientTraceEvent.Create( this, traceId, client, clientTraceId ).Emit( Logger.ClientTrace );
+            if ( Logger.ClientTrace is { } clientTrace )
+                clientTrace.Emit( MessageBrokerChannelClientTraceEvent.Create( this, traceId, client, clientTraceId ) );
 
             var dispose = false;
             MessageBrokerChannelPublisherBinding? publisher;
@@ -150,12 +151,18 @@ public sealed class MessageBrokerChannel
 
             if ( publisher is null )
             {
-                var error = new MessageBrokerChannelException( this, Resources.NotBoundAsPublisher( this, client ) );
-                MessageBrokerChannelErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
+                if ( Logger.Error is { } error )
+                {
+                    var exc = new MessageBrokerChannelException( this, Resources.NotBoundAsPublisher( this, client ) );
+                    error.Emit( MessageBrokerChannelErrorEvent.Create( this, traceId, exc ) );
+                }
+
                 return;
             }
 
-            MessageBrokerChannelPublisherUnboundEvent.Create( publisher, traceId, streamRemoved: false ).Emit( Logger.PublisherUnbound );
+            if ( Logger.PublisherUnbound is { } publisherUnbound )
+                publisherUnbound.Emit( MessageBrokerChannelPublisherUnboundEvent.Create( publisher, traceId, streamRemoved: false ) );
+
             if ( dispose )
                 DisposeDueToLackOfReferences( traceId );
         }
@@ -174,7 +181,8 @@ public sealed class MessageBrokerChannel
 
         using ( MessageBrokerChannelTraceEvent.CreateScope( this, traceId, MessageBrokerChannelTraceEventType.UnbindListener ) )
         {
-            MessageBrokerChannelClientTraceEvent.Create( this, traceId, client, clientTraceId ).Emit( Logger.ClientTrace );
+            if ( Logger.ClientTrace is { } clientTrace )
+                clientTrace.Emit( MessageBrokerChannelClientTraceEvent.Create( this, traceId, client, clientTraceId ) );
 
             var dispose = false;
             MessageBrokerChannelListenerBinding? listener;
@@ -194,12 +202,18 @@ public sealed class MessageBrokerChannel
 
             if ( listener is null )
             {
-                var error = new MessageBrokerChannelException( this, Resources.NotBoundAsListener( this, client ) );
-                MessageBrokerChannelErrorEvent.Create( this, traceId, error ).Emit( Logger.Error );
+                if ( Logger.Error is { } error )
+                {
+                    var exc = new MessageBrokerChannelException( this, Resources.NotBoundAsListener( this, client ) );
+                    error.Emit( MessageBrokerChannelErrorEvent.Create( this, traceId, exc ) );
+                }
+
                 return;
             }
 
-            MessageBrokerChannelListenerUnboundEvent.Create( listener, traceId, queueRemoved: false ).Emit( Logger.ListenerUnbound );
+            if ( Logger.ListenerUnbound is { } listenerUnbound )
+                listenerUnbound.Emit( MessageBrokerChannelListenerUnboundEvent.Create( listener, traceId, queueRemoved: false ) );
+
             if ( dispose )
                 DisposeDueToLackOfReferences( traceId );
         }
@@ -219,8 +233,11 @@ public sealed class MessageBrokerChannel
 
         using ( MessageBrokerChannelTraceEvent.CreateScope( this, traceId, MessageBrokerChannelTraceEventType.Dispose ) )
         {
-            MessageBrokerChannelServerTraceEvent.Create( this, traceId, serverTraceId ).Emit( Logger.ServerTrace );
-            MessageBrokerChannelDisposingEvent.Create( this, traceId ).Emit( Logger.Disposing );
+            if ( Logger.ServerTrace is { } serverTrace )
+                serverTrace.Emit( MessageBrokerChannelServerTraceEvent.Create( this, traceId, serverTraceId ) );
+
+            if ( Logger.Disposing is { } disposing )
+                disposing.Emit( MessageBrokerChannelDisposingEvent.Create( this, traceId ) );
 
             using ( AcquireLock() )
             {
@@ -229,18 +246,20 @@ public sealed class MessageBrokerChannel
                 _state = MessageBrokerChannelState.Disposed;
             }
 
-            MessageBrokerChannelDisposedEvent.Create( this, traceId ).Emit( Logger.Disposed );
+            if ( Logger.Disposed is { } disposed )
+                disposed.Emit( MessageBrokerChannelDisposedEvent.Create( this, traceId ) );
         }
     }
 
     internal void DisposeDueToLackOfReferences(ulong traceId)
     {
         Assume.Equals( State, MessageBrokerChannelState.Disposing );
-        MessageBrokerChannelDisposingEvent.Create( this, traceId ).Emit( Logger.Disposing );
+        if ( Logger.Disposing is { } disposing )
+            disposing.Emit( MessageBrokerChannelDisposingEvent.Create( this, traceId ) );
 
         var exc = ChannelCollection.Remove( this ).Exception;
-        if ( exc is not null )
-            MessageBrokerChannelErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
+        if ( exc is not null && Logger.Error is { } error )
+            error.Emit( MessageBrokerChannelErrorEvent.Create( this, traceId, exc ) );
 
         using ( AcquireLock() )
         {
@@ -249,7 +268,8 @@ public sealed class MessageBrokerChannel
             _state = MessageBrokerChannelState.Disposed;
         }
 
-        MessageBrokerChannelDisposedEvent.Create( this, traceId ).Emit( Logger.Disposed );
+        if ( Logger.Disposed is { } disposed )
+            disposed.Emit( MessageBrokerChannelDisposedEvent.Create( this, traceId ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -270,7 +290,9 @@ public sealed class MessageBrokerChannel
 
         @lock.Dispose();
         exception = new MessageBrokerChannelDisposedException( this );
-        MessageBrokerChannelErrorEvent.Create( this, traceId, exception ).Emit( Logger.Error );
+        if ( Logger.Error is { } error )
+            error.Emit( MessageBrokerChannelErrorEvent.Create( this, traceId, exception ) );
+
         return default;
     }
 

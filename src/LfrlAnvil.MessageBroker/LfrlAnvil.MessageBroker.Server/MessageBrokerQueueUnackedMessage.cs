@@ -27,16 +27,16 @@ public readonly struct MessageBrokerQueueUnackedMessage
         MessageBrokerChannelListenerBinding listener,
         int storeKey,
         ulong messageId,
-        int retryAttempt,
-        int redeliveryAttempt,
+        int retry,
+        int redelivery,
         Timestamp expiresAt)
     {
         Publisher = publisher;
         Listener = listener;
         StoreKey = storeKey;
         MessageId = messageId;
-        RetryAttempt = retryAttempt;
-        RedeliveryAttempt = redeliveryAttempt;
+        Retry = retry;
+        Redelivery = redelivery;
         ExpiresAt = expiresAt;
     }
 
@@ -63,12 +63,12 @@ public readonly struct MessageBrokerQueueUnackedMessage
     /// <summary>
     /// Retry attempt of this message.
     /// </summary>
-    public int RetryAttempt { get; }
+    public int Retry { get; }
 
     /// <summary>
     /// Redelivery attempt of this message.
     /// </summary>
-    public int RedeliveryAttempt { get; }
+    public int Redelivery { get; }
 
     /// <summary>
     /// Moment in time when the ack for this message expires.
@@ -96,6 +96,6 @@ public readonly struct MessageBrokerQueueUnackedMessage
     public override string ToString()
     {
         return
-            $"Publisher = ({Publisher}), Listener = ({Listener}), StoreKey = {StoreKey}, MessageId = {MessageId}, Retry = {RetryAttempt}, Redelivery = {RedeliveryAttempt}, ExpiresAt = {ExpiresAt}";
+            $"Publisher = ({Publisher}), Listener = ({Listener}), StoreKey = {StoreKey}, MessageId = {MessageId}, Retry = {Retry}, Redelivery = {Redelivery}, ExpiresAt = {ExpiresAt}";
     }
 }

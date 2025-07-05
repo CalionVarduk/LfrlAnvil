@@ -60,7 +60,9 @@ internal struct RequestHandler
 
             using ( MessageBrokerRemoteClientTraceEvent.CreateScope( client, traceId, MessageBrokerRemoteClientTraceEventType.Unexpected ) )
             {
-                MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ).Emit( client.Logger.Error );
+                if ( client.Logger.Error is { } error )
+                    error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
+
                 await client.DisposeAsync( traceId ).ConfigureAwait( false );
             }
         }
@@ -185,7 +187,8 @@ internal struct RequestHandler
             var poolToken = request.PoolToken;
             try
             {
-                MessageBrokerRemoteClientReadPacketEvent.CreateReceived( client, traceId, request.Header ).Emit( client.Logger.ReadPacket );
+                var readPacket = client.Logger.ReadPacket;
+                readPacket?.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateReceived( client, traceId, request.Header ) );
 
                 var exception = Protocol.AssertMinPayload( client, request.Header, Protocol.BindPublisherRequestHeader.Length );
                 if ( exception is not null )
@@ -228,8 +231,9 @@ internal struct RequestHandler
                     return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
                 }
 
-                MessageBrokerRemoteClientBindingPublisherEvent.Create( client, traceId, channelName.Value, streamName.Value )
-                    .Emit( client.Logger.BindingPublisher );
+                if ( client.Logger.BindingPublisher is { } bindingPublisher )
+                    bindingPublisher.Emit(
+                        MessageBrokerRemoteClientBindingPublisherEvent.Create( client, traceId, channelName.Value, streamName.Value ) );
 
                 if ( streamName.Value.Length == 0 )
                     streamName = channelName;
@@ -286,17 +290,21 @@ internal struct RequestHandler
 
                 if ( bindResult != BindResult.Success )
                 {
-                    Exception error = bindResult switch
+                    if ( client.Logger.Error is { } error )
                     {
-                        BindResult.AlreadyBound => new MessageBrokerChannelPublisherBindingException(
-                            client,
-                            publisher!,
-                            Resources.PublisherAlreadyBound( publisher! ) ),
-                        BindResult.ChannelDisposed => new MessageBrokerChannelDisposedException( channel ),
-                        _ => new MessageBrokerStreamDisposedException( stream! )
-                    };
+                        Exception exc = bindResult switch
+                        {
+                            BindResult.AlreadyBound => new MessageBrokerChannelPublisherBindingException(
+                                client,
+                                publisher!,
+                                Resources.PublisherAlreadyBound( publisher! ) ),
+                            BindResult.ChannelDisposed => new MessageBrokerChannelDisposedException( channel ),
+                            _ => new MessageBrokerStreamDisposedException( stream! )
+                        };
 
-                    MessageBrokerRemoteClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+                        error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
+                    }
+
                     var responseLength = Protocol.PacketHeader.Length + Protocol.BindPublisherFailureResponse.Payload;
                     var response = new Protocol.BindPublisherFailureResponse( bindResult );
                     if ( responseLength > data.Length )
@@ -311,23 +319,22 @@ internal struct RequestHandler
                     Assume.IsNotNull( channel );
                     Assume.IsNotNull( stream );
                     Assume.IsNotNull( publisher );
-
-                    MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( client, traceId, request.Header )
-                        .Emit( client.Logger.ReadPacket );
+                    readPacket?.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( client, traceId, request.Header ) );
 
                     using ( MessageBrokerChannelTraceEvent.CreateScope(
                         channel,
                         channelTraceId,
                         MessageBrokerChannelTraceEventType.BindPublisher ) )
                     {
-                        MessageBrokerChannelClientTraceEvent.Create( channel, channelTraceId, client, traceId )
-                            .Emit( channel.Logger.ClientTrace );
+                        if ( channel.Logger.ClientTrace is { } clientTrace )
+                            clientTrace.Emit( MessageBrokerChannelClientTraceEvent.Create( channel, channelTraceId, client, traceId ) );
 
-                        if ( channelCreated )
-                            MessageBrokerChannelCreatedEvent.Create( channel, channelTraceId ).Emit( channel.Logger.Created );
+                        if ( channelCreated && channel.Logger.Created is { } created )
+                            created.Emit( MessageBrokerChannelCreatedEvent.Create( channel, channelTraceId ) );
 
-                        MessageBrokerChannelPublisherBoundEvent.Create( publisher, channelTraceId, streamCreated )
-                            .Emit( channel.Logger.PublisherBound );
+                        if ( channel.Logger.PublisherBound is { } channelPublisherBound )
+                            channelPublisherBound.Emit(
+                                MessageBrokerChannelPublisherBoundEvent.Create( publisher, channelTraceId, streamCreated ) );
                     }
 
                     using ( MessageBrokerStreamTraceEvent.CreateScope(
@@ -335,18 +342,20 @@ internal struct RequestHandler
                         streamTraceId,
                         MessageBrokerStreamTraceEventType.BindPublisher ) )
                     {
-                        MessageBrokerStreamClientTraceEvent.Create( stream, streamTraceId, client, traceId )
-                            .Emit( stream.Logger.ClientTrace );
+                        if ( stream.Logger.ClientTrace is { } clientTrace )
+                            clientTrace.Emit( MessageBrokerStreamClientTraceEvent.Create( stream, streamTraceId, client, traceId ) );
 
-                        if ( streamCreated )
-                            MessageBrokerStreamCreatedEvent.Create( stream, streamTraceId ).Emit( stream.Logger.Created );
+                        if ( streamCreated && stream.Logger.Created is { } created )
+                            created.Emit( MessageBrokerStreamCreatedEvent.Create( stream, streamTraceId ) );
 
-                        MessageBrokerStreamPublisherBoundEvent.Create( publisher, streamTraceId, channelCreated )
-                            .Emit( stream.Logger.PublisherBound );
+                        if ( stream.Logger.PublisherBound is { } streamPublisherBound )
+                            streamPublisherBound.Emit(
+                                MessageBrokerStreamPublisherBoundEvent.Create( publisher, streamTraceId, channelCreated ) );
                     }
 
-                    MessageBrokerRemoteClientPublisherBoundEvent.Create( publisher, traceId, channelCreated, streamCreated )
-                        .Emit( client.Logger.PublisherBound );
+                    if ( client.Logger.PublisherBound is { } publisherBound )
+                        publisherBound.Emit(
+                            MessageBrokerRemoteClientPublisherBoundEvent.Create( publisher, traceId, channelCreated, streamCreated ) );
 
                     var responseLength = Protocol.PacketHeader.Length + Protocol.PublisherBoundResponse.Payload;
                     var response = new Protocol.PublisherBoundResponse( channelCreated, streamCreated, channel.Id, stream.Id );
@@ -360,7 +369,9 @@ internal struct RequestHandler
 
                 if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
                 {
-                    MessageBrokerRemoteClientErrorEvent.Create( client, traceId, client.DisposedException() ).Emit( client.Logger.Error );
+                    if ( client.Logger.Error is { } error )
+                        error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, client.DisposedException() ) );
+
                     return RequestResult.Done();
                 }
 
@@ -391,7 +402,8 @@ internal struct RequestHandler
             var poolToken = request.PoolToken;
             try
             {
-                MessageBrokerRemoteClientReadPacketEvent.CreateReceived( client, traceId, request.Header ).Emit( client.Logger.ReadPacket );
+                var readPacket = client.Logger.ReadPacket;
+                readPacket?.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateReceived( client, traceId, request.Header ) );
 
                 var exception = Protocol.AssertPayload( client, request.Header, Protocol.UnbindPublisherRequest.Length );
                 if ( exception is not null )
@@ -406,8 +418,9 @@ internal struct RequestHandler
                     return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
                 }
 
-                MessageBrokerRemoteClientUnbindingPublisherEvent.Create( client, traceId, parsedRequest.ChannelId )
-                    .Emit( client.Logger.UnbindingPublisher );
+                if ( client.Logger.UnbindingPublisher is { } unbindingPublisher )
+                    unbindingPublisher.Emit(
+                        MessageBrokerRemoteClientUnbindingPublisherEvent.Create( client, traceId, parsedRequest.ChannelId ) );
 
                 var disposingChannel = false;
                 var disposingStream = false;
@@ -443,20 +456,24 @@ internal struct RequestHandler
 
                 if ( unbindResult != UnbindResult.Success )
                 {
-                    Exception error = unbindResult switch
+                    if ( client.Logger.Error is { } error )
                     {
-                        UnbindResult.NotBound => new MessageBrokerChannelPublisherBindingException(
-                            client,
-                            publisher,
-                            channel is null
-                                ? Resources.CannotUnbindPublisherFromNonExistingChannel( client, parsedRequest.ChannelId )
-                                : Resources.PublisherNotBound( client, channel ) ),
-                        UnbindResult.ChannelDisposed => new MessageBrokerChannelDisposedException( channel! ),
-                        UnbindResult.ParentDisposed => new MessageBrokerStreamDisposedException( stream! ),
-                        _ => new MessageBrokerChannelPublisherBindingDisposedException( publisher! )
-                    };
+                        Exception exc = unbindResult switch
+                        {
+                            UnbindResult.NotBound => new MessageBrokerChannelPublisherBindingException(
+                                client,
+                                publisher,
+                                channel is null
+                                    ? Resources.CannotUnbindPublisherFromNonExistingChannel( client, parsedRequest.ChannelId )
+                                    : Resources.PublisherNotBound( client, channel ) ),
+                            UnbindResult.ChannelDisposed => new MessageBrokerChannelDisposedException( channel! ),
+                            UnbindResult.ParentDisposed => new MessageBrokerStreamDisposedException( stream! ),
+                            _ => new MessageBrokerChannelPublisherBindingDisposedException( publisher! )
+                        };
 
-                    MessageBrokerRemoteClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+                        error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
+                    }
+
                     var responseLength = Protocol.PacketHeader.Length + Protocol.UnbindPublisherFailureResponse.Payload;
                     var response = new Protocol.UnbindPublisherFailureResponse( unbindResult );
                     if ( data.Length < responseLength )
@@ -471,20 +488,19 @@ internal struct RequestHandler
                     Assume.IsNotNull( channel );
                     Assume.IsNotNull( stream );
                     Assume.IsNotNull( publisher );
-
-                    MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( client, traceId, request.Header )
-                        .Emit( client.Logger.ReadPacket );
+                    readPacket?.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( client, traceId, request.Header ) );
 
                     using ( MessageBrokerStreamTraceEvent.CreateScope(
                         stream,
                         streamTraceId,
                         MessageBrokerStreamTraceEventType.UnbindPublisher ) )
                     {
-                        MessageBrokerStreamClientTraceEvent.Create( stream, streamTraceId, client, traceId )
-                            .Emit( stream.Logger.ClientTrace );
+                        if ( stream.Logger.ClientTrace is { } clientTrace )
+                            clientTrace.Emit( MessageBrokerStreamClientTraceEvent.Create( stream, streamTraceId, client, traceId ) );
 
-                        MessageBrokerStreamPublisherUnboundEvent.Create( publisher, streamTraceId, disposingChannel )
-                            .Emit( stream.Logger.PublisherUnbound );
+                        if ( stream.Logger.PublisherUnbound is { } streamPublisherUnbound )
+                            streamPublisherUnbound.Emit(
+                                MessageBrokerStreamPublisherUnboundEvent.Create( publisher, streamTraceId, disposingChannel ) );
 
                         if ( disposingStream )
                             await stream.DisposeDueToLackOfReferencesAsync( ignoreProcessorTask: false, streamTraceId )
@@ -496,20 +512,25 @@ internal struct RequestHandler
                         channelTraceId,
                         MessageBrokerChannelTraceEventType.UnbindPublisher ) )
                     {
-                        MessageBrokerChannelClientTraceEvent.Create( channel, channelTraceId, client, traceId )
-                            .Emit( channel.Logger.ClientTrace );
+                        if ( channel.Logger.ClientTrace is { } clientTrace )
+                            clientTrace.Emit( MessageBrokerChannelClientTraceEvent.Create( channel, channelTraceId, client, traceId ) );
 
-                        MessageBrokerChannelPublisherUnboundEvent.Create( publisher, channelTraceId, disposingStream )
-                            .Emit( channel.Logger.PublisherUnbound );
+                        if ( channel.Logger.PublisherUnbound is { } channelPublisherUnbound )
+                            channelPublisherUnbound.Emit(
+                                MessageBrokerChannelPublisherUnboundEvent.Create( publisher, channelTraceId, disposingStream ) );
 
                         if ( disposingChannel )
                             channel.DisposeDueToLackOfReferences( channelTraceId );
                     }
 
                     publisher.EndDisposing();
-
-                    MessageBrokerRemoteClientPublisherUnboundEvent.Create( publisher, traceId, disposingChannel, disposingStream )
-                        .Emit( client.Logger.PublisherUnbound );
+                    if ( client.Logger.PublisherUnbound is { } publisherUnbound )
+                        publisherUnbound.Emit(
+                            MessageBrokerRemoteClientPublisherUnboundEvent.Create(
+                                publisher,
+                                traceId,
+                                disposingChannel,
+                                disposingStream ) );
 
                     var responseLength = Protocol.PacketHeader.Length + Protocol.PublisherUnboundResponse.Payload;
                     var response = new Protocol.PublisherUnboundResponse( disposingChannel, disposingStream );
@@ -532,7 +553,9 @@ internal struct RequestHandler
 
                 if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
                 {
-                    MessageBrokerRemoteClientErrorEvent.Create( client, traceId, client.DisposedException() ).Emit( client.Logger.Error );
+                    if ( client.Logger.Error is { } error )
+                        error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, client.DisposedException() ) );
+
                     return RequestResult.Done();
                 }
 
@@ -560,7 +583,8 @@ internal struct RequestHandler
             var poolToken = request.PoolToken;
             try
             {
-                MessageBrokerRemoteClientReadPacketEvent.CreateReceived( client, traceId, request.Header ).Emit( client.Logger.ReadPacket );
+                var readPacket = client.Logger.ReadPacket;
+                readPacket?.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateReceived( client, traceId, request.Header ) );
 
                 var exception = Protocol.AssertMinPayload( client, request.Header, Protocol.BindListenerRequestHeader.Length );
                 if ( exception is not null )
@@ -603,18 +627,19 @@ internal struct RequestHandler
                     return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
                 }
 
-                MessageBrokerRemoteClientBindingListenerEvent.Create(
-                        client,
-                        traceId,
-                        channelName.Value,
-                        queueName.Value,
-                        parsedRequestHeader.PrefetchHint,
-                        parsedRequestHeader.MaxRetries,
-                        parsedRequestHeader.RetryDelay,
-                        parsedRequestHeader.MaxRedeliveries,
-                        parsedRequestHeader.MinAckTimeout,
-                        parsedRequestHeader.CreateChannelIfNotExists )
-                    .Emit( client.Logger.BindingListener );
+                if ( client.Logger.BindingListener is { } bindingListener )
+                    bindingListener.Emit(
+                        MessageBrokerRemoteClientBindingListenerEvent.Create(
+                            client,
+                            traceId,
+                            channelName.Value,
+                            queueName.Value,
+                            parsedRequestHeader.PrefetchHint,
+                            parsedRequestHeader.MaxRetries,
+                            parsedRequestHeader.RetryDelay,
+                            parsedRequestHeader.MaxRedeliveries,
+                            parsedRequestHeader.MinAckTimeout,
+                            parsedRequestHeader.CreateChannelIfNotExists ) );
 
                 if ( queueName.Value.Length == 0 )
                     queueName = channelName;
@@ -680,21 +705,25 @@ internal struct RequestHandler
 
                 if ( bindResult != BindResult.Success )
                 {
-                    Exception error = bindResult switch
+                    if ( client.Logger.Error is { } error )
                     {
-                        BindResult.AlreadyBound => new MessageBrokerChannelListenerBindingException(
-                            client,
-                            listener!,
-                            Resources.ListenerAlreadyBound( listener! ) ),
-                        BindResult.ChannelDisposed => new MessageBrokerChannelDisposedException( channel! ),
-                        BindResult.ParentDisposed => new MessageBrokerQueueDisposedException( queue! ),
-                        _ => new MessageBrokerChannelListenerBindingException(
-                            client,
-                            null,
-                            Resources.CannotBindAsListenerToNonExistingChannel( client, channelName.Value ) )
-                    };
+                        Exception exc = bindResult switch
+                        {
+                            BindResult.AlreadyBound => new MessageBrokerChannelListenerBindingException(
+                                client,
+                                listener!,
+                                Resources.ListenerAlreadyBound( listener! ) ),
+                            BindResult.ChannelDisposed => new MessageBrokerChannelDisposedException( channel! ),
+                            BindResult.ParentDisposed => new MessageBrokerQueueDisposedException( queue! ),
+                            _ => new MessageBrokerChannelListenerBindingException(
+                                client,
+                                null,
+                                Resources.CannotBindAsListenerToNonExistingChannel( client, channelName.Value ) )
+                        };
 
-                    MessageBrokerRemoteClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+                        error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
+                    }
+
                     var responseLength = Protocol.PacketHeader.Length + Protocol.BindListenerFailureResponse.Payload;
                     var response = new Protocol.BindListenerFailureResponse( bindResult );
                     Assume.IsGreaterThanOrEqualTo( data.Length, responseLength );
@@ -708,37 +737,40 @@ internal struct RequestHandler
                     Assume.IsNotNull( channel );
                     Assume.IsNotNull( queue );
                     Assume.IsNotNull( listener );
-
-                    MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( client, traceId, request.Header )
-                        .Emit( client.Logger.ReadPacket );
+                    readPacket?.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( client, traceId, request.Header ) );
 
                     using ( MessageBrokerChannelTraceEvent.CreateScope(
                         channel,
                         channelTraceId,
                         MessageBrokerChannelTraceEventType.BindListener ) )
                     {
-                        MessageBrokerChannelClientTraceEvent.Create( channel, channelTraceId, client, traceId )
-                            .Emit( channel.Logger.ClientTrace );
+                        if ( channel.Logger.ClientTrace is { } clientTrace )
+                            clientTrace.Emit( MessageBrokerChannelClientTraceEvent.Create( channel, channelTraceId, client, traceId ) );
 
-                        if ( channelCreated )
-                            MessageBrokerChannelCreatedEvent.Create( channel, channelTraceId ).Emit( channel.Logger.Created );
+                        if ( channelCreated && channel.Logger.Created is { } created )
+                            created.Emit( MessageBrokerChannelCreatedEvent.Create( channel, channelTraceId ) );
 
-                        MessageBrokerChannelListenerBoundEvent.Create( listener, channelTraceId, queueCreated )
-                            .Emit( channel.Logger.ListenerBound );
+                        if ( channel.Logger.ListenerBound is { } channelListenerBound )
+                            channelListenerBound.Emit(
+                                MessageBrokerChannelListenerBoundEvent.Create( listener, channelTraceId, queueCreated ) );
                     }
 
                     using ( MessageBrokerQueueTraceEvent.CreateScope( queue, queueTraceId, MessageBrokerQueueTraceEventType.BindListener ) )
                     {
-                        MessageBrokerQueueClientTraceEvent.Create( queue, queueTraceId, traceId ).Emit( queue.Logger.ClientTrace );
-                        if ( queueCreated )
-                            MessageBrokerQueueCreatedEvent.Create( queue, queueTraceId ).Emit( queue.Logger.Created );
+                        if ( queue.Logger.ClientTrace is { } clientTrace )
+                            clientTrace.Emit( MessageBrokerQueueClientTraceEvent.Create( queue, queueTraceId, traceId ) );
 
-                        MessageBrokerQueueListenerBoundEvent.Create( listener, queueTraceId, channelCreated )
-                            .Emit( queue.Logger.ListenerBound );
+                        if ( queueCreated && queue.Logger.Created is { } created )
+                            created.Emit( MessageBrokerQueueCreatedEvent.Create( queue, queueTraceId ) );
+
+                        if ( queue.Logger.ListenerBound is { } queueListenerBound )
+                            queueListenerBound.Emit(
+                                MessageBrokerQueueListenerBoundEvent.Create( listener, queueTraceId, channelCreated ) );
                     }
 
-                    MessageBrokerRemoteClientListenerBoundEvent.Create( listener, traceId, channelCreated, queueCreated )
-                        .Emit( client.Logger.ListenerBound );
+                    if ( client.Logger.ListenerBound is { } listenerBound )
+                        listenerBound.Emit(
+                            MessageBrokerRemoteClientListenerBoundEvent.Create( listener, traceId, channelCreated, queueCreated ) );
 
                     var responseLength = Protocol.PacketHeader.Length + Protocol.ListenerBoundResponse.Payload;
                     var response = new Protocol.ListenerBoundResponse( channelCreated, queueCreated, channel.Id, queue.Id );
@@ -752,7 +784,9 @@ internal struct RequestHandler
 
                 if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
                 {
-                    MessageBrokerRemoteClientErrorEvent.Create( client, traceId, client.DisposedException() ).Emit( client.Logger.Error );
+                    if ( client.Logger.Error is { } error )
+                        error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, client.DisposedException() ) );
+
                     return RequestResult.Done();
                 }
 
@@ -780,7 +814,8 @@ internal struct RequestHandler
             var poolToken = request.PoolToken;
             try
             {
-                MessageBrokerRemoteClientReadPacketEvent.CreateReceived( client, traceId, request.Header ).Emit( client.Logger.ReadPacket );
+                var readPacket = client.Logger.ReadPacket;
+                readPacket?.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateReceived( client, traceId, request.Header ) );
 
                 var exception = Protocol.AssertPayload( client, request.Header, Protocol.UnbindListenerRequest.Length );
                 if ( exception is not null )
@@ -795,8 +830,9 @@ internal struct RequestHandler
                     return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
                 }
 
-                MessageBrokerRemoteClientUnbindingListenerEvent.Create( client, traceId, parsedRequest.ChannelId )
-                    .Emit( client.Logger.UnbindingListener );
+                if ( client.Logger.UnbindingListener is { } unbindingListener )
+                    unbindingListener.Emit(
+                        MessageBrokerRemoteClientUnbindingListenerEvent.Create( client, traceId, parsedRequest.ChannelId ) );
 
                 var disposingChannel = false;
                 var disposingQueue = false;
@@ -832,20 +868,23 @@ internal struct RequestHandler
 
                 if ( unbindResult != UnbindResult.Success )
                 {
-                    Exception error = unbindResult switch
+                    if ( client.Logger.Error is { } error )
                     {
-                        UnbindResult.NotBound => new MessageBrokerChannelListenerBindingException(
-                            client,
-                            listener,
-                            channel is null
-                                ? Resources.CannotUnbindListenerFromNonExistingChannel( client, parsedRequest.ChannelId )
-                                : Resources.ListenerNotBound( client, channel ) ),
-                        UnbindResult.ChannelDisposed => new MessageBrokerChannelDisposedException( channel! ),
-                        UnbindResult.ParentDisposed => new MessageBrokerQueueDisposedException( queue! ),
-                        _ => new MessageBrokerChannelListenerBindingDisposedException( listener! )
-                    };
+                        Exception exc = unbindResult switch
+                        {
+                            UnbindResult.NotBound => new MessageBrokerChannelListenerBindingException(
+                                client,
+                                listener,
+                                channel is null
+                                    ? Resources.CannotUnbindListenerFromNonExistingChannel( client, parsedRequest.ChannelId )
+                                    : Resources.ListenerNotBound( client, channel ) ),
+                            UnbindResult.ChannelDisposed => new MessageBrokerChannelDisposedException( channel! ),
+                            UnbindResult.ParentDisposed => new MessageBrokerQueueDisposedException( queue! ),
+                            _ => new MessageBrokerChannelListenerBindingDisposedException( listener! )
+                        };
 
-                    MessageBrokerRemoteClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+                        error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
+                    }
 
                     var responseLength = Protocol.PacketHeader.Length + Protocol.UnbindListenerFailureResponse.Payload;
                     var response = new Protocol.UnbindListenerFailureResponse( unbindResult );
@@ -861,18 +900,19 @@ internal struct RequestHandler
                     Assume.IsNotNull( channel );
                     Assume.IsNotNull( queue );
                     Assume.IsNotNull( listener );
-
-                    MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( client, traceId, request.Header )
-                        .Emit( client.Logger.ReadPacket );
+                    readPacket?.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( client, traceId, request.Header ) );
 
                     using ( MessageBrokerQueueTraceEvent.CreateScope(
                         queue,
                         queueTraceId,
                         MessageBrokerQueueTraceEventType.UnbindListener ) )
                     {
-                        MessageBrokerQueueClientTraceEvent.Create( queue, queueTraceId, traceId ).Emit( queue.Logger.ClientTrace );
-                        MessageBrokerQueueListenerUnboundEvent.Create( listener, queueTraceId, disposingChannel )
-                            .Emit( queue.Logger.ListenerUnbound );
+                        if ( queue.Logger.ClientTrace is { } clientTrace )
+                            clientTrace.Emit( MessageBrokerQueueClientTraceEvent.Create( queue, queueTraceId, traceId ) );
+
+                        if ( queue.Logger.ListenerUnbound is { } queueListenerUnbound )
+                            queueListenerUnbound.Emit(
+                                MessageBrokerQueueListenerUnboundEvent.Create( listener, queueTraceId, disposingChannel ) );
 
                         if ( disposingQueue )
                             await queue.DisposeDueToLackOfReferencesAsync( ignoreProcessorTask: false, queueTraceId )
@@ -884,20 +924,21 @@ internal struct RequestHandler
                         channelTraceId,
                         MessageBrokerChannelTraceEventType.UnbindListener ) )
                     {
-                        MessageBrokerChannelClientTraceEvent.Create( channel, channelTraceId, client, traceId )
-                            .Emit( channel.Logger.ClientTrace );
+                        if ( channel.Logger.ClientTrace is { } clientTrace )
+                            clientTrace.Emit( MessageBrokerChannelClientTraceEvent.Create( channel, channelTraceId, client, traceId ) );
 
-                        MessageBrokerChannelListenerUnboundEvent.Create( listener, channelTraceId, disposingQueue )
-                            .Emit( channel.Logger.ListenerUnbound );
+                        if ( channel.Logger.ListenerUnbound is { } channelListenerUnbound )
+                            channelListenerUnbound.Emit(
+                                MessageBrokerChannelListenerUnboundEvent.Create( listener, channelTraceId, disposingQueue ) );
 
                         if ( disposingChannel )
                             channel.DisposeDueToLackOfReferences( channelTraceId );
                     }
 
                     listener.EndDisposing();
-
-                    MessageBrokerRemoteClientListenerUnboundEvent.Create( listener, traceId, disposingChannel, disposingQueue )
-                        .Emit( client.Logger.ListenerUnbound );
+                    if ( client.Logger.ListenerUnbound is { } listenerUnbound )
+                        listenerUnbound.Emit(
+                            MessageBrokerRemoteClientListenerUnboundEvent.Create( listener, traceId, disposingChannel, disposingQueue ) );
 
                     var responseLength = Protocol.PacketHeader.Length + Protocol.ListenerUnboundResponse.Payload;
                     var response = new Protocol.ListenerUnboundResponse( disposingChannel, disposingQueue );
@@ -920,7 +961,9 @@ internal struct RequestHandler
 
                 if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
                 {
-                    MessageBrokerRemoteClientErrorEvent.Create( client, traceId, client.DisposedException() ).Emit( client.Logger.Error );
+                    if ( client.Logger.Error is { } error )
+                        error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, client.DisposedException() ) );
+
                     return RequestResult.Done();
                 }
 
@@ -946,7 +989,7 @@ internal struct RequestHandler
         using ( MessageBrokerRemoteClientTraceEvent.CreateScope( client, traceId, MessageBrokerRemoteClientTraceEventType.PushMessage ) )
         {
             var disposeBuffer = true;
-            var messageStoreKey = 0;
+            var storeKey = 0;
             ulong messageId = 0;
             ulong streamTraceId = 0;
             MessageBrokerChannelPublisherBinding? publisher;
@@ -956,7 +999,8 @@ internal struct RequestHandler
 
             try
             {
-                MessageBrokerRemoteClientReadPacketEvent.CreateReceived( client, traceId, request.Header ).Emit( client.Logger.ReadPacket );
+                if ( client.Logger.ReadPacket is { } readPacket )
+                    readPacket.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateReceived( client, traceId, request.Header ) );
 
                 var exception = Protocol.AssertMinPayload( client, request.Header, Protocol.PushMessageHeader.Length );
                 if ( exception is not null )
@@ -978,13 +1022,14 @@ internal struct RequestHandler
                     messageToken.SetLength( messageLength, out messageData, trimStart: true );
                 }
 
-                MessageBrokerRemoteClientPushingMessageEvent.Create(
-                        client,
-                        traceId,
-                        messageData.Length,
-                        parsedRequest.ChannelId,
-                        parsedRequest.Confirm )
-                    .Emit( client.Logger.PushingMessage );
+                if ( client.Logger.PushingMessage is { } pushingMessage )
+                    pushingMessage.Emit(
+                        MessageBrokerRemoteClientPushingMessageEvent.Create(
+                            client,
+                            traceId,
+                            messageData.Length,
+                            parsedRequest.ChannelId,
+                            parsedRequest.Confirm ) );
 
                 using ( client.AcquireActiveLock( traceId, out var exc ) )
                 {
@@ -998,7 +1043,7 @@ internal struct RequestHandler
                             messageToken,
                             messageData,
                             ref messageId,
-                            ref messageStoreKey,
+                            ref storeKey,
                             ref streamTraceId );
 
                         if ( pushMessageResult == PushMessageResult.Success && messageData.Length > 0 )
@@ -1022,17 +1067,21 @@ internal struct RequestHandler
 
                 if ( pushMessageResult != PushMessageResult.Success )
                 {
-                    Exception error = pushMessageResult switch
+                    if ( client.Logger.Error is { } error )
                     {
-                        PushMessageResult.NotBound => new MessageBrokerChannelPublisherBindingException(
-                            client,
-                            null,
-                            Resources.PublisherNotBound( client, parsedRequest.ChannelId ) ),
-                        PushMessageResult.StreamDisposed => new MessageBrokerStreamDisposedException( publisher!.Stream ),
-                        _ => new MessageBrokerChannelPublisherBindingDisposedException( publisher! )
-                    };
+                        Exception exc = pushMessageResult switch
+                        {
+                            PushMessageResult.NotBound => new MessageBrokerChannelPublisherBindingException(
+                                client,
+                                null,
+                                Resources.PublisherNotBound( client, parsedRequest.ChannelId ) ),
+                            PushMessageResult.StreamDisposed => new MessageBrokerStreamDisposedException( publisher!.Stream ),
+                            _ => new MessageBrokerChannelPublisherBindingDisposedException( publisher! )
+                        };
 
-                    MessageBrokerRemoteClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+                        error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
+                    }
+
                     if ( ! parsedRequest.Confirm )
                         return FinishRequestHandling( client, traceId );
 
@@ -1045,27 +1094,31 @@ internal struct RequestHandler
                 else
                 {
                     Assume.IsNotNull( publisher );
-                    MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( client, traceId, request.Header )
-                        .Emit( client.Logger.ReadPacket );
+                    if ( client.Logger.ReadPacket is { } readPacket )
+                        readPacket.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( client, traceId, request.Header ) );
 
                     using ( MessageBrokerStreamTraceEvent.CreateScope(
                         publisher.Stream,
                         streamTraceId,
                         MessageBrokerStreamTraceEventType.PushMessage ) )
                     {
-                        MessageBrokerStreamClientTraceEvent.Create( publisher.Stream, streamTraceId, client, traceId )
-                            .Emit( publisher.Stream.Logger.ClientTrace );
+                        if ( publisher.Stream.Logger.ClientTrace is { } clientTrace )
+                            clientTrace.Emit(
+                                MessageBrokerStreamClientTraceEvent.Create( publisher.Stream, streamTraceId, client, traceId ) );
 
-                        MessageBrokerStreamMessagePushedEvent.Create(
-                                publisher,
-                                streamTraceId,
-                                messageId,
-                                messageStoreKey,
-                                messageData.Length )
-                            .Emit( publisher.Stream.Logger.MessagePushed );
+                        if ( publisher.Stream.Logger.MessagePushed is { } streamMessagePushed )
+                            streamMessagePushed.Emit(
+                                MessageBrokerStreamMessagePushedEvent.Create(
+                                    publisher,
+                                    streamTraceId,
+                                    messageId,
+                                    storeKey,
+                                    messageData.Length ) );
                     }
 
-                    MessageBrokerRemoteClientMessagePushedEvent.Create( publisher, traceId, messageId ).Emit( client.Logger.MessagePushed );
+                    if ( client.Logger.MessagePushed is { } messagePushed )
+                        messagePushed.Emit( MessageBrokerRemoteClientMessagePushedEvent.Create( publisher, traceId, messageId ) );
+
                     if ( ! parsedRequest.Confirm )
                         return FinishRequestHandling( client, traceId );
 
@@ -1087,7 +1140,9 @@ internal struct RequestHandler
 
                 if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
                 {
-                    MessageBrokerRemoteClientErrorEvent.Create( client, traceId, client.DisposedException() ).Emit( client.Logger.Error );
+                    if ( client.Logger.Error is { } error )
+                        error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, client.DisposedException() ) );
+
                     return RequestResult.Done();
                 }
 
@@ -1121,7 +1176,8 @@ internal struct RequestHandler
 
             try
             {
-                MessageBrokerRemoteClientReadPacketEvent.CreateReceived( client, traceId, request.Header ).Emit( client.Logger.ReadPacket );
+                if ( client.Logger.ReadPacket is { } readPacket )
+                    readPacket.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateReceived( client, traceId, request.Header ) );
 
                 var exception = Protocol.AssertPayload( client, request.Header, Protocol.MessageNotificationAck.Length );
                 if ( exception is not null )
@@ -1135,16 +1191,17 @@ internal struct RequestHandler
                     return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
                 }
 
-                MessageBrokerRemoteClientProcessingAckEvent.Create(
-                        client,
-                        traceId,
-                        parsedRequest.QueueId,
-                        parsedRequest.AckId,
-                        parsedRequest.StreamId,
-                        parsedRequest.MessageId,
-                        parsedRequest.RetryAttempt,
-                        parsedRequest.RedeliveryAttempt )
-                    .Emit( client.Logger.ProcessingAck );
+                if ( client.Logger.ProcessingAck is { } processingAck )
+                    processingAck.Emit(
+                        MessageBrokerRemoteClientProcessingAckEvent.Create(
+                            client,
+                            traceId,
+                            parsedRequest.QueueId,
+                            parsedRequest.AckId,
+                            parsedRequest.StreamId,
+                            parsedRequest.MessageId,
+                            parsedRequest.Retry,
+                            parsedRequest.Redelivery ) );
 
                 using ( client.AcquireActiveLock( traceId, out var exc ) )
                 {
@@ -1157,8 +1214,8 @@ internal struct RequestHandler
                             parsedRequest.AckId,
                             parsedRequest.StreamId,
                             parsedRequest.MessageId,
-                            parsedRequest.RetryAttempt,
-                            parsedRequest.RedeliveryAttempt,
+                            parsedRequest.Retry,
+                            parsedRequest.Redelivery,
                             ref message,
                             ref queueTraceId,
                             ref disposing );
@@ -1173,56 +1230,63 @@ internal struct RequestHandler
 
             if ( ackResult != AckResult.Success )
             {
-                Exception error = ackResult switch
+                if ( client.Logger.Error is { } error )
                 {
-                    AckResult.MessageNotFound => new MessageBrokerQueueException(
-                        queue!,
-                        Resources.MessageNotFound( queue!, parsedRequest.AckId, parsedRequest.StreamId, parsedRequest.MessageId ) ),
-                    AckResult.MessageVersionNotFound => new MessageBrokerQueueException(
-                        queue!,
-                        Resources.MessageVersionNotFound(
+                    Exception exc = ackResult switch
+                    {
+                        AckResult.MessageNotFound => new MessageBrokerQueueException(
                             queue!,
-                            parsedRequest.StreamId,
-                            parsedRequest.MessageId,
-                            parsedRequest.RetryAttempt,
-                            parsedRequest.RedeliveryAttempt ) ),
-                    AckResult.QueueNotFound => new MessageBrokerRemoteClientException(
-                        client,
-                        Resources.QueueNotFound( client, parsedRequest.QueueId ) ),
-                    _ => new MessageBrokerQueueDisposedException( queue! )
-                };
+                            Resources.MessageNotFound( queue!, parsedRequest.AckId, parsedRequest.StreamId, parsedRequest.MessageId ) ),
+                        AckResult.MessageVersionNotFound => new MessageBrokerQueueException(
+                            queue!,
+                            Resources.MessageVersionNotFound(
+                                queue!,
+                                parsedRequest.StreamId,
+                                parsedRequest.MessageId,
+                                parsedRequest.Retry,
+                                parsedRequest.Redelivery ) ),
+                        AckResult.QueueNotFound => new MessageBrokerRemoteClientException(
+                            client,
+                            Resources.QueueNotFound( client, parsedRequest.QueueId ) ),
+                        _ => new MessageBrokerQueueDisposedException( queue! )
+                    };
 
-                MessageBrokerRemoteClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+                    error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
+                }
             }
             else
             {
                 Assume.IsNotNull( queue );
                 Assume.IsNotNull( message.Publisher );
                 Assume.IsNotNull( message.Listener );
-                MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( client, traceId, request.Header ).Emit( client.Logger.ReadPacket );
+                if ( client.Logger.ReadPacket is { } readPacket )
+                    readPacket.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( client, traceId, request.Header ) );
 
                 using ( MessageBrokerQueueTraceEvent.CreateScope( queue, queueTraceId, MessageBrokerQueueTraceEventType.Ack ) )
                 {
-                    MessageBrokerQueueClientTraceEvent.Create( queue, queueTraceId, traceId ).Emit( queue.Logger.ClientTrace );
-                    var messageDataRemoved = queue.RemoveFromStreamMessageStore( message, queueTraceId );
+                    if ( queue.Logger.ClientTrace is { } clientTrace )
+                        clientTrace.Emit( MessageBrokerQueueClientTraceEvent.Create( queue, queueTraceId, traceId ) );
 
-                    MessageBrokerQueueAckProcessedEvent.Create( queue, queueTraceId, parsedRequest.AckId, messageDataRemoved )
-                        .Emit( queue.Logger.AckProcessed );
+                    var messageRemoved = queue.RemoveFromStreamMessageStore( message, queueTraceId );
+                    if ( queue.Logger.AckProcessed is { } queueAckProcessed )
+                        queueAckProcessed.Emit(
+                            MessageBrokerQueueAckProcessedEvent.Create( queue, queueTraceId, parsedRequest.AckId, messageRemoved ) );
 
                     if ( disposing )
                         await queue.DisposeDueToLackOfReferencesAsync( ignoreProcessorTask: false, queueTraceId ).ConfigureAwait( false );
                 }
 
-                MessageBrokerRemoteClientAckProcessedEvent.Create(
-                        message.Listener,
-                        traceId,
-                        message.Publisher,
-                        parsedRequest.AckId,
-                        parsedRequest.MessageId,
-                        parsedRequest.RetryAttempt,
-                        parsedRequest.RedeliveryAttempt,
-                        isNack: false )
-                    .Emit( client.Logger.AckProcessed );
+                if ( client.Logger.AckProcessed is { } ackProcessed )
+                    ackProcessed.Emit(
+                        MessageBrokerRemoteClientAckProcessedEvent.Create(
+                            message.Listener,
+                            traceId,
+                            message.Publisher,
+                            parsedRequest.AckId,
+                            parsedRequest.MessageId,
+                            parsedRequest.Retry,
+                            parsedRequest.Redelivery,
+                            isNack: false ) );
             }
 
             return FinishRequestHandling( client, traceId );
@@ -1246,7 +1310,8 @@ internal struct RequestHandler
 
             try
             {
-                MessageBrokerRemoteClientReadPacketEvent.CreateReceived( client, traceId, request.Header ).Emit( client.Logger.ReadPacket );
+                if ( client.Logger.ReadPacket is { } readPacket )
+                    readPacket.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateReceived( client, traceId, request.Header ) );
 
                 var exception = Protocol.AssertPayload( client, request.Header, Protocol.MessageNotificationNegativeAck.Length );
                 if ( exception is not null )
@@ -1261,18 +1326,19 @@ internal struct RequestHandler
                 }
 
                 var explicitDelay = parsedRequest.HasExplicitDelay ? parsedRequest.ExplicitDelay : ( Duration? )null;
-                MessageBrokerRemoteClientProcessingNegativeAckEvent.Create(
-                        client,
-                        traceId,
-                        parsedRequest.QueueId,
-                        parsedRequest.AckId,
-                        parsedRequest.StreamId,
-                        parsedRequest.MessageId,
-                        parsedRequest.RetryAttempt,
-                        parsedRequest.RedeliveryAttempt,
-                        parsedRequest.NoRetry,
-                        explicitDelay )
-                    .Emit( client.Logger.ProcessingNegativeAck );
+                if ( client.Logger.ProcessingNegativeAck is { } processingNegativeAck )
+                    processingNegativeAck.Emit(
+                        MessageBrokerRemoteClientProcessingNegativeAckEvent.Create(
+                            client,
+                            traceId,
+                            parsedRequest.QueueId,
+                            parsedRequest.AckId,
+                            parsedRequest.StreamId,
+                            parsedRequest.MessageId,
+                            parsedRequest.Retry,
+                            parsedRequest.Redelivery,
+                            parsedRequest.NoRetry,
+                            explicitDelay ) );
 
                 using ( client.AcquireActiveLock( traceId, out var exc ) )
                 {
@@ -1285,8 +1351,8 @@ internal struct RequestHandler
                             parsedRequest.AckId,
                             parsedRequest.StreamId,
                             parsedRequest.MessageId,
-                            parsedRequest.RetryAttempt,
-                            parsedRequest.RedeliveryAttempt,
+                            parsedRequest.Retry,
+                            parsedRequest.Redelivery,
                             parsedRequest.NoRetry,
                             explicitDelay,
                             ref message,
@@ -1304,78 +1370,86 @@ internal struct RequestHandler
 
             if ( ackResult != AckResult.Success )
             {
-                Exception error = ackResult switch
+                if ( client.Logger.Error is { } error )
                 {
-                    AckResult.MessageNotFound => new MessageBrokerQueueException(
-                        queue!,
-                        Resources.MessageNotFound( queue!, parsedRequest.AckId, parsedRequest.StreamId, parsedRequest.MessageId ) ),
-                    AckResult.MessageVersionNotFound => new MessageBrokerQueueException(
-                        queue!,
-                        Resources.MessageVersionNotFound(
+                    Exception exc = ackResult switch
+                    {
+                        AckResult.MessageNotFound => new MessageBrokerQueueException(
                             queue!,
-                            parsedRequest.StreamId,
-                            parsedRequest.MessageId,
-                            parsedRequest.RetryAttempt,
-                            parsedRequest.RedeliveryAttempt ) ),
-                    AckResult.QueueNotFound => new MessageBrokerRemoteClientException(
-                        client,
-                        Resources.QueueNotFound( client, parsedRequest.QueueId ) ),
-                    _ => new MessageBrokerQueueDisposedException( queue! )
-                };
+                            Resources.MessageNotFound( queue!, parsedRequest.AckId, parsedRequest.StreamId, parsedRequest.MessageId ) ),
+                        AckResult.MessageVersionNotFound => new MessageBrokerQueueException(
+                            queue!,
+                            Resources.MessageVersionNotFound(
+                                queue!,
+                                parsedRequest.StreamId,
+                                parsedRequest.MessageId,
+                                parsedRequest.Retry,
+                                parsedRequest.Redelivery ) ),
+                        AckResult.QueueNotFound => new MessageBrokerRemoteClientException(
+                            client,
+                            Resources.QueueNotFound( client, parsedRequest.QueueId ) ),
+                        _ => new MessageBrokerQueueDisposedException( queue! )
+                    };
 
-                MessageBrokerRemoteClientErrorEvent.Create( client, traceId, error ).Emit( client.Logger.Error );
+                    error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
+                }
             }
             else
             {
                 Assume.IsNotNull( queue );
                 Assume.IsNotNull( message.Listener );
                 Assume.IsNotNull( message.Publisher );
-                MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( client, traceId, request.Header ).Emit( client.Logger.ReadPacket );
+                if ( client.Logger.ReadPacket is { } readPacket )
+                    readPacket.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( client, traceId, request.Header ) );
 
                 using ( MessageBrokerQueueTraceEvent.CreateScope( queue, queueTraceId, MessageBrokerQueueTraceEventType.NegativeAck ) )
                 {
-                    MessageBrokerQueueClientTraceEvent.Create( queue, queueTraceId, traceId ).Emit( queue.Logger.ClientTrace );
+                    if ( queue.Logger.ClientTrace is { } clientTrace )
+                        clientTrace.Emit( MessageBrokerQueueClientTraceEvent.Create( queue, queueTraceId, traceId ) );
 
-                    var messageDataRemoved = false;
+                    var messageRemoved = false;
                     if ( delay < Duration.Zero )
                     {
-                        messageDataRemoved = queue.RemoveFromStreamMessageStore( message, queueTraceId );
-                        MessageBrokerQueueMessageDiscardedEvent.Create(
-                                message.Listener,
-                                queueTraceId,
-                                message.Publisher,
-                                message.StoreKey,
-                                parsedRequest.RetryAttempt,
-                                parsedRequest.RedeliveryAttempt,
-                                messageDataRemoved,
-                                parsedRequest.NoRetry
-                                    ? MessageBrokerQueueDiscardMessageReason.ExplicitNoRetry
-                                    : MessageBrokerQueueDiscardMessageReason.MaxRetriesReached )
-                            .Emit( queue.Logger.MessageDiscarded );
+                        messageRemoved = queue.RemoveFromStreamMessageStore( message, queueTraceId );
+                        if ( queue.Logger.MessageDiscarded is { } messageDiscarded )
+                            messageDiscarded.Emit(
+                                MessageBrokerQueueMessageDiscardedEvent.Create(
+                                    message.Listener,
+                                    queueTraceId,
+                                    message.Publisher,
+                                    message.StoreKey,
+                                    parsedRequest.Retry,
+                                    parsedRequest.Redelivery,
+                                    messageRemoved,
+                                    parsedRequest.NoRetry
+                                        ? MessageBrokerQueueDiscardMessageReason.ExplicitNoRetry
+                                        : MessageBrokerQueueDiscardMessageReason.MaxRetriesReached ) );
                     }
 
-                    MessageBrokerQueueNegativeAckProcessedEvent.Create(
-                            queue,
-                            queueTraceId,
-                            parsedRequest.AckId,
-                            delay,
-                            messageDataRemoved )
-                        .Emit( queue.Logger.NegativeAckProcessed );
+                    if ( queue.Logger.NegativeAckProcessed is { } negativeAckProcessed )
+                        negativeAckProcessed.Emit(
+                            MessageBrokerQueueNegativeAckProcessedEvent.Create(
+                                queue,
+                                queueTraceId,
+                                parsedRequest.AckId,
+                                delay,
+                                messageRemoved ) );
 
                     if ( disposing )
                         await queue.DisposeDueToLackOfReferencesAsync( ignoreProcessorTask: false, queueTraceId ).ConfigureAwait( false );
                 }
 
-                MessageBrokerRemoteClientAckProcessedEvent.Create(
-                        message.Listener,
-                        traceId,
-                        message.Publisher,
-                        parsedRequest.AckId,
-                        parsedRequest.MessageId,
-                        parsedRequest.RetryAttempt,
-                        parsedRequest.RedeliveryAttempt,
-                        isNack: true )
-                    .Emit( client.Logger.AckProcessed );
+                if ( client.Logger.AckProcessed is { } ackProcessed )
+                    ackProcessed.Emit(
+                        MessageBrokerRemoteClientAckProcessedEvent.Create(
+                            message.Listener,
+                            traceId,
+                            message.Publisher,
+                            parsedRequest.AckId,
+                            parsedRequest.MessageId,
+                            parsedRequest.Retry,
+                            parsedRequest.Redelivery,
+                            isNack: true ) );
             }
 
             return FinishRequestHandling( client, traceId );
@@ -1391,7 +1465,8 @@ internal struct RequestHandler
     {
         using ( MessageBrokerRemoteClientTraceEvent.CreateScope( client, traceId, MessageBrokerRemoteClientTraceEventType.Ping ) )
         {
-            MessageBrokerRemoteClientReadPacketEvent.CreateReceived( client, traceId, request ).Emit( client.Logger.ReadPacket );
+            var readPacket = client.Logger.ReadPacket;
+            readPacket?.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateReceived( client, traceId, request ) );
 
             if ( request.Payload != Protocol.Endianness.VerificationPayload )
             {
@@ -1399,7 +1474,7 @@ internal struct RequestHandler
                 return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
             }
 
-            MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( client, traceId, request ).Emit( client.Logger.ReadPacket );
+            readPacket?.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( client, traceId, request ) );
 
             ManualResetValueTaskSource<bool> writerSource;
             using ( client.AcquireActiveLock( traceId, out var exc ) )
@@ -1412,7 +1487,9 @@ internal struct RequestHandler
 
             if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
             {
-                MessageBrokerRemoteClientErrorEvent.Create( client, traceId, client.DisposedException() ).Emit( client.Logger.Error );
+                if ( client.Logger.Error is { } error )
+                    error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, client.DisposedException() ) );
+
                 return RequestResult.Done();
             }
 
@@ -1471,7 +1548,9 @@ internal struct RequestHandler
         Exception exception,
         ulong traceId)
     {
-        MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exception ).Emit( client.Logger.Error );
+        if ( client.Logger.Error is { } error )
+            error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exception ) );
+
         await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
         return RequestResult.Done();
     }
@@ -1500,7 +1579,9 @@ internal struct RequestHandler
 
         @lock.Dispose();
         exception = client.Server.DisposedException();
-        MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exception ).Emit( client.Logger.Error );
+        if ( client.Logger.Error is { } error )
+            error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exception ) );
+
         return default;
     }
 

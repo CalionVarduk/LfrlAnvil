@@ -48,7 +48,7 @@ public class MessageBrokerStreamTests : TestsBase, IClassFixture<SharedResourceF
                                 if ( e.Type == MessageBrokerStreamTraceEventType.ProcessMessage )
                                     endSource.Complete();
                             },
-                            messagePushed: e => storeKeyByMessageId[e.MessageId] = e.MessageStoreKey ) ) ) );
+                            messagePushed: e => storeKeyByMessageId[e.MessageId] = e.StoreKey ) ) ) );
 
         await server.StartAsync();
 
@@ -126,21 +126,21 @@ public class MessageBrokerStreamTests : TestsBase, IClassFixture<SharedResourceF
                         [
                             $"[Trace:PushMessage] Stream = [1] 'c', TraceId = {t.Id} (start)",
                             $"[ClientTrace] Stream = [1] 'c', TraceId = {t.Id}, Correlation = (Client = [1] 'test', TraceId = 2)",
-                            $"[MessagePushed] Stream = [1] 'c', TraceId = {t.Id}, Client = [1] 'test', Channel = [1] 'c', MessageId = 0, MessageStoreKey = {storeKeyByMessageId.GetValueOrDefault( 0UL )}, Length = 1",
+                            $"[MessagePushed] Stream = [1] 'c', TraceId = {t.Id}, Client = [1] 'test', Channel = [1] 'c', MessageId = 0, StoreKey = {storeKeyByMessageId.GetValueOrDefault( 0UL )}, Length = 1",
                             $"[Trace:PushMessage] Stream = [1] 'c', TraceId = {t.Id} (end)"
                         ] ),
                         (t, _) => t.Logs.TestSequence(
                         [
                             $"[Trace:PushMessage] Stream = [1] 'c', TraceId = {t.Id} (start)",
                             $"[ClientTrace] Stream = [1] 'c', TraceId = {t.Id}, Correlation = (Client = [1] 'test', TraceId = 3)",
-                            $"[MessagePushed] Stream = [1] 'c', TraceId = {t.Id}, Client = [1] 'test', Channel = [1] 'c', MessageId = 1, MessageStoreKey = {storeKeyByMessageId.GetValueOrDefault( 1UL )}, Length = 2",
+                            $"[MessagePushed] Stream = [1] 'c', TraceId = {t.Id}, Client = [1] 'test', Channel = [1] 'c', MessageId = 1, StoreKey = {storeKeyByMessageId.GetValueOrDefault( 1UL )}, Length = 2",
                             $"[Trace:PushMessage] Stream = [1] 'c', TraceId = {t.Id} (end)"
                         ] ),
                         (t, _) => t.Logs.TestSequence(
                         [
                             $"[Trace:PushMessage] Stream = [1] 'c', TraceId = {t.Id} (start)",
                             $"[ClientTrace] Stream = [1] 'c', TraceId = {t.Id}, Correlation = (Client = [1] 'test', TraceId = 4)",
-                            $"[MessagePushed] Stream = [1] 'c', TraceId = {t.Id}, Client = [1] 'test', Channel = [1] 'c', MessageId = 2, MessageStoreKey = {storeKeyByMessageId.GetValueOrDefault( 2UL )}, Length = 3",
+                            $"[MessagePushed] Stream = [1] 'c', TraceId = {t.Id}, Client = [1] 'test', Channel = [1] 'c', MessageId = 2, StoreKey = {storeKeyByMessageId.GetValueOrDefault( 2UL )}, Length = 3",
                             $"[Trace:PushMessage] Stream = [1] 'c', TraceId = {t.Id} (end)"
                         ] )
                     ] ),
@@ -244,7 +244,7 @@ public class MessageBrokerStreamTests : TestsBase, IClassFixture<SharedResourceF
                         [
                             "[Trace:PushMessage] Stream = [1] 'c', TraceId = 1 (start)",
                             "[ClientTrace] Stream = [1] 'c', TraceId = 1, Correlation = (Client = [1] 'test', TraceId = 2)",
-                            "[MessagePushed] Stream = [1] 'c', TraceId = 1, Client = [1] 'test', Channel = [1] 'c', MessageId = 0, MessageStoreKey = 0, Length = 1",
+                            "[MessagePushed] Stream = [1] 'c', TraceId = 1, Client = [1] 'test', Channel = [1] 'c', MessageId = 0, StoreKey = 0, Length = 1",
                             "[Trace:PushMessage] Stream = [1] 'c', TraceId = 1 (end)"
                         ] ),
                         (t, _) => t.Logs.TestSequence(
@@ -292,7 +292,7 @@ public class MessageBrokerStreamTests : TestsBase, IClassFixture<SharedResourceF
                                 else if ( e.Type == MessageBrokerStreamTraceEventType.PushMessage )
                                     enqueueEndSource.Complete();
                             },
-                            messagePushed: e => storeKeyByMessageId[e.MessageId] = e.MessageStoreKey ) ) ) );
+                            messagePushed: e => storeKeyByMessageId[e.MessageId] = e.StoreKey ) ) ) );
 
         await server.StartAsync();
 
@@ -404,35 +404,35 @@ public class MessageBrokerStreamTests : TestsBase, IClassFixture<SharedResourceF
                         [
                             $"[Trace:PushMessage] Stream = [1] 'c', TraceId = {t.Id} (start)",
                             $"[ClientTrace] Stream = [1] 'c', TraceId = {t.Id}, Correlation = (Client = [1] 'test', TraceId = 4)",
-                            $"[MessagePushed] Stream = [1] 'c', TraceId = {t.Id}, Client = [1] 'test', Channel = [1] 'c', MessageId = 0, MessageStoreKey = {storeKeyByMessageId.GetValueOrDefault( 0UL )}, Length = 1",
+                            $"[MessagePushed] Stream = [1] 'c', TraceId = {t.Id}, Client = [1] 'test', Channel = [1] 'c', MessageId = 0, StoreKey = {storeKeyByMessageId.GetValueOrDefault( 0UL )}, Length = 1",
                             $"[Trace:PushMessage] Stream = [1] 'c', TraceId = {t.Id} (end)"
                         ] ),
                         (t, _) => t.Logs.TestSequence(
                         [
                             $"[Trace:PushMessage] Stream = [1] 'c', TraceId = {t.Id} (start)",
                             $"[ClientTrace] Stream = [1] 'c', TraceId = {t.Id}, Correlation = (Client = [1] 'test', TraceId = 5)",
-                            $"[MessagePushed] Stream = [1] 'c', TraceId = {t.Id}, Client = [1] 'test', Channel = [2] 'd', MessageId = 1, MessageStoreKey = {storeKeyByMessageId.GetValueOrDefault( 1UL )}, Length = 2",
+                            $"[MessagePushed] Stream = [1] 'c', TraceId = {t.Id}, Client = [1] 'test', Channel = [2] 'd', MessageId = 1, StoreKey = {storeKeyByMessageId.GetValueOrDefault( 1UL )}, Length = 2",
                             $"[Trace:PushMessage] Stream = [1] 'c', TraceId = {t.Id} (end)"
                         ] ),
                         (t, _) => t.Logs.TestSequence(
                         [
                             $"[Trace:PushMessage] Stream = [1] 'c', TraceId = {t.Id} (start)",
                             $"[ClientTrace] Stream = [1] 'c', TraceId = {t.Id}, Correlation = (Client = [1] 'test', TraceId = 6)",
-                            $"[MessagePushed] Stream = [1] 'c', TraceId = {t.Id}, Client = [1] 'test', Channel = [3] 'e', MessageId = 2, MessageStoreKey = {storeKeyByMessageId.GetValueOrDefault( 2UL )}, Length = 3",
+                            $"[MessagePushed] Stream = [1] 'c', TraceId = {t.Id}, Client = [1] 'test', Channel = [3] 'e', MessageId = 2, StoreKey = {storeKeyByMessageId.GetValueOrDefault( 2UL )}, Length = 3",
                             $"[Trace:PushMessage] Stream = [1] 'c', TraceId = {t.Id} (end)"
                         ] ),
                         (t, _) => t.Logs.TestSequence(
                         [
                             $"[Trace:PushMessage] Stream = [1] 'c', TraceId = {t.Id} (start)",
                             $"[ClientTrace] Stream = [1] 'c', TraceId = {t.Id}, Correlation = (Client = [1] 'test', TraceId = 7)",
-                            $"[MessagePushed] Stream = [1] 'c', TraceId = {t.Id}, Client = [1] 'test', Channel = [3] 'e', MessageId = 3, MessageStoreKey = {storeKeyByMessageId.GetValueOrDefault( 3UL )}, Length = 4",
+                            $"[MessagePushed] Stream = [1] 'c', TraceId = {t.Id}, Client = [1] 'test', Channel = [3] 'e', MessageId = 3, StoreKey = {storeKeyByMessageId.GetValueOrDefault( 3UL )}, Length = 4",
                             $"[Trace:PushMessage] Stream = [1] 'c', TraceId = {t.Id} (end)"
                         ] ),
                         (t, _) => t.Logs.TestSequence(
                         [
                             $"[Trace:PushMessage] Stream = [1] 'c', TraceId = {t.Id} (start)",
                             $"[ClientTrace] Stream = [1] 'c', TraceId = {t.Id}, Correlation = (Client = [1] 'test', TraceId = 8)",
-                            $"[MessagePushed] Stream = [1] 'c', TraceId = {t.Id}, Client = [1] 'test', Channel = [1] 'c', MessageId = 4, MessageStoreKey = {storeKeyByMessageId.GetValueOrDefault( 4UL )}, Length = 5",
+                            $"[MessagePushed] Stream = [1] 'c', TraceId = {t.Id}, Client = [1] 'test', Channel = [1] 'c', MessageId = 4, StoreKey = {storeKeyByMessageId.GetValueOrDefault( 4UL )}, Length = 5",
                             $"[Trace:PushMessage] Stream = [1] 'c', TraceId = {t.Id} (end)"
                         ] )
                     ] ),

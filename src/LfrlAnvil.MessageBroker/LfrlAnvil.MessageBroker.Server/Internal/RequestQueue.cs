@@ -34,13 +34,13 @@ internal struct RequestQueue
         return new RequestQueue( 0 );
     }
 
-    internal Chain<Exception> Dispose()
+    internal Chain<Exception> Dispose(bool extractExceptions)
     {
         var exceptions = Chain<Exception>.Empty;
         foreach ( ref readonly var request in _pendingRequests )
         {
             var exc = request.PoolToken.Return();
-            if ( exc is not null )
+            if ( exc is not null && extractExceptions )
                 exceptions = exceptions.Extend( exc );
         }
 

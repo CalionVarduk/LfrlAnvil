@@ -202,7 +202,9 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
             }
             catch ( Exception exc )
             {
-                MessageBrokerServerErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
+                if ( Logger.Error is { } error )
+                    error.Emit( MessageBrokerServerErrorEvent.Create( this, traceId, exc ) );
+
                 throw;
             }
 
@@ -219,7 +221,9 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
             }
             catch ( Exception exc )
             {
-                MessageBrokerServerErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
+                if ( Logger.Error is { } error )
+                    error.Emit( MessageBrokerServerErrorEvent.Create( this, traceId, exc ) );
+
                 if ( exc is MessageBrokerServerStateException )
                     throw;
 
@@ -229,7 +233,8 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
 
             try
             {
-                MessageBrokerServerListenerStartingEvent.Create( this, traceId ).Emit( Logger.ListenerStarting );
+                if ( Logger.ListenerStarting is { } listenerStarting )
+                    listenerStarting.Emit( MessageBrokerServerListenerStartingEvent.Create( this, traceId ) );
 
                 using ( AcquireActiveLock( traceId, out var exc ) )
                 {
@@ -241,12 +246,16 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
                     _state = MessageBrokerServerState.Running;
                 }
 
-                MessageBrokerServerListenerStartedEvent.Create( this, traceId ).Emit( Logger.ListenerStarted );
+                if ( Logger.ListenerStarted is { } listenerStarted )
+                    listenerStarted.Emit( MessageBrokerServerListenerStartedEvent.Create( this, traceId ) );
+
                 cancellationToken.ThrowIfCancellationRequested();
             }
             catch ( Exception exc )
             {
-                MessageBrokerServerErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
+                if ( Logger.Error is { } error )
+                    error.Emit( MessageBrokerServerErrorEvent.Create( this, traceId, exc ) );
+
                 await DisposeAsync( traceId ).ConfigureAwait( false );
                 return exc;
             }
@@ -264,7 +273,9 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
             }
             catch ( Exception exc )
             {
-                MessageBrokerServerErrorEvent.Create( this, traceId, exc ).Emit( Logger.Error );
+                if ( Logger.Error is { } error )
+                    error.Emit( MessageBrokerServerErrorEvent.Create( this, traceId, exc ) );
+
                 await DisposeAsync( traceId ).ConfigureAwait( false );
                 return exc;
             }
@@ -298,7 +309,9 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
 
         @lock.Dispose();
         exception = DisposedException();
-        MessageBrokerServerErrorEvent.Create( this, traceId, exception ).Emit( Logger.Error );
+        if ( Logger.Error is { } error )
+            error.Emit( MessageBrokerServerErrorEvent.Create( this, traceId, exception ) );
+
         return default;
     }
 
@@ -333,7 +346,8 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
 
     internal async ValueTask DisposeAsyncCore(ulong traceId)
     {
-        MessageBrokerServerDisposingEvent.Create( this, traceId ).Emit( Logger.Disposing );
+        if ( Logger.Disposing is { } disposing )
+            disposing.Emit( MessageBrokerServerDisposingEvent.Create( this, traceId ) );
 
         Exception? exception = null;
         MessageBrokerRemoteClient[] clients;
@@ -358,8 +372,8 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
             }
         }
 
-        if ( exception is not null )
-            MessageBrokerServerErrorEvent.Create( this, traceId, exception ).Emit( Logger.Error );
+        if ( exception is not null && Logger.Error is { } error )
+            error.Emit( MessageBrokerServerErrorEvent.Create( this, traceId, exception ) );
 
         await Parallel.ForEachAsync( streams, (s, _) => s.OnServerDisposedAsync( traceId ) ).ConfigureAwait( false );
         foreach ( var channel in channels )
@@ -375,7 +389,8 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         using ( AcquireLock() )
             _state = MessageBrokerServerState.Disposed;
 
-        MessageBrokerServerDisposedEvent.Create( this, traceId ).Emit( Logger.Disposed );
+        if ( Logger.Disposed is { } disposed )
+            disposed.Emit( MessageBrokerServerDisposedEvent.Create( this, traceId ) );
     }
 
     [StackTraceHidden]

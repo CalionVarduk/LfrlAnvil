@@ -45,10 +45,10 @@ internal struct QueueMessageStore
     internal bool TryPeekNext(
         Timestamp now,
         ref ListSlim<DiscardedMessage> discarded,
-        out QueueMessage message,
-        out MessageType messageType,
-        out int retryAttempt,
-        out int lastRedeliveryAttempt)
+        ref QueueMessage message,
+        ref MessageType messageType,
+        ref int retry,
+        ref int lastRedelivery)
     {
         Assume.True( discarded.IsEmpty );
         Assume.IsGreaterThan( discarded.Capacity, 0 );
@@ -64,29 +64,23 @@ internal struct QueueMessageStore
             {
                 message = entry.Message;
                 messageType = MessageType.Redelivery;
-                retryAttempt = entry.RetryAttempt;
-                lastRedeliveryAttempt = entry.RedeliveryAttempt;
+                retry = entry.Retry;
+                lastRedelivery = entry.Redelivery;
                 return true;
             }
 
             discarded.Add(
                 new DiscardedMessage(
                     entry.Message,
-                    entry.RetryAttempt,
-                    entry.RedeliveryAttempt,
+                    entry.Retry,
+                    entry.Redelivery,
                     MessageBrokerQueueDiscardMessageReason.DisposedUnacked ) );
 
             var nextNode = unackedNode.Value.Next;
             Unacked.Remove( unackedNode.Value.Index );
             unackedNode = nextNode;
-            if ( discarded.Count < discarded.Capacity )
-                continue;
-
-            message = default;
-            messageType = default;
-            retryAttempt = default;
-            lastRedeliveryAttempt = default;
-            return false;
+            if ( discarded.Count >= discarded.Capacity )
+                return false;
         }
 
         while ( ! Retries.IsEmpty )
@@ -99,8 +93,8 @@ internal struct QueueMessageStore
             {
                 message = entry.Message;
                 messageType = MessageType.Retry;
-                retryAttempt = entry.RetryAttempt;
-                lastRedeliveryAttempt = entry.RedeliveryAttempt;
+                retry = entry.Retry;
+                lastRedelivery = entry.Redelivery;
                 return true;
             }
 
@@ -110,19 +104,13 @@ internal struct QueueMessageStore
             discarded.Add(
                 new DiscardedMessage(
                     entry.Message,
-                    entry.RetryAttempt,
-                    entry.RedeliveryAttempt,
+                    entry.Retry,
+                    entry.Redelivery,
                     MessageBrokerQueueDiscardMessageReason.DisposedRetry ) );
 
             Retries.Pop();
-            if ( discarded.Count < discarded.Capacity )
-                continue;
-
-            message = default;
-            messageType = default;
-            retryAttempt = default;
-            lastRedeliveryAttempt = default;
-            return false;
+            if ( discarded.Count >= discarded.Capacity )
+                return false;
         }
 
         while ( ! Pending.IsEmpty )
@@ -132,8 +120,8 @@ internal struct QueueMessageStore
             {
                 message = next;
                 messageType = MessageType.Pending;
-                retryAttempt = 0;
-                lastRedeliveryAttempt = 0;
+                retry = 0;
+                lastRedelivery = 0;
                 return true;
             }
 
@@ -146,16 +134,12 @@ internal struct QueueMessageStore
                 break;
         }
 
-        message = default;
-        messageType = default;
-        retryAttempt = default;
-        lastRedeliveryAttempt = default;
         return false;
     }
 
-    internal void Enqueue(MessageBrokerChannelPublisherBinding publisher, MessageBrokerChannelListenerBinding listener, int messageStoreKey)
+    internal void Enqueue(MessageBrokerChannelPublisherBinding publisher, MessageBrokerChannelListenerBinding listener, int storeKey)
     {
-        Pending.Enqueue( new QueueMessage( publisher, listener, messageStoreKey ) );
+        Pending.Enqueue( new QueueMessage( publisher, listener, storeKey ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -205,7 +189,7 @@ internal struct QueueMessageStore
         return ref Unacked[ackId - 1];
     }
 
-    internal int AddUnacked(QueueMessage message, ulong messageId, int retryAttempt, int redeliveryAttempt, out Timestamp expiresAt)
+    internal int AddUnacked(QueueMessage message, ulong messageId, int retry, int redelivery, out Timestamp expiresAt)
     {
         expiresAt = message.Listener.Client.GetTimestamp() + message.Listener.MinAckTimeout;
         var last = Unacked.Last;
@@ -216,12 +200,12 @@ internal struct QueueMessageStore
                 expiresAt = lastEntry.ExpiresAt;
         }
 
-        return Unacked.Add( new UnackedEntry( message, messageId, retryAttempt, redeliveryAttempt, expiresAt ) ) + 1;
+        return Unacked.Add( new UnackedEntry( message, messageId, retry, redelivery, expiresAt ) ) + 1;
     }
 
-    internal void ScheduleRetry(QueueMessage message, int retryAttempt, int redeliveryAttempt, Duration delay)
+    internal void ScheduleRetry(QueueMessage message, int retry, int redelivery, Duration delay)
     {
-        Retries.Add( message, retryAttempt, redeliveryAttempt, delay );
+        Retries.Add( message, retry, redelivery, delay );
     }
 
     internal void RemoveUnacked(int ackId)
@@ -247,7 +231,8 @@ internal struct QueueMessageStore
             }
             catch ( Exception exc )
             {
-                MessageBrokerQueueErrorEvent.Create( queue, traceId, exc ).Emit( queue.Logger.Error );
+                if ( queue.Logger.Error is { } error )
+                    error.Emit( MessageBrokerQueueErrorEvent.Create( queue, traceId, exc ) );
             }
         }
 
@@ -278,7 +263,8 @@ internal struct QueueMessageStore
             }
             catch ( Exception exc )
             {
-                MessageBrokerQueueErrorEvent.Create( queue, traceId, exc ).Emit( queue.Logger.Error );
+                if ( queue.Logger.Error is { } error )
+                    error.Emit( MessageBrokerQueueErrorEvent.Create( queue, traceId, exc ) );
             }
         }
 
@@ -304,7 +290,8 @@ internal struct QueueMessageStore
             }
             catch ( Exception exc )
             {
-                MessageBrokerQueueErrorEvent.Create( queue, traceId, exc ).Emit( queue.Logger.Error );
+                if ( queue.Logger.Error is { } error )
+                    error.Emit( MessageBrokerQueueErrorEvent.Create( queue, traceId, exc ) );
             }
         }
 
@@ -359,26 +346,25 @@ internal struct QueueMessageStore
 
     internal readonly struct UnackedEntry
     {
-        internal UnackedEntry(QueueMessage message, ulong messageId, int retryAttempt, int redeliveryAttempt, Timestamp expiresAt)
+        internal UnackedEntry(QueueMessage message, ulong messageId, int retry, int redelivery, Timestamp expiresAt)
         {
             Message = message;
             MessageId = messageId;
-            RetryAttempt = retryAttempt;
-            RedeliveryAttempt = redeliveryAttempt;
+            Retry = retry;
+            Redelivery = redelivery;
             ExpiresAt = expiresAt;
         }
 
         internal readonly QueueMessage Message;
         internal readonly ulong MessageId;
-        internal readonly int RetryAttempt;
-        internal readonly int RedeliveryAttempt;
+        internal readonly int Retry;
+        internal readonly int Redelivery;
         internal readonly Timestamp ExpiresAt;
 
         [Pure]
         public override string ToString()
         {
-            return
-                $"Message = ({Message}), MessageId = {MessageId}, Retry = {RetryAttempt}, Redelivery = {RedeliveryAttempt}, ExpiresAt = {ExpiresAt}";
+            return $"Message = ({Message}), MessageId = {MessageId}, Retry = {Retry}, Redelivery = {Redelivery}, ExpiresAt = {ExpiresAt}";
         }
     }
 }

@@ -29,18 +29,16 @@ public readonly struct MessageBrokerQueueMessageProcessedEvent
         MessageBrokerChannelPublisherBinding publisher,
         ulong messageId,
         int ackId,
-        Timestamp ackExpiresAt,
-        int length,
-        bool messageDataRemoved)
+        bool messageRemoved,
+        Timestamp ackExpiresAt)
     {
         Source = MessageBrokerQueueEventSource.Create( listener.Queue, traceId );
         Listener = listener;
         Publisher = publisher;
         MessageId = messageId;
         AckId = ackId;
+        MessageRemoved = messageRemoved;
         AckExpiresAt = ackExpiresAt;
-        Length = length;
-        MessageDataRemoved = messageDataRemoved;
     }
 
     /// <summary>
@@ -69,20 +67,15 @@ public readonly struct MessageBrokerQueueMessageProcessedEvent
     public int AckId { get; }
 
     /// <summary>
-    /// Moment of pending ACK expiration.
-    /// </summary>
-    public Timestamp AckExpiresAt { get; }
-
-    /// <summary>
-    /// Message length.
-    /// </summary>
-    public int Length { get; }
-
-    /// <summary>
     /// Specifies whether or not the data of the message has been removed from the stream's message store
     /// due to no longer being referenced.
     /// </summary>
-    public bool MessageDataRemoved { get; }
+    public bool MessageRemoved { get; }
+
+    /// <summary>
+    /// Moment of pending ACK expiration.
+    /// </summary>
+    public Timestamp AckExpiresAt { get; }
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerQueueMessageProcessedEvent"/> instance.
@@ -92,9 +85,9 @@ public readonly struct MessageBrokerQueueMessageProcessedEvent
     public override string ToString()
     {
         var ack = AckId > 0 ? $", Ack = (Id = {AckId}, ExpiresAt = {AckExpiresAt})" : string.Empty;
-        var messageDataRemoved = AckId == 0 ? $", MessageDataRemoved = {MessageDataRemoved}" : string.Empty;
+        var messageRemoved = AckId == 0 ? $", MessageRemoved = {MessageRemoved}" : string.Empty;
         return
-            $"[MessageProcessed] {Source}, Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', MessageId = {MessageId}{ack}{messageDataRemoved}, Length = {Length}";
+            $"[MessageProcessed] {Source}, Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', MessageId = {MessageId}{ack}{messageRemoved}";
     }
 
     [Pure]
@@ -105,9 +98,8 @@ public readonly struct MessageBrokerQueueMessageProcessedEvent
         MessageBrokerChannelPublisherBinding publisher,
         ulong messageId,
         int ackId,
-        Timestamp ackExpiresAt,
-        int length,
-        bool messageDataRemoved)
+        bool messageRemoved,
+        Timestamp ackExpiresAt)
     {
         return new MessageBrokerQueueMessageProcessedEvent(
             listener,
@@ -115,8 +107,7 @@ public readonly struct MessageBrokerQueueMessageProcessedEvent
             publisher,
             messageId,
             ackId,
-            ackExpiresAt,
-            length,
-            messageDataRemoved );
+            messageRemoved,
+            ackExpiresAt );
     }
 }
