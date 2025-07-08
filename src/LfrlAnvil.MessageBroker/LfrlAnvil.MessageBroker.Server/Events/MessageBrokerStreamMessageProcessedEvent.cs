@@ -27,16 +27,14 @@ public readonly struct MessageBrokerStreamMessageProcessedEvent
         MessageBrokerChannelPublisherBinding publisher,
         ulong traceId,
         ulong messageId,
-        int length,
         int failures,
-        bool discarded)
+        int filtered)
     {
         Source = MessageBrokerStreamEventSource.Create( publisher.Stream, traceId );
         Publisher = publisher;
         MessageId = messageId;
-        Length = length;
         Failures = failures;
-        Discarded = discarded;
+        Filtered = filtered;
     }
 
     /// <summary>
@@ -55,19 +53,14 @@ public readonly struct MessageBrokerStreamMessageProcessedEvent
     public ulong MessageId { get; }
 
     /// <summary>
-    /// Message length.
-    /// </summary>
-    public int Length { get; }
-
-    /// <summary>
     /// Number of listeners that failed to accept the message.
     /// </summary>
     public int Failures { get; }
 
     /// <summary>
-    /// Specifies whether or not the message was discarded because no listener has accepted it.
+    /// Number of listeners that filtered out the message.
     /// </summary>
-    public bool Discarded { get; }
+    public int Filtered { get; }
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerStreamMessageProcessedEvent"/> instance.
@@ -77,7 +70,7 @@ public readonly struct MessageBrokerStreamMessageProcessedEvent
     public override string ToString()
     {
         return
-            $"[MessageProcessed] {Source}, Channel = [{Publisher.Channel.Id}] '{Publisher.Channel.Name}', Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', MessageId = {MessageId}, Length = {Length}, Failures = {Failures}, Discarded = {Discarded}";
+            $"[MessageProcessed] {Source}, Channel = [{Publisher.Channel.Id}] '{Publisher.Channel.Name}', Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', MessageId = {MessageId}, Failures = {Failures}, Filtered = {Filtered}";
     }
 
     [Pure]
@@ -86,10 +79,9 @@ public readonly struct MessageBrokerStreamMessageProcessedEvent
         MessageBrokerChannelPublisherBinding publisher,
         ulong traceId,
         ulong messageId,
-        int length,
         int failures,
-        bool discarded)
+        int filtered)
     {
-        return new MessageBrokerStreamMessageProcessedEvent( publisher, traceId, messageId, length, failures, discarded );
+        return new MessageBrokerStreamMessageProcessedEvent( publisher, traceId, messageId, failures, filtered );
     }
 }

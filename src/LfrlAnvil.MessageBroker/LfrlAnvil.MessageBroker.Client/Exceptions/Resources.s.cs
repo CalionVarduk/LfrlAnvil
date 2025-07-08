@@ -38,6 +38,9 @@ internal static class Resources
     internal static readonly string ServerFailedToDecodeClientName
         = $"Server failed to decode client's name using {TextEncoding.Instance.EncodingName} encoding.";
 
+    internal static readonly string MaxMessageRoutingTargetCountReached
+        = $"Max message routing target count of {short.MaxValue} was reached.";
+
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string ClientDisposed(string name)

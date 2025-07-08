@@ -26,6 +26,7 @@ internal static class Resources
 {
     internal const string ServerDisposed = "Operation has been cancelled because server is disposed.";
     internal const string UnexpectedServerEndpoint = "Received unexpected server endpoint.";
+    internal const string MessageRoutingIsAlreadyEnqueued = "Message routing is already enqueued.";
 
     internal const string ExternalDelaySourceHasBeenDisposed
         = "Operation has been cancelled because external delay value task source has been disposed.";
@@ -126,6 +127,13 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string TooLargeHeaderPayload(int remaining)
+    {
+        return $"Header payload is too large by {remaining}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string InvalidPayloadFromClient(
         int clientId,
         string clientName,
@@ -184,6 +192,56 @@ internal static class Resources
     internal static string ChannelIdIsNotPositive(int received)
     {
         return $"Expected channel ID to be greater than 0 but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string TargetCountIsNotPositive(short received)
+    {
+        return $"Expected target count to be greater than 0 but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string TargetIdIsNotPositive(int index, int received)
+    {
+        return $"Expected target ID at index {index} to be greater than 0 but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string InvalidTargetNameLength(int index, int length)
+    {
+        return
+            $"Expected target name length at index {index} to be in [{Defaults.NameLengthBounds.Min}, {Defaults.NameLengthBounds.Max}] range but found {length}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string TargetByIdDoesNotExist(int index, int id)
+    {
+        return $"Target client with ID {id} at index {index} could not be found.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string TargetByNameDoesNotExist(int index, string name)
+    {
+        return $"Target client with name '{name}' at index {index} could not be found.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string TargetDuplicateFound(int index, MessageBrokerRemoteClient target)
+    {
+        return $"Target client [{target.Id}] '{target.Name}' at index {index} is a duplicate.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string TargetCountIsTooLarge(int read, int count)
+    {
+        return $"Target count {count} is larger than actual element count {read}.";
     }
 
     [Pure]
@@ -317,6 +375,13 @@ internal static class Resources
     internal static string UnexpectedPacketLength(int length)
     {
         return $"Expected packet length to be in [0, {int.MaxValue}] range but found {length}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string UnexpectedPacketElementLength(int index, int remaining, int expected)
+    {
+        return $"Expected packet element length at index {index} to be at least {expected} but found {remaining}.";
     }
 
     [Pure]

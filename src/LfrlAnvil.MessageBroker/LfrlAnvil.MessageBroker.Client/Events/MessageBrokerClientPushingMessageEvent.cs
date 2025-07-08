@@ -27,11 +27,13 @@ public readonly struct MessageBrokerClientPushingMessageEvent
         ulong traceId,
         MessageBrokerPublisher publisher,
         int length,
+        short routingTargetCount,
         bool confifm)
     {
         Source = MessageBrokerClientEventSource.Create( client, traceId );
         Publisher = publisher;
         Length = length;
+        RoutingTargetCount = routingTargetCount;
         Confirm = confifm;
     }
 
@@ -51,6 +53,11 @@ public readonly struct MessageBrokerClientPushingMessageEvent
     public int Length { get; }
 
     /// <summary>
+    /// Number of explicit routing targets.
+    /// </summary>
+    public short RoutingTargetCount { get; }
+
+    /// <summary>
     /// Specifies whether or not the server should send confirmation that it successfully handled the message.
     /// </summary>
     public bool Confirm { get; }
@@ -62,8 +69,9 @@ public readonly struct MessageBrokerClientPushingMessageEvent
     [Pure]
     public override string ToString()
     {
+        var routingTargetCount = RoutingTargetCount > 0 ? $", RoutingTargetCount = {RoutingTargetCount}" : string.Empty;
         return
-            $"[PushingMessage] {Source}, Channel = [{Publisher.ChannelId}] '{Publisher.ChannelName}', Stream = [{Publisher.StreamId}] '{Publisher.StreamName}', Length = {Length}, Confirm = {Confirm}";
+            $"[PushingMessage] {Source}, Channel = [{Publisher.ChannelId}] '{Publisher.ChannelName}', Stream = [{Publisher.StreamId}] '{Publisher.StreamName}', Length = {Length}{routingTargetCount}, Confirm = {Confirm}";
     }
 
     [Pure]
@@ -73,8 +81,9 @@ public readonly struct MessageBrokerClientPushingMessageEvent
         ulong traceId,
         MessageBrokerPublisher publisher,
         int length,
+        short routingTargetCount,
         bool confirm)
     {
-        return new MessageBrokerClientPushingMessageEvent( client, traceId, publisher, length, confirm );
+        return new MessageBrokerClientPushingMessageEvent( client, traceId, publisher, length, routingTargetCount, confirm );
     }
 }

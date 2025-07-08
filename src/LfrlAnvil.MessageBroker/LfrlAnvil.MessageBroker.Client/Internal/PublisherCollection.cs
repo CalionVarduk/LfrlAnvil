@@ -502,39 +502,106 @@ internal struct PublisherCollection
         using ( MessageBrokerClientTraceEvent.CreateScope( client, traceId, MessageBrokerClientTraceEventType.PushMessage ) )
         {
             var buffer = context.Data;
+            var routing = context.Routing;
+            var routingBuffer = routing.Data;
             var messageLength = unchecked( buffer.Length - Protocol.PushMessageHeader.Length );
             if ( client.Logger.PushingMessage is { } pushingMessage )
                 pushingMessage.Emit(
-                    MessageBrokerClientPushingMessageEvent.Create( client, traceId, context.Publisher, messageLength, confirm ) );
+                    MessageBrokerClientPushingMessageEvent.Create(
+                        client,
+                        traceId,
+                        context.Publisher,
+                        messageLength,
+                        routing.TargetCount,
+                        confirm ) );
 
             ManualResetValueTaskSource<IncomingPacketToken>? responseSource = null;
             Protocol.PushMessageHeader request;
 
             try
             {
-                request = new Protocol.PushMessageHeader( context.Publisher.ChannelId, messageLength, confirm );
+                var routingRequest = default( Protocol.PushMessageRoutingHeader );
+                if ( routing.TargetCount > 0 )
+                {
+                    routingRequest = new Protocol.PushMessageRoutingHeader(
+                        routing.TargetCount,
+                        unchecked( routingBuffer.Length - Protocol.PushMessageRoutingHeader.Length ) );
+
+                    routingRequest.Serialize( routingBuffer.Slice( 0, Protocol.PushMessageRoutingHeader.Length ), reverseEndianness );
+                }
+
+                request = new Protocol.PushMessageHeader( context.Publisher.ChannelId, messageLength, confirm, context.ClearOnDispose );
                 request.Serialize( buffer.Slice( 0, Protocol.PushMessageHeader.Length ), reverseEndianness );
 
+                ManualResetValueTaskSource<bool>? routingWriterSource = null;
                 ManualResetValueTaskSource<bool> writerSource;
                 using ( client.AcquireActiveLock( traceId, out var exc ) )
                 {
                     if ( exc is not null )
                         return exc;
 
+                    if ( routing.TargetCount > 0 )
+                        routingWriterSource = client.WriterQueue.AcquireSource();
+
                     writerSource = client.WriterQueue.AcquireSource();
                 }
 
-                if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
-                    return client.EmitError( client.DisposedException(), traceId );
-
-                using ( client.AcquireActiveLock( traceId, out var exc ) )
+                if ( routingWriterSource is not null )
                 {
-                    if ( exc is not null )
-                        return exc;
+                    if ( ! await routingWriterSource.GetTask().ConfigureAwait( false ) )
+                        return client.EmitError( client.DisposedException(), traceId );
 
-                    client.EventScheduler.PausePing();
+                    using ( client.AcquireActiveLock( traceId, out var exc ) )
+                    {
+                        if ( exc is not null )
+                            return exc;
+
+                        client.EventScheduler.PausePing();
+                    }
+
+                    var routingResult = await client.WriteAsync( routingRequest.Header, routingBuffer, traceId ).ConfigureAwait( false );
+                    if ( routingResult.Exception is not null )
+                    {
+                        await client.DisposeAsync( traceId ).ConfigureAwait( false );
+                        return routingResult.Exception;
+                    }
+
+                    using ( client.AcquireActiveLock( traceId, out var exc ) )
+                    {
+                        if ( exc is not null )
+                            return exc;
+
+                        client.WriterQueue.Release( client, routingWriterSource );
+                    }
+
+                    if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
+                        return client.EmitError( client.DisposedException(), traceId );
+
                     if ( confirm )
-                        responseSource = client.ResponseQueue.EnqueueSource();
+                    {
+                        using ( client.AcquireActiveLock( traceId, out var exc ) )
+                        {
+                            if ( exc is not null )
+                                return exc;
+
+                            responseSource = client.ResponseQueue.EnqueueSource();
+                        }
+                    }
+                }
+                else
+                {
+                    if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
+                        return client.EmitError( client.DisposedException(), traceId );
+
+                    using ( client.AcquireActiveLock( traceId, out var exc ) )
+                    {
+                        if ( exc is not null )
+                            return exc;
+
+                        client.EventScheduler.PausePing();
+                        if ( confirm )
+                            responseSource = client.ResponseQueue.EnqueueSource();
+                    }
                 }
 
                 var result = await client.WriteAsync( request.Header, buffer, traceId ).ConfigureAwait( false );

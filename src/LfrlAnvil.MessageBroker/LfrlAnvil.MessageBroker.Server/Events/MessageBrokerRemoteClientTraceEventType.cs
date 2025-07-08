@@ -50,32 +50,37 @@ public enum MessageBrokerRemoteClientTraceEventType : byte
     UnbindPublisher = 5,
 
     /// <summary>
+    /// Specifies that trace is related to the client pushing message routing packet to the server.
+    /// </summary>
+    PushMessageRouting = 6,
+
+    /// <summary>
     /// Specifies that trace is related to the client pushing message packet to the server.
     /// </summary>
-    PushMessage = 6,
+    PushMessage = 7,
 
     /// <summary>
     /// Specifies that trace is related to the server sending message notification to the client.
     /// </summary>
-    MessageNotification = 7,
+    MessageNotification = 8,
 
     /// <summary>
     /// Specifies that trace is related to the client sending a message notification ACK to the server.
     /// </summary>
-    Ack = 8,
+    Ack = 9,
 
     /// <summary>
     /// Specifies that trace is related to the client sending a negative message notification ACK to the server.
     /// </summary>
-    NegativeAck = 9,
+    NegativeAck = 10,
 
     /// <summary>
     /// Specifies that trace is related to the client disposal.
     /// </summary>
-    Dispose = 10,
+    Dispose = 11,
 
     /// <summary>
     /// Specifies that trace is related to an unexpected occurrence in the client e.g. an error.
     /// </summary>
-    Unexpected = 11
+    Unexpected = 12
 }

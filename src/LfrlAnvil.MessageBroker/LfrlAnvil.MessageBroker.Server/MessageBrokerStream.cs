@@ -109,6 +109,7 @@ public sealed class MessageBrokerStream
         MessageBrokerChannelPublisherBinding publisher,
         MemoryPoolToken<byte> token,
         ReadOnlyMemory<byte> data,
+        in MessageRouting routing,
         ref ulong messageId,
         ref int storeKey,
         ref ulong streamTraceId)
@@ -123,7 +124,7 @@ public sealed class MessageBrokerStream
                 if ( publisher.ShouldCancel )
                     return PushMessageResult.BindingDisposed;
 
-                messageId = MessageStore.Add( publisher, token, data, out storeKey );
+                messageId = MessageStore.Add( publisher, token, data, in routing, out storeKey );
             }
 
             streamTraceId = GetTraceId();

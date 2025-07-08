@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using System.Diagnostics.Contracts;
 using System.Net.Sockets;
 using System.Numerics;
@@ -114,6 +115,14 @@ internal static class Defaults
         {
             Assume.IsGreaterThanOrEqualTo( minCapacity, MemorySize.BytesPerKilobyte );
             var result = BitOperations.RoundUpToPowerOf2( unchecked( ( uint )minCapacity ) );
+            return result > int.MaxValue ? int.MaxValue : unchecked( ( int )result );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static int GetRoutingBufferCapacity(int minCapacity)
+        {
+            var result = BitOperations.RoundUpToPowerOf2( unchecked( ( uint )Math.Max( minCapacity, 64 ) ) );
             return result > int.MaxValue ? int.MaxValue : unchecked( ( int )result );
         }
     }

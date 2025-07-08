@@ -27,12 +27,14 @@ public readonly struct MessageBrokerStreamProcessingMessageEvent
         ulong traceId,
         ulong messageId,
         int length,
+        bool hasRouting,
         ReadOnlyArray<MessageBrokerChannelListenerBinding> listeners)
     {
         Source = MessageBrokerStreamEventSource.Create( publisher.Stream, traceId );
         Publisher = publisher;
         MessageId = messageId;
         Length = length;
+        HasRouting = hasRouting;
         Listeners = listeners;
     }
 
@@ -57,6 +59,11 @@ public readonly struct MessageBrokerStreamProcessingMessageEvent
     public int Length { get; }
 
     /// <summary>
+    /// Specifies whether or not this message has explicit routing.
+    /// </summary>
+    public bool HasRouting { get; }
+
+    /// <summary>
     /// Collection of <see cref="MessageBrokerChannelListenerBinding"/> that will receive the message.
     /// </summary>
     public ReadOnlyArray<MessageBrokerChannelListenerBinding> Listeners { get; }
@@ -69,7 +76,7 @@ public readonly struct MessageBrokerStreamProcessingMessageEvent
     public override string ToString()
     {
         return
-            $"[ProcessingMessage] {Source}, Channel = [{Publisher.Channel.Id}] '{Publisher.Channel.Name}', Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', MessageId = {MessageId}, Length = {Length}, ListenerCount = {Listeners.Count}";
+            $"[ProcessingMessage] {Source}, Channel = [{Publisher.Channel.Id}] '{Publisher.Channel.Name}', Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', MessageId = {MessageId}, Length = {Length}, HasRouting = {HasRouting}, ListenerCount = {Listeners.Count}";
     }
 
     [Pure]
@@ -79,8 +86,9 @@ public readonly struct MessageBrokerStreamProcessingMessageEvent
         ulong traceId,
         ulong messageId,
         int length,
+        bool hasRouting,
         ReadOnlyArray<MessageBrokerChannelListenerBinding> listeners)
     {
-        return new MessageBrokerStreamProcessingMessageEvent( publisher, traceId, messageId, length, listeners );
+        return new MessageBrokerStreamProcessingMessageEvent( publisher, traceId, messageId, length, hasRouting, listeners );
     }
 }

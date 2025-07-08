@@ -295,6 +295,31 @@ internal sealed class ClientMock : IDisposable
         Send( buffer );
     }
 
+    internal void SendPushMessageRouting(IReadOnlyCollection<Routing> routes, short? targetCount = null, uint? payload = null)
+    {
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.PushMessageRoutingHeader.Length + routes.Sum( r => r.Length )];
+        var writer = new BinaryContractWriter( buffer );
+        writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.PushMessageRouting );
+        writer.MoveWrite( payload ?? ( uint )(Protocol.PushMessageRoutingHeader.Length + routes.Sum( r => r.Length )) );
+        writer.MoveWrite( ( ushort )(targetCount ?? routes.Count) );
+        foreach ( var route in routes )
+        {
+            if ( route.IsName )
+            {
+                writer.MoveWrite( ( ushort )((route.Name.ByteCount << 1) | 1) );
+                route.Name.Encode( writer.GetSpan( route.Name.ByteCount ) ).ThrowIfError();
+                writer.Move( route.Name.ByteCount );
+            }
+            else
+            {
+                writer.MoveWrite( 0 );
+                writer.MoveWrite( ( uint )route.Id );
+            }
+        }
+
+        Send( buffer );
+    }
+
     internal void SendPushMessage(int channelId, byte[] data, bool confirm = true, uint? payload = null)
     {
         var buffer = new byte[Protocol.PacketHeader.Length + Protocol.PushMessageHeader.Length + data.Length];

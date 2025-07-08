@@ -25,39 +25,44 @@ public enum MessageBrokerServerEndpoint : byte
     Ping = 1,
 
     /// <summary>
+    /// Represents push message routing sent by client.
+    /// </summary>
+    PushMessageRouting = 2,
+
+    /// <summary>
     /// Represents push message sent by client.
     /// </summary>
-    PushMessage = 2,
+    PushMessage = 3,
 
     /// <summary>
     /// Represents bind publisher request sent by client.
     /// </summary>
-    BindPublisherRequest = 3,
+    BindPublisherRequest = 4,
 
     /// <summary>
     /// Represents unbind publisher request sent by client.
     /// </summary>
-    UnbindPublisherRequest = 4,
+    UnbindPublisherRequest = 5,
 
     /// <summary>
     /// Represents bind listener request sent by client.
     /// </summary>
-    BindListenerRequest = 5,
+    BindListenerRequest = 6,
 
     /// <summary>
     /// Represents unbind listener request sent by client.
     /// </summary>
-    UnbindListenerRequest = 6,
+    UnbindListenerRequest = 7,
 
     /// <summary>
     /// Represents message notification ACK sent by client.
     /// </summary>
-    MessageNotificationAck = 7,
+    MessageNotificationAck = 8,
 
     /// <summary>
     /// Represents message notification negative ACK sent by client.
     /// </summary>
-    MessageNotificationNack = 8,
+    MessageNotificationNack = 9,
 
     /// <summary>
     /// Represents handshake request sent by client.

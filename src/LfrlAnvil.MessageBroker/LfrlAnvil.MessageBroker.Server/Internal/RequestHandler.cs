@@ -132,6 +132,8 @@ internal struct RequestHandler
                             pongData,
                             traceId )
                         .ConfigureAwait( false ),
+                    MessageBrokerServerEndpoint.PushMessageRouting => await HandlePushMessageRoutingAsync( client, request, traceId )
+                        .ConfigureAwait( false ),
                     MessageBrokerServerEndpoint.PushMessage => await HandlePushMessageAsync( client, request, traceId )
                         .ConfigureAwait( false ),
                     MessageBrokerServerEndpoint.BindPublisherRequest => await HandleBindPublisherRequestAsync( client, request, traceId )
@@ -981,11 +983,99 @@ internal struct RequestHandler
         }
     }
 
+    private static async ValueTask<RequestResult> HandlePushMessageRoutingAsync(
+        MessageBrokerRemoteClient client,
+        IncomingPacketToken request,
+        ulong traceId)
+    {
+        using ( MessageBrokerRemoteClientTraceEvent.CreateScope(
+            client,
+            traceId,
+            MessageBrokerRemoteClientTraceEventType.PushMessageRouting ) )
+        {
+            var readPacket = client.Logger.ReadPacket;
+            MessageRouting.Result routingResult;
+            Protocol.PushMessageRoutingHeader parsedRequest;
+            try
+            {
+                readPacket?.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateReceived( client, traceId, request.Header ) );
+
+                var exception = Protocol.AssertMinPayload( client, request.Header, Protocol.PushMessageRoutingHeader.Length );
+                if ( exception is not null )
+                    return await FinishInvalidRequestHandlingAsync( client, exception, traceId ).ConfigureAwait( false );
+
+                parsedRequest = Protocol.PushMessageRoutingHeader.Parse(
+                    request.Data.Slice( 0, Protocol.PushMessageRoutingHeader.Length ) );
+
+                var requestErrors = parsedRequest.StringifyErrors();
+                if ( requestErrors.Count > 0 )
+                {
+                    var error = Protocol.ProtocolException( client, request.Header, requestErrors );
+                    return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
+                }
+
+                bool hasEnqueuedRouting;
+                using ( client.AcquireLock() )
+                    hasEnqueuedRouting = client.MessageRouting.IsActive;
+
+                if ( hasEnqueuedRouting )
+                {
+                    var error = Protocol.ProtocolException(
+                        client,
+                        request.Header,
+                        Chain.Create( Resources.MessageRoutingIsAlreadyEnqueued ) );
+
+                    return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
+                }
+
+                if ( client.Logger.EnqueueingRouting is { } enqueueingRouting )
+                    enqueueingRouting.Emit(
+                        MessageBrokerRemoteClientEnqueueingRoutingEvent.Create( client, traceId, parsedRequest.TargetCount ) );
+
+                routingResult = client.GetMessageRouting(
+                    traceId,
+                    request.Header,
+                    parsedRequest.TargetCount,
+                    request.Data.Slice( Protocol.PushMessageRoutingHeader.Length ).Span );
+            }
+            finally
+            {
+                request.PoolToken.Return( client, traceId );
+            }
+
+            if ( ! routingResult.IsValid )
+            {
+                routingResult.Value.PoolToken.Return( client, traceId );
+                await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
+                return RequestResult.Done();
+            }
+
+            readPacket?.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( client, traceId, request.Header ) );
+
+            using ( client.AcquireLock() )
+            {
+                if ( ! client.ShouldCancel )
+                    client.MessageRouting = routingResult.Value;
+            }
+
+            if ( client.Logger.RoutingEnqueued is { } routingEnqueued )
+                routingEnqueued.Emit(
+                    MessageBrokerRemoteClientRoutingEnqueuedEvent.Create(
+                        client,
+                        traceId,
+                        parsedRequest.TargetCount,
+                        routingResult.FoundCount ) );
+
+            return FinishRequestHandling( client, traceId );
+        }
+    }
+
     private static async ValueTask<RequestResult> HandlePushMessageAsync(
         MessageBrokerRemoteClient client,
         IncomingPacketToken request,
         ulong traceId)
     {
+        var requestPoolToken = request.PoolToken;
         using ( MessageBrokerRemoteClientTraceEvent.CreateScope( client, traceId, MessageBrokerRemoteClientTraceEventType.PushMessage ) )
         {
             var disposeBuffer = true;
@@ -993,8 +1083,9 @@ internal struct RequestHandler
             ulong messageId = 0;
             ulong streamTraceId = 0;
             MessageBrokerChannelPublisherBinding? publisher;
-            PushMessageResult pushMessageResult;
+            var pushMessageResult = PushMessageResult.NotBound;
             Protocol.PushMessageHeader parsedRequest;
+            var messageRouting = MessageRouting.Empty;
             var messageData = Memory<byte>.Empty;
 
             try
@@ -1014,11 +1105,12 @@ internal struct RequestHandler
                     return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
                 }
 
+                requestPoolToken = requestPoolToken.EnableClearing( parsedRequest.ClearBuffer );
                 var messageToken = MemoryPoolToken<byte>.Empty;
                 var messageLength = request.Data.Length - Protocol.PushMessageHeader.Length;
                 if ( messageLength > 0 )
                 {
-                    messageToken = request.PoolToken;
+                    messageToken = requestPoolToken;
                     messageToken.SetLength( messageLength, out messageData, trimStart: true );
                 }
 
@@ -1036,12 +1128,15 @@ internal struct RequestHandler
                     if ( exc is not null )
                         return RequestResult.Done();
 
+                    messageRouting = client.MessageRouting;
+                    client.MessageRouting = MessageRouting.Empty;
                     if ( client.PublishersByChannelId.TryGet( parsedRequest.ChannelId, out publisher ) )
                     {
                         pushMessageResult = publisher.Stream.PushMessage(
                             publisher,
                             messageToken,
                             messageData,
+                            in messageRouting,
                             ref messageId,
                             ref storeKey,
                             ref streamTraceId );
@@ -1049,14 +1144,15 @@ internal struct RequestHandler
                         if ( pushMessageResult == PushMessageResult.Success && messageData.Length > 0 )
                             disposeBuffer = false;
                     }
-                    else
-                        pushMessageResult = PushMessageResult.NotBound;
                 }
             }
             finally
             {
                 if ( disposeBuffer )
-                    request.PoolToken.Return( client, traceId );
+                    requestPoolToken.Return( client, traceId );
+
+                if ( pushMessageResult != PushMessageResult.Success )
+                    messageRouting.PoolToken.Return( client, traceId );
             }
 
             var poolToken = MemoryPoolToken<byte>.Empty;
@@ -1117,7 +1213,12 @@ internal struct RequestHandler
                     }
 
                     if ( client.Logger.MessagePushed is { } messagePushed )
-                        messagePushed.Emit( MessageBrokerRemoteClientMessagePushedEvent.Create( publisher, traceId, messageId ) );
+                        messagePushed.Emit(
+                            MessageBrokerRemoteClientMessagePushedEvent.Create(
+                                publisher,
+                                traceId,
+                                messageId,
+                                messageRouting.IsActive ? messageRouting.TraceId : null ) );
 
                     if ( ! parsedRequest.Confirm )
                         return FinishRequestHandling( client, traceId );

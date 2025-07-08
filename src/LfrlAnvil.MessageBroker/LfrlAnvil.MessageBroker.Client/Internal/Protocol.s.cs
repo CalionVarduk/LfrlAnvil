@@ -832,6 +832,46 @@ internal static class Protocol
         }
     }
 
+    internal readonly struct PushMessageRoutingHeader
+    {
+        internal const int Length = PacketHeader.Length + sizeof( ushort );
+        internal readonly PacketHeader Header;
+        internal readonly short TargetCount;
+
+        internal PushMessageRoutingHeader(short targetCount, int length)
+        {
+            Assume.IsGreaterThan( targetCount, 0 );
+            Assume.IsGreaterThan( length, 0 );
+            TargetCount = targetCount;
+            Header = PacketHeader.Create( MessageBrokerServerEndpoint.PushMessageRouting, unchecked( sizeof( ushort ) + ( uint )length ) );
+        }
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"[{Header}] TargetCount = {TargetCount}";
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal void Serialize(Memory<byte> target, bool reverseEndianness)
+        {
+            Assume.Equals( target.Length, Length );
+
+            var payload = Header.Payload;
+            var targetCount = unchecked( ( ushort )TargetCount );
+            if ( reverseEndianness )
+            {
+                payload = BinaryPrimitives.ReverseEndianness( payload );
+                targetCount = BinaryPrimitives.ReverseEndianness( targetCount );
+            }
+
+            var writer = new BinaryContractWriter( target.Span );
+            writer.MoveWrite( Header.EndpointCode );
+            writer.MoveWrite( payload );
+            writer.Write( targetCount );
+        }
+    }
+
     internal readonly struct PushMessageHeader
     {
         internal const int Length = PacketHeader.Length + sizeof( byte ) + sizeof( uint );
@@ -839,10 +879,10 @@ internal static class Protocol
         internal readonly byte Flags;
         internal readonly int ChannelId;
 
-        internal PushMessageHeader(int channelId, int messageLength, bool confirm)
+        internal PushMessageHeader(int channelId, int messageLength, bool confirm, bool clearOnDispose)
         {
             Assume.IsInRange( messageLength, 0, int.MaxValue - Length );
-            Flags = ( byte )(confirm ? 1 : 0);
+            Flags = ( byte )((confirm ? 1 : 0) | (clearOnDispose ? 2 : 0));
             ChannelId = channelId;
             Header = PacketHeader.Create(
                 MessageBrokerServerEndpoint.PushMessage,

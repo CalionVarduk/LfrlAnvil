@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -112,6 +113,7 @@ public sealed class MessageBrokerPublisher
     /// Pushes a message to the bound channel.
     /// </summary>
     /// <param name="data">Message to push.</param>
+    /// <param name="targets">Optional collection of explicit routing targets. Equal to <b>null</b> by default.</param>
     /// <param name="confirm">
     /// Specifies whether or not the server should send confirmation that it received the message. Equal to <b>true</b> by default.
     /// </param>
@@ -130,10 +132,22 @@ public sealed class MessageBrokerPublisher
     /// </remarks>
     public async ValueTask<Result<MessageBrokerPushResult>> PushAsync(
         ReadOnlyMemory<byte> data,
+        IEnumerable<MessageBrokerClientRoutingTarget>? targets = null,
         bool confirm = true,
         bool clearBuffer = false)
     {
         using var context = GetPushContext( MemorySize.FromBytes( data.Length ), clearBuffer );
+        if ( targets is not null )
+        {
+            foreach ( var target in targets )
+            {
+                if ( target.IsFromName )
+                    context.AddTarget( target.Name );
+                else
+                    context.AddTarget( target.Id );
+            }
+        }
+
         return await context.Append( data.Span ).PushAsync( confirm ).ConfigureAwait( false );
     }
 

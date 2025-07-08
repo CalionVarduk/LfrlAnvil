@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using System.Diagnostics.Contracts;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Diagnostics;
@@ -93,6 +95,14 @@ internal static class Defaults
         {
             var result = value is not null ? PoolSegmentLengthBounds.Clamp( value.Value ) : PoolSegmentLengthBounds.Min;
             return unchecked( ( int )result.Bytes );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static int GetBufferCapacity(int minCapacity)
+        {
+            var result = BitOperations.RoundUpToPowerOf2( unchecked( ( uint )Math.Max( minCapacity, 8 ) ) );
+            return result > int.MaxValue ? int.MaxValue : unchecked( ( int )result );
         }
     }
 }

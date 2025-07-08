@@ -24,12 +24,14 @@ namespace LfrlAnvil.MessageBroker.Server.Internal;
 internal struct StreamMessageStore
 {
     private SparseListSlim<Entry> _store;
+    private QueueSlim<RoutingEntry> _routing;
     private ulong _nextMessageId;
     private NullableIndex _nextPendingNodeId;
 
     private StreamMessageStore(int capacity)
     {
         _store = SparseListSlim<Entry>.Create( capacity );
+        _routing = QueueSlim<RoutingEntry>.Create();
         _nextMessageId = 0;
         _nextPendingNodeId = NullableIndex.Null;
     }
@@ -47,6 +49,7 @@ internal struct StreamMessageStore
         MessageBrokerChannelPublisherBinding publisher,
         MemoryPoolToken<byte> poolToken,
         ReadOnlyMemory<byte> data,
+        in MessageRouting routing,
         out int key)
     {
         var messageId = unchecked( _nextMessageId++ );
@@ -54,15 +57,19 @@ internal struct StreamMessageStore
         if ( ! _nextPendingNodeId.HasValue )
             _nextPendingNodeId = NullableIndex.Create( key );
 
+        if ( routing.IsActive )
+            _routing.Enqueue( new RoutingEntry( routing.PoolToken, routing.Data, messageId ) );
+
         return messageId;
     }
 
-    internal bool TryPeekPending(out int key, out StreamMessage message)
+    internal bool TryPeekPending(out int key, out StreamMessage message, out ReadOnlyMemory<byte> routingData)
     {
         if ( ! _nextPendingNodeId.HasValue )
         {
             key = default;
             message = default;
+            routingData = default;
             return false;
         }
 
@@ -70,10 +77,19 @@ internal struct StreamMessageStore
         ref var entryRef = ref _store[key];
         Assume.False( Unsafe.IsNullRef( ref entryRef ) );
         message = entryRef.Message;
+
+        if ( ! _routing.IsEmpty )
+        {
+            ref var nextRouting = ref _routing.First();
+            routingData = nextRouting.MessageId == message.Id ? nextRouting.Data : ReadOnlyMemory<byte>.Empty;
+        }
+        else
+            routingData = ReadOnlyMemory<byte>.Empty;
+
         return true;
     }
 
-    internal Result<bool> DequeuePending(int failCount)
+    internal Exception? DequeuePending(int failCount, bool hasRouting)
     {
         Assume.IsGreaterThanOrEqualTo( failCount, 0 );
         Assume.True( _nextPendingNodeId.HasValue );
@@ -83,14 +99,29 @@ internal struct StreamMessageStore
         var nextNode = node.Value.Next;
         _nextPendingNodeId = nextNode is null ? NullableIndex.Null : NullableIndex.Create( nextNode.Value.Index );
         ref var entry = ref node.Value.Value;
+
+        Exception? routingExc = null;
+        if ( hasRouting )
+        {
+            Assume.False( _routing.IsEmpty );
+            ref var routing = ref _routing.First();
+            Assume.Equals( entry.Message.Id, routing.MessageId );
+            routingExc = routing.PoolToken.Return();
+            _routing.Dequeue();
+        }
+
         entry.RefCount -= failCount + 1;
         if ( entry.RefCount > 0 )
-            return false;
+            return routingExc;
 
         var poolToken = entry.Message.PoolToken;
         _store.Remove( node.Value.Index );
         var exc = poolToken.Return();
-        return exc is null ? Result.Create( true ) : Result.Error( exc, true );
+        return exc is null
+            ? routingExc
+            : routingExc is null
+                ? exc
+                : new AggregateException( [ routingExc, exc ] );
     }
 
     internal bool TryGet(int key, out StreamMessage message)
@@ -182,6 +213,14 @@ internal struct StreamMessageStore
             _nextPendingNodeId = NullableIndex.Null;
         }
 
+        foreach ( ref readonly var entry in _routing )
+        {
+            var exc = entry.PoolToken.Return();
+            if ( exc is not null && extractExceptions )
+                exceptions = exceptions.Extend( exc );
+        }
+
+        _routing = QueueSlim<RoutingEntry>.Create();
         return (discardedMessageCount, exceptions);
     }
 
@@ -225,6 +264,26 @@ internal struct StreamMessageStore
         public override string ToString()
         {
             return $"Message = ({Message}), RefCount = {RefCount}";
+        }
+    }
+
+    private readonly struct RoutingEntry
+    {
+        internal readonly MemoryPoolToken<byte> PoolToken;
+        internal readonly ReadOnlyMemory<byte> Data;
+        internal readonly ulong MessageId;
+
+        public RoutingEntry(MemoryPoolToken<byte> poolToken, ReadOnlyMemory<byte> data, ulong messageId)
+        {
+            PoolToken = poolToken;
+            Data = data;
+            MessageId = messageId;
+        }
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"MessageId = {MessageId}";
         }
     }
 }

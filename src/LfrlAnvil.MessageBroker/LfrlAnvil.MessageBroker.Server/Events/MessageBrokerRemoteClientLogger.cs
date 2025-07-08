@@ -39,6 +39,8 @@ public readonly struct MessageBrokerRemoteClientLogger
         Action<MessageBrokerRemoteClientListenerBoundEvent>? listenerBound,
         Action<MessageBrokerRemoteClientUnbindingListenerEvent>? unbindingListener,
         Action<MessageBrokerRemoteClientListenerUnboundEvent>? listenerUnbound,
+        Action<MessageBrokerRemoteClientEnqueueingRoutingEvent>? enqueueingRouting,
+        Action<MessageBrokerRemoteClientRoutingEnqueuedEvent>? routingEnqueued,
         Action<MessageBrokerRemoteClientPushingMessageEvent>? pushingMessage,
         Action<MessageBrokerRemoteClientMessagePushedEvent>? messagePushed,
         Action<MessageBrokerRemoteClientProcessingMessageEvent>? processingMessage,
@@ -69,6 +71,8 @@ public readonly struct MessageBrokerRemoteClientLogger
         ListenerBound = listenerBound;
         UnbindingListener = unbindingListener;
         ListenerUnbound = listenerUnbound;
+        EnqueueingRouting = enqueueingRouting;
+        RoutingEnqueued = routingEnqueued;
         PushingMessage = pushingMessage;
         MessagePushed = messagePushed;
         ProcessingMessage = processingMessage;
@@ -165,6 +169,16 @@ public readonly struct MessageBrokerRemoteClientLogger
     public readonly Action<MessageBrokerRemoteClientListenerUnboundEvent>? ListenerUnbound;
 
     /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerRemoteClientEnqueueingRoutingEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerRemoteClientEnqueueingRoutingEvent>? EnqueueingRouting;
+
+    /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerRemoteClientRoutingEnqueuedEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerRemoteClientRoutingEnqueuedEvent>? RoutingEnqueued;
+
+    /// <summary>
     /// Optional callback for a <see cref="MessageBrokerRemoteClientPushingMessageEvent"/>.
     /// </summary>
     public readonly Action<MessageBrokerRemoteClientPushingMessageEvent>? PushingMessage;
@@ -248,6 +262,8 @@ public readonly struct MessageBrokerRemoteClientLogger
     /// <param name="listenerBound">Optional <see cref="ListenerBound"/> callback.</param>
     /// <param name="unbindingListener">Optional <see cref="UnbindingListener"/> callback.</param>
     /// <param name="listenerUnbound">Optional <see cref="ListenerUnbound"/> callback.</param>
+    /// <param name="enqueueingRouting">Optional <see cref="EnqueueingRouting"/> callback.</param>
+    /// <param name="routingEnqueued">Optional <see cref="RoutingEnqueued"/> callback.</param>
     /// <param name="pushingMessage">Optional <see cref="PushingMessage"/> callback.</param>
     /// <param name="messagePushed">Optional <see cref="MessagePushed"/> callback.</param>
     /// <param name="processingMessage">Optional <see cref="ProcessingMessage"/> callback.</param>
@@ -280,6 +296,8 @@ public readonly struct MessageBrokerRemoteClientLogger
         Action<MessageBrokerRemoteClientListenerBoundEvent>? listenerBound = null,
         Action<MessageBrokerRemoteClientUnbindingListenerEvent>? unbindingListener = null,
         Action<MessageBrokerRemoteClientListenerUnboundEvent>? listenerUnbound = null,
+        Action<MessageBrokerRemoteClientEnqueueingRoutingEvent>? enqueueingRouting = null,
+        Action<MessageBrokerRemoteClientRoutingEnqueuedEvent>? routingEnqueued = null,
         Action<MessageBrokerRemoteClientPushingMessageEvent>? pushingMessage = null,
         Action<MessageBrokerRemoteClientMessagePushedEvent>? messagePushed = null,
         Action<MessageBrokerRemoteClientProcessingMessageEvent>? processingMessage = null,
@@ -311,6 +329,8 @@ public readonly struct MessageBrokerRemoteClientLogger
             listenerBound,
             unbindingListener,
             listenerUnbound,
+            enqueueingRouting,
+            routingEnqueued,
             pushingMessage,
             messagePushed,
             processingMessage,

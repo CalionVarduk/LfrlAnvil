@@ -120,13 +120,14 @@ internal struct StreamProcessor
             {
                 int storeKey;
                 StreamMessage message;
+                ReadOnlyMemory<byte> routingData;
                 ulong traceId;
                 using ( stream.AcquireLock() )
                 {
                     if ( stream.ShouldCancel )
                         return;
 
-                    if ( ! stream.MessageStore.TryPeekPending( out storeKey, out message ) )
+                    if ( ! stream.MessageStore.TryPeekPending( out storeKey, out message, out routingData ) )
                     {
                         if ( stream.TryDisposeDueToEmptyMessageStoreUnsafe() )
                             disposed = true;
@@ -141,7 +142,6 @@ internal struct StreamProcessor
 
                 using ( MessageBrokerStreamTraceEvent.CreateScope( stream, traceId, MessageBrokerStreamTraceEventType.ProcessMessage ) )
                 {
-                    var failures = 0;
                     var listeners = message.Publisher.Channel.Listeners.GetAll();
                     if ( stream.Logger.ProcessingMessage is { } processingMessage )
                         processingMessage.Emit(
@@ -150,45 +150,29 @@ internal struct StreamProcessor
                                 traceId,
                                 message.Id,
                                 message.Data.Length,
+                                routingData.Length > 0,
                                 listeners ) );
 
-                    var error = stream.Logger.Error;
+                    var failures = 0;
+                    var filtered = 0;
                     if ( listeners.Count > 0 )
                     {
                         using ( stream.AcquireLock() )
                             stream.MessageStore.IncreaseRefCount( storeKey, listeners.Count );
 
-                        foreach ( var listener in listeners )
-                        {
-                            try
-                            {
-                                if ( ! listener.Queue.PushMessage( listener, storeKey, in message, stream, traceId ) )
-                                    ++failures;
-                            }
-                            catch ( Exception exc )
-                            {
-                                ++failures;
-                                error?.Emit( MessageBrokerStreamErrorEvent.Create( stream, traceId, exc ) );
-                            }
-                        }
+                        (failures, filtered) = PushMessageToListeners( stream, listeners, storeKey, in message, routingData.Span, traceId );
                     }
 
-                    Result<bool> result;
+                    Exception? exception;
                     using ( stream.AcquireLock() )
-                        result = stream.MessageStore.DequeuePending( failures );
+                        exception = stream.MessageStore.DequeuePending( failures, routingData.Length > 0 );
 
-                    if ( result.Exception is not null )
-                        error?.Emit( MessageBrokerStreamErrorEvent.Create( stream, traceId, result.Exception ) );
+                    if ( exception is not null && stream.Logger.Error is { } error )
+                        error.Emit( MessageBrokerStreamErrorEvent.Create( stream, traceId, exception ) );
 
                     if ( stream.Logger.MessageProcessed is { } messageProcessed )
                         messageProcessed.Emit(
-                            MessageBrokerStreamMessageProcessedEvent.Create(
-                                message.Publisher,
-                                traceId,
-                                message.Id,
-                                message.Data.Length,
-                                failures,
-                                result.Value ) );
+                            MessageBrokerStreamMessageProcessedEvent.Create( message.Publisher, traceId, message.Id, failures, filtered ) );
                 }
             }
 
@@ -204,5 +188,56 @@ internal struct StreamProcessor
                 return;
             }
         }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static (int Failures, int Filtered) PushMessageToListeners(
+        MessageBrokerStream stream,
+        ReadOnlyArray<MessageBrokerChannelListenerBinding> listeners,
+        int storeKey,
+        in StreamMessage message,
+        ReadOnlySpan<byte> routingData,
+        ulong traceId)
+    {
+        var failures = 0;
+        var filtered = 0;
+        if ( routingData.Length > 0 )
+        {
+            foreach ( var listener in listeners )
+            {
+                try
+                {
+                    if ( ! MessageRouting.Contains( routingData, listener.Client.Id ) )
+                        ++filtered;
+                    else if ( ! listener.Queue.PushMessage( listener, storeKey, in message, stream, traceId ) )
+                        ++failures;
+                }
+                catch ( Exception exc )
+                {
+                    ++failures;
+                    if ( stream.Logger.Error is { } error )
+                        error.Emit( MessageBrokerStreamErrorEvent.Create( stream, traceId, exc ) );
+                }
+            }
+        }
+        else
+        {
+            foreach ( var listener in listeners )
+            {
+                try
+                {
+                    if ( ! listener.Queue.PushMessage( listener, storeKey, in message, stream, traceId ) )
+                        ++failures;
+                }
+                catch ( Exception exc )
+                {
+                    ++failures;
+                    if ( stream.Logger.Error is { } error )
+                        error.Emit( MessageBrokerStreamErrorEvent.Create( stream, traceId, exc ) );
+                }
+            }
+        }
+
+        return (failures, filtered);
     }
 }

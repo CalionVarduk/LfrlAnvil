@@ -151,22 +151,22 @@ public class MessageBrokerStreamTests : TestsBase, IClassFixture<SharedResourceF
                         (t, _) => t.Logs.TestSequence(
                         [
                             $"[Trace:ProcessMessage] Stream = [1] 'c', TraceId = {t.Id} (start)",
-                            $"[ProcessingMessage] Stream = [1] 'c', TraceId = {t.Id}, Channel = [1] 'c', Sender = [1] 'test', MessageId = 0, Length = 1, ListenerCount = 0",
-                            $"[MessageProcessed] Stream = [1] 'c', TraceId = {t.Id}, Channel = [1] 'c', Sender = [1] 'test', MessageId = 0, Length = 1, Failures = 0, Discarded = True",
+                            $"[ProcessingMessage] Stream = [1] 'c', TraceId = {t.Id}, Channel = [1] 'c', Sender = [1] 'test', MessageId = 0, Length = 1, HasRouting = False, ListenerCount = 0",
+                            $"[MessageProcessed] Stream = [1] 'c', TraceId = {t.Id}, Channel = [1] 'c', Sender = [1] 'test', MessageId = 0, Failures = 0, Filtered = 0",
                             $"[Trace:ProcessMessage] Stream = [1] 'c', TraceId = {t.Id} (end)"
                         ] ),
                         (t, _) => t.Logs.TestSequence(
                         [
                             $"[Trace:ProcessMessage] Stream = [1] 'c', TraceId = {t.Id} (start)",
-                            $"[ProcessingMessage] Stream = [1] 'c', TraceId = {t.Id}, Channel = [1] 'c', Sender = [1] 'test', MessageId = 1, Length = 2, ListenerCount = 0",
-                            $"[MessageProcessed] Stream = [1] 'c', TraceId = {t.Id}, Channel = [1] 'c', Sender = [1] 'test', MessageId = 1, Length = 2, Failures = 0, Discarded = True",
+                            $"[ProcessingMessage] Stream = [1] 'c', TraceId = {t.Id}, Channel = [1] 'c', Sender = [1] 'test', MessageId = 1, Length = 2, HasRouting = False, ListenerCount = 0",
+                            $"[MessageProcessed] Stream = [1] 'c', TraceId = {t.Id}, Channel = [1] 'c', Sender = [1] 'test', MessageId = 1, Failures = 0, Filtered = 0",
                             $"[Trace:ProcessMessage] Stream = [1] 'c', TraceId = {t.Id} (end)"
                         ] ),
                         (t, _) => t.Logs.TestSequence(
                         [
                             $"[Trace:ProcessMessage] Stream = [1] 'c', TraceId = {t.Id} (start)",
-                            $"[ProcessingMessage] Stream = [1] 'c', TraceId = {t.Id}, Channel = [1] 'c', Sender = [1] 'test', MessageId = 2, Length = 3, ListenerCount = 0",
-                            $"[MessageProcessed] Stream = [1] 'c', TraceId = {t.Id}, Channel = [1] 'c', Sender = [1] 'test', MessageId = 2, Length = 3, Failures = 0, Discarded = True",
+                            $"[ProcessingMessage] Stream = [1] 'c', TraceId = {t.Id}, Channel = [1] 'c', Sender = [1] 'test', MessageId = 2, Length = 3, HasRouting = False, ListenerCount = 0",
+                            $"[MessageProcessed] Stream = [1] 'c', TraceId = {t.Id}, Channel = [1] 'c', Sender = [1] 'test', MessageId = 2, Failures = 0, Filtered = 0",
                             $"[Trace:ProcessMessage] Stream = [1] 'c', TraceId = {t.Id} (end)"
                         ] )
                     ] ) )
@@ -250,8 +250,8 @@ public class MessageBrokerStreamTests : TestsBase, IClassFixture<SharedResourceF
                         (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:ProcessMessage] Stream = [1] 'c', TraceId = 2 (start)",
-                            "[ProcessingMessage] Stream = [1] 'c', TraceId = 2, Channel = [1] 'c', Sender = [1] 'test', MessageId = 0, Length = 1, ListenerCount = 0",
-                            "[MessageProcessed] Stream = [1] 'c', TraceId = 2, Channel = [1] 'c', Sender = [1] 'test', MessageId = 0, Length = 1, Failures = 0, Discarded = True",
+                            "[ProcessingMessage] Stream = [1] 'c', TraceId = 2, Channel = [1] 'c', Sender = [1] 'test', MessageId = 0, Length = 1, HasRouting = False, ListenerCount = 0",
+                            "[MessageProcessed] Stream = [1] 'c', TraceId = 2, Channel = [1] 'c', Sender = [1] 'test', MessageId = 0, Failures = 0, Filtered = 0",
                             "[Trace:ProcessMessage] Stream = [1] 'c', TraceId = 2 (end)"
                         ] )
                     ] ) )
@@ -443,36 +443,36 @@ public class MessageBrokerStreamTests : TestsBase, IClassFixture<SharedResourceF
                         (t, _) => t.Logs.TestSequence(
                         [
                             $"[Trace:ProcessMessage] Stream = [1] 'c', TraceId = {t.Id} (start)",
-                            $"[ProcessingMessage] Stream = [1] 'c', TraceId = {t.Id}, Channel = [1] 'c', Sender = [1] 'test', MessageId = 0, Length = 1, ListenerCount = 0",
-                            $"[MessageProcessed] Stream = [1] 'c', TraceId = {t.Id}, Channel = [1] 'c', Sender = [1] 'test', MessageId = 0, Length = 1, Failures = 0, Discarded = True",
+                            $"[ProcessingMessage] Stream = [1] 'c', TraceId = {t.Id}, Channel = [1] 'c', Sender = [1] 'test', MessageId = 0, Length = 1, HasRouting = False, ListenerCount = 0",
+                            $"[MessageProcessed] Stream = [1] 'c', TraceId = {t.Id}, Channel = [1] 'c', Sender = [1] 'test', MessageId = 0, Failures = 0, Filtered = 0",
                             $"[Trace:ProcessMessage] Stream = [1] 'c', TraceId = {t.Id} (end)"
                         ] ),
                         (t, _) => t.Logs.TestSequence(
                         [
                             $"[Trace:ProcessMessage] Stream = [1] 'c', TraceId = {t.Id} (start)",
-                            $"[ProcessingMessage] Stream = [1] 'c', TraceId = {t.Id}, Channel = [2] 'd', Sender = [1] 'test', MessageId = 1, Length = 2, ListenerCount = 0",
-                            $"[MessageProcessed] Stream = [1] 'c', TraceId = {t.Id}, Channel = [2] 'd', Sender = [1] 'test', MessageId = 1, Length = 2, Failures = 0, Discarded = True",
+                            $"[ProcessingMessage] Stream = [1] 'c', TraceId = {t.Id}, Channel = [2] 'd', Sender = [1] 'test', MessageId = 1, Length = 2, HasRouting = False, ListenerCount = 0",
+                            $"[MessageProcessed] Stream = [1] 'c', TraceId = {t.Id}, Channel = [2] 'd', Sender = [1] 'test', MessageId = 1, Failures = 0, Filtered = 0",
                             $"[Trace:ProcessMessage] Stream = [1] 'c', TraceId = {t.Id} (end)"
                         ] ),
                         (t, _) => t.Logs.TestSequence(
                         [
                             $"[Trace:ProcessMessage] Stream = [1] 'c', TraceId = {t.Id} (start)",
-                            $"[ProcessingMessage] Stream = [1] 'c', TraceId = {t.Id}, Channel = [3] 'e', Sender = [1] 'test', MessageId = 2, Length = 3, ListenerCount = 0",
-                            $"[MessageProcessed] Stream = [1] 'c', TraceId = {t.Id}, Channel = [3] 'e', Sender = [1] 'test', MessageId = 2, Length = 3, Failures = 0, Discarded = True",
+                            $"[ProcessingMessage] Stream = [1] 'c', TraceId = {t.Id}, Channel = [3] 'e', Sender = [1] 'test', MessageId = 2, Length = 3, HasRouting = False, ListenerCount = 0",
+                            $"[MessageProcessed] Stream = [1] 'c', TraceId = {t.Id}, Channel = [3] 'e', Sender = [1] 'test', MessageId = 2, Failures = 0, Filtered = 0",
                             $"[Trace:ProcessMessage] Stream = [1] 'c', TraceId = {t.Id} (end)"
                         ] ),
                         (t, _) => t.Logs.TestSequence(
                         [
                             $"[Trace:ProcessMessage] Stream = [1] 'c', TraceId = {t.Id} (start)",
-                            $"[ProcessingMessage] Stream = [1] 'c', TraceId = {t.Id}, Channel = [3] 'e', Sender = [1] 'test', MessageId = 3, Length = 4, ListenerCount = 0",
-                            $"[MessageProcessed] Stream = [1] 'c', TraceId = {t.Id}, Channel = [3] 'e', Sender = [1] 'test', MessageId = 3, Length = 4, Failures = 0, Discarded = True",
+                            $"[ProcessingMessage] Stream = [1] 'c', TraceId = {t.Id}, Channel = [3] 'e', Sender = [1] 'test', MessageId = 3, Length = 4, HasRouting = False, ListenerCount = 0",
+                            $"[MessageProcessed] Stream = [1] 'c', TraceId = {t.Id}, Channel = [3] 'e', Sender = [1] 'test', MessageId = 3, Failures = 0, Filtered = 0",
                             $"[Trace:ProcessMessage] Stream = [1] 'c', TraceId = {t.Id} (end)"
                         ] ),
                         (t, _) => t.Logs.TestSequence(
                         [
                             $"[Trace:ProcessMessage] Stream = [1] 'c', TraceId = {t.Id} (start)",
-                            $"[ProcessingMessage] Stream = [1] 'c', TraceId = {t.Id}, Channel = [1] 'c', Sender = [1] 'test', MessageId = 4, Length = 5, ListenerCount = 0",
-                            $"[MessageProcessed] Stream = [1] 'c', TraceId = {t.Id}, Channel = [1] 'c', Sender = [1] 'test', MessageId = 4, Length = 5, Failures = 0, Discarded = True",
+                            $"[ProcessingMessage] Stream = [1] 'c', TraceId = {t.Id}, Channel = [1] 'c', Sender = [1] 'test', MessageId = 4, Length = 5, HasRouting = False, ListenerCount = 0",
+                            $"[MessageProcessed] Stream = [1] 'c', TraceId = {t.Id}, Channel = [1] 'c', Sender = [1] 'test', MessageId = 4, Failures = 0, Filtered = 0",
                             $"[Trace:ProcessMessage] Stream = [1] 'c', TraceId = {t.Id} (end)"
                         ] )
                     ] ) )

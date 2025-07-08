@@ -686,6 +686,40 @@ internal static class Protocol
         }
     }
 
+    internal readonly struct PushMessageRoutingHeader
+    {
+        internal const int Length = sizeof( ushort );
+        internal readonly short TargetCount;
+
+        private PushMessageRoutingHeader(short targetCount)
+        {
+            TargetCount = targetCount;
+        }
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"TargetCount = {TargetCount}";
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static PushMessageRoutingHeader Parse(ReadOnlyMemory<byte> source)
+        {
+            Assume.Equals( source.Length, Length );
+            var reader = new BinaryContractReader( source.Span );
+            var targetCount = unchecked( ( short )reader.ReadInt16() );
+            return new PushMessageRoutingHeader( targetCount );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal Chain<string> StringifyErrors()
+        {
+            return TargetCount <= 0 ? Chain.Create( Resources.TargetCountIsNotPositive( TargetCount ) ) : Chain<string>.Empty;
+        }
+    }
+
     internal readonly struct PushMessageHeader
     {
         internal const int Length = sizeof( byte ) + sizeof( uint );
@@ -699,6 +733,7 @@ internal static class Protocol
         }
 
         internal bool Confirm => (Flags & 1) != 0;
+        internal bool ClearBuffer => (Flags & 2) != 0;
 
         [Pure]
         public override string ToString()

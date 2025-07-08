@@ -1226,7 +1226,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
         await using var server = new MessageBrokerServer(
             originalEndPoint,
             MessageBrokerServerOptions.Default
-                .SetHandshakeTimeout( Duration.FromTicks( 1 ) )
+                .SetHandshakeTimeout( Duration.FromMilliseconds( 15 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
                 .SetClientLoggerFactory(
                     _ => logs.GetLogger(
@@ -1255,7 +1255,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                             $"[ServerTrace] Client = [1], TraceId = 0, Correlation = (Server = {server.LocalEndPoint}, TraceId = 1)",
                             """
                             [Error] Client = [1], TraceId = 0
-                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientRequestTimeoutException: Client [1] '' failed to send a request to the server in the specified amount of time (1 milliseconds).
+                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientRequestTimeoutException: Client [1] '' failed to send a request to the server in the specified amount of time (15 milliseconds).
                             """,
                             "[Disposing] Client = [1], TraceId = 0",
                             "[Disposed] Client = [1], TraceId = 0",

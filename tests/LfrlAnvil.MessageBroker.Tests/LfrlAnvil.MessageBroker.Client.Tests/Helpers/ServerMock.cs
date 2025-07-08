@@ -83,6 +83,11 @@ internal sealed class ServerMock : IDisposable
             MessageBrokerServerEndpoint.MessageNotificationNack );
     }
 
+    internal byte[] ReadPushMessageRouting(int length)
+    {
+        return AssertEndpoint( Read( Protocol.PushMessageRoutingHeader.Length + length ), MessageBrokerServerEndpoint.PushMessageRouting );
+    }
+
     internal byte[] ReadPushMessage(int length)
     {
         return AssertEndpoint( Read( Protocol.PushMessageHeader.Length + length ), MessageBrokerServerEndpoint.PushMessage );

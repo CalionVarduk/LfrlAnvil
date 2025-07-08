@@ -35,6 +35,13 @@ internal static class TextEncoding
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static Result<string> Parse(ReadOnlyMemory<byte> value)
     {
-        return Instance.Decode( value.Span );
+        return Parse( value.Span );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static Result<string> Parse(ReadOnlySpan<byte> value)
+    {
+        return Instance.Decode( value );
     }
 }

@@ -18,6 +18,7 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
@@ -47,6 +48,7 @@ public sealed partial class MessageBrokerRemoteClient
     internal MessageNotifications MessageNotifications;
     internal RequestHandler RequestHandler;
     internal ExternalNameCache ExternalNameCache;
+    internal MessageRouting MessageRouting;
     internal readonly MessageBrokerRemoteClientLogger Logger;
 
     private readonly ITimestampProvider _timestamps;
@@ -84,6 +86,7 @@ public sealed partial class MessageBrokerRemoteClient
         MessageNotifications = MessageNotifications.Create();
         RequestHandler = RequestHandler.Create();
         ExternalNameCache = ExternalNameCache.Create();
+        MessageRouting = MessageRouting.Empty;
 
         Logger = Server.RemoteClientLoggerFactory?.Invoke( this ) ?? default;
         _timestamps = Server.TimestampsFactory( this );
@@ -629,6 +632,197 @@ public sealed partial class MessageBrokerRemoteClient
         return exception;
     }
 
+    internal MessageRouting.Result GetMessageRouting(ulong traceId, Protocol.PacketHeader header, int count, ReadOnlySpan<byte> data)
+    {
+        Assume.IsGreaterThan( count, 0 );
+        var read = 0;
+        var found = 0;
+        var poolToken = MemoryPoolToken<byte>.Empty;
+        try
+        {
+            poolToken = MemoryPool.Rent( Defaults.Memory.GetBufferCapacity( (count + 7) >> 3 ), out var buffer );
+            var bufferSpan = buffer.Span;
+            bufferSpan.Clear();
+
+            while ( data.Length > 1 && read < count )
+            {
+                MessageBrokerRemoteClient? target;
+                var reader = new BinaryContractReader( data );
+                if ( (reader.ReadInt8() & 1) == 0 )
+                {
+                    if ( data.Length < sizeof( byte ) + sizeof( uint ) )
+                    {
+                        if ( Logger.Error is { } error )
+                        {
+                            var exc = Protocol.ProtocolException(
+                                this,
+                                header,
+                                Chain.Create(
+                                    Resources.UnexpectedPacketElementLength( read, data.Length, sizeof( byte ) + sizeof( uint ) ) ) );
+
+                            error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
+                        }
+
+                        return MessageRouting.Result.CreateInvalid( poolToken );
+                    }
+
+                    reader.Move( sizeof( byte ) );
+                    var id = unchecked( ( int )reader.ReadInt32() );
+                    if ( id <= 0 )
+                    {
+                        if ( Logger.Error is { } error )
+                        {
+                            var exc = Protocol.ProtocolException(
+                                this,
+                                header,
+                                Chain.Create( Resources.TargetIdIsNotPositive( read, id ) ) );
+
+                            error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
+                        }
+
+                        return MessageRouting.Result.CreateInvalid( poolToken );
+                    }
+
+                    ++read;
+                    data = data.Slice( sizeof( byte ) + sizeof( uint ) );
+                    target = RemoteClientCollection.TryGetById( Server, id );
+                    if ( target is null )
+                    {
+                        if ( Logger.Error is { } error )
+                        {
+                            var exception = new MessageBrokerRemoteClientException(
+                                this,
+                                Resources.TargetByIdDoesNotExist( read - 1, id ) );
+
+                            error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exception ) );
+                        }
+
+                        continue;
+                    }
+                }
+                else
+                {
+                    var byteLength = reader.ReadInt16() >> 1;
+                    var totalLength = sizeof( ushort ) + byteLength;
+                    if ( data.Length < totalLength )
+                    {
+                        if ( Logger.Error is { } error )
+                        {
+                            var exc = Protocol.ProtocolException(
+                                this,
+                                header,
+                                Chain.Create( Resources.UnexpectedPacketElementLength( read, data.Length, totalLength ) ) );
+
+                            error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
+                        }
+
+                        return MessageRouting.Result.CreateInvalid( poolToken );
+                    }
+
+                    var name = TextEncoding.Parse( data.Slice( sizeof( ushort ), byteLength ) );
+                    if ( name.Exception is not null )
+                    {
+                        if ( Logger.Error is { } error )
+                            error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, name.Exception ) );
+
+                        return MessageRouting.Result.CreateInvalid( poolToken );
+                    }
+
+                    Assume.IsNotNull( name.Value );
+                    if ( ! Defaults.NameLengthBounds.Contains( name.Value.Length ) )
+                    {
+                        if ( Logger.Error is { } error )
+                        {
+                            var exc = Protocol.ProtocolException(
+                                this,
+                                header,
+                                Chain.Create( Resources.InvalidTargetNameLength( read, name.Value.Length ) ) );
+
+                            error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
+                        }
+
+                        return MessageRouting.Result.CreateInvalid( poolToken );
+                    }
+
+                    ++read;
+                    data = data.Slice( totalLength );
+                    target = RemoteClientCollection.TryGetByName( Server, name.Value );
+                    if ( target is null )
+                    {
+                        if ( Logger.Error is { } error )
+                        {
+                            var exception = new MessageBrokerRemoteClientException(
+                                this,
+                                Resources.TargetByNameDoesNotExist( read - 1, name.Value ) );
+
+                            error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exception ) );
+                        }
+
+                        continue;
+                    }
+                }
+
+                ++found;
+                var position = target.Id - 1;
+                var index = position >> 3;
+                if ( index >= buffer.Length )
+                {
+                    var oldLength = bufferSpan.Length;
+                    poolToken.SetLength( Defaults.Memory.GetBufferCapacity( (target.Id + 7) >> 3 ), out buffer );
+                    bufferSpan = buffer.Span;
+                    bufferSpan.Slice( oldLength ).Clear();
+                }
+
+                ref var element = ref Unsafe.Add( ref MemoryMarshal.GetReference( bufferSpan ), index );
+                if ( ((element >> (position & 7)) & 1) != 0 )
+                {
+                    if ( Logger.Error is { } error )
+                    {
+                        var exception = new MessageBrokerRemoteClientException( this, Resources.TargetDuplicateFound( read - 1, target ) );
+                        error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exception ) );
+                    }
+                }
+
+                element |= ( byte )(1 << (position & 7));
+            }
+
+            if ( read < count )
+            {
+                if ( Logger.Error is { } error )
+                {
+                    var exc = Protocol.ProtocolException(
+                        this,
+                        header,
+                        Chain.Create( Resources.TargetCountIsTooLarge( read, count ) ) );
+
+                    error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
+                }
+
+                return MessageRouting.Result.CreateInvalid( poolToken );
+            }
+
+            if ( data.Length > 0 )
+            {
+                if ( Logger.Error is { } error )
+                {
+                    var exc = Protocol.ProtocolException( this, header, Chain.Create( Resources.TooLargeHeaderPayload( data.Length ) ) );
+                    error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
+                }
+
+                return MessageRouting.Result.CreateInvalid( poolToken );
+            }
+
+            return MessageRouting.Result.Create( poolToken, buffer, traceId, found );
+        }
+        catch ( Exception exc )
+        {
+            if ( Logger.Error is { } error )
+                error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
+
+            return MessageRouting.Result.CreateInvalid( poolToken );
+        }
+    }
+
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ulong GetTraceId()
     {
@@ -755,9 +949,14 @@ public sealed partial class MessageBrokerRemoteClient
 
             using ( AcquireLock() )
             {
+                exception = MessageRouting.PoolToken.Return();
+                MessageRouting = MessageRouting.Empty;
                 ExternalNameCache.Clear();
                 _state = MessageBrokerRemoteClientState.Disposed;
             }
+
+            if ( exception is not null )
+                error?.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exception ) );
 
             if ( ownedDelaySource is not null )
                 await ownedDelaySource.TryDisposeAsync().ConfigureAwait( false );

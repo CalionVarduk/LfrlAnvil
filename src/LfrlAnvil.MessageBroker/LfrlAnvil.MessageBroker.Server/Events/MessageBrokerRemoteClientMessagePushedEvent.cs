@@ -23,11 +23,16 @@ namespace LfrlAnvil.MessageBroker.Server.Events;
 /// </summary>
 public readonly struct MessageBrokerRemoteClientMessagePushedEvent
 {
-    private MessageBrokerRemoteClientMessagePushedEvent(MessageBrokerChannelPublisherBinding publisher, ulong traceId, ulong messageId)
+    private MessageBrokerRemoteClientMessagePushedEvent(
+        MessageBrokerChannelPublisherBinding publisher,
+        ulong traceId,
+        ulong messageId,
+        ulong? routingTraceId)
     {
         Source = MessageBrokerRemoteClientEventSource.Create( publisher.Client, traceId );
         Publisher = publisher;
         MessageId = messageId;
+        RoutingTraceId = routingTraceId;
     }
 
     /// <summary>
@@ -46,14 +51,21 @@ public readonly struct MessageBrokerRemoteClientMessagePushedEvent
     public ulong MessageId { get; }
 
     /// <summary>
+    /// Identifier of an internal message routing client trace that's used for this message.
+    /// </summary>
+    /// <remarks>See <see cref="MessageBrokerRemoteClientEventSource"/> for more information.</remarks>
+    public ulong? RoutingTraceId { get; }
+
+    /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerRemoteClientMessagePushedEvent"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
+        var routingTraceId = RoutingTraceId is not null ? $", RoutingTraceId = {RoutingTraceId.Value}" : string.Empty;
         return
-            $"[MessagePushed] {Source}, Channel = [{Publisher.Channel.Id}] '{Publisher.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', MessageId = {MessageId}";
+            $"[MessagePushed] {Source}, Channel = [{Publisher.Channel.Id}] '{Publisher.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', MessageId = {MessageId}{routingTraceId}";
     }
 
     [Pure]
@@ -61,8 +73,9 @@ public readonly struct MessageBrokerRemoteClientMessagePushedEvent
     internal static MessageBrokerRemoteClientMessagePushedEvent Create(
         MessageBrokerChannelPublisherBinding publisher,
         ulong traceId,
-        ulong messageId)
+        ulong messageId,
+        ulong? routingTraceId)
     {
-        return new MessageBrokerRemoteClientMessagePushedEvent( publisher, traceId, messageId );
+        return new MessageBrokerRemoteClientMessagePushedEvent( publisher, traceId, messageId, routingTraceId );
     }
 }

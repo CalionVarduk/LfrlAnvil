@@ -39,6 +39,7 @@ public sealed class MessageBrokerPushContext : IBufferWriter<byte>, IDisposable
     private MemoryPoolToken<byte> _token;
     private Memory<byte> _buffer;
     private int _written;
+    internal MessageRouting Routing;
 
     internal MessageBrokerPushContext(Memory.MemoryPool<byte> pool)
     {
@@ -48,6 +49,7 @@ public sealed class MessageBrokerPushContext : IBufferWriter<byte>, IDisposable
         _token = MemoryPoolToken<byte>.Empty;
         _buffer = Memory<byte>.Empty;
         _written = 0;
+        Routing = default;
     }
 
     internal MessageBrokerPublisher Publisher
@@ -60,6 +62,7 @@ public sealed class MessageBrokerPushContext : IBufferWriter<byte>, IDisposable
     }
 
     internal Memory<byte> Data => _buffer.Slice( 0, _written );
+    internal bool ClearOnDispose => _token.Clear;
 
     /// <inheritdoc/>
     public void Dispose()
@@ -69,13 +72,15 @@ public sealed class MessageBrokerPushContext : IBufferWriter<byte>, IDisposable
 
         var publisher = _publisher;
         var token = _token;
+        var routingToken = Routing.Token;
         _publisher = null;
         _token = MemoryPoolToken<byte>.Empty;
         _buffer = Memory<byte>.Empty;
         _written = 0;
+        Routing = default;
 
         Assume.IsNotNull( publisher );
-        publisher.Client.ReturnMessageContext( this, token );
+        publisher.Client.ReturnMessageContext( this, token, routingToken );
     }
 
     /// <inheritdoc/>
@@ -136,6 +141,38 @@ public sealed class MessageBrokerPushContext : IBufferWriter<byte>, IDisposable
     {
         ObjectDisposedException.ThrowIf( _disposed.Value, this );
         return PublisherCollection.PushAsync( this, confirm );
+    }
+
+    /// <summary>
+    /// Adds routing target to the message in the form of a client id.
+    /// </summary>
+    /// <param name="clientId">Id of the target client.</param>
+    /// <returns><b>this</b>.</returns>
+    /// <exception cref="ObjectDisposedException">When this context has been disposed.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">When <paramref name="clientId"/> is less than or equal to <b>0</b>.</exception>
+    /// <exception cref="InvalidOperationException">When routing target count limit of <b>32767</b> has already been reached.</exception>
+    public MessageBrokerPushContext AddTarget(int clientId)
+    {
+        ObjectDisposedException.ThrowIf( _disposed.Value, this );
+        Routing.Add( Publisher.Client, clientId, _token.Clear );
+        return this;
+    }
+
+    /// <summary>
+    /// Adds routing target to the message in the form of a client name.
+    /// </summary>
+    /// <param name="clientName">Name of the target client.</param>
+    /// <returns><b>this</b>.</returns>
+    /// <exception cref="ObjectDisposedException">When this context has been disposed.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// When <paramref name="clientName"/>'s length is less than <b>1</b> or greater than <b>512</b>.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">When routing target count limit of <b>32767</b> has already been reached.</exception>
+    public MessageBrokerPushContext AddTarget(string clientName)
+    {
+        ObjectDisposedException.ThrowIf( _disposed.Value, this );
+        Routing.Add( Publisher.Client, clientName, _token.Clear );
+        return this;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

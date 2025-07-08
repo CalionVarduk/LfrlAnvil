@@ -424,9 +424,12 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void ReturnMessageContext(MessageBrokerPushContext context, MemoryPoolToken<byte> token)
+    internal void ReturnMessageContext(MessageBrokerPushContext context, MemoryPoolToken<byte> token, MemoryPoolToken<byte> routingToken)
     {
         var exception = token.Return();
+        var routingException = routingToken.Return();
+        if ( routingException is not null )
+            exception = exception is not null ? new AggregateException( [ exception, routingException ] ) : routingException;
 
         ulong traceId;
         using ( AcquireLock() )

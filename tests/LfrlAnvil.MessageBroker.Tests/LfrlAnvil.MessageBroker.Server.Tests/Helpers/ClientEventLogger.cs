@@ -94,6 +94,16 @@ public sealed class ClientEventLogger
                 Add( e.Source.TraceId, e.ToString() );
                 logger.ListenerUnbound?.Invoke( e );
             },
+            enqueueingRouting: e =>
+            {
+                Add( e.Source.TraceId, e.ToString() );
+                logger.EnqueueingRouting?.Invoke( e );
+            },
+            routingEnqueued: e =>
+            {
+                Add( e.Source.TraceId, e.ToString() );
+                logger.RoutingEnqueued?.Invoke( e );
+            },
             pushingMessage: e =>
             {
                 Add( e.Source.TraceId, e.ToString() );
