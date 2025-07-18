@@ -552,7 +552,7 @@ public static class EnumerableExtensions
         {
             IMemoizedCollection<T> m => m.Source.Value,
             IReadOnlyCollection<T> c => c,
-            _ => source.ToList()
+            _ => source.TryGetNonEnumeratedCount( out _ ) ? source.ToArray() : source.ToList()
         };
     }
 
