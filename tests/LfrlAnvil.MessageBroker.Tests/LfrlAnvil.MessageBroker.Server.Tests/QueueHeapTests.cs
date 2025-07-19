@@ -396,7 +396,9 @@ public class QueueHeapTests : TestsBase
             0,
             Duration.FromSeconds( 1 ),
             1,
-            Duration.FromSeconds( 3 ) );
+            Duration.FromSeconds( 3 ),
+            null,
+            null );
     }
 
     private sealed class TimestampProviderMock : TimestampProviderBase

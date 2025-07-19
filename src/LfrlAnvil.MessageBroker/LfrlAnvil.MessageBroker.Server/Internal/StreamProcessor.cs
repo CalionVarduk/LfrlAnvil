@@ -165,7 +165,7 @@ internal struct StreamProcessor
 
                     Exception? exception;
                     using ( stream.AcquireLock() )
-                        exception = stream.MessageStore.DequeuePending( failures, routingData.Length > 0 );
+                        exception = stream.MessageStore.DequeuePending( failures + filtered, routingData.Length > 0 );
 
                     if ( exception is not null && stream.Logger.Error is { } error )
                         error.Emit( MessageBrokerStreamErrorEvent.Create( stream, traceId, exception ) );

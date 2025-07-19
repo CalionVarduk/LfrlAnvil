@@ -440,7 +440,7 @@ internal static class Protocol
 
     internal readonly struct BindListenerRequestHeader
     {
-        internal const int Length = sizeof( byte ) + sizeof( ushort ) * 2 + sizeof( uint ) * 5 + sizeof( ulong );
+        internal const int Length = sizeof( byte ) + sizeof( ushort ) * 3 + sizeof( uint ) * 5 + sizeof( ulong );
         internal readonly byte Flags;
         internal readonly short PrefetchHint;
         internal readonly int MaxRetries;
@@ -450,6 +450,7 @@ internal static class Protocol
         internal readonly int DeadLetterCapacityHint;
         internal readonly Duration MinDeadLetterRetention;
         internal readonly int ChannelNameLength;
+        internal readonly int QueueNameLength;
 
         private BindListenerRequestHeader(
             byte flags,
@@ -460,7 +461,8 @@ internal static class Protocol
             Duration minAckTimeout,
             int deadLetterCapacityHint,
             Duration minDeadLetterRetention,
-            int channelNameLength)
+            int channelNameLength,
+            int queueNameLength)
         {
             Flags = flags;
             PrefetchHint = prefetchHint;
@@ -471,6 +473,7 @@ internal static class Protocol
             DeadLetterCapacityHint = deadLetterCapacityHint;
             MinDeadLetterRetention = minDeadLetterRetention;
             ChannelNameLength = channelNameLength;
+            QueueNameLength = queueNameLength;
         }
 
         internal bool CreateChannelIfNotExists => (Flags & 1) != 0;
@@ -479,7 +482,7 @@ internal static class Protocol
         public override string ToString()
         {
             return
-                $"Flags = {Flags}, PrefetchHint = {PrefetchHint}, MaxRetries = {MaxRetries}, RetryDelay = {RetryDelay}, MaxRedeliveries = {MaxRedeliveries}, MinAckTimeout = {MinAckTimeout}, DeadLetterCapacityHint = {DeadLetterCapacityHint}, MinDeadLetterRetention = {MinDeadLetterRetention}, ChannelNameLength = {ChannelNameLength}";
+                $"Flags = {Flags}, PrefetchHint = {PrefetchHint}, MaxRetries = {MaxRetries}, RetryDelay = {RetryDelay}, MaxRedeliveries = {MaxRedeliveries}, MinAckTimeout = {MinAckTimeout}, DeadLetterCapacityHint = {DeadLetterCapacityHint}, MinDeadLetterRetention = {MinDeadLetterRetention}, ChannelNameLength = {ChannelNameLength}, QueueNameLength = {QueueNameLength}";
         }
 
         [Pure]
@@ -498,7 +501,8 @@ internal static class Protocol
             var minDeadLetterRetention = Duration.FromTicks(
                 unchecked( ( long )reader.MoveReadInt64() * ChronoConstants.TicksPerMillisecond ) );
 
-            var channelNameLength = ( int )reader.ReadInt16();
+            var channelNameLength = ( int )reader.MoveReadInt16();
+            var queueNameLength = ( int )reader.ReadInt16();
             return new BindListenerRequestHeader(
                 flags,
                 prefetchHint,
@@ -508,7 +512,8 @@ internal static class Protocol
                 minAckTimeout,
                 deadLetterCapacityHint,
                 minDeadLetterRetention,
-                channelNameLength );
+                channelNameLength,
+                queueNameLength );
         }
 
         [Pure]
@@ -517,9 +522,13 @@ internal static class Protocol
         {
             var errors = Chain<string>.Empty;
             var maxChannelNameLength = packetLength - Length;
+            var maxQueueNameLength = maxChannelNameLength - ChannelNameLength;
 
             if ( ChannelNameLength > maxChannelNameLength )
                 errors = errors.Extend( Resources.InvalidBinaryChannelNameLength( ChannelNameLength, maxChannelNameLength ) );
+
+            if ( QueueNameLength > maxQueueNameLength )
+                errors = errors.Extend( Resources.InvalidBinaryQueueNameLength( QueueNameLength, maxQueueNameLength ) );
 
             if ( PrefetchHint < 1 )
                 errors = errors.Extend( Resources.InvalidPrefetchHint( PrefetchHint ) );
@@ -596,9 +605,15 @@ internal static class Protocol
 
         internal BindListenerFailureResponse(BindResult result)
         {
-            Assume.IsInRange( result, BindResult.AlreadyBound, BindResult.ChannelDoesNotExist );
+            Assume.IsInRange( result, BindResult.AlreadyBound, BindResult.InvalidFilterExpression );
             Header = PacketHeader.Create( MessageBrokerClientEndpoint.BindListenerFailureResponse, Payload );
-            Flags = result == BindResult.ParentDisposed ? ( byte )BindResult.ChannelDisposed : ( byte )result;
+            Flags = result switch
+            {
+                BindResult.ParentDisposed => ( byte )BindResult.ChannelDisposed,
+                BindResult.UnexpectedFilterExpression => 8,
+                BindResult.InvalidFilterExpression => 16,
+                _ => ( byte )result
+            };
         }
 
         [Pure]

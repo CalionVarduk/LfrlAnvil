@@ -17,6 +17,7 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Computable.Expressions;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Internal;
 
@@ -185,6 +186,13 @@ internal static class Resources
     internal static string InvalidBinaryChannelNameLength(int length, int maxLength)
     {
         return $"Expected binary channel name length to be in [0, {maxLength}] range but found {length}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string InvalidBinaryQueueNameLength(int length, int maxLength)
+    {
+        return $"Expected binary queue name length to be in [0, {maxLength}] range but found {length}.";
     }
 
     [Pure]
@@ -410,6 +418,28 @@ internal static class Resources
     internal static string UnexpectedPacketElementLength(int index, int remaining, int expected)
     {
         return $"Expected packet element length at index {index} to be at least {expected} but found {remaining}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string UnexpectedFilterExpression(string expression)
+    {
+        return $"Filter expressions are not enabled but found:{Environment.NewLine}{expression}";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string InvalidFilterExpression(string expression)
+    {
+        return $"Failed to parse the following filter expression:{Environment.NewLine}{expression}";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string InvalidFilterExpressionArgumentCount(string expression, ParsedExpressionUnboundArguments args)
+    {
+        return
+            $"Expected at most one filter expression context argument but found {args.Count} ({string.Join( ", ", args.Select( static a => $"'{a.Key}'" ) )}) in the following expression:{Environment.NewLine}{expression}";
     }
 
     [Pure]

@@ -58,7 +58,7 @@ public readonly struct MessageBrokerStreamMessageProcessedEvent
     public int Failures { get; }
 
     /// <summary>
-    /// Number of listeners that filtered out the message.
+    /// Number of filtered out listeners due to explicit routing.
     /// </summary>
     public int Filtered { get; }
 

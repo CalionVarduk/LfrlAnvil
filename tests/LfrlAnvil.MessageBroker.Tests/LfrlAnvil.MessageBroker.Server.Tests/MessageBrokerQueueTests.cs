@@ -5,6 +5,8 @@ using System.Net;
 using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Async;
+using LfrlAnvil.Computable.Expressions;
+using LfrlAnvil.Computable.Expressions.Extensions;
 using LfrlAnvil.Diagnostics;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Exceptions;
@@ -375,6 +377,160 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                     $"[Trace:ProcessMessage] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id} (start)",
                     $"[MessageDiscarded] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Reason = DisposedPending, StoreKey = {storeKeyByMessageId.GetValueOrDefault( 1UL )}, Retry = 0, Redelivery = 0, MessageRemoved = {dataRemovedByStoreKey.GetValueOrDefault( storeKeyByMessageId.GetValueOrDefault( 1UL ) )}, MovedToDeadLetter = False",
                     $"[Trace:ProcessMessage] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id} (end)"
+                ] )
+            ] )
+            .Go();
+    }
+
+    [Fact]
+    public async Task QueueProcessing_ShouldIgnoreMessagesFilteredOutByListenerFilterExpression()
+    {
+        var endSource = new SafeTaskCompletionSource( completionCount: 3 );
+        var messageRemoved = Atomic.Create( false );
+        var queueLogs = new QueueEventLogger();
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => MessageBrokerRemoteClientLogger.Create(
+                        traceStart: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.MessageNotification )
+                                endSource.Complete();
+                        } ) )
+                .SetQueueLoggerFactory(
+                    _ => queueLogs.GetLogger(
+                        MessageBrokerQueueLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
+                                    endSource.Complete();
+                            },
+                            messageDiscarded: e => messageRemoved.Value = e.MessageRemoved ) ) )
+                .SetExpressionFactory(
+                    new ParsedExpressionFactoryBuilder()
+                        .AddGenericArithmeticOperators()
+                        .AddGenericBitwiseOperators()
+                        .AddGenericLogicalOperators()
+                        .AddInt64TypeDefinition()
+                        .AddBranchingVariadicFunctions()
+                        .Build() ) );
+
+        await server.StartAsync();
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server );
+        await client.GetTask(
+            c =>
+            {
+                c.SendBindPublisherRequest( "c" );
+                c.ReadPublisherBoundResponse();
+                c.SendBindListenerRequest(
+                    "c",
+                    true,
+                    filterExpression:
+                    "[int64] c.Data.Length + if([int64] c.Listener.Client.Id + [int64] c.Publisher.Client.Id + [int64] c.Id + c.PushedAt.UnixEpochTicks > 0l, 0l, 1l) > 1l" );
+
+                c.ReadListenerBoundResponse();
+                c.SendPushMessage( 1, [ 1 ], confirm: false );
+                c.SendPushMessage( 1, [ 1, 2 ], confirm: false );
+                c.ReadMessageNotification( 2 );
+            } );
+
+        await endSource.Task;
+
+        queueLogs.GetAll()
+            .Where( t => t.Logs.Any( l => l.Contains( "[Trace:ProcessMessage]" ) ) )
+            .TestSequence(
+            [
+                (t, _) => t.Logs.TestSequence(
+                [
+                    "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2 (start)",
+                    "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 0, Redelivery = 0, IsFromDeadLetter = False",
+                    $"[MessageDiscarded] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Reason = FilteredOut, StoreKey = 0, Retry = 0, Redelivery = 0, MessageRemoved = {messageRemoved.Value}, MovedToDeadLetter = False",
+                    "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2 (end)"
+                ] ),
+                (t, _) => t.Logs.TestSequence(
+                [
+                    "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 4 (start)",
+                    "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 1, Retry = 0, Redelivery = 0, IsFromDeadLetter = False",
+                    "[MessageProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 1, MessageRemoved = True",
+                    "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 4 (end)"
+                ] )
+            ] )
+            .Go();
+    }
+
+    [Fact]
+    public async Task QueueProcessing_ShouldNotIgnoreMessagesWhenFilterExpressionThrows()
+    {
+        var endSource = new SafeTaskCompletionSource( completionCount: 2 );
+        var queueLogs = new QueueEventLogger();
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => MessageBrokerRemoteClientLogger.Create(
+                        traceStart: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.MessageNotification )
+                                endSource.Complete();
+                        } ) )
+                .SetQueueLoggerFactory(
+                    _ => queueLogs.GetLogger(
+                        MessageBrokerQueueLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
+                                    endSource.Complete();
+                            } ) ) )
+                .SetExpressionFactory(
+                    new ParsedExpressionFactoryBuilder()
+                        .AddGenericArithmeticOperators()
+                        .AddGenericBitwiseOperators()
+                        .AddGenericLogicalOperators()
+                        .AddInt32TypeDefinition()
+                        .AddBranchingVariadicFunctions()
+                        .Build() ) );
+
+        await server.StartAsync();
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server );
+        await client.GetTask(
+            c =>
+            {
+                c.SendBindPublisherRequest( "c" );
+                c.ReadPublisherBoundResponse();
+                c.SendBindListenerRequest( "c", true, filterExpression: "if(c.Data.Length > 0i, throw(), true)" );
+                c.ReadListenerBoundResponse();
+                c.SendPushMessage( 1, [ 1 ], confirm: false );
+                c.ReadMessageNotification( 1 );
+            } );
+
+        await endSource.Task;
+
+        queueLogs.GetAll()
+            .TakeLast( 1 )
+            .TestSequence(
+            [
+                (t, _) => t.Logs.TestSequence(
+                [
+                    (e, _) => e.TestEquals( "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2 (start)" ),
+                    (e, _) => e.TestEquals(
+                        "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 0, Redelivery = 0, IsFromDeadLetter = False" ),
+                    (e, _) => e.TestStartsWith(
+                        """
+                        [Error] Client = [1] 'test', Queue = [1] 'c', TraceId = 2
+                        LfrlAnvil.Computable.Expressions.Exceptions.ParsedExpressionInvocationException: Invocation has thrown an exception.
+                        """ ),
+                    (e, _) => e.TestEquals(
+                        "[MessageProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 0, MessageRemoved = True" ),
+                    (e, _) => e.TestEquals( "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2 (end)" )
                 ] )
             ] )
             .Go();

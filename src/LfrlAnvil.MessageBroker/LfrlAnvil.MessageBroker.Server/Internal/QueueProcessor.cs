@@ -257,6 +257,31 @@ internal struct QueueProcessor
                         continue;
                     }
 
+                    if ( messageType == QueueMessageStore.MessageType.Pending
+                        && message.Listener.FilterExpression is not null
+                        && ! message.Listener.FilterMessage( in streamMessage, traceId ) )
+                    {
+                        message.Listener.DecrementPrefetchCounter();
+                        using ( queue.AcquireLock() )
+                            queue.MessageStore.Dequeue( QueueMessageStore.MessageType.Pending );
+
+                        var messageRemoved = queue.RemoveFromStreamMessageStore( message, traceId );
+                        if ( queue.Logger.MessageDiscarded is { } messageDiscarded )
+                            messageDiscarded.Emit(
+                                MessageBrokerQueueMessageDiscardedEvent.Create(
+                                    message.Listener,
+                                    traceId,
+                                    message.Publisher,
+                                    message.StoreKey,
+                                    0,
+                                    0,
+                                    messageRemoved,
+                                    false,
+                                    MessageBrokerQueueDiscardMessageReason.FilteredOut ) );
+
+                        continue;
+                    }
+
                     var ackExpiresAt = Timestamp.Zero;
                     var failed = true;
                     var poolToken = MemoryPoolToken<byte>.Empty;

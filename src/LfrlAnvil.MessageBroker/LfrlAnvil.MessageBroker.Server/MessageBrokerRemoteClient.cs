@@ -24,6 +24,7 @@ using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Async;
+using LfrlAnvil.Computable.Expressions;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Memory;
 using LfrlAnvil.MessageBroker.Server.Events;
@@ -437,6 +438,8 @@ public sealed partial class MessageBrokerRemoteClient
         MessageBrokerChannel channel,
         bool channelCreated,
         string queueName,
+        string? filterExpression,
+        IParsedExpressionDelegate<MessageBrokerFilterExpressionContext, bool>? filterExpressionDelegate,
         in Protocol.BindListenerRequestHeader header,
         ref MessageBrokerChannelListenerBinding? listener,
         ref ulong channelTraceId,
@@ -488,7 +491,9 @@ public sealed partial class MessageBrokerRemoteClient
                                 header.MaxRedeliveries,
                                 header.MinAckTimeout,
                                 header.DeadLetterCapacityHint,
-                                header.MinDeadLetterRetention ) );
+                                header.MinDeadLetterRetention,
+                                filterExpression,
+                                filterExpressionDelegate ) );
                     }
                     catch
                     {

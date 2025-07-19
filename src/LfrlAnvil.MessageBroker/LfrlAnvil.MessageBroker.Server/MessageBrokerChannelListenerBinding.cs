@@ -12,10 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Computable.Expressions;
+using LfrlAnvil.MessageBroker.Server.Events;
+using LfrlAnvil.MessageBroker.Server.Internal;
 
 namespace LfrlAnvil.MessageBroker.Server;
 
@@ -25,6 +29,8 @@ namespace LfrlAnvil.MessageBroker.Server;
 public sealed class MessageBrokerChannelListenerBinding
 {
     private readonly object _sync = new object();
+    private readonly MessageBrokerFilterExpressionContext[] _filterExpressionArgs;
+    private readonly Func<MessageBrokerFilterExpressionContext[], bool>? _filterExpressionDelegate;
     private InterlockedInt32 _prefetchCounter;
     private InterlockedInt32 _deadLetterCounter;
     private MessageBrokerChannelListenerBindingState _state;
@@ -39,7 +45,9 @@ public sealed class MessageBrokerChannelListenerBinding
         int maxRedeliveries,
         Duration minAckTimeout,
         int deadLetterCapacityHint,
-        Duration minDeadLetterRetention)
+        Duration minDeadLetterRetention,
+        string? filterExpression,
+        IParsedExpressionDelegate<MessageBrokerFilterExpressionContext, bool>? filterExpressionDelegate)
     {
         Assume.IsGreaterThan( prefetchHint, 0 );
         Assume.IsGreaterThanOrEqualTo( maxRetries, 0 );
@@ -59,6 +67,9 @@ public sealed class MessageBrokerChannelListenerBinding
         MinAckTimeout = minAckTimeout;
         DeadLetterCapacityHint = deadLetterCapacityHint;
         MinDeadLetterRetention = minDeadLetterRetention;
+        _filterExpressionArgs = filterExpression is not null ? [ default ] : Array.Empty<MessageBrokerFilterExpressionContext>();
+        _filterExpressionDelegate = filterExpressionDelegate?.Delegate;
+        FilterExpression = filterExpression;
         _prefetchCounter = new InterlockedInt32( 0 );
         _deadLetterCounter = new InterlockedInt32( 0 );
     }
@@ -123,6 +134,11 @@ public sealed class MessageBrokerChannelListenerBinding
     public Duration MinDeadLetterRetention { get; }
 
     /// <summary>
+    /// Specifies message filter expression.
+    /// </summary>
+    public string? FilterExpression { get; }
+
+    /// <summary>
     /// Specifies whether or not the <see cref="Client"/> is expected to send ACK or negative ACK to the <see cref="Queue"/>
     /// in order to confirm message notification.
     /// </summary>
@@ -152,6 +168,37 @@ public sealed class MessageBrokerChannelListenerBinding
     {
         return
             $"[{Client.Id}] '{Client.Name}' => [{Channel.Id}] '{Channel.Name}' listener binding (using [{Queue.Id}] '{Queue.Name}' queue) ({State})";
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool FilterMessage(in StreamMessage message, ulong queueTraceId)
+    {
+        Assume.IsNotNull( _filterExpressionDelegate );
+        var context = new MessageBrokerFilterExpressionContext( this, in message );
+        MessageBrokerFilterExpressionContext[] args;
+        using ( AcquireLock() )
+        {
+            Assume.Equals( _filterExpressionArgs[0], default );
+            _filterExpressionArgs[0] = context;
+            args = _filterExpressionArgs;
+        }
+
+        try
+        {
+            return _filterExpressionDelegate( args );
+        }
+        catch ( Exception exc )
+        {
+            if ( Queue.Logger.Error is { } error )
+                error.Emit( MessageBrokerQueueErrorEvent.Create( Queue, queueTraceId, exc ) );
+
+            return true;
+        }
+        finally
+        {
+            using ( AcquireLock() )
+                _filterExpressionArgs[0] = default;
+        }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -265,26 +312,26 @@ public sealed class MessageBrokerChannelListenerBinding
 
     internal void OnServerDisposed()
     {
-        _prefetchCounter.Write( -1 );
-        _deadLetterCounter.Write( -1 );
         using ( AcquireLock() )
         {
             if ( ShouldCancel )
                 return;
 
+            _prefetchCounter.Write( -1 );
+            _deadLetterCounter.Write( -1 );
             _state = MessageBrokerChannelListenerBindingState.Disposed;
         }
     }
 
     internal void OnClientDisconnected(ulong traceId)
     {
-        _prefetchCounter.Write( -1 );
-        _deadLetterCounter.Write( -1 );
         using ( AcquireLock() )
         {
             if ( ShouldCancel )
                 return;
 
+            _prefetchCounter.Write( -1 );
+            _deadLetterCounter.Write( -1 );
             _state = MessageBrokerChannelListenerBindingState.Disposing;
         }
 

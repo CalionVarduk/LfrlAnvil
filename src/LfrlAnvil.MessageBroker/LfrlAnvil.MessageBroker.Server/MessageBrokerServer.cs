@@ -23,6 +23,7 @@ using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Async;
+using LfrlAnvil.Computable.Expressions;
 using LfrlAnvil.Exceptions;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Exceptions;
@@ -66,6 +67,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         HandshakeTimeout = Defaults.Temporal.GetActualTimeout( options.HandshakeTimeout );
         AcceptableMessageTimeout = Defaults.Temporal.GetActualTimeoutBounds( options.AcceptableMessageTimeout );
         AcceptablePingInterval = Defaults.Temporal.GetActualPingIntervalBounds( options.AcceptablePingInterval );
+        ExpressionFactory = options.ExpressionFactory;
         Logger = options.Logger ?? default;
         RemoteClientLoggerFactory = options.ClientLoggerFactory;
         ChannelLoggerFactory = options.ChannelLoggerFactory;
@@ -105,6 +107,11 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     /// The local <see cref="EndPoint"/> of this server's listener socket.
     /// </summary>
     public EndPoint LocalEndPoint { get; private set; }
+
+    /// <summary>
+    /// Factory of parsed expressions for listener message filter predicates.
+    /// </summary>
+    public IParsedExpressionFactory? ExpressionFactory { get; }
 
     /// <summary>
     /// Current server's state.

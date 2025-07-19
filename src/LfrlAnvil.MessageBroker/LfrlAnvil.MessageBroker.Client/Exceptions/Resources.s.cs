@@ -31,6 +31,8 @@ internal static class Resources
     internal const string MessageCannotBeBothRetryAndRedelivery = "Message notification cannot be marked as both a retry and a redelivery.";
     internal const string ListenerExpectsAckId = "Expected ACK ID to be greater than 0 because listener has ACKs enabled.";
     internal const string ListenerDoesNotExpectAckId = "Expected ACK ID to be equal to 0 because listener has ACKs disabled.";
+    internal const string UnexpectedFilterExpression = "Server does not support filter expressions.";
+    internal const string FilterExpressionIsNotValid = "Server failed to parse provided filter expression.";
 
     internal const string ExternalDelaySourceHasBeenDisposed
         = "Operation has been cancelled because external delay value task source has been disposed.";

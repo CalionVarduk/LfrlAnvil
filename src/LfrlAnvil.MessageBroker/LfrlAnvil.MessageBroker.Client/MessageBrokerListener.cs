@@ -48,6 +48,7 @@ public sealed class MessageBrokerListener
         Duration minAckTimeout,
         int deadLetterCapacityHint,
         Duration minDeadLetterRetention,
+        string? filterExpression,
         MessageBrokerListenerCallback callback)
     {
         Client = client;
@@ -62,6 +63,7 @@ public sealed class MessageBrokerListener
         MinAckTimeout = minAckTimeout;
         DeadLetterCapacityHint = deadLetterCapacityHint;
         MinDeadLetterRetention = minDeadLetterRetention;
+        FilterExpression = filterExpression;
         Callback = callback;
         _state = MessageBrokerListenerState.Bound;
         CancellationSource = new CancellationTokenSource();
@@ -146,6 +148,11 @@ public sealed class MessageBrokerListener
     /// This is a min value. Actual value is dependant on all listeners attached to the queue and the state of the queue's dead letter.
     /// </remarks>
     public Duration MinDeadLetterRetention { get; }
+
+    /// <summary>
+    /// Specifies server-side message filter expression.
+    /// </summary>
+    public string? FilterExpression { get; }
 
     /// <summary>
     /// Specifies whether or not the <see cref="Client"/> is expected to send ACK or negative ACK to the server

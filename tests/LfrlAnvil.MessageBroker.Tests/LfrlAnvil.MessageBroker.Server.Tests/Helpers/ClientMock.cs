@@ -265,20 +265,28 @@ internal sealed class ClientMock : IDisposable
         int? deadLetterCapacityHint = null,
         Duration? minDeadLetterRetention = null,
         string? queueName = null,
+        string? filterExpression = null,
         short? channelNameLength = null,
+        short? queueNameLength = null,
         uint? payload = null)
     {
         var preparedChannelName = EncodeableText.Create( TextEncoding.Instance, channelName ).GetValueOrThrow();
         var preparedQueueName = EncodeableText.Create( TextEncoding.Instance, queueName ?? string.Empty ).GetValueOrThrow();
+        var preparedFilterExpression = EncodeableText.Create( TextEncoding.Instance, filterExpression ?? string.Empty ).GetValueOrThrow();
         var buffer = new byte[Protocol.PacketHeader.Length
             + Protocol.BindListenerRequestHeader.Length
             + preparedChannelName.ByteCount
-            + preparedQueueName.ByteCount];
+            + preparedQueueName.ByteCount
+            + preparedFilterExpression.ByteCount];
 
         var writer = new BinaryContractWriter( buffer );
         writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.BindListenerRequest );
         writer.MoveWrite(
-            payload ?? ( uint )(Protocol.BindListenerRequestHeader.Length + preparedChannelName.ByteCount + preparedQueueName.ByteCount) );
+            payload
+            ?? ( uint )(Protocol.BindListenerRequestHeader.Length
+                + preparedChannelName.ByteCount
+                + preparedQueueName.ByteCount
+                + preparedFilterExpression.ByteCount) );
 
         writer.MoveWrite( ( byte )(createChannelIfNotExists ? 1 : 0) );
         writer.MoveWrite( ( ushort )(prefetchHint ?? 1) );
@@ -289,9 +297,12 @@ internal sealed class ClientMock : IDisposable
         writer.MoveWrite( ( uint )(deadLetterCapacityHint ?? 0) );
         writer.MoveWrite( ( ulong )(minDeadLetterRetention?.FullMilliseconds ?? 0) );
         writer.MoveWrite( ( ushort )(channelNameLength ?? preparedChannelName.ByteCount) );
+        writer.MoveWrite( ( ushort )(queueNameLength ?? preparedQueueName.ByteCount) );
         preparedChannelName.Encode( writer.GetSpan( preparedChannelName.ByteCount ) ).ThrowIfError();
         writer.Move( preparedChannelName.ByteCount );
         preparedQueueName.Encode( writer.GetSpan( preparedQueueName.ByteCount ) ).ThrowIfError();
+        writer.Move( preparedQueueName.ByteCount );
+        preparedFilterExpression.Encode( writer.GetSpan( preparedFilterExpression.ByteCount ) ).ThrowIfError();
 
         Send( buffer );
     }

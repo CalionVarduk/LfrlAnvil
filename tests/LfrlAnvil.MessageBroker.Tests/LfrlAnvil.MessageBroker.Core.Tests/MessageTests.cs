@@ -4,6 +4,8 @@ using System.Net;
 using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Async;
+using LfrlAnvil.Computable.Expressions;
+using LfrlAnvil.Computable.Expressions.Extensions;
 using LfrlAnvil.MessageBroker.Client;
 using LfrlAnvil.MessageBroker.Core.Tests.Helpers;
 using LfrlAnvil.MessageBroker.Server;
@@ -825,6 +827,80 @@ public class MessageTests : TestsBase, IClassFixture<SharedResourceFixture>
                     new MessageSnapshot( listener, 0, sender, stream, 0, 0, true, MessageSnapshot.GetData( [ 1 ] ) ),
                     new MessageSnapshot( listener, 1, sender, stream, 0, 0, true, MessageSnapshot.GetData( [ 2, 3 ] ) ),
                     new MessageSnapshot( listener, 2, sender, stream, 0, 0, true, MessageSnapshot.GetData( [ 4, 5, 6 ] ) )
+                ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task Server_ShouldNotSendMessagesFilteredOutByListenerFilterExpression()
+    {
+        var endSource = new SafeTaskCompletionSource( completionCount: 2 );
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetExpressionFactory(
+                    new ParsedExpressionFactoryBuilder()
+                        .AddGenericArithmeticOperators()
+                        .AddGenericBitwiseOperators()
+                        .AddGenericLogicalOperators()
+                        .AddInt32TypeDefinition()
+                        .Build() ) );
+
+        await server.StartAsync();
+
+        await using var client = new MessageBrokerClient(
+            ( IPEndPoint )server.LocalEndPoint,
+            "test",
+            MessageBrokerClientOptions.Default
+                .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) )
+                .SetDelaySource( _sharedDelaySource ) );
+
+        await client.StartAsync();
+
+        var sentMessageIds = new List<ulong?>();
+        var receivedMessages = new List<MessageSnapshot>();
+
+        await client.Publishers.BindAsync( "foo" );
+        await client.Listeners.BindAsync(
+            "foo",
+            async (a, _) =>
+            {
+                lock ( receivedMessages )
+                    receivedMessages.Add( MessageSnapshot.FromArgs( a ) );
+
+                await a.AckAsync();
+                endSource.Complete();
+            },
+            MessageBrokerListenerOptions.Default.SetFilterExpression( "c.Data.Length != 2i" ) );
+
+        var publisher = client.Publishers.TryGetByChannelId( 1 );
+        var listener = client.Listeners.TryGetByChannelId( 1 )!;
+
+        if ( publisher is not null )
+        {
+            var result = await publisher.PushAsync( new byte[] { 1 } );
+            sentMessageIds.Add( result.Value.Id );
+            result = await publisher.PushAsync( new byte[] { 2, 3 } );
+            sentMessageIds.Add( result.Value.Id );
+            result = await publisher.PushAsync( new byte[] { 4, 5, 6 } );
+            sentMessageIds.Add( result.Value.Id );
+        }
+
+        await endSource.Task;
+
+        var sender = new MessageBrokerExternalObject( 1, "test" );
+        var stream = new MessageBrokerExternalObject( 1, "foo" );
+
+        Assertion.All(
+                sentMessageIds.TestSequence( [ 0UL, 1UL, 2UL ] ),
+                receivedMessages.TestSequence(
+                [
+                    new MessageSnapshot( listener, 0, sender, stream, 0, 0, false, MessageSnapshot.GetData( [ 1 ] ) ),
+                    new MessageSnapshot( listener, 2, sender, stream, 0, 0, false, MessageSnapshot.GetData( [ 4, 5, 6 ] ) )
                 ] ) )
             .Go();
     }

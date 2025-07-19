@@ -866,6 +866,7 @@ public partial class MessageBrokerClientTests
             Duration? minAckTimeout = null,
             int deadLetterCapacity = 0,
             Duration deadLetterRetention = default,
+            string? filterExpression = null,
             bool createChannelIfNotExists = true)
         {
             return new Protocol.BindListenerRequest(
@@ -878,6 +879,7 @@ public partial class MessageBrokerClientTests
                 minAckTimeout ?? MessageBrokerListenerOptions.DefaultMinAckTimeout,
                 deadLetterCapacity,
                 deadLetterRetention,
+                filterExpression,
                 createChannelIfNotExists );
         }
     }

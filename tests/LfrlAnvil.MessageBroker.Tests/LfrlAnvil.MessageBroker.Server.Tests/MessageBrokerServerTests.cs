@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Computable.Expressions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Exceptions;
@@ -24,6 +25,7 @@ public class MessageBrokerServerTests : TestsBase
                 sut.AcceptableMessageTimeout.TestEquals(
                     Bounds.Create( Duration.FromMilliseconds( 1 ), Duration.FromMilliseconds( int.MaxValue ) ) ),
                 sut.AcceptablePingInterval.TestEquals( Bounds.Create( Duration.FromMilliseconds( 1 ), Duration.FromHours( 24 ) ) ),
+                sut.ExpressionFactory.TestNull(),
                 sut.State.TestEquals( MessageBrokerServerState.Created ),
                 sut.ToString().TestEquals( $"{localEndPoint} server (Created)" ),
                 sut.Clients.Count.TestEquals( 0 ),
@@ -51,6 +53,7 @@ public class MessageBrokerServerTests : TestsBase
         long maxPingIntervalTicks,
         int expectedMaxPingIntervalMs)
     {
+        var expressionFactory = Substitute.For<IParsedExpressionFactory>();
         var localEndPoint = new IPEndPoint( IPAddress.Loopback, 12345 );
         var sut = new MessageBrokerServer(
             localEndPoint,
@@ -59,7 +62,8 @@ public class MessageBrokerServerTests : TestsBase
                 .SetAcceptableMessageTimeout(
                     Bounds.Create( Duration.FromTicks( minMessageTimeoutTicks ), Duration.FromTicks( maxMessageTimeoutTicks ) ) )
                 .SetAcceptablePingInterval(
-                    Bounds.Create( Duration.FromTicks( minPingIntervalTicks ), Duration.FromTicks( maxPingIntervalTicks ) ) ) );
+                    Bounds.Create( Duration.FromTicks( minPingIntervalTicks ), Duration.FromTicks( maxPingIntervalTicks ) ) )
+                .SetExpressionFactory( expressionFactory ) );
 
         Assertion.All(
                 sut.LocalEndPoint.TestRefEquals( localEndPoint ),
@@ -72,6 +76,7 @@ public class MessageBrokerServerTests : TestsBase
                     Bounds.Create(
                         Duration.FromMilliseconds( expectedMinPingIntervalMs ),
                         Duration.FromMilliseconds( expectedMaxPingIntervalMs ) ) ),
+                sut.ExpressionFactory.TestRefEquals( expressionFactory ),
                 sut.State.TestEquals( MessageBrokerServerState.Created ),
                 sut.Clients.Count.TestEquals( 0 ),
                 sut.Clients.GetAll().TestEmpty(),

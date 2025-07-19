@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Chrono;
@@ -35,6 +36,7 @@ public readonly struct MessageBrokerClientBindingListenerEvent
         Duration minAckTimeout,
         int deadLetterCapacityHint,
         Duration minDeadLetterRetention,
+        string? filterExpression,
         bool createChannelIfNotExists)
     {
         Source = MessageBrokerClientEventSource.Create( client, traceId );
@@ -47,6 +49,7 @@ public readonly struct MessageBrokerClientBindingListenerEvent
         MinAckTimeout = minAckTimeout;
         DeadLetterCapacityHint = deadLetterCapacityHint;
         MinDeadLetterRetention = minDeadLetterRetention;
+        FilterExpression = filterExpression;
         CreateChannelIfNotExists = createChannelIfNotExists;
     }
 
@@ -106,6 +109,11 @@ public readonly struct MessageBrokerClientBindingListenerEvent
     public int MaxRedeliveries { get; }
 
     /// <summary>
+    /// Listener's server-side message filter expression.
+    /// </summary>
+    public string? FilterExpression { get; }
+
+    /// <summary>
     /// Specifies whether or not the listener has ACKs enabled.
     /// </summary>
     public bool AreAcksEnabled => MinAckTimeout > Duration.Zero;
@@ -122,8 +130,10 @@ public readonly struct MessageBrokerClientBindingListenerEvent
         var deadLetter
             = $"DeadLetter = {(DeadLetterCapacityHint > 0 ? $"(CapacityHint = {DeadLetterCapacityHint}, MinRetention = {MinDeadLetterRetention})" : "<disabled>")}";
 
+        var filterExpression = FilterExpression is not null ? $", FilterExpression:{Environment.NewLine}{FilterExpression}" : string.Empty;
+
         return
-            $"[BindingListener] {Source}, ChannelName = '{ChannelName}', QueueName = '{QueueName}', PrefetchHint = {PrefetchHint}, {retries}, MaxRedeliveries = {MaxRedeliveries}, {minAckTimeout}, {deadLetter}, CreateChannelIfNotExists = {CreateChannelIfNotExists}";
+            $"[BindingListener] {Source}, ChannelName = '{ChannelName}', QueueName = '{QueueName}', PrefetchHint = {PrefetchHint}, {retries}, MaxRedeliveries = {MaxRedeliveries}, {minAckTimeout}, {deadLetter}, CreateChannelIfNotExists = {CreateChannelIfNotExists}{filterExpression}";
     }
 
     [Pure]
@@ -140,6 +150,7 @@ public readonly struct MessageBrokerClientBindingListenerEvent
         Duration minAckTimeout,
         int deadLetterCapacityHint,
         Duration minDeadLetterRetention,
+        string? filterExpression,
         bool createChannelIfNotExists)
     {
         return new MessageBrokerClientBindingListenerEvent(
@@ -154,6 +165,7 @@ public readonly struct MessageBrokerClientBindingListenerEvent
             minAckTimeout,
             deadLetterCapacityHint,
             minDeadLetterRetention,
+            filterExpression,
             createChannelIfNotExists );
     }
 }

@@ -62,5 +62,10 @@ public enum MessageBrokerQueueDiscardMessageReason : byte
     /// <summary>
     /// Specifies that a listener has been disposed for a dead letter entry.
     /// </summary>
-    DisposedDeadLetter = 8
+    DisposedDeadLetter = 8,
+
+    /// <summary>
+    /// Specifies that a listener has filtered out the message.
+    /// </summary>
+    FilteredOut = 9
 }

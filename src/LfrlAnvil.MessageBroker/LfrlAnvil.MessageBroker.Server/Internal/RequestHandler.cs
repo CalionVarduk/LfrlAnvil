@@ -19,6 +19,7 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Sources;
 using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Computable.Expressions;
 using LfrlAnvil.Memory;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Exceptions;
@@ -619,7 +620,9 @@ internal struct RequestHandler
                 }
 
                 var queueName = TextEncoding.Parse(
-                    data.Slice( Protocol.BindListenerRequestHeader.Length + parsedRequestHeader.ChannelNameLength ) );
+                    data.Slice(
+                        Protocol.BindListenerRequestHeader.Length + parsedRequestHeader.ChannelNameLength,
+                        parsedRequestHeader.QueueNameLength ) );
 
                 if ( queueName.Exception is not null )
                     return await FinishInvalidRequestHandlingAsync( client, queueName.Exception, traceId ).ConfigureAwait( false );
@@ -631,6 +634,18 @@ internal struct RequestHandler
                     return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
                 }
 
+                var filterExpression = TextEncoding.Parse(
+                    data.Slice(
+                        Protocol.BindListenerRequestHeader.Length
+                        + parsedRequestHeader.ChannelNameLength
+                        + parsedRequestHeader.QueueNameLength ) );
+
+                if ( filterExpression.Exception is not null )
+                    return await FinishInvalidRequestHandlingAsync( client, filterExpression.Exception, traceId ).ConfigureAwait( false );
+
+                Assume.IsNotNull( filterExpression.Value );
+                var rawFilterExpression = filterExpression.Value.Length > 0 ? filterExpression.Value : null;
+
                 if ( client.Logger.BindingListener is { } bindingListener )
                     bindingListener.Emit(
                         MessageBrokerRemoteClientBindingListenerEvent.Create(
@@ -638,6 +653,7 @@ internal struct RequestHandler
                             traceId,
                             channelName.Value,
                             queueName.Value,
+                            rawFilterExpression,
                             parsedRequestHeader.PrefetchHint,
                             parsedRequestHeader.MaxRetries,
                             parsedRequestHeader.RetryDelay,
@@ -650,14 +666,54 @@ internal struct RequestHandler
                 if ( queueName.Value.Length == 0 )
                     queueName = channelName;
 
+                var bindResult = BindResult.Success;
+                IParsedExpressionDelegate<MessageBrokerFilterExpressionContext, bool>? filterExpressionDelegate = null;
+                if ( rawFilterExpression is not null )
+                {
+                    if ( client.Server.ExpressionFactory is null )
+                        bindResult = BindResult.UnexpectedFilterExpression;
+                    else
+                    {
+                        try
+                        {
+                            var expression = client.Server.ExpressionFactory.Create<MessageBrokerFilterExpressionContext, bool>(
+                                rawFilterExpression );
+
+                            if ( expression.UnboundArguments.Count > 1 )
+                            {
+                                if ( client.Logger.Error is { } error )
+                                {
+                                    var exc = new MessageBrokerRemoteClientException(
+                                        client,
+                                        Resources.InvalidFilterExpressionArgumentCount(
+                                            rawFilterExpression,
+                                            expression.UnboundArguments ) );
+
+                                    error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
+                                }
+
+                                bindResult = BindResult.InvalidFilterExpression;
+                            }
+                            else
+                                filterExpressionDelegate = expression.Compile();
+                        }
+                        catch ( Exception exc )
+                        {
+                            if ( client.Logger.Error is { } error )
+                                error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
+
+                            bindResult = BindResult.InvalidFilterExpression;
+                        }
+                    }
+                }
+
                 var channelCreated = false;
                 var queueCreated = false;
                 ulong channelTraceId = 0;
                 ulong queueTraceId = 0;
-                MessageBrokerChannel? channel;
+                MessageBrokerChannel? channel = null;
                 MessageBrokerQueue? queue = null;
                 MessageBrokerChannelListenerBinding? listener = null;
-                BindResult bindResult;
                 ManualResetValueTaskSource<bool> writerSource;
 
                 using ( AcquireActiveServerLock( client, traceId, out var serverExc ) )
@@ -670,35 +726,40 @@ internal struct RequestHandler
                         if ( exc is not null )
                             return RequestResult.Done();
 
-                        channel = ChannelCollection.TryRegisterUnsafe(
-                            client.Server,
-                            channelName.Value,
-                            parsedRequestHeader.CreateChannelIfNotExists,
-                            ref channelCreated );
-
-                        if ( channel is null )
-                            bindResult = BindResult.ChannelDoesNotExist;
-                        else
+                        if ( bindResult == BindResult.Success )
                         {
-                            try
-                            {
-                                bindResult = client.BindListenerUnsafe(
-                                    channel,
-                                    channelCreated,
-                                    queueName.Value,
-                                    in parsedRequestHeader,
-                                    ref listener,
-                                    ref channelTraceId,
-                                    ref queue,
-                                    ref queueTraceId,
-                                    ref queueCreated );
-                            }
-                            catch
-                            {
-                                if ( channelCreated )
-                                    ChannelCollection.RemoveUnsafe( channel );
+                            channel = ChannelCollection.TryRegisterUnsafe(
+                                client.Server,
+                                channelName.Value,
+                                parsedRequestHeader.CreateChannelIfNotExists,
+                                ref channelCreated );
 
-                                throw;
+                            if ( channel is null )
+                                bindResult = BindResult.ChannelDoesNotExist;
+                            else
+                            {
+                                try
+                                {
+                                    bindResult = client.BindListenerUnsafe(
+                                        channel,
+                                        channelCreated,
+                                        queueName.Value,
+                                        rawFilterExpression,
+                                        filterExpressionDelegate,
+                                        in parsedRequestHeader,
+                                        ref listener,
+                                        ref channelTraceId,
+                                        ref queue,
+                                        ref queueTraceId,
+                                        ref queueCreated );
+                                }
+                                catch
+                                {
+                                    if ( channelCreated )
+                                        ChannelCollection.RemoveUnsafe( channel );
+
+                                    throw;
+                                }
                             }
                         }
 
@@ -721,10 +782,14 @@ internal struct RequestHandler
                                 Resources.ListenerAlreadyBound( listener! ) ),
                             BindResult.ChannelDisposed => new MessageBrokerChannelDisposedException( channel! ),
                             BindResult.ParentDisposed => new MessageBrokerQueueDisposedException( queue! ),
-                            _ => new MessageBrokerChannelListenerBindingException(
+                            BindResult.ChannelDoesNotExist => new MessageBrokerChannelListenerBindingException(
                                 client,
                                 null,
-                                Resources.CannotBindAsListenerToNonExistingChannel( client, channelName.Value ) )
+                                Resources.CannotBindAsListenerToNonExistingChannel( client, channelName.Value ) ),
+                            BindResult.UnexpectedFilterExpression => new MessageBrokerRemoteClientException(
+                                client,
+                                Resources.UnexpectedFilterExpression( rawFilterExpression! ) ),
+                            _ => new MessageBrokerRemoteClientException( client, Resources.InvalidFilterExpression( rawFilterExpression! ) )
                         };
 
                         error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );

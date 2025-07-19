@@ -5,8 +5,7 @@
 |   MessageBroker.*   |   Max Packet Length & Batching   |   [link](#messagebroker-max-packet-length--batching)   |                                                    |
 |   MessageBroker.*   |            Permanence            |           [link](#messagebroker-permanence)            | [link](#messagebroker-max-packet-length--batching) |
 |   MessageBroker.*   |      Request-Reply Channel       |      [link](#messagebroker-request-reply-channel)      |         [link](#messagebroker-permanence)          |
-|   MessageBroker.*   |        Subscriber Filter         |        [link](#messagebroker-subscriber-filter)        |    [link](#messagebroker-request-reply-channel)    |
-|   MessageBroker.*   |        Server Maintenance        |       [link](#messagebroker-server-maintenance)        |      [link](#messagebroker-subscriber-filter)      |
+|   MessageBroker.*   |        Server Maintenance        |       [link](#messagebroker-server-maintenance)        |                                                    |
 |    Dependencies     |     Generic dependency types     |     [link](#dependencies-generic-dependency-types)     |                         -                          |
 |   Dependencies.*    |  Dependencies.ServiceProviders   |            [link](#dependencies-aspnetcore)            |   [link](#dependencies-generic-dependency-types)   |
 |    Computable.*     |       Math/Physics structs       |        [link](#computable-mathphysics-structs)         |                         -                          |
@@ -20,7 +19,6 @@
 |      Sql.Core       |          Add JSON nodes          |            [link](#sqlcore-add-json-nodes)             |                         -                          |
 
 ### Scribbles:
-
 Sql:
 
 - source generators for queries/statements?
@@ -42,6 +40,9 @@ Reactive:
 
 - scheduler requires DelayValueTaskSource usage, with async MRE
     - also, add task container pooling
+    - task scheduler based on timer may also require changes
+    - maybe use sth akin to worker task pool, to make it fully async?
+      - main loop delegates tasks to workers pooled on-demand, notified via manual value task resets
 
 Core:
 
@@ -160,17 +161,6 @@ project idea:
 - its subscribers also cannot be permanent
 - WON'T DO
     - can be setup manually with correct meta channels
-
-### MessageBroker: Subscriber Filter
-
-- allow clients to configure a filter on a subscriber
-- filter will be ran on the server-side
-- only applies to pub-sub channel subscriptions
-- filter is provided in string format
-- server compiles the filter into a delegate
-    - delegate only accepts a single parameter of some sort of context type
-    - which contains all the necessary info about the message
-    - it should also allow to read binary message data
 
 ### MessageBroker: Server Maintenance
 

@@ -17,7 +17,8 @@ public class MessageBrokerListenerOptionsTests : TestsBase
                 sut.RetryDelay.TestEquals( Duration.Zero ),
                 sut.DeadLetterCapacityHint.TestEquals( 0 ),
                 sut.MinDeadLetterRetention.TestEquals( Duration.Zero ),
-                sut.MinAckTimeout.TestEquals( MessageBrokerListenerOptions.DefaultMinAckTimeout ) )
+                sut.MinAckTimeout.TestEquals( MessageBrokerListenerOptions.DefaultMinAckTimeout ),
+                sut.FilterExpression.TestNull() )
             .Go();
     }
 
@@ -33,7 +34,8 @@ public class MessageBrokerListenerOptionsTests : TestsBase
                 sut.RetryDelay.TestEquals( Duration.Zero ),
                 sut.DeadLetterCapacityHint.TestEquals( 0 ),
                 sut.MinDeadLetterRetention.TestEquals( Duration.Zero ),
-                sut.MinAckTimeout.TestEquals( MessageBrokerListenerOptions.DefaultMinAckTimeout ) )
+                sut.MinAckTimeout.TestEquals( MessageBrokerListenerOptions.DefaultMinAckTimeout ),
+                sut.FilterExpression.TestNull() )
             .Go();
     }
 
@@ -53,7 +55,8 @@ public class MessageBrokerListenerOptionsTests : TestsBase
                 result.RetryDelay.TestEquals( sut.RetryDelay ),
                 result.DeadLetterCapacityHint.TestEquals( sut.DeadLetterCapacityHint ),
                 result.MinDeadLetterRetention.TestEquals( sut.MinDeadLetterRetention ),
-                result.MinAckTimeout.TestEquals( sut.MinAckTimeout ) )
+                result.MinAckTimeout.TestEquals( sut.MinAckTimeout ),
+                result.FilterExpression.TestEquals( sut.FilterExpression ) )
             .Go();
     }
 
@@ -70,7 +73,8 @@ public class MessageBrokerListenerOptionsTests : TestsBase
                 result.RetryDelay.TestEquals( sut.RetryDelay ),
                 result.DeadLetterCapacityHint.TestEquals( sut.DeadLetterCapacityHint ),
                 result.MinDeadLetterRetention.TestEquals( sut.MinDeadLetterRetention ),
-                result.MinAckTimeout.TestEquals( sut.MinAckTimeout ) )
+                result.MinAckTimeout.TestEquals( sut.MinAckTimeout ),
+                result.FilterExpression.TestEquals( sut.FilterExpression ) )
             .Go();
     }
 
@@ -105,7 +109,8 @@ public class MessageBrokerListenerOptionsTests : TestsBase
                 result.RetryDelay.TestEquals( Duration.FromTicks( expectedRetryDelayTicks ) ),
                 result.DeadLetterCapacityHint.TestEquals( sut.DeadLetterCapacityHint ),
                 result.MinDeadLetterRetention.TestEquals( sut.MinDeadLetterRetention ),
-                result.MinAckTimeout.TestEquals( sut.MinAckTimeout ) )
+                result.MinAckTimeout.TestEquals( sut.MinAckTimeout ),
+                result.FilterExpression.TestEquals( sut.FilterExpression ) )
             .Go();
     }
 
@@ -122,7 +127,8 @@ public class MessageBrokerListenerOptionsTests : TestsBase
                 result.RetryDelay.TestEquals( MessageBrokerListenerOptions.DefaultRetryDelay ),
                 result.DeadLetterCapacityHint.TestEquals( sut.DeadLetterCapacityHint ),
                 result.MinDeadLetterRetention.TestEquals( sut.MinDeadLetterRetention ),
-                result.MinAckTimeout.TestEquals( sut.MinAckTimeout ) )
+                result.MinAckTimeout.TestEquals( sut.MinAckTimeout ),
+                result.FilterExpression.TestEquals( sut.FilterExpression ) )
             .Go();
     }
 
@@ -139,7 +145,8 @@ public class MessageBrokerListenerOptionsTests : TestsBase
                 result.RetryDelay.TestEquals( Duration.Zero ),
                 result.DeadLetterCapacityHint.TestEquals( sut.DeadLetterCapacityHint ),
                 result.MinDeadLetterRetention.TestEquals( sut.MinDeadLetterRetention ),
-                result.MinAckTimeout.TestEquals( sut.MinAckTimeout ) )
+                result.MinAckTimeout.TestEquals( sut.MinAckTimeout ),
+                result.FilterExpression.TestEquals( sut.FilterExpression ) )
             .Go();
     }
 
@@ -156,7 +163,8 @@ public class MessageBrokerListenerOptionsTests : TestsBase
                 result.RetryDelay.TestEquals( MessageBrokerListenerOptions.DefaultRetryDelay ),
                 result.DeadLetterCapacityHint.TestEquals( sut.DeadLetterCapacityHint ),
                 result.MinDeadLetterRetention.TestEquals( sut.MinDeadLetterRetention ),
-                result.MinAckTimeout.TestEquals( MessageBrokerListenerOptions.DefaultMinAckTimeout ) )
+                result.MinAckTimeout.TestEquals( MessageBrokerListenerOptions.DefaultMinAckTimeout ),
+                result.FilterExpression.TestEquals( sut.FilterExpression ) )
             .Go();
     }
 
@@ -194,7 +202,8 @@ public class MessageBrokerListenerOptionsTests : TestsBase
                 result.RetryDelay.TestEquals( sut.RetryDelay ),
                 result.DeadLetterCapacityHint.TestEquals( sut.DeadLetterCapacityHint ),
                 result.MinDeadLetterRetention.TestEquals( sut.MinDeadLetterRetention ),
-                result.MinAckTimeout.TestEquals( sut.MinAckTimeout ) )
+                result.MinAckTimeout.TestEquals( sut.MinAckTimeout ),
+                result.FilterExpression.TestEquals( sut.FilterExpression ) )
             .Go();
     }
 
@@ -211,7 +220,8 @@ public class MessageBrokerListenerOptionsTests : TestsBase
                 result.RetryDelay.TestEquals( sut.RetryDelay ),
                 result.DeadLetterCapacityHint.TestEquals( sut.DeadLetterCapacityHint ),
                 result.MinDeadLetterRetention.TestEquals( sut.MinDeadLetterRetention ),
-                result.MinAckTimeout.TestEquals( MessageBrokerListenerOptions.DefaultMinAckTimeout ) )
+                result.MinAckTimeout.TestEquals( MessageBrokerListenerOptions.DefaultMinAckTimeout ),
+                result.FilterExpression.TestEquals( sut.FilterExpression ) )
             .Go();
     }
 
@@ -241,7 +251,8 @@ public class MessageBrokerListenerOptionsTests : TestsBase
                 result.RetryDelay.TestEquals( sut.RetryDelay ),
                 result.DeadLetterCapacityHint.TestEquals( sut.DeadLetterCapacityHint ),
                 result.MinDeadLetterRetention.TestEquals( sut.MinDeadLetterRetention ),
-                result.MinAckTimeout.TestEquals( Duration.FromTicks( expectedTicks ) ) )
+                result.MinAckTimeout.TestEquals( Duration.FromTicks( expectedTicks ) ),
+                result.FilterExpression.TestEquals( sut.FilterExpression ) )
             .Go();
     }
 
@@ -258,7 +269,8 @@ public class MessageBrokerListenerOptionsTests : TestsBase
                 result.RetryDelay.TestEquals( sut.RetryDelay ),
                 result.DeadLetterCapacityHint.TestEquals( sut.DeadLetterCapacityHint ),
                 result.MinDeadLetterRetention.TestEquals( sut.MinDeadLetterRetention ),
-                result.MinAckTimeout.TestEquals( MessageBrokerListenerOptions.DefaultMinAckTimeout ) )
+                result.MinAckTimeout.TestEquals( MessageBrokerListenerOptions.DefaultMinAckTimeout ),
+                result.FilterExpression.TestEquals( sut.FilterExpression ) )
             .Go();
     }
 
@@ -294,7 +306,8 @@ public class MessageBrokerListenerOptionsTests : TestsBase
                 result.RetryDelay.TestEquals( sut.RetryDelay ),
                 result.DeadLetterCapacityHint.TestEquals( capacity ),
                 result.MinDeadLetterRetention.TestEquals( Duration.FromTicks( expectedRetentionTicks ) ),
-                result.MinAckTimeout.TestEquals( sut.MinAckTimeout ) )
+                result.MinAckTimeout.TestEquals( sut.MinAckTimeout ),
+                result.FilterExpression.TestEquals( sut.FilterExpression ) )
             .Go();
     }
 
@@ -317,6 +330,34 @@ public class MessageBrokerListenerOptionsTests : TestsBase
     }
 
     [Fact]
+    public void SetFilterExpression_ShouldChangeFilterExpression()
+    {
+        var sut = MessageBrokerListenerOptions.Default;
+        var result = sut.SetFilterExpression( "expression" );
+        Assertion.All(
+                result.MaxRetries.TestEquals( sut.MaxRetries ),
+                result.MaxRedeliveries.TestEquals( sut.MaxRedeliveries ),
+                result.PrefetchHint.TestEquals( sut.PrefetchHint ),
+                result.AreAcksEnabled.TestEquals( sut.AreAcksEnabled ),
+                result.RetryDelay.TestEquals( sut.RetryDelay ),
+                result.DeadLetterCapacityHint.TestEquals( sut.DeadLetterCapacityHint ),
+                result.MinDeadLetterRetention.TestEquals( sut.MinDeadLetterRetention ),
+                result.MinAckTimeout.TestEquals( sut.MinAckTimeout ),
+                result.FilterExpression.TestEquals( "expression" ) )
+            .Go();
+    }
+
+    [Theory]
+    [InlineData( "" )]
+    [InlineData( "   " )]
+    public void SetFilterExpression_ShouldThrowArgumentException_WhenValueIsInvalid(string value)
+    {
+        var sut = MessageBrokerListenerOptions.Default;
+        var action = Lambda.Of( () => sut.SetFilterExpression( value ) );
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
+    }
+
+    [Fact]
     public void EnableAcks_ShouldAllowToDisableAcks()
     {
         var sut = MessageBrokerListenerOptions.Default;
@@ -329,7 +370,8 @@ public class MessageBrokerListenerOptionsTests : TestsBase
                 result.RetryDelay.TestEquals( sut.RetryDelay ),
                 result.DeadLetterCapacityHint.TestEquals( sut.DeadLetterCapacityHint ),
                 result.MinDeadLetterRetention.TestEquals( sut.MinDeadLetterRetention ),
-                result.MinAckTimeout.TestEquals( Duration.Zero ) )
+                result.MinAckTimeout.TestEquals( Duration.Zero ),
+                result.FilterExpression.TestEquals( sut.FilterExpression ) )
             .Go();
     }
 
@@ -346,7 +388,8 @@ public class MessageBrokerListenerOptionsTests : TestsBase
                 result.RetryDelay.TestEquals( sut.RetryDelay ),
                 result.DeadLetterCapacityHint.TestEquals( sut.DeadLetterCapacityHint ),
                 result.MinDeadLetterRetention.TestEquals( sut.MinDeadLetterRetention ),
-                result.MinAckTimeout.TestEquals( MessageBrokerListenerOptions.DefaultMinAckTimeout ) )
+                result.MinAckTimeout.TestEquals( MessageBrokerListenerOptions.DefaultMinAckTimeout ),
+                result.FilterExpression.TestEquals( sut.FilterExpression ) )
             .Go();
     }
 
@@ -374,7 +417,8 @@ public class MessageBrokerListenerOptionsTests : TestsBase
                 result.RetryDelay.TestEquals( sut.RetryDelay ),
                 result.DeadLetterCapacityHint.TestEquals( deadLetterCapacity ),
                 result.MinDeadLetterRetention.TestEquals( deadLetterCapacity > 0 ? Duration.FromHours( 1 ) : Duration.Zero ),
-                result.MinAckTimeout.TestEquals( sut.MinAckTimeout ) )
+                result.MinAckTimeout.TestEquals( sut.MinAckTimeout ),
+                result.FilterExpression.TestEquals( sut.FilterExpression ) )
             .Go();
     }
 }

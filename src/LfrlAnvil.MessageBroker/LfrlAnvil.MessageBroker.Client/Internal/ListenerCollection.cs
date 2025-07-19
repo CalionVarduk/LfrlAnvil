@@ -98,6 +98,7 @@ internal struct ListenerCollection
         var minAckTimeout = options.MinAckTimeout;
         var deadLetterCapacityHint = options.DeadLetterCapacityHint;
         var minDeadLetterRetention = options.MinDeadLetterRetention;
+        var filterExpression = options.FilterExpression;
 
         ulong traceId;
         bool reverseEndianness;
@@ -131,6 +132,7 @@ internal struct ListenerCollection
                         minAckTimeout,
                         deadLetterCapacityHint,
                         minDeadLetterRetention,
+                        filterExpression,
                         createChannelIfNotExists ) );
 
             ManualResetValueTaskSource<IncomingPacketToken> responseSource;
@@ -149,6 +151,7 @@ internal struct ListenerCollection
                     minAckTimeout,
                     deadLetterCapacityHint,
                     minDeadLetterRetention,
+                    filterExpression,
                     createChannelIfNotExists );
 
                 poolToken = client.MemoryPool.Rent( request.Length, out var buffer ).EnableClearing();
@@ -275,6 +278,7 @@ internal struct ListenerCollection
                                 minAckTimeout,
                                 deadLetterCapacityHint,
                                 minDeadLetterRetention,
+                                filterExpression,
                                 callback );
 
                             client.ListenerCollection._store.Add( parsedResponse.ChannelId, channelName, listener );

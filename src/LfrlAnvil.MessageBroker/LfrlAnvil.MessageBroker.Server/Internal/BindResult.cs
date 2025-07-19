@@ -20,5 +20,7 @@ internal enum BindResult : byte
     AlreadyBound = 1,
     ChannelDisposed = 2,
     ParentDisposed = 3,
-    ChannelDoesNotExist = 4
+    ChannelDoesNotExist = 4,
+    UnexpectedFilterExpression = 5,
+    InvalidFilterExpression = 6
 }

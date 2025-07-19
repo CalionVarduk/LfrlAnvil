@@ -544,6 +544,7 @@ internal static class Protocol
         internal readonly Duration MinDeadLetterRetention;
         internal readonly EncodeableText ChannelName;
         internal readonly EncodeableText QueueName;
+        internal readonly EncodeableText FilterExpression;
 
         internal BindListenerRequest(
             string channelName,
@@ -555,6 +556,7 @@ internal static class Protocol
             Duration minAckTimeout,
             int deadLetterCapacityHint,
             Duration minDeadLetterRetention,
+            string? filterExpression,
             bool createChannelIfNotExists)
         {
             Assume.IsGreaterThan( prefetchHint, 0 );
@@ -574,14 +576,16 @@ internal static class Protocol
             MinDeadLetterRetention = minDeadLetterRetention;
             ChannelName = TextEncoding.Prepare( channelName ).GetValueOrThrow();
             QueueName = TextEncoding.Prepare( queueName ?? string.Empty ).GetValueOrThrow();
+            FilterExpression = TextEncoding.Prepare( filterExpression ?? string.Empty ).GetValueOrThrow();
             Header = PacketHeader.Create(
                 MessageBrokerServerEndpoint.BindListenerRequest,
                 sizeof( byte )
-                + sizeof( ushort ) * 2
+                + sizeof( ushort ) * 3
                 + sizeof( uint ) * 5
                 + sizeof( ulong )
                 + ( uint )ChannelName.ByteCount
-                + ( uint )QueueName.ByteCount );
+                + ( uint )QueueName.ByteCount
+                + ( uint )FilterExpression.ByteCount );
         }
 
         internal int Length => PacketHeader.Length + unchecked( ( int )Header.Payload );
@@ -590,7 +594,7 @@ internal static class Protocol
         public override string ToString()
         {
             return
-                $"[{Header}] Flags = {Flags}, PrefetchHint = {PrefetchHint}, MaxRetries = {MaxRetries}, RetryDelay = {RetryDelay}, MaxRedeliveries = {MaxRedeliveries}, MinAckTimeout = {MinAckTimeout}, DeadLetterCapacityHint = {DeadLetterCapacityHint}, MinDeadLetterRetention = {MinDeadLetterRetention}, ChannelName = ({ChannelName}), QueueName = ({QueueName})";
+                $"[{Header}] Flags = {Flags}, PrefetchHint = {PrefetchHint}, MaxRetries = {MaxRetries}, RetryDelay = {RetryDelay}, MaxRedeliveries = {MaxRedeliveries}, MinAckTimeout = {MinAckTimeout}, DeadLetterCapacityHint = {DeadLetterCapacityHint}, MinDeadLetterRetention = {MinDeadLetterRetention}, ChannelName = ({ChannelName}), QueueName = ({QueueName}), FilterExpression = ({FilterExpression})";
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -607,6 +611,7 @@ internal static class Protocol
             var deadLetterCapacityHint = unchecked( ( uint )DeadLetterCapacityHint );
             var minDeadLetterRetentionMs = unchecked( ( ulong )MinDeadLetterRetention.FullMilliseconds );
             var channelNameLength = unchecked( ( ushort )ChannelName.ByteCount );
+            var queueNameLength = unchecked( ( ushort )QueueName.ByteCount );
             if ( reverseEndianness )
             {
                 payload = BinaryPrimitives.ReverseEndianness( payload );
@@ -618,6 +623,7 @@ internal static class Protocol
                 deadLetterCapacityHint = BinaryPrimitives.ReverseEndianness( deadLetterCapacityHint );
                 minDeadLetterRetentionMs = BinaryPrimitives.ReverseEndianness( minDeadLetterRetentionMs );
                 channelNameLength = BinaryPrimitives.ReverseEndianness( channelNameLength );
+                queueNameLength = BinaryPrimitives.ReverseEndianness( queueNameLength );
             }
 
             var writer = new BinaryContractWriter( target.Span );
@@ -632,9 +638,12 @@ internal static class Protocol
             writer.MoveWrite( deadLetterCapacityHint );
             writer.MoveWrite( minDeadLetterRetentionMs );
             writer.MoveWrite( channelNameLength );
+            writer.MoveWrite( queueNameLength );
             ChannelName.Encode( writer.GetSpan( ChannelName.ByteCount ) ).ThrowIfError();
             writer.Move( ChannelName.ByteCount );
             QueueName.Encode( writer.GetSpan( QueueName.ByteCount ) ).ThrowIfError();
+            writer.Move( QueueName.ByteCount );
+            FilterExpression.Encode( writer.GetSpan( FilterExpression.ByteCount ) ).ThrowIfError();
         }
     }
 
@@ -709,6 +718,8 @@ internal static class Protocol
         internal bool AlreadyBound => (Flags & 1) != 0;
         internal bool Cancelled => (Flags & 2) != 0;
         internal bool ChannelDoesNotExist => (Flags & 4) != 0;
+        internal bool UnexpectedFilterExpression => (Flags & 8) != 0;
+        internal bool InvalidFilterExpression => (Flags & 16) != 0;
 
         [Pure]
         public override string ToString()
@@ -740,6 +751,12 @@ internal static class Protocol
 
             if ( Cancelled )
                 result = result.Extend( Resources.BindListenerCancelled( channelName ) );
+
+            if ( UnexpectedFilterExpression )
+                result = result.Extend( Resources.UnexpectedFilterExpression );
+
+            if ( InvalidFilterExpression )
+                result = result.Extend( Resources.FilterExpressionIsNotValid );
 
             return result;
         }

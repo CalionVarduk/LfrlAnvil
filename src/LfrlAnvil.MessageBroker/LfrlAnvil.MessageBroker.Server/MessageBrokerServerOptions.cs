@@ -17,6 +17,7 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Async;
+using LfrlAnvil.Computable.Expressions;
 using LfrlAnvil.Diagnostics;
 using LfrlAnvil.MessageBroker.Server.Events;
 
@@ -36,6 +37,7 @@ namespace LfrlAnvil.MessageBroker.Server;
 /// <param name="AcceptablePingInterval">
 /// Range of acceptable send ping interval values. Equal to [<b>1 ms</b>, <b>24 hours</b>] by default.
 /// </param>
+/// <param name="ExpressionFactory">Factory of parsed expressions for listener message filter predicates.</param>
 /// <param name="TimestampsFactory">Factory of <see cref="Timestamp"/> providers.</param>
 /// <param name="DelaySourceFactory">Factory of <see cref="ValueTaskDelaySource"/> instances used for scheduling future events.</param>
 /// <param name="Logger"><see cref="MessageBrokerServerLogger"/> instance.</param>
@@ -50,6 +52,7 @@ public readonly record struct MessageBrokerServerOptions(
     Duration? HandshakeTimeout,
     Bounds<Duration>? AcceptableMessageTimeout,
     Bounds<Duration>? AcceptablePingInterval,
+    IParsedExpressionFactory? ExpressionFactory,
     Func<MessageBrokerRemoteClient, ITimestampProvider>? TimestampsFactory,
     Func<MessageBrokerRemoteClient, ValueTaskDelaySource>? DelaySourceFactory,
     MessageBrokerServerLogger? Logger,
@@ -80,6 +83,7 @@ public readonly record struct MessageBrokerServerOptions(
             HandshakeTimeout,
             AcceptableMessageTimeout,
             AcceptablePingInterval,
+            ExpressionFactory,
             TimestampsFactory,
             DelaySourceFactory,
             Logger,
@@ -105,6 +109,7 @@ public readonly record struct MessageBrokerServerOptions(
             HandshakeTimeout,
             AcceptableMessageTimeout,
             AcceptablePingInterval,
+            ExpressionFactory,
             TimestampsFactory,
             DelaySourceFactory,
             Logger,
@@ -130,6 +135,7 @@ public readonly record struct MessageBrokerServerOptions(
             value,
             AcceptableMessageTimeout,
             AcceptablePingInterval,
+            ExpressionFactory,
             TimestampsFactory,
             DelaySourceFactory,
             Logger,
@@ -155,6 +161,7 @@ public readonly record struct MessageBrokerServerOptions(
             HandshakeTimeout,
             value,
             AcceptablePingInterval,
+            ExpressionFactory,
             TimestampsFactory,
             DelaySourceFactory,
             Logger,
@@ -179,6 +186,33 @@ public readonly record struct MessageBrokerServerOptions(
             MinMemoryPoolSegmentLength,
             HandshakeTimeout,
             AcceptableMessageTimeout,
+            value,
+            ExpressionFactory,
+            TimestampsFactory,
+            DelaySourceFactory,
+            Logger,
+            ClientLoggerFactory,
+            ChannelLoggerFactory,
+            StreamLoggerFactory,
+            QueueLoggerFactory,
+            StreamDecorator );
+    }
+
+    /// <summary>
+    /// Allows to change <see cref="ExpressionFactory"/>.
+    /// </summary>
+    /// <param name="value">New value.</param>
+    /// <returns>New <see cref="MessageBrokerServerOptions"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public MessageBrokerServerOptions SetExpressionFactory(IParsedExpressionFactory? value)
+    {
+        return new MessageBrokerServerOptions(
+            Tcp,
+            MinMemoryPoolSegmentLength,
+            HandshakeTimeout,
+            AcceptableMessageTimeout,
+            AcceptablePingInterval,
             value,
             TimestampsFactory,
             DelaySourceFactory,
@@ -205,6 +239,7 @@ public readonly record struct MessageBrokerServerOptions(
             HandshakeTimeout,
             AcceptableMessageTimeout,
             AcceptablePingInterval,
+            ExpressionFactory,
             value,
             DelaySourceFactory,
             Logger,
@@ -230,6 +265,7 @@ public readonly record struct MessageBrokerServerOptions(
             HandshakeTimeout,
             AcceptableMessageTimeout,
             AcceptablePingInterval,
+            ExpressionFactory,
             TimestampsFactory,
             value,
             Logger,
@@ -255,6 +291,7 @@ public readonly record struct MessageBrokerServerOptions(
             HandshakeTimeout,
             AcceptableMessageTimeout,
             AcceptablePingInterval,
+            ExpressionFactory,
             TimestampsFactory,
             DelaySourceFactory,
             value,
@@ -280,6 +317,7 @@ public readonly record struct MessageBrokerServerOptions(
             HandshakeTimeout,
             AcceptableMessageTimeout,
             AcceptablePingInterval,
+            ExpressionFactory,
             TimestampsFactory,
             DelaySourceFactory,
             Logger,
@@ -305,6 +343,7 @@ public readonly record struct MessageBrokerServerOptions(
             HandshakeTimeout,
             AcceptableMessageTimeout,
             AcceptablePingInterval,
+            ExpressionFactory,
             TimestampsFactory,
             DelaySourceFactory,
             Logger,
@@ -330,6 +369,7 @@ public readonly record struct MessageBrokerServerOptions(
             HandshakeTimeout,
             AcceptableMessageTimeout,
             AcceptablePingInterval,
+            ExpressionFactory,
             TimestampsFactory,
             DelaySourceFactory,
             Logger,
@@ -355,6 +395,7 @@ public readonly record struct MessageBrokerServerOptions(
             HandshakeTimeout,
             AcceptableMessageTimeout,
             AcceptablePingInterval,
+            ExpressionFactory,
             TimestampsFactory,
             DelaySourceFactory,
             Logger,
@@ -380,6 +421,7 @@ public readonly record struct MessageBrokerServerOptions(
             HandshakeTimeout,
             AcceptableMessageTimeout,
             AcceptablePingInterval,
+            ExpressionFactory,
             TimestampsFactory,
             DelaySourceFactory,
             Logger,

@@ -39,10 +39,11 @@ public readonly struct MessageBrokerListenerOptions
     public static Duration DefaultMinAckTimeout => Duration.FromMinutes( 10 );
 
     /// <summary>
-    /// Represents default options, with default prefetch hint, disabled retries and redeliveries and dead letter, and enabled ACKs.
+    /// Represents default options, with default prefetch hint, disabled retries and redeliveries and dead letter,
+    /// lack of filter expression, and enabled ACKs.
     /// </summary>
     public static MessageBrokerListenerOptions Default =>
-        new MessageBrokerListenerOptions( null, 0, null, 0, null, 0, Duration.Zero, false );
+        new MessageBrokerListenerOptions( null, 0, null, 0, null, 0, Duration.Zero, null, false );
 
     private readonly short? _prefetchHint;
     private readonly Duration? _retryDelay;
@@ -58,6 +59,7 @@ public readonly struct MessageBrokerListenerOptions
         Duration? minAckTimeout,
         int deadLetterCapacityHint,
         Duration minDeadLetterRetention,
+        string? filterExpression,
         bool acksDisabled)
     {
         _prefetchHint = prefetchHint;
@@ -68,6 +70,7 @@ public readonly struct MessageBrokerListenerOptions
         MaxRetries = maxRetries;
         MaxRedeliveries = maxRedeliveries;
         DeadLetterCapacityHint = deadLetterCapacityHint;
+        FilterExpression = filterExpression;
     }
 
     /// <summary>
@@ -91,6 +94,11 @@ public readonly struct MessageBrokerListenerOptions
     /// This is a min value. Actual value is dependant on all listeners attached to the queue and the state of the queue's dead letter.
     /// </remarks>
     public int DeadLetterCapacityHint { get; }
+
+    /// <summary>
+    /// Specifies server-side message filter expression.
+    /// </summary>
+    public string? FilterExpression { get; }
 
     /// <summary>
     /// Specifies the retention period for messages stored in the dead letter.
@@ -173,6 +181,7 @@ public readonly struct MessageBrokerListenerOptions
             _minAckTimeout,
             DeadLetterCapacityHint,
             _minDeadLetterRetention,
+            FilterExpression,
             _acksDisabled );
     }
 
@@ -207,6 +216,7 @@ public readonly struct MessageBrokerListenerOptions
             _minAckTimeout,
             DeadLetterCapacityHint,
             _minDeadLetterRetention,
+            FilterExpression,
             _acksDisabled );
     }
 
@@ -228,6 +238,7 @@ public readonly struct MessageBrokerListenerOptions
             _minAckTimeout,
             DeadLetterCapacityHint,
             _minDeadLetterRetention,
+            FilterExpression,
             _acksDisabled );
     }
 
@@ -259,6 +270,7 @@ public readonly struct MessageBrokerListenerOptions
             value,
             DeadLetterCapacityHint,
             _minDeadLetterRetention,
+            FilterExpression,
             _acksDisabled );
     }
 
@@ -290,6 +302,33 @@ public readonly struct MessageBrokerListenerOptions
             _minAckTimeout,
             capacityHint,
             minRetention,
+            FilterExpression,
+            _acksDisabled );
+    }
+
+    /// <summary>
+    /// Allows to change <see cref="FilterExpression"/>.
+    /// </summary>
+    /// <param name="value">New <see cref="FilterExpression"/> value.</param>
+    /// <returns>New <see cref="MessageBrokerListenerOptions"/> instance.</returns>
+    /// <exception cref="ArgumentException">
+    /// When <paramref name="value"/> is not <b>null</b> and consists only of white-space characters.
+    /// </exception>
+    [Pure]
+    public MessageBrokerListenerOptions SetFilterExpression(string? value)
+    {
+        if ( value is not null )
+            Ensure.IsNotNullOrWhiteSpace( value );
+
+        return new MessageBrokerListenerOptions(
+            _prefetchHint,
+            MaxRetries,
+            _retryDelay,
+            MaxRedeliveries,
+            _minAckTimeout,
+            DeadLetterCapacityHint,
+            _minDeadLetterRetention,
+            value,
             _acksDisabled );
     }
 
@@ -314,6 +353,7 @@ public readonly struct MessageBrokerListenerOptions
             _minAckTimeout,
             DeadLetterCapacityHint,
             _minDeadLetterRetention,
+            FilterExpression,
             ! enabled );
     }
 }

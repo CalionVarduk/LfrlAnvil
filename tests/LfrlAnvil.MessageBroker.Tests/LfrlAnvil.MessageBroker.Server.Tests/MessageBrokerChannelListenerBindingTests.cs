@@ -3,6 +3,9 @@ using System.Net;
 using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Async;
+using LfrlAnvil.Computable.Expressions;
+using LfrlAnvil.Computable.Expressions.Exceptions;
+using LfrlAnvil.Computable.Expressions.Extensions;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Exceptions;
 using LfrlAnvil.MessageBroker.Server.Tests.Helpers;
@@ -116,6 +119,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         s.MinAckTimeout.TestEquals( Duration.FromMinutes( 10 ) ),
                         s.DeadLetterCapacityHint.TestEquals( 0 ),
                         s.MinDeadLetterRetention.TestEquals( Duration.Zero ),
+                        s.FilterExpression.TestNull(),
                         s.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ),
                         s.ToString().TestEquals( "[1] 'test' => [1] 'c' listener binding (using [1] 'c' queue) (Running)" ) ) ),
                 server.Channels.Count.TestEquals( 1 ),
@@ -128,9 +132,9 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
-                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 39)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 41)",
                             "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'c', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = 600 second(s), DeadLetter = <disabled>, CreateChannelIfNotExists = True",
-                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 39)",
+                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 41)",
                             "[ListenerBound] Client = [1] 'test', TraceId = 1, Channel = [1] 'c' (created), Queue = [1] 'c' (created)",
                             "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (ListenerBoundResponse, Length = 14)",
                             "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (ListenerBoundResponse, Length = 14)",
@@ -141,7 +145,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                     .TestContainsContiguousSequence(
                     [
                         "[AwaitPacket] Client = [1] 'test'",
-                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 39)"
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 41)"
                     ] ),
                 channelLogs.GetAll()
                     .TestSequence(
@@ -191,7 +195,14 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                                     endSource.Complete();
                             } ) ) )
                 .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
-                .SetQueueLoggerFactory( _ => queueLogs.GetLogger() ) );
+                .SetQueueLoggerFactory( _ => queueLogs.GetLogger() )
+                .SetExpressionFactory(
+                    new ParsedExpressionFactoryBuilder()
+                        .AddGenericArithmeticOperators()
+                        .AddGenericBitwiseOperators()
+                        .AddGenericLogicalOperators()
+                        .AddInt32TypeDefinition()
+                        .Build() ) );
 
         await server.StartAsync();
 
@@ -205,6 +216,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                 c.SendBindListenerRequest(
                     "c",
                     createChannelIfNotExists: false,
+                    filterExpression: "c.Data.Length > 10i",
                     prefetchHint: 10,
                     maxRetries: 2,
                     maxRedeliveries: 3,
@@ -266,6 +278,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         s.MinAckTimeout.TestEquals( Duration.FromMinutes( 10 ) ),
                         s.DeadLetterCapacityHint.TestEquals( 100 ),
                         s.MinDeadLetterRetention.TestEquals( Duration.FromHours( 1 ) ),
+                        s.FilterExpression.TestEquals( "c.Data.Length > 10i" ),
                         s.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ) ) ),
                 server.Channels.Count.TestEquals( 1 ),
                 server.Channels.GetAll().TestSequence( [ (ch, _) => ch.TestRefEquals( channel ) ] ),
@@ -277,9 +290,12 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 2 (start)",
-                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (BindListenerRequest, Length = 39)",
-                            "[BindingListener] Client = [1] 'test', TraceId = 2, ChannelName = 'c', PrefetchHint = 10, MaxRetries = 2, RetryDelay = 10 second(s), MaxRedeliveries = 3, MinAckTimeout = 600 second(s), DeadLetter = (CapacityHint = 100, MinRetention = 3600 second(s)), CreateChannelIfNotExists = False",
-                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (BindListenerRequest, Length = 39)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (BindListenerRequest, Length = 60)",
+                            """
+                            [BindingListener] Client = [1] 'test', TraceId = 2, ChannelName = 'c', PrefetchHint = 10, MaxRetries = 2, RetryDelay = 10 second(s), MaxRedeliveries = 3, MinAckTimeout = 600 second(s), DeadLetter = (CapacityHint = 100, MinRetention = 3600 second(s)), CreateChannelIfNotExists = False, FilterExpression:
+                            c.Data.Length > 10i
+                            """,
+                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (BindListenerRequest, Length = 60)",
                             "[ListenerBound] Client = [1] 'test', TraceId = 2, Channel = [1] 'c', Queue = [1] 'c' (created)",
                             "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (ListenerBoundResponse, Length = 14)",
                             "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (ListenerBoundResponse, Length = 14)",
@@ -290,7 +306,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                     .TestContainsContiguousSequence(
                     [
                         "[AwaitPacket] Client = [1] 'test'",
-                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 39)"
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 60)"
                     ] ),
                 channelLogs.GetAll()
                     .Skip( 1 )
@@ -438,9 +454,9 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 2 (start)",
-                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (BindListenerRequest, Length = 40)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (BindListenerRequest, Length = 42)",
                             "[BindingListener] Client = [1] 'test', TraceId = 2, ChannelName = 'd', QueueName = 'c', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = 600 second(s), DeadLetter = <disabled>, CreateChannelIfNotExists = True",
-                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (BindListenerRequest, Length = 40)",
+                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (BindListenerRequest, Length = 42)",
                             "[ListenerBound] Client = [1] 'test', TraceId = 2, Channel = [2] 'd' (created), Queue = [1] 'c'",
                             "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (ListenerBoundResponse, Length = 14)",
                             "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (ListenerBoundResponse, Length = 14)",
@@ -451,9 +467,9 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                     .TestContainsContiguousSequence(
                     [
                         "[AwaitPacket] Client = [1] 'test'",
-                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 39)",
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 41)",
                         "[AwaitPacket] Client = [1] 'test'",
-                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 40)"
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 42)"
                     ] ),
                 channelLogs.GetAll()
                     .TestSequence(
@@ -525,7 +541,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
-                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 39)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 41)",
                             "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'c', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = 600 second(s), DeadLetter = <disabled>, CreateChannelIfNotExists = True",
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (end)"
                         ] ),
@@ -546,7 +562,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                     .TestContainsContiguousSequence(
                     [
                         "[AwaitPacket] Client = [1] 'test'",
-                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 39)"
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 41)"
                     ] ) )
             .Go();
     }
@@ -594,7 +610,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
-                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 39)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 41)",
                             "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'c', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = 600 second(s), DeadLetter = <disabled>, CreateChannelIfNotExists = True",
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (end)"
                         ] ),
@@ -615,7 +631,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                     .TestContainsContiguousSequence(
                     [
                         "[AwaitPacket] Client = [1] 'test'",
-                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 39)"
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 41)"
                     ] ) )
             .Go();
     }
@@ -645,7 +661,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
         var remoteClient = server.Clients.TryGetById( 1 );
-        await client.GetTask( c => c.SendBindListenerRequest( "c", createChannelIfNotExists: true, payload: 32 ) );
+        await client.GetTask( c => c.SendBindListenerRequest( "c", createChannelIfNotExists: true, payload: 34 ) );
         await endSource.Task;
 
         Assertion.All(
@@ -658,11 +674,11 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
-                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 37)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 39)",
                             """
                             [Error] Client = [1] 'test', TraceId = 1
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid BindListenerRequest from client [1] 'test'. Encountered 1 error(s):
-                            1. Expected header payload to be at least 33 but found 32.
+                            1. Expected header payload to be at least 35 but found 34.
                             """,
                             "[Disposing] Client = [1] 'test', TraceId = 1",
                             "[Disposed] Client = [1] 'test', TraceId = 1",
@@ -673,7 +689,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                     .TestContainsContiguousSequence(
                     [
                         "[AwaitPacket] Client = [1] 'test'",
-                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 37)"
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 39)"
                     ] ) )
             .Go();
     }
@@ -716,11 +732,12 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
-                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 41)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 43)",
                             """
                             [Error] Client = [1] 'test', TraceId = 1
-                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid BindListenerRequest from client [1] 'test'. Encountered 1 error(s):
+                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid BindListenerRequest from client [1] 'test'. Encountered 2 error(s):
                             1. Expected binary channel name length to be in [0, 3] range but found 4.
+                            2. Expected binary queue name length to be in [0, -1] range but found 0.
                             """,
                             "[Disposing] Client = [1] 'test', TraceId = 1",
                             "[Disposed] Client = [1] 'test', TraceId = 1",
@@ -731,7 +748,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                     .TestContainsContiguousSequence(
                     [
                         "[AwaitPacket] Client = [1] 'test'",
-                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 41)"
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 43)"
                     ] ) )
             .Go();
     }
@@ -776,7 +793,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
-                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 38)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 40)",
                             """
                             [Error] Client = [1] 'test', TraceId = 1
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid BindListenerRequest from client [1] 'test'. Encountered 1 error(s):
@@ -791,7 +808,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                     .TestContainsContiguousSequence(
                     [
                         "[AwaitPacket] Client = [1] 'test'",
-                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 38)"
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 40)"
                     ] ) )
             .Go();
     }
@@ -835,7 +852,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
-                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 551)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 553)",
                             """
                             [Error] Client = [1] 'test', TraceId = 1
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid BindListenerRequest from client [1] 'test'. Encountered 1 error(s):
@@ -850,7 +867,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                     .TestContainsContiguousSequence(
                     [
                         "[AwaitPacket] Client = [1] 'test'",
-                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 551)"
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 553)"
                     ] ) )
             .Go();
     }
@@ -894,7 +911,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
-                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 552)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 554)",
                             """
                             [Error] Client = [1] 'test', TraceId = 1
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid BindListenerRequest from client [1] 'test'. Encountered 1 error(s):
@@ -909,7 +926,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                     .TestContainsContiguousSequence(
                     [
                         "[AwaitPacket] Client = [1] 'test'",
-                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 552)"
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 554)"
                     ] ) )
             .Go();
     }
@@ -1016,7 +1033,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
-                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 39)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 41)",
                             $"""
                              [Error] Client = [1] 'test', TraceId = 1
                              LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid BindListenerRequest from client [1] 'test'. {expectedError}
@@ -1030,7 +1047,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                     .TestContainsContiguousSequence(
                     [
                         "[AwaitPacket] Client = [1] 'test'",
-                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 39)"
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 41)"
                     ] ) )
             .Go();
     }
@@ -1099,7 +1116,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 2 (start)",
-                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (BindListenerRequest, Length = 39)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (BindListenerRequest, Length = 41)",
                             "[BindingListener] Client = [1] 'test', TraceId = 2, ChannelName = 'c', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = 600 second(s), DeadLetter = <disabled>, CreateChannelIfNotExists = False",
                             """
                             [Error] Client = [1] 'test', TraceId = 2
@@ -1114,9 +1131,9 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                     .TestContainsContiguousSequence(
                     [
                         "[AwaitPacket] Client = [1] 'test'",
-                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 39)",
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 41)",
                         "[AwaitPacket] Client = [1] 'test'",
-                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 39)"
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 41)"
                     ] ) )
             .Go();
     }
@@ -1175,7 +1192,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
-                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 39)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 41)",
                             "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'c', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = 600 second(s), DeadLetter = <disabled>, CreateChannelIfNotExists = False",
                             """
                             [Error] Client = [1] 'test', TraceId = 1
@@ -1190,7 +1207,274 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                     .TestContainsContiguousSequence(
                     [
                         "[AwaitPacket] Client = [1] 'test'",
-                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 39)"
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 41)"
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task BindListenerRequest_ShouldBeRejected_WhenFilterExpressionsAreNotEnabledAndRequestContainsOne()
+    {
+        Exception? exception = null;
+        var endSource = new SafeTaskCompletionSource();
+        var clientLogs = new ClientEventLogger();
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
+                                    endSource.Complete();
+                            },
+                            error: e => exception = e.Exception ) ) ) );
+
+        await server.StartAsync();
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server );
+        var remoteClient = server.Clients.TryGetById( 1 );
+        await client.GetTask(
+            c =>
+            {
+                c.SendBindListenerRequest( "c", false, filterExpression: "expression" );
+                c.ReadBindListenerFailureResponse();
+            } );
+
+        await endSource.Task;
+
+        Assertion.All(
+                exception.TestType().Exact<MessageBrokerRemoteClientException>( exc => exc.Client.TestRefEquals( remoteClient ) ),
+                remoteClient.TestNotNull(
+                    c => Assertion.All(
+                        "client",
+                        c.State.TestEquals( MessageBrokerRemoteClientState.Running ),
+                        c.Listeners.Count.TestEquals( 0 ),
+                        c.Listeners.GetAll().TestEmpty() ) ),
+                server.Clients.Count.TestEquals( 1 ),
+                server.Channels.Count.TestEquals( 0 ),
+                clientLogs.GetAll()
+                    .Skip( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 51)",
+                            """
+                            [BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'c', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = <disabled>, DeadLetter = <disabled>, CreateChannelIfNotExists = False, FilterExpression:
+                            expression
+                            """,
+                            """
+                            [Error] Client = [1] 'test', TraceId = 1
+                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientException: Filter expressions are not enabled but found:
+                            expression
+                            """,
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindListenerFailureResponse, Length = 6)",
+                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindListenerFailureResponse, Length = 6)",
+                            "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (end)"
+                        ] )
+                    ] ),
+                clientLogs.GetAllAwaitPacket()
+                    .TestContainsContiguousSequence(
+                    [
+                        "[AwaitPacket] Client = [1] 'test'",
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 51)"
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task BindListenerRequest_ShouldBeRejected_WhenFilterExpressionCouldNotBeParsed()
+    {
+        var exception1 = Atomic.Create( ( Exception? )null );
+        var exception2 = Atomic.Create( ( Exception? )null );
+        var endSource = new SafeTaskCompletionSource();
+        var clientLogs = new ClientEventLogger();
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
+                                    endSource.Complete();
+                            },
+                            error: e =>
+                            {
+                                var target = exception1.Value is null ? exception1 : exception2;
+                                target.Value = e.Exception;
+                            } ) ) )
+                .SetExpressionFactory(
+                    new ParsedExpressionFactoryBuilder()
+                        .AddGenericArithmeticOperators()
+                        .AddGenericBitwiseOperators()
+                        .AddGenericLogicalOperators()
+                        .Build() ) );
+
+        await server.StartAsync();
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server );
+        var remoteClient = server.Clients.TryGetById( 1 );
+        await client.GetTask(
+            c =>
+            {
+                c.SendBindListenerRequest( "c", false, filterExpression: "expression" );
+                c.ReadBindListenerFailureResponse();
+            } );
+
+        await endSource.Task;
+
+        Assertion.All(
+                exception1.Value.TestType().Exact<ParsedExpressionCreationException>(),
+                exception2.Value.TestType().Exact<MessageBrokerRemoteClientException>( exc => exc.Client.TestRefEquals( remoteClient ) ),
+                remoteClient.TestNotNull(
+                    c => Assertion.All(
+                        "client",
+                        c.State.TestEquals( MessageBrokerRemoteClientState.Running ),
+                        c.Listeners.Count.TestEquals( 0 ),
+                        c.Listeners.GetAll().TestEmpty() ) ),
+                server.Clients.Count.TestEquals( 1 ),
+                server.Channels.Count.TestEquals( 0 ),
+                clientLogs.GetAll()
+                    .Skip( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            (e, _) => e.TestEquals( "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)" ),
+                            (e, _) => e.TestEquals(
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 51)" ),
+                            (e, _) => e.TestEquals(
+                                """
+                                [BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'c', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = <disabled>, DeadLetter = <disabled>, CreateChannelIfNotExists = False, FilterExpression:
+                                expression
+                                """ ),
+                            (e, _) => e.TestStartsWith(
+                                """
+                                [Error] Client = [1] 'test', TraceId = 1
+                                LfrlAnvil.Computable.Expressions.Exceptions.ParsedExpressionCreationException: Failed to create an expression:
+                                expression
+
+                                Encountered 1 error(s):
+                                1. OutputTypeConverterHasThrownException, construct of type LfrlAnvil.Computable.Expressions.Constructs.ParsedExpressionTypeConverter, an exception has been thrown:
+                                System.InvalidOperationException
+                                """ ),
+                            (e, _) => e.TestEquals(
+                                """
+                                [Error] Client = [1] 'test', TraceId = 1
+                                LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientException: Failed to parse the following filter expression:
+                                expression
+                                """ ),
+                            (e, _) => e.TestEquals(
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindListenerFailureResponse, Length = 6)" ),
+                            (e, _) => e.TestEquals(
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindListenerFailureResponse, Length = 6)" ),
+                            (e, _) => e.TestEquals( "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (end)" )
+                        ] )
+                    ] ),
+                clientLogs.GetAllAwaitPacket()
+                    .TestContainsContiguousSequence(
+                    [
+                        "[AwaitPacket] Client = [1] 'test'",
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 51)"
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task BindListenerRequest_ShouldBeRejected_WhenFilterExpressionContainsTooManyArguments()
+    {
+        Exception? exception = null;
+        var endSource = new SafeTaskCompletionSource();
+        var clientLogs = new ClientEventLogger();
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
+                                    endSource.Complete();
+                            },
+                            error: e => exception = e.Exception ) ) )
+                .SetExpressionFactory(
+                    new ParsedExpressionFactoryBuilder()
+                        .AddGenericArithmeticOperators()
+                        .AddGenericBitwiseOperators()
+                        .AddGenericLogicalOperators()
+                        .AddInt32TypeDefinition()
+                        .Build() ) );
+
+        await server.StartAsync();
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server );
+        var remoteClient = server.Clients.TryGetById( 1 );
+        await client.GetTask(
+            c =>
+            {
+                c.SendBindListenerRequest( "c", false, filterExpression: "a.Data.Length + b.Data.Length < 10i" );
+                c.ReadBindListenerFailureResponse();
+            } );
+
+        await endSource.Task;
+
+        Assertion.All(
+                exception.TestType().Exact<MessageBrokerRemoteClientException>( exc => exc.Client.TestRefEquals( remoteClient ) ),
+                remoteClient.TestNotNull(
+                    c => Assertion.All(
+                        "client",
+                        c.State.TestEquals( MessageBrokerRemoteClientState.Running ),
+                        c.Listeners.Count.TestEquals( 0 ),
+                        c.Listeners.GetAll().TestEmpty() ) ),
+                server.Clients.Count.TestEquals( 1 ),
+                server.Channels.Count.TestEquals( 0 ),
+                clientLogs.GetAll()
+                    .Skip( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 76)",
+                            """
+                            [BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'c', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = <disabled>, DeadLetter = <disabled>, CreateChannelIfNotExists = False, FilterExpression:
+                            a.Data.Length + b.Data.Length < 10i
+                            """,
+                            """
+                            [Error] Client = [1] 'test', TraceId = 1
+                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientException: Expected at most one filter expression context argument but found 2 ('a', 'b') in the following expression:
+                            a.Data.Length + b.Data.Length < 10i
+                            """,
+                            """
+                            [Error] Client = [1] 'test', TraceId = 1
+                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientException: Failed to parse the following filter expression:
+                            a.Data.Length + b.Data.Length < 10i
+                            """,
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindListenerFailureResponse, Length = 6)",
+                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindListenerFailureResponse, Length = 6)",
+                            "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (end)"
+                        ] )
+                    ] ),
+                clientLogs.GetAllAwaitPacket()
+                    .TestContainsContiguousSequence(
+                    [
+                        "[AwaitPacket] Client = [1] 'test'",
+                        "[AwaitPacket] Client = [1] 'test', Packet = (BindListenerRequest, Length = 76)"
                     ] ) )
             .Go();
     }

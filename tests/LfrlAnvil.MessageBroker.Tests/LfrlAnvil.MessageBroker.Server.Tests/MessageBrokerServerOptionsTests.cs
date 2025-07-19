@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Async;
+using LfrlAnvil.Computable.Expressions;
 using LfrlAnvil.Diagnostics;
 using LfrlAnvil.MessageBroker.Server.Events;
 
@@ -19,6 +20,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 sut.HandshakeTimeout.TestNull(),
                 sut.AcceptableMessageTimeout.TestNull(),
                 sut.AcceptablePingInterval.TestNull(),
+                sut.ExpressionFactory.TestNull(),
                 sut.TimestampsFactory.TestNull(),
                 sut.DelaySourceFactory.TestNull(),
                 sut.Logger.TestNull(),
@@ -44,6 +46,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
+                result.ExpressionFactory.TestEquals( sut.ExpressionFactory ),
                 result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
                 result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.Logger.TestEquals( sut.Logger ),
@@ -69,6 +72,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
+                result.ExpressionFactory.TestEquals( sut.ExpressionFactory ),
                 result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
                 result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.Logger.TestEquals( sut.Logger ),
@@ -94,6 +98,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.HandshakeTimeout.TestEquals( value ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
+                result.ExpressionFactory.TestEquals( sut.ExpressionFactory ),
                 result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
                 result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.Logger.TestEquals( sut.Logger ),
@@ -119,6 +124,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( value ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
+                result.ExpressionFactory.TestEquals( sut.ExpressionFactory ),
                 result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
                 result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.Logger.TestEquals( sut.Logger ),
@@ -144,6 +150,33 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( value ),
+                result.ExpressionFactory.TestEquals( sut.ExpressionFactory ),
+                result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
+                result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
+                result.Logger.TestEquals( sut.Logger ),
+                result.ClientLoggerFactory.TestEquals( sut.ClientLoggerFactory ),
+                result.ChannelLoggerFactory.TestEquals( sut.ChannelLoggerFactory ),
+                result.StreamLoggerFactory.TestEquals( sut.StreamLoggerFactory ),
+                result.QueueLoggerFactory.TestEquals( sut.QueueLoggerFactory ),
+                result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetExpressionFactory_ShouldChangeValue()
+    {
+        var value = Substitute.For<IParsedExpressionFactory>();
+        var sut = MessageBrokerServerOptions.Default;
+
+        var result = sut.SetExpressionFactory( value );
+
+        Assertion.All(
+                result.Tcp.TestEquals( sut.Tcp ),
+                result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
+                result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
+                result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
+                result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
+                result.ExpressionFactory.TestEquals( value ),
                 result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
                 result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.Logger.TestEquals( sut.Logger ),
@@ -169,6 +202,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
+                result.ExpressionFactory.TestEquals( sut.ExpressionFactory ),
                 result.TimestampsFactory.TestEquals( value ),
                 result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.Logger.TestEquals( sut.Logger ),
@@ -194,6 +228,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
+                result.ExpressionFactory.TestEquals( sut.ExpressionFactory ),
                 result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
                 result.DelaySourceFactory.TestEquals( value ),
                 result.Logger.TestEquals( sut.Logger ),
@@ -219,6 +254,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
+                result.ExpressionFactory.TestEquals( sut.ExpressionFactory ),
                 result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
                 result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.Logger.TestEquals( value ),
@@ -246,6 +282,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
+                result.ExpressionFactory.TestEquals( sut.ExpressionFactory ),
                 result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
                 result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.Logger.TestEquals( sut.Logger ),
@@ -271,6 +308,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
+                result.ExpressionFactory.TestEquals( sut.ExpressionFactory ),
                 result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
                 result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.Logger.TestEquals( sut.Logger ),
@@ -296,6 +334,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
+                result.ExpressionFactory.TestEquals( sut.ExpressionFactory ),
                 result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
                 result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.Logger.TestEquals( sut.Logger ),
@@ -321,6 +360,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
+                result.ExpressionFactory.TestEquals( sut.ExpressionFactory ),
                 result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
                 result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.Logger.TestEquals( sut.Logger ),
@@ -346,6 +386,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
+                result.ExpressionFactory.TestEquals( sut.ExpressionFactory ),
                 result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
                 result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
                 result.Logger.TestEquals( sut.Logger ),

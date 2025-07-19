@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Chrono;
@@ -28,6 +29,7 @@ public readonly struct MessageBrokerRemoteClientBindingListenerEvent
         ulong traceId,
         string channelName,
         string queueName,
+        string? filterExpression,
         short prefetchHint,
         int maxRetries,
         Duration retryDelay,
@@ -40,6 +42,7 @@ public readonly struct MessageBrokerRemoteClientBindingListenerEvent
         Source = MessageBrokerRemoteClientEventSource.Create( client, traceId );
         ChannelName = channelName;
         QueueName = queueName;
+        FilterExpression = filterExpression;
         PrefetchHint = prefetchHint;
         MaxRetries = maxRetries;
         RetryDelay = retryDelay;
@@ -64,6 +67,11 @@ public readonly struct MessageBrokerRemoteClientBindingListenerEvent
     /// Queue's name.
     /// </summary>
     public string QueueName { get; }
+
+    /// <summary>
+    /// Listener's message filter expression.
+    /// </summary>
+    public string? FilterExpression { get; }
 
     /// <summary>
     /// Listener's prefetch hint.
@@ -122,8 +130,9 @@ public readonly struct MessageBrokerRemoteClientBindingListenerEvent
         var deadLetter
             = $"DeadLetter = {(DeadLetterCapacityHint > 0 ? $"(CapacityHint = {DeadLetterCapacityHint}, MinRetention = {MinDeadLetterRetention})" : "<disabled>")}";
 
+        var filterExpression = FilterExpression is not null ? $", FilterExpression:{Environment.NewLine}{FilterExpression}" : string.Empty;
         return
-            $"[BindingListener] {Source}, ChannelName = '{ChannelName}'{queue}, PrefetchHint = {PrefetchHint}, MaxRetries = {MaxRetries}, RetryDelay = {RetryDelay}, MaxRedeliveries = {MaxRedeliveries}, {minAckTimeout}, {deadLetter}, CreateChannelIfNotExists = {CreateChannelIfNotExists}";
+            $"[BindingListener] {Source}, ChannelName = '{ChannelName}'{queue}, PrefetchHint = {PrefetchHint}, MaxRetries = {MaxRetries}, RetryDelay = {RetryDelay}, MaxRedeliveries = {MaxRedeliveries}, {minAckTimeout}, {deadLetter}, CreateChannelIfNotExists = {CreateChannelIfNotExists}{filterExpression}";
     }
 
     [Pure]
@@ -133,6 +142,7 @@ public readonly struct MessageBrokerRemoteClientBindingListenerEvent
         ulong traceId,
         string channelName,
         string queueName,
+        string? filterExpression,
         short prefetchHint,
         int maxRetries,
         Duration retryDelay,
@@ -147,6 +157,7 @@ public readonly struct MessageBrokerRemoteClientBindingListenerEvent
             traceId,
             channelName,
             queueName,
+            filterExpression,
             prefetchHint,
             maxRetries,
             retryDelay,

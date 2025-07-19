@@ -218,13 +218,24 @@ internal sealed class ServerMock : IDisposable
         Send( buffer );
     }
 
-    internal void SendBindListenerFailureResponse(bool channelDoesNotExist, bool clientAlreadyBound, bool cancelled, uint? payload = null)
+    internal void SendBindListenerFailureResponse(
+        bool channelDoesNotExist,
+        bool clientAlreadyBound,
+        bool cancelled,
+        bool unexpectedFilterExpression,
+        bool invalidFilterExpression,
+        uint? payload = null)
     {
         var buffer = new byte[Protocol.PacketHeader.Length + Protocol.BindListenerFailureResponse.Length];
         var writer = new BinaryContractWriter( buffer );
         writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.BindListenerFailureResponse );
         writer.MoveWrite( payload ?? Protocol.BindListenerFailureResponse.Length );
-        writer.Write( ( byte )((clientAlreadyBound ? 1 : 0) | (cancelled ? 2 : 0) | (channelDoesNotExist ? 4 : 0)) );
+        writer.Write(
+            ( byte )((clientAlreadyBound ? 1 : 0)
+                | (cancelled ? 2 : 0)
+                | (channelDoesNotExist ? 4 : 0)
+                | (unexpectedFilterExpression ? 8 : 0)
+                | (invalidFilterExpression ? 16 : 0)) );
 
         Send( buffer );
     }
