@@ -40,4 +40,9 @@ public readonly struct MessageBrokerQueueMessageCollection
     /// Collection of scheduled message retries stored in the queue.
     /// </summary>
     public MessageBrokerQueueMessageRetriesCollection Retries => new MessageBrokerQueueMessageRetriesCollection( _queue );
+
+    /// <summary>
+    /// Collection of dead letter messages stored in the queue.
+    /// </summary>
+    public MessageBrokerQueueDeadLetterMessageCollection DeadLetter => new MessageBrokerQueueDeadLetterMessageCollection( _queue );
 }

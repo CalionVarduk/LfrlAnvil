@@ -379,6 +379,201 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Attempts to asynchronously consume chosen queue's dead letter messages.
+    /// </summary>
+    /// <param name="queueId">ID of the queue whose dead letter is to be queried.</param>
+    /// <param name="readCount">Number of dead letter messages to be asynchronously consumed.</param>
+    /// <returns>
+    /// A task that represents the operation, which returns a <see cref="Result{T}"/> instance,
+    /// with underlying <see cref="MessageBrokerDeadLetterQueryResult"/> instance.
+    /// </returns>
+    /// <exception cref="MessageBrokerClientDisposedException">When client has already been disposed.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// When <paramref name="queueId"/> is less than or equal to <b>0</b> or when <paramref name="readCount"/> is less than <b>0</b>.
+    /// </exception>
+    /// <remarks>
+    /// This operation will consume dead letter messages by sending them to correct listeners,
+    /// which will also cause them to be completely removed from the server.
+    /// Unexpected errors encountered during dead letter querying will cause the client to be automatically disposed.
+    /// </remarks>
+    public async ValueTask<Result<MessageBrokerDeadLetterQueryResult>> QueryDeadLetterAsync(int queueId, int readCount)
+    {
+        Ensure.IsGreaterThan( queueId, 0 );
+        Ensure.IsGreaterThanOrEqualTo( readCount, 0 );
+
+        ulong traceId;
+        bool reverseEndianness;
+        using ( AcquireLock() )
+        {
+            if ( ShouldCancel )
+                ExceptionThrower.Throw( DisposedException() );
+
+            AssertState( MessageBrokerClientState.Running );
+            reverseEndianness = BitConverter.IsLittleEndian != IsServerLittleEndian;
+            traceId = GetTraceId();
+        }
+
+        using ( MessageBrokerClientTraceEvent.CreateScope( this, traceId, MessageBrokerClientTraceEventType.DeadLetterQuery ) )
+        {
+            if ( Logger.QueryingDeadLetter is { } queryingDeadLetter )
+                queryingDeadLetter.Emit( MessageBrokerClientQueryingDeadLetterEvent.Create( this, traceId, queueId, readCount ) );
+
+            ManualResetValueTaskSource<IncomingPacketToken> responseSource;
+            Protocol.DeadLetterQuery request;
+
+            var poolToken = MemoryPoolToken<byte>.Empty;
+            try
+            {
+                request = new Protocol.DeadLetterQuery( queueId, readCount );
+                poolToken = MemoryPool.Rent( Protocol.DeadLetterQuery.Length, out var buffer ).EnableClearing();
+                request.Serialize( buffer, reverseEndianness );
+
+                ManualResetValueTaskSource<bool> writerSource;
+                using ( AcquireActiveLock( traceId, out var exc ) )
+                {
+                    if ( exc is not null )
+                        return exc;
+
+                    writerSource = WriterQueue.AcquireSource();
+                }
+
+                if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
+                    return EmitError( DisposedException(), traceId );
+
+                using ( AcquireActiveLock( traceId, out var exc ) )
+                {
+                    if ( exc is not null )
+                        return exc;
+
+                    EventScheduler.PausePing();
+                    responseSource = ResponseQueue.EnqueueSource();
+                }
+
+                var result = await WriteAsync( request.Header, buffer, traceId ).ConfigureAwait( false );
+                if ( result.Exception is not null )
+                {
+                    await DisposeAsync( traceId ).ConfigureAwait( false );
+                    return result.Exception;
+                }
+
+                using ( AcquireActiveLock( traceId, out var exc ) )
+                {
+                    if ( exc is not null )
+                        return exc;
+
+                    WriterQueue.Release( this, writerSource );
+                    ResponseQueue.ActivateTimeout( this, responseSource );
+                    EventScheduler.SchedulePing( this );
+                }
+            }
+            catch ( Exception exc )
+            {
+                if ( Logger.Error is { } error )
+                    error.Emit( MessageBrokerClientErrorEvent.Create( this, traceId, exc ) );
+
+                await DisposeAsync( traceId ).ConfigureAwait( false );
+                return exc;
+            }
+            finally
+            {
+                poolToken.Return( this, traceId );
+            }
+
+            var response = await responseSource.GetTask().ConfigureAwait( false );
+            try
+            {
+                if ( response.Type != IncomingPacketToken.Result.Ok )
+                {
+                    if ( response.Type == IncomingPacketToken.Result.Disposed )
+                        return EmitError( DisposedException(), traceId );
+
+                    var exception = new MessageBrokerClientResponseTimeoutException( this, request.Header.GetServerEndpoint() );
+                    if ( Logger.Error is { } error )
+                        error.Emit( MessageBrokerClientErrorEvent.Create( this, traceId, exception ) );
+
+                    await DisposeAsync( traceId ).ConfigureAwait( false );
+                    return exception;
+                }
+
+                using ( AcquireActiveLock( traceId, out var exc ) )
+                {
+                    if ( exc is not null )
+                        return exc;
+
+                    ResponseQueue.Release( responseSource );
+                }
+
+                switch ( response.Header.GetClientEndpoint() )
+                {
+                    case MessageBrokerClientEndpoint.DeadLetterQueryResponse:
+                    {
+                        var readPacket = Logger.ReadPacket;
+                        readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateReceived( this, traceId, response.Header ) );
+
+                        var exception = Protocol.AssertPayload( this, response.Header, Protocol.DeadLetterQueryResponse.Length );
+                        if ( exception is not null )
+                        {
+                            if ( Logger.Error is { } error )
+                                error.Emit( MessageBrokerClientErrorEvent.Create( this, traceId, exception ) );
+
+                            await DisposeAsync( traceId ).ConfigureAwait( false );
+                            return exception;
+                        }
+
+                        var parsedResponse = Protocol.DeadLetterQueryResponse.Parse( response.Data, reverseEndianness );
+
+                        var errors = parsedResponse.StringifyErrors();
+                        if ( errors.Count > 0 )
+                        {
+                            var error = EmitError( Protocol.ProtocolException( this, response.Header, errors ), traceId );
+                            await DisposeAsync( traceId ).ConfigureAwait( false );
+                            return error;
+                        }
+
+                        readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( this, traceId, response.Header ) );
+                        if ( ! parsedResponse.QueueExists )
+                            return EmitError(
+                                Protocol.RequestException( this, request.Header, Chain.Create( Resources.QueueDoesNotExist( queueId ) ) ),
+                                traceId );
+
+                        if ( Logger.DeadLetterQueried is { } deadLetterQueried )
+                            deadLetterQueried.Emit(
+                                MessageBrokerClientDeadLetterQueriedEvent.Create(
+                                    this,
+                                    traceId,
+                                    parsedResponse.TotalCount,
+                                    parsedResponse.MaxReadCount,
+                                    parsedResponse.NextExpirationAt ) );
+
+                        return MessageBrokerDeadLetterQueryResult.Create(
+                            parsedResponse.TotalCount,
+                            parsedResponse.MaxReadCount,
+                            parsedResponse.NextExpirationAt );
+                    }
+                    default:
+                    {
+                        var error = HandleUnexpectedEndpoint( response.Header, traceId );
+                        await DisposeAsync( traceId ).ConfigureAwait( false );
+                        return error;
+                    }
+                }
+            }
+            catch ( Exception exc )
+            {
+                if ( Logger.Error is { } error )
+                    error.Emit( MessageBrokerClientErrorEvent.Create( this, traceId, exc ) );
+
+                await DisposeAsync( traceId ).ConfigureAwait( false );
+                return exc;
+            }
+            finally
+            {
+                response.PoolToken.Return( this, traceId );
+            }
+        }
+    }
+
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ExclusiveLock AcquireLock()
     {

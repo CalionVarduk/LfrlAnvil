@@ -160,27 +160,34 @@ internal struct QueueProcessor
                     if ( ! hasMessage )
                         continue;
 
+                    var ackId = 0;
                     Int31BoolPair retry;
                     Int31BoolPair redelivery;
                     switch ( messageType )
                     {
-                        case QueueMessageStore.MessageType.Pending:
-                            retry = Int31BoolPair.GetData( 0 );
-                            redelivery = Int31BoolPair.GetData( 0 );
-                            break;
-                        case QueueMessageStore.MessageType.Retry:
-                            retry = Int31BoolPair.GetActiveData( retryNo );
-                            redelivery = Int31BoolPair.GetData( lastRedeliveryNo );
-                            break;
-                        default:
+                        case QueueMessageStore.MessageType.Redelivery:
                         {
                             if ( lastRedeliveryNo >= message.Listener.MaxRedeliveries )
                             {
+                                var messageRemoved = false;
                                 message.Listener.DecrementPrefetchCounter();
-                                using ( queue.AcquireLock() )
-                                    queue.MessageStore.Dequeue( QueueMessageStore.MessageType.Redelivery );
+                                if ( message.Listener.DeadLetterCapacityHint > 0 )
+                                {
+                                    using ( queue.AcquireLock() )
+                                    {
+                                        queue.MessageStore.AddToDeadLetter( message, retryNo, lastRedeliveryNo );
+                                        queue.MessageStore.Dequeue( QueueMessageStore.MessageType.Redelivery );
+                                        message.Listener.IncrementDeadLetterCounter();
+                                    }
+                                }
+                                else
+                                {
+                                    using ( queue.AcquireLock() )
+                                        queue.MessageStore.Dequeue( QueueMessageStore.MessageType.Redelivery );
 
-                                var messageRemoved = queue.RemoveFromStreamMessageStore( message, traceId );
+                                    messageRemoved = queue.RemoveFromStreamMessageStore( message, traceId );
+                                }
+
                                 if ( queue.Logger.MessageDiscarded is { } messageDiscarded )
                                     messageDiscarded.Emit(
                                         MessageBrokerQueueMessageDiscardedEvent.Create(
@@ -191,9 +198,9 @@ internal struct QueueProcessor
                                             retryNo,
                                             lastRedeliveryNo,
                                             messageRemoved,
+                                            message.Listener.DeadLetterCapacityHint > 0,
                                             MessageBrokerQueueDiscardMessageReason.MaxRedeliveriesReached ) );
 
-                                // TODO: potential move to dead-letter
                                 continue;
                             }
 
@@ -201,6 +208,19 @@ internal struct QueueProcessor
                             redelivery = Int31BoolPair.GetActiveData( unchecked( lastRedeliveryNo + 1 ) );
                             break;
                         }
+                        case QueueMessageStore.MessageType.Retry:
+                            retry = Int31BoolPair.GetActiveData( retryNo );
+                            redelivery = Int31BoolPair.GetData( lastRedeliveryNo );
+                            break;
+                        case QueueMessageStore.MessageType.DeadLetter:
+                            ackId = -1;
+                            retry = Int31BoolPair.GetData( retryNo );
+                            redelivery = Int31BoolPair.GetData( lastRedeliveryNo );
+                            break;
+                        default:
+                            retry = Int31BoolPair.GetData( 0 );
+                            redelivery = Int31BoolPair.GetData( 0 );
+                            break;
                     }
 
                     if ( queue.Logger.ProcessingMessage is { } processingMessage )
@@ -210,6 +230,7 @@ internal struct QueueProcessor
                                 traceId,
                                 message.Publisher,
                                 message.StoreKey,
+                                ackId != 0,
                                 retry,
                                 redelivery ) );
 
@@ -220,6 +241,7 @@ internal struct QueueProcessor
 
                     if ( ! messageDataExists )
                     {
+                        message.Listener.DecrementPrefetchCounter();
                         using ( queue.AcquireLock() )
                             queue.MessageStore.Dequeue( messageType );
 
@@ -235,13 +257,12 @@ internal struct QueueProcessor
                         continue;
                     }
 
-                    var ackId = 0;
                     var ackExpiresAt = Timestamp.Zero;
                     var failed = true;
                     var poolToken = MemoryPoolToken<byte>.Empty;
                     try
                     {
-                        if ( message.Listener.AreAcksEnabled )
+                        if ( ackId == 0 && message.Listener.AreAcksEnabled )
                         {
                             using ( queue.AcquireLock() )
                                 ackId = queue.MessageStore.AddUnacked(
@@ -277,7 +298,7 @@ internal struct QueueProcessor
                             if ( exc is not null )
                                 return;
 
-                            MessageNotifications.EnqueueMessageUnsafe(
+                            NotificationSender.EnqueueMessageUnsafe(
                                 queue.Client,
                                 in message,
                                 retry,
@@ -288,13 +309,16 @@ internal struct QueueProcessor
                                 data );
 
                             failed = false;
-                            queue.Client.MessageNotifications.SignalContinuation();
+                            queue.Client.NotificationSender.SignalContinuation();
                         }
                     }
                     finally
                     {
                         if ( failed )
                         {
+                            if ( messageType != QueueMessageStore.MessageType.Redelivery )
+                                message.Listener.DecrementPrefetchCounter();
+
                             if ( ackId > 0 )
                             {
                                 using ( queue.AcquireLock() )
@@ -310,7 +334,7 @@ internal struct QueueProcessor
                             using ( queue.AcquireLock() )
                                 queue.MessageStore.Dequeue( messageType );
 
-                            var messageRemoved = ackId == 0 && queue.RemoveFromStreamMessageStore( message, traceId );
+                            var messageRemoved = ackId <= 0 && queue.RemoveFromStreamMessageStore( message, traceId );
                             if ( queue.Logger.MessageProcessed is { } messageProcessed )
                                 messageProcessed.Emit(
                                     MessageBrokerQueueMessageProcessedEvent.Create(
@@ -368,6 +392,7 @@ internal struct QueueProcessor
                             message.Retry,
                             message.Redelivery,
                             messageRemoved,
+                            false,
                             message.Reason ) );
             }
             catch ( Exception exc )

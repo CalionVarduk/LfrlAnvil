@@ -30,6 +30,7 @@ public readonly struct MessageBrokerQueueMessageDiscardedEvent
         int retry,
         int redelivery,
         bool messageRemoved,
+        bool movedToDeadLetter,
         MessageBrokerQueueDiscardMessageReason reason)
     {
         Source = MessageBrokerQueueEventSource.Create( listener.Queue, traceId );
@@ -39,6 +40,7 @@ public readonly struct MessageBrokerQueueMessageDiscardedEvent
         Retry = retry;
         Redelivery = redelivery;
         MessageRemoved = messageRemoved;
+        MovedToDeadLetter = movedToDeadLetter;
         Reason = reason;
     }
 
@@ -79,6 +81,11 @@ public readonly struct MessageBrokerQueueMessageDiscardedEvent
     public bool MessageRemoved { get; }
 
     /// <summary>
+    /// Specifies whether or not the message has been moved to dead letter.
+    /// </summary>
+    public bool MovedToDeadLetter { get; }
+
+    /// <summary>
     /// Specifies the reason behind discarding of this message.
     /// </summary>
     /// <remarks>See <see cref="MessageBrokerQueueDiscardMessageReason"/> for more information.</remarks>
@@ -92,7 +99,7 @@ public readonly struct MessageBrokerQueueMessageDiscardedEvent
     public override string ToString()
     {
         return
-            $"[MessageDiscarded] {Source}, Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', Reason = {Reason}, StoreKey = {StoreKey}, Retry = {Retry}, Redelivery = {Redelivery}, MessageRemoved = {MessageRemoved}";
+            $"[MessageDiscarded] {Source}, Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', Reason = {Reason}, StoreKey = {StoreKey}, Retry = {Retry}, Redelivery = {Redelivery}, MessageRemoved = {MessageRemoved}, MovedToDeadLetter = {MovedToDeadLetter}";
     }
 
     [Pure]
@@ -105,6 +112,7 @@ public readonly struct MessageBrokerQueueMessageDiscardedEvent
         int retry,
         int redelivery,
         bool messageRemoved,
+        bool movedToDeadLetter,
         MessageBrokerQueueDiscardMessageReason reason)
     {
         return new MessageBrokerQueueMessageDiscardedEvent(
@@ -115,6 +123,7 @@ public readonly struct MessageBrokerQueueMessageDiscardedEvent
             retry,
             redelivery,
             messageRemoved,
+            movedToDeadLetter,
             reason );
     }
 }

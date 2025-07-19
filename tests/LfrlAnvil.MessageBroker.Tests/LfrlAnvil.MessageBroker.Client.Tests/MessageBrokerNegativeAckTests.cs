@@ -9,26 +9,30 @@ public class MessageBrokerNegativeAckTests : TestsBase
     public void Default_ShouldHaveCorrectProperties()
     {
         var sut = default( MessageBrokerNegativeAck );
-        Assertion.All( sut.SkipRetry.TestFalse(), sut.RetryDelay.TestNull() ).Go();
+        Assertion.All( sut.SkipRetry.TestFalse(), sut.SkipDeadLetter.TestFalse(), sut.RetryDelay.TestNull() ).Go();
     }
 
     [Fact]
     public void Default_ShouldCreateCorrectNack()
     {
         var sut = MessageBrokerNegativeAck.Default;
-        Assertion.All( sut.SkipRetry.TestFalse(), sut.RetryDelay.TestNull() ).Go();
+        Assertion.All( sut.SkipRetry.TestFalse(), sut.SkipDeadLetter.TestFalse(), sut.RetryDelay.TestNull() ).Go();
     }
 
     [Theory]
-    [InlineData( 0, 0 )]
-    [InlineData( 1, 0 )]
-    [InlineData( 9999, 0 )]
-    [InlineData( 10000, 10000 )]
-    [InlineData( 10001, 10000 )]
-    public void Retry_ShouldCreateCorrectNack(long ticks, long expectedTicks)
+    [InlineData( 0, true, 0 )]
+    [InlineData( 1, false, 0 )]
+    [InlineData( 9999, true, 0 )]
+    [InlineData( 10000, false, 10000 )]
+    [InlineData( 10001, true, 10000 )]
+    public void Retry_ShouldCreateCorrectNack(long ticks, bool skipDeadLetter, long expectedTicks)
     {
-        var sut = MessageBrokerNegativeAck.Retry( Duration.FromTicks( ticks ) );
-        Assertion.All( sut.SkipRetry.TestFalse(), sut.RetryDelay.TestEquals( Duration.FromTicks( expectedTicks ) ) ).Go();
+        var sut = MessageBrokerNegativeAck.Retry( Duration.FromTicks( ticks ), skipDeadLetter );
+        Assertion.All(
+                sut.SkipRetry.TestFalse(),
+                sut.SkipDeadLetter.TestEquals( skipDeadLetter ),
+                sut.RetryDelay.TestEquals( Duration.FromTicks( expectedTicks ) ) )
+            .Go();
     }
 
     [Theory]
@@ -40,10 +44,19 @@ public class MessageBrokerNegativeAckTests : TestsBase
         action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
-    [Fact]
-    public void NoRetry_ShouldCreateCorrectNack()
+    [Theory]
+    [InlineData( true )]
+    [InlineData( false )]
+    public void NoRetry_ShouldCreateCorrectNack(bool skipDeadLetter)
     {
-        var sut = MessageBrokerNegativeAck.NoRetry();
-        Assertion.All( sut.SkipRetry.TestTrue(), sut.RetryDelay.TestNull() ).Go();
+        var sut = MessageBrokerNegativeAck.NoRetry( skipDeadLetter );
+        Assertion.All( sut.SkipRetry.TestTrue(), sut.SkipDeadLetter.TestEquals( skipDeadLetter ), sut.RetryDelay.TestNull() ).Go();
+    }
+
+    [Fact]
+    public void NoDeadLetter_ShouldCreateCorrectNack()
+    {
+        var sut = MessageBrokerNegativeAck.NoDeadLetter();
+        Assertion.All( sut.SkipRetry.TestFalse(), sut.SkipDeadLetter.TestTrue(), sut.RetryDelay.TestNull() ).Go();
     }
 }

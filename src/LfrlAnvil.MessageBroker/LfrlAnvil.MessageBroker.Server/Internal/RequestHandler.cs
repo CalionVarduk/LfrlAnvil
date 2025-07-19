@@ -147,6 +147,8 @@ internal struct RequestHandler
                         .ConfigureAwait( false ),
                     MessageBrokerServerEndpoint.UnbindListenerRequest => await HandleUnbindListenerRequestAsync( client, request, traceId )
                         .ConfigureAwait( false ),
+                    MessageBrokerServerEndpoint.DeadLetterQuery => await HandleDeadLetterQueryAsync( client, request, traceId )
+                        .ConfigureAwait( false ),
                     MessageBrokerServerEndpoint.MessageNotificationAck => await HandleMessageNotificationAckAsync(
                             client,
                             request,
@@ -641,6 +643,8 @@ internal struct RequestHandler
                             parsedRequestHeader.RetryDelay,
                             parsedRequestHeader.MaxRedeliveries,
                             parsedRequestHeader.MinAckTimeout,
+                            parsedRequestHeader.DeadLetterCapacityHint,
+                            parsedRequestHeader.MinDeadLetterRetention,
                             parsedRequestHeader.CreateChannelIfNotExists ) );
 
                 if ( queueName.Value.Length == 0 )
@@ -1261,6 +1265,128 @@ internal struct RequestHandler
         }
     }
 
+    private static async ValueTask<RequestResult> HandleDeadLetterQueryAsync(
+        MessageBrokerRemoteClient client,
+        IncomingPacketToken request,
+        ulong traceId)
+    {
+        using ( MessageBrokerRemoteClientTraceEvent.CreateScope(
+            client,
+            traceId,
+            MessageBrokerRemoteClientTraceEventType.DeadLetterQuery ) )
+        {
+            var poolToken = request.PoolToken;
+            try
+            {
+                var readPacket = client.Logger.ReadPacket;
+                readPacket?.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateReceived( client, traceId, request.Header ) );
+
+                var exception = Protocol.AssertPayload( client, request.Header, Protocol.DeadLetterQuery.Length );
+                if ( exception is not null )
+                    return await FinishInvalidRequestHandlingAsync( client, exception, traceId ).ConfigureAwait( false );
+
+                var data = request.Data;
+                var parsedRequest = Protocol.DeadLetterQuery.Parse( data );
+                var requestErrors = parsedRequest.StringifyErrors();
+                if ( requestErrors.Count > 0 )
+                {
+                    var error = Protocol.ProtocolException( client, request.Header, requestErrors );
+                    return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
+                }
+
+                if ( client.Logger.QueryingDeadLetter is { } queryingDeadLetter )
+                    queryingDeadLetter.Emit(
+                        MessageBrokerRemoteClientQueryingDeadLetterEvent.Create(
+                            client,
+                            traceId,
+                            parsedRequest.QueueId,
+                            parsedRequest.ReadCount ) );
+
+                MessageBrokerQueue? queue;
+                var totalCount = -1;
+                var maxReadCount = 0;
+                var nextExpirationAt = Timestamp.Zero;
+                DeadLetterQueryResult result;
+
+                using ( client.AcquireActiveLock( traceId, out var exc ) )
+                {
+                    if ( exc is not null )
+                        return RequestResult.Done();
+
+                    queue = client.QueueStore.TryGetById( parsedRequest.QueueId );
+                    result = queue is not null
+                        ? queue.HandleDeadLetterQuery(
+                            parsedRequest.ReadCount,
+                            ref totalCount,
+                            ref maxReadCount,
+                            ref nextExpirationAt )
+                        : DeadLetterQueryResult.QueueNotFound;
+                }
+
+                if ( result != DeadLetterQueryResult.Success )
+                {
+                    if ( client.Logger.Error is { } error )
+                    {
+                        Exception exc = result switch
+                        {
+                            DeadLetterQueryResult.QueueNotFound => new MessageBrokerRemoteClientException(
+                                client,
+                                Resources.QueueForDeadLetterQueryNotFound( client, parsedRequest.QueueId ) ),
+                            _ => new MessageBrokerQueueDisposedException( queue! )
+                        };
+
+                        error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
+                    }
+                }
+                else
+                {
+                    Assume.IsNotNull( queue );
+                    readPacket?.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( client, traceId, request.Header ) );
+                    if ( client.Logger.DeadLetterQueried is { } deadLetterQueried )
+                        deadLetterQueried.Emit(
+                            MessageBrokerRemoteClientDeadLetterQueriedEvent.Create(
+                                queue,
+                                traceId,
+                                totalCount,
+                                maxReadCount,
+                                nextExpirationAt ) );
+                }
+
+                poolToken.SetLength( Protocol.PacketHeader.Length + Protocol.DeadLetterQueryResponse.Payload, out data );
+                var response = new Protocol.DeadLetterQueryResponse( totalCount, maxReadCount, nextExpirationAt );
+                response.Serialize( data );
+
+                ManualResetValueTaskSource<bool> writerSource;
+                using ( client.AcquireActiveLock( traceId, out var exc ) )
+                {
+                    if ( exc is not null )
+                        return RequestResult.Done();
+
+                    writerSource = client.WriterQueue.AcquireSource();
+                }
+
+                if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
+                {
+                    if ( client.Logger.Error is { } error )
+                        error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, client.DisposedException() ) );
+
+                    return RequestResult.Done();
+                }
+
+                var writeResult = await client.WriteAsync( response.Header, data, traceId ).ConfigureAwait( false );
+                if ( writeResult.Exception is null )
+                    return FinishRequestHandling( client, writerSource, traceId );
+
+                await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
+                return RequestResult.Done();
+            }
+            finally
+            {
+                poolToken.Return( client, traceId );
+            }
+        }
+    }
+
     private static async ValueTask<RequestResult> HandleMessageNotificationAckAsync(
         MessageBrokerRemoteClient client,
         IncomingPacketToken request,
@@ -1348,7 +1474,7 @@ internal struct RequestHandler
                                 parsedRequest.Redelivery ) ),
                         AckResult.QueueNotFound => new MessageBrokerRemoteClientException(
                             client,
-                            Resources.QueueNotFound( client, parsedRequest.QueueId ) ),
+                            Resources.QueueForAckNotFound( client, parsedRequest.QueueId ) ),
                         _ => new MessageBrokerQueueDisposedException( queue! )
                     };
 
@@ -1439,6 +1565,7 @@ internal struct RequestHandler
                             parsedRequest.Retry,
                             parsedRequest.Redelivery,
                             parsedRequest.NoRetry,
+                            parsedRequest.NoDeadLetter,
                             explicitDelay ) );
 
                 using ( client.AcquireActiveLock( traceId, out var exc ) )
@@ -1455,6 +1582,7 @@ internal struct RequestHandler
                             parsedRequest.Retry,
                             parsedRequest.Redelivery,
                             parsedRequest.NoRetry,
+                            parsedRequest.NoDeadLetter,
                             explicitDelay,
                             ref message,
                             ref delay,
@@ -1488,7 +1616,7 @@ internal struct RequestHandler
                                 parsedRequest.Redelivery ) ),
                         AckResult.QueueNotFound => new MessageBrokerRemoteClientException(
                             client,
-                            Resources.QueueNotFound( client, parsedRequest.QueueId ) ),
+                            Resources.QueueForAckNotFound( client, parsedRequest.QueueId ) ),
                         _ => new MessageBrokerQueueDisposedException( queue! )
                     };
 
@@ -1511,7 +1639,8 @@ internal struct RequestHandler
                     var messageRemoved = false;
                     if ( delay < Duration.Zero )
                     {
-                        messageRemoved = queue.RemoveFromStreamMessageStore( message, queueTraceId );
+                        var movedToDeadLetter = ! parsedRequest.NoDeadLetter && message.Listener.DeadLetterCapacityHint > 0;
+                        messageRemoved = ! movedToDeadLetter && queue.RemoveFromStreamMessageStore( message, queueTraceId );
                         if ( queue.Logger.MessageDiscarded is { } messageDiscarded )
                             messageDiscarded.Emit(
                                 MessageBrokerQueueMessageDiscardedEvent.Create(
@@ -1522,6 +1651,7 @@ internal struct RequestHandler
                                     parsedRequest.Retry,
                                     parsedRequest.Redelivery,
                                     messageRemoved,
+                                    movedToDeadLetter,
                                     parsedRequest.NoRetry
                                         ? MessageBrokerQueueDiscardMessageReason.ExplicitNoRetry
                                         : MessageBrokerQueueDiscardMessageReason.MaxRetriesReached ) );

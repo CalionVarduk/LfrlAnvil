@@ -157,6 +157,92 @@ public partial class MessageBrokerClientTests
         }
 
         [Fact]
+        public async Task Ack_ShouldThrowArgumentOutOfRangeException_WhenInvokedThroughCallbackArgsForMessageFromDeadLetter()
+        {
+            Exception? exception = null;
+            var endSource = new SafeTaskCompletionSource();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger(
+                        MessageBrokerClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerClientTraceEventType.MessageNotification )
+                                    endSource.Complete();
+                            },
+                            error: e => exception = e.Exception ) ) );
+
+            await server.EstablishHandshake( client );
+            var serverTask = server.GetTask(
+                s =>
+                {
+                    s.Read( GetBindListenerRequest( "foo" ) );
+                    s.SendListenerBoundResponse( true, true, 1, 1 );
+                    s.SendMessageNotification( -1, 1, 2, 1, 3, [ 1, 2, 3 ] );
+                } );
+
+            await client.Listeners.BindAsync( "foo", async (a, _) => await a.AckAsync() );
+            await serverTask;
+            await endSource.Task;
+
+            Assertion.All(
+                    exception.TestType().Exact<ArgumentOutOfRangeException>(),
+                    client.State.TestEquals( MessageBrokerClientState.Running ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task NegativeAck_ShouldThrowArgumentOutOfRangeException_WhenInvokedThroughCallbackArgsForMessageFromDeadLetter()
+        {
+            Exception? exception = null;
+            var endSource = new SafeTaskCompletionSource();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger(
+                        MessageBrokerClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerClientTraceEventType.MessageNotification )
+                                    endSource.Complete();
+                            },
+                            error: e => exception = e.Exception ) ) );
+
+            await server.EstablishHandshake( client );
+            var serverTask = server.GetTask(
+                s =>
+                {
+                    s.Read( GetBindListenerRequest( "foo" ) );
+                    s.SendListenerBoundResponse( true, true, 1, 1 );
+                    s.SendMessageNotification( -1, 1, 2, 1, 3, [ 1, 2, 3 ] );
+                } );
+
+            await client.Listeners.BindAsync( "foo", async (a, _) => await a.NegativeAckAsync() );
+            await serverTask;
+            await endSource.Task;
+
+            Assertion.All(
+                    exception.TestType().Exact<ArgumentOutOfRangeException>(),
+                    client.State.TestEquals( MessageBrokerClientState.Running ) )
+                .Go();
+        }
+
+        [Fact]
         public async Task SendMessageAckAsync_ShouldThrowMessageBrokerClientDisposedException_WhenClientIsDisposed()
         {
             var logs = new EventLogger();
@@ -394,7 +480,7 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:NegativeAck] Client = [1] 'test', TraceId = 3 (start)",
-                                "[AcknowledgingMessage] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 3, MessageId = 1, Retry = 0, Redelivery = 0, MessageTraceId = 2, NACK = (SkipRetry = False, IsAutomatic = False)",
+                                "[AcknowledgingMessage] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 3, MessageId = 1, Retry = 0, Redelivery = 0, MessageTraceId = 2, NACK = (SkipRetry = False, SkipDeadLetter = False, IsAutomatic = False)",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 3, Packet = (MessageNotificationNack, Length = 38)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 3, Packet = (MessageNotificationNack, Length = 38)",
                                 "[MessageAcknowledged] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 3, MessageId = 1, Retry = 0, Redelivery = 0, IsNack = True",
@@ -458,7 +544,65 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:NegativeAck] Client = [1] 'test', TraceId = 2 (start)",
-                                "[AcknowledgingMessage] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 2, MessageId = 3, Retry = 1, Redelivery = 1, NACK = (SkipRetry = True, IsAutomatic = False)",
+                                "[AcknowledgingMessage] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 2, MessageId = 3, Retry = 1, Redelivery = 1, NACK = (SkipRetry = True, SkipDeadLetter = False, IsAutomatic = False)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (MessageNotificationNack, Length = 38)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (MessageNotificationNack, Length = 38)",
+                                "[MessageAcknowledged] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 2, MessageId = 3, Retry = 1, Redelivery = 1, IsNack = True",
+                                "[Trace:NegativeAck] Client = [1] 'test', TraceId = 2 (end)"
+                            ] )
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task SendNegativeMessageAckAsync_ShouldSendNegativeAck_WithNoDeadLetter()
+        {
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger( logs.GetLogger() ) );
+
+            await server.EstablishHandshake( client );
+            var serverTask = server.GetTask(
+                s =>
+                {
+                    s.Read( GetBindListenerRequest( "foo" ) );
+                    s.SendListenerBoundResponse( true, true, 1, 1 );
+                    s.ReadMessageNotificationNegativeAck();
+                } );
+
+            await client.Listeners.BindAsync(
+                "foo",
+                (_, _) => ValueTask.CompletedTask,
+                MessageBrokerListenerOptions.Default.SetRetryPolicy( 1 ).SetMaxRedeliveries( 1 ) );
+
+            var listener = client.Listeners.TryGetByChannelId( 1 );
+            var ackResult = Result.Error<bool>( new Exception() );
+            if ( listener is not null )
+                ackResult = await listener.SendNegativeMessageAckAsync( 1, 2, 3, 1, 1, MessageBrokerNegativeAck.NoDeadLetter() );
+
+            await serverTask;
+
+            Assertion.All(
+                    ackResult.Exception.TestNull(),
+                    ackResult.Value.TestTrue(),
+                    client.State.TestEquals( MessageBrokerClientState.Running ),
+                    logs.GetAll()
+                        .Skip( 2 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:NegativeAck] Client = [1] 'test', TraceId = 2 (start)",
+                                "[AcknowledgingMessage] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 2, MessageId = 3, Retry = 1, Redelivery = 1, NACK = (SkipRetry = False, SkipDeadLetter = True, IsAutomatic = False)",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (MessageNotificationNack, Length = 38)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (MessageNotificationNack, Length = 38)",
                                 "[MessageAcknowledged] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 2, MessageId = 3, Retry = 1, Redelivery = 1, IsNack = True",
@@ -522,7 +666,7 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:NegativeAck] Client = [1] 'test', TraceId = 2 (start)",
-                                "[AcknowledgingMessage] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 2, MessageId = 3, Retry = 2, Redelivery = 2, NACK = (SkipRetry = False, RetryDelay = 3 second(s), IsAutomatic = False)",
+                                "[AcknowledgingMessage] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 2, MessageId = 3, Retry = 2, Redelivery = 2, NACK = (SkipRetry = False, SkipDeadLetter = False, RetryDelay = 3 second(s), IsAutomatic = False)",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (MessageNotificationNack, Length = 38)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (MessageNotificationNack, Length = 38)",
                                 "[MessageAcknowledged] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 2, MessageId = 3, Retry = 2, Redelivery = 2, IsNack = True",
@@ -720,6 +864,8 @@ public partial class MessageBrokerClientTests
             Duration retryDelay = default,
             int maxRedeliveries = 0,
             Duration? minAckTimeout = null,
+            int deadLetterCapacity = 0,
+            Duration deadLetterRetention = default,
             bool createChannelIfNotExists = true)
         {
             return new Protocol.BindListenerRequest(
@@ -730,6 +876,8 @@ public partial class MessageBrokerClientTests
                 retryDelay,
                 maxRedeliveries,
                 minAckTimeout ?? MessageBrokerListenerOptions.DefaultMinAckTimeout,
+                deadLetterCapacity,
+                deadLetterRetention,
                 createChannelIfNotExists );
         }
     }

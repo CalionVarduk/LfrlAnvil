@@ -39,13 +39,15 @@ public readonly struct MessageBrokerListenerOptions
     public static Duration DefaultMinAckTimeout => Duration.FromMinutes( 10 );
 
     /// <summary>
-    /// Represents default options, with default prefetch hint, disabled retries and redeliveries, and enabled ACKs.
+    /// Represents default options, with default prefetch hint, disabled retries and redeliveries and dead letter, and enabled ACKs.
     /// </summary>
-    public static MessageBrokerListenerOptions Default => new MessageBrokerListenerOptions( null, 0, null, 0, null, false );
+    public static MessageBrokerListenerOptions Default =>
+        new MessageBrokerListenerOptions( null, 0, null, 0, null, 0, Duration.Zero, false );
 
     private readonly short? _prefetchHint;
     private readonly Duration? _retryDelay;
     private readonly Duration? _minAckTimeout;
+    private readonly Duration _minDeadLetterRetention;
     private readonly bool _acksDisabled;
 
     private MessageBrokerListenerOptions(
@@ -54,14 +56,18 @@ public readonly struct MessageBrokerListenerOptions
         Duration? retryDelay,
         int maxRedeliveries,
         Duration? minAckTimeout,
+        int deadLetterCapacityHint,
+        Duration minDeadLetterRetention,
         bool acksDisabled)
     {
         _prefetchHint = prefetchHint;
         _retryDelay = retryDelay;
         _minAckTimeout = minAckTimeout;
+        _minDeadLetterRetention = minDeadLetterRetention;
+        _acksDisabled = acksDisabled;
         MaxRetries = maxRetries;
         MaxRedeliveries = maxRedeliveries;
-        _acksDisabled = acksDisabled;
+        DeadLetterCapacityHint = deadLetterCapacityHint;
     }
 
     /// <summary>
@@ -79,6 +85,22 @@ public readonly struct MessageBrokerListenerOptions
     public int MaxRedeliveries { get; }
 
     /// <summary>
+    /// Specifies how many messages will be stored at most by the dead letter.
+    /// </summary>
+    /// <remarks>
+    /// This is a min value. Actual value is dependant on all listeners attached to the queue and the state of the queue's dead letter.
+    /// </remarks>
+    public int DeadLetterCapacityHint { get; }
+
+    /// <summary>
+    /// Specifies the retention period for messages stored in the dead letter.
+    /// </summary>
+    /// <remarks>
+    /// This is a min value. Actual value is dependant on all listeners attached to the queue and the state of the queue's dead letter.
+    /// </remarks>
+    public Duration MinDeadLetterRetention => DeadLetterCapacityHint > 0 ? _minDeadLetterRetention : Duration.Zero;
+
+    /// <summary>
     /// Specifies how many messages intended for the created listener can be sent by the server to the client at the same time.
     /// </summary>
     /// <remarks>
@@ -91,9 +113,10 @@ public readonly struct MessageBrokerListenerOptions
     /// Specifies whether or not the client is expected to send ACK or negative ACK to the server in order to confirm message notification.
     /// </summary>
     /// <remarks>
-    /// This will always be enabled when either <see cref="MaxRetries"/> or <see cref="MaxRedeliveries"/> is greater than <b>0</b>.
+    /// This will always be enabled when <see cref="MaxRetries"/> or <see cref="MaxRedeliveries"/> or <see cref="DeadLetterCapacityHint"/>
+    /// is greater than <b>0</b>.
     /// </remarks>
-    public bool AreAcksEnabled => MaxRetries > 0 || MaxRedeliveries > 0 || ! _acksDisabled;
+    public bool AreAcksEnabled => MaxRetries > 0 || MaxRedeliveries > 0 || DeadLetterCapacityHint > 0 || ! _acksDisabled;
 
     /// <summary>
     /// Specifies the delay between the server successfully processing negative ACK sent by the client
@@ -142,7 +165,15 @@ public readonly struct MessageBrokerListenerOptions
         if ( value is not null )
             Ensure.IsGreaterThan( value.Value, 0 );
 
-        return new MessageBrokerListenerOptions( value, MaxRetries, _retryDelay, MaxRedeliveries, _minAckTimeout, _acksDisabled );
+        return new MessageBrokerListenerOptions(
+            value,
+            MaxRetries,
+            _retryDelay,
+            MaxRedeliveries,
+            _minAckTimeout,
+            DeadLetterCapacityHint,
+            _minDeadLetterRetention,
+            _acksDisabled );
     }
 
     /// <summary>
@@ -168,7 +199,15 @@ public readonly struct MessageBrokerListenerOptions
             Ensure.IsInRange( delay.Value, Duration.Zero, Duration.FromMilliseconds( int.MaxValue ) );
         }
 
-        return new MessageBrokerListenerOptions( _prefetchHint, maxRetries, delay, MaxRedeliveries, _minAckTimeout, _acksDisabled );
+        return new MessageBrokerListenerOptions(
+            _prefetchHint,
+            maxRetries,
+            delay,
+            MaxRedeliveries,
+            _minAckTimeout,
+            DeadLetterCapacityHint,
+            _minDeadLetterRetention,
+            _acksDisabled );
     }
 
     /// <summary>
@@ -181,7 +220,15 @@ public readonly struct MessageBrokerListenerOptions
     public MessageBrokerListenerOptions SetMaxRedeliveries(int value)
     {
         Ensure.IsGreaterThanOrEqualTo( value, 0 );
-        return new MessageBrokerListenerOptions( _prefetchHint, MaxRetries, _retryDelay, value, _minAckTimeout, _acksDisabled );
+        return new MessageBrokerListenerOptions(
+            _prefetchHint,
+            MaxRetries,
+            _retryDelay,
+            value,
+            _minAckTimeout,
+            DeadLetterCapacityHint,
+            _minDeadLetterRetention,
+            _acksDisabled );
     }
 
     /// <summary>
@@ -204,7 +251,46 @@ public readonly struct MessageBrokerListenerOptions
             Ensure.IsInRange( value.Value, Duration.FromMilliseconds( 1 ), Duration.FromMilliseconds( int.MaxValue ) );
         }
 
-        return new MessageBrokerListenerOptions( _prefetchHint, MaxRetries, _retryDelay, MaxRedeliveries, value, _acksDisabled );
+        return new MessageBrokerListenerOptions(
+            _prefetchHint,
+            MaxRetries,
+            _retryDelay,
+            MaxRedeliveries,
+            value,
+            DeadLetterCapacityHint,
+            _minDeadLetterRetention,
+            _acksDisabled );
+    }
+
+    /// <summary>
+    /// Allows to change <see cref="DeadLetterCapacityHint"/> and <see cref="MinDeadLetterRetention"/>.
+    /// </summary>
+    /// <param name="capacityHint">New <see cref="DeadLetterCapacityHint"/> value.</param>
+    /// <param name="minRetention">
+    /// New <see cref="MinDeadLetterRetention"/> value. Sub-millisecond components will be trimmed.
+    /// Value will be ignored when <see cref="DeadLetterCapacityHint"/> is equal to <b>0</b>.
+    /// </param>
+    /// <returns>New <see cref="MessageBrokerListenerOptions"/> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// When <paramref name="capacityHint"/> is less than <b>0</b>
+    /// or when <paramref name="capacityHint"/> is greater than <b>0</b> and <paramref name="minRetention"/> is less than <b>1 ms</b>
+    /// or when <paramref name="capacityHint"/> is equal to <b>0</b> and <paramref name="minRetention"/> is less than <b>0</b>.
+    /// </exception>
+    [Pure]
+    public MessageBrokerListenerOptions SetDeadLetterPolicy(int capacityHint, Duration minRetention)
+    {
+        Ensure.IsGreaterThanOrEqualTo( capacityHint, 0 );
+        minRetention = minRetention.TrimToMillisecond();
+        Ensure.IsGreaterThanOrEqualTo( minRetention, capacityHint > 0 ? Duration.FromMilliseconds( 1 ) : Duration.Zero );
+        return new MessageBrokerListenerOptions(
+            _prefetchHint,
+            MaxRetries,
+            _retryDelay,
+            MaxRedeliveries,
+            _minAckTimeout,
+            capacityHint,
+            minRetention,
+            _acksDisabled );
     }
 
     /// <summary>
@@ -212,13 +298,22 @@ public readonly struct MessageBrokerListenerOptions
     /// </summary>
     /// <param name="enabled">
     /// New <see cref="AreAcksEnabled"/> value.
-    /// Value will be ignored when either <see cref="MaxRetries"/> or <see cref="MaxRedeliveries"/> is greater than <b>0</b>.
+    /// Value will be ignored when <see cref="MaxRetries"/> or <see cref="MaxRedeliveries"/> or <see cref="DeadLetterCapacityHint"/>
+    /// is greater than <b>0</b>.
     /// Equal to <b>true</b> by default.
     /// </param>
     /// <returns>New <see cref="MessageBrokerListenerOptions"/> instance.</returns>
     [Pure]
     public MessageBrokerListenerOptions EnableAcks(bool enabled = true)
     {
-        return new MessageBrokerListenerOptions( _prefetchHint, MaxRetries, _retryDelay, MaxRedeliveries, _minAckTimeout, ! enabled );
+        return new MessageBrokerListenerOptions(
+            _prefetchHint,
+            MaxRetries,
+            _retryDelay,
+            MaxRedeliveries,
+            _minAckTimeout,
+            DeadLetterCapacityHint,
+            _minDeadLetterRetention,
+            ! enabled );
     }
 }

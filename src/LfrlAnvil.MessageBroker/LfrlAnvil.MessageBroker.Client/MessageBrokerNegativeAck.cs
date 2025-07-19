@@ -27,18 +27,24 @@ public readonly struct MessageBrokerNegativeAck
     /// <summary>
     /// Represents default negative ACK, with default retry behavior based on <see cref="MessageBrokerListener"/> options.
     /// </summary>
-    public static MessageBrokerNegativeAck Default => new MessageBrokerNegativeAck( false, null );
+    public static MessageBrokerNegativeAck Default => new MessageBrokerNegativeAck( false, false, null );
 
-    internal MessageBrokerNegativeAck(bool skipRetry, Duration? retryDelay)
+    internal MessageBrokerNegativeAck(bool skipRetry, bool skipDeadLetter, Duration? retryDelay)
     {
         SkipRetry = skipRetry;
+        SkipDeadLetter = skipDeadLetter;
         RetryDelay = retryDelay;
     }
 
     /// <summary>
-    /// Specifies whether or not future retries fo the message will be skipped.
+    /// Specifies whether or not future retries for the message will be skipped.
     /// </summary>
     public bool SkipRetry { get; }
+
+    /// <summary>
+    /// Specifies whether or not the last failed message attempt should not add it to dead letter.
+    /// </summary>
+    public bool SkipDeadLetter { get; }
 
     /// <summary>
     /// Specifies custom retry delay.
@@ -49,27 +55,44 @@ public readonly struct MessageBrokerNegativeAck
     /// Creates a negative ACK with a custom retry delay.
     /// </summary>
     /// <param name="delay">Custom retry delay. Sub-millisecond components will be trimmed.</param>
+    /// <param name="skipDeadLetter">
+    /// Specifies whether or not the last failed message attempt should not add it to dead letter. Equal to <b>false</b> by default.
+    /// </param>
     /// <returns>New <see cref="MessageBrokerNegativeAck"/> instance.</returns>
     /// <exception cref="ArgumentOutOfRangeException">
     /// When <paramref name="delay"/> is not in [<b>0</b>, <b>2147483647 ms</b>] range.
     /// </exception>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static MessageBrokerNegativeAck Retry(Duration delay)
+    public static MessageBrokerNegativeAck Retry(Duration delay, bool skipDeadLetter = false)
     {
         delay = delay.TrimToMillisecond();
         Ensure.IsInRange( delay, Duration.Zero, Duration.FromMilliseconds( int.MaxValue ) );
-        return new MessageBrokerNegativeAck( false, delay );
+        return new MessageBrokerNegativeAck( false, skipDeadLetter, delay );
     }
 
     /// <summary>
     /// Creates a negative ACK that skips any future retries for the message.
     /// </summary>
+    /// <param name="skipDeadLetter">
+    /// Specifies whether or not the last failed message attempt should not add it to dead letter. Equal to <b>false</b> by default.
+    /// </param>
     /// <returns>New <see cref="MessageBrokerNegativeAck"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static MessageBrokerNegativeAck NoRetry()
+    public static MessageBrokerNegativeAck NoRetry(bool skipDeadLetter = false)
     {
-        return new MessageBrokerNegativeAck( true, null );
+        return new MessageBrokerNegativeAck( true, skipDeadLetter, null );
+    }
+
+    /// <summary>
+    /// Creates a negative ACK that skips last failed message attempt to add it to dead letter.
+    /// </summary>
+    /// <returns>New <see cref="MessageBrokerNegativeAck"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static MessageBrokerNegativeAck NoDeadLetter()
+    {
+        return new MessageBrokerNegativeAck( false, true, null );
     }
 }

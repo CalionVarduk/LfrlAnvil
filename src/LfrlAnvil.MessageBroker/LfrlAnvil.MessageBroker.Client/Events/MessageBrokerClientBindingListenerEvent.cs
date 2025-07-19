@@ -33,6 +33,8 @@ public readonly struct MessageBrokerClientBindingListenerEvent
         Duration retryDelay,
         int maxRedeliveries,
         Duration minAckTimeout,
+        int deadLetterCapacityHint,
+        Duration minDeadLetterRetention,
         bool createChannelIfNotExists)
     {
         Source = MessageBrokerClientEventSource.Create( client, traceId );
@@ -43,6 +45,8 @@ public readonly struct MessageBrokerClientBindingListenerEvent
         RetryDelay = retryDelay;
         MaxRedeliveries = maxRedeliveries;
         MinAckTimeout = minAckTimeout;
+        DeadLetterCapacityHint = deadLetterCapacityHint;
+        MinDeadLetterRetention = minDeadLetterRetention;
         CreateChannelIfNotExists = createChannelIfNotExists;
     }
 
@@ -72,6 +76,11 @@ public readonly struct MessageBrokerClientBindingListenerEvent
     public int MaxRetries { get; }
 
     /// <summary>
+    /// Specifies whether or not the server should create the channel if it does not exist yet.
+    /// </summary>
+    public bool CreateChannelIfNotExists { get; }
+
+    /// <summary>
     /// Listener's retry delay.
     /// </summary>
     public Duration RetryDelay { get; }
@@ -82,14 +91,19 @@ public readonly struct MessageBrokerClientBindingListenerEvent
     public Duration MinAckTimeout { get; }
 
     /// <summary>
+    /// Retention period for messages stored in the dead letter.
+    /// </summary>
+    public Duration MinDeadLetterRetention { get; }
+
+    /// <summary>
+    /// How many messages will be stored at most by the dead letter.
+    /// </summary>
+    public int DeadLetterCapacityHint { get; }
+
+    /// <summary>
     /// Listener's max redeliveries count.
     /// </summary>
     public int MaxRedeliveries { get; }
-
-    /// <summary>
-    /// Specifies whether or not the server should create the channel if it does not exist yet.
-    /// </summary>
-    public bool CreateChannelIfNotExists { get; }
 
     /// <summary>
     /// Specifies whether or not the listener has ACKs enabled.
@@ -103,10 +117,13 @@ public readonly struct MessageBrokerClientBindingListenerEvent
     [Pure]
     public override string ToString()
     {
-        var retries = $", MaxRetries = {MaxRetries}{(MaxRetries > 0 ? $", RetryDelay = {RetryDelay}" : string.Empty)}";
+        var retries = $"MaxRetries = {MaxRetries}{(MaxRetries > 0 ? $", RetryDelay = {RetryDelay}" : string.Empty)}";
         var minAckTimeout = AreAcksEnabled ? $"MinAckTimeout = {MinAckTimeout}" : "MinAckTimeout = <disabled>";
+        var deadLetter
+            = $"DeadLetter = {(DeadLetterCapacityHint > 0 ? $"(CapacityHint = {DeadLetterCapacityHint}, MinRetention = {MinDeadLetterRetention})" : "<disabled>")}";
+
         return
-            $"[BindingListener] {Source}, ChannelName = '{ChannelName}', QueueName = '{QueueName}', PrefetchHint = {PrefetchHint}{retries}, MaxRedeliveries = {MaxRedeliveries}, {minAckTimeout}, CreateChannelIfNotExists = {CreateChannelIfNotExists}";
+            $"[BindingListener] {Source}, ChannelName = '{ChannelName}', QueueName = '{QueueName}', PrefetchHint = {PrefetchHint}, {retries}, MaxRedeliveries = {MaxRedeliveries}, {minAckTimeout}, {deadLetter}, CreateChannelIfNotExists = {CreateChannelIfNotExists}";
     }
 
     [Pure]
@@ -121,6 +138,8 @@ public readonly struct MessageBrokerClientBindingListenerEvent
         Duration retryDelay,
         int maxRedeliveries,
         Duration minAckTimeout,
+        int deadLetterCapacityHint,
+        Duration minDeadLetterRetention,
         bool createChannelIfNotExists)
     {
         return new MessageBrokerClientBindingListenerEvent(
@@ -133,6 +152,8 @@ public readonly struct MessageBrokerClientBindingListenerEvent
             retryDelay,
             maxRedeliveries,
             minAckTimeout,
+            deadLetterCapacityHint,
+            minDeadLetterRetention,
             createChannelIfNotExists );
     }
 }

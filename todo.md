@@ -2,8 +2,7 @@
 
 |       Project       |              Title               |                        Details                         |                    Requirements                    |
 |:-------------------:|:--------------------------------:|:------------------------------------------------------:|:--------------------------------------------------:|
-|   MessageBroker.*   |             Messages             |            [link](#messagebroker-messages)             |                                                    |
-|   MessageBroker.*   |   Max Packet Length & Batching   |   [link](#messagebroker-max-packet-length--batching)   |          [link](#messagebroker-messages)           |
+|   MessageBroker.*   |   Max Packet Length & Batching   |   [link](#messagebroker-max-packet-length--batching)   |                                                    |
 |   MessageBroker.*   |            Permanence            |           [link](#messagebroker-permanence)            | [link](#messagebroker-max-packet-length--batching) |
 |   MessageBroker.*   |      Request-Reply Channel       |      [link](#messagebroker-request-reply-channel)      |         [link](#messagebroker-permanence)          |
 |   MessageBroker.*   |        Subscriber Filter         |        [link](#messagebroker-subscriber-filter)        |    [link](#messagebroker-request-reply-channel)    |
@@ -33,13 +32,19 @@ MessageBroker:
 
 - refactor packet read/write & payload error emitting? there's a lot of copy-pasta (wait for packet batching)
 - add some basic memory pool tracking & possibility to trim excess
+- message routing: check actual practical target limit
+    - each id takes exactly 5 bytes
+    - each valid name takes at least 3 bytes
+    - so, the limit is less than short.maxvalue
+    - solve it when implementing packet batching
 
 Reactive:
 
 - scheduler requires DelayValueTaskSource usage, with async MRE
-  - also, add task container pooling
+    - also, add task container pooling
 
 Core:
+
 - add async reader/writer lock
 
 ### Terminal
@@ -51,61 +56,17 @@ project idea:
 - write table
 - prompt, switch etc. for user interaction
 
-### MessageBroker: Messages
-
-- Add possibility for a client to publish a message to a channel
-    - it must be relatively safe, no loss of data etc.:
-        - client sends message
-            - \[stage 2\] client can limit target clients by providing their ids, by default all subscribed clients are notified
-            - hard max route count is 128
-            - route can either be a client id (if known by the consumer) or client name
-            - UPDATE:
-              - a separate routing request will be sent to the server
-              - right before sending the actual message
-              - server will cache the routing data until next message arrives
-              - routing data can contain a collection of target identifiers
-              - they can either be an id or a name
-              - the size limit will be the max packet size
-        - \[stage 2\] subscriber moves message to un-acked messages collection
-        - \[stage 2\] client needs to respond with ack/nack (not immediately)
-            - message headers get additional re-send-no (starts from 0) & re-delivery-no (starts from 0) fields
-            - ack notifies the server that message was processed & removes it from waiting-for-ack messages collection
-            - nack notifies the server that message processing failed in a controlled manner
-                - subscribers can configure max re-send count & max re-delivery count & default re-send delay
-                - nack can specify whether or not to re-send the message (if subscriber allows), true by default
-                - nack can specify custom re-send delay
-                - \[stage 3\] nack can specify to skip dead letter
-        - \[stage 2\] if client doesn't respond in time (5 minutes by default? configurable):
-            - server attempts to re-deliver the message, as long as subscriber's max re-delivery allows
-        - \[stage 3\] messages that reached max re-send or re-delivery count are moved by the server to subscriber's dead letter collection
-            - it can be queried by client-side subscriber instances (fetching dequeues from dead-letter permanently)
-            - should be possible to configure max number of dead-letter entries and their TTL (either channel or subscriber config)
-            - dead-letter entries create a copy of the message and decrement ref-counter on the stream side
-    - note on server's lack of ack/nack to client's message send:
-        - if this is due to client's disposal, then client could instead wait for server's responses before fully disposing
-            - in this state, client must be seen as disposed to new consumers (no sending of messages etc.)
-        - otherwise, it's up to the client to handle this properly
-            - there is a chance that server handled the message correctly & just failed to respond to client in time
-            - client won't know about it, which may lead to it either rolling back some sort of transaction
-            - or sending the same message more than once
-            - IT'S ON THE CLIENT TO HANDLE THIS SCENARIO, IF IT CAN EVEN OCCUR
-                - it would be a sign of server/client misconfiguration or overwhelmed server
-                - response times can be tracked (& would probably have a real impact on client's performance, if very long)
-                - and client should be able to react accordingly before a disaster happens
-            - it's more important to NOT LOSE messages rather than making sure they are unique
-- server should be allowed to send messages to any channel or subscriber
-
 ### MessageBroker: Max Packet Length & Batching
 
 - Add internal limit to single TCP packet's length (configurable, min 16KB, server defines acceptable range)
     - data that exceeds the limit will be chunked accordingly
-      - or will it? I might give up on the whole chunking idea and just throw an error when message is too large
-      - max configurable max packet length would be 1GB (maybe less...? 100MB?), by default equal to min 16KB
-      - the limit might be linked to memory pool's segment length?
-      - configuration is server-wide, it's up to the clients to conform
-      - most endpoints (if not all except for push-message and message-notification) could have a hard limit of 16KB
-      - other endpoints could allocate buffer in steps, squaring its size each step
-      - server could have a shared large buffer memory pool, which would be used after some packet size threshold is exceeded
+        - or will it? I might give up on the whole chunking idea and just throw an error when message is too large
+        - max configurable max packet length would be 1GB (maybe less...? 100MB?), by default equal to min 16KB
+        - the limit might be linked to memory pool's segment length?
+        - configuration is server-wide, it's up to the clients to conform
+        - most endpoints (if not all except for push-message and message-notification) could have a hard limit of 16KB
+        - other endpoints could allocate buffer in steps, squaring its size each step
+        - server could have a shared large buffer memory pool, which would be used after some packet size threshold is exceeded
     - data must be handled atomically by both client and server (impacts ack/nack)
         - (server-side) store in some sort of temp file with managed lifetime
         - (client-side) if client is configured to ignore large packet buffering:
@@ -139,7 +100,7 @@ project idea:
 ### MessageBroker: Permanence
 
 - Clients, channels & subscribers can be configured as permanent
-  - or, more like they can be configured as transient, false by default
+    - or, more like they can be configured as transient, false by default
 - uses sqlite under the hood (no other option, for now)
 - Permanent subscribers:
     - preserve id
@@ -198,7 +159,7 @@ project idea:
 - cannot be made permanent
 - its subscribers also cannot be permanent
 - WON'T DO
-  - can be setup manually with correct meta channels
+    - can be setup manually with correct meta channels
 
 ### MessageBroker: Subscriber Filter
 
@@ -214,9 +175,9 @@ project idea:
 ### MessageBroker: Server Maintenance
 
 - allow the server to disconnect clients (already implemented)
-- delete channels
-- delete subscribers
-- delete client-channel links
+- send messages
+- delete publishers
+- delete listeners
 - deleting sends a notification request to the relevant client and doesn't wait for a response
     - it's on the client to handle this correctly
     - however, try to make it so that any 'racing' due to async doesn't cause the client to be auto-disposed

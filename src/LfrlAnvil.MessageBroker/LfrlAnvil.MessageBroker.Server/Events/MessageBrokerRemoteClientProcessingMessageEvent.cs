@@ -97,17 +97,28 @@ public readonly struct MessageBrokerRemoteClientProcessingMessageEvent
     public bool IsRedelivery => _redelivery.BoolValue;
 
     /// <summary>
+    /// Specifies whether or not this message is from dead letter.
+    /// </summary>
+    public bool IsFromDeadLetter => AckId < 0;
+
+    /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerRemoteClientProcessingMessageEvent"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
-        var ack = AckId > 0 ? $", AckId = {AckId}" : string.Empty;
+        var ackId = AckId switch
+        {
+            > 0 => $", AckId = {AckId}",
+            -1 => ", AckId = <dead-letter>",
+            _ => string.Empty
+        };
+
         var isRetry = IsRetry ? " (active)" : string.Empty;
         var isRedelivery = IsRedelivery ? " (active)" : string.Empty;
         return
-            $"[ProcessingMessage] {Source}, Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', Queue = [{Listener.Queue.Id}] '{Listener.Queue.Name}'{ack}, MessageId = {MessageId}, Retry = {Retry}{isRetry}, Redelivery = {Redelivery}{isRedelivery}, Length = {Length}";
+            $"[ProcessingMessage] {Source}, Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', Queue = [{Listener.Queue.Id}] '{Listener.Queue.Name}'{ackId}, MessageId = {MessageId}, Retry = {Retry}{isRetry}, Redelivery = {Redelivery}{isRedelivery}, Length = {Length}";
     }
 
     [Pure]

@@ -48,6 +48,8 @@ public readonly struct MessageBrokerRemoteClientLogger
         Action<MessageBrokerRemoteClientProcessingAckEvent>? processingAck,
         Action<MessageBrokerRemoteClientProcessingNegativeAckEvent>? processingNegativeAck,
         Action<MessageBrokerRemoteClientAckProcessedEvent>? ackProcessed,
+        Action<MessageBrokerRemoteClientQueryingDeadLetterEvent>? queryingDeadLetter,
+        Action<MessageBrokerRemoteClientDeadLetterQueriedEvent>? deadLetterQueried,
         Action<MessageBrokerRemoteClientSendingSenderNameEvent>? sendingSenderName,
         Action<MessageBrokerRemoteClientSendingStreamNameEvent>? sendingStreamName,
         Action<MessageBrokerRemoteClientSystemNotificationSentEvent>? systemNotificationSent,
@@ -80,6 +82,8 @@ public readonly struct MessageBrokerRemoteClientLogger
         ProcessingAck = processingAck;
         ProcessingNegativeAck = processingNegativeAck;
         AckProcessed = ackProcessed;
+        QueryingDeadLetter = queryingDeadLetter;
+        DeadLetterQueried = deadLetterQueried;
         SendingSenderName = sendingSenderName;
         SendingStreamName = sendingStreamName;
         SystemNotificationSent = systemNotificationSent;
@@ -214,6 +218,16 @@ public readonly struct MessageBrokerRemoteClientLogger
     public readonly Action<MessageBrokerRemoteClientAckProcessedEvent>? AckProcessed;
 
     /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerRemoteClientQueryingDeadLetterEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerRemoteClientQueryingDeadLetterEvent>? QueryingDeadLetter;
+
+    /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerRemoteClientDeadLetterQueriedEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerRemoteClientDeadLetterQueriedEvent>? DeadLetterQueried;
+
+    /// <summary>
     /// Optional callback for a <see cref="MessageBrokerRemoteClientSendingSenderNameEvent"/>.
     /// </summary>
     public readonly Action<MessageBrokerRemoteClientSendingSenderNameEvent>? SendingSenderName;
@@ -271,6 +285,8 @@ public readonly struct MessageBrokerRemoteClientLogger
     /// <param name="processingAck">Optional <see cref="ProcessingAck"/> callback.</param>
     /// <param name="processingNegativeAck">Optional <see cref="ProcessingNegativeAck"/> callback.</param>
     /// <param name="ackProcessed">Optional <see cref="AckProcessed"/> callback.</param>
+    ///     /// <param name="queryingDeadLetter">Optional <see cref="QueryingDeadLetter"/> callback.</param>
+    /// <param name="deadLetterQueried">Optional <see cref="DeadLetterQueried"/> callback.</param>
     /// <param name="sendingSenderName">Optional <see cref="SendingSenderName"/> callback.</param>
     /// <param name="sendingStreamName">Optional <see cref="SendingStreamName"/> callback.</param>
     /// <param name="systemNotificationSent">Optional <see cref="SystemNotificationSent"/> callback.</param>
@@ -305,6 +321,8 @@ public readonly struct MessageBrokerRemoteClientLogger
         Action<MessageBrokerRemoteClientProcessingAckEvent>? processingAck = null,
         Action<MessageBrokerRemoteClientProcessingNegativeAckEvent>? processingNegativeAck = null,
         Action<MessageBrokerRemoteClientAckProcessedEvent>? ackProcessed = null,
+        Action<MessageBrokerRemoteClientQueryingDeadLetterEvent>? queryingDeadLetter = null,
+        Action<MessageBrokerRemoteClientDeadLetterQueriedEvent>? deadLetterQueried = null,
         Action<MessageBrokerRemoteClientSendingSenderNameEvent>? sendingSenderName = null,
         Action<MessageBrokerRemoteClientSendingStreamNameEvent>? sendingStreamName = null,
         Action<MessageBrokerRemoteClientSystemNotificationSentEvent>? systemNotificationSent = null,
@@ -338,6 +356,8 @@ public readonly struct MessageBrokerRemoteClientLogger
             processingAck,
             processingNegativeAck,
             ackProcessed,
+            queryingDeadLetter,
+            deadLetterQueried,
             sendingSenderName,
             sendingStreamName,
             systemNotificationSent,

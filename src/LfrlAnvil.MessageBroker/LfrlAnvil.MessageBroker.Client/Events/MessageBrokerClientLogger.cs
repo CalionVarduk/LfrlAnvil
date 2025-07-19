@@ -46,6 +46,8 @@ public readonly struct MessageBrokerClientLogger
         Action<MessageBrokerClientMessageProcessedEvent>? messageProcessed,
         Action<MessageBrokerClientAcknowledgingMessageEvent>? acknowledgingMessage,
         Action<MessageBrokerClientMessageAcknowledgedEvent>? messageAcknowledged,
+        Action<MessageBrokerClientQueryingDeadLetterEvent>? queryingDeadLetter,
+        Action<MessageBrokerClientDeadLetterQueriedEvent>? deadLetterQueried,
         Action<MessageBrokerClientProcessingSystemNotificationEvent>? processingSystemNotification,
         Action<MessageBrokerClientSenderNameProcessedEvent>? senderNameProcessed,
         Action<MessageBrokerClientStreamNameProcessedEvent>? streamNameProcessed,
@@ -76,6 +78,8 @@ public readonly struct MessageBrokerClientLogger
         MessageProcessed = messageProcessed;
         AcknowledgingMessage = acknowledgingMessage;
         MessageAcknowledged = messageAcknowledged;
+        QueryingDeadLetter = queryingDeadLetter;
+        DeadLetterQueried = deadLetterQueried;
         ProcessingSystemNotification = processingSystemNotification;
         SenderNameProcessed = senderNameProcessed;
         StreamNameProcessed = streamNameProcessed;
@@ -200,6 +204,16 @@ public readonly struct MessageBrokerClientLogger
     public readonly Action<MessageBrokerClientMessageAcknowledgedEvent>? MessageAcknowledged;
 
     /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerClientQueryingDeadLetterEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerClientQueryingDeadLetterEvent>? QueryingDeadLetter;
+
+    /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerClientDeadLetterQueriedEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerClientDeadLetterQueriedEvent>? DeadLetterQueried;
+
+    /// <summary>
     /// Optional callback for a <see cref="MessageBrokerClientProcessingSystemNotificationEvent"/>.
     /// </summary>
     public readonly Action<MessageBrokerClientProcessingSystemNotificationEvent>? ProcessingSystemNotification;
@@ -255,6 +269,8 @@ public readonly struct MessageBrokerClientLogger
     /// <param name="messageProcessed">Optional <see cref="MessageProcessed"/> callback.</param>
     /// <param name="acknowledgingMessage">Optional <see cref="AcknowledgingMessage"/> callback.</param>
     /// <param name="messageAcknowledged">Optional <see cref="MessageAcknowledged"/> callback.</param>
+    /// <param name="queryingDeadLetter">Optional <see cref="QueryingDeadLetter"/> callback.</param>
+    /// <param name="deadLetterQueried">Optional <see cref="DeadLetterQueried"/> callback.</param>
     /// <param name="processingSystemNotification">Optional <see cref="ProcessingSystemNotification"/> callback.</param>
     /// <param name="senderNameProcessed">Optional <see cref="SenderNameProcessed"/> callback.</param>
     /// <param name="streamNameProcessed">Optional <see cref="StreamNameProcessed"/> callback.</param>
@@ -287,6 +303,8 @@ public readonly struct MessageBrokerClientLogger
         Action<MessageBrokerClientMessageProcessedEvent>? messageProcessed = null,
         Action<MessageBrokerClientAcknowledgingMessageEvent>? acknowledgingMessage = null,
         Action<MessageBrokerClientMessageAcknowledgedEvent>? messageAcknowledged = null,
+        Action<MessageBrokerClientQueryingDeadLetterEvent>? queryingDeadLetter = null,
+        Action<MessageBrokerClientDeadLetterQueriedEvent>? deadLetterQueried = null,
         Action<MessageBrokerClientProcessingSystemNotificationEvent>? processingSystemNotification = null,
         Action<MessageBrokerClientSenderNameProcessedEvent>? senderNameProcessed = null,
         Action<MessageBrokerClientStreamNameProcessedEvent>? streamNameProcessed = null,
@@ -318,6 +336,8 @@ public readonly struct MessageBrokerClientLogger
             messageProcessed,
             acknowledgingMessage,
             messageAcknowledged,
+            queryingDeadLetter,
+            deadLetterQueried,
             processingSystemNotification,
             senderNameProcessed,
             streamNameProcessed,

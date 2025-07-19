@@ -91,9 +91,14 @@ public readonly struct MessageBrokerRemoteClientProcessingNegativeAckEvent
     public bool NoRetry => (_flags & 1) != 0;
 
     /// <summary>
+    /// Specifies whether or not the client requested to not store the message in dead letter.
+    /// </summary>
+    public bool NoDeadLetter => (_flags & 2) != 0;
+
+    /// <summary>
     /// Specifies explicit retry delay requested by the client.
     /// </summary>
-    public Duration? ExplicitDelay => (_flags & 2) != 0 ? _explicitDelay : null;
+    public Duration? ExplicitDelay => (_flags & 4) != 0 ? _explicitDelay : null;
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerRemoteClientProcessingNegativeAckEvent"/> instance.
@@ -104,7 +109,7 @@ public readonly struct MessageBrokerRemoteClientProcessingNegativeAckEvent
     {
         var explicitDelay = ExplicitDelay is not null ? $", ExplicitDelay = {ExplicitDelay.Value}" : string.Empty;
         return
-            $"[ProcessingNegativeAck] {Source}, QueueId = {QueueId}, AckId = {AckId}, StreamId = {StreamId}, MessageId = {MessageId}, Retry = {Retry}, Redelivery = {Redelivery}, NoRetry = {NoRetry}{explicitDelay}";
+            $"[ProcessingNegativeAck] {Source}, QueueId = {QueueId}, AckId = {AckId}, StreamId = {StreamId}, MessageId = {MessageId}, Retry = {Retry}, Redelivery = {Redelivery}, NoRetry = {NoRetry}, NoDeadLetter = {NoDeadLetter}{explicitDelay}";
     }
 
     [Pure]
@@ -119,6 +124,7 @@ public readonly struct MessageBrokerRemoteClientProcessingNegativeAckEvent
         int retry,
         int redelivery,
         bool noRetry,
+        bool noDeadLetter,
         Duration? explicitDelay)
     {
         return new MessageBrokerRemoteClientProcessingNegativeAckEvent(
@@ -131,6 +137,6 @@ public readonly struct MessageBrokerRemoteClientProcessingNegativeAckEvent
             retry,
             redelivery,
             explicitDelay ?? Duration.Zero,
-            ( byte )((noRetry ? 1 : 0) | (explicitDelay is not null ? 2 : 0)) );
+            ( byte )((noRetry ? 1 : 0) | (noDeadLetter ? 2 : 0) | (explicitDelay is not null ? 4 : 0)) );
     }
 }

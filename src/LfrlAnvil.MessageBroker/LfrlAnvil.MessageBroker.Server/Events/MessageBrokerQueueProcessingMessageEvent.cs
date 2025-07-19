@@ -31,6 +31,7 @@ public readonly struct MessageBrokerQueueProcessingMessageEvent
         ulong traceId,
         MessageBrokerChannelPublisherBinding publisher,
         int storeKey,
+        bool isFromDeadLetter,
         Int31BoolPair retry,
         Int31BoolPair redelivery)
     {
@@ -38,6 +39,7 @@ public readonly struct MessageBrokerQueueProcessingMessageEvent
         Listener = listener;
         Publisher = publisher;
         StoreKey = storeKey;
+        IsFromDeadLetter = isFromDeadLetter;
         _retry = retry;
         _redelivery = redelivery;
     }
@@ -61,6 +63,11 @@ public readonly struct MessageBrokerQueueProcessingMessageEvent
     /// Key of the stream's message store entry associated with the message.
     /// </summary>
     public int StoreKey { get; }
+
+    /// <summary>
+    /// Specifies whether or not this message is from dead letter.
+    /// </summary>
+    public bool IsFromDeadLetter { get; }
 
     /// <summary>
     /// Specifies whether or not this message is a retry.
@@ -92,7 +99,7 @@ public readonly struct MessageBrokerQueueProcessingMessageEvent
         var isRetry = IsRetry ? " (active)" : string.Empty;
         var isRedelivery = IsRedelivery ? " (active)" : string.Empty;
         return
-            $"[ProcessingMessage] {Source}, Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', StoreKey = {StoreKey}, Retry = {Retry}{isRetry}, Redelivery = {Redelivery}{isRedelivery}";
+            $"[ProcessingMessage] {Source}, Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', StoreKey = {StoreKey}, Retry = {Retry}{isRetry}, Redelivery = {Redelivery}{isRedelivery}, IsFromDeadLetter = {IsFromDeadLetter}";
     }
 
     [Pure]
@@ -102,9 +109,10 @@ public readonly struct MessageBrokerQueueProcessingMessageEvent
         ulong traceId,
         MessageBrokerChannelPublisherBinding publisher,
         int storeKey,
+        bool isFromDeadLetter,
         Int31BoolPair retry,
         Int31BoolPair redelivery)
     {
-        return new MessageBrokerQueueProcessingMessageEvent( listener, traceId, publisher, storeKey, retry, redelivery );
+        return new MessageBrokerQueueProcessingMessageEvent( listener, traceId, publisher, storeKey, isFromDeadLetter, retry, redelivery );
     }
 }

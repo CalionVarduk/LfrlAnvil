@@ -63,7 +63,10 @@ public readonly struct MessageBrokerListenerCallbackArgs
     /// <summary>
     /// Id of the ACK associated with the message.
     /// </summary>
-    /// <remarks>ACK is expected only when value is greater than <b>0</b>.</remarks>
+    /// <remarks>
+    /// ACK is expected only when value is greater than <b>0</b>.
+    /// Value equal to <b>-1</b> specifies that this message is from a dead letter.
+    /// </remarks>
     public int AckId { get; }
 
     /// <summary>
@@ -130,7 +133,12 @@ public readonly struct MessageBrokerListenerCallbackArgs
     /// <summary>
     /// Specifies whether or not this message is not a retry and not a redelivery.
     /// </summary>
-    public bool IsFirst => _retry.Data == 0 && _redelivery.Data == 0;
+    public bool IsFirst => _retry.Data == 0 && _redelivery.Data == 0 && ! IsFromDeadLetter;
+
+    /// <summary>
+    /// Specifies whether or not this message is from a dead letter.
+    /// </summary>
+    public bool IsFromDeadLetter => AckId < 0;
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerListenerCallbackArgs"/> instance.
@@ -139,7 +147,13 @@ public readonly struct MessageBrokerListenerCallbackArgs
     [Pure]
     public override string ToString()
     {
-        var ackId = AckId > 0 ? $", AckId = {AckId}" : string.Empty;
+        var ackId = AckId switch
+        {
+            > 0 => $", AckId = {AckId}",
+            -1 => ", AckId = <dead-letter>",
+            _ => string.Empty
+        };
+
         var isRetry = IsRetry ? " (active)" : string.Empty;
         var isRedelivery = IsRedelivery ? " (active)" : string.Empty;
         return
@@ -151,6 +165,7 @@ public readonly struct MessageBrokerListenerCallbackArgs
     /// </summary>
     /// <exception cref="MessageBrokerClientDisposedException">When client has already been disposed.</exception>
     /// <exception cref="MessageBrokerClientMessageException">When ACKs are not enabled for the <see cref="Listener"/>.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">When <see cref="IsFromDeadLetter"/> is equal to <b>true</b>.</exception>
     /// <returns>
     /// A task that represents the operation, which returns a <see cref="Result{T}"/> instance,
     /// with underlying <see cref="bool"/> result. If the result is equal to <b>true</b>, then ACK sending was successful,
@@ -175,6 +190,7 @@ public readonly struct MessageBrokerListenerCallbackArgs
     /// </param>
     /// <exception cref="MessageBrokerClientDisposedException">When client has already been disposed.</exception>
     /// <exception cref="MessageBrokerClientMessageException">When ACKs are not enabled for the <see cref="Listener"/>.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">When <see cref="IsFromDeadLetter"/> is equal to <b>true</b>.</exception>
     /// <returns>
     /// A task that represents the operation, which returns a <see cref="Result{T}"/> instance,
     /// with underlying <see cref="bool"/> result. If the result is equal to <b>true</b>, then ACK sending was successful,

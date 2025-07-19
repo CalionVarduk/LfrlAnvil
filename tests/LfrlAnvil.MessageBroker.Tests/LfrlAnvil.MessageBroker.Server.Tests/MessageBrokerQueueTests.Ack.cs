@@ -83,7 +83,8 @@ public partial class MessageBrokerQueueTests
                         q => Assertion.All(
                             "queue",
                             q.Messages.Unacked.Count.TestEquals( 0 ),
-                            q.Messages.Retries.Count.TestEquals( 0 ) ) ),
+                            q.Messages.Retries.Count.TestEquals( 0 ),
+                            q.Messages.DeadLetter.Count.TestEquals( 0 ) ) ),
                     messageCount.TestEquals( 1 ),
                     pendingCount.TestEquals( 0 ),
                     unackedCount.TestEquals( 1 ),
@@ -344,6 +345,7 @@ public partial class MessageBrokerQueueTests
             Exception? exception = null;
             MessageBrokerStream? stream = null;
             var endSource = new SafeTaskCompletionSource();
+            var streamEndSource = new SafeTaskCompletionSource();
             var queueLogs = new QueueEventLogger();
             await using var server = new MessageBrokerServer(
                 new IPEndPoint( IPAddress.Loopback, 0 ),
@@ -352,6 +354,11 @@ public partial class MessageBrokerQueueTests
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
                     .SetClientLoggerFactory(
                         _ => MessageBrokerRemoteClientLogger.Create(
+                            traceStart: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.Ack )
+                                    streamEndSource.Task.Wait();
+                            },
                             traceEnd: e =>
                             {
                                 if ( e.Type == MessageBrokerRemoteClientTraceEventType.Ack )
@@ -368,7 +375,14 @@ public partial class MessageBrokerQueueTests
                                             stream.MessageStore.DecrementRefCount( 0, out var _ );
                                     }
                                 },
-                                error: e => exception = e.Exception ) ) ) );
+                                error: e => exception = e.Exception ) ) )
+                    .SetStreamLoggerFactory(
+                        _ => MessageBrokerStreamLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerStreamTraceEventType.ProcessMessage )
+                                    streamEndSource.Complete();
+                            } ) ) );
 
             await server.StartAsync();
 
@@ -753,6 +767,7 @@ public partial class MessageBrokerQueueTests
                             "queue",
                             q.Messages.Pending.Count.TestEquals( 0 ),
                             q.Messages.Unacked.Count.TestEquals( 0 ),
+                            q.Messages.DeadLetter.Count.TestEquals( 0 ),
                             q.Messages.Retries.Count.TestEquals( 1 ),
                             q.Messages.Retries.TryGetNext()
                                 .TestNotNull(
@@ -776,7 +791,7 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:NegativeAck] Client = [1] 'test', TraceId = 5 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 5, Packet = (MessageNotificationNack, Length = 38)",
-                                "[ProcessingNegativeAck] Client = [1] 'test', TraceId = 5, QueueId = 1, AckId = 1, StreamId = 1, MessageId = 0, Retry = 0, Redelivery = 0, NoRetry = False",
+                                "[ProcessingNegativeAck] Client = [1] 'test', TraceId = 5, QueueId = 1, AckId = 1, StreamId = 1, MessageId = 0, Retry = 0, Redelivery = 0, NoRetry = False, NoDeadLetter = False",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 5, Packet = (MessageNotificationNack, Length = 38)",
                                 "[AckProcessed] Client = [1] 'test', TraceId = 5, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0, IsNack = True",
                                 "[Trace:NegativeAck] Client = [1] 'test', TraceId = 5 (end)"
@@ -868,7 +883,7 @@ public partial class MessageBrokerQueueTests
                             [
                                 $"[Trace:NegativeAck] Client = [1] 'test', TraceId = {t.Id} (start)",
                                 $"[ReadPacket:Received] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotificationNack, Length = 38)",
-                                $"[ProcessingNegativeAck] Client = [1] 'test', TraceId = {t.Id}, QueueId = 1, AckId = 1, StreamId = 1, MessageId = 0, Retry = 0, Redelivery = 0, NoRetry = False",
+                                $"[ProcessingNegativeAck] Client = [1] 'test', TraceId = {t.Id}, QueueId = 1, AckId = 1, StreamId = 1, MessageId = 0, Retry = 0, Redelivery = 0, NoRetry = False, NoDeadLetter = False",
                                 $"[ReadPacket:Accepted] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotificationNack, Length = 38)",
                                 $"[AckProcessed] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0, IsNack = True",
                                 $"[Trace:NegativeAck] Client = [1] 'test', TraceId = {t.Id} (end)"
@@ -877,7 +892,7 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:NegativeAck] Client = [1] 'test', TraceId = 8 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 8, Packet = (MessageNotificationNack, Length = 38)",
-                                "[ProcessingNegativeAck] Client = [1] 'test', TraceId = 8, QueueId = 1, AckId = 1, StreamId = 1, MessageId = 1, Retry = 0, Redelivery = 0, NoRetry = False",
+                                "[ProcessingNegativeAck] Client = [1] 'test', TraceId = 8, QueueId = 1, AckId = 1, StreamId = 1, MessageId = 1, Retry = 0, Redelivery = 0, NoRetry = False, NoDeadLetter = False",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 8, Packet = (MessageNotificationNack, Length = 38)",
                                 "[AckProcessed] Client = [1] 'test', TraceId = 8, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 1, Retry = 0, Redelivery = 0, IsNack = True",
                                 "[Trace:NegativeAck] Client = [1] 'test', TraceId = 8 (end)"
@@ -978,7 +993,7 @@ public partial class MessageBrokerQueueTests
                             [
                                 $"[Trace:NegativeAck] Client = [1] 'test', TraceId = {t.Id} (start)",
                                 $"[ReadPacket:Received] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotificationNack, Length = 38)",
-                                $"[ProcessingNegativeAck] Client = [1] 'test', TraceId = {t.Id}, QueueId = 1, AckId = 1, StreamId = 1, MessageId = 0, Retry = 0, Redelivery = 0, NoRetry = True",
+                                $"[ProcessingNegativeAck] Client = [1] 'test', TraceId = {t.Id}, QueueId = 1, AckId = 1, StreamId = 1, MessageId = 0, Retry = 0, Redelivery = 0, NoRetry = True, NoDeadLetter = False",
                                 $"[ReadPacket:Accepted] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotificationNack, Length = 38)",
                                 $"[AckProcessed] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0, IsNack = True",
                                 $"[Trace:NegativeAck] Client = [1] 'test', TraceId = {t.Id} (end)"
@@ -987,7 +1002,7 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:NegativeAck] Client = [1] 'test', TraceId = 8 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 8, Packet = (MessageNotificationNack, Length = 38)",
-                                "[ProcessingNegativeAck] Client = [1] 'test', TraceId = 8, QueueId = 1, AckId = 1, StreamId = 1, MessageId = 1, Retry = 0, Redelivery = 0, NoRetry = False",
+                                "[ProcessingNegativeAck] Client = [1] 'test', TraceId = 8, QueueId = 1, AckId = 1, StreamId = 1, MessageId = 1, Retry = 0, Redelivery = 0, NoRetry = False, NoDeadLetter = False",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 8, Packet = (MessageNotificationNack, Length = 38)",
                                 "[AckProcessed] Client = [1] 'test', TraceId = 8, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 1, Retry = 0, Redelivery = 0, IsNack = True",
                                 "[Trace:NegativeAck] Client = [1] 'test', TraceId = 8 (end)"
@@ -1001,7 +1016,7 @@ public partial class MessageBrokerQueueTests
                             [
                                 $"[Trace:NegativeAck] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id} (start)",
                                 $"[ClientTrace] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id}, ClientTraceId = {clientTraceIdsByQueueTraceId.GetValueOrDefault( t.Id )}",
-                                $"[MessageDiscarded] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Reason = ExplicitNoRetry, StoreKey = 0, Retry = 0, Redelivery = 0, MessageRemoved = {messageRemoved.Value}",
+                                $"[MessageDiscarded] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Reason = ExplicitNoRetry, StoreKey = 0, Retry = 0, Redelivery = 0, MessageRemoved = {messageRemoved.Value}, MovedToDeadLetter = False",
                                 $"[NegativeAckProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id}, AckId = 1, MessageRemoved = {messageRemoved.Value}",
                                 $"[Trace:NegativeAck] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id} (end)"
                             ] ),
@@ -1011,6 +1026,87 @@ public partial class MessageBrokerQueueTests
                                 "[ClientTrace] Client = [1] 'test', Queue = [1] 'c', TraceId = 6, ClientTraceId = 8",
                                 "[NegativeAckProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 6, AckId = 1, Delay = 10 second(s)",
                                 "[Trace:NegativeAck] Client = [1] 'test', Queue = [1] 'c', TraceId = 6 (end)"
+                            ] )
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task NegativeAck_ShouldNotAddMessageToDeadLetterOnLastAttempt_WhenExplicitlySpecified()
+        {
+            var endSource = new SafeTaskCompletionSource();
+            var clientLogs = new ClientEventLogger();
+            var queueLogs = new QueueEventLogger();
+            var messageRemoved = Atomic.Create( false );
+            await using var server = new MessageBrokerServer(
+                new IPEndPoint( IPAddress.Loopback, 0 ),
+                MessageBrokerServerOptions.Default
+                    .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySourceFactory( _ => _sharedDelaySource )
+                    .SetClientLoggerFactory(
+                        _ => clientLogs.GetLogger(
+                            MessageBrokerRemoteClientLogger.Create(
+                                traceEnd: e =>
+                                {
+                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.NegativeAck )
+                                        endSource.Complete();
+                                } ) ) )
+                    .SetQueueLoggerFactory(
+                        _ => queueLogs.GetLogger(
+                            MessageBrokerQueueLogger.Create( messageDiscarded: e => messageRemoved.Value = e.MessageRemoved ) ) ) );
+
+            await server.StartAsync();
+
+            using var client = new ClientMock();
+            await client.EstablishHandshake( server );
+            await client.GetTask(
+                c =>
+                {
+                    c.SendBindPublisherRequest( "c" );
+                    c.ReadPublisherBoundResponse();
+                    c.SendBindListenerRequest(
+                        "c",
+                        false,
+                        deadLetterCapacityHint: 1,
+                        minDeadLetterRetention: Duration.FromHours( 1 ),
+                        minAckTimeout: Duration.FromMinutes( 10 ) );
+
+                    c.ReadListenerBoundResponse();
+                    c.SendPushMessage( 1, [ 1 ], confirm: false );
+                    c.ReadMessageNotification( 1 );
+                    c.SendMessageNotificationNegativeAck( 1, 1, 1, 0, noDeadLetter: true );
+                } );
+
+            var queue = server.Clients.TryGetById( 1 )?.Queues.TryGetById( 1 );
+            await endSource.Task;
+
+            Assertion.All(
+                    queue.TestNotNull( q => q.Messages.DeadLetter.Count.TestEquals( 0 ) ),
+                    clientLogs.GetAll()
+                        .TakeLast( 1 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:NegativeAck] Client = [1] 'test', TraceId = 5 (start)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 5, Packet = (MessageNotificationNack, Length = 38)",
+                                "[ProcessingNegativeAck] Client = [1] 'test', TraceId = 5, QueueId = 1, AckId = 1, StreamId = 1, MessageId = 0, Retry = 0, Redelivery = 0, NoRetry = False, NoDeadLetter = True",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 5, Packet = (MessageNotificationNack, Length = 38)",
+                                "[AckProcessed] Client = [1] 'test', TraceId = 5, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0, IsNack = True",
+                                "[Trace:NegativeAck] Client = [1] 'test', TraceId = 5 (end)"
+                            ] )
+                        ] ),
+                    queueLogs.GetAll()
+                        .TakeLast( 1 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:NegativeAck] Client = [1] 'test', Queue = [1] 'c', TraceId = 3 (start)",
+                                "[ClientTrace] Client = [1] 'test', Queue = [1] 'c', TraceId = 3, ClientTraceId = 5",
+                                $"[MessageDiscarded] Client = [1] 'test', Queue = [1] 'c', TraceId = 3, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Reason = MaxRetriesReached, StoreKey = 0, Retry = 0, Redelivery = 0, MessageRemoved = {messageRemoved.Value}, MovedToDeadLetter = False",
+                                $"[NegativeAckProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 3, AckId = 1, MessageRemoved = {messageRemoved.Value}",
+                                "[Trace:NegativeAck] Client = [1] 'test', Queue = [1] 'c', TraceId = 3 (end)"
                             ] )
                         ] ) )
                 .Go();
@@ -1099,7 +1195,7 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:NegativeAck] Client = [1] 'test', Queue = [1] 'c', TraceId = 4 (start)",
                                 "[ClientTrace] Client = [1] 'test', Queue = [1] 'c', TraceId = 4, ClientTraceId = 7",
-                                $"[MessageDiscarded] Client = [1] 'test', Queue = [1] 'c', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Reason = MaxRetriesReached, StoreKey = 0, Retry = 0, Redelivery = 0, MessageRemoved = {messageRemoved.Value}",
+                                $"[MessageDiscarded] Client = [1] 'test', Queue = [1] 'c', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Reason = MaxRetriesReached, StoreKey = 0, Retry = 0, Redelivery = 0, MessageRemoved = {messageRemoved.Value}, MovedToDeadLetter = False",
                                 $"[NegativeAckProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 4, AckId = 1, MessageRemoved = {messageRemoved.Value}",
                                 "[Disposing] Client = [1] 'test', Queue = [1] 'c', TraceId = 4",
                                 "[Disposed] Client = [1] 'test', Queue = [1] 'c', TraceId = 4",
@@ -1149,7 +1245,7 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:NegativeAck] Client = [1] 'test', TraceId = 1 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (MessageNotificationNack, Length = 38)",
-                                "[ProcessingNegativeAck] Client = [1] 'test', TraceId = 1, QueueId = 1, AckId = 2, StreamId = 3, MessageId = 4, Retry = 5, Redelivery = 6, NoRetry = False",
+                                "[ProcessingNegativeAck] Client = [1] 'test', TraceId = 1, QueueId = 1, AckId = 2, StreamId = 3, MessageId = 4, Retry = 5, Redelivery = 6, NoRetry = False, NoDeadLetter = False",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 1
                                 LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientException: Client [1] 'test' could not process a message ACK for non-existing queue with ID 1.
@@ -1208,7 +1304,7 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:NegativeAck] Client = [1] 'test', TraceId = 2 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageNotificationNack, Length = 38)",
-                                "[ProcessingNegativeAck] Client = [1] 'test', TraceId = 2, QueueId = 1, AckId = 2, StreamId = 3, MessageId = 4, Retry = 5, Redelivery = 6, NoRetry = False",
+                                "[ProcessingNegativeAck] Client = [1] 'test', TraceId = 2, QueueId = 1, AckId = 2, StreamId = 3, MessageId = 4, Retry = 5, Redelivery = 6, NoRetry = False, NoDeadLetter = False",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 2
                                 LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerQueueException: Queue [1] 'c' for client [1] 'test' could not process a (ack ID: 2, stream ID: 3, message ID: 4) message ACK because the message does not exist.
@@ -1271,7 +1367,7 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:NegativeAck] Client = [1] 'test', TraceId = 5 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 5, Packet = (MessageNotificationNack, Length = 38)",
-                                "[ProcessingNegativeAck] Client = [1] 'test', TraceId = 5, QueueId = 1, AckId = 1, StreamId = 1, MessageId = 0, Retry = 2, Redelivery = 3, NoRetry = False",
+                                "[ProcessingNegativeAck] Client = [1] 'test', TraceId = 5, QueueId = 1, AckId = 1, StreamId = 1, MessageId = 0, Retry = 2, Redelivery = 3, NoRetry = False, NoDeadLetter = False",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 5
                                 LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerQueueException: Queue [1] 'c' for client [1] 'test' could not process a (stream ID: 1, message ID: 0) message ACK because its (retry: 2, redelivery: 3) version does not exist.
@@ -1514,7 +1610,8 @@ public partial class MessageBrokerQueueTests
                             "queue",
                             q.Messages.Pending.Count.TestEquals( 0 ),
                             q.Messages.Unacked.Count.TestEquals( 0 ),
-                            q.Messages.Retries.Count.TestEquals( 0 ) ) ),
+                            q.Messages.Retries.Count.TestEquals( 0 ),
+                            q.Messages.DeadLetter.Count.TestEquals( 0 ) ) ),
                     clientLogs.GetAll()
                         .Skip( 4 )
                         .TestSequence(
@@ -1554,29 +1651,164 @@ public partial class MessageBrokerQueueTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2 (start)",
-                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 0, Redelivery = 0",
+                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 0, Redelivery = 0, IsFromDeadLetter = False",
                                 $"[MessageProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 0, Ack = (Id = 1, ExpiresAt = {ackExpireDatesByQueueTraceId.GetValueOrDefault( 2UL )})",
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2 (end)"
                             ] ),
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 3 (start)",
-                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 3, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 0, Redelivery = 1 (active)",
+                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 3, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 0, Redelivery = 1 (active), IsFromDeadLetter = False",
                                 $"[MessageProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 3, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 0, Ack = (Id = 2, ExpiresAt = {ackExpireDatesByQueueTraceId.GetValueOrDefault( 3UL )})",
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 3 (end)"
                             ] ),
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 4 (start)",
-                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 0, Redelivery = 2 (active)",
+                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 0, Redelivery = 2 (active), IsFromDeadLetter = False",
                                 $"[MessageProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 0, Ack = (Id = 1, ExpiresAt = {ackExpireDatesByQueueTraceId.GetValueOrDefault( 4UL )})",
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 4 (end)"
                             ] ),
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 5 (start)",
-                                $"[MessageDiscarded] Client = [1] 'test', Queue = [1] 'c', TraceId = 5, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Reason = MaxRedeliveriesReached, StoreKey = 0, Retry = 0, Redelivery = 2, MessageRemoved = {messageRemoved.Value}",
+                                $"[MessageDiscarded] Client = [1] 'test', Queue = [1] 'c', TraceId = 5, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Reason = MaxRedeliveriesReached, StoreKey = 0, Retry = 0, Redelivery = 2, MessageRemoved = {messageRemoved.Value}, MovedToDeadLetter = False",
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 5 (end)"
+                            ] )
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task AckTimeout_ShouldSendMessageRedeliveryUntilListenerLimit_WithDeadLetter()
+        {
+            var endSource = new SafeTaskCompletionSource( completionCount: 5 );
+            var clientLogs = new ClientEventLogger();
+            var queueLogs = new QueueEventLogger();
+            var ackExpireDatesByQueueTraceId = new ConcurrentDictionary<ulong, Timestamp>();
+            await using var server = new MessageBrokerServer(
+                new IPEndPoint( IPAddress.Loopback, 0 ),
+                MessageBrokerServerOptions.Default
+                    .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySourceFactory( _ => _sharedDelaySource )
+                    .SetClientLoggerFactory(
+                        _ => clientLogs.GetLogger(
+                            MessageBrokerRemoteClientLogger.Create(
+                                traceEnd: e =>
+                                {
+                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.MessageNotification )
+                                        endSource.Complete();
+                                } ) ) )
+                    .SetQueueLoggerFactory(
+                        _ => queueLogs.GetLogger(
+                            MessageBrokerQueueLogger.Create(
+                                traceEnd: e =>
+                                {
+                                    if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
+                                        endSource.Complete();
+                                },
+                                messageProcessed: e => ackExpireDatesByQueueTraceId[e.Source.TraceId] = e.AckExpiresAt ) ) ) );
+
+            await server.StartAsync();
+
+            using var client = new ClientMock();
+            await client.EstablishHandshake( server );
+            var minPushedAt = TimestampProvider.Shared.GetNow();
+            await client.GetTask(
+                c =>
+                {
+                    c.SendBindPublisherRequest( "c" );
+                    c.ReadPublisherBoundResponse();
+                    c.SendBindListenerRequest(
+                        "c",
+                        false,
+                        maxRedeliveries: 1,
+                        deadLetterCapacityHint: 1,
+                        minDeadLetterRetention: Duration.FromMinutes( 1 ),
+                        minAckTimeout: Duration.FromMilliseconds( 15 ) );
+
+                    c.ReadListenerBoundResponse();
+                    c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
+                    c.ReadMessageNotification( 3 );
+                    c.ReadMessageNotification( 3 );
+                } );
+
+            var stream = server.Streams.TryGetById( 1 );
+            var queue = server.Clients.TryGetById( 1 )?.Queues.TryGetById( 1 );
+            var publisher = stream?.Publishers.TryGetByKey( 1, 1 );
+            var listener = queue?.Listeners.TryGetByChannelId( 1 );
+            await endSource.Task;
+
+            Assertion.All(
+                    stream.TestNotNull( s => s.Messages.Count.TestEquals( 1 ) ),
+                    queue.TestNotNull(
+                        q => Assertion.All(
+                            "queue",
+                            q.Messages.Pending.Count.TestEquals( 0 ),
+                            q.Messages.Unacked.Count.TestEquals( 0 ),
+                            q.Messages.Retries.Count.TestEquals( 0 ),
+                            q.Messages.DeadLetter.Count.TestEquals( 1 ),
+                            q.Messages.DeadLetter.TryPeekAt( 0 )
+                                .TestNotNull(
+                                    d => Assertion.All(
+                                        "deadLetterMessage",
+                                        d.Listener.TestRefEquals( listener ),
+                                        d.Publisher.TestRefEquals( publisher ),
+                                        d.StoreKey.TestEquals( 0 ),
+                                        d.Retry.TestEquals( 0 ),
+                                        d.Redelivery.TestEquals( 1 ),
+                                        d.ExpiresAt.TestGreaterThanOrEqualTo(
+                                            minPushedAt + listener?.MinDeadLetterRetention ?? Timestamp.Zero ),
+                                        d.ToString()
+                                            .TestEquals(
+                                                $"Publisher = ([1] 'test' => [1] 'c' publisher binding (using [1] 'c' stream) (Running)), Listener = ([1] 'test' => [1] 'c' listener binding (using [1] 'c' queue) (Running)), StoreKey = 0, Retry = 0, Redelivery = 1, ExpiresAt = {d.ExpiresAt}" ),
+                                        d.TryGetMessage().TestNotNull( m => m.StoreKey.TestEquals( d.StoreKey ) ) ) ) ) ),
+                    clientLogs.GetAll()
+                        .Skip( 4 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (start)",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0, Length = 3",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 48)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 48)",
+                                "[MessageProcessed] Client = [1] 'test', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0",
+                                "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (end)"
+                            ] ),
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:MessageNotification] Client = [1] 'test', TraceId = 5 (start)",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 5, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 2, MessageId = 0, Retry = 0, Redelivery = 1 (active), Length = 3",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 5, Packet = (MessageNotification, Length = 48)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 5, Packet = (MessageNotification, Length = 48)",
+                                "[MessageProcessed] Client = [1] 'test', TraceId = 5, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 2, MessageId = 0, Retry = 0, Redelivery = 1 (active)",
+                                "[Trace:MessageNotification] Client = [1] 'test', TraceId = 5 (end)"
+                            ] )
+                        ] ),
+                    queueLogs.GetAll()
+                        .Skip( 2 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2 (start)",
+                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 0, Redelivery = 0, IsFromDeadLetter = False",
+                                $"[MessageProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 0, Ack = (Id = 1, ExpiresAt = {ackExpireDatesByQueueTraceId.GetValueOrDefault( 2UL )})",
+                                "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2 (end)"
+                            ] ),
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 3 (start)",
+                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 3, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 0, Redelivery = 1 (active), IsFromDeadLetter = False",
+                                $"[MessageProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 3, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 0, Ack = (Id = 2, ExpiresAt = {ackExpireDatesByQueueTraceId.GetValueOrDefault( 3UL )})",
+                                "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 3 (end)"
+                            ] ),
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 4 (start)",
+                                "[MessageDiscarded] Client = [1] 'test', Queue = [1] 'c', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Reason = MaxRedeliveriesReached, StoreKey = 0, Retry = 0, Redelivery = 1, MessageRemoved = False, MovedToDeadLetter = True",
+                                "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 4 (end)"
                             ] )
                         ] ) )
                 .Go();
@@ -1670,7 +1902,8 @@ public partial class MessageBrokerQueueTests
                             "queue",
                             q.Messages.Pending.Count.TestEquals( 0 ),
                             q.Messages.Unacked.Count.TestEquals( 0 ),
-                            q.Messages.Retries.Count.TestEquals( 0 ) ) ),
+                            q.Messages.Retries.Count.TestEquals( 0 ),
+                            q.Messages.DeadLetter.Count.TestEquals( 0 ) ) ),
                     clientLogs.GetAll()
                         .Skip( 4 )
                         .Take( 1 )
@@ -1694,7 +1927,7 @@ public partial class MessageBrokerQueueTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2 (start)",
-                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 0, Redelivery = 0",
+                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 0, Redelivery = 0, IsFromDeadLetter = False",
                                 $"[MessageProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 0, Ack = (Id = 1, ExpiresAt = {ackExpireDatesByQueueTraceId.GetValueOrDefault( 2UL )})",
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2 (end)"
                             ] ),
@@ -1708,7 +1941,7 @@ public partial class MessageBrokerQueueTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 4 (start)",
-                                $"[MessageDiscarded] Client = [1] 'test', Queue = [1] 'c', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Reason = DisposedUnacked, StoreKey = 0, Retry = 0, Redelivery = 0, MessageRemoved = {messageRemoved.Value}",
+                                $"[MessageDiscarded] Client = [1] 'test', Queue = [1] 'c', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Reason = DisposedUnacked, StoreKey = 0, Retry = 0, Redelivery = 0, MessageRemoved = {messageRemoved.Value}, MovedToDeadLetter = False",
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 4 (end)"
                             ] )
                         ] ) )
@@ -1785,7 +2018,8 @@ public partial class MessageBrokerQueueTests
                             "queue",
                             q.Messages.Pending.Count.TestEquals( 0 ),
                             q.Messages.Unacked.Count.TestEquals( 0 ),
-                            q.Messages.Retries.Count.TestEquals( 0 ) ) ),
+                            q.Messages.Retries.Count.TestEquals( 0 ),
+                            q.Messages.DeadLetter.Count.TestEquals( 0 ) ) ),
                     clientLogs.GetAll()
                         .Where( t => t.Logs.Any( l => l.Contains( "[Trace:MessageNotification]" ) ) )
                         .TestSequence(
@@ -1825,21 +2059,21 @@ public partial class MessageBrokerQueueTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2 (start)",
-                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 0, Redelivery = 0",
+                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 0, Redelivery = 0, IsFromDeadLetter = False",
                                 $"[MessageProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 0, Ack = (Id = 1, ExpiresAt = {ackExpireDatesByQueueTraceId.GetValueOrDefault( 2UL )})",
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2 (end)"
                             ] ),
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 4 (start)",
-                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 1 (active), Redelivery = 0",
+                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 1 (active), Redelivery = 0, IsFromDeadLetter = False",
                                 $"[MessageProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 0, Ack = (Id = 1, ExpiresAt = {ackExpireDatesByQueueTraceId.GetValueOrDefault( 4UL )})",
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 4 (end)"
                             ] ),
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 6 (start)",
-                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 6, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 2 (active), Redelivery = 0",
+                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 6, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 2 (active), Redelivery = 0, IsFromDeadLetter = False",
                                 $"[MessageProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 6, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 0, Ack = (Id = 1, ExpiresAt = {ackExpireDatesByQueueTraceId.GetValueOrDefault( 6UL )})",
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 6 (end)"
                             ] )
@@ -1853,7 +2087,7 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:NegativeAck] Client = [1] 'test', Queue = [1] 'c', TraceId = 7 (start)",
                                 "[ClientTrace] Client = [1] 'test', Queue = [1] 'c', TraceId = 7, ClientTraceId = 9",
-                                $"[MessageDiscarded] Client = [1] 'test', Queue = [1] 'c', TraceId = 7, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Reason = MaxRetriesReached, StoreKey = 0, Retry = 2, Redelivery = 0, MessageRemoved = {messageRemoved.Value}",
+                                $"[MessageDiscarded] Client = [1] 'test', Queue = [1] 'c', TraceId = 7, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Reason = MaxRetriesReached, StoreKey = 0, Retry = 2, Redelivery = 0, MessageRemoved = {messageRemoved.Value}, MovedToDeadLetter = False",
                                 $"[NegativeAckProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 7, AckId = 1, MessageRemoved = {messageRemoved.Value}",
                                 "[Trace:NegativeAck] Client = [1] 'test', Queue = [1] 'c', TraceId = 7 (end)"
                             ] )
@@ -1932,7 +2166,8 @@ public partial class MessageBrokerQueueTests
                             "queue",
                             q.Messages.Pending.Count.TestEquals( 0 ),
                             q.Messages.Unacked.Count.TestEquals( 0 ),
-                            q.Messages.Retries.Count.TestEquals( 0 ) ) ),
+                            q.Messages.Retries.Count.TestEquals( 0 ),
+                            q.Messages.DeadLetter.Count.TestEquals( 0 ) ) ),
                     clientLogs.GetAll()
                         .Where( t => t.Logs.Any( l => l.Contains( "[Trace:MessageNotification]" ) ) )
                         .TestSequence(
@@ -1972,21 +2207,21 @@ public partial class MessageBrokerQueueTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2 (start)",
-                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 0, Redelivery = 0",
+                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 0, Redelivery = 0, IsFromDeadLetter = False",
                                 $"[MessageProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 0, Ack = (Id = 1, ExpiresAt = {ackExpireDatesByQueueTraceId.GetValueOrDefault( 2UL )})",
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2 (end)"
                             ] ),
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 4 (start)",
-                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 1 (active), Redelivery = 0",
+                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 1 (active), Redelivery = 0, IsFromDeadLetter = False",
                                 $"[MessageProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 0, Ack = (Id = 1, ExpiresAt = {ackExpireDatesByQueueTraceId.GetValueOrDefault( 4UL )})",
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 4 (end)"
                             ] ),
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 6 (start)",
-                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 6, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 2 (active), Redelivery = 0",
+                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 6, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 2 (active), Redelivery = 0, IsFromDeadLetter = False",
                                 $"[MessageProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 6, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 0, Ack = (Id = 1, ExpiresAt = {ackExpireDatesByQueueTraceId.GetValueOrDefault( 6UL )})",
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 6 (end)"
                             ] )
@@ -2000,9 +2235,138 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:NegativeAck] Client = [1] 'test', Queue = [1] 'c', TraceId = 7 (start)",
                                 "[ClientTrace] Client = [1] 'test', Queue = [1] 'c', TraceId = 7, ClientTraceId = 9",
-                                $"[MessageDiscarded] Client = [1] 'test', Queue = [1] 'c', TraceId = 7, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Reason = MaxRetriesReached, StoreKey = 0, Retry = 2, Redelivery = 0, MessageRemoved = {messageRemoved.Value}",
+                                $"[MessageDiscarded] Client = [1] 'test', Queue = [1] 'c', TraceId = 7, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Reason = MaxRetriesReached, StoreKey = 0, Retry = 2, Redelivery = 0, MessageRemoved = {messageRemoved.Value}, MovedToDeadLetter = False",
                                 $"[NegativeAckProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 7, AckId = 1, MessageRemoved = {messageRemoved.Value}",
                                 "[Trace:NegativeAck] Client = [1] 'test', Queue = [1] 'c', TraceId = 7 (end)"
+                            ] )
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task Retry_ShouldScheduleMessageRetryUntilListenerLimit_WithDeadLetter()
+        {
+            var endSource = new SafeTaskCompletionSource( completionCount: 6 );
+            var clientLogs = new ClientEventLogger();
+            var queueLogs = new QueueEventLogger();
+            var ackExpireDatesByQueueTraceId = new ConcurrentDictionary<ulong, Timestamp>();
+            await using var server = new MessageBrokerServer(
+                new IPEndPoint( IPAddress.Loopback, 0 ),
+                MessageBrokerServerOptions.Default
+                    .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySourceFactory( _ => _sharedDelaySource )
+                    .SetClientLoggerFactory(
+                        _ => clientLogs.GetLogger(
+                            MessageBrokerRemoteClientLogger.Create(
+                                traceEnd: e =>
+                                {
+                                    if ( e.Type is MessageBrokerRemoteClientTraceEventType.NegativeAck
+                                        or MessageBrokerRemoteClientTraceEventType.MessageNotification )
+                                        endSource.Complete();
+                                } ) ) )
+                    .SetQueueLoggerFactory(
+                        _ => queueLogs.GetLogger(
+                            MessageBrokerQueueLogger.Create(
+                                traceEnd: e =>
+                                {
+                                    if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
+                                        endSource.Complete();
+                                },
+                                messageProcessed: e => ackExpireDatesByQueueTraceId[e.Source.TraceId] = e.AckExpiresAt ) ) ) );
+
+            await server.StartAsync();
+
+            using var client = new ClientMock();
+            await client.EstablishHandshake( server );
+            await client.GetTask(
+                c =>
+                {
+                    c.SendBindPublisherRequest( "c" );
+                    c.ReadPublisherBoundResponse();
+                    c.SendBindListenerRequest(
+                        "c",
+                        false,
+                        maxRetries: 1,
+                        retryDelay: Duration.FromMilliseconds( 15 ),
+                        deadLetterCapacityHint: 1,
+                        minDeadLetterRetention: Duration.FromMinutes( 1 ),
+                        minAckTimeout: Duration.FromMinutes( 10 ) );
+
+                    c.ReadListenerBoundResponse();
+                    c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
+                    c.ReadMessageNotification( 3 );
+                    c.SendMessageNotificationNegativeAck( 1, 1, 1, 0 );
+                    c.ReadMessageNotification( 3 );
+                    c.SendMessageNotificationNegativeAck( 1, 1, 1, 0, 1 );
+                } );
+
+            var stream = server.Streams.TryGetById( 1 );
+            var queue = server.Clients.TryGetById( 1 )?.Queues.TryGetById( 1 );
+            await endSource.Task;
+
+            Assertion.All(
+                    stream.TestNotNull( s => s.Messages.Count.TestEquals( 1 ) ),
+                    queue.TestNotNull(
+                        q => Assertion.All(
+                            "queue",
+                            q.Messages.Pending.Count.TestEquals( 0 ),
+                            q.Messages.Unacked.Count.TestEquals( 0 ),
+                            q.Messages.Retries.Count.TestEquals( 0 ),
+                            q.Messages.DeadLetter.Count.TestEquals( 1 ) ) ),
+                    clientLogs.GetAll()
+                        .Where( t => t.Logs.Any( l => l.Contains( "[Trace:MessageNotification]" ) ) )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (start)",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0, Length = 3",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 48)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 48)",
+                                "[MessageProcessed] Client = [1] 'test', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0",
+                                "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (end)"
+                            ] ),
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:MessageNotification] Client = [1] 'test', TraceId = 6 (start)",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 6, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 1 (active), Redelivery = 0, Length = 3",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 6, Packet = (MessageNotification, Length = 48)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 6, Packet = (MessageNotification, Length = 48)",
+                                "[MessageProcessed] Client = [1] 'test', TraceId = 6, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 1 (active), Redelivery = 0",
+                                "[Trace:MessageNotification] Client = [1] 'test', TraceId = 6 (end)"
+                            ] )
+                        ] ),
+                    queueLogs.GetAll()
+                        .Where( t => t.Logs.Any( l => l.Contains( "[Trace:ProcessMessage]" ) ) )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2 (start)",
+                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 0, Redelivery = 0, IsFromDeadLetter = False",
+                                $"[MessageProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 0, Ack = (Id = 1, ExpiresAt = {ackExpireDatesByQueueTraceId.GetValueOrDefault( 2UL )})",
+                                "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2 (end)"
+                            ] ),
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 4 (start)",
+                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 1 (active), Redelivery = 0, IsFromDeadLetter = False",
+                                $"[MessageProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 0, Ack = (Id = 1, ExpiresAt = {ackExpireDatesByQueueTraceId.GetValueOrDefault( 4UL )})",
+                                "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 4 (end)"
+                            ] )
+                        ] ),
+                    queueLogs.GetAll()
+                        .Where( t => t.Logs.Any( l => l.Contains( "[Trace:NegativeAck]" ) ) )
+                        .TakeLast( 1 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:NegativeAck] Client = [1] 'test', Queue = [1] 'c', TraceId = 5 (start)",
+                                "[ClientTrace] Client = [1] 'test', Queue = [1] 'c', TraceId = 5, ClientTraceId = 7",
+                                "[MessageDiscarded] Client = [1] 'test', Queue = [1] 'c', TraceId = 5, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Reason = MaxRetriesReached, StoreKey = 0, Retry = 1, Redelivery = 0, MessageRemoved = False, MovedToDeadLetter = True",
+                                "[NegativeAckProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 5, AckId = 1, MessageRemoved = False",
+                                "[Trace:NegativeAck] Client = [1] 'test', Queue = [1] 'c', TraceId = 5 (end)"
                             ] )
                         ] ) )
                 .Go();
@@ -2063,13 +2427,14 @@ public partial class MessageBrokerQueueTests
             await endSource.Task;
 
             Assertion.All(
-                    stream.TestNotNull( s => s.Messages.Count.TestEquals( 0 ) ),
+                    stream.TestNotNull( s => s.Messages.Count.TestInRange( 0, 1 ) ),
                     queue.TestNotNull(
                         q => Assertion.All(
                             "queue",
                             q.Messages.Pending.Count.TestEquals( 0 ),
                             q.Messages.Unacked.Count.TestEquals( 0 ),
-                            q.Messages.Retries.Count.TestEquals( 0 ) ) ),
+                            q.Messages.Retries.Count.TestEquals( 0 ),
+                            q.Messages.DeadLetter.Count.TestEquals( 0 ) ) ),
                     clientLogs.GetAll()
                         .Where( t => t.Logs.Any( l => l.Contains( "[Trace:MessageNotification]" ) ) )
                         .TestSequence(
@@ -2091,7 +2456,7 @@ public partial class MessageBrokerQueueTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2 (start)",
-                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 0, Redelivery = 0",
+                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 0, Redelivery = 0, IsFromDeadLetter = False",
                                 $"[MessageProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 0, Ack = (Id = 1, ExpiresAt = {ackExpireDatesByQueueTraceId.GetValueOrDefault( 2UL )})",
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2 (end)"
                             ] ),
@@ -2099,8 +2464,113 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:NegativeAck] Client = [1] 'test', Queue = [1] 'c', TraceId = 3 (start)",
                                 "[ClientTrace] Client = [1] 'test', Queue = [1] 'c', TraceId = 3, ClientTraceId = 5",
-                                $"[MessageDiscarded] Client = [1] 'test', Queue = [1] 'c', TraceId = 3, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Reason = ExplicitNoRetry, StoreKey = 0, Retry = 0, Redelivery = 0, MessageRemoved = {messageRemoved.Value}",
+                                $"[MessageDiscarded] Client = [1] 'test', Queue = [1] 'c', TraceId = 3, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Reason = ExplicitNoRetry, StoreKey = 0, Retry = 0, Redelivery = 0, MessageRemoved = {messageRemoved.Value}, MovedToDeadLetter = False",
                                 $"[NegativeAckProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 3, AckId = 1, MessageRemoved = {messageRemoved.Value}",
+                                "[Trace:NegativeAck] Client = [1] 'test', Queue = [1] 'c', TraceId = 3 (end)"
+                            ] )
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task Retry_ShouldNotBeScheduled_WhenNegativeAckContainsNoRetryFlag_WithDeadLetter()
+        {
+            var endSource = new SafeTaskCompletionSource( completionCount: 3 );
+            var clientLogs = new ClientEventLogger();
+            var queueLogs = new QueueEventLogger();
+            var ackExpireDatesByQueueTraceId = new ConcurrentDictionary<ulong, Timestamp>();
+            await using var server = new MessageBrokerServer(
+                new IPEndPoint( IPAddress.Loopback, 0 ),
+                MessageBrokerServerOptions.Default
+                    .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySourceFactory( _ => _sharedDelaySource )
+                    .SetClientLoggerFactory(
+                        _ => clientLogs.GetLogger(
+                            MessageBrokerRemoteClientLogger.Create(
+                                traceEnd: e =>
+                                {
+                                    if ( e.Type is MessageBrokerRemoteClientTraceEventType.NegativeAck
+                                        or MessageBrokerRemoteClientTraceEventType.MessageNotification )
+                                        endSource.Complete();
+                                } ) ) )
+                    .SetQueueLoggerFactory(
+                        _ => queueLogs.GetLogger(
+                            MessageBrokerQueueLogger.Create(
+                                traceEnd: e =>
+                                {
+                                    if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
+                                        endSource.Complete();
+                                },
+                                messageProcessed: e => ackExpireDatesByQueueTraceId[e.Source.TraceId] = e.AckExpiresAt ) ) ) );
+
+            await server.StartAsync();
+
+            using var client = new ClientMock();
+            await client.EstablishHandshake( server );
+            await client.GetTask(
+                c =>
+                {
+                    c.SendBindPublisherRequest( "c" );
+                    c.ReadPublisherBoundResponse();
+                    c.SendBindListenerRequest(
+                        "c",
+                        false,
+                        maxRetries: 2,
+                        retryDelay: Duration.FromMilliseconds( 15 ),
+                        deadLetterCapacityHint: 1,
+                        minDeadLetterRetention: Duration.FromMinutes( 1 ),
+                        minAckTimeout: Duration.FromMinutes( 10 ) );
+
+                    c.ReadListenerBoundResponse();
+                    c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
+                    c.ReadMessageNotification( 3 );
+                    c.SendMessageNotificationNegativeAck( 1, 1, 1, 0, noRetry: true );
+                } );
+
+            var stream = server.Streams.TryGetById( 1 );
+            var queue = server.Clients.TryGetById( 1 )?.Queues.TryGetById( 1 );
+            await endSource.Task;
+
+            Assertion.All(
+                    stream.TestNotNull( s => s.Messages.Count.TestEquals( 1 ) ),
+                    queue.TestNotNull(
+                        q => Assertion.All(
+                            "queue",
+                            q.Messages.Pending.Count.TestEquals( 0 ),
+                            q.Messages.Unacked.Count.TestEquals( 0 ),
+                            q.Messages.Retries.Count.TestEquals( 0 ),
+                            q.Messages.DeadLetter.Count.TestEquals( 1 ) ) ),
+                    clientLogs.GetAll()
+                        .Where( t => t.Logs.Any( l => l.Contains( "[Trace:MessageNotification]" ) ) )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (start)",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0, Length = 3",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 48)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 48)",
+                                "[MessageProcessed] Client = [1] 'test', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0",
+                                "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (end)"
+                            ] )
+                        ] ),
+                    queueLogs.GetAll()
+                        .Skip( 2 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2 (start)",
+                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 0, Redelivery = 0, IsFromDeadLetter = False",
+                                $"[MessageProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 0, Ack = (Id = 1, ExpiresAt = {ackExpireDatesByQueueTraceId.GetValueOrDefault( 2UL )})",
+                                "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2 (end)"
+                            ] ),
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:NegativeAck] Client = [1] 'test', Queue = [1] 'c', TraceId = 3 (start)",
+                                "[ClientTrace] Client = [1] 'test', Queue = [1] 'c', TraceId = 3, ClientTraceId = 5",
+                                "[MessageDiscarded] Client = [1] 'test', Queue = [1] 'c', TraceId = 3, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Reason = ExplicitNoRetry, StoreKey = 0, Retry = 0, Redelivery = 0, MessageRemoved = False, MovedToDeadLetter = True",
+                                "[NegativeAckProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 3, AckId = 1, MessageRemoved = False",
                                 "[Trace:NegativeAck] Client = [1] 'test', Queue = [1] 'c', TraceId = 3 (end)"
                             ] )
                         ] ) )
@@ -2185,7 +2655,8 @@ public partial class MessageBrokerQueueTests
                             "queue",
                             q.Messages.Pending.Count.TestEquals( 0 ),
                             q.Messages.Unacked.Count.TestEquals( 0 ),
-                            q.Messages.Retries.Count.TestEquals( 0 ) ) ),
+                            q.Messages.Retries.Count.TestEquals( 0 ),
+                            q.Messages.DeadLetter.Count.TestEquals( 0 ) ) ),
                     clientLogs.GetAll()
                         .Where( t => t.Logs.Any( l => l.Contains( "[Trace:MessageNotification]" ) ) )
                         .TestSequence(
@@ -2225,7 +2696,7 @@ public partial class MessageBrokerQueueTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2 (start)",
-                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 0, Redelivery = 0",
+                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 0, Redelivery = 0, IsFromDeadLetter = False",
                                 $"[MessageProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 0, Ack = (Id = 1, ExpiresAt = {ackExpireDatesByQueueTraceId.GetValueOrDefault( 2UL )})",
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2 (end)"
                             ] ),
@@ -2239,14 +2710,14 @@ public partial class MessageBrokerQueueTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 5 (start)",
-                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 5, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 1, Retry = 0, Redelivery = 0",
+                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 5, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 1, Retry = 0, Redelivery = 0, IsFromDeadLetter = False",
                                 $"[MessageProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 5, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 1, Ack = (Id = 1, ExpiresAt = {ackExpireDatesByQueueTraceId.GetValueOrDefault( 5UL )})",
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 5 (end)"
                             ] ),
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 7 (start)",
-                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 7, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 1 (active), Redelivery = 0",
+                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 7, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 1 (active), Redelivery = 0, IsFromDeadLetter = False",
                                 $"[MessageProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 7, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 0, Ack = (Id = 1, ExpiresAt = {ackExpireDatesByQueueTraceId.GetValueOrDefault( 7UL )})",
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 7 (end)"
                             ] )
@@ -2344,7 +2815,8 @@ public partial class MessageBrokerQueueTests
                             "queue",
                             q.Messages.Pending.Count.TestEquals( 0 ),
                             q.Messages.Unacked.Count.TestEquals( 0 ),
-                            q.Messages.Retries.Count.TestEquals( 0 ) ) ),
+                            q.Messages.Retries.Count.TestEquals( 0 ),
+                            q.Messages.DeadLetter.Count.TestEquals( 0 ) ) ),
                     clientLogs.GetAll()
                         .Skip( 4 )
                         .Take( 1 )
@@ -2368,7 +2840,7 @@ public partial class MessageBrokerQueueTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2 (start)",
-                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 0, Redelivery = 0",
+                                "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 0, Redelivery = 0, IsFromDeadLetter = False",
                                 $"[MessageProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 0, Ack = (Id = 1, ExpiresAt = {ackExpireDatesByQueueTraceId.GetValueOrDefault( 2UL )})",
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2 (end)"
                             ] ),
@@ -2389,7 +2861,7 @@ public partial class MessageBrokerQueueTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 5 (start)",
-                                $"[MessageDiscarded] Client = [1] 'test', Queue = [1] 'c', TraceId = 5, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Reason = DisposedRetry, StoreKey = 0, Retry = 1, Redelivery = 0, MessageRemoved = {messageRemoved.Value}",
+                                $"[MessageDiscarded] Client = [1] 'test', Queue = [1] 'c', TraceId = 5, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Reason = DisposedRetry, StoreKey = 0, Retry = 1, Redelivery = 0, MessageRemoved = {messageRemoved.Value}, MovedToDeadLetter = False",
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 5 (end)"
                             ] )
                         ] ) )

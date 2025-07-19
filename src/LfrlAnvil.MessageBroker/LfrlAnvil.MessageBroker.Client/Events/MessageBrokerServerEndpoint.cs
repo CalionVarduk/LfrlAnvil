@@ -55,14 +55,19 @@ public enum MessageBrokerServerEndpoint : byte
     UnbindListenerRequest = 7,
 
     /// <summary>
+    /// Represents dead letter query sent by client.
+    /// </summary>
+    DeadLetterQuery = 8,
+
+    /// <summary>
     /// Represents message notification ACK sent by client.
     /// </summary>
-    MessageNotificationAck = 8,
+    MessageNotificationAck = 9,
 
     /// <summary>
     /// Represents message notification negative ACK sent by client.
     /// </summary>
-    MessageNotificationNack = 9,
+    MessageNotificationNack = 10,
 
     /// <summary>
     /// Represents handshake request sent by client.

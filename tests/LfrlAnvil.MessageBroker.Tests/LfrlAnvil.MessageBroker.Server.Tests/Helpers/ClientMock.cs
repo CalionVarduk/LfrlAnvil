@@ -141,6 +141,13 @@ internal sealed class ClientMock : IDisposable
         return AssertEndpoint( Read( notification.Length ), MessageBrokerClientEndpoint.SystemNotification );
     }
 
+    internal byte[] ReadDeadLetterQueryResponse()
+    {
+        return AssertEndpoint(
+            Read( Protocol.PacketHeader.Length + Protocol.DeadLetterQueryResponse.Payload ),
+            MessageBrokerClientEndpoint.DeadLetterQueryResponse );
+    }
+
     internal (byte[] Data, int Index) ReadAny(params (MessageBrokerClientEndpoint Endpoint, int Payload)[] expectations)
     {
         var header = Read( Protocol.PacketHeader.Length );
@@ -255,6 +262,8 @@ internal sealed class ClientMock : IDisposable
         Duration? retryDelay = null,
         int? maxRedeliveries = null,
         Duration? minAckTimeout = null,
+        int? deadLetterCapacityHint = null,
+        Duration? minDeadLetterRetention = null,
         string? queueName = null,
         short? channelNameLength = null,
         uint? payload = null)
@@ -277,6 +286,8 @@ internal sealed class ClientMock : IDisposable
         writer.MoveWrite( ( uint )(retryDelay?.FullMilliseconds ?? 0) );
         writer.MoveWrite( ( uint )(maxRedeliveries ?? 0) );
         writer.MoveWrite( ( uint )(minAckTimeout?.FullMilliseconds ?? 0) );
+        writer.MoveWrite( ( uint )(deadLetterCapacityHint ?? 0) );
+        writer.MoveWrite( ( ulong )(minDeadLetterRetention?.FullMilliseconds ?? 0) );
         writer.MoveWrite( ( ushort )(channelNameLength ?? preparedChannelName.ByteCount) );
         preparedChannelName.Encode( writer.GetSpan( preparedChannelName.ByteCount ) ).ThrowIfError();
         writer.Move( preparedChannelName.ByteCount );
@@ -292,6 +303,17 @@ internal sealed class ClientMock : IDisposable
         writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.UnbindListenerRequest );
         writer.MoveWrite( payload ?? Protocol.UnbindListenerRequest.Length );
         writer.Write( ( uint )channelId );
+        Send( buffer );
+    }
+
+    internal void SendDeadLetterQuery(int queueId, int readCount, uint? payload = null)
+    {
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.DeadLetterQuery.Length];
+        var writer = new BinaryContractWriter( buffer );
+        writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.DeadLetterQuery );
+        writer.MoveWrite( payload ?? Protocol.DeadLetterQuery.Length );
+        writer.MoveWrite( ( uint )queueId );
+        writer.Write( ( uint )readCount );
         Send( buffer );
     }
 
@@ -362,6 +384,7 @@ internal sealed class ClientMock : IDisposable
         int retryAttempt = 0,
         int redeliveryAttempt = 0,
         bool noRetry = false,
+        bool noDeadLetter = false,
         bool hasExplicitDelay = false,
         Duration? explicitDelay = null,
         uint? payload = null)
@@ -370,7 +393,7 @@ internal sealed class ClientMock : IDisposable
         var writer = new BinaryContractWriter( buffer );
         writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.MessageNotificationNack );
         writer.MoveWrite( payload ?? Protocol.MessageNotificationNegativeAck.Length );
-        writer.MoveWrite( ( byte )((noRetry ? 1 : 0) | (hasExplicitDelay ? 2 : 0)) );
+        writer.MoveWrite( ( byte )((noRetry ? 1 : 0) | (noDeadLetter ? 2 : 0) | (hasExplicitDelay ? 4 : 0)) );
         writer.MoveWrite( ( uint )queueId );
         writer.MoveWrite( ( uint )ackId );
         writer.MoveWrite( ( uint )streamId );

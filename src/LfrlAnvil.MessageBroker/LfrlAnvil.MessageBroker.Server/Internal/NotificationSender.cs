@@ -23,13 +23,13 @@ using LfrlAnvil.MessageBroker.Server.Events;
 
 namespace LfrlAnvil.MessageBroker.Server.Internal;
 
-internal struct MessageNotifications
+internal struct NotificationSender
 {
     private readonly ManualResetValueTaskSource<bool> _continuation;
     private QueueSlim<Message> _messages;
     private Task? _task;
 
-    private MessageNotifications(ManualResetValueTaskSource<bool> continuation)
+    private NotificationSender(ManualResetValueTaskSource<bool> continuation)
     {
         _continuation = continuation;
         _messages = QueueSlim<Message>.Create();
@@ -37,9 +37,9 @@ internal struct MessageNotifications
     }
 
     [Pure]
-    internal static MessageNotifications Create()
+    internal static NotificationSender Create()
     {
-        return new MessageNotifications( new ManualResetValueTaskSource<bool>() );
+        return new NotificationSender( new ManualResetValueTaskSource<bool>() );
     }
 
     [MethodImpl( MethodImplOptions.NoInlining )]
@@ -54,7 +54,7 @@ internal struct MessageNotifications
             ulong traceId;
             using ( client.AcquireLock() )
             {
-                client.MessageNotifications._task = null;
+                client.NotificationSender._task = null;
                 traceId = client.GetTraceId();
             }
 
@@ -136,7 +136,7 @@ internal struct MessageNotifications
         }
 
         var writerSource = client.WriterQueue.AcquireSource();
-        client.MessageNotifications._messages.Enqueue(
+        client.NotificationSender._messages.Enqueue(
             new Message( in message, retry, redelivery, id, ackId, poolToken, packet, writerSource, senderName, streamName ) );
     }
 
@@ -145,7 +145,7 @@ internal struct MessageNotifications
     {
         while ( true )
         {
-            var @continue = await client.MessageNotifications._continuation.GetTask().ConfigureAwait( false );
+            var @continue = await client.NotificationSender._continuation.GetTask().ConfigureAwait( false );
             if ( ! @continue )
                 return;
 
@@ -158,12 +158,13 @@ internal struct MessageNotifications
                     if ( client.ShouldCancel )
                         return;
 
-                    if ( ! client.MessageNotifications._messages.TryDequeue( out message ) )
+                    if ( client.NotificationSender._messages.IsEmpty )
                     {
-                        client.MessageNotifications._continuation.Reset();
+                        client.NotificationSender._continuation.Reset();
                         break;
                     }
 
+                    message = client.NotificationSender._messages.First();
                     traceId = client.GetTraceId();
                 }
 
@@ -239,7 +240,7 @@ internal struct MessageNotifications
                         if ( writeResult.Exception is not null )
                         {
                             using ( client.AcquireLock() )
-                                client.MessageNotifications._task = null;
+                                client.NotificationSender._task = null;
 
                             await client.DisposeAsync( traceId ).ConfigureAwait( false );
                             return;
@@ -256,7 +257,7 @@ internal struct MessageNotifications
                                     message.Retry,
                                     message.Redelivery ) );
 
-                        if ( message.AckId == 0 && message.Listener.DecrementPrefetchCounter() )
+                        if ( message.AckId <= 0 && message.Listener.DecrementPrefetchCounter() )
                         {
                             using ( message.Listener.Queue.AcquireLock() )
                             {
@@ -270,6 +271,7 @@ internal struct MessageNotifications
                             if ( exc is not null )
                                 return;
 
+                            client.NotificationSender._messages.Dequeue();
                             client.WriterQueue.Release( client, message.WriterSource );
                         }
                     }
@@ -306,7 +308,7 @@ internal struct MessageNotifications
             if ( writeResult.Exception is not null )
             {
                 using ( client.AcquireLock() )
-                    client.MessageNotifications._task = null;
+                    client.NotificationSender._task = null;
 
                 await client.DisposeAsync( traceId ).ConfigureAwait( false );
                 return false;

@@ -50,37 +50,42 @@ public enum MessageBrokerClientTraceEventType : byte
     UnbindPublisher = 5,
 
     /// <summary>
+    /// Specifies that trace is related to the dead letter querying.
+    /// </summary>
+    DeadLetterQuery = 6,
+
+    /// <summary>
     /// Specifies that trace is related to the client pushing message packet to the server.
     /// </summary>
-    PushMessage = 6,
+    PushMessage = 7,
 
     /// <summary>
     /// Specifies that trace is related to the client receiving message notification from the server.
     /// </summary>
-    MessageNotification = 7,
+    MessageNotification = 8,
 
     /// <summary>
     /// Specifies that trace is related to the client sending a message notification ACK to the server.
     /// </summary>
-    Ack = 8,
+    Ack = 9,
 
     /// <summary>
     /// Specifies that trace is related to the client sending a negative message notification ACK to the server.
     /// </summary>
-    NegativeAck = 9,
+    NegativeAck = 10,
 
     /// <summary>
     /// Specifies that trace is related to the client receiving system notification from the server.
     /// </summary>
-    SystemNotification = 10,
+    SystemNotification = 11,
 
     /// <summary>
     /// Specifies that trace is related to the client disposal.
     /// </summary>
-    Dispose = 11,
+    Dispose = 12,
 
     /// <summary>
     /// Specifies that trace is related to an unexpected occurrence in the client e.g. an error.
     /// </summary>
-    Unexpected = 12
+    Unexpected = 13
 }

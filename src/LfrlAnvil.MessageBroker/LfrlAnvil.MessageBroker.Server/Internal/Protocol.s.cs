@@ -440,13 +440,15 @@ internal static class Protocol
 
     internal readonly struct BindListenerRequestHeader
     {
-        internal const int Length = sizeof( byte ) + sizeof( ushort ) * 2 + sizeof( uint ) * 4;
+        internal const int Length = sizeof( byte ) + sizeof( ushort ) * 2 + sizeof( uint ) * 5 + sizeof( ulong );
         internal readonly byte Flags;
         internal readonly short PrefetchHint;
         internal readonly int MaxRetries;
         internal readonly Duration RetryDelay;
         internal readonly int MaxRedeliveries;
         internal readonly Duration MinAckTimeout;
+        internal readonly int DeadLetterCapacityHint;
+        internal readonly Duration MinDeadLetterRetention;
         internal readonly int ChannelNameLength;
 
         private BindListenerRequestHeader(
@@ -456,6 +458,8 @@ internal static class Protocol
             Duration retryDelay,
             int maxRedeliveries,
             Duration minAckTimeout,
+            int deadLetterCapacityHint,
+            Duration minDeadLetterRetention,
             int channelNameLength)
         {
             Flags = flags;
@@ -464,6 +468,8 @@ internal static class Protocol
             RetryDelay = retryDelay;
             MaxRedeliveries = maxRedeliveries;
             MinAckTimeout = minAckTimeout;
+            DeadLetterCapacityHint = deadLetterCapacityHint;
+            MinDeadLetterRetention = minDeadLetterRetention;
             ChannelNameLength = channelNameLength;
         }
 
@@ -473,7 +479,7 @@ internal static class Protocol
         public override string ToString()
         {
             return
-                $"Flags = {Flags}, PrefetchHint = {PrefetchHint}, MaxRetries = {MaxRetries}, RetryDelay = {RetryDelay}, MaxRedeliveries = {MaxRedeliveries}, MinAckTimeout = {MinAckTimeout}, ChannelNameLength = {ChannelNameLength}";
+                $"Flags = {Flags}, PrefetchHint = {PrefetchHint}, MaxRetries = {MaxRetries}, RetryDelay = {RetryDelay}, MaxRedeliveries = {MaxRedeliveries}, MinAckTimeout = {MinAckTimeout}, DeadLetterCapacityHint = {DeadLetterCapacityHint}, MinDeadLetterRetention = {MinDeadLetterRetention}, ChannelNameLength = {ChannelNameLength}";
         }
 
         [Pure]
@@ -488,6 +494,10 @@ internal static class Protocol
             var retryDelay = Duration.FromMilliseconds( unchecked( ( int )reader.MoveReadInt32() ) );
             var maxRedeliveries = unchecked( ( int )reader.MoveReadInt32() );
             var minAckTimeout = Duration.FromMilliseconds( unchecked( ( int )reader.MoveReadInt32() ) );
+            var deadLetterCapacityHint = unchecked( ( int )reader.MoveReadInt32() );
+            var minDeadLetterRetention = Duration.FromTicks(
+                unchecked( ( long )reader.MoveReadInt64() * ChronoConstants.TicksPerMillisecond ) );
+
             var channelNameLength = ( int )reader.ReadInt16();
             return new BindListenerRequestHeader(
                 flags,
@@ -496,6 +506,8 @@ internal static class Protocol
                 retryDelay,
                 maxRedeliveries,
                 minAckTimeout,
+                deadLetterCapacityHint,
+                minDeadLetterRetention,
                 channelNameLength );
         }
 
@@ -525,8 +537,18 @@ internal static class Protocol
 
             if ( MinAckTimeout < Duration.Zero )
                 errors = errors.Extend( Resources.MinAckTimeoutIsNegative( MinAckTimeout ) );
-            else if ( MinAckTimeout == Duration.Zero && (MaxRetries > 0 || MaxRedeliveries > 0) )
+            else if ( MinAckTimeout == Duration.Zero && (MaxRetries > 0 || MaxRedeliveries > 0 || DeadLetterCapacityHint > 0) )
                 errors = errors.Extend( Resources.EnabledMinAckTimeoutIsNotPositive( MinAckTimeout ) );
+
+            if ( DeadLetterCapacityHint < 0 )
+                errors = errors.Extend( Resources.DeadLetterCapacityIsNegative( DeadLetterCapacityHint ) );
+            else if ( DeadLetterCapacityHint == 0 )
+            {
+                if ( MinDeadLetterRetention != Duration.Zero )
+                    errors = errors.Extend( Resources.DisabledDeadLetterRetentionIsNotZero( MinDeadLetterRetention ) );
+            }
+            else if ( MinDeadLetterRetention <= Duration.Zero )
+                errors = errors.Extend( Resources.EnabledDeadLetterRetentionIsNotPositive( MinDeadLetterRetention ) );
 
             return errors;
         }
@@ -817,6 +839,84 @@ internal static class Protocol
         }
     }
 
+    internal readonly struct DeadLetterQuery
+    {
+        internal const int Length = sizeof( uint ) * 2;
+        internal readonly int QueueId;
+        internal readonly int ReadCount;
+
+        private DeadLetterQuery(int queueId, int readCount)
+        {
+            QueueId = queueId;
+            ReadCount = readCount;
+        }
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"QueueId = {QueueId}, ReadCount = {ReadCount}";
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static DeadLetterQuery Parse(ReadOnlyMemory<byte> source)
+        {
+            Assume.Equals( source.Length, Length );
+            var reader = new BinaryContractReader( source.Span );
+            var queueId = unchecked( ( int )reader.MoveReadInt32() );
+            var readCount = unchecked( ( int )reader.ReadInt32() );
+            return new DeadLetterQuery( queueId, readCount );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal Chain<string> StringifyErrors()
+        {
+            var result = Chain<string>.Empty;
+            if ( QueueId <= 0 )
+                result = result.Extend( Resources.QueueIdIsNotPositive( QueueId ) );
+
+            if ( ReadCount < 0 )
+                result = result.Extend( Resources.ReadCountIsNegative( ReadCount ) );
+
+            return result;
+        }
+    }
+
+    internal readonly struct DeadLetterQueryResponse
+    {
+        internal const int Payload = sizeof( uint ) * 2 + sizeof( ulong );
+        internal readonly PacketHeader Header;
+        internal readonly int TotalCount;
+        internal readonly int MaxReadCount;
+        internal readonly Timestamp NextExpirationAt;
+
+        internal DeadLetterQueryResponse(int totalCount, int maxReadCount, Timestamp nextExpirationAt)
+        {
+            Header = PacketHeader.Create( MessageBrokerClientEndpoint.DeadLetterQueryResponse, Payload );
+            TotalCount = totalCount;
+            MaxReadCount = maxReadCount;
+            NextExpirationAt = nextExpirationAt;
+        }
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"[{Header}] TotalCount = {TotalCount}, MaxReadCount = {MaxReadCount}, NextExpirationAt = {NextExpirationAt}";
+        }
+
+        internal void Serialize(Memory<byte> target)
+        {
+            Assume.Equals( target.Length, PacketHeader.Length + Payload );
+            var writer = new BinaryContractWriter( target.Span );
+            writer.MoveWrite( Header.EndpointCode );
+            writer.MoveWrite( Header.Payload );
+            writer.MoveWrite( unchecked( ( uint )TotalCount ) );
+            writer.MoveWrite( unchecked( ( uint )MaxReadCount ) );
+            writer.Write( unchecked( ( ulong )NextExpirationAt.UnixEpochTicks ) );
+        }
+    }
+
     internal readonly struct MessageNotificationHeader
     {
         internal const int Payload = sizeof( ulong ) * 2 + sizeof( uint ) * 6;
@@ -1013,7 +1113,8 @@ internal static class Protocol
         }
 
         internal bool NoRetry => (Flags & 1) != 0;
-        internal bool HasExplicitDelay => (Flags & 2) != 0;
+        internal bool NoDeadLetter => (Flags & 2) != 0;
+        internal bool HasExplicitDelay => (Flags & 4) != 0;
 
         [Pure]
         public override string ToString()

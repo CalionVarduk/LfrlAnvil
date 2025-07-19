@@ -129,6 +129,16 @@ public sealed class EventLogger
                 Add( e.Source.TraceId, e.ToString() );
                 logger.MessageAcknowledged?.Invoke( e );
             },
+            queryingDeadLetter: e =>
+            {
+                Add( e.Source.TraceId, e.ToString() );
+                logger.QueryingDeadLetter?.Invoke( e );
+            },
+            deadLetterQueried: e =>
+            {
+                Add( e.Source.TraceId, e.ToString() );
+                logger.DeadLetterQueried?.Invoke( e );
+            },
             processingSystemNotification: e =>
             {
                 Add( e.Source.TraceId, e.ToString() );

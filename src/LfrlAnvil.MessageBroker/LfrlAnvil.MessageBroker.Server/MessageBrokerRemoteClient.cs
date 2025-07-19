@@ -45,7 +45,7 @@ public sealed partial class MessageBrokerRemoteClient
     internal RequestQueue RequestQueue;
     internal EventScheduler EventScheduler;
     internal PacketListener PacketListener;
-    internal MessageNotifications MessageNotifications;
+    internal NotificationSender NotificationSender;
     internal RequestHandler RequestHandler;
     internal ExternalNameCache ExternalNameCache;
     internal MessageRouting MessageRouting;
@@ -83,7 +83,7 @@ public sealed partial class MessageBrokerRemoteClient
         RequestQueue = RequestQueue.Create();
         EventScheduler = EventScheduler.Create();
         PacketListener = PacketListener.Create();
-        MessageNotifications = MessageNotifications.Create();
+        NotificationSender = NotificationSender.Create();
         RequestHandler = RequestHandler.Create();
         ExternalNameCache = ExternalNameCache.Create();
         MessageRouting = MessageRouting.Empty;
@@ -486,7 +486,9 @@ public sealed partial class MessageBrokerRemoteClient
                                 header.MaxRetries,
                                 header.RetryDelay,
                                 header.MaxRedeliveries,
-                                header.MinAckTimeout ) );
+                                header.MinAckTimeout,
+                                header.DeadLetterCapacityHint,
+                                header.MinDeadLetterRetention ) );
                     }
                     catch
                     {
@@ -862,7 +864,7 @@ public sealed partial class MessageBrokerRemoteClient
             Task? eventSchedulerTask;
             Task? requestHandlerTask;
             Task? packetListenerTask;
-            Task? messageNotificationsTask;
+            Task? notificationSenderTask;
             ValueTaskDelaySource? ownedDelaySource;
 
             var error = Logger.Error;
@@ -873,10 +875,10 @@ public sealed partial class MessageBrokerRemoteClient
                 eventSchedulerTask = EventScheduler.DiscardUnderlyingTask();
                 requestHandlerTask = RequestHandler.DiscardUnderlyingTask();
                 packetListenerTask = PacketListener.DiscardUnderlyingTask();
-                messageNotificationsTask = MessageNotifications.DiscardUnderlyingTask();
+                notificationSenderTask = NotificationSender.DiscardUnderlyingTask();
                 RequestHandler.Dispose();
                 EventScheduler.Dispose();
-                MessageNotifications.BeginDispose();
+                NotificationSender.BeginDispose();
                 WriterQueue.Dispose();
                 exceptions = RequestQueue.Dispose( error is not null );
             }
@@ -896,8 +898,8 @@ public sealed partial class MessageBrokerRemoteClient
             if ( packetListenerTask is not null )
                 await packetListenerTask.ConfigureAwait( false );
 
-            if ( messageNotificationsTask is not null )
-                await messageNotificationsTask.ConfigureAwait( false );
+            if ( notificationSenderTask is not null )
+                await notificationSenderTask.ConfigureAwait( false );
 
             MessageBrokerChannelPublisherBinding[] publishers;
             MessageBrokerChannelListenerBinding[] listeners;
@@ -933,7 +935,7 @@ public sealed partial class MessageBrokerRemoteClient
 
             int discardedMessageCount;
             using ( AcquireLock() )
-                (discardedMessageCount, exceptions) = MessageNotifications.EndDispose( error is not null );
+                (discardedMessageCount, exceptions) = NotificationSender.EndDispose( error is not null );
 
             foreach ( var exc in exceptions )
             {

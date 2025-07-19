@@ -139,6 +139,16 @@ public sealed class ClientEventLogger
                 Add( e.Source.TraceId, e.ToString() );
                 logger.AckProcessed?.Invoke( e );
             },
+            queryingDeadLetter: e =>
+            {
+                Add( e.Source.TraceId, e.ToString() );
+                logger.QueryingDeadLetter?.Invoke( e );
+            },
+            deadLetterQueried: e =>
+            {
+                Add( e.Source.TraceId, e.ToString() );
+                logger.DeadLetterQueried?.Invoke( e );
+            },
             sendingSenderName: e =>
             {
                 Add( e.Source.TraceId, e.ToString() );

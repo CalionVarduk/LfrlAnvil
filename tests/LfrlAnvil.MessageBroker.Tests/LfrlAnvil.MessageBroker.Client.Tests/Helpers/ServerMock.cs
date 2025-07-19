@@ -93,6 +93,11 @@ internal sealed class ServerMock : IDisposable
         return AssertEndpoint( Read( Protocol.PushMessageHeader.Length + length ), MessageBrokerServerEndpoint.PushMessage );
     }
 
+    internal byte[] ReadDeadLetterQuery()
+    {
+        return AssertEndpoint( Read( Protocol.DeadLetterQuery.Length ), MessageBrokerServerEndpoint.DeadLetterQuery );
+    }
+
     internal byte[] Read(Protocol.HandshakeRequest request)
     {
         return AssertEndpoint( Read( request.Length ), MessageBrokerServerEndpoint.HandshakeRequest );
@@ -244,6 +249,18 @@ internal sealed class ServerMock : IDisposable
         Send( buffer );
     }
 
+    internal void SendDeadLetterQueryResponse(int totalCount, int maxReadCount, Timestamp nextExpirationAt, uint? payload = null)
+    {
+        var buffer = new byte[Protocol.PacketHeader.Length + Protocol.DeadLetterQueryResponse.Length];
+        var writer = new BinaryContractWriter( buffer );
+        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.DeadLetterQueryResponse );
+        writer.MoveWrite( payload ?? Protocol.DeadLetterQueryResponse.Length );
+        writer.MoveWrite( ( uint )totalCount );
+        writer.MoveWrite( ( uint )maxReadCount );
+        writer.Write( ( ulong )nextExpirationAt.UnixEpochTicks );
+        Send( buffer );
+    }
+
     internal void SendMessageAcceptedResponse(ulong messageId, uint? payload = null)
     {
         var buffer = new byte[Protocol.PacketHeader.Length + Protocol.MessageAcceptedResponse.Length];
@@ -273,9 +290,9 @@ internal sealed class ServerMock : IDisposable
         byte[] data,
         Timestamp? pushedAt = null,
         bool isRetry = false,
-        int? retryAttempt = null,
+        int? retry = null,
         bool isRedelivery = false,
-        int? redeliveryAttempt = null,
+        int? redelivery = null,
         uint? payload = null)
     {
         var buffer = new byte[Protocol.PacketHeader.Length + Protocol.MessageNotificationHeader.Length + data.Length];
@@ -285,8 +302,8 @@ internal sealed class ServerMock : IDisposable
         writer.MoveWrite( ( uint )ackId );
         writer.MoveWrite( ( uint )streamId );
         writer.MoveWrite( messageId );
-        writer.MoveWrite( ( uint )(retryAttempt ?? 0) | (isRetry ? 1U << 31 : 0) );
-        writer.MoveWrite( ( uint )(redeliveryAttempt ?? 0) | (isRedelivery ? 1U << 31 : 0) );
+        writer.MoveWrite( ( uint )(retry ?? 0) | (isRetry ? 1U << 31 : 0) );
+        writer.MoveWrite( ( uint )(redelivery ?? 0) | (isRedelivery ? 1U << 31 : 0) );
         writer.MoveWrite( ( uint )channelId );
         writer.MoveWrite( ( uint )senderId );
         writer.MoveWrite( ( ulong )(pushedAt ?? new Timestamp( DateTime.UtcNow )).UnixEpochTicks );

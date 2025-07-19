@@ -26,15 +26,17 @@ internal struct QueueMessageStore
     internal QueueSlim<QueueMessage> Pending;
     internal SparseListSlim<UnackedEntry> Unacked;
     internal QueueRetryHeap Retries;
+    internal QueueSlim<DeadLetterEntry> DeadLetter;
 
     private QueueMessageStore(int capacity)
     {
         Pending = QueueSlim<QueueMessage>.Create( capacity );
         Unacked = SparseListSlim<UnackedEntry>.Create();
         Retries = QueueRetryHeap.Create();
+        DeadLetter = QueueSlim<DeadLetterEntry>.Create();
     }
 
-    internal bool IsEmpty => Pending.IsEmpty && Unacked.IsEmpty && Retries.IsEmpty;
+    internal bool IsEmpty => Pending.IsEmpty && Unacked.IsEmpty && Retries.IsEmpty && DeadLetter.IsEmpty;
 
     [Pure]
     internal static QueueMessageStore Create()
@@ -134,6 +136,43 @@ internal struct QueueMessageStore
                 break;
         }
 
+        while ( ! DeadLetter.IsEmpty )
+        {
+            var discardReason = MessageBrokerQueueDiscardMessageReason.DisposedDeadLetter;
+            ref var next = ref DeadLetter.First();
+            if ( next.ExpiresAt > now )
+            {
+                if ( next.Message.Listener.Queue.DeadLetterQueryCounter > 0 )
+                {
+                    if ( next.Message.Listener.TryIncrementPrefetchCounter( out var disposed ) )
+                    {
+                        message = next.Message;
+                        messageType = MessageType.DeadLetter;
+                        retry = next.Retry;
+                        lastRedelivery = next.Redelivery;
+                        return true;
+                    }
+
+                    if ( ! disposed )
+                        break;
+                }
+                else if ( next.Message.Listener.TryDecrementDeadLetterCounterIfExceeded( out var disposed ) )
+                    discardReason = MessageBrokerQueueDiscardMessageReason.DeadLetterCapacityExceeded;
+                else if ( ! disposed )
+                    break;
+            }
+            else if ( next.Message.Listener.DecrementDeadLetterCounter() )
+                discardReason = MessageBrokerQueueDiscardMessageReason.DeadLetterExpiration;
+
+            if ( next.Message.Listener.Queue.DeadLetterQueryCounter > 0 )
+                next.Message.Listener.Queue.DeadLetterQueryCounter = unchecked( next.Message.Listener.Queue.DeadLetterQueryCounter - 1 );
+
+            discarded.Add( new DiscardedMessage( next.Message, next.Retry, next.Redelivery, discardReason ) );
+            DeadLetter.Dequeue();
+            if ( discarded.Count >= discarded.Capacity )
+                break;
+        }
+
         return false;
     }
 
@@ -147,13 +186,28 @@ internal struct QueueMessageStore
     {
         switch ( type )
         {
+            case MessageType.Redelivery:
+                Assume.IsNotNull( Unacked.First );
+                Unacked.Remove( Unacked.First.Value.Index );
+                break;
+
             case MessageType.Retry:
                 Retries.Pop();
                 break;
 
-            case MessageType.Redelivery:
-                Assume.IsNotNull( Unacked.First );
-                Unacked.Remove( Unacked.First.Value.Index );
+            case MessageType.DeadLetter:
+                if ( ! DeadLetter.IsEmpty )
+                {
+                    ref var entry = ref DeadLetter.First();
+                    var listener = entry.Message.Listener;
+                    listener.DecrementDeadLetterCounter();
+
+                    if ( listener.Queue.DeadLetterQueryCounter > 0 )
+                        listener.Queue.DeadLetterQueryCounter = unchecked( listener.Queue.DeadLetterQueryCounter - 1 );
+
+                    DeadLetter.Dequeue();
+                }
+
                 break;
 
             default:
@@ -178,6 +232,12 @@ internal struct QueueMessageStore
             ref var entry = ref Retries.First();
             if ( entry.Message.Listener.CanConsumePrefetchCounter() )
                 result = result.Min( entry.SendAt );
+        }
+
+        if ( ! DeadLetter.IsEmpty )
+        {
+            ref var entry = ref DeadLetter.First();
+            result = result.Min( entry.ExpiresAt );
         }
 
         return result;
@@ -206,6 +266,22 @@ internal struct QueueMessageStore
     internal void ScheduleRetry(QueueMessage message, int retry, int redelivery, Duration delay)
     {
         Retries.Add( message, retry, redelivery, delay );
+    }
+
+    internal void AddToDeadLetter(QueueMessage message, int retry, int redelivery)
+    {
+        Assume.IsInRange( retry, 0, message.Listener.MaxRetries );
+        Assume.IsInRange( redelivery, 0, message.Listener.MaxRedeliveries );
+
+        var expiresAt = message.Listener.Client.GetTimestamp() + message.Listener.MinDeadLetterRetention;
+        if ( ! DeadLetter.IsEmpty )
+        {
+            ref var last = ref DeadLetter.Last();
+            if ( last.ExpiresAt > expiresAt )
+                expiresAt = last.ExpiresAt;
+        }
+
+        DeadLetter.Enqueue( new DeadLetterEntry( message, expiresAt, retry, redelivery ) );
     }
 
     internal void RemoveUnacked(int ackId)
@@ -295,8 +371,35 @@ internal struct QueueMessageStore
             }
         }
 
+        int deadLetterCount;
         using ( queue.AcquireLock() )
+        {
+            deadLetterCount = queue.MessageStore.DeadLetter.Count;
             queue.MessageStore.Retries.Clear();
+        }
+
+        for ( var i = 0; i < deadLetterCount; ++i )
+        {
+            try
+            {
+                QueueMessage message;
+                using ( queue.AcquireLock() )
+                {
+                    ref var entry = ref queue.MessageStore.DeadLetter[i];
+                    message = entry.Message;
+                }
+
+                queue.RemoveFromStreamMessageStore( message, traceId );
+            }
+            catch ( Exception exc )
+            {
+                if ( queue.Logger.Error is { } error )
+                    error.Emit( MessageBrokerQueueErrorEvent.Create( queue, traceId, exc ) );
+            }
+        }
+
+        using ( queue.AcquireLock() )
+            queue.MessageStore.DeadLetter = QueueSlim<DeadLetterEntry>.Create();
 
         return discardedMessageCount;
     }
@@ -307,6 +410,7 @@ internal struct QueueMessageStore
         Pending = QueueSlim<QueueMessage>.Create();
         Unacked = SparseListSlim<UnackedEntry>.Create();
         Retries.Clear();
+        DeadLetter = QueueSlim<DeadLetterEntry>.Create();
         return discardedMessageCount;
     }
 
@@ -314,7 +418,8 @@ internal struct QueueMessageStore
     {
         Pending = 0,
         Redelivery = 1,
-        Retry = 2
+        Retry = 2,
+        DeadLetter = 3
     }
 
     internal readonly struct DiscardedMessage
@@ -365,6 +470,28 @@ internal struct QueueMessageStore
         public override string ToString()
         {
             return $"Message = ({Message}), MessageId = {MessageId}, Retry = {Retry}, Redelivery = {Redelivery}, ExpiresAt = {ExpiresAt}";
+        }
+    }
+
+    internal readonly struct DeadLetterEntry
+    {
+        internal DeadLetterEntry(QueueMessage message, Timestamp expiresAt, int retry, int redelivery)
+        {
+            Message = message;
+            ExpiresAt = expiresAt;
+            Retry = retry;
+            Redelivery = redelivery;
+        }
+
+        internal readonly QueueMessage Message;
+        internal readonly Timestamp ExpiresAt;
+        internal readonly int Retry;
+        internal readonly int Redelivery;
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"Message = ({Message}), Retry = {Retry}, Redelivery = {Redelivery}, ExpiresAt = {ExpiresAt}";
         }
     }
 }

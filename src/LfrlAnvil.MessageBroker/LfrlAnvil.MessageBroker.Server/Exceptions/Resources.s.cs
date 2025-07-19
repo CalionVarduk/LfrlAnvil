@@ -316,6 +316,27 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string DeadLetterCapacityIsNegative(int received)
+    {
+        return $"Expected dead letter capacity hint to not be negative but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string DisabledDeadLetterRetentionIsNotZero(Duration received)
+    {
+        return $"Expected disabled min dead letter retention to be equal to 0 but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string EnabledDeadLetterRetentionIsNotPositive(Duration received)
+    {
+        return $"Expected enabled min dead letter retention to be greater than 0 but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string QueueIdIsNotPositive(int received)
     {
         return $"Expected queue ID to be greater than 0 but found {received}.";
@@ -361,6 +382,13 @@ internal static class Resources
     internal static string DisabledExplicitDelayIsNotZero(Duration received)
     {
         return $"Expected disabled explicit delay to be equal to 0 found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string ReadCountIsNegative(int received)
+    {
+        return $"Expected read count to not be negative but found {received}.";
     }
 
     [Pure]
@@ -447,9 +475,16 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string QueueNotFound(MessageBrokerRemoteClient client, int queueId)
+    internal static string QueueForAckNotFound(MessageBrokerRemoteClient client, int queueId)
     {
         return $"Client [{client.Id}] '{client.Name}' could not process a message ACK for non-existing queue with ID {queueId}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string QueueForDeadLetterQueryNotFound(MessageBrokerRemoteClient client, int queueId)
+    {
+        return $"Client [{client.Id}] '{client.Name}' could not process a dead letter query for non-existing queue with ID {queueId}.";
     }
 
     [Pure]

@@ -96,6 +96,8 @@ internal struct ListenerCollection
         var retryDelay = options.RetryDelay;
         var maxRedeliveries = options.MaxRedeliveries;
         var minAckTimeout = options.MinAckTimeout;
+        var deadLetterCapacityHint = options.DeadLetterCapacityHint;
+        var minDeadLetterRetention = options.MinDeadLetterRetention;
 
         ulong traceId;
         bool reverseEndianness;
@@ -127,6 +129,8 @@ internal struct ListenerCollection
                         retryDelay,
                         maxRedeliveries,
                         minAckTimeout,
+                        deadLetterCapacityHint,
+                        minDeadLetterRetention,
                         createChannelIfNotExists ) );
 
             ManualResetValueTaskSource<IncomingPacketToken> responseSource;
@@ -143,6 +147,8 @@ internal struct ListenerCollection
                     retryDelay,
                     maxRedeliveries,
                     minAckTimeout,
+                    deadLetterCapacityHint,
+                    minDeadLetterRetention,
                     createChannelIfNotExists );
 
                 poolToken = client.MemoryPool.Rent( request.Length, out var buffer ).EnableClearing();
@@ -267,6 +273,8 @@ internal struct ListenerCollection
                                 retryDelay,
                                 maxRedeliveries,
                                 minAckTimeout,
+                                deadLetterCapacityHint,
+                                minDeadLetterRetention,
                                 callback );
 
                             client.ListenerCollection._store.Add( parsedResponse.ChannelId, channelName, listener );
@@ -727,6 +735,7 @@ internal struct ListenerCollection
                     retry,
                     redelivery,
                     nack.SkipRetry,
+                    nack.SkipDeadLetter,
                     nack.RetryDelay );
 
                 poolToken = client.MemoryPool.Rent( Protocol.MessageNotificationNegativeAck.Length, out var buffer ).EnableClearing();

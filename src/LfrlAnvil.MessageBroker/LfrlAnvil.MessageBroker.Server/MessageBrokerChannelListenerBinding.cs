@@ -26,6 +26,7 @@ public sealed class MessageBrokerChannelListenerBinding
 {
     private readonly object _sync = new object();
     private InterlockedInt32 _prefetchCounter;
+    private InterlockedInt32 _deadLetterCounter;
     private MessageBrokerChannelListenerBindingState _state;
 
     internal MessageBrokerChannelListenerBinding(
@@ -36,13 +37,17 @@ public sealed class MessageBrokerChannelListenerBinding
         int maxRetries,
         Duration retryDelay,
         int maxRedeliveries,
-        Duration minAckTimeout)
+        Duration minAckTimeout,
+        int deadLetterCapacityHint,
+        Duration minDeadLetterRetention)
     {
         Assume.IsGreaterThan( prefetchHint, 0 );
         Assume.IsGreaterThanOrEqualTo( maxRetries, 0 );
         Assume.IsGreaterThanOrEqualTo( retryDelay, Duration.Zero );
         Assume.IsGreaterThanOrEqualTo( maxRedeliveries, 0 );
         Assume.IsGreaterThanOrEqualTo( minAckTimeout, Duration.Zero );
+        Assume.IsGreaterThanOrEqualTo( deadLetterCapacityHint, 0 );
+        Assume.IsGreaterThanOrEqualTo( minDeadLetterRetention, Duration.Zero );
         Client = client;
         Channel = channel;
         Queue = queue;
@@ -52,7 +57,10 @@ public sealed class MessageBrokerChannelListenerBinding
         RetryDelay = retryDelay;
         MaxRedeliveries = maxRedeliveries;
         MinAckTimeout = minAckTimeout;
+        DeadLetterCapacityHint = deadLetterCapacityHint;
+        MinDeadLetterRetention = minDeadLetterRetention;
         _prefetchCounter = new InterlockedInt32( 0 );
+        _deadLetterCounter = new InterlockedInt32( 0 );
     }
 
     /// <summary>
@@ -101,6 +109,18 @@ public sealed class MessageBrokerChannelListenerBinding
     /// Actual ACK timeout may be different due to the state of the <see cref="Queue"/> and other listeners bound to it.
     /// </summary>
     public Duration MinAckTimeout { get; }
+
+    /// <summary>
+    /// Specifies how many messages intended for this listener can be stored at most by the <see cref="Queue"/>'s dead letter.
+    /// Actual capacity may be different due to the state of the <see cref="Queue"/> and other listeners bound to it.
+    /// </summary>
+    public int DeadLetterCapacityHint { get; }
+
+    /// <summary>
+    /// Specifies the minimum retention period for messages intended for this listener stored in the <see cref="Queue"/>'s dead letter.
+    /// Actual retention period may be different due to the state of the <see cref="Queue"/> and other listeners bound to it.
+    /// </summary>
+    public Duration MinDeadLetterRetention { get; }
 
     /// <summary>
     /// Specifies whether or not the <see cref="Client"/> is expected to send ACK or negative ACK to the <see cref="Queue"/>
@@ -166,7 +186,7 @@ public sealed class MessageBrokerChannelListenerBinding
         do
         {
             current = _prefetchCounter.Value;
-            if ( current < 0 )
+            if ( current <= 0 )
                 return true;
         }
         while ( ! _prefetchCounter.Write( unchecked( current - 1 ), current ) );
@@ -188,9 +208,65 @@ public sealed class MessageBrokerChannelListenerBinding
         return _prefetchCounter.Value >= 0;
     }
 
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool IncrementDeadLetterCounter()
+    {
+        int current;
+        do
+        {
+            current = _deadLetterCounter.Value;
+            if ( current < 0 )
+                return true;
+        }
+        while ( ! _deadLetterCounter.Write( checked( current + 1 ), current ) );
+
+        return current == DeadLetterCapacityHint;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool DecrementDeadLetterCounter()
+    {
+        int current;
+        do
+        {
+            current = _deadLetterCounter.Value;
+            if ( current <= 0 )
+                return current == 0;
+        }
+        while ( ! _deadLetterCounter.Write( unchecked( current - 1 ), current ) );
+
+        return true;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool TryDecrementDeadLetterCounterIfExceeded(out bool disposed)
+    {
+        int current;
+        do
+        {
+            current = _deadLetterCounter.Value;
+            if ( current < 0 )
+            {
+                disposed = true;
+                return false;
+            }
+
+            if ( current <= DeadLetterCapacityHint )
+            {
+                disposed = false;
+                return false;
+            }
+        }
+        while ( ! _deadLetterCounter.Write( unchecked( current - 1 ), current ) );
+
+        disposed = false;
+        return true;
+    }
+
     internal void OnServerDisposed()
     {
         _prefetchCounter.Write( -1 );
+        _deadLetterCounter.Write( -1 );
         using ( AcquireLock() )
         {
             if ( ShouldCancel )
@@ -203,6 +279,7 @@ public sealed class MessageBrokerChannelListenerBinding
     internal void OnClientDisconnected(ulong traceId)
     {
         _prefetchCounter.Write( -1 );
+        _deadLetterCounter.Write( -1 );
         using ( AcquireLock() )
         {
             if ( ShouldCancel )
@@ -221,6 +298,7 @@ public sealed class MessageBrokerChannelListenerBinding
     {
         Assume.Equals( _state, MessageBrokerChannelListenerBindingState.Running );
         _prefetchCounter.Write( -1 );
+        _deadLetterCounter.Write( -1 );
         _state = MessageBrokerChannelListenerBindingState.Disposing;
     }
 

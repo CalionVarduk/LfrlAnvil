@@ -154,24 +154,30 @@ public class QueueHeapTests : TestsBase
 
         sut.Update( queues[4] );
 
+        timestamps.Next += Duration.FromSeconds( 3 );
         sut.Add( queues[5] );
         queues[5]
             .MessageStore
-            .ScheduleRetry( new QueueMessage( publisher, listener, 8 ), 0, 0, Duration.FromSeconds( 6 ) );
+            .AddToDeadLetter( new QueueMessage( publisher, listener, 8 ), 0, 0 );
+
+        timestamps.Next -= Duration.FromSeconds( 3 );
+        queues[5]
+            .MessageStore
+            .AddToDeadLetter( new QueueMessage( publisher, listener, 9 ), 0, 0 );
 
         sut.Update( queues[5] );
 
         sut.Add( queues[6] );
         queues[6]
             .MessageStore
-            .ScheduleRetry( new QueueMessage( publisher, listener, 9 ), 0, 0, Duration.FromSeconds( 7 ) );
+            .ScheduleRetry( new QueueMessage( publisher, listener, 10 ), 0, 0, Duration.FromSeconds( 7 ) );
 
         sut.Update( queues[6] );
 
         sut.Add( queues[7] );
         queues[7]
             .MessageStore
-            .ScheduleRetry( new QueueMessage( publisher, listener, 10 ), 0, 0, Duration.FromSeconds( 8 ) );
+            .ScheduleRetry( new QueueMessage( publisher, listener, 11 ), 0, 0, Duration.FromSeconds( 8 ) );
 
         sut.Update( queues[7] );
 
@@ -181,7 +187,7 @@ public class QueueHeapTests : TestsBase
         sut.Add( queues[9] );
         queues[9]
             .MessageStore
-            .ScheduleRetry( new QueueMessage( publisher, listener, 11 ), 0, 0, Duration.FromSeconds( 1 ) );
+            .ScheduleRetry( new QueueMessage( publisher, listener, 12 ), 0, 0, Duration.FromSeconds( 1 ) );
 
         listener.TryIncrementPrefetchCounter( out _ );
         sut.Update( queues[9] );
@@ -262,7 +268,7 @@ public class QueueHeapTests : TestsBase
         sut.Add( queues[3] );
         queues[3]
             .MessageStore
-            .ScheduleRetry( new QueueMessage( publisher, listener, 3 ), 0, 0, Duration.FromSeconds( 3 ) );
+            .AddToDeadLetter( new QueueMessage( publisher, listener, 3 ), 0, 0 );
 
         sut.Update( queues[3] );
 
@@ -380,7 +386,17 @@ public class QueueHeapTests : TestsBase
     private static MessageBrokerChannelListenerBinding CreateListener(MessageBrokerRemoteClient client, MessageBrokerChannel channel)
     {
         var queue = CreateQueue( client, 1 );
-        return new MessageBrokerChannelListenerBinding( client, channel, queue, 1, 1, Duration.Zero, 0, Duration.FromSeconds( 1 ) );
+        return new MessageBrokerChannelListenerBinding(
+            client,
+            channel,
+            queue,
+            1,
+            1,
+            Duration.Zero,
+            0,
+            Duration.FromSeconds( 1 ),
+            1,
+            Duration.FromSeconds( 3 ) );
     }
 
     private sealed class TimestampProviderMock : TimestampProviderBase

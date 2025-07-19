@@ -78,14 +78,25 @@ public readonly struct MessageBrokerQueueMessageProcessedEvent
     public Timestamp AckExpiresAt { get; }
 
     /// <summary>
+    /// Specifies whether or not the message is from dead letter.
+    /// </summary>
+    public bool IsFromDeadLetter => AckId < 0;
+
+    /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerQueueMessageProcessedEvent"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
-        var ack = AckId > 0 ? $", Ack = (Id = {AckId}, ExpiresAt = {AckExpiresAt})" : string.Empty;
-        var messageRemoved = AckId == 0 ? $", MessageRemoved = {MessageRemoved}" : string.Empty;
+        var ack = AckId switch
+        {
+            > 0 => $", Ack = (Id = {AckId}, ExpiresAt = {AckExpiresAt})",
+            -1 => ", Ack = <dead-letter>",
+            _ => string.Empty
+        };
+
+        var messageRemoved = AckId <= 0 ? $", MessageRemoved = {MessageRemoved}" : string.Empty;
         return
             $"[MessageProcessed] {Source}, Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', MessageId = {MessageId}{ack}{messageRemoved}";
     }

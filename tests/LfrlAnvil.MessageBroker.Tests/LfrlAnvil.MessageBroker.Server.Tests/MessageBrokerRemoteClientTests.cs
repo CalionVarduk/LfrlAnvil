@@ -1559,10 +1559,10 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
     public async Task Disposal_ShouldDiscardPendingMessageNotificationsAndRetries()
     {
         Exception? exception = null;
-        var endSource = new SafeTaskCompletionSource( completionCount: 3 );
-        var pushContinuation = new SafeTaskCompletionSource( completionCount: 3 );
+        var endSource = new SafeTaskCompletionSource( completionCount: 4 );
+        var pushContinuation = new SafeTaskCompletionSource( completionCount: 4 );
         var disposeContinuation = new SafeTaskCompletionSource();
-        var firstNotificationSent = Atomic.Create( false );
+        var sentNotificationsCount = Atomic.Create( 0 );
         var logs = new ClientEventLogger();
         var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
@@ -1579,9 +1579,9 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                                 if ( e.Type != MessageBrokerRemoteClientTraceEventType.MessageNotification )
                                     return;
 
-                                if ( ! firstNotificationSent.Value )
+                                if ( sentNotificationsCount.Value < 2 )
                                 {
-                                    firstNotificationSent.Value = true;
+                                    ++sentNotificationsCount.Value;
                                     return;
                                 }
 
@@ -1615,6 +1615,8 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                     prefetchHint: 2,
                     maxRetries: 1,
                     retryDelay: Duration.FromSeconds( 10 ),
+                    deadLetterCapacityHint: 1,
+                    minDeadLetterRetention: Duration.FromMinutes( 1 ),
                     minAckTimeout: Duration.FromMinutes( 10 ) );
 
                 c.ReadListenerBoundResponse();
@@ -1626,9 +1628,12 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
             {
                 c.SendPushMessage( 1, [ 1 ], confirm: false );
                 c.ReadMessageNotification( 1 );
-                c.SendMessageNotificationNegativeAck( 1, 1, 1, 0 );
+                c.SendMessageNotificationNegativeAck( 1, 1, 1, 0, noRetry: true );
                 c.SendPushMessage( 1, [ 2, 3 ], confirm: false );
+                c.ReadMessageNotification( 1 );
+                c.SendMessageNotificationNegativeAck( 1, 1, 1, 1 );
                 c.SendPushMessage( 1, [ 4, 5, 6 ], confirm: false );
+                c.SendPushMessage( 1, [ 7, 8, 9, 10 ], confirm: false );
             } );
 
         await endSource.Task;
@@ -1643,7 +1648,8 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                         q.State.TestEquals( MessageBrokerQueueState.Disposed ),
                         q.Messages.Pending.Count.TestEquals( 0 ),
                         q.Messages.Unacked.Count.TestEquals( 0 ),
-                        q.Messages.Retries.Count.TestEquals( 0 ) ) ),
+                        q.Messages.Retries.Count.TestEquals( 0 ),
+                        q.Messages.DeadLetter.Count.TestEquals( 0 ) ) ),
                 logs.GetAll()
                     .Skip( 3 )
                     .Where( t => t.Logs.All( e => ! e.Contains( "[Trace:PushMessage]" ) && ! e.Contains( "[Trace:NegativeAck]" ) ) )
@@ -1660,25 +1666,34 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                         ] ),
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:MessageNotification] Client = [1] 'test', TraceId = 8 (start)",
-                            "[ProcessingMessage] Client = [1] 'test', TraceId = 8, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 1, Retry = 0, Redelivery = 0, Length = 2",
-                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 8, Packet = (MessageNotification, Length = 47)",
-                            """
-                            [Error] Client = [1] 'test', TraceId = 8
-                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientDisposedException: Operation has been cancelled because remote client [1] 'test' is disposed.
-                            """,
-                            "[Trace:MessageNotification] Client = [1] 'test', TraceId = 8 (end)"
+                            $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (start)",
+                            $"[ProcessingMessage] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 1, Retry = 0, Redelivery = 0, Length = 2",
+                            $"[SendPacket:Sending] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 47)",
+                            $"[SendPacket:Sent] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 47)",
+                            $"[MessageProcessed] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 1, Retry = 0, Redelivery = 0",
+                            $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (end)"
                         ] ),
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:Dispose] Client = [1] 'test', TraceId = 9 (start)",
-                            "[Disposing] Client = [1] 'test', TraceId = 9",
+                            "[Trace:MessageNotification] Client = [1] 'test', TraceId = 11 (start)",
+                            "[ProcessingMessage] Client = [1] 'test', TraceId = 11, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 2, Retry = 0, Redelivery = 0, Length = 3",
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 11, Packet = (MessageNotification, Length = 48)",
                             """
-                            [Error] Client = [1] 'test', TraceId = 9
-                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientException: 1 stored pending message notification(s) have been discarded due to client disposal.
+                            [Error] Client = [1] 'test', TraceId = 11
+                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientDisposedException: Operation has been cancelled because remote client [1] 'test' is disposed.
                             """,
-                            "[Disposed] Client = [1] 'test', TraceId = 9",
-                            "[Trace:Dispose] Client = [1] 'test', TraceId = 9 (end)"
+                            "[Trace:MessageNotification] Client = [1] 'test', TraceId = 11 (end)"
+                        ] ),
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:Dispose] Client = [1] 'test', TraceId = 12 (start)",
+                            "[Disposing] Client = [1] 'test', TraceId = 12",
+                            """
+                            [Error] Client = [1] 'test', TraceId = 12
+                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientException: 2 stored pending message notification(s) have been discarded due to client disposal.
+                            """,
+                            "[Disposed] Client = [1] 'test', TraceId = 12",
+                            "[Trace:Dispose] Client = [1] 'test', TraceId = 12 (end)"
                         ] )
                     ] ) )
             .Go();

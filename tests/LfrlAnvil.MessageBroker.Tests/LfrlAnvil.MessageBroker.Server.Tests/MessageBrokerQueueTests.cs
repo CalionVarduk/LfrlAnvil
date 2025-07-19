@@ -209,21 +209,21 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                         (t, _) => t.Logs.TestSequence(
                         [
                             $"[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id} (start)",
-                            $"[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = {storeKeyByMessageId.GetValueOrDefault( 0UL )}, Retry = 0, Redelivery = 0",
+                            $"[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = {storeKeyByMessageId.GetValueOrDefault( 0UL )}, Retry = 0, Redelivery = 0, IsFromDeadLetter = False",
                             $"[MessageProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 0, MessageRemoved = {dataRemovedByMessageId.GetValueOrDefault( 0UL )}",
                             $"[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id} (end)"
                         ] ),
                         (t, _) => t.Logs.TestSequence(
                         [
                             $"[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id} (start)",
-                            $"[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = {storeKeyByMessageId.GetValueOrDefault( 1UL )}, Retry = 0, Redelivery = 0",
+                            $"[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = {storeKeyByMessageId.GetValueOrDefault( 1UL )}, Retry = 0, Redelivery = 0, IsFromDeadLetter = False",
                             $"[MessageProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 1, MessageRemoved = {dataRemovedByMessageId.GetValueOrDefault( 1UL )}",
                             $"[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id} (end)"
                         ] ),
                         (t, _) => t.Logs.TestSequence(
                         [
                             $"[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id} (start)",
-                            $"[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = {storeKeyByMessageId.GetValueOrDefault( 2UL )}, Retry = 0, Redelivery = 0",
+                            $"[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = {storeKeyByMessageId.GetValueOrDefault( 2UL )}, Retry = 0, Redelivery = 0, IsFromDeadLetter = False",
                             $"[MessageProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 2, MessageRemoved = {dataRemovedByMessageId.GetValueOrDefault( 2UL )}",
                             $"[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id} (end)"
                         ] )
@@ -358,7 +358,7 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                 (t, _) => t.Logs.TestSequence(
                 [
                     "[Trace:ProcessMessage] Client = [2] 'test2', Queue = [1] 'c', TraceId = 3 (start)",
-                    $"[ProcessingMessage] Client = [2] 'test2', Queue = [1] 'c', TraceId = 3, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = {storeKeyByMessageId.GetValueOrDefault( 0UL )}, Retry = 0, Redelivery = 0",
+                    $"[ProcessingMessage] Client = [2] 'test2', Queue = [1] 'c', TraceId = 3, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = {storeKeyByMessageId.GetValueOrDefault( 0UL )}, Retry = 0, Redelivery = 0, IsFromDeadLetter = False",
                     $"[MessageProcessed] Client = [2] 'test2', Queue = [1] 'c', TraceId = 3, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', MessageId = 0, MessageRemoved = {dataRemovedByMessageId.GetValueOrDefault( 0UL )}",
                     "[Trace:ProcessMessage] Client = [2] 'test2', Queue = [1] 'c', TraceId = 3 (end)"
                 ] ),
@@ -373,7 +373,7 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                 (t, _) => t.Logs.TestSequence(
                 [
                     $"[Trace:ProcessMessage] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id} (start)",
-                    $"[MessageDiscarded] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Reason = DisposedPending, StoreKey = {storeKeyByMessageId.GetValueOrDefault( 1UL )}, Retry = 0, Redelivery = 0, MessageRemoved = {dataRemovedByStoreKey.GetValueOrDefault( storeKeyByMessageId.GetValueOrDefault( 1UL ) )}",
+                    $"[MessageDiscarded] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Reason = DisposedPending, StoreKey = {storeKeyByMessageId.GetValueOrDefault( 1UL )}, Retry = 0, Redelivery = 0, MessageRemoved = {dataRemovedByStoreKey.GetValueOrDefault( storeKeyByMessageId.GetValueOrDefault( 1UL ) )}, MovedToDeadLetter = False",
                     $"[Trace:ProcessMessage] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id} (end)"
                 ] )
             ] )
@@ -775,6 +775,7 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
         Exception? exception = null;
         MessageBrokerStream? stream = null;
         var endSource = new SafeTaskCompletionSource();
+        var streamEndSource = new SafeTaskCompletionSource();
         var readMessageSource = new SafeTaskCompletionSource();
         var continuation = new SafeTaskCompletionSource();
         var queueLogs = new QueueEventLogger();
@@ -786,6 +787,11 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                 .SetQueueLoggerFactory(
                     _ => queueLogs.GetLogger(
                         MessageBrokerQueueLogger.Create(
+                            traceStart: e =>
+                            {
+                                if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
+                                    streamEndSource.Task.Wait();
+                            },
                             traceEnd: e =>
                             {
                                 if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
@@ -801,7 +807,14 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                                         stream.MessageStore.DecrementRefCount( e.StoreKey, out var _ );
                                 }
                             },
-                            error: e => exception = e.Exception ) ) ) );
+                            error: e => exception = e.Exception ) ) )
+                .SetStreamLoggerFactory(
+                    _ => MessageBrokerStreamLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerStreamTraceEventType.ProcessMessage )
+                                streamEndSource.Complete();
+                        } ) ) );
 
         await server.StartAsync();
 
@@ -839,7 +852,10 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                 exception.TestType().Exact<MessageBrokerQueueException>( e => e.Queue.TestRefEquals( queue ) ),
                 stream.TestNotNull( s => s.Messages.Count.TestEquals( 0 ) ),
                 queue.TestNotNull(
-                    q => Assertion.All( q.State.TestEquals( MessageBrokerQueueState.Running ), q.Messages.Pending.Count.TestEquals( 0 ) ) ),
+                    q => Assertion.All(
+                        "queue",
+                        q.State.TestEquals( MessageBrokerQueueState.Running ),
+                        q.Messages.Pending.Count.TestEquals( 0 ) ) ),
                 pendingCount.TestEquals( 1 ),
                 messageCount.TestEquals( 1 ),
                 message.TestNotNull(
@@ -870,7 +886,7 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                         (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2 (start)",
-                            "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 0, Redelivery = 0",
+                            "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 0, Redelivery = 0, IsFromDeadLetter = False",
                             """
                             [Error] Client = [1] 'test', Queue = [1] 'c', TraceId = 2
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerQueueException: Stream [1] 'c' does not have a message related to store key 0.

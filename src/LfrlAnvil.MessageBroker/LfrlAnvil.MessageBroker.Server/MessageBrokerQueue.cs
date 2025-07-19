@@ -34,6 +34,7 @@ public sealed class MessageBrokerQueue
     internal QueueMessageStore MessageStore;
     internal readonly MessageBrokerQueueLogger Logger;
     internal int EventHeapIndex;
+    internal int DeadLetterQueryCounter;
     private MessageBrokerQueueState _state;
     private readonly object _sync = new object();
     private ulong _nextTraceId;
@@ -44,6 +45,7 @@ public sealed class MessageBrokerQueue
         Id = id;
         Name = name;
         EventHeapIndex = -1;
+        DeadLetterQueryCounter = 0;
         _state = MessageBrokerQueueState.Running;
         _nextTraceId = 0;
         ListenersByChannelId = ReferenceStore<int, MessageBrokerChannelListenerBinding>.Create();
@@ -194,6 +196,7 @@ public sealed class MessageBrokerQueue
         int retry,
         int redelivery,
         bool noRetry,
+        bool noDeadLetter,
         Duration? explicitDelay,
         ref QueueMessage message,
         ref Duration delay,
@@ -215,12 +218,22 @@ public sealed class MessageBrokerQueue
 
             if ( noRetry || retry >= message.Listener.MaxRetries )
             {
-                MessageStore.RemoveUnacked( ackId );
-                disposing = TryDisposeDueToPotentiallyEmptyStoreUnsafe();
-                if ( message.Listener.DecrementPrefetchCounter() && ! MessageStore.IsEmpty )
-                    QueueProcessor.SignalContinuation();
+                var signalProcessor = message.Listener.DecrementPrefetchCounter();
+                if ( ! noDeadLetter && message.Listener.DeadLetterCapacityHint > 0 )
+                {
+                    MessageStore.AddToDeadLetter( message, retry, redelivery );
+                    MessageStore.RemoveUnacked( ackId );
+                    signalProcessor |= message.Listener.IncrementDeadLetterCounter();
+                }
+                else
+                {
+                    MessageStore.RemoveUnacked( ackId );
+                    disposing = TryDisposeDueToPotentiallyEmptyStoreUnsafe();
+                    signalProcessor &= ! MessageStore.IsEmpty;
+                }
 
-                // TODO: potential move to dead-letter
+                if ( signalProcessor )
+                    QueueProcessor.SignalContinuation();
             }
             else
             {
@@ -235,6 +248,35 @@ public sealed class MessageBrokerQueue
         }
 
         return AckResult.Success;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal DeadLetterQueryResult HandleDeadLetterQuery(
+        int readCount,
+        ref int totalCount,
+        ref int maxReadCount,
+        ref Timestamp nextExpirationAt)
+    {
+        using ( AcquireLock() )
+        {
+            if ( ShouldCancel )
+                return DeadLetterQueryResult.QueueDisposed;
+
+            totalCount = MessageStore.DeadLetter.Count;
+            var desiredReadCount = unchecked( ( long )DeadLetterQueryCounter + readCount );
+            maxReadCount = totalCount > desiredReadCount ? unchecked( ( int )desiredReadCount ) : totalCount;
+            DeadLetterQueryCounter = maxReadCount;
+            if ( totalCount > 0 )
+            {
+                ref var first = ref MessageStore.DeadLetter.First();
+                nextExpirationAt = first.ExpiresAt;
+            }
+
+            if ( DeadLetterQueryCounter > 0 )
+                QueueProcessor.SignalContinuation();
+        }
+
+        return DeadLetterQueryResult.Success;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -273,7 +315,10 @@ public sealed class MessageBrokerQueue
     {
         ListenersByChannelId.Remove( channelId );
         if ( ListenersByChannelId.Count > 0 || ! MessageStore.IsEmpty )
+        {
+            QueueProcessor.SignalContinuation();
             return false;
+        }
 
         _state = MessageBrokerQueueState.Disposing;
         return true;
@@ -313,6 +358,7 @@ public sealed class MessageBrokerQueue
             Assume.Equals( ListenersByChannelId.Count, 0 );
             Assume.True( MessageStore.IsEmpty );
 
+            DeadLetterQueryCounter = 0;
             processorTask = QueueProcessor.DiscardUnderlyingTask();
             if ( ignoreProcessorTask )
                 processorTask = null;
@@ -392,6 +438,7 @@ public sealed class MessageBrokerQueue
             Task? processorTask;
             using ( AcquireLock() )
             {
+                DeadLetterQueryCounter = 0;
                 ListenersByChannelId.Clear();
                 processorTask = QueueProcessor.DiscardUnderlyingTask();
                 QueueProcessor.Dispose();

@@ -35,17 +35,32 @@ public enum MessageBrokerQueueDiscardMessageReason : byte
     ExplicitNoRetry = 2,
 
     /// <summary>
+    /// Specifies that a dead letter entry has expired.
+    /// </summary>
+    DeadLetterExpiration = 3,
+
+    /// <summary>
+    /// Specifies that listener's dead letter capacity hint has been exceeded.
+    /// </summary>
+    DeadLetterCapacityExceeded = 4,
+
+    /// <summary>
     /// Specifies that a listener has been disposed for a pending message.
     /// </summary>
-    DisposedPending = 3,
+    DisposedPending = 5,
 
     /// <summary>
     /// Specifies that a listener has been disposed for an unacked message.
     /// </summary>
-    DisposedUnacked = 4,
+    DisposedUnacked = 6,
 
     /// <summary>
     /// Specifies that a listener has been disposed for a scheduled retry.
     /// </summary>
-    DisposedRetry = 5
+    DisposedRetry = 7,
+
+    /// <summary>
+    /// Specifies that a listener has been disposed for a dead letter entry.
+    /// </summary>
+    DisposedDeadLetter = 8
 }

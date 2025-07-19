@@ -92,13 +92,24 @@ public readonly struct MessageBrokerRemoteClientMessageProcessedEvent
     public bool IsRedelivery => _redelivery.BoolValue;
 
     /// <summary>
+    /// Specifies whether or not this message is from dead letter.
+    /// </summary>
+    public bool IsFromDeadLetter => AckId < 0;
+
+    /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerRemoteClientMessageProcessedEvent"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
-        var ackId = AckId > 0 ? $", AckId = {AckId}" : string.Empty;
+        var ackId = AckId switch
+        {
+            > 0 => $", AckId = {AckId}",
+            -1 => ", AckId = <dead-letter>",
+            _ => string.Empty
+        };
+
         var isRetry = IsRetry ? " (active)" : string.Empty;
         var isRedelivery = IsRedelivery ? " (active)" : string.Empty;
         return

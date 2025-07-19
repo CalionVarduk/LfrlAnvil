@@ -85,6 +85,11 @@ public enum MessageBrokerClientEndpoint : byte
     UnbindListenerFailureResponse = 13,
 
     /// <summary>
+    /// Represents server's response to client's dead letter query request.
+    /// </summary>
+    DeadLetterQueryResponse = 14,
+
+    /// <summary>
     /// Represents server's response to client's valid handshake request.
     /// </summary>
     HandshakeAcceptedResponse = 254,

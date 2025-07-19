@@ -26,7 +26,8 @@ public readonly struct MessageBrokerClientAcknowledgingMessageEvent
 {
     private const ulong NackExistsMask = 1UL << 63;
     private const ulong NackSkipRetryMask = 1UL << 62;
-    private const ulong NackDelayExistsMask = 1UL << 61;
+    private const ulong NackSkipDeadLetterMask = 1UL << 61;
+    private const ulong NackDelayExistsMask = 1UL << 60;
     private const ulong NackDelayMask = NackDelayExistsMask - 1;
 
     private readonly Int31BoolPair _data1;
@@ -88,6 +89,7 @@ public readonly struct MessageBrokerClientAcknowledgingMessageEvent
     public MessageBrokerNegativeAck? Nack => (_nackData & NackExistsMask) != 0
         ? new MessageBrokerNegativeAck(
             (_nackData & NackSkipRetryMask) != 0,
+            (_nackData & NackSkipDeadLetterMask) != 0,
             (_nackData & NackDelayExistsMask) != 0 ? Duration.FromTicks( unchecked( ( long )(_nackData & NackDelayMask) ) ) : null )
         : null;
 
@@ -123,7 +125,7 @@ public readonly struct MessageBrokerClientAcknowledgingMessageEvent
         var nackValue = Nack;
         var messageTraceId = messageTraceIdValue is not null ? $", MessageTraceId = {messageTraceIdValue.Value}" : string.Empty;
         var nack = nackValue is not null
-            ? $", NACK = (SkipRetry = {nackValue.Value.SkipRetry}{(nackValue.Value.RetryDelay is not null ? $", RetryDelay = {nackValue.Value.RetryDelay.Value}" : string.Empty)}, IsAutomatic = {IsAutomatic})"
+            ? $", NACK = (SkipRetry = {nackValue.Value.SkipRetry}, SkipDeadLetter = {nackValue.Value.SkipDeadLetter}{(nackValue.Value.RetryDelay is not null ? $", RetryDelay = {nackValue.Value.RetryDelay.Value}" : string.Empty)}, IsAutomatic = {IsAutomatic})"
             : string.Empty;
 
         return
@@ -149,6 +151,7 @@ public readonly struct MessageBrokerClientAcknowledgingMessageEvent
         {
             nackData |= NackExistsMask;
             nackData |= nack.Value.SkipRetry ? NackSkipRetryMask : 0;
+            nackData |= nack.Value.SkipDeadLetter ? NackSkipDeadLetterMask : 0;
             nackData |= nack.Value.RetryDelay is not null
                 ? unchecked( ( ulong )nack.Value.RetryDelay.Value.Ticks | NackDelayExistsMask )
                 : 0;

@@ -540,6 +540,8 @@ internal static class Protocol
         internal readonly Duration RetryDelay;
         internal readonly int MaxRedeliveries;
         internal readonly Duration MinAckTimeout;
+        internal readonly int DeadLetterCapacityHint;
+        internal readonly Duration MinDeadLetterRetention;
         internal readonly EncodeableText ChannelName;
         internal readonly EncodeableText QueueName;
 
@@ -551,6 +553,8 @@ internal static class Protocol
             Duration retryDelay,
             int maxRedeliveries,
             Duration minAckTimeout,
+            int deadLetterCapacityHint,
+            Duration minDeadLetterRetention,
             bool createChannelIfNotExists)
         {
             Assume.IsGreaterThan( prefetchHint, 0 );
@@ -558,17 +562,26 @@ internal static class Protocol
             Assume.IsGreaterThanOrEqualTo( maxRedeliveries, 0 );
             Assume.IsGreaterThanOrEqualTo( retryDelay, Duration.Zero );
             Assume.IsGreaterThanOrEqualTo( minAckTimeout, Duration.Zero );
+            Assume.IsGreaterThanOrEqualTo( deadLetterCapacityHint, 0 );
+            Assume.IsGreaterThanOrEqualTo( minDeadLetterRetention, Duration.Zero );
             Flags = ( byte )(createChannelIfNotExists ? 1 : 0);
             PrefetchHint = prefetchHint;
             MaxRetries = maxRetries;
             RetryDelay = retryDelay;
             MaxRedeliveries = maxRedeliveries;
             MinAckTimeout = minAckTimeout;
+            DeadLetterCapacityHint = deadLetterCapacityHint;
+            MinDeadLetterRetention = minDeadLetterRetention;
             ChannelName = TextEncoding.Prepare( channelName ).GetValueOrThrow();
             QueueName = TextEncoding.Prepare( queueName ?? string.Empty ).GetValueOrThrow();
             Header = PacketHeader.Create(
                 MessageBrokerServerEndpoint.BindListenerRequest,
-                sizeof( byte ) + sizeof( ushort ) * 2 + sizeof( uint ) * 4 + ( uint )ChannelName.ByteCount + ( uint )QueueName.ByteCount );
+                sizeof( byte )
+                + sizeof( ushort ) * 2
+                + sizeof( uint ) * 5
+                + sizeof( ulong )
+                + ( uint )ChannelName.ByteCount
+                + ( uint )QueueName.ByteCount );
         }
 
         internal int Length => PacketHeader.Length + unchecked( ( int )Header.Payload );
@@ -577,7 +590,7 @@ internal static class Protocol
         public override string ToString()
         {
             return
-                $"[{Header}] Flags = {Flags}, PrefetchHint = {PrefetchHint}, MaxRetries = {MaxRetries}, RetryDelay = {RetryDelay}, MaxRedeliveries = {MaxRedeliveries}, MinAckTimeout = {MinAckTimeout}, ChannelName = ({ChannelName}), QueueName = ({QueueName})";
+                $"[{Header}] Flags = {Flags}, PrefetchHint = {PrefetchHint}, MaxRetries = {MaxRetries}, RetryDelay = {RetryDelay}, MaxRedeliveries = {MaxRedeliveries}, MinAckTimeout = {MinAckTimeout}, DeadLetterCapacityHint = {DeadLetterCapacityHint}, MinDeadLetterRetention = {MinDeadLetterRetention}, ChannelName = ({ChannelName}), QueueName = ({QueueName})";
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -591,6 +604,8 @@ internal static class Protocol
             var retryDelayMs = unchecked( ( uint )RetryDelay.FullMilliseconds );
             var maxRedeliveries = unchecked( ( uint )MaxRedeliveries );
             var minAckTimeoutMs = unchecked( ( uint )MinAckTimeout.FullMilliseconds );
+            var deadLetterCapacityHint = unchecked( ( uint )DeadLetterCapacityHint );
+            var minDeadLetterRetentionMs = unchecked( ( ulong )MinDeadLetterRetention.FullMilliseconds );
             var channelNameLength = unchecked( ( ushort )ChannelName.ByteCount );
             if ( reverseEndianness )
             {
@@ -600,6 +615,8 @@ internal static class Protocol
                 retryDelayMs = BinaryPrimitives.ReverseEndianness( retryDelayMs );
                 maxRedeliveries = BinaryPrimitives.ReverseEndianness( maxRedeliveries );
                 minAckTimeoutMs = BinaryPrimitives.ReverseEndianness( minAckTimeoutMs );
+                deadLetterCapacityHint = BinaryPrimitives.ReverseEndianness( deadLetterCapacityHint );
+                minDeadLetterRetentionMs = BinaryPrimitives.ReverseEndianness( minDeadLetterRetentionMs );
                 channelNameLength = BinaryPrimitives.ReverseEndianness( channelNameLength );
             }
 
@@ -612,6 +629,8 @@ internal static class Protocol
             writer.MoveWrite( retryDelayMs );
             writer.MoveWrite( maxRedeliveries );
             writer.MoveWrite( minAckTimeoutMs );
+            writer.MoveWrite( deadLetterCapacityHint );
+            writer.MoveWrite( minDeadLetterRetentionMs );
             writer.MoveWrite( channelNameLength );
             ChannelName.Encode( writer.GetSpan( ChannelName.ByteCount ) ).ThrowIfError();
             writer.Move( ChannelName.ByteCount );
@@ -991,6 +1010,118 @@ internal static class Protocol
         }
     }
 
+    internal readonly struct DeadLetterQuery
+    {
+        internal const int Length = PacketHeader.Length + sizeof( uint ) * 2;
+        internal readonly PacketHeader Header;
+        internal readonly int QueueId;
+        internal readonly int ReadCount;
+
+        internal DeadLetterQuery(int queueId, int readCount)
+        {
+            QueueId = queueId;
+            ReadCount = readCount;
+            Header = PacketHeader.Create( MessageBrokerServerEndpoint.DeadLetterQuery, sizeof( uint ) * 2 );
+        }
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"[{Header}] QueueId = {QueueId}, ReadCount = {ReadCount}";
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal void Serialize(Memory<byte> target, bool reverseEndianness)
+        {
+            Assume.Equals( target.Length, Length );
+
+            var payload = Header.Payload;
+            var queueId = unchecked( ( uint )QueueId );
+            var readCount = unchecked( ( uint )ReadCount );
+            if ( reverseEndianness )
+            {
+                payload = BinaryPrimitives.ReverseEndianness( payload );
+                queueId = BinaryPrimitives.ReverseEndianness( queueId );
+                readCount = BinaryPrimitives.ReverseEndianness( readCount );
+            }
+
+            var writer = new BinaryContractWriter( target.Span );
+            writer.MoveWrite( Header.EndpointCode );
+            writer.MoveWrite( payload );
+            writer.MoveWrite( queueId );
+            writer.Write( readCount );
+        }
+    }
+
+    internal readonly struct DeadLetterQueryResponse
+    {
+        internal const int Length = sizeof( uint ) * 2 + sizeof( ulong );
+        internal readonly int TotalCount;
+        internal readonly int MaxReadCount;
+        internal readonly Timestamp NextExpirationAt;
+
+        private DeadLetterQueryResponse(int totalCount, int maxReadCount, Timestamp nextExpirationAt)
+        {
+            TotalCount = totalCount;
+            MaxReadCount = maxReadCount;
+            NextExpirationAt = nextExpirationAt;
+        }
+
+        internal bool QueueExists => TotalCount >= 0;
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"TotalCount = {TotalCount}, MaxReadCount = {MaxReadCount}, NextExpirationAt = {NextExpirationAt}";
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static DeadLetterQueryResponse Parse(ReadOnlyMemory<byte> source, bool reverseEndianness)
+        {
+            Assume.Equals( source.Length, Length );
+            var reader = new BinaryContractReader( source.Span );
+            var totalCount = unchecked( ( int )reader.MoveReadInt32() );
+            var maxReadCount = unchecked( ( int )reader.MoveReadInt32() );
+            var nextExpirationAtTicks = unchecked( ( long )reader.ReadInt64() );
+            if ( reverseEndianness )
+            {
+                totalCount = BinaryPrimitives.ReverseEndianness( totalCount );
+                maxReadCount = BinaryPrimitives.ReverseEndianness( maxReadCount );
+                nextExpirationAtTicks = BinaryPrimitives.ReverseEndianness( nextExpirationAtTicks );
+            }
+
+            return new DeadLetterQueryResponse( totalCount, maxReadCount, new Timestamp( nextExpirationAtTicks ) );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal Chain<string> StringifyErrors()
+        {
+            var result = Chain<string>.Empty;
+            if ( TotalCount < -1 )
+                result = result.Extend( Resources.TotalCountIsNotValid( TotalCount ) );
+            else if ( TotalCount == -1 )
+            {
+                if ( MaxReadCount != 0 )
+                    result = result.Extend( Resources.MaxReadCountIsNotEqualToZero( MaxReadCount ) );
+
+                if ( NextExpirationAt != Timestamp.Zero )
+                    result = result.Extend( Resources.NextExpirationAtIsNotEqualToZero( NextExpirationAt ) );
+            }
+            else
+            {
+                if ( MaxReadCount < 0 || MaxReadCount > TotalCount )
+                    result = result.Extend( Resources.MaxReadCountIsNotValid( MaxReadCount, TotalCount ) );
+
+                if ( TotalCount == 0 && NextExpirationAt != Timestamp.Zero )
+                    result = result.Extend( Resources.NextExpirationAtIsNotEqualToZero( NextExpirationAt ) );
+            }
+
+            return result;
+        }
+    }
+
     internal readonly struct MessageNotificationHeader
     {
         internal const int Length = sizeof( ulong ) * 2 + sizeof( uint ) * 6;
@@ -1074,16 +1205,27 @@ internal static class Protocol
         internal Chain<string> StringifyErrors()
         {
             var result = Chain<string>.Empty;
-            if ( AckId < 0 )
-                result = result.Extend( Resources.AckIdIsNegative( AckId ) );
-
-            if ( StreamId <= 0 )
-                result = result.Extend( Resources.StreamIdIsNotPositive( StreamId ) );
-
             var retry = Retry.IntValue;
             var isRetry = Retry.BoolValue;
             var redelivery = Redelivery.IntValue;
             var isRedelivery = Redelivery.BoolValue;
+
+            if ( AckId <= 0 )
+            {
+                if ( AckId < -1 )
+                    result = result.Extend( Resources.AckIdIsInvalid( AckId ) );
+                else
+                {
+                    if ( isRetry )
+                        result = result.Extend( Resources.InvalidRetry( AckId ) );
+
+                    if ( isRedelivery )
+                        result = result.Extend( Resources.InvalidRedelivery( AckId ) );
+                }
+            }
+
+            if ( StreamId <= 0 )
+                result = result.Extend( Resources.StreamIdIsNotPositive( StreamId ) );
 
             if ( isRetry )
             {
@@ -1104,7 +1246,7 @@ internal static class Protocol
                 if ( redelivery == 0 )
                     result = result.Extend( Resources.RedeliveryIsNotPositive( redelivery ) );
             }
-            else if ( retry > 0 || redelivery > 0 )
+            else if ( (retry > 0 || redelivery > 0) && AckId != -1 )
                 result = result.Extend( Resources.MissingNonZeroMessageResendAttemptMarker( retry, redelivery ) );
 
             if ( ChannelId <= 0 )
@@ -1126,7 +1268,7 @@ internal static class Protocol
                 if ( AckId == 0 )
                     result = result.Extend( Resources.ListenerExpectsAckId );
             }
-            else if ( AckId > 0 )
+            else if ( AckId != 0 )
                 result = result.Extend( Resources.ListenerDoesNotExpectAckId );
 
             if ( Retry.IntValue > listener.MaxRetries )
@@ -1293,9 +1435,10 @@ internal static class Protocol
             int retry,
             int redelivery,
             bool noRetry,
+            bool noDeadLetter,
             Duration? explicitDelay)
         {
-            Flags = ( byte )((noRetry ? 1 : 0) | (explicitDelay is not null ? 2 : 0));
+            Flags = ( byte )((noRetry ? 1 : 0) | (noDeadLetter ? 2 : 0) | (explicitDelay is not null ? 4 : 0));
             QueueId = queueId;
             AckId = ackId;
             StreamId = streamId;

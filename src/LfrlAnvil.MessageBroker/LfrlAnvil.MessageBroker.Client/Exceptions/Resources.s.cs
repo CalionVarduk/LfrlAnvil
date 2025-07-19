@@ -127,9 +127,23 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string AckIdIsNegative(int received)
+    internal static string AckIdIsInvalid(int received)
     {
-        return $"Expected ACK ID to not be negative but found {received}.";
+        return $"Expected ACK ID to not be less than -1 but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string InvalidRetry(int ackId)
+    {
+        return $"Message notification with ACK ID {ackId} cannot be marked as retry.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string InvalidRedelivery(int ackId)
+    {
+        return $"Message notification with ACK ID {ackId} cannot be marked as redelivery.";
     }
 
     [Pure]
@@ -261,6 +275,41 @@ internal static class Resources
     internal static string MessageCancelled(int streamId, string streamName)
     {
         return $"Message push to stream [{streamId}] '{streamName}' has been cancelled by the server.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string TotalCountIsNotValid(int received)
+    {
+        return $"Expected total count to not be less than -1 but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string MaxReadCountIsNotEqualToZero(int received)
+    {
+        return $"Expected max read count to be equal to 0 but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string MaxReadCountIsNotValid(int received, int totalCount)
+    {
+        return $"Expected max read count to be in [0, {totalCount}] range but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string NextExpirationAtIsNotEqualToZero(Timestamp received)
+    {
+        return $"Expected next expiration at to be equal to 0 but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string QueueDoesNotExist(int queueId)
+    {
+        return $"Queue with ID {queueId} does not exist.";
     }
 
     [Pure]

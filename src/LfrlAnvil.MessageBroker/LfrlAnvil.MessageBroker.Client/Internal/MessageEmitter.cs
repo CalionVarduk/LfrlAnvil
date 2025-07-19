@@ -194,7 +194,7 @@ internal struct MessageEmitter
                         error.Emit( MessageBrokerClientErrorEvent.Create( listener.Client, notification.Args.TraceId, exc ) );
 
                     if ( (exc is not OperationCanceledException cancelExc || cancelExc.CancellationToken != cancellationToken)
-                        && notification.Args.Listener.AreAcksEnabled )
+                        && notification.Args.AckId > 0 )
                     {
                         await ListenerCollection.SendNegativeMessageAckAsync(
                                 listener,

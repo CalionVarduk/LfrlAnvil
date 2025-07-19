@@ -113,7 +113,13 @@ public readonly struct MessageBrokerClientProcessingMessageEvent
     [Pure]
     public override string ToString()
     {
-        var ackId = AckId > 0 ? $", AckId = {AckId}" : string.Empty;
+        var ackId = AckId switch
+        {
+            > 0 => $", AckId = {AckId}",
+            -1 => ", AckId = <dead-letter>",
+            _ => string.Empty
+        };
+
         var isRetry = IsRetry ? " (active)" : string.Empty;
         var isRedelivery = IsRedelivery ? " (active)" : string.Empty;
         return

@@ -46,6 +46,8 @@ public sealed class MessageBrokerListener
         Duration retryDelay,
         int maxRedeliveries,
         Duration minAckTimeout,
+        int deadLetterCapacityHint,
+        Duration minDeadLetterRetention,
         MessageBrokerListenerCallback callback)
     {
         Client = client;
@@ -58,6 +60,8 @@ public sealed class MessageBrokerListener
         RetryDelay = retryDelay;
         MaxRedeliveries = maxRedeliveries;
         MinAckTimeout = minAckTimeout;
+        DeadLetterCapacityHint = deadLetterCapacityHint;
+        MinDeadLetterRetention = minDeadLetterRetention;
         Callback = callback;
         _state = MessageBrokerListenerState.Bound;
         CancellationSource = new CancellationTokenSource();
@@ -126,6 +130,22 @@ public sealed class MessageBrokerListener
     /// Actual ACK timeout may be different due to the state of the queue and other listeners bound to it.
     /// </summary>
     public Duration MinAckTimeout { get; }
+
+    /// <summary>
+    /// Specifies how many messages will be stored at most by the dead letter.
+    /// </summary>
+    /// <remarks>
+    /// This is a min value. Actual value is dependant on all listeners attached to the queue and the state of the queue's dead letter.
+    /// </remarks>
+    public int DeadLetterCapacityHint { get; }
+
+    /// <summary>
+    /// Specifies retention period for messages stored in the dead letter.
+    /// </summary>
+    /// <remarks>
+    /// This is a min value. Actual value is dependant on all listeners attached to the queue and the state of the queue's dead letter.
+    /// </remarks>
+    public Duration MinDeadLetterRetention { get; }
 
     /// <summary>
     /// Specifies whether or not the <see cref="Client"/> is expected to send ACK or negative ACK to the server

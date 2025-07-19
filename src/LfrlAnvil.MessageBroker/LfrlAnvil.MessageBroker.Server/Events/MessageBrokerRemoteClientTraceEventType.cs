@@ -60,27 +60,32 @@ public enum MessageBrokerRemoteClientTraceEventType : byte
     PushMessage = 7,
 
     /// <summary>
+    /// Specifies that trace is related to the client's dead letter query.
+    /// </summary>
+    DeadLetterQuery = 8,
+
+    /// <summary>
     /// Specifies that trace is related to the server sending message notification to the client.
     /// </summary>
-    MessageNotification = 8,
+    MessageNotification = 9,
 
     /// <summary>
     /// Specifies that trace is related to the client sending a message notification ACK to the server.
     /// </summary>
-    Ack = 9,
+    Ack = 10,
 
     /// <summary>
     /// Specifies that trace is related to the client sending a negative message notification ACK to the server.
     /// </summary>
-    NegativeAck = 10,
+    NegativeAck = 11,
 
     /// <summary>
     /// Specifies that trace is related to the client disposal.
     /// </summary>
-    Dispose = 11,
+    Dispose = 12,
 
     /// <summary>
     /// Specifies that trace is related to an unexpected occurrence in the client e.g. an error.
     /// </summary>
-    Unexpected = 12
+    Unexpected = 13
 }
