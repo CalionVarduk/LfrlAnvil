@@ -13,6 +13,9 @@
 // limitations under the License.
 
 using System;
+using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.MessageBroker.Server.Internal;
 
@@ -23,13 +26,20 @@ namespace LfrlAnvil.MessageBroker.Server;
 /// </summary>
 public readonly struct MessageBrokerFilterExpressionContext
 {
+    private readonly byte[] _source;
+    private readonly int _startIndex;
+    private readonly int _length;
+
     internal MessageBrokerFilterExpressionContext(MessageBrokerChannelListenerBinding listener, in StreamMessage message)
     {
+        MemoryMarshal.TryGetArray( message.Data, out var segment );
+        _source = segment.Array ?? Array.Empty<byte>();
+        _startIndex = segment.Offset;
+        _length = segment.Count;
         Listener = listener;
         Publisher = message.Publisher;
-        Id = message.Id;
+        MessageId = message.Id;
         PushedAt = message.PushedAt;
-        Data = message.Data;
     }
 
     /// <summary>
@@ -45,7 +55,7 @@ public readonly struct MessageBrokerFilterExpressionContext
     /// <summary>
     /// Unique message id.
     /// </summary>
-    public ulong Id { get; }
+    public ulong MessageId { get; }
 
     /// <summary>
     /// Moment of registration of this message in the <see cref="MessageBrokerStream"/>.
@@ -55,5 +65,51 @@ public readonly struct MessageBrokerFilterExpressionContext
     /// <summary>
     /// Binary message data.
     /// </summary>
-    public ReadOnlyMemory<byte> Data { get; }
+    public Span Data => new Span( _source, _startIndex, _length );
+
+    /// <summary>
+    /// Converts binary message data to <see cref="ReadOnlyMemory{T}"/>.
+    /// </summary>
+    /// <returns>New <see cref="ReadOnlyMemory{T}"/> instance.</returns>
+    [Pure]
+    public ReadOnlyMemory<byte> AsMemory()
+    {
+        return _source.AsMemory( _startIndex, _length );
+    }
+
+    /// <summary>
+    /// Converts binary message data to <see cref="ReadOnlySpan{T}"/>.
+    /// </summary>
+    /// <returns>New <see cref="ReadOnlySpan{T}"/> instance.</returns>
+    [Pure]
+    public ReadOnlySpan<byte> AsSpan()
+    {
+        return _source.AsSpan( _startIndex, _length );
+    }
+
+    /// <summary>
+    /// Represents binary message data.
+    /// </summary>
+    public readonly ref struct Span
+    {
+        private readonly ReadOnlySpan<byte> _data;
+
+        internal Span(byte[] source, int startIndex, int length)
+        {
+            ref var first = ref Unsafe.Add( ref MemoryMarshal.GetArrayDataReference( source ), startIndex );
+            _data = MemoryMarshal.CreateReadOnlySpan( ref first, length );
+        }
+
+        /// <summary>
+        /// Binary message length.
+        /// </summary>
+        public int Length => _data.Length;
+
+        /// <summary>
+        /// Gets the byte at the provided 0-based <paramref name="index"/>.
+        /// </summary>
+        /// <param name="index">0-based index of the byte to get.</param>
+        /// <exception cref="IndexOutOfRangeException">When <paramref name="index"/> is out of range.</exception>
+        public byte this[int index] => _data[index];
+    }
 }

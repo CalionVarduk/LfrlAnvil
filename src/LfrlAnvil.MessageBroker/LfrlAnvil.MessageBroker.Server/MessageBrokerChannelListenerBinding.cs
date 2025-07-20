@@ -29,8 +29,8 @@ namespace LfrlAnvil.MessageBroker.Server;
 public sealed class MessageBrokerChannelListenerBinding
 {
     private readonly object _sync = new object();
-    private readonly MessageBrokerFilterExpressionContext[] _filterExpressionArgs;
-    private readonly Func<MessageBrokerFilterExpressionContext[], bool>? _filterExpressionDelegate;
+    private readonly MessageBrokerFilterExpressionContext[] _filterPredicateArgs;
+    private readonly Func<MessageBrokerFilterExpressionContext[], bool>? _filterPredicate;
     private InterlockedInt32 _prefetchCounter;
     private InterlockedInt32 _deadLetterCounter;
     private MessageBrokerChannelListenerBindingState _state;
@@ -67,8 +67,8 @@ public sealed class MessageBrokerChannelListenerBinding
         MinAckTimeout = minAckTimeout;
         DeadLetterCapacityHint = deadLetterCapacityHint;
         MinDeadLetterRetention = minDeadLetterRetention;
-        _filterExpressionArgs = filterExpression is not null ? [ default ] : Array.Empty<MessageBrokerFilterExpressionContext>();
-        _filterExpressionDelegate = filterExpressionDelegate?.Delegate;
+        _filterPredicateArgs = filterExpression is not null ? [ default ] : Array.Empty<MessageBrokerFilterExpressionContext>();
+        _filterPredicate = filterExpressionDelegate?.Delegate;
         FilterExpression = filterExpression;
         _prefetchCounter = new InterlockedInt32( 0 );
         _deadLetterCounter = new InterlockedInt32( 0 );
@@ -173,19 +173,19 @@ public sealed class MessageBrokerChannelListenerBinding
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal bool FilterMessage(in StreamMessage message, ulong queueTraceId)
     {
-        Assume.IsNotNull( _filterExpressionDelegate );
+        Assume.IsNotNull( _filterPredicate );
         var context = new MessageBrokerFilterExpressionContext( this, in message );
         MessageBrokerFilterExpressionContext[] args;
         using ( AcquireLock() )
         {
-            Assume.Equals( _filterExpressionArgs[0], default );
-            _filterExpressionArgs[0] = context;
-            args = _filterExpressionArgs;
+            Assume.Equals( _filterPredicateArgs[0], default );
+            _filterPredicateArgs[0] = context;
+            args = _filterPredicateArgs;
         }
 
         try
         {
-            return _filterExpressionDelegate( args );
+            return _filterPredicate( args );
         }
         catch ( Exception exc )
         {
@@ -197,7 +197,7 @@ public sealed class MessageBrokerChannelListenerBinding
         finally
         {
             using ( AcquireLock() )
-                _filterExpressionArgs[0] = default;
+                _filterPredicateArgs[0] = default;
         }
     }
 

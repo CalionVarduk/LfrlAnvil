@@ -431,7 +431,7 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                     "c",
                     true,
                     filterExpression:
-                    "[int64] c.Data.Length + if([int64] c.Listener.Client.Id + [int64] c.Publisher.Client.Id + [int64] c.Id + c.PushedAt.UnixEpochTicks > 0l, 0l, 1l) > 1l" );
+                    "[int64] c.Data.Length + if([int64] c.Listener.Client.Id + [int64] c.Publisher.Client.Id + [int64] c.MessageId + c.PushedAt.UnixEpochTicks > 0l, 0l, 1l) > 1l" );
 
                 c.ReadListenerBoundResponse();
                 c.SendPushMessage( 1, [ 1 ], confirm: false );
@@ -506,7 +506,7 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
             {
                 c.SendBindPublisherRequest( "c" );
                 c.ReadPublisherBoundResponse();
-                c.SendBindListenerRequest( "c", true, filterExpression: "if(c.Data.Length > 0i, throw(), true)" );
+                c.SendBindListenerRequest( "c", true, filterExpression: "if([int32] c.Data[0i] + c.AsMemory().Length + c.AsSpan().Length > 0i, throw(), true)" );
                 c.ReadListenerBoundResponse();
                 c.SendPushMessage( 1, [ 1 ], confirm: false );
                 c.ReadMessageNotification( 1 );
