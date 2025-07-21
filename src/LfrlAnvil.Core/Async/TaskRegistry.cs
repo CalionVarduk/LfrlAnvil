@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2025 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,7 +15,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using LfrlAnvil.Exceptions;
 
@@ -26,7 +27,7 @@ namespace LfrlAnvil.Async;
 /// </summary>
 public sealed class TaskRegistry : IDisposable, IAsyncDisposable
 {
-    private readonly Dictionary<int, Task> _tasks = new Dictionary<int, Task>();
+    private readonly Dictionary<int, MicroCollection<Task>> _tasks = new Dictionary<int, MicroCollection<Task>>();
     private readonly Action<Task> _taskContinuation;
     private InterlockedBoolean _isDisposed = new InterlockedBoolean( false );
 
@@ -38,7 +39,11 @@ public sealed class TaskRegistry : IDisposable, IAsyncDisposable
         _taskContinuation = t =>
         {
             using ( ExclusiveLock.Enter( _tasks ) )
-                _tasks.Remove( t.Id );
+            {
+                ref var entry = ref CollectionsMarshal.GetValueRefOrNullRef( _tasks, t.Id );
+                if ( ! Unsafe.IsNullRef( ref entry ) && entry.Remove( t ) && entry.Count == 0 )
+                    _tasks.Remove( t.Id );
+            }
         };
     }
 
@@ -50,7 +55,13 @@ public sealed class TaskRegistry : IDisposable, IAsyncDisposable
         get
         {
             using ( ExclusiveLock.Enter( _tasks ) )
-                return _tasks.Count;
+            {
+                var result = 0;
+                foreach ( var (_, e) in _tasks )
+                    result += e.Count;
+
+                return result;
+            }
         }
     }
 
@@ -79,7 +90,7 @@ public sealed class TaskRegistry : IDisposable, IAsyncDisposable
 
         try
         {
-            await task;
+            await task.ConfigureAwait( false );
         }
         catch ( TaskCanceledException )
         {
@@ -94,7 +105,10 @@ public sealed class TaskRegistry : IDisposable, IAsyncDisposable
     /// </summary>
     /// <param name="task"><see cref="Task"/> to register.</param>
     /// <exception cref="ObjectDisposedException">When this registry has been disposed.</exception>
-    /// <exception cref="ArgumentException">When <see cref="TaskStatus"/> of <paramref name="task"/> is equal to <b>Created</b>.</exception>
+    /// <exception cref="ArgumentException">
+    /// When <see cref="TaskStatus"/> of <paramref name="task"/> is equal to <b>Created</b>
+    /// or when <paramref name="task"/> has already been registered.
+    /// </exception>
     /// <remarks>
     /// Task continuation that is responsible for removing provided <paramref name="task"/> from this registry once it gets completed
     /// is created with the <see cref="TaskContinuationOptions.ExecuteSynchronously"/> option.
@@ -103,15 +117,20 @@ public sealed class TaskRegistry : IDisposable, IAsyncDisposable
     {
         using ( ExclusiveLock.Enter( _tasks ) )
         {
-            if ( _isDisposed.Value )
-                ExceptionThrower.Throw( new ObjectDisposedException( null, ExceptionResources.TaskRegistryIsDisposed ) );
-
+            ObjectDisposedException.ThrowIf( _isDisposed.Value, this );
             if ( task.IsCompleted )
                 return;
 
             Ensure.NotEquals( task.Status, TaskStatus.Created, EqualityComparer<TaskStatus>.Default );
 
-            _tasks.Add( task.Id, task );
+            ref var entry = ref CollectionsMarshal.GetValueRefOrAddDefault( _tasks, task.Id, out var exists );
+            if ( ! exists )
+                entry = MicroCollection<Task>.Create();
+            else if ( entry.IndexOf( task ) >= 0 )
+                ExceptionThrower.Throw(
+                    new ArgumentException( ExceptionResources.TaskRegistryAlreadyContainsProvidedTask, nameof( task ) ) );
+
+            entry.Add( task );
             task.ContinueWith( _taskContinuation, TaskContinuationOptions.ExecuteSynchronously );
         }
     }
@@ -125,7 +144,7 @@ public sealed class TaskRegistry : IDisposable, IAsyncDisposable
     public bool Contains(Task task)
     {
         using ( ExclusiveLock.Enter( _tasks ) )
-            return _tasks.ContainsKey( task.Id );
+            return _tasks.TryGetValue( task.Id, out var entry ) && entry.IndexOf( task ) >= 0;
     }
 
     /// <summary>
@@ -140,6 +159,18 @@ public sealed class TaskRegistry : IDisposable, IAsyncDisposable
     public Task WaitForAll()
     {
         using ( ExclusiveLock.Enter( _tasks ) )
-            return Task.WhenAll( _tasks.Values.ToArray() );
+        {
+            if ( _tasks.Count == 0 )
+                return Task.CompletedTask;
+
+            var tasks = new List<Task>( capacity: _tasks.Count );
+            foreach ( var (_, e) in _tasks )
+            {
+                foreach ( var t in e )
+                    tasks.Add( t );
+            }
+
+            return Task.WhenAll( tasks );
+        }
     }
 }

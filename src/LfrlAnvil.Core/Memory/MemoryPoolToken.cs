@@ -114,7 +114,8 @@ public readonly struct MemoryPoolToken<T> : IDisposable
     /// </param>
     /// <exception cref="ArgumentOutOfRangeException">When <paramref name="length"/> is less than or equal to <b>0</b>.</exception>
     /// <remarks>
-    /// When new <paramref name="length"/> is less than the current length, then elements at the end of the buffer will be discarded.
+    /// When new <paramref name="length"/> is less than the current length, then elements at the end of the buffer will be discarded,
+    /// unless <paramref name="trimStart"/> is equal to <b>true</b>, in which case elements at the start of the buffer will be discarded.
     /// Additionally, the <see cref="Clear"/> value will determine whether or not discarded elements will be cleared.
     /// </remarks>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

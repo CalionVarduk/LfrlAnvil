@@ -30,6 +30,8 @@ MessageBroker:
 
 - refactor packet read/write & payload error emitting? there's a lot of copy-pasta (wait for packet batching)
 - add some basic memory pool tracking & possibility to trim excess
+- change protocol parse methods to not assume exact buffer length (change to gte)
+  - parse calls shouldn't have to slice buffers to an exact length as well
 - message routing: check actual practical target limit
     - each id takes exactly 5 bytes
     - each valid name takes at least 3 bytes
@@ -47,6 +49,13 @@ Reactive:
 Core:
 
 - add async reader/writer lock
+
+Computable.Expressions:
+
+- add block expressions
+- they can have their own local variables and delegates (and macros? or should macros be global?)
+- starts with { and ends with }
+- returns last statement
 
 ### Terminal
 

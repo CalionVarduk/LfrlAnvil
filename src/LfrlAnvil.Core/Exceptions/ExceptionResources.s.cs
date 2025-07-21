@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2025 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public static class ExceptionResources
     internal const string LazyDisposableCannotAssign = "Lazy disposable cannot assign an inner disposable.";
     internal const string ChainHasAlreadyBeenExtended = "Chain has already been extended.";
     internal const string MeasurableHasAlreadyBeenInvoked = "Measurable has already been invoked.";
-    internal const string TaskRegistryIsDisposed = "Task registry is disposed.";
+    internal const string TaskRegistryAlreadyContainsProvidedTask = "Task registry already contains provided task.";
 
     internal const string ChainCannotBeExtendedBecauseItIsAttachedToAnotherChain =
         "Chain cannot be extended because it is attached to another chain.";

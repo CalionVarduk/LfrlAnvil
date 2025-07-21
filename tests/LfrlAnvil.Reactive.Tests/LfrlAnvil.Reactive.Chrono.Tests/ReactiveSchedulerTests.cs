@@ -929,6 +929,7 @@ public class ReactiveSchedulerTests : TestsBase
         var sut = new ReactiveScheduler<string>( timestamps );
 
         var scheduler = _ = Task.Factory.StartNew( () => sut.Start(), TaskCreationOptions.LongRunning );
+        await Task.Delay( 15 );
 
         Exception? exception = null;
         try

@@ -96,6 +96,18 @@ public class TaskRegistryTests : TestsBase
     }
 
     [Fact]
+    public void Add_ShouldThrowArgumentException_WhenTaskAlreadyExistsInRegistry()
+    {
+        var taskSource = new TaskCompletionSource();
+        var sut = new TaskRegistry();
+        sut.Add( taskSource.Task );
+
+        var action = Lambda.Of( () => sut.Add( taskSource.Task ) );
+
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
+    }
+
+    [Fact]
     public void TaskSuccessfulCompletion_ShouldRemoveTaskFromRegistry()
     {
         var taskSource = new TaskCompletionSource();
