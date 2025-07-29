@@ -55,6 +55,21 @@ internal ref struct BinaryContractReader
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal ushort ReadInt16()
+    {
+        return Unsafe.ReadUnaligned<ushort>( ref _first );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal ushort MoveReadInt16()
+    {
+        var result = ReadInt16();
+        Move( sizeof( ushort ) );
+        return result;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal uint ReadInt32()
     {
         return Unsafe.ReadUnaligned<uint>( ref _first );

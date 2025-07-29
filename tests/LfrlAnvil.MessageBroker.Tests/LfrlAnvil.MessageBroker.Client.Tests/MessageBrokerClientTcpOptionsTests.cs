@@ -3,12 +3,12 @@ using LfrlAnvil.Diagnostics;
 
 namespace LfrlAnvil.MessageBroker.Client.Tests;
 
-public class MessageBrokerTcpClientOptionsTests : TestsBase
+public class MessageBrokerClientTcpOptionsTests : TestsBase
 {
     [Fact]
     public void Default_ShouldReturnCorrectResult()
     {
-        var sut = MessageBrokerTcpClientOptions.Default;
+        var sut = MessageBrokerClientTcpOptions.Default;
         Assertion.All(
                 sut.LocalEndPoint.TestNull(),
                 sut.NoDelay.TestNull(),
@@ -20,7 +20,7 @@ public class MessageBrokerTcpClientOptionsTests : TestsBase
     public void SetLocalEndPoint_ShouldChangeValue()
     {
         var value = new IPEndPoint( IPAddress.Loopback, 12345 );
-        var sut = MessageBrokerTcpClientOptions.Default;
+        var sut = MessageBrokerClientTcpOptions.Default;
 
         var result = sut.SetLocalEndPoint( value );
 
@@ -35,7 +35,7 @@ public class MessageBrokerTcpClientOptionsTests : TestsBase
     public void SetNoDelay_ShouldChangeValue()
     {
         var value = true;
-        var sut = MessageBrokerTcpClientOptions.Default;
+        var sut = MessageBrokerClientTcpOptions.Default;
 
         var result = sut.SetNoDelay( value );
 
@@ -50,7 +50,7 @@ public class MessageBrokerTcpClientOptionsTests : TestsBase
     public void SetSocketBufferSize_ShouldChangeValue()
     {
         var value = MemorySize.FromKilobytes( 16 );
-        var sut = MessageBrokerTcpClientOptions.Default;
+        var sut = MessageBrokerClientTcpOptions.Default;
 
         var result = sut.SetSocketBufferSize( value );
 

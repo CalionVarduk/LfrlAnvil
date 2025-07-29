@@ -216,7 +216,7 @@ public sealed partial class MessageBrokerRemoteClient
         {
             if ( exc is OperationCanceledException cancelExc && cancelExc.CancellationToken == timeoutToken )
             {
-                var timeoutException = new MessageBrokerRemoteClientRequestTimeoutException( this );
+                var timeoutException = this.RequestTimeoutException();
                 if ( Logger.Error is { } error )
                     error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, timeoutException ) );
 
@@ -234,20 +234,23 @@ public sealed partial class MessageBrokerRemoteClient
         if ( header.GetServerEndpoint() != MessageBrokerServerEndpoint.HandshakeRequest )
             return HandleUnexpectedEndpoint( header, traceId );
 
-        var exception = Protocol.AssertMinPayload( this, header, Protocol.HandshakeRequestHeader.Length );
+        var packetLength = header.AssertPacketLength( this, Defaults.Memory.DefaultNetworkPacketLength );
+        if ( packetLength.Exception is not null )
+            return EmitError( packetLength.Exception, traceId );
+
+        var exception = header.AssertMinPayload( this, Protocol.HandshakeRequestHeader.Length );
         if ( exception is not null )
             return EmitError( exception, traceId );
 
-        var packetLength = unchecked( ( int )header.Payload );
         Protocol.HandshakeAcceptedResponse acceptedResponse;
         bool isClientLittleEndian;
         Result<string> name;
         try
         {
-            if ( packetLength > buffer.Length )
-                poolToken.SetLength( packetLength, out buffer );
+            if ( packetLength.Value > buffer.Length )
+                poolToken.IncreaseLength( packetLength.Value, out buffer );
 
-            var data = buffer.Slice( 0, packetLength );
+            var data = buffer.Slice( 0, packetLength.Value );
             await _stream.ReadExactlyAsync( data, timeoutToken ).ConfigureAwait( false );
             var handshakeHeader = Protocol.HandshakeRequestHeader.Parse( data.Slice( 0, Protocol.HandshakeRequestHeader.Length ) );
 
@@ -255,12 +258,7 @@ public sealed partial class MessageBrokerRemoteClient
             name = TextEncoding.Parse( data.Slice( Protocol.HandshakeRequestHeader.Length ) );
             if ( name.Exception is not null )
             {
-                var result = new ReadHandshakeResult(
-                    Buffer: buffer,
-                    RejectedResponse: new Protocol.HandshakeRejectedResponse(
-                        Protocol.HandshakeRejectedResponse.Reasons.NameDecodingFailure ),
-                    IsClientLittleEndian: isClientLittleEndian );
-
+                var result = new ReadHandshakeResult( Buffer: buffer, RejectedResponse: null, IsClientLittleEndian: isClientLittleEndian );
                 if ( Logger.Error is { } error )
                     error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, name.Exception ) );
 
@@ -270,7 +268,7 @@ public sealed partial class MessageBrokerRemoteClient
             Assume.IsNotNull( name.Value );
             if ( ! Defaults.NameLengthBounds.Contains( name.Value.Length ) )
             {
-                var exc = Protocol.InvalidNameLengthException( this, header, name.Value.Length );
+                var exc = this.ProtocolException( header, Resources.InvalidNameLength( name.Value.Length ) );
                 var result = new ReadHandshakeResult(
                     Buffer: buffer,
                     RejectedResponse: new Protocol.HandshakeRejectedResponse(
@@ -291,6 +289,8 @@ public sealed partial class MessageBrokerRemoteClient
                         name.Value,
                         handshakeHeader.MessageTimeout,
                         handshakeHeader.PingInterval,
+                        handshakeHeader.MaxBatchPacketCount,
+                        handshakeHeader.MaxNetworkBatchPacketLength,
                         handshakeHeader.SynchronizeExternalObjectNames,
                         isClientLittleEndian ) );
 
@@ -304,6 +304,16 @@ public sealed partial class MessageBrokerRemoteClient
                 IsLittleEndian = isClientLittleEndian;
                 MessageTimeout = Server.AcceptableMessageTimeout.Clamp( handshakeHeader.MessageTimeout );
                 PingInterval = Server.AcceptablePingInterval.Clamp( handshakeHeader.PingInterval );
+                MaxBatchPacketCount = Server.AcceptableMaxBatchPacketCount.Clamp( handshakeHeader.MaxBatchPacketCount );
+                if ( MaxBatchPacketCount == 1 )
+                    MaxBatchPacketCount = 0;
+
+                MaxNetworkBatchPacketBytes = MaxBatchPacketCount > 0
+                    ? unchecked( ( int )Server.AcceptableMaxNetworkBatchPacketLength
+                        .Clamp( handshakeHeader.MaxNetworkBatchPacketLength )
+                        .Bytes )
+                    : 0;
+
                 SynchronizeExternalObjectNames = handshakeHeader.SynchronizeExternalObjectNames;
                 MaxReadTimeout = MessageTimeout + PingInterval;
                 acceptedResponse = new Protocol.HandshakeAcceptedResponse( this );
@@ -313,7 +323,7 @@ public sealed partial class MessageBrokerRemoteClient
         {
             if ( exc is OperationCanceledException cancelExc && cancelExc.CancellationToken == timeoutToken )
             {
-                var timeoutException = new MessageBrokerRemoteClientRequestTimeoutException( this );
+                var timeoutException = this.RequestTimeoutException();
                 if ( Logger.Error is { } error )
                     error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, timeoutException ) );
 
@@ -330,7 +340,7 @@ public sealed partial class MessageBrokerRemoteClient
 
         if ( ! registration.Value )
         {
-            var exc = new MessageBrokerServerException( Server, Resources.DuplicateClientName( name.Value ) );
+            var exc = Server.Exception( Resources.DuplicateClientName( name.Value ) );
             var result = new ReadHandshakeResult(
                 Buffer: buffer,
                 RejectedResponse: new Protocol.HandshakeRejectedResponse( Protocol.HandshakeRejectedResponse.Reasons.NameAlreadyExists ),
@@ -415,7 +425,7 @@ public sealed partial class MessageBrokerRemoteClient
         {
             if ( exc is OperationCanceledException cancelExc && cancelExc.CancellationToken == timeoutToken )
             {
-                var exception = new MessageBrokerRemoteClientRequestTimeoutException( this );
+                var exception = this.RequestTimeoutException();
                 if ( Logger.Error is { } error )
                     error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exception ) );
 
@@ -434,7 +444,7 @@ public sealed partial class MessageBrokerRemoteClient
             return HandleUnexpectedEndpoint( header, traceId );
 
         if ( header.Payload != Protocol.Endianness.VerificationPayload )
-            return EmitError( Protocol.EndiannessPayloadException( this, header ), traceId );
+            return EmitError( this.ProtocolException( header, Resources.InvalidEndiannessPayload( header.Payload ) ), traceId );
 
         readPacket?.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( this, traceId, header ) );
         if ( Logger.HandshakeEstablished is { } handshakeEstablished )

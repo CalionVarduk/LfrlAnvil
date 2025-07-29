@@ -24,10 +24,15 @@ namespace LfrlAnvil.MessageBroker.Client.Events;
 /// </summary>
 public readonly struct MessageBrokerClientAwaitPacketEvent
 {
-    private MessageBrokerClientAwaitPacketEvent(MessageBrokerClient client, MessageBrokerClientReadPacket? packet, Exception? exception)
+    private MessageBrokerClientAwaitPacketEvent(
+        MessageBrokerClient client,
+        MessageBrokerClientReadPacket? packet,
+        int packetCount,
+        Exception? exception)
     {
         Client = client;
         Packet = packet;
+        PacketCount = packetCount;
         Exception = exception;
     }
 
@@ -40,6 +45,11 @@ public readonly struct MessageBrokerClientAwaitPacketEvent
     /// Incoming network packet.
     /// </summary>
     public MessageBrokerClientReadPacket? Packet { get; }
+
+    /// <summary>
+    /// Number of received packets.
+    /// </summary>
+    public int PacketCount { get; }
 
     /// <summary>
     /// Encountered error.
@@ -55,7 +65,8 @@ public readonly struct MessageBrokerClientAwaitPacketEvent
     {
         var client = Client.Id == 0 ? $"'{Client.Name}'" : $"[{Client.Id}] '{Client.Name}'";
         var packet = Packet is not null ? $", Packet = ({Packet.Value})" : string.Empty;
-        var result = $"[AwaitPacket] Client = {client}{packet}";
+        var packetCount = PacketCount > 1 ? $", PacketCount = {PacketCount}" : string.Empty;
+        var result = $"[AwaitPacket] Client = {client}{packet}{packetCount}";
         return Exception is null ? result : $"{result}{Environment.NewLine}{Exception}";
     }
 
@@ -63,7 +74,7 @@ public readonly struct MessageBrokerClientAwaitPacketEvent
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerClientAwaitPacketEvent Create(MessageBrokerClient client, Exception? exception = null)
     {
-        return new MessageBrokerClientAwaitPacketEvent( client, null, exception );
+        return new MessageBrokerClientAwaitPacketEvent( client, null, 0, exception );
     }
 
     [Pure]
@@ -71,8 +82,9 @@ public readonly struct MessageBrokerClientAwaitPacketEvent
     internal static MessageBrokerClientAwaitPacketEvent Create(
         MessageBrokerClient client,
         Protocol.PacketHeader header,
+        int packetCount = 1,
         Exception? exception = null)
     {
-        return new MessageBrokerClientAwaitPacketEvent( client, MessageBrokerClientReadPacket.Create( header ), exception );
+        return new MessageBrokerClientAwaitPacketEvent( client, MessageBrokerClientReadPacket.Create( header ), packetCount, exception );
     }
 }

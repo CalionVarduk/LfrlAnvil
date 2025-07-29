@@ -90,6 +90,24 @@ public class DefaultsSynchronizationTests : TestsBase
     }
 
     [Fact]
+    public void MaxNetworkPacketLengthBounds()
+    {
+        var client = Defaults.Memory.MaxNetworkPacketLengthBounds;
+        var server = Server.Internal.Defaults.Memory.MaxNetworkPacketLengthBounds;
+        client.TestEquals( server ).Go();
+    }
+
+    [Fact]
+    public void MaxNetworkLargePacketLengthBounds()
+    {
+        var client = Defaults.Memory.MaxNetworkLargePacketLengthBounds;
+        var server = Server.Internal.Defaults.Memory.MaxNetworkPacketLengthBounds.SetMax(
+            Server.Internal.Defaults.Memory.MaxNetworkLargePacketLength );
+
+        client.TestEquals( server ).Go();
+    }
+
+    [Fact]
     public void EndiannessVerificationPayload()
     {
         var client = Protocol.Endianness.VerificationPayload;

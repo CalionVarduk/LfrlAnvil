@@ -191,7 +191,7 @@ public sealed class MessageBrokerStream
             {
                 if ( Logger.Error is { } error )
                 {
-                    var exc = new MessageBrokerStreamException( this, Resources.NotBoundAsPublisher( this, client, channel ) );
+                    var exc = this.Exception( Resources.NotBoundAsPublisher( this, client, channel ) );
                     error.Emit( MessageBrokerStreamErrorEvent.Create( this, traceId, exc ) );
                 }
 
@@ -251,7 +251,7 @@ public sealed class MessageBrokerStream
 
             if ( discardedMessageCount > 0 && error is not null )
             {
-                var exc = new MessageBrokerStreamException( this, Resources.StreamMessagesDiscarded( discardedMessageCount ) );
+                var exc = this.Exception( Resources.StreamMessagesDiscarded( discardedMessageCount ) );
                 error.Emit( MessageBrokerStreamErrorEvent.Create( this, traceId, exc ) );
             }
 
@@ -340,7 +340,7 @@ public sealed class MessageBrokerStream
         }
 
         @lock.Dispose();
-        exception = new MessageBrokerStreamDisposedException( this );
+        exception = this.DisposedException();
         if ( Logger.Error is { } error )
             error.Emit( MessageBrokerStreamErrorEvent.Create( this, traceId, exception ) );
 

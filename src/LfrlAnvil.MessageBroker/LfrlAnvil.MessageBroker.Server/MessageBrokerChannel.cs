@@ -153,7 +153,7 @@ public sealed class MessageBrokerChannel
             {
                 if ( Logger.Error is { } error )
                 {
-                    var exc = new MessageBrokerChannelException( this, Resources.NotBoundAsPublisher( this, client ) );
+                    var exc = this.Exception( Resources.NotBoundAsPublisher( this, client ) );
                     error.Emit( MessageBrokerChannelErrorEvent.Create( this, traceId, exc ) );
                 }
 
@@ -204,7 +204,7 @@ public sealed class MessageBrokerChannel
             {
                 if ( Logger.Error is { } error )
                 {
-                    var exc = new MessageBrokerChannelException( this, Resources.NotBoundAsListener( this, client ) );
+                    var exc = this.Exception( Resources.NotBoundAsListener( this, client ) );
                     error.Emit( MessageBrokerChannelErrorEvent.Create( this, traceId, exc ) );
                 }
 
@@ -289,7 +289,7 @@ public sealed class MessageBrokerChannel
         }
 
         @lock.Dispose();
-        exception = new MessageBrokerChannelDisposedException( this );
+        exception = this.DisposedException();
         if ( Logger.Error is { } error )
             error.Emit( MessageBrokerChannelErrorEvent.Create( this, traceId, exception ) );
 

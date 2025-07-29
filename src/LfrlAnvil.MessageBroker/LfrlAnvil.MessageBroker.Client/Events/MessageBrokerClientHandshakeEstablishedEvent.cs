@@ -39,8 +39,12 @@ public readonly struct MessageBrokerClientHandshakeEstablishedEvent
     [Pure]
     public override string ToString()
     {
+        var batchPacket = Source.Client.MaxBatchPacketCount > 0
+            ? $"(MaxPacketCount = {Source.Client.MaxBatchPacketCount}, MaxLength = {Source.Client.MaxNetworkBatchPacketLength})"
+            : "<disabled>";
+
         return
-            $"[HandshakeEstablished] {Source}, MessageTimeout = {Source.Client.MessageTimeout}, PingInterval = {Source.Client.PingInterval}, IsServerLittleEndian = {Source.Client.IsServerLittleEndian}";
+            $"[HandshakeEstablished] {Source}, MessageTimeout = {Source.Client.MessageTimeout}, PingInterval = {Source.Client.PingInterval}, MaxNetworkPacketLength = {Source.Client.MaxNetworkPacketLength}, MaxNetworkMessagePacketLength = {Source.Client.MaxNetworkMessagePacketLength}, BatchPacket = {batchPacket}, IsServerLittleEndian = {Source.Client.IsServerLittleEndian}";
     }
 
     [Pure]

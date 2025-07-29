@@ -372,11 +372,7 @@ public sealed class MessageBrokerListener
 
         if ( discardedMessageCount > 0 )
         {
-            var exc = new MessageBrokerClientMessageException(
-                Client,
-                this,
-                Resources.MessagesDiscarded( ChannelId, ChannelName, discardedMessageCount ) );
-
+            var exc = Client.MessageException( this, Resources.MessagesDiscarded( ChannelId, ChannelName, discardedMessageCount ) );
             error?.Emit( MessageBrokerClientErrorEvent.Create( Client, traceId, exc ) );
         }
 

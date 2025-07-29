@@ -114,6 +114,35 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string BatchPacketCountIsInvalid(int received, int max)
+    {
+        return $"Expected batch packet count to be in [2, {max}] range but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string BatchPacketElementHeaderIsTooShort(int index, int remaining)
+    {
+        return
+            $"Expected length of the packet at index {index} in batch to be greater than or equal to {Protocol.PacketHeader.Length} but found {remaining}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string BatchPacketElementPayloadIsTooLarge(int index, int payload, int remaining)
+    {
+        return $"Expected payload of the packet at index {index} in batch to be less than or equal to {remaining} but found {payload}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string BatchPacketContainsTooMuchData(int remaining)
+    {
+        return $"Expected an end of the batch packet but found {remaining} remaining byte(s).";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string InvalidHeaderPayload(uint actual, uint expected)
     {
         return $"Expected header payload to be {expected} but found {actual}.";
@@ -408,9 +437,10 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string UnexpectedPacketLength(int length)
+    internal static string UnexpectedPacketLength(int length, int expectedMax)
     {
-        return $"Expected packet length to be in [0, {int.MaxValue}] range but found {length}.";
+        return
+            $"Expected total packet length to be in [{Protocol.PacketHeader.Length}, {expectedMax}] range but found {( long )length + Protocol.PacketHeader.Length}.";
     }
 
     [Pure]

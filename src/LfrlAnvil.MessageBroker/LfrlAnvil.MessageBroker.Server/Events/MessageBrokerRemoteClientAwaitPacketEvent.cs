@@ -28,10 +28,12 @@ public readonly struct MessageBrokerRemoteClientAwaitPacketEvent
     private MessageBrokerRemoteClientAwaitPacketEvent(
         MessageBrokerRemoteClient client,
         MessageBrokerRemoteClientReadPacket? packet,
+        int packetCount,
         Exception? exception)
     {
         Client = client;
         Packet = packet;
+        PacketCount = packetCount;
         Exception = exception;
     }
 
@@ -44,6 +46,11 @@ public readonly struct MessageBrokerRemoteClientAwaitPacketEvent
     /// Incoming network packet.
     /// </summary>
     public MessageBrokerRemoteClientReadPacket? Packet { get; }
+
+    /// <summary>
+    /// Number of received packets.
+    /// </summary>
+    public int PacketCount { get; }
 
     /// <summary>
     /// Encountered error.
@@ -59,7 +66,8 @@ public readonly struct MessageBrokerRemoteClientAwaitPacketEvent
     {
         var client = Client.Name.Length == 0 ? $"[{Client.Id}]" : $"[{Client.Id}] '{Client.Name}'";
         var packet = Packet is not null ? $", Packet = ({Packet.Value})" : string.Empty;
-        var result = $"[AwaitPacket] Client = {client}{packet}";
+        var packetCount = PacketCount > 1 ? $", PacketCount = {PacketCount}" : string.Empty;
+        var result = $"[AwaitPacket] Client = {client}{packet}{packetCount}";
         return Exception is null ? result : $"{result}{Environment.NewLine}{Exception}";
     }
 
@@ -67,7 +75,7 @@ public readonly struct MessageBrokerRemoteClientAwaitPacketEvent
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerRemoteClientAwaitPacketEvent Create(MessageBrokerRemoteClient client, Exception? exception = null)
     {
-        return new MessageBrokerRemoteClientAwaitPacketEvent( client, null, exception );
+        return new MessageBrokerRemoteClientAwaitPacketEvent( client, null, 0, exception );
     }
 
     [Pure]
@@ -75,8 +83,13 @@ public readonly struct MessageBrokerRemoteClientAwaitPacketEvent
     internal static MessageBrokerRemoteClientAwaitPacketEvent Create(
         MessageBrokerRemoteClient client,
         Protocol.PacketHeader header,
+        int packetCount = 1,
         Exception? exception = null)
     {
-        return new MessageBrokerRemoteClientAwaitPacketEvent( client, MessageBrokerRemoteClientReadPacket.Create( header ), exception );
+        return new MessageBrokerRemoteClientAwaitPacketEvent(
+            client,
+            MessageBrokerRemoteClientReadPacket.Create( header ),
+            packetCount,
+            exception );
     }
 }

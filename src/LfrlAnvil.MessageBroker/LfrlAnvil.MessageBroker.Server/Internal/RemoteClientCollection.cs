@@ -17,7 +17,6 @@ using System.Diagnostics.Contracts;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using LfrlAnvil.Diagnostics;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.MessageBroker.Server.Events;
 
@@ -28,20 +27,18 @@ internal struct RemoteClientCollection
     private ObjectStore<MessageBrokerRemoteClient> _store;
     private readonly int _tcpSocketBufferSize;
     private readonly bool _tcpNoDelay;
-    private readonly int _minMemoryPoolSegmentLength;
 
-    private RemoteClientCollection(MessageBrokerTcpServerOptions options, MemorySize? minMemoryPoolSegmentLength)
+    private RemoteClientCollection(MessageBrokerServerTcpOptions options)
     {
         _store = ObjectStore<MessageBrokerRemoteClient>.Create( StringComparer.OrdinalIgnoreCase );
         _tcpSocketBufferSize = Defaults.Tcp.GetActualSocketBufferSize( options.SocketBufferSize );
         _tcpNoDelay = options.NoDelay ?? Defaults.Tcp.NoDelay;
-        _minMemoryPoolSegmentLength = Defaults.Memory.GetActualMinSegmentLength( minMemoryPoolSegmentLength );
     }
 
     [Pure]
-    internal static RemoteClientCollection Create(MessageBrokerTcpServerOptions options, MemorySize? minMemoryPoolSegmentLength)
+    internal static RemoteClientCollection Create(MessageBrokerServerTcpOptions options)
     {
-        return new RemoteClientCollection( options, minMemoryPoolSegmentLength );
+        return new RemoteClientCollection( options );
     }
 
     [Pure]
@@ -95,11 +92,7 @@ internal struct RemoteClientCollection
                 {
                     client = token.SetObject(
                         ref server.RemoteClientCollection._store,
-                        new MessageBrokerRemoteClient(
-                            token.Id,
-                            server,
-                            tcp,
-                            server.RemoteClientCollection._minMemoryPoolSegmentLength ) );
+                        new MessageBrokerRemoteClient( token.Id, server, tcp ) );
                 }
                 catch
                 {

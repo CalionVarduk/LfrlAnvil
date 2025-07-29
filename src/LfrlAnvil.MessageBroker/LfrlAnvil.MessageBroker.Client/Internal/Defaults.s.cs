@@ -39,7 +39,7 @@ internal static class Defaults
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal static TcpClient CreateClient(MessageBrokerTcpClientOptions options)
+        internal static TcpClient CreateClient(MessageBrokerClientTcpOptions options)
         {
             var actualSocketBufferSize = options.SocketBufferSize is not null
                 ? SocketBufferSizeBounds.Clamp( options.SocketBufferSize.Value )
@@ -86,9 +86,24 @@ internal static class Defaults
 
     internal static class Memory
     {
+        internal static Bounds<MemorySize> MaxNetworkPacketLengthBounds => Bounds.Create(
+            MemorySize.FromKilobytes( 16 ),
+            MemorySize.FromMegabytes( 1 ) );
+
+        internal static Bounds<MemorySize> MaxNetworkLargePacketLengthBounds => Bounds.Create(
+            MemorySize.FromKilobytes( 16 ),
+            MemorySize.FromGigabytes( 1 ) );
+
         private static Bounds<MemorySize> PoolSegmentLengthBounds => Bounds.Create(
             MemorySize.FromKilobytes( 16 ),
             MemorySize.FromBytes( int.MaxValue ) );
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static Bounds<MemorySize> GetNetworkLargePacketLengthBounds(MemorySize min)
+        {
+            return Bounds.Create( MaxNetworkPacketLengthBounds.Clamp( min ), MemorySize.FromGigabytes( 1 ) );
+        }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -99,6 +114,22 @@ internal static class Defaults
                 : PoolSegmentLengthBounds.Min;
 
             return new MemoryPool<byte>( unchecked( ( int )actualMinSegmentLength.Bytes ) );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static short GetActualMaxBatchPacketCount(short? value)
+        {
+            var result = value?.Max( ( short )0 ) ?? 0;
+            return result > 1 ? result : ( short )0;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static int GetActualMaxNetworkBatchPacketLength(MemorySize? value)
+        {
+            var result = value is not null ? MaxNetworkLargePacketLengthBounds.Clamp( value.Value ) : MaxNetworkLargePacketLengthBounds.Min;
+            return unchecked( ( int )result.Bytes );
         }
 
         [Pure]

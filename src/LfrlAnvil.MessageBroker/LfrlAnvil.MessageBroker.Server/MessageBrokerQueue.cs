@@ -300,10 +300,7 @@ public sealed class MessageBrokerQueue
 
         if ( ! result.Value && error is not null )
         {
-            var exc = new MessageBrokerQueueException(
-                this,
-                Resources.MessageDataNotFound( message.Publisher.Stream, message.StoreKey ) );
-
+            var exc = this.Exception( Resources.MessageDataNotFound( message.Publisher.Stream, message.StoreKey ) );
             error.Emit( MessageBrokerQueueErrorEvent.Create( this, traceId, exc ) );
         }
 
@@ -402,7 +399,7 @@ public sealed class MessageBrokerQueue
         }
 
         @lock.Dispose();
-        exception = new MessageBrokerQueueDisposedException( this );
+        exception = this.DisposedException();
         if ( Logger.Error is { } error )
             error.Emit( MessageBrokerQueueErrorEvent.Create( this, traceId, exception ) );
 
@@ -458,7 +455,7 @@ public sealed class MessageBrokerQueue
 
             if ( discardedMessageCount > 0 && Logger.Error is { } error )
             {
-                var exc = new MessageBrokerQueueException( this, Resources.QueueMessagesDiscarded( discardedMessageCount ) );
+                var exc = this.Exception( Resources.QueueMessagesDiscarded( discardedMessageCount ) );
                 error.Emit( MessageBrokerQueueErrorEvent.Create( this, traceId, exc ) );
             }
 

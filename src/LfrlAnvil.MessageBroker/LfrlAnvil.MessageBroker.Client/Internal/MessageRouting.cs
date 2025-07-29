@@ -14,6 +14,7 @@
 
 using System;
 using System.Buffers.Binary;
+using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Exceptions;
 using LfrlAnvil.Memory;
@@ -77,6 +78,13 @@ internal struct MessageRouting
         _written = unchecked( _written + sizeof( ushort ) + encodedName.ByteCount );
     }
 
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal int GetRemainingBytes(MessageBrokerClient client)
+    {
+        return unchecked( client.MaxNetworkPacketBytes - _written );
+    }
+
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void Initialize(MemoryPool<byte> pool, int desired, bool clearOnDispose)
     {
@@ -100,6 +108,6 @@ internal struct MessageRouting
             return;
 
         desired = Defaults.Memory.GetRoutingBufferCapacity( checked( _written + desired ) );
-        Token.SetLength( desired, out _buffer );
+        Token.IncreaseLength( desired, out _buffer );
     }
 }

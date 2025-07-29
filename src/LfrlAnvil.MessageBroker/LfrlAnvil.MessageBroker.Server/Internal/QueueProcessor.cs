@@ -247,10 +247,7 @@ internal struct QueueProcessor
 
                         if ( queue.Logger.Error is { } error )
                         {
-                            var exc = new MessageBrokerQueueException(
-                                queue,
-                                Resources.MessageDataNotFound( message.Publisher.Stream, message.StoreKey ) );
-
+                            var exc = queue.Exception( Resources.MessageDataNotFound( message.Publisher.Stream, message.StoreKey ) );
                             error.Emit( MessageBrokerQueueErrorEvent.Create( queue, traceId, exc ) );
                         }
 
@@ -309,11 +306,14 @@ internal struct QueueProcessor
                             streamMessage.PushedAt,
                             streamMessage.Data.Length );
 
-                        poolToken = queue.Client.MemoryPool.Rent(
-                                Protocol.PacketHeader.Length + Protocol.MessageNotificationHeader.Payload + streamMessage.Data.Length,
-                                out var data )
-                            .EnableClearing( streamMessage.PoolToken.Clear );
+                        var totalLength = Protocol.PacketHeader.Length + unchecked( ( int )header.Header.Payload );
+                        Assume.IsLessThanOrEqualTo( totalLength, queue.Client.Server.MaxNetworkMessagePacketLength.Bytes );
 
+                        var memoryPool = totalLength > queue.Client.MemoryPool.SegmentLength
+                            ? queue.Client.Server.MemoryPool
+                            : queue.Client.MemoryPool;
+
+                        poolToken = memoryPool.Rent( totalLength, out var data ).EnableClearing( streamMessage.PoolToken.Clear );
                         header.Serialize( data.Slice( 0, Protocol.PacketHeader.Length + Protocol.MessageNotificationHeader.Payload ) );
                         streamMessage.Data.CopyTo(
                             data.Slice( Protocol.PacketHeader.Length + Protocol.MessageNotificationHeader.Payload ) );
@@ -444,7 +444,7 @@ internal struct QueueProcessor
         }
 
         @lock.Dispose();
-        exception = new MessageBrokerRemoteClientDisposedException( queue.Client );
+        exception = queue.Client.DisposedException();
         if ( queue.Logger.Error is { } error )
             error.Emit( MessageBrokerQueueErrorEvent.Create( queue, traceId, exception ) );
 

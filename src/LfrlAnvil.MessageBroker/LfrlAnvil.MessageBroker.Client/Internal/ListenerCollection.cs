@@ -216,7 +216,7 @@ internal struct ListenerCollection
                     if ( response.Type == IncomingPacketToken.Result.Disposed )
                         return client.EmitError( client.DisposedException(), traceId );
 
-                    var exception = new MessageBrokerClientResponseTimeoutException( client, request.Header.GetServerEndpoint() );
+                    var exception = client.ResponseTimeoutException( request.Header );
                     if ( client.Logger.Error is { } error )
                         error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
 
@@ -239,7 +239,7 @@ internal struct ListenerCollection
                         var readPacket = client.Logger.ReadPacket;
                         readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header ) );
 
-                        var exception = Protocol.AssertPayload( client, response.Header, Protocol.ListenerBoundResponse.Length );
+                        var exception = response.Header.AssertExactPayload( client, Protocol.ListenerBoundResponse.Length );
                         if ( exception is not null )
                         {
                             if ( client.Logger.Error is { } error )
@@ -254,7 +254,7 @@ internal struct ListenerCollection
 
                         if ( errors.Count > 0 )
                         {
-                            var error = client.EmitError( Protocol.ProtocolException( client, response.Header, errors ), traceId );
+                            var error = client.EmitError( client.ProtocolException( response.Header, errors ), traceId );
                             await client.DisposeAsync( traceId ).ConfigureAwait( false );
                             return error;
                         }
@@ -304,7 +304,7 @@ internal struct ListenerCollection
                         var readPacket = client.Logger.ReadPacket;
                         readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header ) );
 
-                        var exception = Protocol.AssertPayload( client, response.Header, Protocol.BindListenerFailureResponse.Length );
+                        var exception = response.Header.AssertExactPayload( client, Protocol.BindListenerFailureResponse.Length );
                         if ( exception is not null )
                         {
                             if ( client.Logger.Error is { } error )
@@ -318,7 +318,7 @@ internal struct ListenerCollection
                         readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header ) );
 
                         return client.EmitError(
-                            Protocol.RequestException( client, request.Header, parsedResponse.StringifyErrors( channelName ) ),
+                            client.RequestException( request.Header, parsedResponse.StringifyErrors( channelName ) ),
                             traceId );
                     }
                     default:
@@ -438,7 +438,7 @@ internal struct ListenerCollection
                         if ( response.Type == IncomingPacketToken.Result.Disposed )
                             return client.EmitError( client.DisposedException(), traceId );
 
-                        var exception = new MessageBrokerClientResponseTimeoutException( client, request.Header.GetServerEndpoint() );
+                        var exception = client.ResponseTimeoutException( request.Header );
                         if ( client.Logger.Error is { } error )
                             error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
 
@@ -461,7 +461,7 @@ internal struct ListenerCollection
                             var readPacket = client.Logger.ReadPacket;
                             readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header ) );
 
-                            var exception = Protocol.AssertPayload( client, response.Header, Protocol.ListenerUnboundResponse.Length );
+                            var exception = response.Header.AssertExactPayload( client, Protocol.ListenerUnboundResponse.Length );
                             if ( exception is not null )
                             {
                                 if ( client.Logger.Error is { } error )
@@ -497,11 +497,7 @@ internal struct ListenerCollection
                             var readPacket = client.Logger.ReadPacket;
                             readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header ) );
 
-                            var exception = Protocol.AssertPayload(
-                                client,
-                                response.Header,
-                                Protocol.UnbindListenerFailureResponse.Length );
-
+                            var exception = response.Header.AssertExactPayload( client, Protocol.UnbindListenerFailureResponse.Length );
                             if ( exception is not null )
                             {
                                 if ( client.Logger.Error is { } error )
@@ -515,7 +511,7 @@ internal struct ListenerCollection
                             readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header ) );
 
                             return client.EmitError(
-                                Protocol.RequestException( client, request.Header, parsedResponse.StringifyErrors( listener ) ),
+                                client.RequestException( request.Header, parsedResponse.StringifyErrors( listener ) ),
                                 traceId );
                         }
                         default:
@@ -560,8 +556,7 @@ internal struct ListenerCollection
         Ensure.IsInRange( retry, 0, listener.MaxRetries );
         Ensure.IsInRange( redelivery, 0, listener.MaxRedeliveries );
         if ( ! listener.AreAcksEnabled )
-            ExceptionThrower.Throw(
-                new MessageBrokerClientMessageException( listener.Client, listener, Resources.DisabledAcks( listener ) ) );
+            ExceptionThrower.Throw( listener.Client.MessageException( listener, Resources.DisabledAcks( listener ) ) );
 
         ulong traceId;
         bool reverseEndianness;
@@ -689,8 +684,7 @@ internal struct ListenerCollection
         Ensure.IsInRange( retry, 0, listener.MaxRetries );
         Ensure.IsInRange( redelivery, 0, listener.MaxRedeliveries );
         if ( ! listener.AreAcksEnabled )
-            ExceptionThrower.Throw(
-                new MessageBrokerClientMessageException( listener.Client, listener, Resources.DisabledAcks( listener ) ) );
+            ExceptionThrower.Throw( listener.Client.MessageException( listener, Resources.DisabledAcks( listener ) ) );
 
         ulong traceId;
         bool reverseEndianness;

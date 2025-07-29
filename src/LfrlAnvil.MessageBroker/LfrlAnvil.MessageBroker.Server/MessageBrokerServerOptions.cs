@@ -18,7 +18,6 @@ using System.Runtime.CompilerServices;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.Computable.Expressions;
-using LfrlAnvil.Diagnostics;
 using LfrlAnvil.MessageBroker.Server.Events;
 
 namespace LfrlAnvil.MessageBroker.Server;
@@ -27,15 +26,18 @@ namespace LfrlAnvil.MessageBroker.Server;
 /// Represents available <see cref="MessageBrokerServer"/> creation options.
 /// </summary>
 /// <param name="Tcp">Available <see cref="System.Net.Sockets.TcpClient"/> options.</param>
-/// <param name="MinMemoryPoolSegmentLength">
-/// Minimum segment length of an underlying <see cref="LfrlAnvil.Memory.MemoryPool{T}"/>. Equal to <b>16 KB</b> by default.
+/// <param name="NetworkPacket">Available network packet options.</param>
+/// <param name="HandshakeTimeout">
+/// Handshake timeout for newly connected clients. Equal to <b>15 seconds</b> by default. Sub-millisecond components will be trimmed.
+/// Value will be clamped to [<b>1 ms</b>, <b>2147483647 ms</b>] range.
 /// </param>
-/// <param name="HandshakeTimeout">Handshake timeout for newly connected clients. Equal to <b>15 seconds</b> by default.</param>
 /// <param name="AcceptableMessageTimeout">
 /// Range of acceptable send or receive message timeout values. Equal to [<b>1 ms</b>, <b>2147483647 ms</b>] by default.
+/// Sub-millisecond components will be trimmed. Values will be clamped to [<b>1 ms</b>, <b>2147483647 ms</b>] range.
 /// </param>
 /// <param name="AcceptablePingInterval">
 /// Range of acceptable send ping interval values. Equal to [<b>1 ms</b>, <b>24 hours</b>] by default.
+/// Sub-millisecond components will be trimmed. Values will be clamped to [<b>1 ms</b>, <b>24 hours</b>] range.
 /// </param>
 /// <param name="ExpressionFactory">Factory of parsed expressions for listener message filter predicates.</param>
 /// <param name="TimestampsFactory">Factory of <see cref="Timestamp"/> providers.</param>
@@ -47,8 +49,8 @@ namespace LfrlAnvil.MessageBroker.Server;
 /// <param name="QueueLoggerFactory">Factory of <see cref="MessageBrokerQueueLogger"/> instances.</param>
 /// <param name="StreamDecorator"><see cref="MessageBrokerRemoteClientStreamDecorator"/> callback.</param>
 public readonly record struct MessageBrokerServerOptions(
-    MessageBrokerTcpServerOptions Tcp,
-    MemorySize? MinMemoryPoolSegmentLength,
+    MessageBrokerServerTcpOptions Tcp,
+    MessageBrokerServerNetworkPacketOptions NetworkPacket,
     Duration? HandshakeTimeout,
     Bounds<Duration>? AcceptableMessageTimeout,
     Bounds<Duration>? AcceptablePingInterval,
@@ -75,11 +77,11 @@ public readonly record struct MessageBrokerServerOptions(
     /// <returns>New <see cref="MessageBrokerServerOptions"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public MessageBrokerServerOptions SetTcpOptions(MessageBrokerTcpServerOptions value)
+    public MessageBrokerServerOptions SetTcpOptions(MessageBrokerServerTcpOptions value)
     {
         return new MessageBrokerServerOptions(
             value,
-            MinMemoryPoolSegmentLength,
+            NetworkPacket,
             HandshakeTimeout,
             AcceptableMessageTimeout,
             AcceptablePingInterval,
@@ -95,13 +97,13 @@ public readonly record struct MessageBrokerServerOptions(
     }
 
     /// <summary>
-    /// Allows to change <see cref="MinMemoryPoolSegmentLength"/>.
+    /// Allows to change <see cref="NetworkPacket"/>.
     /// </summary>
     /// <param name="value">New value.</param>
     /// <returns>New <see cref="MessageBrokerServerOptions"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public MessageBrokerServerOptions SetMinMemoryPoolSegmentLength(MemorySize? value)
+    public MessageBrokerServerOptions SetNetworkPacketOptions(MessageBrokerServerNetworkPacketOptions value)
     {
         return new MessageBrokerServerOptions(
             Tcp,
@@ -131,7 +133,7 @@ public readonly record struct MessageBrokerServerOptions(
     {
         return new MessageBrokerServerOptions(
             Tcp,
-            MinMemoryPoolSegmentLength,
+            NetworkPacket,
             value,
             AcceptableMessageTimeout,
             AcceptablePingInterval,
@@ -157,7 +159,7 @@ public readonly record struct MessageBrokerServerOptions(
     {
         return new MessageBrokerServerOptions(
             Tcp,
-            MinMemoryPoolSegmentLength,
+            NetworkPacket,
             HandshakeTimeout,
             value,
             AcceptablePingInterval,
@@ -183,7 +185,7 @@ public readonly record struct MessageBrokerServerOptions(
     {
         return new MessageBrokerServerOptions(
             Tcp,
-            MinMemoryPoolSegmentLength,
+            NetworkPacket,
             HandshakeTimeout,
             AcceptableMessageTimeout,
             value,
@@ -209,7 +211,7 @@ public readonly record struct MessageBrokerServerOptions(
     {
         return new MessageBrokerServerOptions(
             Tcp,
-            MinMemoryPoolSegmentLength,
+            NetworkPacket,
             HandshakeTimeout,
             AcceptableMessageTimeout,
             AcceptablePingInterval,
@@ -235,7 +237,7 @@ public readonly record struct MessageBrokerServerOptions(
     {
         return new MessageBrokerServerOptions(
             Tcp,
-            MinMemoryPoolSegmentLength,
+            NetworkPacket,
             HandshakeTimeout,
             AcceptableMessageTimeout,
             AcceptablePingInterval,
@@ -261,7 +263,7 @@ public readonly record struct MessageBrokerServerOptions(
     {
         return new MessageBrokerServerOptions(
             Tcp,
-            MinMemoryPoolSegmentLength,
+            NetworkPacket,
             HandshakeTimeout,
             AcceptableMessageTimeout,
             AcceptablePingInterval,
@@ -287,7 +289,7 @@ public readonly record struct MessageBrokerServerOptions(
     {
         return new MessageBrokerServerOptions(
             Tcp,
-            MinMemoryPoolSegmentLength,
+            NetworkPacket,
             HandshakeTimeout,
             AcceptableMessageTimeout,
             AcceptablePingInterval,
@@ -313,7 +315,7 @@ public readonly record struct MessageBrokerServerOptions(
     {
         return new MessageBrokerServerOptions(
             Tcp,
-            MinMemoryPoolSegmentLength,
+            NetworkPacket,
             HandshakeTimeout,
             AcceptableMessageTimeout,
             AcceptablePingInterval,
@@ -339,7 +341,7 @@ public readonly record struct MessageBrokerServerOptions(
     {
         return new MessageBrokerServerOptions(
             Tcp,
-            MinMemoryPoolSegmentLength,
+            NetworkPacket,
             HandshakeTimeout,
             AcceptableMessageTimeout,
             AcceptablePingInterval,
@@ -365,7 +367,7 @@ public readonly record struct MessageBrokerServerOptions(
     {
         return new MessageBrokerServerOptions(
             Tcp,
-            MinMemoryPoolSegmentLength,
+            NetworkPacket,
             HandshakeTimeout,
             AcceptableMessageTimeout,
             AcceptablePingInterval,
@@ -391,7 +393,7 @@ public readonly record struct MessageBrokerServerOptions(
     {
         return new MessageBrokerServerOptions(
             Tcp,
-            MinMemoryPoolSegmentLength,
+            NetworkPacket,
             HandshakeTimeout,
             AcceptableMessageTimeout,
             AcceptablePingInterval,
@@ -417,7 +419,7 @@ public readonly record struct MessageBrokerServerOptions(
     {
         return new MessageBrokerServerOptions(
             Tcp,
-            MinMemoryPoolSegmentLength,
+            NetworkPacket,
             HandshakeTimeout,
             AcceptableMessageTimeout,
             AcceptablePingInterval,

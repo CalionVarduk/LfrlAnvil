@@ -195,7 +195,7 @@ internal struct RequestHandler
                 var readPacket = client.Logger.ReadPacket;
                 readPacket?.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateReceived( client, traceId, request.Header ) );
 
-                var exception = Protocol.AssertMinPayload( client, request.Header, Protocol.BindPublisherRequestHeader.Length );
+                var exception = request.Header.AssertMinPayload( client, Protocol.BindPublisherRequestHeader.Length );
                 if ( exception is not null )
                     return await FinishInvalidRequestHandlingAsync( client, exception, traceId ).ConfigureAwait( false );
 
@@ -206,7 +206,7 @@ internal struct RequestHandler
                 var requestErrors = parsedRequestHeader.StringifyErrors( data.Length );
                 if ( requestErrors.Count > 0 )
                 {
-                    var error = Protocol.ProtocolException( client, request.Header, requestErrors );
+                    var error = client.ProtocolException( request.Header, requestErrors );
                     return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
                 }
 
@@ -219,7 +219,7 @@ internal struct RequestHandler
                 Assume.IsNotNull( channelName.Value );
                 if ( ! Defaults.NameLengthBounds.Contains( channelName.Value.Length ) )
                 {
-                    var error = Protocol.InvalidChannelNameLengthException( client, request.Header, channelName.Value.Length );
+                    var error = client.ProtocolException( request.Header, Resources.InvalidChannelNameLength( channelName.Value.Length ) );
                     return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
                 }
 
@@ -232,7 +232,7 @@ internal struct RequestHandler
                 Assume.IsNotNull( streamName.Value );
                 if ( streamName.Value.Length > Defaults.NameLengthBounds.Max )
                 {
-                    var error = Protocol.InvalidStreamNameLengthException( client, request.Header, streamName.Value.Length );
+                    var error = client.ProtocolException( request.Header, Resources.InvalidStreamNameLength( streamName.Value.Length ) );
                     return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
                 }
 
@@ -299,12 +299,11 @@ internal struct RequestHandler
                     {
                         Exception exc = bindResult switch
                         {
-                            BindResult.AlreadyBound => new MessageBrokerChannelPublisherBindingException(
-                                client,
-                                publisher!,
+                            BindResult.AlreadyBound => client.PublisherException(
+                                publisher,
                                 Resources.PublisherAlreadyBound( publisher! ) ),
-                            BindResult.ChannelDisposed => new MessageBrokerChannelDisposedException( channel ),
-                            _ => new MessageBrokerStreamDisposedException( stream! )
+                            BindResult.ChannelDisposed => channel.DisposedException(),
+                            _ => stream!.DisposedException()
                         };
 
                         error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
@@ -312,8 +311,8 @@ internal struct RequestHandler
 
                     var responseLength = Protocol.PacketHeader.Length + Protocol.BindPublisherFailureResponse.Payload;
                     var response = new Protocol.BindPublisherFailureResponse( bindResult );
-                    if ( responseLength > data.Length )
-                        poolToken.SetLength( responseLength, out data );
+                    if ( data.Length < responseLength )
+                        poolToken.IncreaseLength( responseLength, out data );
 
                     responseHeader = response.Header;
                     responseData = data.Slice( 0, responseLength );
@@ -365,7 +364,7 @@ internal struct RequestHandler
                     var responseLength = Protocol.PacketHeader.Length + Protocol.PublisherBoundResponse.Payload;
                     var response = new Protocol.PublisherBoundResponse( channelCreated, streamCreated, channel.Id, stream.Id );
                     if ( data.Length < responseLength )
-                        poolToken.SetLength( responseLength, out data );
+                        poolToken.IncreaseLength( responseLength, out data );
 
                     responseHeader = response.Header;
                     responseData = data.Slice( 0, responseLength );
@@ -410,7 +409,7 @@ internal struct RequestHandler
                 var readPacket = client.Logger.ReadPacket;
                 readPacket?.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateReceived( client, traceId, request.Header ) );
 
-                var exception = Protocol.AssertPayload( client, request.Header, Protocol.UnbindPublisherRequest.Length );
+                var exception = request.Header.AssertExactPayload( client, Protocol.UnbindPublisherRequest.Length );
                 if ( exception is not null )
                     return await FinishInvalidRequestHandlingAsync( client, exception, traceId ).ConfigureAwait( false );
 
@@ -419,7 +418,7 @@ internal struct RequestHandler
                 var requestErrors = parsedRequest.StringifyErrors();
                 if ( requestErrors.Count > 0 )
                 {
-                    var error = Protocol.ProtocolException( client, request.Header, requestErrors );
+                    var error = client.ProtocolException( request.Header, requestErrors );
                     return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
                 }
 
@@ -465,15 +464,14 @@ internal struct RequestHandler
                     {
                         Exception exc = unbindResult switch
                         {
-                            UnbindResult.NotBound => new MessageBrokerChannelPublisherBindingException(
-                                client,
+                            UnbindResult.NotBound => client.PublisherException(
                                 publisher,
                                 channel is null
                                     ? Resources.CannotUnbindPublisherFromNonExistingChannel( client, parsedRequest.ChannelId )
                                     : Resources.PublisherNotBound( client, channel ) ),
-                            UnbindResult.ChannelDisposed => new MessageBrokerChannelDisposedException( channel! ),
-                            UnbindResult.ParentDisposed => new MessageBrokerStreamDisposedException( stream! ),
-                            _ => new MessageBrokerChannelPublisherBindingDisposedException( publisher! )
+                            UnbindResult.ChannelDisposed => channel!.DisposedException(),
+                            UnbindResult.ParentDisposed => stream!.DisposedException(),
+                            _ => publisher!.DisposedException()
                         };
 
                         error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
@@ -482,7 +480,7 @@ internal struct RequestHandler
                     var responseLength = Protocol.PacketHeader.Length + Protocol.UnbindPublisherFailureResponse.Payload;
                     var response = new Protocol.UnbindPublisherFailureResponse( unbindResult );
                     if ( data.Length < responseLength )
-                        poolToken.SetLength( responseLength, out data );
+                        poolToken.IncreaseLength( responseLength, out data );
 
                     responseHeader = response.Header;
                     responseData = data.Slice( 0, responseLength );
@@ -540,7 +538,7 @@ internal struct RequestHandler
                     var responseLength = Protocol.PacketHeader.Length + Protocol.PublisherUnboundResponse.Payload;
                     var response = new Protocol.PublisherUnboundResponse( disposingChannel, disposingStream );
                     if ( data.Length < responseLength )
-                        poolToken.SetLength( responseLength, out data );
+                        poolToken.IncreaseLength( responseLength, out data );
 
                     responseHeader = response.Header;
                     responseData = data.Slice( 0, responseLength );
@@ -591,7 +589,7 @@ internal struct RequestHandler
                 var readPacket = client.Logger.ReadPacket;
                 readPacket?.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateReceived( client, traceId, request.Header ) );
 
-                var exception = Protocol.AssertMinPayload( client, request.Header, Protocol.BindListenerRequestHeader.Length );
+                var exception = request.Header.AssertMinPayload( client, Protocol.BindListenerRequestHeader.Length );
                 if ( exception is not null )
                     return await FinishInvalidRequestHandlingAsync( client, exception, traceId ).ConfigureAwait( false );
 
@@ -602,7 +600,7 @@ internal struct RequestHandler
                 var requestErrors = parsedRequestHeader.StringifyErrors( data.Length );
                 if ( requestErrors.Count > 0 )
                 {
-                    var error = Protocol.ProtocolException( client, request.Header, requestErrors );
+                    var error = client.ProtocolException( request.Header, requestErrors );
                     return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
                 }
 
@@ -615,7 +613,7 @@ internal struct RequestHandler
                 Assume.IsNotNull( channelName.Value );
                 if ( ! Defaults.NameLengthBounds.Contains( channelName.Value.Length ) )
                 {
-                    var error = Protocol.InvalidChannelNameLengthException( client, request.Header, channelName.Value.Length );
+                    var error = client.ProtocolException( request.Header, Resources.InvalidChannelNameLength( channelName.Value.Length ) );
                     return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
                 }
 
@@ -630,7 +628,7 @@ internal struct RequestHandler
                 Assume.IsNotNull( queueName.Value );
                 if ( queueName.Value.Length > Defaults.NameLengthBounds.Max )
                 {
-                    var error = Protocol.InvalidQueueNameLengthException( client, request.Header, queueName.Value.Length );
+                    var error = client.ProtocolException( request.Header, Resources.InvalidQueueNameLength( queueName.Value.Length ) );
                     return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
                 }
 
@@ -683,8 +681,7 @@ internal struct RequestHandler
                             {
                                 if ( client.Logger.Error is { } error )
                                 {
-                                    var exc = new MessageBrokerRemoteClientException(
-                                        client,
+                                    var exc = client.Exception(
                                         Resources.InvalidFilterExpressionArgumentCount(
                                             rawFilterExpression,
                                             expression.UnboundArguments ) );
@@ -776,20 +773,15 @@ internal struct RequestHandler
                     {
                         Exception exc = bindResult switch
                         {
-                            BindResult.AlreadyBound => new MessageBrokerChannelListenerBindingException(
-                                client,
-                                listener!,
-                                Resources.ListenerAlreadyBound( listener! ) ),
-                            BindResult.ChannelDisposed => new MessageBrokerChannelDisposedException( channel! ),
-                            BindResult.ParentDisposed => new MessageBrokerQueueDisposedException( queue! ),
-                            BindResult.ChannelDoesNotExist => new MessageBrokerChannelListenerBindingException(
-                                client,
+                            BindResult.AlreadyBound => client.ListenerException( listener, Resources.ListenerAlreadyBound( listener! ) ),
+                            BindResult.ChannelDisposed => channel!.DisposedException(),
+                            BindResult.ParentDisposed => queue!.DisposedException(),
+                            BindResult.ChannelDoesNotExist => client.ListenerException(
                                 null,
                                 Resources.CannotBindAsListenerToNonExistingChannel( client, channelName.Value ) ),
-                            BindResult.UnexpectedFilterExpression => new MessageBrokerRemoteClientException(
-                                client,
+                            BindResult.UnexpectedFilterExpression => client.Exception(
                                 Resources.UnexpectedFilterExpression( rawFilterExpression! ) ),
-                            _ => new MessageBrokerRemoteClientException( client, Resources.InvalidFilterExpression( rawFilterExpression! ) )
+                            _ => client.Exception( Resources.InvalidFilterExpression( rawFilterExpression! ) )
                         };
 
                         error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
@@ -846,7 +838,7 @@ internal struct RequestHandler
                     var responseLength = Protocol.PacketHeader.Length + Protocol.ListenerBoundResponse.Payload;
                     var response = new Protocol.ListenerBoundResponse( channelCreated, queueCreated, channel.Id, queue.Id );
                     if ( data.Length < responseLength )
-                        poolToken.SetLength( responseLength, out data );
+                        poolToken.IncreaseLength( responseLength, out data );
 
                     responseHeader = response.Header;
                     responseData = data.Slice( 0, responseLength );
@@ -888,7 +880,7 @@ internal struct RequestHandler
                 var readPacket = client.Logger.ReadPacket;
                 readPacket?.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateReceived( client, traceId, request.Header ) );
 
-                var exception = Protocol.AssertPayload( client, request.Header, Protocol.UnbindListenerRequest.Length );
+                var exception = request.Header.AssertExactPayload( client, Protocol.UnbindListenerRequest.Length );
                 if ( exception is not null )
                     return await FinishInvalidRequestHandlingAsync( client, exception, traceId ).ConfigureAwait( false );
 
@@ -897,7 +889,7 @@ internal struct RequestHandler
                 var requestErrors = parsedRequest.StringifyErrors();
                 if ( requestErrors.Count > 0 )
                 {
-                    var error = Protocol.ProtocolException( client, request.Header, requestErrors );
+                    var error = client.ProtocolException( request.Header, requestErrors );
                     return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
                 }
 
@@ -943,15 +935,14 @@ internal struct RequestHandler
                     {
                         Exception exc = unbindResult switch
                         {
-                            UnbindResult.NotBound => new MessageBrokerChannelListenerBindingException(
-                                client,
+                            UnbindResult.NotBound => client.ListenerException(
                                 listener,
                                 channel is null
                                     ? Resources.CannotUnbindListenerFromNonExistingChannel( client, parsedRequest.ChannelId )
                                     : Resources.ListenerNotBound( client, channel ) ),
-                            UnbindResult.ChannelDisposed => new MessageBrokerChannelDisposedException( channel! ),
-                            UnbindResult.ParentDisposed => new MessageBrokerQueueDisposedException( queue! ),
-                            _ => new MessageBrokerChannelListenerBindingDisposedException( listener! )
+                            UnbindResult.ChannelDisposed => channel!.DisposedException(),
+                            UnbindResult.ParentDisposed => queue!.DisposedException(),
+                            _ => listener!.DisposedException()
                         };
 
                         error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
@@ -960,7 +951,7 @@ internal struct RequestHandler
                     var responseLength = Protocol.PacketHeader.Length + Protocol.UnbindListenerFailureResponse.Payload;
                     var response = new Protocol.UnbindListenerFailureResponse( unbindResult );
                     if ( data.Length < responseLength )
-                        poolToken.SetLength( responseLength, out data );
+                        poolToken.IncreaseLength( responseLength, out data );
 
                     responseHeader = response.Header;
                     responseData = data.Slice( 0, responseLength );
@@ -1014,7 +1005,7 @@ internal struct RequestHandler
                     var responseLength = Protocol.PacketHeader.Length + Protocol.ListenerUnboundResponse.Payload;
                     var response = new Protocol.ListenerUnboundResponse( disposingChannel, disposingQueue );
                     if ( data.Length < responseLength )
-                        poolToken.SetLength( responseLength, out data );
+                        poolToken.IncreaseLength( responseLength, out data );
 
                     responseHeader = response.Header;
                     responseData = data.Slice( 0, responseLength );
@@ -1069,7 +1060,7 @@ internal struct RequestHandler
             {
                 readPacket?.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateReceived( client, traceId, request.Header ) );
 
-                var exception = Protocol.AssertMinPayload( client, request.Header, Protocol.PushMessageRoutingHeader.Length );
+                var exception = request.Header.AssertMinPayload( client, Protocol.PushMessageRoutingHeader.Length );
                 if ( exception is not null )
                     return await FinishInvalidRequestHandlingAsync( client, exception, traceId ).ConfigureAwait( false );
 
@@ -1079,7 +1070,7 @@ internal struct RequestHandler
                 var requestErrors = parsedRequest.StringifyErrors();
                 if ( requestErrors.Count > 0 )
                 {
-                    var error = Protocol.ProtocolException( client, request.Header, requestErrors );
+                    var error = client.ProtocolException( request.Header, requestErrors );
                     return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
                 }
 
@@ -1089,11 +1080,7 @@ internal struct RequestHandler
 
                 if ( hasEnqueuedRouting )
                 {
-                    var error = Protocol.ProtocolException(
-                        client,
-                        request.Header,
-                        Chain.Create( Resources.MessageRoutingIsAlreadyEnqueued ) );
-
+                    var error = client.ProtocolException( request.Header, Resources.MessageRoutingIsAlreadyEnqueued );
                     return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
                 }
 
@@ -1162,7 +1149,7 @@ internal struct RequestHandler
                 if ( client.Logger.ReadPacket is { } readPacket )
                     readPacket.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateReceived( client, traceId, request.Header ) );
 
-                var exception = Protocol.AssertMinPayload( client, request.Header, Protocol.PushMessageHeader.Length );
+                var exception = request.Header.AssertMinPayload( client, Protocol.PushMessageHeader.Length );
                 if ( exception is not null )
                     return await FinishInvalidRequestHandlingAsync( client, exception, traceId ).ConfigureAwait( false );
 
@@ -1170,7 +1157,7 @@ internal struct RequestHandler
                 var requestErrors = parsedRequest.StringifyErrors();
                 if ( requestErrors.Count > 0 )
                 {
-                    var error = Protocol.ProtocolException( client, request.Header, requestErrors );
+                    var error = client.ProtocolException( request.Header, requestErrors );
                     return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
                 }
 
@@ -1180,7 +1167,8 @@ internal struct RequestHandler
                 if ( messageLength > 0 )
                 {
                     messageToken = requestPoolToken;
-                    messageToken.SetLength( messageLength, out messageData, trimStart: true );
+                    messageToken.DecreaseLengthAtStart( messageLength );
+                    messageData = request.Data.Slice( Protocol.PushMessageHeader.Length );
                 }
 
                 if ( client.Logger.PushingMessage is { } pushingMessage )
@@ -1236,12 +1224,11 @@ internal struct RequestHandler
                     {
                         Exception exc = pushMessageResult switch
                         {
-                            PushMessageResult.NotBound => new MessageBrokerChannelPublisherBindingException(
-                                client,
+                            PushMessageResult.NotBound => client.PublisherException(
                                 null,
                                 Resources.PublisherNotBound( client, parsedRequest.ChannelId ) ),
-                            PushMessageResult.StreamDisposed => new MessageBrokerStreamDisposedException( publisher!.Stream ),
-                            _ => new MessageBrokerChannelPublisherBindingDisposedException( publisher! )
+                            PushMessageResult.StreamDisposed => publisher!.Stream.DisposedException(),
+                            _ => publisher!.DisposedException()
                         };
 
                         error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
@@ -1346,7 +1333,7 @@ internal struct RequestHandler
                 var readPacket = client.Logger.ReadPacket;
                 readPacket?.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateReceived( client, traceId, request.Header ) );
 
-                var exception = Protocol.AssertPayload( client, request.Header, Protocol.DeadLetterQuery.Length );
+                var exception = request.Header.AssertExactPayload( client, Protocol.DeadLetterQuery.Length );
                 if ( exception is not null )
                     return await FinishInvalidRequestHandlingAsync( client, exception, traceId ).ConfigureAwait( false );
 
@@ -1355,7 +1342,7 @@ internal struct RequestHandler
                 var requestErrors = parsedRequest.StringifyErrors();
                 if ( requestErrors.Count > 0 )
                 {
-                    var error = Protocol.ProtocolException( client, request.Header, requestErrors );
+                    var error = client.ProtocolException( request.Header, requestErrors );
                     return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
                 }
 
@@ -1394,10 +1381,9 @@ internal struct RequestHandler
                     {
                         Exception exc = result switch
                         {
-                            DeadLetterQueryResult.QueueNotFound => new MessageBrokerRemoteClientException(
-                                client,
+                            DeadLetterQueryResult.QueueNotFound => client.Exception(
                                 Resources.QueueForDeadLetterQueryNotFound( client, parsedRequest.QueueId ) ),
-                            _ => new MessageBrokerQueueDisposedException( queue! )
+                            _ => queue!.DisposedException()
                         };
 
                         error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
@@ -1417,7 +1403,7 @@ internal struct RequestHandler
                                 nextExpirationAt ) );
                 }
 
-                poolToken.SetLength( Protocol.PacketHeader.Length + Protocol.DeadLetterQueryResponse.Payload, out data );
+                poolToken.IncreaseLength( Protocol.PacketHeader.Length + Protocol.DeadLetterQueryResponse.Payload, out data );
                 var response = new Protocol.DeadLetterQueryResponse( totalCount, maxReadCount, nextExpirationAt );
                 response.Serialize( data );
 
@@ -1471,7 +1457,7 @@ internal struct RequestHandler
                 if ( client.Logger.ReadPacket is { } readPacket )
                     readPacket.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateReceived( client, traceId, request.Header ) );
 
-                var exception = Protocol.AssertPayload( client, request.Header, Protocol.MessageNotificationAck.Length );
+                var exception = request.Header.AssertExactPayload( client, Protocol.MessageNotificationAck.Length );
                 if ( exception is not null )
                     return await FinishInvalidRequestHandlingAsync( client, exception, traceId ).ConfigureAwait( false );
 
@@ -1479,7 +1465,7 @@ internal struct RequestHandler
                 var requestErrors = parsedRequest.StringifyErrors();
                 if ( requestErrors.Count > 0 )
                 {
-                    var error = Protocol.ProtocolException( client, request.Header, requestErrors );
+                    var error = client.ProtocolException( request.Header, requestErrors );
                     return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
                 }
 
@@ -1526,21 +1512,17 @@ internal struct RequestHandler
                 {
                     Exception exc = ackResult switch
                     {
-                        AckResult.MessageNotFound => new MessageBrokerQueueException(
-                            queue!,
+                        AckResult.MessageNotFound => queue!.Exception(
                             Resources.MessageNotFound( queue!, parsedRequest.AckId, parsedRequest.StreamId, parsedRequest.MessageId ) ),
-                        AckResult.MessageVersionNotFound => new MessageBrokerQueueException(
-                            queue!,
+                        AckResult.MessageVersionNotFound => queue!.Exception(
                             Resources.MessageVersionNotFound(
                                 queue!,
                                 parsedRequest.StreamId,
                                 parsedRequest.MessageId,
                                 parsedRequest.Retry,
                                 parsedRequest.Redelivery ) ),
-                        AckResult.QueueNotFound => new MessageBrokerRemoteClientException(
-                            client,
-                            Resources.QueueForAckNotFound( client, parsedRequest.QueueId ) ),
-                        _ => new MessageBrokerQueueDisposedException( queue! )
+                        AckResult.QueueNotFound => client.Exception( Resources.QueueForAckNotFound( client, parsedRequest.QueueId ) ),
+                        _ => queue!.DisposedException()
                     };
 
                     error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
@@ -1605,7 +1587,7 @@ internal struct RequestHandler
                 if ( client.Logger.ReadPacket is { } readPacket )
                     readPacket.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateReceived( client, traceId, request.Header ) );
 
-                var exception = Protocol.AssertPayload( client, request.Header, Protocol.MessageNotificationNegativeAck.Length );
+                var exception = request.Header.AssertExactPayload( client, Protocol.MessageNotificationNegativeAck.Length );
                 if ( exception is not null )
                     return await FinishInvalidRequestHandlingAsync( client, exception, traceId ).ConfigureAwait( false );
 
@@ -1613,7 +1595,7 @@ internal struct RequestHandler
                 var requestErrors = parsedRequest.StringifyErrors();
                 if ( requestErrors.Count > 0 )
                 {
-                    var error = Protocol.ProtocolException( client, request.Header, requestErrors );
+                    var error = client.ProtocolException( request.Header, requestErrors );
                     return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
                 }
 
@@ -1668,21 +1650,17 @@ internal struct RequestHandler
                 {
                     Exception exc = ackResult switch
                     {
-                        AckResult.MessageNotFound => new MessageBrokerQueueException(
-                            queue!,
+                        AckResult.MessageNotFound => queue!.Exception(
                             Resources.MessageNotFound( queue!, parsedRequest.AckId, parsedRequest.StreamId, parsedRequest.MessageId ) ),
-                        AckResult.MessageVersionNotFound => new MessageBrokerQueueException(
-                            queue!,
+                        AckResult.MessageVersionNotFound => queue!.Exception(
                             Resources.MessageVersionNotFound(
                                 queue!,
                                 parsedRequest.StreamId,
                                 parsedRequest.MessageId,
                                 parsedRequest.Retry,
                                 parsedRequest.Redelivery ) ),
-                        AckResult.QueueNotFound => new MessageBrokerRemoteClientException(
-                            client,
-                            Resources.QueueForAckNotFound( client, parsedRequest.QueueId ) ),
-                        _ => new MessageBrokerQueueDisposedException( queue! )
+                        AckResult.QueueNotFound => client.Exception( Resources.QueueForAckNotFound( client, parsedRequest.QueueId ) ),
+                        _ => queue!.DisposedException()
                     };
 
                     error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
@@ -1766,7 +1744,7 @@ internal struct RequestHandler
 
             if ( request.Payload != Protocol.Endianness.VerificationPayload )
             {
-                var error = Protocol.EndiannessPayloadException( client, request );
+                var error = client.ProtocolException( request, Resources.InvalidEndiannessPayload( request.Payload ) );
                 return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
             }
 
@@ -1805,7 +1783,7 @@ internal struct RequestHandler
     {
         using ( MessageBrokerRemoteClientTraceEvent.CreateScope( client, traceId, MessageBrokerRemoteClientTraceEventType.Unexpected ) )
         {
-            var error = Protocol.UnexpectedServerEndpointException( client, request );
+            var error = client.ProtocolException( request, Resources.UnexpectedServerEndpoint );
             return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
         }
     }

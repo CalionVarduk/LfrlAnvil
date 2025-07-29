@@ -72,10 +72,15 @@ public enum MessageBrokerServerEndpoint : byte
     /// <summary>
     /// Represents handshake request sent by client.
     /// </summary>
-    HandshakeRequest = 254,
+    HandshakeRequest = 253,
 
     /// <summary>
     /// Represents client's confirmation of server's handshake acceptance response.
     /// </summary>
-    ConfirmHandshakeResponse = 255
+    ConfirmHandshakeResponse = 254,
+
+    /// <summary>
+    /// Represents a batch of requests sent by client.
+    /// </summary>
+    Batch = 255
 }

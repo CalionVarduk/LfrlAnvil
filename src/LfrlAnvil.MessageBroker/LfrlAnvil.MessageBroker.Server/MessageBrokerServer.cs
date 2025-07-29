@@ -24,7 +24,10 @@ using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.Computable.Expressions;
+using LfrlAnvil.Diagnostics;
 using LfrlAnvil.Exceptions;
+using LfrlAnvil.Extensions;
+using LfrlAnvil.Memory;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Exceptions;
 using LfrlAnvil.MessageBroker.Server.Internal;
@@ -40,6 +43,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     internal RemoteClientCollection RemoteClientCollection;
     internal ChannelCollection ChannelCollection;
     internal StreamCollection StreamCollection;
+    internal readonly MemoryPool<byte> MemoryPool;
     internal readonly Func<MessageBrokerRemoteClient, MessageBrokerRemoteClientLogger?>? RemoteClientLoggerFactory;
     internal readonly Func<MessageBrokerChannel, MessageBrokerChannelLogger?>? ChannelLoggerFactory;
     internal readonly Func<MessageBrokerStream, MessageBrokerStreamLogger?>? StreamLoggerFactory;
@@ -67,6 +71,18 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         HandshakeTimeout = Defaults.Temporal.GetActualTimeout( options.HandshakeTimeout );
         AcceptableMessageTimeout = Defaults.Temporal.GetActualTimeoutBounds( options.AcceptableMessageTimeout );
         AcceptablePingInterval = Defaults.Temporal.GetActualPingIntervalBounds( options.AcceptablePingInterval );
+        MaxNetworkPacketLength = Defaults.Memory.GetActualMaxNetworkPacketLength( options.NetworkPacket.MaxLength );
+        MaxNetworkMessagePacketLength = Defaults.Memory.GetActualMaxNetworkLargePacketLength(
+            MaxNetworkPacketLength,
+            options.NetworkPacket.MaxMessageLength );
+
+        AcceptableMaxNetworkBatchPacketLength = Bounds.Create(
+            MaxNetworkPacketLength,
+            Defaults.Memory.GetActualMaxNetworkLargePacketLength(
+                MaxNetworkPacketLength,
+                options.NetworkPacket.MaxBatchLength ) );
+
+        AcceptableMaxBatchPacketCount = Defaults.Memory.GetActualBatchPacketCountBounds( options.NetworkPacket.MaxBatchPacketCount );
         ExpressionFactory = options.ExpressionFactory;
         Logger = options.Logger ?? default;
         RemoteClientLoggerFactory = options.ClientLoggerFactory;
@@ -80,8 +96,11 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         _state = MessageBrokerServerState.Created;
         _nextTraceId = 0;
 
+        MemoryPool = new MemoryPool<byte>(
+            unchecked( ( int )MaxNetworkMessagePacketLength.Max( AcceptableMaxNetworkBatchPacketLength.Max ).Bytes ) );
+
         ClientListener = ClientListener.Create();
-        RemoteClientCollection = RemoteClientCollection.Create( options.Tcp, options.MinMemoryPoolSegmentLength );
+        RemoteClientCollection = RemoteClientCollection.Create( options.Tcp );
         ChannelCollection = ChannelCollection.Create();
         StreamCollection = StreamCollection.Create();
     }
@@ -102,6 +121,39 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     /// </summary>
     /// <remarks>Acts as a limit imposed on client's desired ping interval during handshake.</remarks>
     public Bounds<Duration> AcceptablePingInterval { get; }
+
+    /// <summary>
+    /// Max acceptable network packet length.
+    /// </summary>
+    /// <remarks>
+    /// Represents max possible length for packets not handled
+    /// by either <see cref="MaxNetworkMessagePacketLength"/> or <see cref="MessageBrokerRemoteClient.MaxNetworkBatchPacketLength"/>.
+    /// </remarks>
+    public MemorySize MaxNetworkPacketLength { get; }
+
+    /// <summary>
+    /// Max acceptable network message packet length.
+    /// </summary>
+    /// <remarks>
+    /// Represents max possible length for outbound packets of <see cref="MessageBrokerClientEndpoint.MessageNotification"/> type
+    /// or inbound packets of <see cref="MessageBrokerServerEndpoint.PushMessage"/> type.
+    /// </remarks>
+    public MemorySize MaxNetworkMessagePacketLength { get; }
+
+    /// <summary>
+    /// Range of acceptable max network batch packet length values.
+    /// </summary>
+    /// <remarks>
+    /// Represents a range of max possible length values for packets of <b>Batch</b> type.
+    /// Acts as a limit imposed on client's desired max network batch packet length during handshake.
+    /// </remarks>
+    public Bounds<MemorySize> AcceptableMaxNetworkBatchPacketLength { get; }
+
+    /// <summary>
+    /// Range of acceptable max number of packets in a single network batch packet values.
+    /// </summary>
+    /// <remarks>Acts as a limit imposed on client's desired max batch packet count during handshake.</remarks>
+    public Bounds<short> AcceptableMaxBatchPacketCount { get; }
 
     /// <summary>
     /// The local <see cref="EndPoint"/> of this server's listener socket.
@@ -196,7 +248,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         using ( AcquireLock() )
         {
             if ( ShouldCancel )
-                ExceptionThrower.Throw( DisposedException() );
+                ExceptionThrower.Throw( this.DisposedException() );
 
             traceId = GetTraceId();
         }
@@ -291,13 +343,6 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         }
     }
 
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal MessageBrokerServerDisposedException DisposedException()
-    {
-        return new MessageBrokerServerDisposedException( this );
-    }
-
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ExclusiveLock AcquireLock()
     {
@@ -315,7 +360,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         }
 
         @lock.Dispose();
-        exception = DisposedException();
+        exception = this.DisposedException();
         if ( Logger.Error is { } error )
             error.Emit( MessageBrokerServerErrorEvent.Create( this, traceId, exception ) );
 

@@ -5,6 +5,7 @@ using System.Net;
 using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Async;
+using LfrlAnvil.Diagnostics;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Exceptions;
 using LfrlAnvil.MessageBroker.Server.Tests.Helpers;
@@ -474,6 +475,94 @@ public class MessageBrokerStreamTests : TestsBase, IClassFixture<SharedResourceF
                             $"[ProcessingMessage] Stream = [1] 'c', TraceId = {t.Id}, Channel = [1] 'c', Sender = [1] 'test', MessageId = 4, Length = 5, HasRouting = False, ListenerCount = 0",
                             $"[MessageProcessed] Stream = [1] 'c', TraceId = {t.Id}, Channel = [1] 'c', Sender = [1] 'test', MessageId = 4, Failures = 0, Filtered = 0",
                             $"[Trace:ProcessMessage] Stream = [1] 'c', TraceId = {t.Id} (end)"
+                        ] )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task PushMessage_ShouldEnqueueLargeMessageCorrectly()
+    {
+        var endSource = new SafeTaskCompletionSource( completionCount: 2 );
+        var clientLogs = new ClientEventLogger();
+        var streamLogs = new StreamEventLogger();
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessage )
+                                    endSource.Complete();
+                            } ) ) )
+                .SetStreamLoggerFactory(
+                    _ => streamLogs.GetLogger(
+                        MessageBrokerStreamLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerStreamTraceEventType.ProcessMessage )
+                                    endSource.Complete();
+                            } ) ) ) );
+
+        await server.StartAsync();
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server );
+        await client.GetTask(
+            c =>
+            {
+                c.SendBindPublisherRequest( "c" );
+                c.ReadPublisherBoundResponse();
+                c.SendPushMessage(
+                    1,
+                    Enumerable.Range( 0, ( int )MemorySize.BytesPerKilobyte * 20 ).Select( static x => ( byte )x ).ToArray(),
+                    confirm: false );
+            } );
+
+        await endSource.Task;
+
+        Assertion.All(
+                clientLogs.GetAll()
+                    .Skip( 2 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 20490)",
+                            "[PushingMessage] Client = [1] 'test', TraceId = 2, Length = 20480, ChannelId = 1, Confirm = False",
+                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 20490)",
+                            "[MessagePushed] Client = [1] 'test', TraceId = 2, Channel = [1] 'c', Stream = [1] 'c', MessageId = 0",
+                            "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (end)"
+                        ] )
+                    ] ),
+                clientLogs.GetAllAwaitPacket()
+                    .TestContainsContiguousSequence(
+                    [
+                        "[AwaitPacket] Client = [1] 'test'",
+                        "[AwaitPacket] Client = [1] 'test', Packet = (PushMessage, Length = 20490)"
+                    ] ),
+                streamLogs.GetAll()
+                    .Skip( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:PushMessage] Stream = [1] 'c', TraceId = 1 (start)",
+                            "[ClientTrace] Stream = [1] 'c', TraceId = 1, Correlation = (Client = [1] 'test', TraceId = 2)",
+                            "[MessagePushed] Stream = [1] 'c', TraceId = 1, Client = [1] 'test', Channel = [1] 'c', MessageId = 0, StoreKey = 0, Length = 20480",
+                            "[Trace:PushMessage] Stream = [1] 'c', TraceId = 1 (end)"
+                        ] ),
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:ProcessMessage] Stream = [1] 'c', TraceId = 2 (start)",
+                            "[ProcessingMessage] Stream = [1] 'c', TraceId = 2, Channel = [1] 'c', Sender = [1] 'test', MessageId = 0, Length = 20480, HasRouting = False, ListenerCount = 0",
+                            "[MessageProcessed] Stream = [1] 'c', TraceId = 2, Channel = [1] 'c', Sender = [1] 'test', MessageId = 0, Failures = 0, Filtered = 0",
+                            "[Trace:ProcessMessage] Stream = [1] 'c', TraceId = 2 (end)"
                         ] )
                     ] ) )
             .Go();

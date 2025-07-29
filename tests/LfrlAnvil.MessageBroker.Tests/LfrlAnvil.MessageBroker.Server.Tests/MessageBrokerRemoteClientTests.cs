@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Async;
+using LfrlAnvil.Diagnostics;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Exceptions;
 using LfrlAnvil.MessageBroker.Server.Internal;
@@ -52,7 +53,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
             s =>
             {
                 s.Connect( endPoint );
-                s.SendHandshake( "test", Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ) );
+                s.SendHandshake( "test", Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ), 5, MemorySize.FromMegabytes( 1 ) );
                 s.ReadHandshakeAcceptedResponse();
                 s.SendConfirmHandshakeResponse();
             } );
@@ -74,6 +75,8 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                         r.IsLittleEndian.TestTrue(),
                         r.MessageTimeout.TestEquals( Duration.FromSeconds( 1 ) ),
                         r.PingInterval.TestEquals( Duration.FromSeconds( 10 ) ),
+                        r.MaxBatchPacketCount.TestEquals( ( short )5 ),
+                        r.MaxNetworkBatchPacketLength.TestEquals( MemorySize.FromMegabytes( 1 ) ),
                         r.State.TestEquals( MessageBrokerRemoteClientState.Running ),
                         r.ToString().TestEquals( "[1] 'test' client (Running)" ),
                         r.Publishers.Count.TestEquals( 0 ),
@@ -105,14 +108,14 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                         [
                             "[Trace:Start] Client = [1], TraceId = 0 (start)",
                             $"[ServerTrace] Client = [1], TraceId = 0, Correlation = (Server = {server.LocalEndPoint}, TraceId = 1)",
-                            "[ReadPacket:Received] Client = [1], TraceId = 0, Packet = (HandshakeRequest, Length = 18)",
-                            $"[Handshaking] Client = [1], TraceId = 0, ClientName = 'test', DesiredMessageTimeout = 1 second(s), DesiredPingInterval = 10 second(s), SynchronizeExternalObjectNames = False, IsClientLittleEndian = {BitConverter.IsLittleEndian}",
-                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 18)",
-                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 18)",
-                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 18)",
+                            "[ReadPacket:Received] Client = [1], TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
+                            $"[Handshaking] Client = [1], TraceId = 0, ClientName = 'test', DesiredMessageTimeout = 1 second(s), DesiredPingInterval = 10 second(s), DesiredBatchPacket = (MaxPacketCount = 5, MaxLength = 1048576 B), SynchronizeExternalObjectNames = False, IsClientLittleEndian = {BitConverter.IsLittleEndian}",
+                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 32)",
+                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 32)",
                             "[ReadPacket:Received] Client = [1] 'test', TraceId = 0, Packet = (ConfirmHandshakeResponse, Length = 5)",
                             "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 0, Packet = (ConfirmHandshakeResponse, Length = 5)",
-                            "[HandshakeEstablished] Client = [1] 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 10 second(s)",
+                            "[HandshakeEstablished] Client = [1] 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 10 second(s), BatchPacket = (MaxPacketCount = 5, MaxLength = 1048576 B)",
                             "[Trace:Start] Client = [1] 'test', TraceId = 0 (end)"
                         ] )
                     ] ),
@@ -120,7 +123,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                     .TestContainsContiguousSequence(
                     [
                         "[AwaitPacket] Client = [1]",
-                        "[AwaitPacket] Client = [1], Packet = (HandshakeRequest, Length = 18)",
+                        "[AwaitPacket] Client = [1], Packet = (HandshakeRequest, Length = 24)",
                         "[AwaitPacket] Client = [1] 'test'",
                         "[AwaitPacket] Client = [1] 'test', Packet = (ConfirmHandshakeResponse, Length = 5)"
                     ] ) )
@@ -165,7 +168,13 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
             s =>
             {
                 s.Connect( endPoint );
-                s.SendHandshake( "foo", Duration.FromSeconds( 1.5 ), Duration.FromSeconds( 15 ), true );
+                s.SendHandshake(
+                    "foo",
+                    Duration.FromSeconds( 1.5 ),
+                    Duration.FromSeconds( 15 ),
+                    maxBatchPacketCount: 1,
+                    synchronizeExternalObjectNames: true );
+
                 s.ReadHandshakeAcceptedResponse();
                 s.SendConfirmHandshakeResponse();
             } );
@@ -188,6 +197,8 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                         r.IsLittleEndian.TestTrue(),
                         r.MessageTimeout.TestEquals( Duration.FromSeconds( 1.5 ) ),
                         r.PingInterval.TestEquals( Duration.FromSeconds( 15 ) ),
+                        r.MaxBatchPacketCount.TestEquals( ( short )0 ),
+                        r.MaxNetworkBatchPacketLength.TestEquals( MemorySize.Zero ),
                         r.State.TestEquals( MessageBrokerRemoteClientState.Running ),
                         r.Publishers.Count.TestEquals( 0 ),
                         r.Publishers.GetAll().TestEmpty(),
@@ -200,14 +211,14 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                         [
                             "[Trace:Start] Client = [1], TraceId = 0 (start)",
                             $"[ServerTrace] Client = [1], TraceId = 0, Correlation = (Server = {server.LocalEndPoint}, TraceId = 1)",
-                            "[ReadPacket:Received] Client = [1], TraceId = 0, Packet = (HandshakeRequest, Length = 17)",
-                            $"[Handshaking] Client = [1], TraceId = 0, ClientName = 'foo', DesiredMessageTimeout = 1.5 second(s), DesiredPingInterval = 15 second(s), SynchronizeExternalObjectNames = True, IsClientLittleEndian = {BitConverter.IsLittleEndian}",
-                            "[ReadPacket:Accepted] Client = [1] 'foo', TraceId = 0, Packet = (HandshakeRequest, Length = 17)",
-                            "[SendPacket:Sending] Client = [1] 'foo', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 18)",
-                            "[SendPacket:Sent] Client = [1] 'foo', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 18)",
+                            "[ReadPacket:Received] Client = [1], TraceId = 0, Packet = (HandshakeRequest, Length = 23)",
+                            $"[Handshaking] Client = [1], TraceId = 0, ClientName = 'foo', DesiredMessageTimeout = 1.5 second(s), DesiredPingInterval = 15 second(s), DesiredBatchPacket = <disabled>, SynchronizeExternalObjectNames = True, IsClientLittleEndian = {BitConverter.IsLittleEndian}",
+                            "[ReadPacket:Accepted] Client = [1] 'foo', TraceId = 0, Packet = (HandshakeRequest, Length = 23)",
+                            "[SendPacket:Sending] Client = [1] 'foo', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 32)",
+                            "[SendPacket:Sent] Client = [1] 'foo', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 32)",
                             "[ReadPacket:Received] Client = [1] 'foo', TraceId = 0, Packet = (ConfirmHandshakeResponse, Length = 5)",
                             "[ReadPacket:Accepted] Client = [1] 'foo', TraceId = 0, Packet = (ConfirmHandshakeResponse, Length = 5)",
-                            "[HandshakeEstablished] Client = [1] 'foo', TraceId = 0, MessageTimeout = 1.5 second(s), PingInterval = 15 second(s)",
+                            "[HandshakeEstablished] Client = [1] 'foo', TraceId = 0, MessageTimeout = 1.5 second(s), PingInterval = 15 second(s), BatchPacket = <disabled>",
                             "[Trace:Start] Client = [1] 'foo', TraceId = 0 (end)"
                         ] )
                     ] ),
@@ -215,7 +226,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                     .TestContainsContiguousSequence(
                     [
                         "[AwaitPacket] Client = [1]",
-                        "[AwaitPacket] Client = [1], Packet = (HandshakeRequest, Length = 17)",
+                        "[AwaitPacket] Client = [1], Packet = (HandshakeRequest, Length = 23)",
                         "[AwaitPacket] Client = [1] 'foo'",
                         "[AwaitPacket] Client = [1] 'foo', Packet = (ConfirmHandshakeResponse, Length = 5)"
                     ] ) )
@@ -270,7 +281,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
             s =>
             {
                 s.Connect( endPoint );
-                s.SendHandshake( "bar", Duration.FromSeconds( 2 ), Duration.FromSeconds( 20 ) );
+                s.SendHandshake( "bar", Duration.FromSeconds( 2 ), Duration.FromSeconds( 20 ), 10, MemorySize.FromMegabytes( 2 ) );
                 s.ReadHandshakeAcceptedResponse();
                 s.SendConfirmHandshakeResponse();
             } );
@@ -293,6 +304,8 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                         r.IsLittleEndian.TestTrue(),
                         r.MessageTimeout.TestEquals( Duration.FromSeconds( 1 ) ),
                         r.PingInterval.TestEquals( Duration.FromSeconds( 10 ) ),
+                        r.MaxBatchPacketCount.TestEquals( ( short )0 ),
+                        r.MaxNetworkBatchPacketLength.TestEquals( MemorySize.Zero ),
                         r.State.TestEquals( MessageBrokerRemoteClientState.Running ),
                         r.Publishers.Count.TestEquals( 0 ),
                         r.Publishers.GetAll().TestEmpty(),
@@ -309,6 +322,8 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                         r.IsLittleEndian.TestTrue(),
                         r.MessageTimeout.TestEquals( Duration.FromSeconds( 1.5 ) ),
                         r.PingInterval.TestEquals( Duration.FromSeconds( 15 ) ),
+                        r.MaxBatchPacketCount.TestEquals( ( short )10 ),
+                        r.MaxNetworkBatchPacketLength.TestEquals( MemorySize.FromMegabytes( 2 ) ),
                         r.State.TestEquals( MessageBrokerRemoteClientState.Running ),
                         r.Publishers.Count.TestEquals( 0 ),
                         r.Publishers.GetAll().TestEmpty(),
@@ -348,14 +363,14 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                         [
                             "[Trace:Start] Client = [1], TraceId = 0 (start)",
                             $"[ServerTrace] Client = [1], TraceId = 0, Correlation = (Server = {server.LocalEndPoint}, TraceId = 1)",
-                            "[ReadPacket:Received] Client = [1], TraceId = 0, Packet = (HandshakeRequest, Length = 17)",
-                            $"[Handshaking] Client = [1], TraceId = 0, ClientName = 'foo', DesiredMessageTimeout = 0.5 second(s), DesiredPingInterval = 5 second(s), SynchronizeExternalObjectNames = False, IsClientLittleEndian = {BitConverter.IsLittleEndian}",
-                            "[ReadPacket:Accepted] Client = [1] 'foo', TraceId = 0, Packet = (HandshakeRequest, Length = 17)",
-                            "[SendPacket:Sending] Client = [1] 'foo', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 18)",
-                            "[SendPacket:Sent] Client = [1] 'foo', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 18)",
+                            "[ReadPacket:Received] Client = [1], TraceId = 0, Packet = (HandshakeRequest, Length = 23)",
+                            $"[Handshaking] Client = [1], TraceId = 0, ClientName = 'foo', DesiredMessageTimeout = 0.5 second(s), DesiredPingInterval = 5 second(s), DesiredBatchPacket = <disabled>, SynchronizeExternalObjectNames = False, IsClientLittleEndian = {BitConverter.IsLittleEndian}",
+                            "[ReadPacket:Accepted] Client = [1] 'foo', TraceId = 0, Packet = (HandshakeRequest, Length = 23)",
+                            "[SendPacket:Sending] Client = [1] 'foo', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 32)",
+                            "[SendPacket:Sent] Client = [1] 'foo', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 32)",
                             "[ReadPacket:Received] Client = [1] 'foo', TraceId = 0, Packet = (ConfirmHandshakeResponse, Length = 5)",
                             "[ReadPacket:Accepted] Client = [1] 'foo', TraceId = 0, Packet = (ConfirmHandshakeResponse, Length = 5)",
-                            "[HandshakeEstablished] Client = [1] 'foo', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 10 second(s)",
+                            "[HandshakeEstablished] Client = [1] 'foo', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 10 second(s), BatchPacket = <disabled>",
                             "[Trace:Start] Client = [1] 'foo', TraceId = 0 (end)"
                         ] )
                     ] ),
@@ -364,7 +379,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                     .TestContainsContiguousSequence(
                     [
                         "[AwaitPacket] Client = [1]",
-                        "[AwaitPacket] Client = [1], Packet = (HandshakeRequest, Length = 17)",
+                        "[AwaitPacket] Client = [1], Packet = (HandshakeRequest, Length = 23)",
                         "[AwaitPacket] Client = [1] 'foo'",
                         "[AwaitPacket] Client = [1] 'foo', Packet = (ConfirmHandshakeResponse, Length = 5)"
                     ] ),
@@ -376,14 +391,14 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                         [
                             "[Trace:Start] Client = [2], TraceId = 0 (start)",
                             $"[ServerTrace] Client = [2], TraceId = 0, Correlation = (Server = {server.LocalEndPoint}, TraceId = 2)",
-                            "[ReadPacket:Received] Client = [2], TraceId = 0, Packet = (HandshakeRequest, Length = 17)",
-                            $"[Handshaking] Client = [2], TraceId = 0, ClientName = 'bar', DesiredMessageTimeout = 2 second(s), DesiredPingInterval = 20 second(s), SynchronizeExternalObjectNames = False, IsClientLittleEndian = {BitConverter.IsLittleEndian}",
-                            "[ReadPacket:Accepted] Client = [2] 'bar', TraceId = 0, Packet = (HandshakeRequest, Length = 17)",
-                            "[SendPacket:Sending] Client = [2] 'bar', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 18)",
-                            "[SendPacket:Sent] Client = [2] 'bar', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 18)",
+                            "[ReadPacket:Received] Client = [2], TraceId = 0, Packet = (HandshakeRequest, Length = 23)",
+                            $"[Handshaking] Client = [2], TraceId = 0, ClientName = 'bar', DesiredMessageTimeout = 2 second(s), DesiredPingInterval = 20 second(s), DesiredBatchPacket = (MaxPacketCount = 10, MaxLength = 2097152 B), SynchronizeExternalObjectNames = False, IsClientLittleEndian = {BitConverter.IsLittleEndian}",
+                            "[ReadPacket:Accepted] Client = [2] 'bar', TraceId = 0, Packet = (HandshakeRequest, Length = 23)",
+                            "[SendPacket:Sending] Client = [2] 'bar', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 32)",
+                            "[SendPacket:Sent] Client = [2] 'bar', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 32)",
                             "[ReadPacket:Received] Client = [2] 'bar', TraceId = 0, Packet = (ConfirmHandshakeResponse, Length = 5)",
                             "[ReadPacket:Accepted] Client = [2] 'bar', TraceId = 0, Packet = (ConfirmHandshakeResponse, Length = 5)",
-                            "[HandshakeEstablished] Client = [2] 'bar', TraceId = 0, MessageTimeout = 1.5 second(s), PingInterval = 15 second(s)",
+                            "[HandshakeEstablished] Client = [2] 'bar', TraceId = 0, MessageTimeout = 1.5 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 10, MaxLength = 2097152 B)",
                             "[Trace:Start] Client = [2] 'bar', TraceId = 0 (end)"
                         ] )
                     ] ),
@@ -392,7 +407,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                     .TestContainsContiguousSequence(
                     [
                         "[AwaitPacket] Client = [2]",
-                        "[AwaitPacket] Client = [2], Packet = (HandshakeRequest, Length = 17)",
+                        "[AwaitPacket] Client = [2], Packet = (HandshakeRequest, Length = 23)",
                         "[AwaitPacket] Client = [2] 'bar'",
                         "[AwaitPacket] Client = [2] 'bar', Packet = (ConfirmHandshakeResponse, Length = 5)"
                     ] ) )
@@ -540,13 +555,13 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                             (e, _) => e.TestEquals(
                                 $"[ServerTrace] Client = [1], TraceId = 0, Correlation = (Server = {server.LocalEndPoint}, TraceId = 1)" ),
                             (e, _) => e.TestEquals(
-                                "[ReadPacket:Received] Client = [1], TraceId = 0, Packet = (HandshakeRequest, Length = 18)" ),
+                                "[ReadPacket:Received] Client = [1], TraceId = 0, Packet = (HandshakeRequest, Length = 24)" ),
                             (e, _) => e.TestEquals(
-                                $"[Handshaking] Client = [1], TraceId = 0, ClientName = 'test', DesiredMessageTimeout = 1 second(s), DesiredPingInterval = 10 second(s), SynchronizeExternalObjectNames = False, IsClientLittleEndian = {BitConverter.IsLittleEndian}" ),
+                                $"[Handshaking] Client = [1], TraceId = 0, ClientName = 'test', DesiredMessageTimeout = 1 second(s), DesiredPingInterval = 10 second(s), DesiredBatchPacket = <disabled>, SynchronizeExternalObjectNames = False, IsClientLittleEndian = {BitConverter.IsLittleEndian}" ),
                             (e, _) => e.TestEquals(
-                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 18)" ),
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)" ),
                             (e, _) => e.TestEquals(
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 18)" ),
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 32)" ),
                             (e, _) => e.TestStartsWith(
                                 """
                                 [Error] Client = [1] 'test', TraceId = 0
@@ -561,7 +576,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                     .TestSequence(
                     [
                         "[AwaitPacket] Client = [1]",
-                        "[AwaitPacket] Client = [1], Packet = (HandshakeRequest, Length = 18)"
+                        "[AwaitPacket] Client = [1], Packet = (HandshakeRequest, Length = 24)"
                     ] ) )
             .Go();
     }
@@ -672,11 +687,11 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                         [
                             "[Trace:Start] Client = [1], TraceId = 0 (start)",
                             $"[ServerTrace] Client = [1], TraceId = 0, Correlation = (Server = {server.LocalEndPoint}, TraceId = 1)",
-                            "[ReadPacket:Received] Client = [1], TraceId = 0, Packet = (HandshakeRequest, Length = 18)",
-                            $"[Handshaking] Client = [1], TraceId = 0, ClientName = 'test', DesiredMessageTimeout = 1 second(s), DesiredPingInterval = 10 second(s), SynchronizeExternalObjectNames = False, IsClientLittleEndian = {BitConverter.IsLittleEndian}",
-                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 18)",
-                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 18)",
-                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 18)",
+                            "[ReadPacket:Received] Client = [1], TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
+                            $"[Handshaking] Client = [1], TraceId = 0, ClientName = 'test', DesiredMessageTimeout = 1 second(s), DesiredPingInterval = 10 second(s), DesiredBatchPacket = <disabled>, SynchronizeExternalObjectNames = False, IsClientLittleEndian = {BitConverter.IsLittleEndian}",
+                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 32)",
+                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 32)",
                             "[Disposing] Client = [1] 'test', TraceId = 0",
                             "[Disposed] Client = [1] 'test', TraceId = 0",
                             "[Trace:Start] Client = [1] 'test', TraceId = 0 (end)"
@@ -686,7 +701,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                     .TestSequence(
                     [
                         (e, _) => e.TestEquals( "[AwaitPacket] Client = [1]" ),
-                        (e, _) => e.TestEquals( "[AwaitPacket] Client = [1], Packet = (HandshakeRequest, Length = 18)" ),
+                        (e, _) => e.TestEquals( "[AwaitPacket] Client = [1], Packet = (HandshakeRequest, Length = 24)" ),
                         (e, _) => e.TestEquals( "[AwaitPacket] Client = [1] 'test'" ),
                         (e, _) => e.TestStartsWith(
                             """
@@ -789,7 +804,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
             s =>
             {
                 s.Connect( endPoint );
-                s.SendHandshake( "test", Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ), payload: 8 );
+                s.SendHandshake( "test", Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ), payload: 14 );
             } );
 
         await endSource.Task;
@@ -803,11 +818,11 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                         [
                             "[Trace:Start] Client = [1], TraceId = 0 (start)",
                             $"[ServerTrace] Client = [1], TraceId = 0, Correlation = (Server = {server.LocalEndPoint}, TraceId = 1)",
-                            "[ReadPacket:Received] Client = [1], TraceId = 0, Packet = (HandshakeRequest, Length = 13)",
+                            "[ReadPacket:Received] Client = [1], TraceId = 0, Packet = (HandshakeRequest, Length = 19)",
                             """
                             [Error] Client = [1], TraceId = 0
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid HandshakeRequest from client [1] ''. Encountered 1 error(s):
-                            1. Expected header payload to be at least 9 but found 8.
+                            1. Expected header payload to be at least 15 but found 14.
                             """,
                             "[Disposing] Client = [1], TraceId = 0",
                             "[Disposed] Client = [1], TraceId = 0",
@@ -818,7 +833,74 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                     .TestSequence(
                     [
                         "[AwaitPacket] Client = [1]",
-                        "[AwaitPacket] Client = [1], Packet = (HandshakeRequest, Length = 13)"
+                        "[AwaitPacket] Client = [1], Packet = (HandshakeRequest, Length = 19)"
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task Start_ShouldDisposeGracefully_WhenClientSendsTooLargeHandshakeRequest()
+    {
+        var endSource = new SafeTaskCompletionSource();
+        var logs = new ClientEventLogger();
+        var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
+
+        await using var server = new MessageBrokerServer(
+            originalEndPoint,
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => logs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.Start )
+                                    endSource.Complete();
+                            } ) ) ) );
+
+        await server.StartAsync();
+        var endPoint = server.LocalEndPoint;
+
+        using var client = new ClientMock();
+        await client.GetTask(
+            s =>
+            {
+                s.Connect( endPoint );
+                s.SendHandshake(
+                    "test",
+                    Duration.FromSeconds( 1 ),
+                    Duration.FromSeconds( 10 ),
+                    payload: ( uint )MemorySize.BytesPerKilobyte * 16 - Protocol.PacketHeader.Length + 1 );
+            } );
+
+        await endSource.Task;
+
+        Assertion.All(
+                server.Clients.Count.TestEquals( 0 ),
+                logs.GetAll()
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:Start] Client = [1], TraceId = 0 (start)",
+                            $"[ServerTrace] Client = [1], TraceId = 0, Correlation = (Server = {server.LocalEndPoint}, TraceId = 1)",
+                            "[ReadPacket:Received] Client = [1], TraceId = 0, Packet = (HandshakeRequest, Length = 16385)",
+                            """
+                            [Error] Client = [1], TraceId = 0
+                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid HandshakeRequest from client [1] ''. Encountered 1 error(s):
+                            1. Expected total packet length to be in [5, 16384] range but found 16385.
+                            """,
+                            "[Disposing] Client = [1], TraceId = 0",
+                            "[Disposed] Client = [1], TraceId = 0",
+                            "[Trace:Start] Client = [1], TraceId = 0 (end)"
+                        ] )
+                    ] ),
+                logs.GetAllAwaitPacket()
+                    .TestSequence(
+                    [
+                        "[AwaitPacket] Client = [1]",
+                        "[AwaitPacket] Client = [1], Packet = (HandshakeRequest, Length = 16385)"
                     ] ) )
             .Go();
     }
@@ -867,7 +949,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                         [
                             "[Trace:Start] Client = [1], TraceId = 0 (start)",
                             $"[ServerTrace] Client = [1], TraceId = 0, Correlation = (Server = {server.LocalEndPoint}, TraceId = 1)",
-                            "[ReadPacket:Received] Client = [1], TraceId = 0, Packet = (HandshakeRequest, Length = 527)",
+                            "[ReadPacket:Received] Client = [1], TraceId = 0, Packet = (HandshakeRequest, Length = 533)",
                             """
                             [Error] Client = [1], TraceId = 0
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid HandshakeRequest from client [1] ''. Encountered 1 error(s):
@@ -884,7 +966,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                     .TestSequence(
                     [
                         "[AwaitPacket] Client = [1]",
-                        "[AwaitPacket] Client = [1], Packet = (HandshakeRequest, Length = 527)"
+                        "[AwaitPacket] Client = [1], Packet = (HandshakeRequest, Length = 533)"
                     ] ) )
             .Go();
     }
@@ -933,7 +1015,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                         [
                             "[Trace:Start] Client = [1], TraceId = 0 (start)",
                             $"[ServerTrace] Client = [1], TraceId = 0, Correlation = (Server = {server.LocalEndPoint}, TraceId = 1)",
-                            "[ReadPacket:Received] Client = [1], TraceId = 0, Packet = (HandshakeRequest, Length = 14)",
+                            "[ReadPacket:Received] Client = [1], TraceId = 0, Packet = (HandshakeRequest, Length = 20)",
                             """
                             [Error] Client = [1], TraceId = 0
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid HandshakeRequest from client [1] ''. Encountered 1 error(s):
@@ -950,7 +1032,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                     .TestSequence(
                     [
                         "[AwaitPacket] Client = [1]",
-                        "[AwaitPacket] Client = [1], Packet = (HandshakeRequest, Length = 14)"
+                        "[AwaitPacket] Client = [1], Packet = (HandshakeRequest, Length = 20)"
                     ] ) )
             .Go();
     }
@@ -1021,14 +1103,14 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                         [
                             "[Trace:Start] Client = [1], TraceId = 0 (start)",
                             $"[ServerTrace] Client = [1], TraceId = 0, Correlation = (Server = {server.LocalEndPoint}, TraceId = 1)",
-                            "[ReadPacket:Received] Client = [1], TraceId = 0, Packet = (HandshakeRequest, Length = 18)",
-                            $"[Handshaking] Client = [1], TraceId = 0, ClientName = 'test', DesiredMessageTimeout = 1 second(s), DesiredPingInterval = 10 second(s), SynchronizeExternalObjectNames = False, IsClientLittleEndian = {BitConverter.IsLittleEndian}",
-                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 18)",
-                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 18)",
-                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 18)",
+                            "[ReadPacket:Received] Client = [1], TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
+                            $"[Handshaking] Client = [1], TraceId = 0, ClientName = 'test', DesiredMessageTimeout = 1 second(s), DesiredPingInterval = 10 second(s), DesiredBatchPacket = <disabled>, SynchronizeExternalObjectNames = False, IsClientLittleEndian = {BitConverter.IsLittleEndian}",
+                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 32)",
+                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 32)",
                             "[ReadPacket:Received] Client = [1] 'test', TraceId = 0, Packet = (ConfirmHandshakeResponse, Length = 5)",
                             "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 0, Packet = (ConfirmHandshakeResponse, Length = 5)",
-                            "[HandshakeEstablished] Client = [1] 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 10 second(s)",
+                            "[HandshakeEstablished] Client = [1] 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 10 second(s), BatchPacket = <disabled>",
                             "[Trace:Start] Client = [1] 'test', TraceId = 0 (end)",
                         ] )
                     ] ),
@@ -1037,7 +1119,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                     .TestContainsContiguousSequence(
                     [
                         "[AwaitPacket] Client = [1]",
-                        "[AwaitPacket] Client = [1], Packet = (HandshakeRequest, Length = 18)",
+                        "[AwaitPacket] Client = [1], Packet = (HandshakeRequest, Length = 24)",
                         "[AwaitPacket] Client = [1] 'test'",
                         "[AwaitPacket] Client = [1] 'test', Packet = (ConfirmHandshakeResponse, Length = 5)"
                     ] ),
@@ -1049,8 +1131,8 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                         [
                             "[Trace:Start] Client = [2], TraceId = 0 (start)",
                             $"[ServerTrace] Client = [2], TraceId = 0, Correlation = (Server = {server.LocalEndPoint}, TraceId = 2)",
-                            "[ReadPacket:Received] Client = [2], TraceId = 0, Packet = (HandshakeRequest, Length = 18)",
-                            $"[Handshaking] Client = [2], TraceId = 0, ClientName = 'test', DesiredMessageTimeout = 1 second(s), DesiredPingInterval = 10 second(s), SynchronizeExternalObjectNames = False, IsClientLittleEndian = {BitConverter.IsLittleEndian}",
+                            "[ReadPacket:Received] Client = [2], TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
+                            $"[Handshaking] Client = [2], TraceId = 0, ClientName = 'test', DesiredMessageTimeout = 1 second(s), DesiredPingInterval = 10 second(s), DesiredBatchPacket = <disabled>, SynchronizeExternalObjectNames = False, IsClientLittleEndian = {BitConverter.IsLittleEndian}",
                             """
                             [Error] Client = [2] 'test', TraceId = 0
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerException: Client with name 'test' already exists.
@@ -1067,7 +1149,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                     .TestSequence(
                     [
                         "[AwaitPacket] Client = [2]",
-                        "[AwaitPacket] Client = [2], Packet = (HandshakeRequest, Length = 18)"
+                        "[AwaitPacket] Client = [2], Packet = (HandshakeRequest, Length = 24)"
                     ] ) )
             .Go();
     }
@@ -1117,11 +1199,11 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                         [
                             "[Trace:Start] Client = [1], TraceId = 0 (start)",
                             $"[ServerTrace] Client = [1], TraceId = 0, Correlation = (Server = {server.LocalEndPoint}, TraceId = 1)",
-                            "[ReadPacket:Received] Client = [1], TraceId = 0, Packet = (HandshakeRequest, Length = 18)",
-                            $"[Handshaking] Client = [1], TraceId = 0, ClientName = 'test', DesiredMessageTimeout = 1 second(s), DesiredPingInterval = 10 second(s), SynchronizeExternalObjectNames = False, IsClientLittleEndian = {BitConverter.IsLittleEndian}",
-                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 18)",
-                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 18)",
-                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 18)",
+                            "[ReadPacket:Received] Client = [1], TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
+                            $"[Handshaking] Client = [1], TraceId = 0, ClientName = 'test', DesiredMessageTimeout = 1 second(s), DesiredPingInterval = 10 second(s), DesiredBatchPacket = <disabled>, SynchronizeExternalObjectNames = False, IsClientLittleEndian = {BitConverter.IsLittleEndian}",
+                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 32)",
+                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 32)",
                             "[ReadPacket:Received] Client = [1] 'test', TraceId = 0, Packet = (<unrecognized-endpoint-0>, Length = 5)",
                             """
                             [Error] Client = [1] 'test', TraceId = 0
@@ -1137,7 +1219,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                     .TestContainsContiguousSequence(
                     [
                         "[AwaitPacket] Client = [1]",
-                        "[AwaitPacket] Client = [1], Packet = (HandshakeRequest, Length = 18)",
+                        "[AwaitPacket] Client = [1], Packet = (HandshakeRequest, Length = 24)",
                         "[AwaitPacket] Client = [1] 'test'",
                         "[AwaitPacket] Client = [1] 'test', Packet = (<unrecognized-endpoint-0>, Length = 5)"
                     ] ) )
@@ -1189,11 +1271,11 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                         [
                             "[Trace:Start] Client = [1], TraceId = 0 (start)",
                             $"[ServerTrace] Client = [1], TraceId = 0, Correlation = (Server = {server.LocalEndPoint}, TraceId = 1)",
-                            "[ReadPacket:Received] Client = [1], TraceId = 0, Packet = (HandshakeRequest, Length = 18)",
-                            $"[Handshaking] Client = [1], TraceId = 0, ClientName = 'test', DesiredMessageTimeout = 1 second(s), DesiredPingInterval = 10 second(s), SynchronizeExternalObjectNames = False, IsClientLittleEndian = {BitConverter.IsLittleEndian}",
-                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 18)",
-                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 18)",
-                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 18)",
+                            "[ReadPacket:Received] Client = [1], TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
+                            $"[Handshaking] Client = [1], TraceId = 0, ClientName = 'test', DesiredMessageTimeout = 1 second(s), DesiredPingInterval = 10 second(s), DesiredBatchPacket = <disabled>, SynchronizeExternalObjectNames = False, IsClientLittleEndian = {BitConverter.IsLittleEndian}",
+                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 32)",
+                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 32)",
                             "[ReadPacket:Received] Client = [1] 'test', TraceId = 0, Packet = (ConfirmHandshakeResponse, Length = 5)",
                             """
                             [Error] Client = [1] 'test', TraceId = 0
@@ -1209,7 +1291,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                     .TestSequence(
                     [
                         "[AwaitPacket] Client = [1]",
-                        "[AwaitPacket] Client = [1], Packet = (HandshakeRequest, Length = 18)",
+                        "[AwaitPacket] Client = [1], Packet = (HandshakeRequest, Length = 24)",
                         "[AwaitPacket] Client = [1] 'test'",
                         "[AwaitPacket] Client = [1] 'test', Packet = (ConfirmHandshakeResponse, Length = 5)",
                     ] ) )
@@ -1316,7 +1398,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                         [
                             "[Trace:Start] Client = [1], TraceId = 0 (start)",
                             $"[ServerTrace] Client = [1], TraceId = 0, Correlation = (Server = {server.LocalEndPoint}, TraceId = 1)",
-                            "[ReadPacket:Received] Client = [1], TraceId = 0, Packet = (HandshakeRequest, Length = 14)",
+                            "[ReadPacket:Received] Client = [1], TraceId = 0, Packet = (HandshakeRequest, Length = 20)",
                             """
                             [Error] Client = [1], TraceId = 0
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientRequestTimeoutException: Client [1] '' failed to send a request to the server in the specified amount of time (100 milliseconds).
@@ -1330,7 +1412,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                     .TestSequence(
                     [
                         "[AwaitPacket] Client = [1]",
-                        "[AwaitPacket] Client = [1], Packet = (HandshakeRequest, Length = 14)"
+                        "[AwaitPacket] Client = [1], Packet = (HandshakeRequest, Length = 20)"
                     ] ) )
             .Go();
     }
@@ -1379,11 +1461,11 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                         [
                             "[Trace:Start] Client = [1], TraceId = 0 (start)",
                             $"[ServerTrace] Client = [1], TraceId = 0, Correlation = (Server = {server.LocalEndPoint}, TraceId = 1)",
-                            "[ReadPacket:Received] Client = [1], TraceId = 0, Packet = (HandshakeRequest, Length = 18)",
-                            $"[Handshaking] Client = [1], TraceId = 0, ClientName = 'test', DesiredMessageTimeout = 0.1 second(s), DesiredPingInterval = 10 second(s), SynchronizeExternalObjectNames = False, IsClientLittleEndian = {BitConverter.IsLittleEndian}",
-                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 18)",
-                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 18)",
-                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 18)",
+                            "[ReadPacket:Received] Client = [1], TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
+                            $"[Handshaking] Client = [1], TraceId = 0, ClientName = 'test', DesiredMessageTimeout = 0.1 second(s), DesiredPingInterval = 10 second(s), DesiredBatchPacket = <disabled>, SynchronizeExternalObjectNames = False, IsClientLittleEndian = {BitConverter.IsLittleEndian}",
+                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 32)",
+                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 32)",
                             """
                             [Error] Client = [1] 'test', TraceId = 0
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientRequestTimeoutException: Client [1] 'test' failed to send a request to the server in the specified amount of time (10100 milliseconds).
@@ -1397,7 +1479,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                     .TestSequence(
                     [
                         "[AwaitPacket] Client = [1]",
-                        "[AwaitPacket] Client = [1], Packet = (HandshakeRequest, Length = 18)",
+                        "[AwaitPacket] Client = [1], Packet = (HandshakeRequest, Length = 24)",
                         "[AwaitPacket] Client = [1] 'test'"
                     ] ) )
             .Go();
@@ -1695,6 +1777,79 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                             "[Disposed] Client = [1] 'test', TraceId = 12",
                             "[Trace:Dispose] Client = [1] 'test', TraceId = 12 (end)"
                         ] )
+                    ] ) )
+            .Go();
+    }
+
+    [Theory]
+    [InlineData( MessageBrokerServerEndpoint.DeadLetterQuery, -1, ( int )MemorySize.BytesPerKilobyte * 16 )]
+    [InlineData(
+        MessageBrokerServerEndpoint.DeadLetterQuery,
+        ( int )MemorySize.BytesPerKilobyte * 16 + 1,
+        ( int )MemorySize.BytesPerKilobyte * 16 )]
+    [InlineData(
+        MessageBrokerServerEndpoint.PushMessage,
+        -1,
+        ( int )MemorySize.BytesPerKilobyte * 20 - Protocol.MessageNotificationHeader.Payload + Protocol.PushMessageHeader.Length )]
+    [InlineData(
+        MessageBrokerServerEndpoint.PushMessage,
+        ( int )MemorySize.BytesPerKilobyte * 20 - Protocol.MessageNotificationHeader.Payload + Protocol.PushMessageHeader.Length + 1,
+        ( int )MemorySize.BytesPerKilobyte * 20 - Protocol.MessageNotificationHeader.Payload + Protocol.PushMessageHeader.Length )]
+    [InlineData( MessageBrokerServerEndpoint.Batch, -1, ( int )MemorySize.BytesPerKilobyte * 30 )]
+    [InlineData( MessageBrokerServerEndpoint.Batch, ( int )MemorySize.BytesPerKilobyte * 30 + 1, ( int )MemorySize.BytesPerKilobyte * 30 )]
+    public async Task InvalidPacketPayload_ShouldDisposeClient(MessageBrokerServerEndpoint endpoint, int payload, int expectedMax)
+    {
+        var endSource = new SafeTaskCompletionSource();
+        var logs = new ClientEventLogger();
+        var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
+
+        await using var server = new MessageBrokerServer(
+            originalEndPoint,
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetNetworkPacketOptions(
+                    MessageBrokerServerNetworkPacketOptions.Default
+                        .SetMaxMessageLength( MemorySize.FromKilobytes( 20 ) )
+                        .SetMaxBatchLength( MemorySize.FromKilobytes( 30 ) ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => logs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.Unexpected )
+                                    endSource.Complete();
+                            } ) ) ) );
+
+        await server.StartAsync();
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server, maxBatchPacketCount: 2, maxNetworkBatchPacketLength: MemorySize.FromKilobytes( 30 ) );
+        await client.GetTask( c => c.SendHeader( endpoint, ( uint )payload ) );
+        await endSource.Task;
+
+        Assertion.All(
+                logs.GetAll()
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:Unexpected] Client = [1] 'test', TraceId = 1 (start)",
+                            "[Disposing] Client = [1] 'test', TraceId = 1",
+                            "[Disposed] Client = [1] 'test', TraceId = 1",
+                            "[Trace:Unexpected] Client = [1] 'test', TraceId = 1 (end)"
+                        ] )
+                    ] ),
+                logs.GetAllAwaitPacket()
+                    .TestContainsSequence(
+                    [
+                        $"[AwaitPacket] Client = [1] 'test', Packet = ({endpoint}, Length = {Protocol.PacketHeader.Length + payload})",
+                        $"""
+                         [AwaitPacket] Client = [1] 'test', Packet = ({endpoint}, Length = {Protocol.PacketHeader.Length + payload})
+                         LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid {endpoint} from client [1] 'test'. Encountered 1 error(s):
+                         1. Expected total packet length to be in [5, {expectedMax}] range but found {Protocol.PacketHeader.Length + payload}.
+                         """
                     ] ) )
             .Go();
     }

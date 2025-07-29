@@ -18,6 +18,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Diagnostics;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.MessageBroker.Server.Internal;
 
@@ -85,16 +86,36 @@ internal static class Defaults
 
     internal static class Memory
     {
-        private static Bounds<MemorySize> PoolSegmentLengthBounds => Bounds.Create(
-            MemorySize.FromKilobytes( 16 ),
-            MemorySize.FromBytes( int.MaxValue ) );
+        internal const int DefaultNetworkPacketLength = ( int )MemorySize.BytesPerKilobyte * 16;
+
+        internal static Bounds<MemorySize> MaxNetworkPacketLengthBounds => Bounds.Create(
+            MemorySize.FromBytes( DefaultNetworkPacketLength ),
+            MemorySize.FromMegabytes( 1 ) );
+
+        internal static MemorySize MaxNetworkLargePacketLength => MemorySize.FromGigabytes( 1 );
+        private static MemorySize NetworkLargePacketLength => MemorySize.FromMegabytes( 10 );
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal static int GetActualMinSegmentLength(MemorySize? value)
+        internal static MemorySize GetActualMaxNetworkPacketLength(MemorySize? maxValue)
         {
-            var result = value is not null ? PoolSegmentLengthBounds.Clamp( value.Value ) : PoolSegmentLengthBounds.Min;
-            return unchecked( ( int )result.Bytes );
+            return maxValue is not null ? MaxNetworkPacketLengthBounds.Clamp( maxValue.Value ) : MaxNetworkPacketLengthBounds.Min;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static MemorySize GetActualMaxNetworkLargePacketLength(MemorySize maxNetworkPacketLength, MemorySize? maxValue)
+        {
+            Assume.IsInRange( maxNetworkPacketLength, MaxNetworkPacketLengthBounds.Min, MaxNetworkPacketLengthBounds.Max );
+            return maxValue?.Clamp( maxNetworkPacketLength, MaxNetworkLargePacketLength ) ?? NetworkLargePacketLength;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static Bounds<short> GetActualBatchPacketCountBounds(short? value)
+        {
+            var max = value?.Max( ( short )0 ) ?? short.MaxValue;
+            return Bounds.Create<short>( 0, max > 1 ? max : ( short )0 );
         }
 
         [Pure]

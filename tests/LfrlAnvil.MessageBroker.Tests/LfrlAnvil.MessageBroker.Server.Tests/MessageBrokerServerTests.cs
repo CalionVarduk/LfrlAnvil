@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Computable.Expressions;
+using LfrlAnvil.Diagnostics;
 using LfrlAnvil.Functional;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Exceptions;
@@ -22,9 +23,14 @@ public class MessageBrokerServerTests : TestsBase
         Assertion.All(
                 sut.LocalEndPoint.TestRefEquals( localEndPoint ),
                 sut.HandshakeTimeout.TestEquals( Duration.FromSeconds( 15 ) ),
+                sut.MaxNetworkPacketLength.TestEquals( MemorySize.FromKilobytes( 16 ) ),
+                sut.MaxNetworkMessagePacketLength.TestEquals( MemorySize.FromMegabytes( 10 ) ),
                 sut.AcceptableMessageTimeout.TestEquals(
                     Bounds.Create( Duration.FromMilliseconds( 1 ), Duration.FromMilliseconds( int.MaxValue ) ) ),
                 sut.AcceptablePingInterval.TestEquals( Bounds.Create( Duration.FromMilliseconds( 1 ), Duration.FromHours( 24 ) ) ),
+                sut.AcceptableMaxBatchPacketCount.TestEquals( Bounds.Create<short>( 0, short.MaxValue ) ),
+                sut.AcceptableMaxNetworkBatchPacketLength.TestEquals(
+                    Bounds.Create( MemorySize.FromKilobytes( 16 ), MemorySize.FromMegabytes( 10 ) ) ),
                 sut.ExpressionFactory.TestNull(),
                 sut.State.TestEquals( MessageBrokerServerState.Created ),
                 sut.ToString().TestEquals( $"{localEndPoint} server (Created)" ),
@@ -63,11 +69,22 @@ public class MessageBrokerServerTests : TestsBase
                     Bounds.Create( Duration.FromTicks( minMessageTimeoutTicks ), Duration.FromTicks( maxMessageTimeoutTicks ) ) )
                 .SetAcceptablePingInterval(
                     Bounds.Create( Duration.FromTicks( minPingIntervalTicks ), Duration.FromTicks( maxPingIntervalTicks ) ) )
+                .SetNetworkPacketOptions(
+                    MessageBrokerServerNetworkPacketOptions.Default
+                        .SetMaxLength( MemorySize.FromKilobytes( 30 ) )
+                        .SetMaxMessageLength( MemorySize.FromMegabytes( 100 ) )
+                        .SetMaxBatchPacketCount( 100 )
+                        .SetMaxBatchLength( MemorySize.FromMegabytes( 80 ) ) )
                 .SetExpressionFactory( expressionFactory ) );
 
         Assertion.All(
                 sut.LocalEndPoint.TestRefEquals( localEndPoint ),
                 sut.HandshakeTimeout.TestEquals( Duration.FromMilliseconds( expectedHandshakeTimeoutMs ) ),
+                sut.MaxNetworkPacketLength.TestEquals( MemorySize.FromKilobytes( 30 ) ),
+                sut.MaxNetworkMessagePacketLength.TestEquals( MemorySize.FromMegabytes( 100 ) ),
+                sut.AcceptableMaxBatchPacketCount.TestEquals( Bounds.Create<short>( 0, 100 ) ),
+                sut.AcceptableMaxNetworkBatchPacketLength.TestEquals(
+                    Bounds.Create( MemorySize.FromKilobytes( 30 ), MemorySize.FromMegabytes( 80 ) ) ),
                 sut.AcceptableMessageTimeout.TestEquals(
                     Bounds.Create(
                         Duration.FromMilliseconds( expectedMinMessageTimeoutMs ),

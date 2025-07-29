@@ -25,6 +25,7 @@ using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.Computable.Expressions;
+using LfrlAnvil.Diagnostics;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Memory;
 using LfrlAnvil.MessageBroker.Server.Events;
@@ -50,6 +51,9 @@ public sealed partial class MessageBrokerRemoteClient
     internal RequestHandler RequestHandler;
     internal ExternalNameCache ExternalNameCache;
     internal MessageRouting MessageRouting;
+    internal int MaxNetworkBatchPacketBytes;
+    internal readonly int MaxNetworkPacketBytes;
+    internal readonly int MaxNetworkMessagePacketBytes;
     internal readonly MessageBrokerRemoteClientLogger Logger;
 
     private readonly ITimestampProvider _timestamps;
@@ -60,11 +64,11 @@ public sealed partial class MessageBrokerRemoteClient
     private MessageBrokerRemoteClientState _state;
     private ulong _nextTraceId;
 
-    internal MessageBrokerRemoteClient(int id, MessageBrokerServer server, TcpClient tcp, int minMemoryPoolSegmentLength)
+    internal MessageBrokerRemoteClient(int id, MessageBrokerServer server, TcpClient tcp)
     {
         _tcp = tcp;
         _stream = _tcp.GetStream();
-        MemoryPool = new MemoryPool<byte>( minMemoryPoolSegmentLength );
+        MemoryPool = new MemoryPool<byte>( unchecked( ( int )server.MaxNetworkPacketLength.Bytes ) );
         Server = server;
         Id = id;
         Name = string.Empty;
@@ -72,6 +76,13 @@ public sealed partial class MessageBrokerRemoteClient
         MessageTimeout = server.HandshakeTimeout;
         MaxReadTimeout = MessageTimeout;
         PingInterval = Duration.Zero;
+        MaxNetworkPacketBytes = unchecked( ( int )server.MaxNetworkPacketLength.Bytes );
+        MaxNetworkMessagePacketBytes = unchecked( ( int )server.MaxNetworkMessagePacketLength.Bytes
+            - Math.Max( Protocol.PushMessageHeader.Length, Protocol.MessageNotificationHeader.Payload )
+            + Protocol.PushMessageHeader.Length );
+
+        MaxNetworkBatchPacketBytes = 0;
+        MaxBatchPacketCount = 0;
         SynchronizeExternalObjectNames = false;
         _disconnected = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
         _state = MessageBrokerRemoteClientState.Created;
@@ -133,10 +144,25 @@ public sealed partial class MessageBrokerRemoteClient
     public Duration PingInterval { get; private set; }
 
     /// <summary>
+    /// Max acceptable batch packet count.
+    /// </summary>
+    /// <remarks>Value will be initialized during handshake with the remote client.</remarks>
+    public short MaxBatchPacketCount { get; private set; }
+
+    /// <summary>
     /// Specifies whether or not synchronization of external object names is enabled.
     /// </summary>
     /// <remarks>Value will be initialized during handshake with the remote client.</remarks>
     public bool SynchronizeExternalObjectNames { get; private set; }
+
+    /// <summary>
+    /// Max acceptable network batch packet length.
+    /// </summary>
+    /// <remarks>
+    /// Represents max possible length for packets of <b>Batch</b> type.
+    /// Value will be initialized during handshake with the remote client.
+    /// </remarks>
+    public MemorySize MaxNetworkBatchPacketLength => MemorySize.FromBytes( MaxNetworkBatchPacketBytes );
 
     /// <summary>
     /// The remote <see cref="IPEndPoint"/> of the remote client to which this client connects to.
@@ -584,17 +610,11 @@ public sealed partial class MessageBrokerRemoteClient
         }
 
         @lock.Dispose();
-        exception = DisposedException();
+        exception = this.DisposedException();
         if ( Logger.Error is { } error )
             error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exception ) );
 
         return default;
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal Exception HandleUnexpectedEndpoint(Protocol.PacketHeader header, ulong traceId)
-    {
-        return EmitError( Protocol.UnexpectedServerEndpointException( this, header ), traceId );
     }
 
     internal async ValueTask<Result> WriteAsync(Protocol.PacketHeader header, ReadOnlyMemory<byte> data, ulong traceId)
@@ -621,13 +641,6 @@ public sealed partial class MessageBrokerRemoteClient
 
         sendPacket?.Emit( MessageBrokerRemoteClientSendPacketEvent.CreateSent( this, traceId, header ) );
         return Result.Valid;
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal MessageBrokerRemoteClientDisposedException DisposedException()
-    {
-        return new MessageBrokerRemoteClientDisposedException( this );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -661,11 +674,9 @@ public sealed partial class MessageBrokerRemoteClient
                     {
                         if ( Logger.Error is { } error )
                         {
-                            var exc = Protocol.ProtocolException(
-                                this,
+                            var exc = this.ProtocolException(
                                 header,
-                                Chain.Create(
-                                    Resources.UnexpectedPacketElementLength( read, data.Length, sizeof( byte ) + sizeof( uint ) ) ) );
+                                Resources.UnexpectedPacketElementLength( read, data.Length, sizeof( byte ) + sizeof( uint ) ) );
 
                             error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
                         }
@@ -679,11 +690,7 @@ public sealed partial class MessageBrokerRemoteClient
                     {
                         if ( Logger.Error is { } error )
                         {
-                            var exc = Protocol.ProtocolException(
-                                this,
-                                header,
-                                Chain.Create( Resources.TargetIdIsNotPositive( read, id ) ) );
-
+                            var exc = this.ProtocolException( header, Resources.TargetIdIsNotPositive( read, id ) );
                             error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
                         }
 
@@ -697,10 +704,7 @@ public sealed partial class MessageBrokerRemoteClient
                     {
                         if ( Logger.Error is { } error )
                         {
-                            var exception = new MessageBrokerRemoteClientException(
-                                this,
-                                Resources.TargetByIdDoesNotExist( read - 1, id ) );
-
+                            var exception = this.Exception( Resources.TargetByIdDoesNotExist( read - 1, id ) );
                             error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exception ) );
                         }
 
@@ -715,10 +719,9 @@ public sealed partial class MessageBrokerRemoteClient
                     {
                         if ( Logger.Error is { } error )
                         {
-                            var exc = Protocol.ProtocolException(
-                                this,
+                            var exc = this.ProtocolException(
                                 header,
-                                Chain.Create( Resources.UnexpectedPacketElementLength( read, data.Length, totalLength ) ) );
+                                Resources.UnexpectedPacketElementLength( read, data.Length, totalLength ) );
 
                             error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
                         }
@@ -740,11 +743,7 @@ public sealed partial class MessageBrokerRemoteClient
                     {
                         if ( Logger.Error is { } error )
                         {
-                            var exc = Protocol.ProtocolException(
-                                this,
-                                header,
-                                Chain.Create( Resources.InvalidTargetNameLength( read, name.Value.Length ) ) );
-
+                            var exc = this.ProtocolException( header, Resources.InvalidTargetNameLength( read, name.Value.Length ) );
                             error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
                         }
 
@@ -758,10 +757,7 @@ public sealed partial class MessageBrokerRemoteClient
                     {
                         if ( Logger.Error is { } error )
                         {
-                            var exception = new MessageBrokerRemoteClientException(
-                                this,
-                                Resources.TargetByNameDoesNotExist( read - 1, name.Value ) );
-
+                            var exception = this.Exception( Resources.TargetByNameDoesNotExist( read - 1, name.Value ) );
                             error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exception ) );
                         }
 
@@ -775,7 +771,7 @@ public sealed partial class MessageBrokerRemoteClient
                 if ( index >= buffer.Length )
                 {
                     var oldLength = bufferSpan.Length;
-                    poolToken.SetLength( Defaults.Memory.GetBufferCapacity( (target.Id + 7) >> 3 ), out buffer );
+                    poolToken.IncreaseLength( Defaults.Memory.GetBufferCapacity( (target.Id + 7) >> 3 ), out buffer );
                     bufferSpan = buffer.Span;
                     bufferSpan.Slice( oldLength ).Clear();
                 }
@@ -785,7 +781,7 @@ public sealed partial class MessageBrokerRemoteClient
                 {
                     if ( Logger.Error is { } error )
                     {
-                        var exception = new MessageBrokerRemoteClientException( this, Resources.TargetDuplicateFound( read - 1, target ) );
+                        var exception = this.Exception( Resources.TargetDuplicateFound( read - 1, target ) );
                         error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exception ) );
                     }
                 }
@@ -797,11 +793,7 @@ public sealed partial class MessageBrokerRemoteClient
             {
                 if ( Logger.Error is { } error )
                 {
-                    var exc = Protocol.ProtocolException(
-                        this,
-                        header,
-                        Chain.Create( Resources.TargetCountIsTooLarge( read, count ) ) );
-
+                    var exc = this.ProtocolException( header, Resources.TargetCountIsTooLarge( read, count ) );
                     error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
                 }
 
@@ -812,7 +804,7 @@ public sealed partial class MessageBrokerRemoteClient
             {
                 if ( Logger.Error is { } error )
                 {
-                    var exc = Protocol.ProtocolException( this, header, Chain.Create( Resources.TooLargeHeaderPayload( data.Length ) ) );
+                    var exc = this.ProtocolException( header, Resources.TooLargeHeaderPayload( data.Length ) );
                     error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
                 }
 
@@ -950,7 +942,7 @@ public sealed partial class MessageBrokerRemoteClient
 
             if ( discardedMessageCount > 0 && error is not null )
             {
-                var exc = new MessageBrokerRemoteClientException( this, Resources.MessagesDiscarded( discardedMessageCount ) );
+                var exc = this.Exception( Resources.MessagesDiscarded( discardedMessageCount ) );
                 error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
             }
 
@@ -983,6 +975,12 @@ public sealed partial class MessageBrokerRemoteClient
             if ( ! _disconnected.Task.IsCompleted )
                 _disconnected.SetResult();
         }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private Exception HandleUnexpectedEndpoint(Protocol.PacketHeader header, ulong traceId)
+    {
+        return EmitError( this.ProtocolException( header, Resources.UnexpectedServerEndpoint ), traceId );
     }
 
     private MessageBrokerQueue RegisterQueue(string name, out bool created)

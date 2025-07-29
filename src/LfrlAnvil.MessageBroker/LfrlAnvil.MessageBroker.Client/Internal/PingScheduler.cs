@@ -185,7 +185,7 @@ internal struct PingScheduler
                         return;
                     }
 
-                    var exc = new MessageBrokerClientResponseTimeoutException( client, request.GetServerEndpoint() );
+                    var exc = client.ResponseTimeoutException( request );
                     error?.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
                     await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
                     return;
@@ -213,7 +213,10 @@ internal struct PingScheduler
                 {
                     if ( client.Logger.Error is { } error )
                     {
-                        var exc = Protocol.EndiannessPayloadException( client, response.Header );
+                        var exc = client.ProtocolException(
+                            response.Header,
+                            Resources.InvalidEndiannessPayload( response.Header.Payload ) );
+
                         error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
                     }
 

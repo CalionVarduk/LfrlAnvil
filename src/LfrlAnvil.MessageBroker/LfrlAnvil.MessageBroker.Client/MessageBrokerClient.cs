@@ -48,6 +48,9 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     internal PublisherCollection PublisherCollection;
     internal ListenerCollection ListenerCollection;
     internal ExternalNameCache ExternalNameCache;
+    internal int MaxNetworkBatchPacketBytes;
+    internal int MaxNetworkPacketBytes;
+    internal int MaxNetworkMessagePacketBytes;
     internal readonly MemoryPool<byte> MemoryPool;
     internal readonly MessageBrokerClientLogger Logger;
 
@@ -78,6 +81,11 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         ConnectionTimeout = Defaults.Temporal.GetActualTimeout( options.ConnectionTimeout );
         MessageTimeout = Defaults.Temporal.GetActualTimeout( options.DesiredMessageTimeout );
         PingInterval = Defaults.Temporal.GetActualPingInterval( options.DesiredPingInterval );
+        MaxBatchPacketCount = Defaults.Memory.GetActualMaxBatchPacketCount( options.NetworkPacket.DesiredMaxBatchPacketCount );
+        MaxNetworkBatchPacketBytes = MaxBatchPacketCount > 0
+            ? Defaults.Memory.GetActualMaxNetworkBatchPacketLength( options.NetworkPacket.DesiredMaxBatchLength )
+            : 0;
+
         ListenerDisposalTimeout = Defaults.Temporal.GetActualTimeout( options.ListenerDisposalTimeout );
         SynchronizeExternalObjectNames = options.SynchronizeExternalObjectNames ?? true;
         _streamDecorator = options.StreamDecorator;
@@ -91,6 +99,8 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         Name = name;
         RemoteEndPoint = remoteEndPoint;
         IsServerLittleEndian = false;
+        MaxNetworkPacketBytes = 0;
+        MaxNetworkMessagePacketBytes = 0;
         _nextTraceId = 0;
 
         _delaySource = options.DelaySource is not null ? DelaySource.External( options.DelaySource ) : DelaySource.Owned();
@@ -145,6 +155,12 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     public Duration PingInterval { get; private set; }
 
     /// <summary>
+    /// Max acceptable batch packet count.
+    /// </summary>
+    /// <remarks>Value may change during handshake with the server.</remarks>
+    public short MaxBatchPacketCount { get; private set; }
+
+    /// <summary>
     /// Amount of time that <see cref="MessageBrokerListener"/> instances will wait during their disposal
     /// for callbacks to complete before giving up.
     /// </summary>
@@ -154,6 +170,35 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     /// Specifies whether or not synchronization of external object names is enabled.
     /// </summary>
     public bool SynchronizeExternalObjectNames { get; }
+
+    /// <summary>
+    /// Max acceptable network packet length.
+    /// </summary>
+    /// <remarks>
+    /// Represents max possible length for packets not handled
+    /// by either <see cref="MaxNetworkMessagePacketLength"/> or <see cref="MaxNetworkBatchPacketLength"/>.
+    /// Value will be initialized during handshake with the server.
+    /// </remarks>
+    public MemorySize MaxNetworkPacketLength => MemorySize.FromBytes( MaxNetworkPacketBytes );
+
+    /// <summary>
+    /// Max acceptable network message packet length.
+    /// </summary>
+    /// <remarks>
+    /// Represents max possible length for inbound packets of <see cref="MessageBrokerClientEndpoint.MessageNotification"/> type
+    /// or outbound packets of <see cref="MessageBrokerServerEndpoint.PushMessage"/> type.
+    /// Value will be initialized during handshake with the server.
+    /// </remarks>
+    public MemorySize MaxNetworkMessagePacketLength => MemorySize.FromBytes( MaxNetworkMessagePacketBytes );
+
+    /// <summary>
+    /// Max acceptable network batch packet length.
+    /// </summary>
+    /// <remarks>
+    /// Represents max possible length for packets of <b>Batch</b> type.
+    /// Value may change during handshake with the server.
+    /// </remarks>
+    public MemorySize MaxNetworkBatchPacketLength => MemorySize.FromBytes( MaxNetworkBatchPacketBytes );
 
     /// <summary>
     /// The local <see cref="EndPoint"/> that this client is using for communications with the server.
@@ -200,6 +245,10 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     public MessageBrokerListenerCollection Listeners => new MessageBrokerListenerCollection( this );
 
     internal bool ShouldCancel => _state >= MessageBrokerClientState.Disposing;
+
+    internal int MaxNetworkPushMessagePacketBytes => MaxNetworkMessagePacketBytes
+        - Math.Max( Protocol.PushMessageHeader.Length, Protocol.PacketHeader.Length + Protocol.MessageNotificationHeader.Length )
+        + Protocol.PushMessageHeader.Length;
 
     /// <inheritdoc />
     public void Dispose()
@@ -254,7 +303,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         using ( AcquireLock() )
         {
             if ( ShouldCancel )
-                ExceptionThrower.Throw( DisposedException() );
+                ExceptionThrower.Throw( this.DisposedException() );
 
             traceId = GetTraceId();
         }
@@ -407,7 +456,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         using ( AcquireLock() )
         {
             if ( ShouldCancel )
-                ExceptionThrower.Throw( DisposedException() );
+                ExceptionThrower.Throw( this.DisposedException() );
 
             AssertState( MessageBrokerClientState.Running );
             reverseEndianness = BitConverter.IsLittleEndian != IsServerLittleEndian;
@@ -439,7 +488,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
                 }
 
                 if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
-                    return EmitError( DisposedException(), traceId );
+                    return EmitError( this.DisposedException(), traceId );
 
                 using ( AcquireActiveLock( traceId, out var exc ) )
                 {
@@ -486,9 +535,9 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
                 if ( response.Type != IncomingPacketToken.Result.Ok )
                 {
                     if ( response.Type == IncomingPacketToken.Result.Disposed )
-                        return EmitError( DisposedException(), traceId );
+                        return EmitError( this.DisposedException(), traceId );
 
-                    var exception = new MessageBrokerClientResponseTimeoutException( this, request.Header.GetServerEndpoint() );
+                    var exception = this.ResponseTimeoutException( request.Header );
                     if ( Logger.Error is { } error )
                         error.Emit( MessageBrokerClientErrorEvent.Create( this, traceId, exception ) );
 
@@ -511,7 +560,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
                         var readPacket = Logger.ReadPacket;
                         readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateReceived( this, traceId, response.Header ) );
 
-                        var exception = Protocol.AssertPayload( this, response.Header, Protocol.DeadLetterQueryResponse.Length );
+                        var exception = response.Header.AssertExactPayload( this, Protocol.DeadLetterQueryResponse.Length );
                         if ( exception is not null )
                         {
                             if ( Logger.Error is { } error )
@@ -526,16 +575,14 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
                         var errors = parsedResponse.StringifyErrors();
                         if ( errors.Count > 0 )
                         {
-                            var error = EmitError( Protocol.ProtocolException( this, response.Header, errors ), traceId );
+                            var error = EmitError( this.ProtocolException( response.Header, errors ), traceId );
                             await DisposeAsync( traceId ).ConfigureAwait( false );
                             return error;
                         }
 
                         readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( this, traceId, response.Header ) );
                         if ( ! parsedResponse.QueueExists )
-                            return EmitError(
-                                Protocol.RequestException( this, request.Header, Chain.Create( Resources.QueueDoesNotExist( queueId ) ) ),
-                                traceId );
+                            return EmitError( this.RequestException( request.Header, Resources.QueueDoesNotExist( queueId ) ), traceId );
 
                         if ( Logger.DeadLetterQueried is { } deadLetterQueried )
                             deadLetterQueried.Emit(
@@ -591,7 +638,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         }
 
         @lock.Dispose();
-        exception = DisposedException();
+        exception = this.DisposedException();
         if ( Logger.Error is { } error )
             error.Emit( MessageBrokerClientErrorEvent.Create( this, traceId, exception ) );
 
@@ -608,7 +655,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         using ( AcquireLock() )
         {
             if ( ShouldCancel )
-                ExceptionThrower.Throw( DisposedException() );
+                ExceptionThrower.Throw( this.DisposedException() );
 
             if ( ! _messageContextPool.TryPop( out result ) )
                 result = new MessageBrokerPushContext( MemoryPool );
@@ -655,7 +702,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal Exception HandleUnexpectedEndpoint(Protocol.PacketHeader header, ulong traceId)
     {
-        return EmitError( Protocol.UnexpectedClientEndpointException( this, header ), traceId );
+        return EmitError( this.ProtocolException( header, Resources.UnexpectedClientEndpoint ), traceId );
     }
 
     internal async ValueTask<Result> WriteAsync(Protocol.PacketHeader header, ReadOnlyMemory<byte> data, ulong traceId)
@@ -774,13 +821,6 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
             ExceptionThrower.Throw( new MessageBrokerClientStateException( this, _state, expected ) );
     }
 
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal MessageBrokerClientDisposedException DisposedException()
-    {
-        return new MessageBrokerClientDisposedException( this );
-    }
-
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal Exception EmitError(Exception exception, ulong traceId)
     {
@@ -880,7 +920,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
 
         if ( discardedMessageCount > 0 && error is not null )
         {
-            var exc = new MessageBrokerClientMessageException( this, null, Resources.MessagesDiscarded( discardedMessageCount ) );
+            var exc = this.MessageException( null, Resources.MessagesDiscarded( discardedMessageCount ) );
             error.Emit( MessageBrokerClientErrorEvent.Create( this, traceId, exc ) );
         }
 

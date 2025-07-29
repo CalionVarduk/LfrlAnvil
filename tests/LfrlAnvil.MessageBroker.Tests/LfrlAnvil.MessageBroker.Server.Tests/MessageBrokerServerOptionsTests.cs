@@ -15,8 +15,8 @@ public class MessageBrokerServerOptionsTests : TestsBase
     {
         var sut = MessageBrokerServerOptions.Default;
         Assertion.All(
-                sut.Tcp.TestEquals( MessageBrokerTcpServerOptions.Default ),
-                sut.MinMemoryPoolSegmentLength.TestNull(),
+                sut.Tcp.TestEquals( MessageBrokerServerTcpOptions.Default ),
+                sut.NetworkPacket.TestEquals( MessageBrokerServerNetworkPacketOptions.Default ),
                 sut.HandshakeTimeout.TestNull(),
                 sut.AcceptableMessageTimeout.TestNull(),
                 sut.AcceptablePingInterval.TestNull(),
@@ -35,14 +35,14 @@ public class MessageBrokerServerOptionsTests : TestsBase
     [Fact]
     public void SetTcpOptions_ShouldChangeValue()
     {
-        var value = MessageBrokerTcpServerOptions.Default.SetNoDelay( true ).SetSocketBufferSize( MemorySize.FromKilobytes( 16 ) );
+        var value = MessageBrokerServerTcpOptions.Default.SetNoDelay( true ).SetSocketBufferSize( MemorySize.FromKilobytes( 16 ) );
         var sut = MessageBrokerServerOptions.Default;
 
         var result = sut.SetTcpOptions( value );
 
         Assertion.All(
                 result.Tcp.TestEquals( value ),
-                result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
+                result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
@@ -59,16 +59,21 @@ public class MessageBrokerServerOptionsTests : TestsBase
     }
 
     [Fact]
-    public void SetMinMemoryPoolSegmentLength_ShouldChangeValue()
+    public void SetNetworkPacketOptions_ShouldChangeValue()
     {
-        var value = MemorySize.FromKilobytes( 32 );
+        var value = MessageBrokerServerNetworkPacketOptions.Default
+            .SetMaxLength( MemorySize.FromKilobytes( 32 ) )
+            .SetMaxMessageLength( MemorySize.FromMegabytes( 100 ) )
+            .SetMaxBatchLength( MemorySize.FromMegabytes( 50 ) )
+            .SetMaxBatchPacketCount( 100 );
+
         var sut = MessageBrokerServerOptions.Default;
 
-        var result = sut.SetMinMemoryPoolSegmentLength( value );
+        var result = sut.SetNetworkPacketOptions( value );
 
         Assertion.All(
                 result.Tcp.TestEquals( sut.Tcp ),
-                result.MinMemoryPoolSegmentLength.TestEquals( value ),
+                result.NetworkPacket.TestEquals( value ),
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
@@ -94,7 +99,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
 
         Assertion.All(
                 result.Tcp.TestEquals( sut.Tcp ),
-                result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
+                result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.HandshakeTimeout.TestEquals( value ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
@@ -120,7 +125,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
 
         Assertion.All(
                 result.Tcp.TestEquals( sut.Tcp ),
-                result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
+                result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( value ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
@@ -146,7 +151,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
 
         Assertion.All(
                 result.Tcp.TestEquals( sut.Tcp ),
-                result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
+                result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( value ),
@@ -172,7 +177,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
 
         Assertion.All(
                 result.Tcp.TestEquals( sut.Tcp ),
-                result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
+                result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
@@ -198,7 +203,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
 
         Assertion.All(
                 result.Tcp.TestEquals( sut.Tcp ),
-                result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
+                result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
@@ -224,7 +229,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
 
         Assertion.All(
                 result.Tcp.TestEquals( sut.Tcp ),
-                result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
+                result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
@@ -250,7 +255,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
 
         Assertion.All(
                 result.Tcp.TestEquals( sut.Tcp ),
-                result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
+                result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
@@ -278,7 +283,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
 
         Assertion.All(
                 result.Tcp.TestEquals( sut.Tcp ),
-                result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
+                result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
@@ -304,7 +309,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
 
         Assertion.All(
                 result.Tcp.TestEquals( sut.Tcp ),
-                result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
+                result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
@@ -330,7 +335,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
 
         Assertion.All(
                 result.Tcp.TestEquals( sut.Tcp ),
-                result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
+                result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
@@ -356,7 +361,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
 
         Assertion.All(
                 result.Tcp.TestEquals( sut.Tcp ),
-                result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
+                result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
@@ -382,7 +387,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
 
         Assertion.All(
                 result.Tcp.TestEquals( sut.Tcp ),
-                result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
+                result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
                 result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
                 result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),

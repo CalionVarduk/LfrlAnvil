@@ -14,7 +14,8 @@ public class MessageBrokerClientOptionsTests : TestsBase
     {
         var sut = MessageBrokerClientOptions.Default;
         Assertion.All(
-                sut.Tcp.TestEquals( MessageBrokerTcpClientOptions.Default ),
+                sut.Tcp.TestEquals( MessageBrokerClientTcpOptions.Default ),
+                sut.NetworkPacket.TestEquals( MessageBrokerClientNetworkPacketOptions.Default ),
                 sut.MinMemoryPoolSegmentLength.TestNull(),
                 sut.ConnectionTimeout.TestNull(),
                 sut.DesiredMessageTimeout.TestNull(),
@@ -31,13 +32,41 @@ public class MessageBrokerClientOptionsTests : TestsBase
     [Fact]
     public void SetTcpOptions_ShouldChangeValue()
     {
-        var value = MessageBrokerTcpClientOptions.Default.SetNoDelay( true ).SetSocketBufferSize( MemorySize.FromKilobytes( 16 ) );
+        var value = MessageBrokerClientTcpOptions.Default.SetNoDelay( true ).SetSocketBufferSize( MemorySize.FromKilobytes( 16 ) );
         var sut = MessageBrokerClientOptions.Default;
 
         var result = sut.SetTcpOptions( value );
 
         Assertion.All(
                 result.Tcp.TestEquals( value ),
+                result.NetworkPacket.TestEquals( sut.NetworkPacket ),
+                result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
+                result.ConnectionTimeout.TestEquals( sut.ConnectionTimeout ),
+                result.DesiredMessageTimeout.TestEquals( sut.DesiredMessageTimeout ),
+                result.DesiredPingInterval.TestEquals( sut.DesiredPingInterval ),
+                result.ListenerDisposalTimeout.TestEquals( sut.ListenerDisposalTimeout ),
+                result.SynchronizeExternalObjectNames.TestEquals( sut.SynchronizeExternalObjectNames ),
+                result.Timestamps.TestEquals( sut.Timestamps ),
+                result.DelaySource.TestEquals( sut.DelaySource ),
+                result.Logger.TestEquals( sut.Logger ),
+                result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetNetworkPacketOptions_ShouldChangeValue()
+    {
+        var value = MessageBrokerClientNetworkPacketOptions.Default
+            .SetDesiredMaxBatchLength( MemorySize.FromMegabytes( 50 ) )
+            .SetDesiredMaxBatchPacketCount( 100 );
+
+        var sut = MessageBrokerClientOptions.Default;
+
+        var result = sut.SetNetworkPacketOptions( value );
+
+        Assertion.All(
+                result.Tcp.TestEquals( sut.Tcp ),
+                result.NetworkPacket.TestEquals( value ),
                 result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
                 result.ConnectionTimeout.TestEquals( sut.ConnectionTimeout ),
                 result.DesiredMessageTimeout.TestEquals( sut.DesiredMessageTimeout ),
@@ -61,6 +90,7 @@ public class MessageBrokerClientOptionsTests : TestsBase
 
         Assertion.All(
                 result.Tcp.TestEquals( sut.Tcp ),
+                result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.MinMemoryPoolSegmentLength.TestEquals( value ),
                 result.ConnectionTimeout.TestEquals( sut.ConnectionTimeout ),
                 result.DesiredMessageTimeout.TestEquals( sut.DesiredMessageTimeout ),
@@ -84,6 +114,7 @@ public class MessageBrokerClientOptionsTests : TestsBase
 
         Assertion.All(
                 result.Tcp.TestEquals( sut.Tcp ),
+                result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
                 result.ConnectionTimeout.TestEquals( value ),
                 result.DesiredMessageTimeout.TestEquals( sut.DesiredMessageTimeout ),
@@ -107,6 +138,7 @@ public class MessageBrokerClientOptionsTests : TestsBase
 
         Assertion.All(
                 result.Tcp.TestEquals( sut.Tcp ),
+                result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
                 result.ConnectionTimeout.TestEquals( sut.ConnectionTimeout ),
                 result.DesiredMessageTimeout.TestEquals( value ),
@@ -130,6 +162,7 @@ public class MessageBrokerClientOptionsTests : TestsBase
 
         Assertion.All(
                 result.Tcp.TestEquals( sut.Tcp ),
+                result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
                 result.ConnectionTimeout.TestEquals( sut.ConnectionTimeout ),
                 result.DesiredMessageTimeout.TestEquals( sut.DesiredMessageTimeout ),
@@ -153,6 +186,7 @@ public class MessageBrokerClientOptionsTests : TestsBase
 
         Assertion.All(
                 result.Tcp.TestEquals( sut.Tcp ),
+                result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
                 result.ConnectionTimeout.TestEquals( sut.ConnectionTimeout ),
                 result.DesiredMessageTimeout.TestEquals( sut.DesiredMessageTimeout ),
@@ -176,6 +210,7 @@ public class MessageBrokerClientOptionsTests : TestsBase
 
         Assertion.All(
                 result.Tcp.TestEquals( sut.Tcp ),
+                result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
                 result.ConnectionTimeout.TestEquals( sut.ConnectionTimeout ),
                 result.DesiredMessageTimeout.TestEquals( sut.DesiredMessageTimeout ),
@@ -199,6 +234,7 @@ public class MessageBrokerClientOptionsTests : TestsBase
 
         Assertion.All(
                 result.Tcp.TestEquals( sut.Tcp ),
+                result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
                 result.ConnectionTimeout.TestEquals( sut.ConnectionTimeout ),
                 result.DesiredMessageTimeout.TestEquals( sut.DesiredMessageTimeout ),
@@ -222,6 +258,7 @@ public class MessageBrokerClientOptionsTests : TestsBase
 
         Assertion.All(
                 result.Tcp.TestEquals( sut.Tcp ),
+                result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
                 result.ConnectionTimeout.TestEquals( sut.ConnectionTimeout ),
                 result.DesiredMessageTimeout.TestEquals( sut.DesiredMessageTimeout ),
@@ -245,6 +282,7 @@ public class MessageBrokerClientOptionsTests : TestsBase
 
         Assertion.All(
                 result.Tcp.TestEquals( sut.Tcp ),
+                result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
                 result.ConnectionTimeout.TestEquals( sut.ConnectionTimeout ),
                 result.DesiredMessageTimeout.TestEquals( sut.DesiredMessageTimeout ),
@@ -268,6 +306,7 @@ public class MessageBrokerClientOptionsTests : TestsBase
 
         Assertion.All(
                 result.Tcp.TestEquals( sut.Tcp ),
+                result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
                 result.ConnectionTimeout.TestEquals( sut.ConnectionTimeout ),
                 result.DesiredMessageTimeout.TestEquals( sut.DesiredMessageTimeout ),

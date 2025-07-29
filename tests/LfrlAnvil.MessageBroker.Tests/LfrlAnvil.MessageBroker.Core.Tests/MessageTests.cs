@@ -1,12 +1,15 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.Computable.Expressions;
 using LfrlAnvil.Computable.Expressions.Extensions;
+using LfrlAnvil.Diagnostics;
 using LfrlAnvil.MessageBroker.Client;
+using LfrlAnvil.MessageBroker.Client.Internal;
 using LfrlAnvil.MessageBroker.Core.Tests.Helpers;
 using LfrlAnvil.MessageBroker.Server;
 using LfrlAnvil.MessageBroker.Server.Events;
@@ -901,6 +904,78 @@ public class MessageTests : TestsBase, IClassFixture<SharedResourceFixture>
                 [
                     new MessageSnapshot( listener, 0, sender, stream, 0, 0, false, MessageSnapshot.GetData( [ 1 ] ) ),
                     new MessageSnapshot( listener, 2, sender, stream, 0, 0, false, MessageSnapshot.GetData( [ 4, 5, 6 ] ) )
+                ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task Server_ShouldAcceptPushedLargeMessage_AndSendItToAppropriateListener()
+    {
+        var endSource = new SafeTaskCompletionSource();
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetNetworkPacketOptions(
+                    MessageBrokerServerNetworkPacketOptions.Default.SetMaxMessageLength( MemorySize.FromKilobytes( 20 ) ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource ) );
+
+        await server.StartAsync();
+
+        await using var client = new MessageBrokerClient(
+            ( IPEndPoint )server.LocalEndPoint,
+            "test",
+            MessageBrokerClientOptions.Default
+                .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) )
+                .SetDelaySource( _sharedDelaySource ) );
+
+        await client.StartAsync();
+
+        var sentMessageIds = new List<ulong?>();
+        var receivedMessages = new List<MessageSnapshot>();
+
+        await client.Publishers.BindAsync( "foo" );
+        await client.Listeners.BindAsync(
+            "foo",
+            (a, _) =>
+            {
+                lock ( receivedMessages )
+                    receivedMessages.Add( MessageSnapshot.FromArgs( a ) );
+
+                endSource.Complete();
+                return ValueTask.CompletedTask;
+            },
+            MessageBrokerListenerOptions.Default.EnableAcks( false ) );
+
+        var data = Enumerable.Range(
+                0,
+                ( int )server.MaxNetworkMessagePacketLength.Bytes
+                - Protocol.PacketHeader.Length
+                - Protocol.MessageNotificationHeader.Length )
+            .Select( static x => ( byte )x )
+            .ToArray();
+
+        var publisher = client.Publishers.TryGetByChannelId( 1 );
+        var listener = client.Listeners.TryGetByChannelId( 1 )!;
+
+        if ( publisher is not null )
+        {
+            var result = await publisher.PushAsync( data );
+            sentMessageIds.Add( result.Value.Id );
+        }
+
+        await endSource.Task;
+
+        var sender = new MessageBrokerExternalObject( 1, "test" );
+        var stream = new MessageBrokerExternalObject( 1, "foo" );
+
+        Assertion.All(
+                sentMessageIds.TestSequence( [ 0UL ] ),
+                receivedMessages.TestSequence(
+                [
+                    new MessageSnapshot( listener, 0, sender, stream, 0, 0, false, MessageSnapshot.GetData( data ) )
                 ] ) )
             .Go();
     }

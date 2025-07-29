@@ -24,47 +24,49 @@ namespace LfrlAnvil.MessageBroker.Client;
 /// </summary>
 /// <param name="LocalEndPoint">The <see cref="IPEndPoint"/> to bind the TCP socket to.</param>
 /// <param name="NoDelay">Value that disables a delay when send or receive buffers are not full. Equal to <b>false</b> by default.</param>
-/// <param name="SocketBufferSize">The size of send and receive buffers. Equal to <b>65535 B</b> by default.</param>
-public readonly record struct MessageBrokerTcpClientOptions(IPEndPoint? LocalEndPoint, bool? NoDelay, MemorySize? SocketBufferSize)
+/// <param name="SocketBufferSize">
+/// The size of send and receive buffers. Equal to <b>65535 B</b> by default. Value will be clamped to [<b>1 B</b>, <b>65535 B</b>] range.
+/// </param>
+public readonly record struct MessageBrokerClientTcpOptions(IPEndPoint? LocalEndPoint, bool? NoDelay, MemorySize? SocketBufferSize)
 {
     /// <summary>
     /// Represents default options.
     /// </summary>
-    public static MessageBrokerTcpClientOptions Default => new MessageBrokerTcpClientOptions();
+    public static MessageBrokerClientTcpOptions Default => new MessageBrokerClientTcpOptions();
 
     /// <summary>
     /// Allows to change <see cref="LocalEndPoint"/>.
     /// </summary>
     /// <param name="value">New value.</param>
-    /// <returns>New <see cref="MessageBrokerTcpClientOptions"/> instance.</returns>
+    /// <returns>New <see cref="MessageBrokerClientTcpOptions"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public MessageBrokerTcpClientOptions SetLocalEndPoint(IPEndPoint? value)
+    public MessageBrokerClientTcpOptions SetLocalEndPoint(IPEndPoint? value)
     {
-        return new MessageBrokerTcpClientOptions( value, NoDelay, SocketBufferSize );
+        return new MessageBrokerClientTcpOptions( value, NoDelay, SocketBufferSize );
     }
 
     /// <summary>
     /// Allows to change <see cref="NoDelay"/>.
     /// </summary>
     /// <param name="value">New value.</param>
-    /// <returns>New <see cref="MessageBrokerTcpClientOptions"/> instance.</returns>
+    /// <returns>New <see cref="MessageBrokerClientTcpOptions"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public MessageBrokerTcpClientOptions SetNoDelay(bool? value)
+    public MessageBrokerClientTcpOptions SetNoDelay(bool? value)
     {
-        return new MessageBrokerTcpClientOptions( LocalEndPoint, value, SocketBufferSize );
+        return new MessageBrokerClientTcpOptions( LocalEndPoint, value, SocketBufferSize );
     }
 
     /// <summary>
     /// Allows to change <see cref="SocketBufferSize"/>.
     /// </summary>
     /// <param name="value">New value.</param>
-    /// <returns>New <see cref="MessageBrokerTcpClientOptions"/> instance.</returns>
+    /// <returns>New <see cref="MessageBrokerClientTcpOptions"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public MessageBrokerTcpClientOptions SetSocketBufferSize(MemorySize? value)
+    public MessageBrokerClientTcpOptions SetSocketBufferSize(MemorySize? value)
     {
-        return new MessageBrokerTcpClientOptions( LocalEndPoint, NoDelay, value );
+        return new MessageBrokerClientTcpOptions( LocalEndPoint, NoDelay, value );
     }
 }

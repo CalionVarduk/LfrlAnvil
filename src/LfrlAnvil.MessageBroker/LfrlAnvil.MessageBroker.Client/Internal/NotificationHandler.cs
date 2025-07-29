@@ -172,11 +172,7 @@ internal struct NotificationHandler
                                 readPacket.Emit(
                                     MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, notification.Header ) );
 
-                            var exception = Protocol.AssertMinPayload(
-                                client,
-                                notification.Header,
-                                Protocol.SystemNotificationHeader.Length );
-
+                            var exception = notification.Header.AssertMinPayload( client, Protocol.SystemNotificationHeader.Length );
                             if ( exception is not null )
                             {
                                 if ( client.Logger.Error is { } error )
@@ -235,7 +231,7 @@ internal struct NotificationHandler
                     var readPacket = client.Logger.ReadPacket;
                     readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, notification.Header ) );
 
-                    var exception = Protocol.AssertMinPayload( client, notification.Header, Protocol.MessageNotificationHeader.Length );
+                    var exception = notification.Header.AssertMinPayload( client, Protocol.MessageNotificationHeader.Length );
                     if ( exception is not null )
                     {
                         if ( client.Logger.Error is { } error )
@@ -254,7 +250,7 @@ internal struct NotificationHandler
                     {
                         if ( client.Logger.Error is { } error )
                         {
-                            var exc = Protocol.ProtocolException( client, notification.Header, errors );
+                            var exc = client.ProtocolException( notification.Header, errors );
                             error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
                         }
 
@@ -294,11 +290,7 @@ internal struct NotificationHandler
                     {
                         if ( client.Logger.Error is { } error )
                         {
-                            var exc = new MessageBrokerClientMessageException(
-                                client,
-                                null,
-                                Resources.ListenerDoesNotExist( request.ChannelId ) );
-
+                            var exc = client.MessageException( null, Resources.ListenerDoesNotExist( request.ChannelId ) );
                             error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
                         }
 
@@ -310,11 +302,7 @@ internal struct NotificationHandler
                     {
                         if ( client.Logger.Error is { } error )
                         {
-                            var exc = new MessageBrokerClientMessageException(
-                                client,
-                                listener,
-                                Resources.InvalidMessageParameters( listener, errors ) );
-
+                            var exc = client.MessageException( listener, Resources.InvalidMessageParameters( listener, errors ) );
                             error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
                         }
 
@@ -348,11 +336,7 @@ internal struct NotificationHandler
                     {
                         if ( client.Logger.Error is { } error )
                         {
-                            var exc = new MessageBrokerClientMessageException(
-                                client,
-                                listener,
-                                Resources.ListenerDoesNotExist( request.ChannelId ) );
-
+                            var exc = client.MessageException( listener, Resources.ListenerDoesNotExist( request.ChannelId ) );
                             error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
                         }
                     }
@@ -384,11 +368,7 @@ internal struct NotificationHandler
         {
             if ( client.Logger.Error is { } error )
             {
-                var exc = Protocol.ProtocolException(
-                    client,
-                    notification.Header,
-                    Chain.Create( Resources.ExternalObjectNameSynchronizationIsDisabled ) );
-
+                var exc = client.ProtocolException( notification.Header, Resources.ExternalObjectNameSynchronizationIsDisabled );
                 error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
             }
 
@@ -396,9 +376,8 @@ internal struct NotificationHandler
             return false;
         }
 
-        var exception = Protocol.AssertMinPayload(
+        var exception = notification.Header.AssertMinPayload(
             client,
-            notification.Header,
             Protocol.SystemNotificationHeader.Length + Protocol.ObjectNameNotificationHeader.Length );
 
         if ( exception is not null )
@@ -420,7 +399,7 @@ internal struct NotificationHandler
         {
             if ( client.Logger.Error is { } error )
             {
-                var exc = Protocol.ProtocolException( client, notification.Header, requestErrors );
+                var exc = client.ProtocolException( notification.Header, requestErrors );
                 error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
             }
 
@@ -443,7 +422,7 @@ internal struct NotificationHandler
         {
             if ( client.Logger.Error is { } error )
             {
-                var exc = Protocol.InvalidSenderNameLengthException( client, notification.Header, name.Value.Length );
+                var exc = client.ProtocolException( notification.Header, Resources.InvalidSenderNameLength( name.Value.Length ) );
                 error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
             }
 
@@ -480,11 +459,7 @@ internal struct NotificationHandler
         {
             if ( client.Logger.Error is { } error )
             {
-                var exc = Protocol.ProtocolException(
-                    client,
-                    notification.Header,
-                    Chain.Create( Resources.ExternalObjectNameSynchronizationIsDisabled ) );
-
+                var exc = client.ProtocolException( notification.Header, Resources.ExternalObjectNameSynchronizationIsDisabled );
                 error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
             }
 
@@ -492,9 +467,8 @@ internal struct NotificationHandler
             return false;
         }
 
-        var exception = Protocol.AssertMinPayload(
+        var exception = notification.Header.AssertMinPayload(
             client,
-            notification.Header,
             Protocol.SystemNotificationHeader.Length + Protocol.ObjectNameNotificationHeader.Length );
 
         if ( exception is not null )
@@ -516,7 +490,7 @@ internal struct NotificationHandler
         {
             if ( client.Logger.Error is { } error )
             {
-                var exc = Protocol.ProtocolException( client, notification.Header, requestErrors );
+                var exc = client.ProtocolException( notification.Header, requestErrors );
                 error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
             }
 
@@ -539,7 +513,7 @@ internal struct NotificationHandler
         {
             if ( client.Logger.Error is { } error )
             {
-                var exc = Protocol.InvalidStreamNameLengthException( client, notification.Header, name.Value.Length );
+                var exc = client.ProtocolException( notification.Header, Resources.InvalidStreamNameLength( name.Value.Length ) );
                 error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
             }
 
@@ -574,7 +548,7 @@ internal struct NotificationHandler
     {
         if ( client.Logger.Error is { } error )
         {
-            var exc = Protocol.ProtocolException( client, header, Chain.Create( Resources.UnexpectedSystemNotificationType( type ) ) );
+            var exc = client.ProtocolException( header, Resources.UnexpectedSystemNotificationType( type ) );
             error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
         }
 

@@ -39,8 +39,12 @@ public readonly struct MessageBrokerClientHandshakingEvent
     [Pure]
     public override string ToString()
     {
+        var batchPacket = Source.Client.MaxBatchPacketCount > 0
+            ? $"(MaxPacketCount = {Source.Client.MaxBatchPacketCount}, MaxLength = {Source.Client.MaxNetworkBatchPacketLength})"
+            : "<disabled>";
+
         return
-            $"[Handshaking] {Source}, MessageTimeout = {Source.Client.MessageTimeout}, PingInterval = {Source.Client.PingInterval}, SynchronizeExternalObjectNames = {Source.Client.SynchronizeExternalObjectNames}";
+            $"[Handshaking] {Source}, MessageTimeout = {Source.Client.MessageTimeout}, PingInterval = {Source.Client.PingInterval}, BatchPacket = {batchPacket}, SynchronizeExternalObjectNames = {Source.Client.SynchronizeExternalObjectNames}";
     }
 
     [Pure]

@@ -20,7 +20,6 @@ using System.Threading.Tasks;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Memory;
 using LfrlAnvil.MessageBroker.Client.Events;
-using LfrlAnvil.MessageBroker.Client.Exceptions;
 using LfrlAnvil.MessageBroker.Client.Internal;
 
 namespace LfrlAnvil.MessageBroker.Client;
@@ -130,7 +129,7 @@ public sealed partial class MessageBrokerClient
         {
             if ( exc is OperationCanceledException cancelExc && cancelExc.CancellationToken == timeoutToken )
             {
-                var exception = new MessageBrokerClientResponseTimeoutException( this, requestHeader.GetServerEndpoint() );
+                var exception = this.ResponseTimeoutException( requestHeader );
                 if ( Logger.Error is { } error )
                     error.Emit( MessageBrokerClientErrorEvent.Create( this, traceId, exception ) );
 
@@ -172,7 +171,7 @@ public sealed partial class MessageBrokerClient
         Chain<string> errors;
         try
         {
-            var exception = Protocol.AssertPayload( this, header, Protocol.HandshakeAcceptedResponse.Length );
+            var exception = header.AssertExactPayload( this, Protocol.HandshakeAcceptedResponse.Length );
             if ( exception is not null )
                 return EmitError( exception, traceId );
 
@@ -190,6 +189,10 @@ public sealed partial class MessageBrokerClient
                 Id = response.Id;
                 MessageTimeout = response.MessageTimeout;
                 PingInterval = response.PingInterval;
+                MaxNetworkPacketBytes = unchecked( ( int )response.MaxNetworkPacketLength.Bytes );
+                MaxNetworkMessagePacketBytes = unchecked( ( int )response.MaxNetworkMessagePacketLength.Bytes );
+                MaxBatchPacketCount = response.MaxBatchPacketCount;
+                MaxNetworkBatchPacketBytes = unchecked( ( int )response.MaxNetworkBatchPacketLength.Bytes );
                 IsServerLittleEndian = response.IsServerLittleEndian;
             }
         }
@@ -197,7 +200,7 @@ public sealed partial class MessageBrokerClient
         {
             if ( exc is OperationCanceledException cancelExc && cancelExc.CancellationToken == timeoutToken )
             {
-                var exception = new MessageBrokerClientResponseTimeoutException( this, MessageBrokerServerEndpoint.HandshakeRequest );
+                var exception = this.ResponseTimeoutException( MessageBrokerServerEndpoint.HandshakeRequest );
                 if ( Logger.Error is { } error )
                     error.Emit( MessageBrokerClientErrorEvent.Create( this, traceId, exception ) );
 
@@ -211,7 +214,7 @@ public sealed partial class MessageBrokerClient
         }
 
         if ( errors.Count > 0 )
-            return EmitError( Protocol.ProtocolException( this, header, errors ), traceId );
+            return EmitError( this.ProtocolException( header, errors ), traceId );
 
         if ( Logger.ReadPacket is { } readPacket )
             readPacket.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( this, traceId, header ) );
@@ -231,7 +234,7 @@ public sealed partial class MessageBrokerClient
         Assume.Equals( responseHeader.GetClientEndpoint(), MessageBrokerClientEndpoint.HandshakeRejectedResponse );
         try
         {
-            var exception = Protocol.AssertPayload( this, responseHeader, Protocol.HandshakeRejectedResponse.Length );
+            var exception = responseHeader.AssertExactPayload( this, Protocol.HandshakeRejectedResponse.Length );
             if ( exception is not null )
                 return EmitError( exception, traceId );
 
@@ -239,13 +242,13 @@ public sealed partial class MessageBrokerClient
             await stream.ReadExactlyAsync( data, timeoutToken ).ConfigureAwait( false );
             var response = Protocol.HandshakeRejectedResponse.Parse( data );
 
-            return EmitError( Protocol.RequestException( this, requestHeader, response.StringifyErrors() ), traceId );
+            return EmitError( this.RequestException( requestHeader, response.StringifyErrors() ), traceId );
         }
         catch ( Exception exc )
         {
             if ( exc is OperationCanceledException cancelExc && cancelExc.CancellationToken == timeoutToken )
             {
-                var exception = new MessageBrokerClientResponseTimeoutException( this, requestHeader.GetServerEndpoint() );
+                var exception = this.ResponseTimeoutException( requestHeader );
                 if ( Logger.Error is { } error )
                     error.Emit( MessageBrokerClientErrorEvent.Create( this, traceId, exception ) );
 

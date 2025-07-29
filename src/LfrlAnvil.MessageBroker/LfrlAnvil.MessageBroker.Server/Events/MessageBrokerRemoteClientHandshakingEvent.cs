@@ -15,6 +15,7 @@
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Diagnostics;
 
 namespace LfrlAnvil.MessageBroker.Server.Events;
 
@@ -29,6 +30,8 @@ public readonly struct MessageBrokerRemoteClientHandshakingEvent
         string clientName,
         Duration desiredMessageTimeout,
         Duration desiredPingInterval,
+        short maxBatchPacketCount,
+        MemorySize maxNetworkBatchPacketLength,
         bool synchronizeExternalObjectNames,
         bool isClientLittleEndian)
     {
@@ -36,6 +39,8 @@ public readonly struct MessageBrokerRemoteClientHandshakingEvent
         ClientName = clientName;
         DesiredMessageTimeout = desiredMessageTimeout;
         DesiredPingInterval = desiredPingInterval;
+        MaxNetworkBatchPacketLength = maxNetworkBatchPacketLength;
+        MaxBatchPacketCount = maxBatchPacketCount;
         SynchronizeExternalObjectNames = synchronizeExternalObjectNames;
         IsClientLittleEndian = isClientLittleEndian;
     }
@@ -61,6 +66,16 @@ public readonly struct MessageBrokerRemoteClientHandshakingEvent
     public Duration DesiredPingInterval { get; }
 
     /// <summary>
+    /// Client's desired max network batch packet length.
+    /// </summary>
+    public MemorySize MaxNetworkBatchPacketLength { get; }
+
+    /// <summary>
+    /// Client's desired max acceptable batch packet count.
+    /// </summary>
+    public short MaxBatchPacketCount { get; }
+
+    /// <summary>
     /// Specifies whether or not the client enabled synchronization of external object names.
     /// </summary>
     public bool SynchronizeExternalObjectNames { get; }
@@ -77,8 +92,12 @@ public readonly struct MessageBrokerRemoteClientHandshakingEvent
     [Pure]
     public override string ToString()
     {
+        var batchPacket = MaxBatchPacketCount > 1
+            ? $"(MaxPacketCount = {MaxBatchPacketCount}, MaxLength = {MaxNetworkBatchPacketLength})"
+            : "<disabled>";
+
         return
-            $"[Handshaking] {Source}, ClientName = '{ClientName}', DesiredMessageTimeout = {DesiredMessageTimeout}, DesiredPingInterval = {DesiredPingInterval}, SynchronizeExternalObjectNames = {SynchronizeExternalObjectNames}, IsClientLittleEndian = {IsClientLittleEndian}";
+            $"[Handshaking] {Source}, ClientName = '{ClientName}', DesiredMessageTimeout = {DesiredMessageTimeout}, DesiredPingInterval = {DesiredPingInterval}, DesiredBatchPacket = {batchPacket}, SynchronizeExternalObjectNames = {SynchronizeExternalObjectNames}, IsClientLittleEndian = {IsClientLittleEndian}";
     }
 
     [Pure]
@@ -89,6 +108,8 @@ public readonly struct MessageBrokerRemoteClientHandshakingEvent
         string clientName,
         Duration desiredMessageTimeout,
         Duration desiredPingInterval,
+        short maxBatchPacketCount,
+        MemorySize maxNetworkBatchPacketLength,
         bool synchronizeExternalObjectNames,
         bool isClientLittleEndian)
     {
@@ -98,6 +119,8 @@ public readonly struct MessageBrokerRemoteClientHandshakingEvent
             clientName,
             desiredMessageTimeout,
             desiredPingInterval,
+            maxBatchPacketCount,
+            maxNetworkBatchPacketLength,
             synchronizeExternalObjectNames,
             isClientLittleEndian );
     }

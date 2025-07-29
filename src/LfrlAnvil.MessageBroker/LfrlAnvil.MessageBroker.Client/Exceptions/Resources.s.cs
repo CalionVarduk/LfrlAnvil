@@ -17,6 +17,7 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Diagnostics;
 using LfrlAnvil.MessageBroker.Client.Events;
 using LfrlAnvil.MessageBroker.Client.Internal;
 
@@ -36,9 +37,6 @@ internal static class Resources
 
     internal const string ExternalDelaySourceHasBeenDisposed
         = "Operation has been cancelled because external delay value task source has been disposed.";
-
-    internal static readonly string ServerFailedToDecodeClientName
-        = $"Server failed to decode client's name using {TextEncoding.Instance.EncodingName} encoding.";
 
     internal static readonly string MaxMessageRoutingTargetCountReached
         = $"Max message routing target count of {short.MaxValue} was reached.";
@@ -73,9 +71,10 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string UnexpectedPacketLength(int length)
+    internal static string UnexpectedPacketLength(int length, int expectedMax)
     {
-        return $"Expected packet length to be in [0, {int.MaxValue}] range but found {length}.";
+        return
+            $"Expected total packet length to be in [{Protocol.PacketHeader.Length}, {expectedMax}] range but found {( long )length + Protocol.PacketHeader.Length}.";
     }
 
     [Pure]
@@ -83,6 +82,35 @@ internal static class Resources
     internal static string InvalidEndiannessPayload(uint received)
     {
         return $"Expected endianness verification payload to be {Protocol.Endianness.VerificationPayload:x8} but found {received:x8}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string BatchPacketCountIsInvalid(int received, int max)
+    {
+        return $"Expected batch packet count to be in [2, {max}] range but found {received}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string BatchPacketElementHeaderIsTooShort(int index, int remaining)
+    {
+        return
+            $"Expected length of the packet at index {index} in batch to be greater than or equal to {Protocol.PacketHeader.Length} but found {remaining}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string BatchPacketElementPayloadIsTooLarge(int index, int payload, int remaining)
+    {
+        return $"Expected payload of the packet at index {index} in batch to be less than or equal to {remaining} but found {payload}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string BatchPacketContainsTooMuchData(int remaining)
+    {
+        return $"Expected an end of the batch packet but found {remaining} remaining byte(s).";
     }
 
     [Pure]
@@ -326,6 +354,67 @@ internal static class Resources
     internal static string PingIntervalIsOutOfBounds(Duration interval)
     {
         return $"Expected received ping interval to be in {GetBounds( Defaults.Temporal.PingIntervalBounds )} range but found {interval}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string MaxNetworkPacketLengthIsOutOfBounds(MemorySize length)
+    {
+        return
+            $"Expected received max network packet length to be in {GetBounds( Defaults.Memory.MaxNetworkPacketLengthBounds )} range but found {length}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string MaxNetworkMessagePacketLengthIsOutOfBounds(MemorySize length, Bounds<MemorySize> range)
+    {
+        return $"Expected received max network message packet length to be in {GetBounds( range )} range but found {length}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string MaxNetworkBatchPacketLengthIsOutOfBounds(MemorySize length, Bounds<MemorySize> range)
+    {
+        return $"Expected received max network batch packet length to be in {GetBounds( range )} range but found {length}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string MaxNetworkBatchPacketLengthIsNotEqualToZero(MemorySize length)
+    {
+        return $"Expected received disabled max network batch packet length to be equal to 0 but found {length}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string MaxBatchPacketCountIsInvalid(short count)
+    {
+        return $"Expected received max batch packet count to be greater than 1 or equal to 0 but found {count}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string MaxRoutingPacketLengthLimitReached(MessageBrokerClient client, int length)
+    {
+        return
+            $"Max network packet length of {client.MaxNetworkPacketLength} for message routing has been exceeded by {MemorySize.FromBytes( length - client.MaxNetworkPacketBytes )}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string MaxMessagePacketLengthLimitReached(MessageBrokerClient client, int length)
+    {
+        return
+            $"Max network message packet length of {MemorySize.FromBytes( client.MaxNetworkPushMessagePacketBytes )} has been exceeded by {MemorySize.FromBytes( length - client.MaxNetworkPushMessagePacketBytes )}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string FailedToPushMessage(Chain<string> errors)
+    {
+        Assume.IsGreaterThan( errors.Count, 0 );
+        var reasons = string.Join( Environment.NewLine, errors.Select( static (e, i) => $"{i + 1}. {e}" ) );
+        return $"Message could not be pushed to the server. Encountered {errors.Count} error(s):{Environment.NewLine}{reasons}";
     }
 
     [Pure]

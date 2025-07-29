@@ -17,6 +17,7 @@ using System.Buffers.Binary;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Diagnostics;
 using LfrlAnvil.MessageBroker.Client.Events;
 using LfrlAnvil.MessageBroker.Client.Exceptions;
 
@@ -98,6 +99,8 @@ internal static class Protocol
         internal readonly byte Flags;
         internal readonly Duration MessageTimeout;
         internal readonly Duration PingInterval;
+        internal readonly int MaxBatchPacketCount;
+        internal readonly MemorySize MaxNetworkBatchPacketLength;
         internal readonly EncodeableText ClientName;
 
         internal HandshakeRequest(MessageBrokerClient client)
@@ -107,10 +110,12 @@ internal static class Protocol
 
             MessageTimeout = client.MessageTimeout;
             PingInterval = client.PingInterval;
+            MaxBatchPacketCount = client.MaxBatchPacketCount;
+            MaxNetworkBatchPacketLength = client.MaxNetworkBatchPacketLength;
             ClientName = TextEncoding.Prepare( client.Name ).GetValueOrThrow();
             Header = PacketHeader.Create(
                 MessageBrokerServerEndpoint.HandshakeRequest,
-                sizeof( byte ) + sizeof( uint ) * 2 + ( uint )ClientName.ByteCount );
+                sizeof( byte ) + sizeof( ushort ) + sizeof( uint ) * 3 + ( uint )ClientName.ByteCount );
         }
 
         internal int Length => PacketHeader.Length + unchecked( ( int )Header.Payload );
@@ -119,7 +124,7 @@ internal static class Protocol
         public override string ToString()
         {
             return
-                $"[{Header}] Flags = {Flags}, MessageTimeout = {MessageTimeout}, PingInterval = {PingInterval}, ClientName = ({ClientName})";
+                $"[{Header}] Flags = {Flags}, MessageTimeout = {MessageTimeout}, PingInterval = {PingInterval}, MaxBatchPacketCount = {MaxBatchPacketCount}, MaxNetworkBatchPacketLength = {MaxNetworkBatchPacketLength}, ClientName = ({ClientName})";
         }
 
         internal void Serialize(Memory<byte> target)
@@ -128,12 +133,16 @@ internal static class Protocol
             var payload = Header.Payload;
             var messageTimeoutMs = unchecked( ( uint )MessageTimeout.FullMilliseconds );
             var pingIntervalMs = unchecked( ( uint )PingInterval.FullMilliseconds );
+            var maxBatchPacketCount = unchecked( ( ushort )MaxBatchPacketCount );
+            var maxNetworkBatchPacketLength = unchecked( ( uint )MaxNetworkBatchPacketLength.Bytes );
 
             if ( BitConverter.IsLittleEndian )
             {
                 payload = BinaryPrimitives.ReverseEndianness( payload );
                 messageTimeoutMs = BinaryPrimitives.ReverseEndianness( messageTimeoutMs );
                 pingIntervalMs = BinaryPrimitives.ReverseEndianness( pingIntervalMs );
+                maxBatchPacketCount = BinaryPrimitives.ReverseEndianness( maxBatchPacketCount );
+                maxNetworkBatchPacketLength = BinaryPrimitives.ReverseEndianness( maxNetworkBatchPacketLength );
             }
 
             var writer = new BinaryContractWriter( target.Span );
@@ -142,24 +151,42 @@ internal static class Protocol
             writer.MoveWrite( Flags );
             writer.MoveWrite( messageTimeoutMs );
             writer.MoveWrite( pingIntervalMs );
+            writer.MoveWrite( maxBatchPacketCount );
+            writer.MoveWrite( maxNetworkBatchPacketLength );
             ClientName.Encode( writer.GetSpan( ClientName.ByteCount ) ).ThrowIfError();
         }
     }
 
     internal readonly struct HandshakeAcceptedResponse
     {
-        internal const int Length = sizeof( byte ) + sizeof( uint ) * 3;
+        internal const int Length = sizeof( byte ) + sizeof( ushort ) + sizeof( uint ) * 6;
         internal readonly byte Flags;
         internal readonly int Id;
         internal readonly Duration MessageTimeout;
         internal readonly Duration PingInterval;
+        internal readonly MemorySize MaxNetworkPacketLength;
+        internal readonly MemorySize MaxNetworkMessagePacketLength;
+        internal readonly short MaxBatchPacketCount;
+        internal readonly MemorySize MaxNetworkBatchPacketLength;
 
-        private HandshakeAcceptedResponse(byte flags, int id, Duration messageTimeout, Duration pingInterval)
+        private HandshakeAcceptedResponse(
+            byte flags,
+            int id,
+            Duration messageTimeout,
+            Duration pingInterval,
+            MemorySize maxNetworkPacketLength,
+            MemorySize maxNetworkMessagePacketLength,
+            short maxBatchPacketCount,
+            MemorySize maxNetworkBatchPacketLength)
         {
             Flags = flags;
             Id = id;
             MessageTimeout = messageTimeout;
             PingInterval = pingInterval;
+            MaxNetworkPacketLength = maxNetworkPacketLength;
+            MaxNetworkMessagePacketLength = maxNetworkMessagePacketLength;
+            MaxBatchPacketCount = maxBatchPacketCount;
+            MaxNetworkBatchPacketLength = maxNetworkBatchPacketLength;
         }
 
         internal bool IsServerLittleEndian => (Flags & 1) != 0;
@@ -167,7 +194,8 @@ internal static class Protocol
         [Pure]
         public override string ToString()
         {
-            return $"Flags = {Flags}, Id = {Id}, MessageTimeout = {MessageTimeout}, PingInterval = {PingInterval}";
+            return
+                $"Flags = {Flags}, Id = {Id}, MessageTimeout = {MessageTimeout}, PingInterval = {PingInterval}, MaxNetworkPacketLength = {MaxNetworkPacketLength}, MaxNetworkMessagePacketLength = {MaxNetworkMessagePacketLength}, MaxBatchPacketCount = {MaxBatchPacketCount}, MaxNetworkBatchPacketLength = {MaxNetworkBatchPacketLength}";
         }
 
         [Pure]
@@ -180,13 +208,21 @@ internal static class Protocol
             var flags = reader.MoveReadInt8();
             var id = unchecked( ( int )reader.MoveReadInt32() );
             var messageTimeoutMs = unchecked( ( int )reader.MoveReadInt32() );
-            var pingIntervalMs = unchecked( ( int )reader.ReadInt32() );
+            var pingIntervalMs = unchecked( ( int )reader.MoveReadInt32() );
+            var maxNetworkPacketLength = unchecked( ( int )reader.MoveReadInt32() );
+            var maxNetworkMessagePacketLength = unchecked( ( int )reader.MoveReadInt32() );
+            var maxBatchPacketCount = unchecked( ( short )reader.MoveReadInt16() );
+            var maxNetworkBatchPacketLength = unchecked( ( int )reader.ReadInt32() );
 
             return new HandshakeAcceptedResponse(
                 flags,
                 id,
                 Duration.FromMilliseconds( messageTimeoutMs ),
-                Duration.FromMilliseconds( pingIntervalMs ) );
+                Duration.FromMilliseconds( pingIntervalMs ),
+                MemorySize.FromBytes( maxNetworkPacketLength ),
+                MemorySize.FromBytes( maxNetworkMessagePacketLength ),
+                maxBatchPacketCount,
+                MemorySize.FromBytes( maxNetworkBatchPacketLength ) );
         }
 
         [Pure]
@@ -204,6 +240,28 @@ internal static class Protocol
             if ( ! Defaults.Temporal.PingIntervalBounds.Contains( PingInterval ) )
                 result = result.Extend( Resources.PingIntervalIsOutOfBounds( PingInterval ) );
 
+            if ( ! Defaults.Memory.MaxNetworkPacketLengthBounds.Contains( MaxNetworkPacketLength ) )
+                result = result.Extend( Resources.MaxNetworkPacketLengthIsOutOfBounds( MaxNetworkPacketLength ) );
+
+            var largePacketLengthBounds = Defaults.Memory.GetNetworkLargePacketLengthBounds( MaxNetworkPacketLength );
+            if ( ! largePacketLengthBounds.Contains( MaxNetworkMessagePacketLength ) )
+                result = result.Extend(
+                    Resources.MaxNetworkMessagePacketLengthIsOutOfBounds( MaxNetworkMessagePacketLength, largePacketLengthBounds ) );
+
+            if ( MaxBatchPacketCount > 1 )
+            {
+                if ( ! largePacketLengthBounds.Contains( MaxNetworkBatchPacketLength ) )
+                    result = result.Extend(
+                        Resources.MaxNetworkBatchPacketLengthIsOutOfBounds( MaxNetworkBatchPacketLength, largePacketLengthBounds ) );
+            }
+            else if ( MaxBatchPacketCount == 0 )
+            {
+                if ( MaxNetworkBatchPacketLength != MemorySize.Zero )
+                    result = result.Extend( Resources.MaxNetworkBatchPacketLengthIsNotEqualToZero( MaxNetworkBatchPacketLength ) );
+            }
+            else
+                result = result.Extend( Resources.MaxBatchPacketCountIsInvalid( MaxBatchPacketCount ) );
+
             return result;
         }
     }
@@ -219,8 +277,7 @@ internal static class Protocol
         }
 
         internal bool InvalidNameLength => (Flags & 1) != 0;
-        internal bool NameDecodingFailure => (Flags & 2) != 0;
-        internal bool NameAlreadyExists => (Flags & 4) != 0;
+        internal bool NameAlreadyExists => (Flags & 2) != 0;
 
         [Pure]
         public override string ToString()
@@ -243,12 +300,8 @@ internal static class Protocol
         internal Chain<string> StringifyErrors()
         {
             var result = Chain<string>.Empty;
-
             if ( InvalidNameLength )
                 result = result.Extend( Resources.ClientNameLengthOutOfBounds );
-
-            if ( NameDecodingFailure )
-                result = result.Extend( Resources.ServerFailedToDecodeClientName );
 
             if ( NameAlreadyExists )
                 result = result.Extend( Resources.ClientNameAlreadyExists );
@@ -274,6 +327,39 @@ internal static class Protocol
         internal static PacketHeader Create()
         {
             return PacketHeader.Create( MessageBrokerServerEndpoint.Ping, Endianness.VerificationPayload );
+        }
+    }
+
+    internal readonly struct BatchHeader
+    {
+        internal const int Length = sizeof( ushort );
+        internal readonly int PacketCount;
+
+        private BatchHeader(int packetCount)
+        {
+            PacketCount = packetCount;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static BatchHeader Parse(ReadOnlyMemory<byte> source, bool reverseEndianness)
+        {
+            Assume.Equals( source.Length, Length );
+            var reader = new BinaryContractReader( source.Span );
+            var packetCount = reader.ReadInt16();
+            if ( reverseEndianness )
+                packetCount = BinaryPrimitives.ReverseEndianness( packetCount );
+
+            return new BatchHeader( unchecked( ( short )packetCount ) );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal Chain<string> StringifyErrors(int max)
+        {
+            return PacketCount <= 1 || PacketCount > max
+                ? Chain.Create( Resources.BatchPacketCountIsInvalid( PacketCount, max ) )
+                : Chain<string>.Empty;
         }
     }
 
@@ -1512,91 +1598,5 @@ internal static class Protocol
             writer.MoveWrite( redelivery );
             writer.Write( explicitDelayMs );
         }
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerClientRequestException RequestException(
-        MessageBrokerClient client,
-        PacketHeader header,
-        Chain<string> errors)
-    {
-        return new MessageBrokerClientRequestException( client, header.GetServerEndpoint(), errors );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerClientProtocolException ProtocolException(
-        MessageBrokerClient client,
-        PacketHeader header,
-        Chain<string> errors)
-    {
-        return new MessageBrokerClientProtocolException( client, header.GetClientEndpoint(), errors );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerClientProtocolException UnexpectedClientEndpointException(MessageBrokerClient client, PacketHeader header)
-    {
-        return ProtocolException( client, header, Chain.Create( Resources.UnexpectedClientEndpoint ) );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerClientProtocolException EndiannessPayloadException(MessageBrokerClient client, PacketHeader header)
-    {
-        return ProtocolException( client, header, Chain.Create( Resources.InvalidEndiannessPayload( header.Payload ) ) );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerClientProtocolException InvalidSenderNameLengthException(
-        MessageBrokerClient client,
-        PacketHeader header,
-        int length)
-    {
-        return ProtocolException( client, header, Chain.Create( Resources.InvalidSenderNameLength( length ) ) );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerClientProtocolException InvalidStreamNameLengthException(
-        MessageBrokerClient client,
-        PacketHeader header,
-        int length)
-    {
-        return ProtocolException( client, header, Chain.Create( Resources.InvalidStreamNameLength( length ) ) );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerClientProtocolException? AssertMinPayload(
-        MessageBrokerClient client,
-        PacketHeader header,
-        uint expectedMin)
-    {
-        return header.Payload < expectedMin
-            ? ProtocolException( client, header, Chain.Create( Resources.TooShortHeaderPayload( header.Payload, expectedMin ) ) )
-            : null;
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerClientProtocolException? AssertPayload(MessageBrokerClient client, PacketHeader header, uint expected)
-    {
-        return header.Payload != expected
-            ? ProtocolException( client, header, Chain.Create( Resources.InvalidHeaderPayload( header.Payload, expected ) ) )
-            : null;
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static Result<int> AssertPacketLength(MessageBrokerClient client, PacketHeader header)
-    {
-        var result = unchecked( ( int )header.Payload );
-        if ( result >= 0 )
-            return result;
-
-        return ProtocolException( client, header, Chain.Create( Resources.UnexpectedPacketLength( result ) ) );
     }
 }

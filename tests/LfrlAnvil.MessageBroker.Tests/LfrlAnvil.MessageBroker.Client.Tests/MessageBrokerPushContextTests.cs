@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Async;
+using LfrlAnvil.Diagnostics;
 using LfrlAnvil.Functional;
 using LfrlAnvil.MessageBroker.Client.Exceptions;
 using LfrlAnvil.MessageBroker.Client.Internal;
@@ -53,17 +54,25 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
                 s.SendMessageAcceptedResponse( 1 );
             } );
 
+        var remainingRoutingPacketLength = MemorySize.Zero;
+        var remainingPacketLength = MemorySize.Zero;
         var result = Result.Create( MessageBrokerPushResult.CreateNotBound( true ) );
         var publisher = client.Publishers.TryGetByChannelId( 1 );
         if ( publisher is not null )
         {
             using var ctx = publisher.GetPushContext();
+            remainingRoutingPacketLength = ctx.RemainingRoutingPacketLength;
+            remainingPacketLength = ctx.RemainingPacketLength;
             result = await ctx.Append( data ).PushAsync();
         }
 
         await serverTask;
 
         Assertion.All(
+                remainingRoutingPacketLength.TestEquals( client.MaxNetworkPacketLength ),
+                remainingPacketLength.TestEquals(
+                    client.MaxNetworkMessagePacketLength
+                    - MemorySize.FromBytes( Protocol.PacketHeader.Length + Protocol.MessageNotificationHeader.Length ) ),
                 result.Exception.TestNull(),
                 result.Value.NotBound.TestFalse(),
                 result.Value.Confirm.TestTrue(),
@@ -128,6 +137,8 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
                 s.SendMessageAcceptedResponse( 2 );
             } );
 
+        var remainingRoutingPacketLength = MemorySize.Zero;
+        var remainingPacketLength = MemorySize.Zero;
         var result = Result.Create( MessageBrokerPushResult.CreateNotBound( true ) );
         var publisher = client.Publishers.TryGetByChannelId( 1 );
         if ( publisher is not null )
@@ -137,12 +148,18 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
             ctx.Advance( 2 );
             data.AsMemory( 2 ).CopyTo( ctx.GetMemory( 3 ) );
             ctx.Advance( 3 );
+            remainingRoutingPacketLength = ctx.RemainingRoutingPacketLength;
+            remainingPacketLength = ctx.RemainingPacketLength;
             result = await ctx.PushAsync();
         }
 
         await serverTask;
 
         Assertion.All(
+                remainingRoutingPacketLength.TestEquals( client.MaxNetworkPacketLength ),
+                remainingPacketLength.TestEquals(
+                    client.MaxNetworkMessagePacketLength
+                    - MemorySize.FromBytes( Protocol.PacketHeader.Length + Protocol.MessageNotificationHeader.Length + data.Length ) ),
                 result.Exception.TestNull(),
                 result.Value.NotBound.TestFalse(),
                 result.Value.Confirm.TestTrue(),
@@ -334,6 +351,8 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
         await client.Publishers.BindAsync( "foo" );
         await serverTask;
 
+        var remainingRoutingPacketLengthAction = Lambda.Of( () => { } );
+        var remainingPacketLength = Lambda.Of( () => { } );
         var getMemoryAction = Lambda.Of( () => { } );
         var getSpanAction = Lambda.Of( () => { } );
         var advanceAction = Lambda.Of( () => { } );
@@ -348,6 +367,8 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
         {
             var ctx = publisher.GetPushContext();
             ctx.Dispose();
+            remainingRoutingPacketLengthAction = Lambda.Of( () => { _ = ctx.RemainingRoutingPacketLength; } );
+            remainingPacketLength = Lambda.Of( () => { _ = ctx.RemainingPacketLength; } );
             getMemoryAction = Lambda.Of( () => { _ = ctx.GetMemory( 5 ); } );
             getSpanAction = Lambda.Of( () => { _ = ctx.GetSpan( 5 ); } );
             advanceAction = Lambda.Of( () => ctx.Advance( 5 ) );
@@ -359,6 +380,8 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
         }
 
         Assertion.All(
+                remainingRoutingPacketLengthAction.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ),
+                remainingPacketLength.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ),
                 getMemoryAction.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ),
                 getSpanAction.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ),
                 advanceAction.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ),
@@ -626,6 +649,84 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
                             "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
                             "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
                             "[MessagePushed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5, MessageId = <NULL>",
+                            "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (end)"
+                        ] )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task GetPushContext_ShouldFailToPushMessage_WhenNetworkPacketLengthsAreExceeded()
+    {
+        var logs = new EventLogger();
+        using var server = new ServerMock();
+        var remoteEndPoint = server.Start();
+
+        await using var client = new MessageBrokerClient(
+            remoteEndPoint,
+            "test",
+            MessageBrokerClientOptions.Default
+                .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySource( _sharedDelaySource )
+                .SetLogger( logs.GetLogger() ) );
+
+        await server.EstablishHandshake( client, maxNetworkMessagePacketLength: MemorySize.FromKilobytes( 20 ) );
+        var serverTask = server.GetTask(
+            s =>
+            {
+                s.Read( new Protocol.BindPublisherRequest( "foo", null ) );
+                s.SendPublisherBoundResponse( true, true, 1, 1 );
+            } );
+
+        await client.Publishers.BindAsync( "foo" );
+        await serverTask;
+
+        var remainingRoutingPacketLength = MemorySize.Zero;
+        var remainingPacketLength = MemorySize.Zero;
+        var result = Result.Create( MessageBrokerPushResult.CreateNotBound( true ) );
+        var publisher = client.Publishers.TryGetByChannelId( 1 );
+        if ( publisher is not null )
+        {
+            using var ctx = publisher
+                .GetPushContext( MemorySize.FromKilobytes( 21 ) )
+                .Append(
+                    new byte[( int )MemorySize.FromKilobytes( 20 ).Bytes
+                        - Protocol.PacketHeader.Length
+                        - Protocol.MessageNotificationHeader.Length
+                        + 1] );
+
+            for ( var i = 0; i < 31; ++i )
+                ctx.AddTarget( new string( 'x', 512 ) );
+
+            ctx.AddTarget( new string( 'x', 442 ) );
+            remainingRoutingPacketLength = ctx.RemainingRoutingPacketLength;
+            remainingPacketLength = ctx.RemainingPacketLength;
+            result = await ctx.PushAsync();
+        }
+
+        Assertion.All(
+                client.State.TestEquals( MessageBrokerClientState.Running ),
+                remainingRoutingPacketLength.TestEquals( MemorySize.FromBytes( -1 ) ),
+                remainingPacketLength.TestEquals( MemorySize.FromBytes( -1 ) ),
+                result.Exception.TestType().Exact<InvalidOperationException>(),
+                result.Value.NotBound.TestTrue(),
+                result.Value.Confirm.TestFalse(),
+                result.Value.Id.TestNull(),
+                logs.GetAll()
+                    .Skip( 2 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (start)",
+                            "[PushingMessage] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 20436, RoutingTargetCount = 32, Confirm = True",
+                            """
+                            [Error] Client = [1] 'test', TraceId = 2
+                            System.InvalidOperationException: Message could not be pushed to the server. Encountered 2 error(s):
+                            1. Max network message packet length of 20445 B has been exceeded by 1 B.
+                            2. Max network packet length of 16384 B for message routing has been exceeded by 1 B.
+                            """,
                             "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (end)"
                         ] )
                     ] ) )

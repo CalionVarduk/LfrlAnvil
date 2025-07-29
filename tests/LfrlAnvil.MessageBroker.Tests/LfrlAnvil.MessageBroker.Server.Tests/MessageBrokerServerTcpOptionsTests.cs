@@ -2,12 +2,12 @@
 
 namespace LfrlAnvil.MessageBroker.Server.Tests;
 
-public class MessageBrokerTcpServerOptionsTests : TestsBase
+public class MessageBrokerServerTcpOptionsTests : TestsBase
 {
     [Fact]
     public void Default_ShouldReturnCorrectResult()
     {
-        var sut = MessageBrokerTcpServerOptions.Default;
+        var sut = MessageBrokerServerTcpOptions.Default;
         Assertion.All(
                 sut.NoDelay.TestNull(),
                 sut.SocketBufferSize.TestNull() )
@@ -18,7 +18,7 @@ public class MessageBrokerTcpServerOptionsTests : TestsBase
     public void SetNoDelay_ShouldChangeValue()
     {
         var value = true;
-        var sut = MessageBrokerTcpServerOptions.Default;
+        var sut = MessageBrokerServerTcpOptions.Default;
 
         var result = sut.SetNoDelay( value );
 
@@ -32,7 +32,7 @@ public class MessageBrokerTcpServerOptionsTests : TestsBase
     public void SetSocketBufferSize_ShouldChangeValue()
     {
         var value = MemorySize.FromKilobytes( 16 );
-        var sut = MessageBrokerTcpServerOptions.Default;
+        var sut = MessageBrokerServerTcpOptions.Default;
 
         var result = sut.SetSocketBufferSize( value );
 

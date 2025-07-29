@@ -125,6 +125,12 @@ public sealed class MessageBrokerPublisher
     /// with underlying <see cref="MessageBrokerPushResult"/> instance.
     /// </returns>
     /// <exception cref="MessageBrokerClientDisposedException">When client has already been disposed.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// When one of routing <paramref name="targets"/> contains client id that is less than or equal to <b>0</b>
+    /// or when one of routing <paramref name="targets"/> contains client name whose length is
+    /// less than <b>1</b> or greater than <b>512</b>.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">When routing target count limit of <b>32767</b> has been exceeded.</exception>
     /// <remarks>
     /// Unexpected errors encountered during pushing will cause the client to be automatically disposed.
     /// Returned <see cref="Result{T}"/> will only be valid when either the message has been successfully enqueued on the server side,
@@ -163,6 +169,7 @@ public sealed class MessageBrokerPublisher
     /// Specifies whether or not to clear the internal memory buffer when it's returned to the pool. Equal to <b>false</b> by default.
     /// </param>
     /// <returns>Pooled <see cref="MessageBrokerPushContext"/> instance.</returns>
+    /// <exception cref="MessageBrokerClientDisposedException">When client has already been disposed.</exception>
     public MessageBrokerPushContext GetPushContext(MemorySize? minCapacity = null, bool clearBufferOnDispose = false)
     {
         return Client.RentMessageContext( this, minCapacity ?? MemorySize.Zero, clearBufferOnDispose );

@@ -52,6 +52,34 @@ public sealed class MessageBrokerPushContext : IBufferWriter<byte>, IDisposable
         Routing = default;
     }
 
+    /// <summary>
+    /// Returns remaining available routing network packet length based on
+    /// currently written routing data and <see cref="MessageBrokerClient.MaxNetworkPacketLength"/>.
+    /// </summary>
+    /// <exception cref="ObjectDisposedException">When this context has been disposed.</exception>
+    public MemorySize RemainingRoutingPacketLength
+    {
+        get
+        {
+            ObjectDisposedException.ThrowIf( _disposed.Value, this );
+            return MemorySize.FromBytes( Routing.GetRemainingBytes( Publisher.Client ) );
+        }
+    }
+
+    /// <summary>
+    /// Returns remaining available network packet length based on
+    /// currently written data and <see cref="MessageBrokerClient.MaxNetworkMessagePacketLength"/> (reduced by necessary packet headers).
+    /// </summary>
+    /// <exception cref="ObjectDisposedException">When this context has been disposed.</exception>
+    public MemorySize RemainingPacketLength
+    {
+        get
+        {
+            ObjectDisposedException.ThrowIf( _disposed.Value, this );
+            return MemorySize.FromBytes( unchecked( Publisher.Client.MaxNetworkPushMessagePacketBytes - _written ) );
+        }
+    }
+
     internal MessageBrokerPublisher Publisher
     {
         get
@@ -198,6 +226,6 @@ public sealed class MessageBrokerPushContext : IBufferWriter<byte>, IDisposable
             return;
 
         desired = Defaults.Memory.GetBufferCapacity( checked( _written + desired ) );
-        _token.SetLength( desired, out _buffer );
+        _token.IncreaseLength( desired, out _buffer );
     }
 }

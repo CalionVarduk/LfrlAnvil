@@ -172,7 +172,7 @@ internal struct PublisherCollection
                     if ( response.Type == IncomingPacketToken.Result.Disposed )
                         return client.EmitError( client.DisposedException(), traceId );
 
-                    var exception = new MessageBrokerClientResponseTimeoutException( client, request.Header.GetServerEndpoint() );
+                    var exception = client.ResponseTimeoutException( request.Header );
                     if ( client.Logger.Error is { } error )
                         error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
 
@@ -195,7 +195,7 @@ internal struct PublisherCollection
                         var readPacket = client.Logger.ReadPacket;
                         readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header ) );
 
-                        var exception = Protocol.AssertPayload( client, response.Header, Protocol.PublisherBoundResponse.Length );
+                        var exception = response.Header.AssertExactPayload( client, Protocol.PublisherBoundResponse.Length );
                         if ( exception is not null )
                         {
                             if ( client.Logger.Error is { } error )
@@ -210,7 +210,7 @@ internal struct PublisherCollection
 
                         if ( errors.Count > 0 )
                         {
-                            var error = client.EmitError( Protocol.ProtocolException( client, response.Header, errors ), traceId );
+                            var error = client.EmitError( client.ProtocolException( response.Header, errors ), traceId );
                             await client.DisposeAsync( traceId ).ConfigureAwait( false );
                             return error;
                         }
@@ -252,7 +252,7 @@ internal struct PublisherCollection
                         var readPacket = client.Logger.ReadPacket;
                         readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header ) );
 
-                        var exception = Protocol.AssertPayload( client, response.Header, Protocol.BindPublisherFailureResponse.Length );
+                        var exception = response.Header.AssertExactPayload( client, Protocol.BindPublisherFailureResponse.Length );
                         if ( exception is not null )
                         {
                             if ( client.Logger.Error is { } error )
@@ -266,7 +266,7 @@ internal struct PublisherCollection
                         readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header ) );
 
                         return client.EmitError(
-                            Protocol.RequestException( client, request.Header, parsedResponse.StringifyErrors( channelName ) ),
+                            client.RequestException( request.Header, parsedResponse.StringifyErrors( channelName ) ),
                             traceId );
                     }
                     default:
@@ -383,7 +383,7 @@ internal struct PublisherCollection
                     if ( response.Type == IncomingPacketToken.Result.Disposed )
                         return client.EmitError( client.DisposedException(), traceId );
 
-                    var exception = new MessageBrokerClientResponseTimeoutException( client, request.Header.GetServerEndpoint() );
+                    var exception = client.ResponseTimeoutException( request.Header );
                     if ( client.Logger.Error is { } error )
                         error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
 
@@ -406,7 +406,7 @@ internal struct PublisherCollection
                         var readPacket = client.Logger.ReadPacket;
                         readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header ) );
 
-                        var exception = Protocol.AssertPayload( client, response.Header, Protocol.PublisherUnboundResponse.Length );
+                        var exception = response.Header.AssertExactPayload( client, Protocol.PublisherUnboundResponse.Length );
                         if ( exception is not null )
                         {
                             if ( client.Logger.Error is { } error )
@@ -442,7 +442,7 @@ internal struct PublisherCollection
                         var readPacket = client.Logger.ReadPacket;
                         readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header ) );
 
-                        var exception = Protocol.AssertPayload( client, response.Header, Protocol.UnbindPublisherFailureResponse.Length );
+                        var exception = response.Header.AssertExactPayload( client, Protocol.UnbindPublisherFailureResponse.Length );
                         if ( exception is not null )
                         {
                             if ( client.Logger.Error is { } error )
@@ -456,7 +456,7 @@ internal struct PublisherCollection
                         readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header ) );
 
                         return client.EmitError(
-                            Protocol.RequestException( client, request.Header, parsedResponse.StringifyErrors( publisher ) ),
+                            client.RequestException( request.Header, parsedResponse.StringifyErrors( publisher ) ),
                             traceId );
                     }
                     default:
@@ -514,6 +514,15 @@ internal struct PublisherCollection
                         messageLength,
                         routing.TargetCount,
                         confirm ) );
+
+            var lengthException = AssertPacketLength( client, buffer.Length, routingBuffer.Length );
+            if ( lengthException is not null )
+            {
+                if ( client.Logger.Error is { } error )
+                    error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, lengthException ) );
+
+                return lengthException;
+            }
 
             ManualResetValueTaskSource<IncomingPacketToken>? responseSource = null;
             Protocol.PushMessageHeader request;
@@ -648,7 +657,7 @@ internal struct PublisherCollection
                     if ( response.Type == IncomingPacketToken.Result.Disposed )
                         return client.EmitError( client.DisposedException(), traceId );
 
-                    var exception = new MessageBrokerClientResponseTimeoutException( client, request.Header.GetServerEndpoint() );
+                    var exception = client.ResponseTimeoutException( request.Header );
                     if ( client.Logger.Error is { } error )
                         error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
 
@@ -671,7 +680,7 @@ internal struct PublisherCollection
                         var readPacket = client.Logger.ReadPacket;
                         readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header ) );
 
-                        var exception = Protocol.AssertPayload( client, response.Header, Protocol.MessageAcceptedResponse.Length );
+                        var exception = response.Header.AssertExactPayload( client, Protocol.MessageAcceptedResponse.Length );
                         if ( exception is not null )
                         {
                             if ( client.Logger.Error is { } error )
@@ -699,7 +708,7 @@ internal struct PublisherCollection
                         var readPacket = client.Logger.ReadPacket;
                         readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header ) );
 
-                        var exception = Protocol.AssertPayload( client, response.Header, Protocol.MessageRejectedResponse.Length );
+                        var exception = response.Header.AssertExactPayload( client, Protocol.MessageRejectedResponse.Length );
                         if ( exception is not null )
                         {
                             if ( client.Logger.Error is { } error )
@@ -713,7 +722,7 @@ internal struct PublisherCollection
                         readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header ) );
 
                         return client.EmitError(
-                            Protocol.RequestException( client, request.Header, parsedResponse.StringifyErrors( context.Publisher ) ),
+                            client.RequestException( request.Header, parsedResponse.StringifyErrors( context.Publisher ) ),
                             traceId );
                     }
                     default:
@@ -745,5 +754,18 @@ internal struct PublisherCollection
             obj.OnClientDisposed();
 
         _store.Clear();
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static InvalidOperationException? AssertPacketLength(MessageBrokerClient client, int messageLength, int routingLength)
+    {
+        var errors = Chain<string>.Empty;
+        if ( messageLength > client.MaxNetworkPushMessagePacketBytes )
+            errors = errors.Extend( Resources.MaxMessagePacketLengthLimitReached( client, messageLength ) );
+
+        if ( routingLength > client.MaxNetworkPacketBytes )
+            errors = errors.Extend( Resources.MaxRoutingPacketLengthLimitReached( client, routingLength ) );
+
+        return errors.Count > 0 ? new InvalidOperationException( Resources.FailedToPushMessage( errors ) ) : null;
     }
 }

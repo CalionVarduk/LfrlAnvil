@@ -19,6 +19,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.Memory;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Exceptions;
@@ -102,98 +103,288 @@ internal struct PacketListener
                 }
 
                 await stream.ReadExactlyAsync( buffer, timeoutToken ).ConfigureAwait( false );
-                header = Protocol.PacketHeader.Parse( buffer );
             }
             catch ( Exception exc )
             {
-                awaitPacket?.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( client, exc ) );
-
-                ulong traceId;
-                var isCancelException = exc is OperationCanceledException cancelExc && cancelExc.CancellationToken == timeoutToken;
-
-                using ( client.AcquireLock() )
-                {
-                    if ( isCancelException && ! client.TryBeginDispose() )
-                        return;
-
-                    client.PacketListener._task = null;
-                    traceId = client.GetTraceId();
-                }
-
-                using ( MessageBrokerRemoteClientTraceEvent.CreateScope(
-                    client,
-                    traceId,
-                    MessageBrokerRemoteClientTraceEventType.Dispose ) )
-                {
-                    ValueTask disposeTask;
-                    if ( isCancelException )
-                    {
-                        if ( client.Logger.Error is { } error )
-                        {
-                            var exception = new MessageBrokerRemoteClientRequestTimeoutException( client );
-                            error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exception ) );
-                        }
-
-                        disposeTask = client.DisposeAsyncCore( traceId );
-                    }
-                    else
-                        disposeTask = client.DisposeAsync( traceId );
-
-                    await disposeTask.ConfigureAwait( false );
-                }
+                await DisposeClientDueToStreamFailureAsync( client, exc, MemoryPoolToken<byte>.Empty, timeoutToken )
+                    .ConfigureAwait( false );
 
                 return;
             }
 
-            awaitPacket?.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( client, header ) );
-
-            var packetPoolToken = MemoryPoolToken<byte>.Empty;
-            var packetBuffer = Memory<byte>.Empty;
-            if ( header.GetServerEndpoint() != MessageBrokerServerEndpoint.Ping )
+            header = Protocol.PacketHeader.Parse( buffer );
+            if ( header.GetClientEndpoint() == MessageBrokerClientEndpoint.Batch )
             {
-                var packetLength = Protocol.AssertPacketLength( client, header );
+                awaitPacket?.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( client, header, 0 ) );
+                var batchPoolToken = MemoryPoolToken<byte>.Empty;
+                var batchBuffer = Memory<byte>.Empty;
+
+                if ( client.MaxBatchPacketCount == 0 )
+                {
+                    var exc = client.ProtocolException( header, Resources.UnexpectedServerEndpoint );
+                    awaitPacket?.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( client, header, exception: exc ) );
+                    await DisposeClientAsync( client, batchPoolToken ).ConfigureAwait( false );
+                    return;
+                }
+
+                var packetLength = header.AssertPacketLength( client, client.MaxNetworkBatchPacketBytes );
                 if ( packetLength.Exception is not null )
                 {
-                    awaitPacket?.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( client, header, packetLength.Exception ) );
-                    await DisposeClientAsync( client, packetPoolToken ).ConfigureAwait( false );
+                    awaitPacket?.Emit(
+                        MessageBrokerRemoteClientAwaitPacketEvent.Create( client, header, exception: packetLength.Exception ) );
+
+                    await DisposeClientAsync( client, batchPoolToken ).ConfigureAwait( false );
                     return;
                 }
 
                 if ( packetLength.Value > 0 )
                 {
-                    packetPoolToken = client.MemoryPool.Rent( packetLength.Value, out packetBuffer ).EnableClearing();
+                    batchPoolToken = client.MemoryPool.Rent( packetLength.Value.Min( client.MemoryPool.SegmentLength ), out batchBuffer )
+                        .EnableClearing();
+
                     try
                     {
-                        await stream.ReadExactlyAsync( packetBuffer, timeoutToken ).ConfigureAwait( false );
+                        await stream.ReadExactlyAsync( batchBuffer, timeoutToken ).ConfigureAwait( false );
+                        if ( packetLength.Value > batchBuffer.Length )
+                        {
+                            var oldPoolToken = batchPoolToken;
+                            var oldBuffer = batchBuffer;
+                            batchPoolToken = client.Server.MemoryPool.Rent( packetLength.Value, out batchBuffer ).EnableClearing();
+                            try
+                            {
+                                await stream.ReadExactlyAsync( batchBuffer.Slice( oldBuffer.Length ), timeoutToken )
+                                    .ConfigureAwait( false );
+
+                                oldBuffer.CopyTo( batchBuffer );
+                            }
+                            finally
+                            {
+                                Return( client, oldPoolToken );
+                            }
+                        }
                     }
                     catch ( Exception exc )
                     {
-                        awaitPacket?.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( client, header, exc ) );
-                        await DisposeClientAsync( client, packetPoolToken ).ConfigureAwait( false );
+                        await DisposeClientDueToStreamFailureAsync( client, exc, batchPoolToken, timeoutToken ).ConfigureAwait( false );
                         return;
                     }
                 }
-            }
 
-            using ( AcquireActiveLock( client, out var acquired ) )
-            {
-                if ( ! acquired )
+                var exception = header.AssertMinPayload( client, Protocol.BatchHeader.Length );
+                if ( exception is not null )
                 {
-                    var exc = packetPoolToken.Return();
-                    if ( exc is not null )
-                        awaitPacket?.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( client, exc ) );
-
+                    awaitPacket?.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( client, header, exception: exception ) );
+                    await DisposeClientAsync( client, batchPoolToken ).ConfigureAwait( false );
                     return;
                 }
 
-                client.EventScheduler.ResetReadTimeout();
-                client.RequestQueue.Enqueue( header, packetPoolToken, packetBuffer );
-                client.RequestHandler.SignalContinuation();
+                var batchHeader = Protocol.BatchHeader.Parse( batchBuffer.Slice( 0, Protocol.BatchHeader.Length ) );
+                var errors = batchHeader.StringifyErrors( client.MaxBatchPacketCount );
+                if ( errors.Count > 0 )
+                {
+                    var error = client.ProtocolException( header, errors );
+                    awaitPacket?.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( client, header, exception: error ) );
+                    await DisposeClientAsync( client, batchPoolToken ).ConfigureAwait( false );
+                    return;
+                }
+
+                batchBuffer = batchBuffer.Slice( Protocol.BatchHeader.Length );
+                awaitPacket?.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( client, header, batchHeader.PacketCount ) );
+                for ( var i = 0; i < batchHeader.PacketCount; ++i )
+                {
+                    if ( batchBuffer.Length < Protocol.PacketHeader.Length )
+                    {
+                        exception = client.ProtocolException(
+                            header,
+                            Resources.BatchPacketElementHeaderIsTooShort( i, batchBuffer.Length ) );
+
+                        awaitPacket?.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( client, header, exception: exception ) );
+                        await DisposeClientAsync( client, batchPoolToken ).ConfigureAwait( false );
+                        return;
+                    }
+
+                    var elementHeader = Protocol.PacketHeader.Parse( batchBuffer.Slice( 0, Protocol.PacketHeader.Length ) );
+                    batchBuffer = batchBuffer.Slice( Protocol.PacketHeader.Length );
+                    if ( batchBuffer.Length > 0 )
+                        batchPoolToken.DecreaseLengthAtStart( batchBuffer.Length );
+                    else
+                    {
+                        Return( client, batchPoolToken );
+                        batchPoolToken = MemoryPoolToken<byte>.Empty;
+                        batchBuffer = Memory<byte>.Empty;
+                    }
+
+                    awaitPacket?.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( client, elementHeader ) );
+                    var elementPoolToken = MemoryPoolToken<byte>.Empty;
+                    var elementBuffer = Memory<byte>.Empty;
+
+                    if ( elementHeader.GetServerEndpoint() != MessageBrokerServerEndpoint.Ping )
+                    {
+                        var maxLength = elementHeader.GetServerEndpoint() == MessageBrokerServerEndpoint.PushMessage
+                            ? client.MaxNetworkMessagePacketBytes
+                            : client.MaxNetworkPacketBytes;
+
+                        packetLength = elementHeader.AssertPacketLength( client, maxLength );
+                        if ( packetLength.Exception is not null )
+                        {
+                            awaitPacket?.Emit(
+                                MessageBrokerRemoteClientAwaitPacketEvent.Create(
+                                    client,
+                                    elementHeader,
+                                    exception: packetLength.Exception ) );
+
+                            await DisposeClientAsync( client, batchPoolToken ).ConfigureAwait( false );
+                            return;
+                        }
+
+                        if ( packetLength.Value > 0 )
+                        {
+                            if ( packetLength.Value > batchBuffer.Length )
+                            {
+                                var exc = client.ProtocolException(
+                                    elementHeader,
+                                    Resources.BatchPacketElementPayloadIsTooLarge( i, packetLength.Value, batchBuffer.Length ) );
+
+                                awaitPacket?.Emit(
+                                    MessageBrokerRemoteClientAwaitPacketEvent.Create( client, elementHeader, exception: exc ) );
+
+                                await DisposeClientAsync( client, batchPoolToken ).ConfigureAwait( false );
+                                return;
+                            }
+
+                            SplitBatch(
+                                ref batchPoolToken,
+                                ref batchBuffer,
+                                out elementPoolToken,
+                                out elementBuffer,
+                                packetLength.Value );
+                        }
+                    }
+
+                    if ( ! EnqueueRequest( client, elementHeader, elementPoolToken, elementBuffer ) )
+                    {
+                        Return( client, elementPoolToken );
+                        Return( client, batchPoolToken );
+                        return;
+                    }
+                }
+
+                if ( batchBuffer.Length > 0 )
+                {
+                    exception = client.ProtocolException( header, Resources.BatchPacketContainsTooMuchData( batchBuffer.Length ) );
+                    awaitPacket?.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( client, header, exception: exception ) );
+                    await DisposeClientAsync( client, batchPoolToken ).ConfigureAwait( false );
+                    return;
+                }
+            }
+            else
+            {
+                awaitPacket?.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( client, header ) );
+                var packetPoolToken = MemoryPoolToken<byte>.Empty;
+                var packetBuffer = Memory<byte>.Empty;
+
+                if ( header.GetServerEndpoint() != MessageBrokerServerEndpoint.Ping )
+                {
+                    var maxLength = header.GetServerEndpoint() == MessageBrokerServerEndpoint.PushMessage
+                        ? client.MaxNetworkMessagePacketBytes
+                        : client.MaxNetworkPacketBytes;
+
+                    var packetLength = header.AssertPacketLength( client, maxLength );
+                    if ( packetLength.Exception is not null )
+                    {
+                        awaitPacket?.Emit(
+                            MessageBrokerRemoteClientAwaitPacketEvent.Create( client, header, exception: packetLength.Exception ) );
+
+                        await DisposeClientAsync( client, packetPoolToken ).ConfigureAwait( false );
+                        return;
+                    }
+
+                    if ( packetLength.Value > 0 )
+                    {
+                        packetPoolToken = client.MemoryPool.Rent(
+                                packetLength.Value.Min( client.MemoryPool.SegmentLength ),
+                                out packetBuffer )
+                            .EnableClearing();
+
+                        try
+                        {
+                            await stream.ReadExactlyAsync( packetBuffer, timeoutToken ).ConfigureAwait( false );
+                            if ( packetLength.Value > packetBuffer.Length )
+                            {
+                                var oldPoolToken = packetPoolToken;
+                                var oldBuffer = packetBuffer;
+                                packetPoolToken = client.Server.MemoryPool.Rent( packetLength.Value, out packetBuffer ).EnableClearing();
+                                try
+                                {
+                                    await stream.ReadExactlyAsync( packetBuffer.Slice( oldBuffer.Length ), timeoutToken )
+                                        .ConfigureAwait( false );
+
+                                    oldBuffer.CopyTo( packetBuffer );
+                                }
+                                finally
+                                {
+                                    Return( client, oldPoolToken );
+                                }
+                            }
+                        }
+                        catch ( Exception exc )
+                        {
+                            await DisposeClientDueToStreamFailureAsync( client, exc, packetPoolToken, timeoutToken )
+                                .ConfigureAwait( false );
+
+                            return;
+                        }
+                    }
+                }
+
+                if ( ! EnqueueRequest( client, header, packetPoolToken, packetBuffer ) )
+                {
+                    Return( client, packetPoolToken );
+                    return;
+                }
             }
         }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static void SplitBatch(
+        ref MemoryPoolToken<byte> batchToken,
+        ref Memory<byte> batchData,
+        out MemoryPoolToken<byte> elementToken,
+        out Memory<byte> elementData,
+        int length)
+    {
+        if ( length < batchData.Length )
+            elementToken = batchToken.Split( ref batchData, length, out elementData );
+        else
+        {
+            elementToken = batchToken;
+            elementData = batchData;
+            batchToken = MemoryPoolToken<byte>.Empty;
+            batchData = Memory<byte>.Empty;
+        }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static bool EnqueueRequest(
+        MessageBrokerRemoteClient client,
+        Protocol.PacketHeader header,
+        MemoryPoolToken<byte> poolToken,
+        Memory<byte> buffer)
+    {
+        using ( AcquireActiveLock( client, out var acquired ) )
+        {
+            if ( ! acquired )
+                return false;
+
+            client.EventScheduler.ResetReadTimeout();
+            client.RequestQueue.Enqueue( header, poolToken, buffer );
+            client.RequestHandler.SignalContinuation();
+        }
+
+        return true;
+    }
+
     private static async ValueTask DisposeClientAsync(MessageBrokerRemoteClient client, MemoryPoolToken<byte> poolToken)
     {
         ulong traceId;
@@ -208,6 +399,60 @@ internal struct PacketListener
             poolToken.Return( client, traceId );
             await client.DisposeAsync( traceId ).ConfigureAwait( false );
         }
+    }
+
+    private static async ValueTask DisposeClientDueToStreamFailureAsync(
+        MessageBrokerRemoteClient client,
+        Exception exception,
+        MemoryPoolToken<byte> poolToken,
+        CancellationToken timeoutToken)
+    {
+        if ( client.Logger.AwaitPacket is { } awaitPacket )
+            awaitPacket.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( client, exception ) );
+
+        ulong traceId;
+        var isCancelException = exception is OperationCanceledException cancelExc && cancelExc.CancellationToken == timeoutToken;
+
+        using ( client.AcquireLock() )
+        {
+            if ( isCancelException && ! client.TryBeginDispose() )
+                return;
+
+            client.PacketListener._task = null;
+            traceId = client.GetTraceId();
+        }
+
+        using ( MessageBrokerRemoteClientTraceEvent.CreateScope(
+            client,
+            traceId,
+            MessageBrokerRemoteClientTraceEventType.Dispose ) )
+        {
+            poolToken.Return( client, traceId );
+
+            ValueTask disposeTask;
+            if ( isCancelException )
+            {
+                if ( client.Logger.Error is { } error )
+                {
+                    var exc = client.RequestTimeoutException();
+                    error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
+                }
+
+                disposeTask = client.DisposeAsyncCore( traceId );
+            }
+            else
+                disposeTask = client.DisposeAsync( traceId );
+
+            await disposeTask.ConfigureAwait( false );
+        }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static void Return(MessageBrokerRemoteClient client, MemoryPoolToken<byte> poolToken)
+    {
+        var exc = poolToken.Return();
+        if ( exc is not null && client.Logger.AwaitPacket is { } awaitPacket )
+            awaitPacket.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( client, exc ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

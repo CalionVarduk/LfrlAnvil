@@ -447,10 +447,10 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
             [
                 (t, _) => t.Logs.TestSequence(
                 [
-                    "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2 (start)",
-                    "[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 0, Redelivery = 0, IsFromDeadLetter = False",
-                    $"[MessageDiscarded] Client = [1] 'test', Queue = [1] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Reason = FilteredOut, StoreKey = 0, Retry = 0, Redelivery = 0, MessageRemoved = {messageRemoved.Value}, MovedToDeadLetter = False",
-                    "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 2 (end)"
+                    $"[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id} (start)",
+                    $"[ProcessingMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', StoreKey = 0, Retry = 0, Redelivery = 0, IsFromDeadLetter = False",
+                    $"[MessageDiscarded] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Reason = FilteredOut, StoreKey = 0, Retry = 0, Redelivery = 0, MessageRemoved = {messageRemoved.Value}, MovedToDeadLetter = False",
+                    $"[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = {t.Id} (end)"
                 ] ),
                 (t, _) => t.Logs.TestSequence(
                 [
@@ -506,7 +506,11 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
             {
                 c.SendBindPublisherRequest( "c" );
                 c.ReadPublisherBoundResponse();
-                c.SendBindListenerRequest( "c", true, filterExpression: "if([int32] c.Data[0i] + c.AsMemory().Length + c.AsSpan().Length > 0i, throw(), true)" );
+                c.SendBindListenerRequest(
+                    "c",
+                    true,
+                    filterExpression: "if([int32] c.Data[0i] + c.AsMemory().Length + c.AsSpan().Length > 0i, throw(), true)" );
+
                 c.ReadListenerBoundResponse();
                 c.SendPushMessage( 1, [ 1 ], confirm: false );
                 c.ReadMessageNotification( 1 );
