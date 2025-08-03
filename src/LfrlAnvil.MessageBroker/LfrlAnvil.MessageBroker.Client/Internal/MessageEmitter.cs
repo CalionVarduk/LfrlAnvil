@@ -95,20 +95,14 @@ internal struct MessageEmitter
             _continuation.SetResult( false );
     }
 
-    internal (int DiscardedMessageCount, Chain<Exception> Exceptions) EndDispose(bool extractExceptions)
+    internal ListSlim<DiscardedNotification> EndDispose()
     {
-        var discardedMessageCount = _messages.Count;
-        var exceptions = Chain<Exception>.Empty;
-
+        var result = ListSlim<DiscardedNotification>.Create( _messages.Count );
         foreach ( ref readonly var message in _messages )
-        {
-            var exc = message.PoolToken.Return();
-            if ( exc is not null && extractExceptions )
-                exceptions = exceptions.Extend( exc );
-        }
+            result.Add( new DiscardedNotification( message.PoolToken, message.Args.TraceId ) );
 
-        _messages.Clear();
-        return (discardedMessageCount, exceptions);
+        _messages = QueueSlim<Notification>.Create();
+        return result;
     }
 
     internal void SetUnderlyingTask(Task task)
@@ -230,6 +224,18 @@ internal struct MessageEmitter
                                 MessageBrokerClientTraceEventType.MessageNotification ) );
                 }
             }
+        }
+    }
+
+    internal readonly struct DiscardedNotification
+    {
+        internal readonly MemoryPoolToken<byte> PoolToken;
+        internal readonly ulong TraceId;
+
+        internal DiscardedNotification(MemoryPoolToken<byte> poolToken, ulong traceId)
+        {
+            PoolToken = poolToken;
+            TraceId = traceId;
         }
     }
 
