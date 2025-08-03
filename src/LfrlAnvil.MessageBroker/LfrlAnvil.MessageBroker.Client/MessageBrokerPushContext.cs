@@ -90,7 +90,6 @@ public sealed class MessageBrokerPushContext : IBufferWriter<byte>, IDisposable
     }
 
     internal Memory<byte> Data => _buffer.Slice( 0, _written );
-    internal bool ClearOnDispose => _token.Clear;
 
     /// <inheritdoc/>
     public void Dispose()
@@ -182,7 +181,7 @@ public sealed class MessageBrokerPushContext : IBufferWriter<byte>, IDisposable
     public MessageBrokerPushContext AddTarget(int clientId)
     {
         ObjectDisposedException.ThrowIf( _disposed.Value, this );
-        Routing.Add( Publisher.Client, clientId, _token.Clear );
+        Routing.Add( Publisher.Client, clientId );
         return this;
     }
 
@@ -199,19 +198,19 @@ public sealed class MessageBrokerPushContext : IBufferWriter<byte>, IDisposable
     public MessageBrokerPushContext AddTarget(string clientName)
     {
         ObjectDisposedException.ThrowIf( _disposed.Value, this );
-        Routing.Add( Publisher.Client, clientName, _token.Clear );
+        Routing.Add( Publisher.Client, clientName );
         return this;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void Initialize(MessageBrokerPublisher publisher, MemorySize minCapacity, bool clearOnDispose)
+    internal void Initialize(MessageBrokerPublisher publisher, MemorySize minCapacity)
     {
         Assume.True( _disposed.Value );
         Assume.Equals( _written, 0 );
         Assume.IsNull( _publisher );
 
         var capacity = Defaults.Memory.GetInitialBufferCapacity( checked( minCapacity.Bytes + Protocol.PushMessageHeader.Length ) );
-        _token = _pool.Rent( capacity, out _buffer ).EnableClearing( clearOnDispose );
+        _token = _pool.Rent( capacity, publisher.Client.ClearBuffers, out _buffer );
         _publisher = publisher;
         _written = Protocol.PushMessageHeader.Length;
         _disposed.WriteFalse();

@@ -44,7 +44,7 @@ public readonly struct MessageBrokerClientHandshakingEvent
             : "<disabled>";
 
         return
-            $"[Handshaking] {Source}, MessageTimeout = {Source.Client.MessageTimeout}, PingInterval = {Source.Client.PingInterval}, BatchPacket = {batchPacket}, SynchronizeExternalObjectNames = {Source.Client.SynchronizeExternalObjectNames}";
+            $"[Handshaking] {Source}, MessageTimeout = {Source.Client.MessageTimeout}, PingInterval = {Source.Client.PingInterval}, BatchPacket = {batchPacket}, SynchronizeExternalObjectNames = {Source.Client.SynchronizeExternalObjectNames}, ClearBuffers = {Source.Client.ClearBuffers}";
     }
 
     [Pure]

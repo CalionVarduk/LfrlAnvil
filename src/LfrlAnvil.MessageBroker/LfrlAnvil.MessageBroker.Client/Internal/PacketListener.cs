@@ -146,7 +146,7 @@ internal struct PacketListener
 
                 if ( packetLength.Value > 0 )
                 {
-                    batchPoolToken = client.MemoryPool.Rent( packetLength.Value, out batchBuffer ).EnableClearing();
+                    batchPoolToken = client.MemoryPool.Rent( packetLength.Value, client.ClearBuffers, out batchBuffer );
                     try
                     {
                         await stream.ReadExactlyAsync( batchBuffer, timeoutToken ).ConfigureAwait( false );
@@ -365,7 +365,7 @@ internal struct PacketListener
 
                         if ( packetLength.Value > 0 )
                         {
-                            packetPoolToken = client.MemoryPool.Rent( packetLength.Value, out packetBuffer ).EnableClearing();
+                            packetPoolToken = client.MemoryPool.Rent( packetLength.Value, client.ClearBuffers, out packetBuffer );
                             try
                             {
                                 await stream.ReadExactlyAsync( packetBuffer, timeoutToken ).ConfigureAwait( false );
@@ -398,7 +398,7 @@ internal struct PacketListener
 
                         if ( packetLength.Value > 0 )
                         {
-                            packetPoolToken = client.MemoryPool.Rent( packetLength.Value, out packetBuffer ).EnableClearing();
+                            packetPoolToken = client.MemoryPool.Rent( packetLength.Value, client.ClearBuffers, out packetBuffer );
                             try
                             {
                                 await stream.ReadExactlyAsync( packetBuffer, timeoutToken ).ConfigureAwait( false );
@@ -443,7 +443,7 @@ internal struct PacketListener
 
                             if ( packetLength.Value > 0 )
                             {
-                                packetPoolToken = client.MemoryPool.Rent( packetLength.Value, out packetBuffer ).EnableClearing();
+                                packetPoolToken = client.MemoryPool.Rent( packetLength.Value, client.ClearBuffers, out packetBuffer );
                                 try
                                 {
                                     await stream.ReadExactlyAsync( packetBuffer, timeoutToken ).ConfigureAwait( false );

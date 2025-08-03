@@ -1301,22 +1301,18 @@ public partial class MessageBrokerClientTests
                                 (MessageBrokerServerEndpoint.MessageNotificationAck, Protocol.MessageNotificationAck.Length),
                                 (MessageBrokerServerEndpoint.MessageNotificationNack, Protocol.MessageNotificationNegativeAck.Length),
                                 (MessageBrokerServerEndpoint.PushMessage,
-                                    Protocol.PacketHeader.Length
-                                    + ( int )new Protocol.PushMessageHeader( 1, 1, true, false ).Header.Payload),
+                                    Protocol.PacketHeader.Length + ( int )new Protocol.PushMessageHeader( 1, 1, true ).Header.Payload),
                                 (MessageBrokerServerEndpoint.PushMessageRouting,
                                     Protocol.PacketHeader.Length + ( int )new Protocol.PushMessageRoutingHeader( 1, 5 ).Header.Payload),
                                 (MessageBrokerServerEndpoint.PushMessage,
-                                    Protocol.PacketHeader.Length
-                                    + ( int )new Protocol.PushMessageHeader( 1, 2, true, false ).Header.Payload),
+                                    Protocol.PacketHeader.Length + ( int )new Protocol.PushMessageHeader( 1, 2, true ).Header.Payload),
                                 (MessageBrokerServerEndpoint.UnbindListenerRequest, Protocol.UnbindListenerRequest.Length),
                                 (MessageBrokerServerEndpoint.PushMessage,
-                                    Protocol.PacketHeader.Length
-                                    + ( int )new Protocol.PushMessageHeader( 1, 3, false, false ).Header.Payload),
+                                    Protocol.PacketHeader.Length + ( int )new Protocol.PushMessageHeader( 1, 3, false ).Header.Payload),
                                 (MessageBrokerServerEndpoint.PushMessageRouting,
                                     Protocol.PacketHeader.Length + ( int )new Protocol.PushMessageRoutingHeader( 1, 5 ).Header.Payload),
                                 (MessageBrokerServerEndpoint.PushMessage,
-                                    Protocol.PacketHeader.Length
-                                    + ( int )new Protocol.PushMessageHeader( 1, 4, false, false ).Header.Payload),
+                                    Protocol.PacketHeader.Length + ( int )new Protocol.PushMessageHeader( 1, 4, false ).Header.Payload),
                                 (MessageBrokerServerEndpoint.UnbindPublisherRequest, Protocol.UnbindPublisherRequest.Length)
                             ] );
 
@@ -1647,7 +1643,7 @@ public partial class MessageBrokerClientTests
                         - Protocol.BatchHeader.Length
                         - Protocol.DeadLetterQuery.Length
                         - Protocol.PacketHeader.Length
-                        - new Protocol.PushMessageHeader( 1, firstMessageLength, false, false ).Header.Payload
+                        - new Protocol.PushMessageHeader( 1, firstMessageLength, false ).Header.Payload
                         - Protocol.PushMessageHeader.Length);
 
                     await batchStart.Task;
@@ -1671,9 +1667,9 @@ public partial class MessageBrokerClientTests
                             [
                                 (MessageBrokerServerEndpoint.DeadLetterQuery, Protocol.DeadLetterQuery.Length),
                                 (MessageBrokerServerEndpoint.PushMessage, Protocol.PacketHeader.Length
-                                    + ( int )new Protocol.PushMessageHeader( 1, firstMessageLength, false, false ).Header.Payload),
+                                    + ( int )new Protocol.PushMessageHeader( 1, firstMessageLength, false ).Header.Payload),
                                 (MessageBrokerServerEndpoint.PushMessage, Protocol.PacketHeader.Length
-                                    + ( int )new Protocol.PushMessageHeader( 1, secondMessageLength, false, false ).Header.Payload)
+                                    + ( int )new Protocol.PushMessageHeader( 1, secondMessageLength, false ).Header.Payload)
                             ] );
 
                             s.SendDeadLetterQueryResponse( 0, 0, Timestamp.Zero );

@@ -52,6 +52,9 @@ namespace LfrlAnvil.MessageBroker.Client;
 /// <param name="SynchronizeExternalObjectNames">
 /// Specifies whether or not synchronization of external object names is enabled. Equal to <b>true</b> by default.
 /// </param>
+/// <param name="ClearBuffers">
+/// Specifies whether or not to clear internal buffers once the client is done using them. Equal to <b>false</b> by default.
+/// </param>
 /// <param name="Timestamps"><see cref="Timestamp"/> provider.</param>
 /// <param name="DelaySource"><see cref="ValueTaskDelaySource"/> instance used for scheduling future events.</param>
 /// <param name="Logger"><see cref="MessageBrokerClientLogger"/> instance.</param>
@@ -65,6 +68,7 @@ public readonly record struct MessageBrokerClientOptions(
     Duration? DesiredPingInterval,
     Duration? ListenerDisposalTimeout,
     bool? SynchronizeExternalObjectNames,
+    bool? ClearBuffers,
     ITimestampProvider? Timestamps,
     ValueTaskDelaySource? DelaySource,
     MessageBrokerClientLogger? Logger,
@@ -94,6 +98,7 @@ public readonly record struct MessageBrokerClientOptions(
             DesiredPingInterval,
             ListenerDisposalTimeout,
             SynchronizeExternalObjectNames,
+            ClearBuffers,
             Timestamps,
             DelaySource,
             Logger,
@@ -118,6 +123,7 @@ public readonly record struct MessageBrokerClientOptions(
             DesiredPingInterval,
             ListenerDisposalTimeout,
             SynchronizeExternalObjectNames,
+            ClearBuffers,
             Timestamps,
             DelaySource,
             Logger,
@@ -142,6 +148,7 @@ public readonly record struct MessageBrokerClientOptions(
             DesiredPingInterval,
             ListenerDisposalTimeout,
             SynchronizeExternalObjectNames,
+            ClearBuffers,
             Timestamps,
             DelaySource,
             Logger,
@@ -166,6 +173,7 @@ public readonly record struct MessageBrokerClientOptions(
             DesiredPingInterval,
             ListenerDisposalTimeout,
             SynchronizeExternalObjectNames,
+            ClearBuffers,
             Timestamps,
             DelaySource,
             Logger,
@@ -190,6 +198,7 @@ public readonly record struct MessageBrokerClientOptions(
             DesiredPingInterval,
             ListenerDisposalTimeout,
             SynchronizeExternalObjectNames,
+            ClearBuffers,
             Timestamps,
             DelaySource,
             Logger,
@@ -214,6 +223,7 @@ public readonly record struct MessageBrokerClientOptions(
             value,
             ListenerDisposalTimeout,
             SynchronizeExternalObjectNames,
+            ClearBuffers,
             Timestamps,
             DelaySource,
             Logger,
@@ -238,6 +248,7 @@ public readonly record struct MessageBrokerClientOptions(
             DesiredPingInterval,
             value,
             SynchronizeExternalObjectNames,
+            ClearBuffers,
             Timestamps,
             DelaySource,
             Logger,
@@ -261,6 +272,32 @@ public readonly record struct MessageBrokerClientOptions(
             DesiredMessageTimeout,
             DesiredPingInterval,
             ListenerDisposalTimeout,
+            value,
+            ClearBuffers,
+            Timestamps,
+            DelaySource,
+            Logger,
+            StreamDecorator );
+    }
+
+    /// <summary>
+    /// Allows to change <see cref="ClearBuffers"/>.
+    /// </summary>
+    /// <param name="value">New value</param>
+    /// <returns>New <see cref="MessageBrokerClientOptions"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public MessageBrokerClientOptions SetClearBuffers(bool? value)
+    {
+        return new MessageBrokerClientOptions(
+            Tcp,
+            NetworkPacket,
+            MinMemoryPoolSegmentLength,
+            ConnectionTimeout,
+            DesiredMessageTimeout,
+            DesiredPingInterval,
+            ListenerDisposalTimeout,
+            SynchronizeExternalObjectNames,
             value,
             Timestamps,
             DelaySource,
@@ -286,6 +323,7 @@ public readonly record struct MessageBrokerClientOptions(
             DesiredPingInterval,
             ListenerDisposalTimeout,
             SynchronizeExternalObjectNames,
+            ClearBuffers,
             value,
             DelaySource,
             Logger,
@@ -310,6 +348,7 @@ public readonly record struct MessageBrokerClientOptions(
             DesiredPingInterval,
             ListenerDisposalTimeout,
             SynchronizeExternalObjectNames,
+            ClearBuffers,
             Timestamps,
             value,
             Logger,
@@ -334,6 +373,7 @@ public readonly record struct MessageBrokerClientOptions(
             DesiredPingInterval,
             ListenerDisposalTimeout,
             SynchronizeExternalObjectNames,
+            ClearBuffers,
             Timestamps,
             DelaySource,
             value,
@@ -358,6 +398,7 @@ public readonly record struct MessageBrokerClientOptions(
             DesiredPingInterval,
             ListenerDisposalTimeout,
             SynchronizeExternalObjectNames,
+            ClearBuffers,
             Timestamps,
             DelaySource,
             Logger,

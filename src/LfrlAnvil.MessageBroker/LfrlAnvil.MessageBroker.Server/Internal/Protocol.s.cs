@@ -122,6 +122,7 @@ internal static class Protocol
 
         internal bool IsClientLittleEndian => (Flags & 2) != 0;
         internal bool SynchronizeExternalObjectNames => (Flags & 4) != 0;
+        internal bool ClearBuffers => (Flags & 8) != 0;
 
         [Pure]
         public override string ToString()
@@ -836,7 +837,6 @@ internal static class Protocol
         }
 
         internal bool Confirm => (Flags & 1) != 0;
-        internal bool ClearBuffer => (Flags & 2) != 0;
 
         [Pure]
         public override string ToString()

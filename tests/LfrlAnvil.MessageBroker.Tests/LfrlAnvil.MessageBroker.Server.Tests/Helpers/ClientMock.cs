@@ -420,6 +420,7 @@ internal sealed class ClientMock : IDisposable
         short? maxBatchPacketCount = null,
         MemorySize? maxNetworkBatchPacketLength = null,
         bool synchronizeExternalObjectNames = false,
+        bool clearBuffers = false,
         uint? payload = null)
     {
         var preparedName = EncodeableText.Create( TextEncoding.Instance, name ).GetValueOrThrow();
@@ -442,7 +443,9 @@ internal sealed class ClientMock : IDisposable
         var writer = new BinaryContractWriter( buffer );
         writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.HandshakeRequest );
         writer.MoveWrite( payloadToSend );
-        writer.MoveWrite( ( byte )((BitConverter.IsLittleEndian ? 2 : 0) | (synchronizeExternalObjectNames ? 4 : 0)) );
+        writer.MoveWrite(
+            ( byte )((BitConverter.IsLittleEndian ? 2 : 0) | (synchronizeExternalObjectNames ? 4 : 0) | (clearBuffers ? 8 : 0)) );
+
         writer.MoveWrite( messageTimeoutMs );
         writer.MoveWrite( pingIntervalMs );
         writer.MoveWrite( maxBatchPacketCountValue );

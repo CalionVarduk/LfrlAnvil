@@ -89,6 +89,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
 
         ListenerDisposalTimeout = Defaults.Temporal.GetActualTimeout( options.ListenerDisposalTimeout );
         SynchronizeExternalObjectNames = options.SynchronizeExternalObjectNames ?? true;
+        ClearBuffers = options.ClearBuffers ?? false;
         _streamDecorator = options.StreamDecorator;
         Logger = options.Logger ?? default;
         _timestamps = options.Timestamps ?? TimestampProvider.Shared;
@@ -171,6 +172,11 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     /// Specifies whether or not synchronization of external object names is enabled.
     /// </summary>
     public bool SynchronizeExternalObjectNames { get; }
+
+    /// <summary>
+    /// Specifies whether or not to clear internal buffers once the client is done using them.
+    /// </summary>
+    public bool ClearBuffers { get; }
 
     /// <summary>
     /// Max acceptable network packet length.
@@ -476,7 +482,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
             try
             {
                 request = new Protocol.DeadLetterQuery( queueId, readCount );
-                poolToken = MemoryPool.Rent( Protocol.DeadLetterQuery.Length, out var buffer ).EnableClearing();
+                poolToken = MemoryPool.Rent( Protocol.DeadLetterQuery.Length, ClearBuffers, out var buffer );
                 request.Serialize( buffer, reverseEndianness );
 
                 ManualResetValueTaskSource<WriterSourceResult> writerSource;
@@ -635,10 +641,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal MessageBrokerPushContext RentMessageContext(
-        MessageBrokerPublisher publisher,
-        MemorySize minCapacity,
-        bool clearBufferOnDispose)
+    internal MessageBrokerPushContext RentMessageContext(MessageBrokerPublisher publisher, MemorySize minCapacity)
     {
         MessageBrokerPushContext? result;
         using ( AcquireLock() )
@@ -650,7 +653,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
                 result = new MessageBrokerPushContext( MemoryPool );
         }
 
-        result.Initialize( publisher, minCapacity, clearBufferOnDispose );
+        result.Initialize( publisher, minCapacity );
         return result;
     }
 
@@ -1109,7 +1112,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         if ( packetCount == 1 )
             return packetCount;
 
-        batchPoolToken = MemoryPool.Rent( unchecked( ( int )batchLength ), out var batchData ).EnableClearing();
+        batchPoolToken = MemoryPool.Rent( unchecked( ( int )batchLength ), ClearBuffers, out var batchData );
         dataToWrite = batchData;
 
         headerToWrite = Protocol.PacketHeader.Create(

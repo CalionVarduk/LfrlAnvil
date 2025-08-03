@@ -117,9 +117,6 @@ public sealed class MessageBrokerPublisher
     /// <param name="confirm">
     /// Specifies whether or not the server should send confirmation that it received the message. Equal to <b>true</b> by default.
     /// </param>
-    /// <param name="clearBuffer">
-    /// Specifies whether or not to clear the internal memory buffer when it's returned to the pool. Equal to <b>false</b> by default.
-    /// </param>
     /// <returns>
     /// A task that represents the operation, which returns a <see cref="Result{T}"/> instance,
     /// with underlying <see cref="MessageBrokerPushResult"/> instance.
@@ -139,10 +136,9 @@ public sealed class MessageBrokerPublisher
     public async ValueTask<Result<MessageBrokerPushResult>> PushAsync(
         ReadOnlyMemory<byte> data,
         IEnumerable<MessageBrokerClientRoutingTarget>? targets = null,
-        bool confirm = true,
-        bool clearBuffer = false)
+        bool confirm = true)
     {
-        using var context = GetPushContext( MemorySize.FromBytes( data.Length ), clearBuffer );
+        using var context = GetPushContext( MemorySize.FromBytes( data.Length ) );
         if ( targets is not null )
         {
             foreach ( var target in targets )
@@ -165,14 +161,11 @@ public sealed class MessageBrokerPublisher
     /// Specifies minimum initial capacity of the allocated memory buffer.
     /// Equal to <b>null</b> by default, which will cause the minimum of <b>1KB</b> to be used.
     /// </param>
-    /// <param name="clearBufferOnDispose">
-    /// Specifies whether or not to clear the internal memory buffer when it's returned to the pool. Equal to <b>false</b> by default.
-    /// </param>
     /// <returns>Pooled <see cref="MessageBrokerPushContext"/> instance.</returns>
     /// <exception cref="MessageBrokerClientDisposedException">When client has already been disposed.</exception>
-    public MessageBrokerPushContext GetPushContext(MemorySize? minCapacity = null, bool clearBufferOnDispose = false)
+    public MessageBrokerPushContext GetPushContext(MemorySize? minCapacity = null)
     {
-        return Client.RentMessageContext( this, minCapacity ?? MemorySize.Zero, clearBufferOnDispose );
+        return Client.RentMessageContext( this, minCapacity ?? MemorySize.Zero );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

@@ -1271,7 +1271,7 @@ public partial class MessageBrokerClientTests
             serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( new Protocol.PushMessageHeader( 1, data.Length, true, false ) );
+                    s.Read( new Protocol.PushMessageHeader( 1, data.Length, true ) );
                     s.SendMessageAcceptedResponse( 1 );
                 } );
 
@@ -1340,7 +1340,7 @@ public partial class MessageBrokerClientTests
             await serverTask;
 
             var data = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
-            serverTask = server.GetTask( s => s.Read( new Protocol.PushMessageHeader( 1, data.Length, true, false ) ) );
+            serverTask = server.GetTask( s => s.Read( new Protocol.PushMessageHeader( 1, data.Length, true ) ) );
 
             var result = Result.Create( MessageBrokerPushResult.CreateNotBound( true ) );
             var publisher = client.Publishers.TryGetByChannelId( 1 );
@@ -1403,7 +1403,7 @@ public partial class MessageBrokerClientTests
                 s =>
                 {
                     s.ReadPushMessageRouting( 11 );
-                    s.Read( new Protocol.PushMessageHeader( 1, data.Length, true, false ) );
+                    s.Read( new Protocol.PushMessageHeader( 1, data.Length, true ) );
                     s.SendMessageAcceptedResponse( 1 );
                 } );
 

@@ -43,7 +43,7 @@ public sealed partial class MessageBrokerClient
                     .Max( Protocol.HandshakeRejectedResponse.Length );
 
                 handshake = new Protocol.HandshakeRequest( this );
-                poolToken = MemoryPool.Rent( handshake.Length.Max( minPacketLength ), out buffer ).EnableClearing();
+                poolToken = MemoryPool.Rent( handshake.Length.Max( minPacketLength ), ClearBuffers, out buffer );
             }
             catch ( Exception exc )
             {

@@ -154,7 +154,7 @@ internal struct ListenerCollection
                     filterExpression,
                     createChannelIfNotExists );
 
-                poolToken = client.MemoryPool.Rent( request.Length, out var buffer ).EnableClearing();
+                poolToken = client.MemoryPool.Rent( request.Length, client.ClearBuffers, out var buffer );
                 request.Serialize( buffer, reverseEndianness );
 
                 ManualResetValueTaskSource<WriterSourceResult> writerSource;
@@ -365,7 +365,7 @@ internal struct ListenerCollection
                 try
                 {
                     request = new Protocol.UnbindListenerRequest( listener.ChannelId );
-                    poolToken = client.MemoryPool.Rent( Protocol.UnbindListenerRequest.Length, out var buffer ).EnableClearing();
+                    poolToken = client.MemoryPool.Rent( Protocol.UnbindListenerRequest.Length, client.ClearBuffers, out var buffer );
                     request.Serialize( buffer, reverseEndianness );
 
                     ManualResetValueTaskSource<WriterSourceResult> writerSource;
@@ -578,7 +578,7 @@ internal struct ListenerCollection
                     retry,
                     redelivery );
 
-                poolToken = client.MemoryPool.Rent( Protocol.MessageNotificationAck.Length, out var buffer ).EnableClearing();
+                poolToken = client.MemoryPool.Rent( Protocol.MessageNotificationAck.Length, client.ClearBuffers, out var buffer );
                 request.Serialize( buffer, reverseEndianness );
 
                 ManualResetValueTaskSource<WriterSourceResult> writerSource;
@@ -717,7 +717,7 @@ internal struct ListenerCollection
                     nack.SkipDeadLetter,
                     nack.RetryDelay );
 
-                poolToken = client.MemoryPool.Rent( Protocol.MessageNotificationNegativeAck.Length, out var buffer ).EnableClearing();
+                poolToken = client.MemoryPool.Rent( Protocol.MessageNotificationNegativeAck.Length, client.ClearBuffers, out var buffer );
                 request.Serialize( buffer, reverseEndianness );
 
                 ManualResetValueTaskSource<WriterSourceResult> writerSource;

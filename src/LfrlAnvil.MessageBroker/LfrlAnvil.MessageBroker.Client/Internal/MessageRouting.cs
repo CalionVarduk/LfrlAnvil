@@ -32,14 +32,14 @@ internal struct MessageRouting
     internal Memory<byte> Data => _buffer.Slice( 0, _written );
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void Add(MessageBrokerClient client, int id, bool clearOnDispose)
+    internal void Add(MessageBrokerClient client, int id)
     {
         Ensure.IsGreaterThan( id, 0 );
         if ( TargetCount == short.MaxValue )
             ExceptionThrower.Throw( new InvalidOperationException( Resources.MaxMessageRoutingTargetCountReached ) );
 
         if ( TargetCount == 0 )
-            Initialize( client.MemoryPool, sizeof( byte ) + sizeof( uint ), clearOnDispose );
+            Initialize( client, sizeof( byte ) + sizeof( uint ) );
 
         EnsureRemainingCapacity( sizeof( byte ) + sizeof( uint ) );
 
@@ -55,7 +55,7 @@ internal struct MessageRouting
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void Add(MessageBrokerClient client, string name, bool clearOnDispose)
+    internal void Add(MessageBrokerClient client, string name)
     {
         Ensure.IsInRange( name.Length, Defaults.NameLengthBounds.Min, Defaults.NameLengthBounds.Max );
         if ( TargetCount == short.MaxValue )
@@ -63,7 +63,7 @@ internal struct MessageRouting
 
         var encodedName = TextEncoding.Prepare( name ).GetValueOrThrow();
         if ( TargetCount == 0 )
-            Initialize( client.MemoryPool, sizeof( ushort ) + encodedName.ByteCount, clearOnDispose );
+            Initialize( client, sizeof( ushort ) + encodedName.ByteCount );
 
         EnsureRemainingCapacity( sizeof( ushort ) + encodedName.ByteCount );
 
@@ -86,16 +86,16 @@ internal struct MessageRouting
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void Initialize(MemoryPool<byte> pool, int desired, bool clearOnDispose)
+    private void Initialize(MessageBrokerClient client, int desired)
     {
         Assume.Equals( TargetCount, 0 );
         Assume.Equals( _buffer.Length, 0 );
         Assume.Equals( _written, 0 );
 
-        Token = pool.Rent(
-                Defaults.Memory.GetRoutingBufferCapacity( checked( Protocol.PushMessageRoutingHeader.Length + desired ) ),
-                out _buffer )
-            .EnableClearing( clearOnDispose );
+        Token = client.MemoryPool.Rent(
+            Defaults.Memory.GetRoutingBufferCapacity( checked( Protocol.PushMessageRoutingHeader.Length + desired ) ),
+            client.ClearBuffers,
+            out _buffer );
 
         _written = Protocol.PushMessageRoutingHeader.Length;
     }

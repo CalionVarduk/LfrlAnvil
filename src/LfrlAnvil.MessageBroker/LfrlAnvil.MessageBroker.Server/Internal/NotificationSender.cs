@@ -292,7 +292,7 @@ internal struct NotificationSender
     {
         Assume.IsNotNull( data.WriterSource );
         var notification = new Protocol.ObjectNameNotification( type, data.Id, data.Name );
-        var token = client.MemoryPool.Rent( notification.Length, out var buffer ).EnableClearing();
+        var token = client.MemoryPool.Rent( notification.Length, client.ClearBuffers, out var buffer );
         try
         {
             notification.Serialize( buffer );

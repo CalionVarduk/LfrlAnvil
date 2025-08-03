@@ -40,14 +40,16 @@ internal static class MessageBrokerExtensions
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MemoryPoolToken<byte> Rent(this MemoryPool<byte> pool, int length, out Memory<byte> data)
+    internal static MemoryPoolToken<byte> Rent(this MemoryPool<byte> pool, int length, bool clear, out Memory<byte> data)
     {
+        MemoryPoolToken<byte> token;
         using ( pool.AcquireLock() )
         {
-            var token = pool.Rent( length );
+            token = pool.Rent( length );
             data = token.AsMemory();
-            return token;
         }
+
+        return token.EnableClearing( clear );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

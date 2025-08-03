@@ -84,6 +84,7 @@ public sealed partial class MessageBrokerRemoteClient
         MaxNetworkBatchPacketBytes = 0;
         MaxBatchPacketCount = 0;
         SynchronizeExternalObjectNames = false;
+        ClearBuffers = true;
         _disconnected = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
         _state = MessageBrokerRemoteClientState.Created;
         _nextTraceId = 0;
@@ -154,6 +155,12 @@ public sealed partial class MessageBrokerRemoteClient
     /// </summary>
     /// <remarks>Value will be initialized during handshake with the remote client.</remarks>
     public bool SynchronizeExternalObjectNames { get; private set; }
+
+    /// <summary>
+    /// Specifies whether or not to clear internal buffers once the server is done using them.
+    /// </summary>
+    /// <remarks>Value will be initialized during handshake with the remote client.</remarks>
+    public bool ClearBuffers { get; private set; }
 
     /// <summary>
     /// Max acceptable network batch packet length.
@@ -660,7 +667,7 @@ public sealed partial class MessageBrokerRemoteClient
         var poolToken = MemoryPoolToken<byte>.Empty;
         try
         {
-            poolToken = MemoryPool.Rent( Defaults.Memory.GetBufferCapacity( (count + 7) >> 3 ), out var buffer );
+            poolToken = MemoryPool.Rent( Defaults.Memory.GetBufferCapacity( (count + 7) >> 3 ), ClearBuffers, out var buffer );
             var bufferSpan = buffer.Span;
             bufferSpan.Clear();
 

@@ -139,8 +139,10 @@ internal struct PacketListener
 
                 if ( packetLength.Value > 0 )
                 {
-                    batchPoolToken = client.MemoryPool.Rent( packetLength.Value.Min( client.MemoryPool.SegmentLength ), out batchBuffer )
-                        .EnableClearing();
+                    batchPoolToken = client.MemoryPool.Rent(
+                        packetLength.Value.Min( client.MemoryPool.SegmentLength ),
+                        client.ClearBuffers,
+                        out batchBuffer );
 
                     try
                     {
@@ -149,7 +151,7 @@ internal struct PacketListener
                         {
                             var oldPoolToken = batchPoolToken;
                             var oldBuffer = batchBuffer;
-                            batchPoolToken = client.Server.MemoryPool.Rent( packetLength.Value, out batchBuffer ).EnableClearing();
+                            batchPoolToken = client.Server.MemoryPool.Rent( packetLength.Value, client.ClearBuffers, out batchBuffer );
                             try
                             {
                                 await stream.ReadExactlyAsync( batchBuffer.Slice( oldBuffer.Length ), timeoutToken )
@@ -294,9 +296,9 @@ internal struct PacketListener
                     if ( packetLength.Value > 0 )
                     {
                         packetPoolToken = client.MemoryPool.Rent(
-                                packetLength.Value.Min( client.MemoryPool.SegmentLength ),
-                                out packetBuffer )
-                            .EnableClearing();
+                            packetLength.Value.Min( client.MemoryPool.SegmentLength ),
+                            client.ClearBuffers,
+                            out packetBuffer );
 
                         try
                         {
@@ -305,7 +307,11 @@ internal struct PacketListener
                             {
                                 var oldPoolToken = packetPoolToken;
                                 var oldBuffer = packetBuffer;
-                                packetPoolToken = client.Server.MemoryPool.Rent( packetLength.Value, out packetBuffer ).EnableClearing();
+                                packetPoolToken = client.Server.MemoryPool.Rent(
+                                    packetLength.Value,
+                                    client.ClearBuffers,
+                                    out packetBuffer );
+
                                 try
                                 {
                                     await stream.ReadExactlyAsync( packetBuffer.Slice( oldBuffer.Length ), timeoutToken )

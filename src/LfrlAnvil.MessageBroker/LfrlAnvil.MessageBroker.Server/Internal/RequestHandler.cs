@@ -1131,7 +1131,6 @@ internal struct RequestHandler
         IncomingPacketToken request,
         ulong traceId)
     {
-        var requestPoolToken = request.PoolToken;
         using ( MessageBrokerRemoteClientTraceEvent.CreateScope( client, traceId, MessageBrokerRemoteClientTraceEventType.PushMessage ) )
         {
             var disposeBuffer = true;
@@ -1161,12 +1160,11 @@ internal struct RequestHandler
                     return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
                 }
 
-                requestPoolToken = requestPoolToken.EnableClearing( parsedRequest.ClearBuffer );
                 var messageToken = MemoryPoolToken<byte>.Empty;
                 var messageLength = request.Data.Length - Protocol.PushMessageHeader.Length;
                 if ( messageLength > 0 )
                 {
-                    messageToken = requestPoolToken;
+                    messageToken = request.PoolToken;
                     messageToken.DecreaseLengthAtStart( messageLength );
                     messageData = request.Data.Slice( Protocol.PushMessageHeader.Length );
                 }
@@ -1206,7 +1204,7 @@ internal struct RequestHandler
             finally
             {
                 if ( disposeBuffer )
-                    requestPoolToken.Return( client, traceId );
+                    request.PoolToken.Return( client, traceId );
 
                 if ( pushMessageResult != PushMessageResult.Success )
                     messageRouting.PoolToken.Return( client, traceId );
@@ -1239,7 +1237,7 @@ internal struct RequestHandler
 
                     var responseLength = Protocol.PacketHeader.Length + Protocol.MessageRejectedResponse.Payload;
                     var response = new Protocol.MessageRejectedResponse( pushMessageResult );
-                    poolToken = client.MemoryPool.Rent( responseLength, out responseData ).EnableClearing();
+                    poolToken = client.MemoryPool.Rent( responseLength, client.ClearBuffers, out responseData );
                     responseHeader = response.Header;
                     response.Serialize( responseData );
                 }
@@ -1281,7 +1279,7 @@ internal struct RequestHandler
 
                     var responseLength = Protocol.PacketHeader.Length + Protocol.MessageAcceptedResponse.Payload;
                     var response = new Protocol.MessageAcceptedResponse( messageId );
-                    poolToken = client.MemoryPool.Rent( responseLength, out responseData ).EnableClearing();
+                    poolToken = client.MemoryPool.Rent( responseLength, client.ClearBuffers, out responseData );
                     responseHeader = response.Header;
                     response.Serialize( responseData );
                 }

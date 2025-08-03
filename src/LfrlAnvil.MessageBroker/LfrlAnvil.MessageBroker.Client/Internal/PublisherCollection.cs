@@ -110,7 +110,7 @@ internal struct PublisherCollection
             try
             {
                 request = new Protocol.BindPublisherRequest( channelName, streamName );
-                poolToken = client.MemoryPool.Rent( request.Length, out var buffer ).EnableClearing();
+                poolToken = client.MemoryPool.Rent( request.Length, client.ClearBuffers, out var buffer );
                 request.Serialize( buffer, reverseEndianness );
 
                 ManualResetValueTaskSource<WriterSourceResult> writerSource;
@@ -310,7 +310,7 @@ internal struct PublisherCollection
             try
             {
                 request = new Protocol.UnbindPublisherRequest( publisher.ChannelId );
-                poolToken = client.MemoryPool.Rent( Protocol.UnbindPublisherRequest.Length, out var buffer ).EnableClearing();
+                poolToken = client.MemoryPool.Rent( Protocol.UnbindPublisherRequest.Length, client.ClearBuffers, out var buffer );
                 request.Serialize( buffer, reverseEndianness );
 
                 ManualResetValueTaskSource<WriterSourceResult> writerSource;
@@ -517,7 +517,7 @@ internal struct PublisherCollection
                     routingRequest.Serialize( routingBuffer.Slice( 0, Protocol.PushMessageRoutingHeader.Length ), reverseEndianness );
                 }
 
-                request = new Protocol.PushMessageHeader( context.Publisher.ChannelId, messageLength, confirm, context.ClearOnDispose );
+                request = new Protocol.PushMessageHeader( context.Publisher.ChannelId, messageLength, confirm );
                 request.Serialize( buffer.Slice( 0, Protocol.PushMessageHeader.Length ), reverseEndianness );
 
                 ManualResetValueTaskSource<WriterSourceResult>? routingWriterSource = null;

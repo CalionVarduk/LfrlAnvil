@@ -33,6 +33,7 @@ public readonly struct MessageBrokerRemoteClientHandshakingEvent
         short maxBatchPacketCount,
         MemorySize maxNetworkBatchPacketLength,
         bool synchronizeExternalObjectNames,
+        bool clearBuffers,
         bool isClientLittleEndian)
     {
         Source = MessageBrokerRemoteClientEventSource.Create( client, traceId );
@@ -42,6 +43,7 @@ public readonly struct MessageBrokerRemoteClientHandshakingEvent
         MaxNetworkBatchPacketLength = maxNetworkBatchPacketLength;
         MaxBatchPacketCount = maxBatchPacketCount;
         SynchronizeExternalObjectNames = synchronizeExternalObjectNames;
+        ClearBuffers = clearBuffers;
         IsClientLittleEndian = isClientLittleEndian;
     }
 
@@ -81,6 +83,11 @@ public readonly struct MessageBrokerRemoteClientHandshakingEvent
     public bool SynchronizeExternalObjectNames { get; }
 
     /// <summary>
+    /// Specifies whether or not the client requested to clear internal buffers once the server is done using them.
+    /// </summary>
+    public bool ClearBuffers { get; }
+
+    /// <summary>
     /// Indicates client's endianness.
     /// </summary>
     public bool IsClientLittleEndian { get; }
@@ -97,7 +104,7 @@ public readonly struct MessageBrokerRemoteClientHandshakingEvent
             : "<disabled>";
 
         return
-            $"[Handshaking] {Source}, ClientName = '{ClientName}', DesiredMessageTimeout = {DesiredMessageTimeout}, DesiredPingInterval = {DesiredPingInterval}, DesiredBatchPacket = {batchPacket}, SynchronizeExternalObjectNames = {SynchronizeExternalObjectNames}, IsClientLittleEndian = {IsClientLittleEndian}";
+            $"[Handshaking] {Source}, ClientName = '{ClientName}', DesiredMessageTimeout = {DesiredMessageTimeout}, DesiredPingInterval = {DesiredPingInterval}, DesiredBatchPacket = {batchPacket}, SynchronizeExternalObjectNames = {SynchronizeExternalObjectNames}, ClearBuffers = {ClearBuffers}, IsClientLittleEndian = {IsClientLittleEndian}";
     }
 
     [Pure]
@@ -111,6 +118,7 @@ public readonly struct MessageBrokerRemoteClientHandshakingEvent
         short maxBatchPacketCount,
         MemorySize maxNetworkBatchPacketLength,
         bool synchronizeExternalObjectNames,
+        bool clearBuffers,
         bool isClientLittleEndian)
     {
         return new MessageBrokerRemoteClientHandshakingEvent(
@@ -122,6 +130,7 @@ public readonly struct MessageBrokerRemoteClientHandshakingEvent
             maxBatchPacketCount,
             maxNetworkBatchPacketLength,
             synchronizeExternalObjectNames,
+            clearBuffers,
             isClientLittleEndian );
     }
 }

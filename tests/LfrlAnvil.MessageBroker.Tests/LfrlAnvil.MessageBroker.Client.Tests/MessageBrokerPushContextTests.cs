@@ -50,7 +50,7 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
         serverTask = server.GetTask(
             s =>
             {
-                s.Read( new Protocol.PushMessageHeader( 1, data.Length, true, false ) );
+                s.Read( new Protocol.PushMessageHeader( 1, data.Length, true ) );
                 s.SendMessageAcceptedResponse( 1 );
             } );
 
@@ -133,7 +133,7 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
         serverTask = server.GetTask(
             s =>
             {
-                s.Read( new Protocol.PushMessageHeader( 1, data.Length, true, false ) );
+                s.Read( new Protocol.PushMessageHeader( 1, data.Length, true ) );
                 s.SendMessageAcceptedResponse( 2 );
             } );
 
@@ -220,7 +220,7 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
         serverTask = server.GetTask(
             s =>
             {
-                s.Read( new Protocol.PushMessageHeader( 1, data.Length, true, false ) );
+                s.Read( new Protocol.PushMessageHeader( 1, data.Length, true ) );
                 s.SendMessageAcceptedResponse( 3 );
             } );
 
@@ -292,7 +292,7 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
         await serverTask;
 
         var data = new byte[] { 1, 2, 3, 4, 5 };
-        serverTask = server.GetTask( s => s.Read( new Protocol.PushMessageHeader( 1, data.Length, false, false ) ) );
+        serverTask = server.GetTask( s => s.Read( new Protocol.PushMessageHeader( 1, data.Length, false ) ) );
 
         var result = Result.Create( MessageBrokerPushResult.CreateNotBound( false ) );
         var publisher = client.Publishers.TryGetByChannelId( 1 );
@@ -457,7 +457,7 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
             s =>
             {
                 s.ReadPushMessageRouting( 10 );
-                s.Read( new Protocol.PushMessageHeader( 1, data.Length, true, false ) );
+                s.Read( new Protocol.PushMessageHeader( 1, data.Length, true ) );
                 s.SendMessageAcceptedResponse( 1 );
             } );
 
@@ -535,7 +535,7 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
             s =>
             {
                 s.ReadPushMessageRouting( 76 );
-                s.Read( new Protocol.PushMessageHeader( 1, data.Length, true, false ) );
+                s.Read( new Protocol.PushMessageHeader( 1, data.Length, true ) );
                 s.SendMessageAcceptedResponse( 1 );
             } );
 
@@ -617,7 +617,7 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
             s =>
             {
                 s.ReadPushMessageRouting( 10 );
-                s.Read( new Protocol.PushMessageHeader( 1, data.Length, false, false ) );
+                s.Read( new Protocol.PushMessageHeader( 1, data.Length, false ) );
                 s.SendMessageAcceptedResponse( 1 );
             } );
 

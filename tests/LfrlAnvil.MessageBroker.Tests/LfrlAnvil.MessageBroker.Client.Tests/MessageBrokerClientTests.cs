@@ -39,6 +39,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                 sut.PingInterval.TestEquals( Duration.FromSeconds( 15 ) ),
                 sut.ListenerDisposalTimeout.TestEquals( Duration.FromSeconds( 15 ) ),
                 sut.SynchronizeExternalObjectNames.TestTrue(),
+                sut.ClearBuffers.TestFalse(),
                 sut.LocalEndPoint.TestNull(),
                 sut.State.TestEquals( MessageBrokerClientState.Created ),
                 sut.Publishers.Count.TestEquals( 0 ),
@@ -78,7 +79,8 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                 .SetDesiredMessageTimeout( Duration.FromTicks( messageTimeoutTicks ) )
                 .SetDesiredPingInterval( Duration.FromTicks( pingIntervalTicks ) )
                 .SetListenerDisposalTimeout( Duration.FromTicks( listenerDisposalTimeoutTicks ) )
-                .SetSynchronizeExternalObjectNames( false ) );
+                .SetSynchronizeExternalObjectNames( false )
+                .SetClearBuffers( true ) );
 
         Assertion.All(
                 sut.Id.TestEquals( 0 ),
@@ -90,6 +92,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                 sut.PingInterval.TestEquals( Duration.FromMilliseconds( expectedPingIntervalMs ) ),
                 sut.ListenerDisposalTimeout.TestEquals( Duration.FromMilliseconds( expectedListenerDisposalTimeoutMs ) ),
                 sut.SynchronizeExternalObjectNames.TestFalse(),
+                sut.ClearBuffers.TestTrue(),
                 sut.LocalEndPoint.TestNull(),
                 sut.State.TestEquals( MessageBrokerClientState.Created ),
                 sut.Publishers.Count.TestEquals( 0 ),
@@ -171,7 +174,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             "[Trace:Start] Client = 'test', TraceId = 0 (start)",
                             $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
                             $"[Connected] Client = 'test', TraceId = 0, Server = {remoteEndPoint}, LocalEndPoint = {localEndPoint}",
-                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True",
+                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True, ClearBuffers = False",
                             "[SendPacket:Sending] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
                             "[SendPacket:Sent] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
                             "[ReadPacket:Received] Client = 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 32)",
@@ -212,6 +215,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                         .SetDesiredMaxBatchPacketCount( 5 )
                         .SetDesiredMaxBatchLength( MemorySize.FromMegabytes( 50 ) ) )
                 .SetSynchronizeExternalObjectNames( false )
+                .SetClearBuffers( true )
                 .SetDelaySource( _sharedDelaySource )
                 .SetLogger(
                     logs.GetLogger(
@@ -272,7 +276,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             "[Trace:Start] Client = 'foo', TraceId = 0 (start)",
                             $"[Connecting] Client = 'foo', TraceId = 0, Server = {remoteEndPoint}",
                             $"[Connected] Client = 'foo', TraceId = 0, Server = {remoteEndPoint}, LocalEndPoint = {localEndPoint}",
-                            "[Handshaking] Client = 'foo', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 5, MaxLength = 52428800 B), SynchronizeExternalObjectNames = False",
+                            "[Handshaking] Client = 'foo', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 5, MaxLength = 52428800 B), SynchronizeExternalObjectNames = False, ClearBuffers = True",
                             "[SendPacket:Sending] Client = 'foo', TraceId = 0, Packet = (HandshakeRequest, Length = 23)",
                             "[SendPacket:Sent] Client = 'foo', TraceId = 0, Packet = (HandshakeRequest, Length = 23)",
                             "[ReadPacket:Received] Client = 'foo', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 32)",
@@ -497,7 +501,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             (e, _) => e.TestEquals(
                                 $"[Connected] Client = 'test', TraceId = 0, Server = {remoteEndPoint}, LocalEndPoint = {localEndPoint}" ),
                             (e, _) => e.TestEquals(
-                                "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True" ),
+                                "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True, ClearBuffers = False" ),
                             (e, _) => e.TestEquals(
                                 "[SendPacket:Sending] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)" ),
                             (e, _) => e.TestStartsWith(
@@ -554,7 +558,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             "[Trace:Start] Client = 'test', TraceId = 0 (start)",
                             $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
                             $"[Connected] Client = 'test', TraceId = 0, Server = {remoteEndPoint}, LocalEndPoint = {localEndPoint}",
-                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True",
+                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True, ClearBuffers = False",
                             "[SendPacket:Sending] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
                             "[SendPacket:Sent] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
                             "[Disposing] Client = 'test', TraceId = 0",
@@ -618,7 +622,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             "[Trace:Start] Client = 'test', TraceId = 0 (start)",
                             $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
                             $"[Connected] Client = 'test', TraceId = 0, Server = {remoteEndPoint}, LocalEndPoint = {localEndPoint}",
-                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True",
+                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True, ClearBuffers = False",
                             "[SendPacket:Sending] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
                             "[SendPacket:Sent] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
                             "[ReadPacket:Received] Client = 'test', TraceId = 0, Packet = (HandshakeRejectedResponse, Length = 6)",
@@ -686,7 +690,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             "[Trace:Start] Client = 'test', TraceId = 0 (start)",
                             $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
                             $"[Connected] Client = 'test', TraceId = 0, Server = {remoteEndPoint}, LocalEndPoint = {localEndPoint}",
-                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True",
+                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True, ClearBuffers = False",
                             "[SendPacket:Sending] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
                             "[SendPacket:Sent] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
                             "[ReadPacket:Received] Client = 'test', TraceId = 0, Packet = (HandshakeRejectedResponse, Length = 7)",
@@ -812,7 +816,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             "[Trace:Start] Client = 'test', TraceId = 0 (start)",
                             $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
                             $"[Connected] Client = 'test', TraceId = 0, Server = {remoteEndPoint}, LocalEndPoint = {localEndPoint}",
-                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s), BatchPacket = <disabled>, SynchronizeExternalObjectNames = True",
+                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s), BatchPacket = <disabled>, SynchronizeExternalObjectNames = True, ClearBuffers = False",
                             "[SendPacket:Sending] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
                             "[SendPacket:Sent] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
                             "[ReadPacket:Received] Client = 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 32)",
@@ -878,7 +882,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             "[Trace:Start] Client = 'test', TraceId = 0 (start)",
                             $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
                             $"[Connected] Client = 'test', TraceId = 0, Server = {remoteEndPoint}, LocalEndPoint = {localEndPoint}",
-                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True",
+                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True, ClearBuffers = False",
                             "[SendPacket:Sending] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
                             "[SendPacket:Sent] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
                             "[ReadPacket:Received] Client = 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 31)",
@@ -945,7 +949,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             "[Trace:Start] Client = 'test', TraceId = 0 (start)",
                             $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
                             $"[Connected] Client = 'test', TraceId = 0, Server = {remoteEndPoint}, LocalEndPoint = {localEndPoint}",
-                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True",
+                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True, ClearBuffers = False",
                             "[SendPacket:Sending] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
                             "[SendPacket:Sent] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
                             "[ReadPacket:Received] Client = 'test', TraceId = 0, Packet = (<unrecognized-endpoint-0>, Length = 5)",
@@ -1050,7 +1054,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             "[Trace:Start] Client = 'test', TraceId = 0 (start)",
                             $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
                             $"[Connected] Client = 'test', TraceId = 0, Server = {remoteEndPoint}, LocalEndPoint = {localEndPoint}",
-                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True",
+                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True, ClearBuffers = False",
                             """
                             [Error] Client = 'test', TraceId = 0
                             LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientDisposedException: Operation has been cancelled because client 'test' is disposed.
@@ -1107,7 +1111,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             "[Trace:Start] Client = 'test', TraceId = 0 (start)",
                             $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
                             $"[Connected] Client = 'test', TraceId = 0, Server = {remoteEndPoint}, LocalEndPoint = {localEndPoint}",
-                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True",
+                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True, ClearBuffers = False",
                             """
                             [Error] Client = 'test', TraceId = 0
                             LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientDisposedException: Operation has been cancelled because client 'test' is disposed.
@@ -1165,7 +1169,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             "[Trace:Start] Client = 'test', TraceId = 0 (start)",
                             $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
                             $"[Connected] Client = 'test', TraceId = 0, Server = {remoteEndPoint}, LocalEndPoint = {localEndPoint}",
-                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True",
+                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True, ClearBuffers = False",
                             "[SendPacket:Sending] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
                             "[SendPacket:Sent] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
                             """
@@ -1264,7 +1268,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             "[Trace:Start] Client = 'test', TraceId = 0 (start)",
                             $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
                             $"[Connected] Client = 'test', TraceId = 0, Server = {remoteEndPoint}, LocalEndPoint = {localEndPoint}",
-                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 0.001 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True",
+                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 0.001 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True, ClearBuffers = False",
                             "[SendPacket:Sending] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
                             "[SendPacket:Sent] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
                             """
@@ -1324,7 +1328,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             "[Trace:Start] Client = 'test', TraceId = 0 (start)",
                             $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
                             $"[Connected] Client = 'test', TraceId = 0, Server = {remoteEndPoint}, LocalEndPoint = {localEndPoint}",
-                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 0.1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True",
+                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 0.1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True, ClearBuffers = False",
                             "[SendPacket:Sending] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
                             "[SendPacket:Sent] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
                             "[ReadPacket:Received] Client = 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 32)",
@@ -1386,7 +1390,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             "[Trace:Start] Client = 'test', TraceId = 0 (start)",
                             $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
                             $"[Connected] Client = 'test', TraceId = 0, Server = {remoteEndPoint}, LocalEndPoint = {localEndPoint}",
-                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 0.1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True",
+                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 0.1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True, ClearBuffers = False",
                             "[SendPacket:Sending] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
                             "[SendPacket:Sent] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
                             "[ReadPacket:Received] Client = 'test', TraceId = 0, Packet = (HandshakeRejectedResponse, Length = 6)",
@@ -1457,7 +1461,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             "[Trace:Start] Client = 'test', TraceId = 0 (start)",
                             $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
                             $"[Connected] Client = 'test', TraceId = 0, Server = {remoteEndPoint}, LocalEndPoint = {localEndPoint}",
-                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True",
+                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True, ClearBuffers = False",
                             "[SendPacket:Sending] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
                             "[SendPacket:Sent] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
                             "[ReadPacket:Received] Client = 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 32)",
@@ -1534,7 +1538,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             "[Trace:Start] Client = 'test', TraceId = 0 (start)",
                             $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
                             $"[Connected] Client = 'test', TraceId = 0, Server = {remoteEndPoint}, LocalEndPoint = {localEndPoint}",
-                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True",
+                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True, ClearBuffers = False",
                             "[SendPacket:Sending] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
                             "[SendPacket:Sent] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
                             "[ReadPacket:Received] Client = 'test', TraceId = 0, Packet = (HandshakeRejectedResponse, Length = 6)",
@@ -1608,7 +1612,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             "[Trace:Start] Client = 'test', TraceId = 0 (start)",
                             $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}",
                             $"[Connected] Client = 'test', TraceId = 0, Server = {remoteEndPoint}, LocalEndPoint = {localEndPoint}",
-                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True",
+                            "[Handshaking] Client = 'test', TraceId = 0, MessageTimeout = 1 second(s), PingInterval = 15 second(s), BatchPacket = (MaxPacketCount = 30, MaxLength = 10485760 B), SynchronizeExternalObjectNames = True, ClearBuffers = False",
                             "[SendPacket:Sending] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
                             "[SendPacket:Sent] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
                             "[ReadPacket:Received] Client = 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 32)",

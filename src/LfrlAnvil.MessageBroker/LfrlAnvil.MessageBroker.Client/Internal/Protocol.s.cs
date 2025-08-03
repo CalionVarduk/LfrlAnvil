@@ -106,7 +106,7 @@ internal static class Protocol
         internal HandshakeRequest(MessageBrokerClient client)
         {
             Flags = ( byte )( /*(client.IsPersistent ? 1 : 0) |*/
-                (BitConverter.IsLittleEndian ? 2 : 0) | (client.SynchronizeExternalObjectNames ? 4 : 0));
+                (BitConverter.IsLittleEndian ? 2 : 0) | (client.SynchronizeExternalObjectNames ? 4 : 0) | (client.ClearBuffers ? 8 : 0));
 
             MessageTimeout = client.MessageTimeout;
             PingInterval = client.PingInterval;
@@ -1017,10 +1017,10 @@ internal static class Protocol
         internal readonly byte Flags;
         internal readonly int ChannelId;
 
-        internal PushMessageHeader(int channelId, int messageLength, bool confirm, bool clearOnDispose)
+        internal PushMessageHeader(int channelId, int messageLength, bool confirm)
         {
             Assume.IsInRange( messageLength, 0, int.MaxValue - Length );
-            Flags = ( byte )((confirm ? 1 : 0) | (clearOnDispose ? 2 : 0));
+            Flags = ( byte )(confirm ? 1 : 0);
             ChannelId = channelId;
             Header = PacketHeader.Create(
                 MessageBrokerServerEndpoint.PushMessage,

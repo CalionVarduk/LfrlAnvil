@@ -140,7 +140,7 @@ public sealed partial class MessageBrokerRemoteClient
                     .Max( Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload )
                     .Max( Protocol.PacketHeader.Length + Protocol.HandshakeRejectedResponse.Payload );
 
-                poolToken = MemoryPool.Rent( minPacketLength, out buffer ).EnableClearing();
+                poolToken = MemoryPool.Rent( minPacketLength, ClearBuffers, out buffer );
             }
             catch ( Exception exc )
             {
@@ -292,6 +292,7 @@ public sealed partial class MessageBrokerRemoteClient
                         handshakeHeader.MaxBatchPacketCount,
                         handshakeHeader.MaxNetworkBatchPacketLength,
                         handshakeHeader.SynchronizeExternalObjectNames,
+                        handshakeHeader.ClearBuffers,
                         isClientLittleEndian ) );
 
             using ( AcquireActiveLock( traceId, out var exc ) )
@@ -315,6 +316,7 @@ public sealed partial class MessageBrokerRemoteClient
                     : 0;
 
                 SynchronizeExternalObjectNames = handshakeHeader.SynchronizeExternalObjectNames;
+                ClearBuffers = handshakeHeader.ClearBuffers;
                 MaxReadTimeout = MessageTimeout + PingInterval;
                 acceptedResponse = new Protocol.HandshakeAcceptedResponse( this );
             }
