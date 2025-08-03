@@ -14,6 +14,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Net;
@@ -478,51 +479,58 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
                 poolToken = MemoryPool.Rent( Protocol.DeadLetterQuery.Length, out var buffer ).EnableClearing();
                 request.Serialize( buffer, reverseEndianness );
 
-                ManualResetValueTaskSource<bool> writerSource;
+                ManualResetValueTaskSource<WriterSourceResult> writerSource;
                 using ( AcquireActiveLock( traceId, out var exc ) )
                 {
                     if ( exc is not null )
                         return exc;
 
-                    writerSource = WriterQueue.AcquireSource();
-                }
-
-                if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
-                    return EmitError( this.DisposedException(), traceId );
-
-                using ( AcquireActiveLock( traceId, out var exc ) )
-                {
-                    if ( exc is not null )
-                        return exc;
-
-                    EventScheduler.PausePing();
+                    writerSource = WriterQueue.AcquireSource( buffer );
                     responseSource = ResponseQueue.EnqueueSource();
                 }
 
-                var result = await WriteAsync( request.Header, buffer, traceId ).ConfigureAwait( false );
-                if ( result.Exception is not null )
+                var writerResult = await writerSource.GetTask().ConfigureAwait( false );
+                switch ( writerResult.Status )
                 {
-                    await DisposeAsync( traceId ).ConfigureAwait( false );
-                    return result.Exception;
-                }
+                    case WriterSourceResultStatus.Ready:
+                    {
+                        if ( ! PausePingSchedule( traceId, out var exc ) )
+                            return exc;
 
-                using ( AcquireActiveLock( traceId, out var exc ) )
-                {
-                    if ( exc is not null )
-                        return exc;
+                        var (packetCount, exception) = await WritePotentialBatchAsync( request.Header, buffer, reverseEndianness, traceId )
+                            .ConfigureAwait( false );
 
-                    WriterQueue.Release( this, writerSource );
-                    ResponseQueue.ActivateTimeout( this, responseSource );
-                    EventScheduler.SchedulePing( this );
+                        if ( exception is not null )
+                        {
+                            await DisposeAsync( traceId ).ConfigureAwait( false );
+                            return exception;
+                        }
+
+                        if ( ! ReleaseWriterWithResponse( writerSource, responseSource, packetCount, traceId, out exc ) )
+                            return exc;
+
+                        break;
+                    }
+                    case WriterSourceResultStatus.Batched:
+                    {
+                        if ( ! ReleaseBatchedWriterWithResponse(
+                            writerSource,
+                            responseSource,
+                            request.Header,
+                            writerResult,
+                            traceId,
+                            out var exc ) )
+                            return exc;
+
+                        break;
+                    }
+                    default:
+                        return EmitError( this.DisposedException(), traceId );
                 }
             }
             catch ( Exception exc )
             {
-                if ( Logger.Error is { } error )
-                    error.Emit( MessageBrokerClientErrorEvent.Create( this, traceId, exc ) );
-
-                await DisposeAsync( traceId ).ConfigureAwait( false );
-                return exc;
+                return await DisposeAsync( exc, traceId ).ConfigureAwait( false );
             }
             finally
             {
@@ -533,25 +541,10 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
             try
             {
                 if ( response.Type != IncomingPacketToken.Result.Ok )
-                {
-                    if ( response.Type == IncomingPacketToken.Result.Disposed )
-                        return EmitError( this.DisposedException(), traceId );
+                    return await HandleResponseErrorAsync( response.Type, request.Header, traceId ).ConfigureAwait( false );
 
-                    var exception = this.ResponseTimeoutException( request.Header );
-                    if ( Logger.Error is { } error )
-                        error.Emit( MessageBrokerClientErrorEvent.Create( this, traceId, exception ) );
-
-                    await DisposeAsync( traceId ).ConfigureAwait( false );
-                    return exception;
-                }
-
-                using ( AcquireActiveLock( traceId, out var exc ) )
-                {
-                    if ( exc is not null )
-                        return exc;
-
-                    ResponseQueue.Release( responseSource );
-                }
+                if ( ! ReleaseResponse( responseSource, traceId, out var exc ) )
+                    return exc;
 
                 switch ( response.Header.GetClientEndpoint() )
                 {
@@ -608,11 +601,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
             }
             catch ( Exception exc )
             {
-                if ( Logger.Error is { } error )
-                    error.Emit( MessageBrokerClientErrorEvent.Create( this, traceId, exc ) );
-
-                await DisposeAsync( traceId ).ConfigureAwait( false );
-                return exc;
+                return await DisposeAsync( exc, traceId ).ConfigureAwait( false );
             }
             finally
             {
@@ -705,112 +694,227 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         return EmitError( this.ProtocolException( header, Resources.UnexpectedClientEndpoint ), traceId );
     }
 
-    internal async ValueTask<Result> WriteAsync(Protocol.PacketHeader header, ReadOnlyMemory<byte> data, ulong traceId)
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool PausePingSchedule(ulong traceId, [MaybeNullWhen( true )] out MessageBrokerClientDisposedException exception)
     {
-        var sendPacket = Logger.SendPacket;
-        sendPacket?.Emit( MessageBrokerClientSendPacketEvent.CreateSending( this, traceId, header ) );
-
-        Stream? stream;
-        CancellationToken timeoutToken;
-        try
+        using ( AcquireActiveLock( traceId, out exception ) )
         {
-            using ( AcquireActiveLock( traceId, out var exc ) )
-            {
-                if ( exc is not null )
-                    return exc;
+            if ( exception is not null )
+                return false;
 
-                stream = _stream;
-                timeoutToken = EventScheduler.ScheduleWriteTimeout( this );
-            }
-        }
-        catch ( Exception exc )
-        {
-            return EmitError( exc, traceId );
+            EventScheduler.PausePing();
         }
 
-        Assume.IsNotNull( stream );
-        try
-        {
-            await stream.WriteAsync( data, timeoutToken ).ConfigureAwait( false );
-        }
-        catch ( Exception exc )
-        {
-            return EmitError( exc, traceId );
-        }
-
-        sendPacket?.Emit( MessageBrokerClientSendPacketEvent.CreateSent( this, traceId, header ) );
-        return Result.Valid;
+        return true;
     }
 
-    private async ValueTask<Result> ConnectToServerAsync(ulong traceId, CancellationToken cancellationToken)
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool ReleaseWriterWithResponse(
+        ManualResetValueTaskSource<WriterSourceResult> writer,
+        ManualResetValueTaskSource<IncomingPacketToken> response,
+        int packetCount,
+        ulong traceId,
+        [MaybeNullWhen( true )] out MessageBrokerClientDisposedException exception)
     {
-        if ( Logger.Connecting is { } connecting )
-            connecting.Emit( MessageBrokerClientConnectingEvent.Create( this, traceId ) );
+        using ( AcquireActiveLock( traceId, out exception ) )
+        {
+            if ( exception is not null )
+                return false;
 
+            if ( packetCount > 1 )
+                WriterQueue.ReleaseBatched( this, writer, packetCount, traceId );
+            else
+                WriterQueue.Release( this, writer );
+
+            ResponseQueue.ActivateTimeout( this, response );
+            EventScheduler.SchedulePing( this );
+        }
+
+        return true;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool ReleaseWriter(
+        ManualResetValueTaskSource<WriterSourceResult> writer,
+        int packetCount,
+        ulong traceId,
+        [MaybeNullWhen( true )] out MessageBrokerClientDisposedException exception)
+    {
+        using ( AcquireActiveLock( traceId, out exception ) )
+        {
+            if ( exception is not null )
+                return false;
+
+            if ( packetCount > 1 )
+                WriterQueue.ReleaseBatched( this, writer, packetCount, traceId );
+            else
+                WriterQueue.Release( this, writer );
+
+            EventScheduler.SchedulePing( this );
+        }
+
+        return true;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool ReleaseBatchedWriterWithResponse(
+        ManualResetValueTaskSource<WriterSourceResult> writer,
+        ManualResetValueTaskSource<IncomingPacketToken> response,
+        Protocol.PacketHeader header,
+        WriterSourceResult writerResult,
+        ulong traceId,
+        [MaybeNullWhen( true )] out MessageBrokerClientDisposedException exception)
+    {
+        Assume.IsGreaterThan( MaxBatchPacketCount, 1 );
+        Assume.Equals( writerResult.Status, WriterSourceResultStatus.Batched );
+
+        if ( Logger.SendPacket is { } sendPacket )
+            sendPacket.Emit( MessageBrokerClientSendPacketEvent.CreateBatched( this, traceId, header, writerResult.BatchTraceId ) );
+
+        using ( AcquireActiveLock( traceId, out exception ) )
+        {
+            if ( exception is not null )
+                return false;
+
+            WriterQueue.ReleaseBatched( this, writer, writerResult );
+            ResponseQueue.ActivateTimeout( this, response );
+        }
+
+        return true;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool ReleaseBatchedWriter(
+        ManualResetValueTaskSource<WriterSourceResult> writer,
+        Protocol.PacketHeader header,
+        WriterSourceResult writerResult,
+        ulong traceId,
+        [MaybeNullWhen( true )] out MessageBrokerClientDisposedException exception)
+    {
+        Assume.IsGreaterThan( MaxBatchPacketCount, 1 );
+        Assume.Equals( writerResult.Status, WriterSourceResultStatus.Batched );
+
+        if ( Logger.SendPacket is { } sendPacket )
+            sendPacket.Emit( MessageBrokerClientSendPacketEvent.CreateBatched( this, traceId, header, writerResult.BatchTraceId ) );
+
+        using ( AcquireActiveLock( traceId, out exception ) )
+        {
+            if ( exception is not null )
+                return false;
+
+            WriterQueue.ReleaseBatched( this, writer, writerResult );
+        }
+
+        return true;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal async ValueTask<Exception> HandleResponseErrorAsync(
+        IncomingPacketToken.Result result,
+        Protocol.PacketHeader header,
+        ulong traceId)
+    {
+        Assume.NotEquals( result, IncomingPacketToken.Result.Ok );
+        if ( result == IncomingPacketToken.Result.Disposed )
+            return EmitError( this.DisposedException(), traceId );
+
+        var exception = this.ResponseTimeoutException( header );
+        if ( Logger.Error is { } error )
+            error.Emit( MessageBrokerClientErrorEvent.Create( this, traceId, exception ) );
+
+        await DisposeAsync( traceId ).ConfigureAwait( false );
+        return exception;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool ReleaseResponse(
+        ManualResetValueTaskSource<IncomingPacketToken> response,
+        ulong traceId,
+        [MaybeNullWhen( true )] out MessageBrokerClientDisposedException exception)
+    {
+        using ( AcquireActiveLock( traceId, out exception ) )
+        {
+            if ( exception is not null )
+                return false;
+
+            ResponseQueue.Release( response );
+        }
+
+        return true;
+    }
+
+    internal async ValueTask<Result<int>> WritePotentialBatchAsync(
+        Protocol.PacketHeader header,
+        ReadOnlyMemory<byte> data,
+        bool reverseEndianness,
+        ulong traceId)
+    {
+        var batchPoolToken = MemoryPoolToken<byte>.Empty;
+        var dataToWrite = data;
+        var headerToWrite = header;
         try
         {
+            var packetCount = TryPrepareBatchPacket(
+                data.Length,
+                ref batchPoolToken,
+                ref headerToWrite,
+                ref dataToWrite,
+                reverseEndianness,
+                traceId );
+
+            if ( packetCount.Exception is not null )
+                return packetCount.Exception;
+
+            var sendPacket = Logger.SendPacket;
+            sendPacket?.Emit( MessageBrokerClientSendPacketEvent.CreateSending( this, traceId, headerToWrite, packetCount.Value ) );
+
+            Stream? stream;
             CancellationToken timeoutToken;
-            using ( AcquireActiveLock( traceId, out var exc ) )
+            try
             {
-                if ( exc is not null )
-                    return exc;
-
-                timeoutToken = EventScheduler.ScheduleConnectTimeout( this );
-            }
-
-            await _tcp.ConnectAsync( RemoteEndPoint, timeoutToken ).ConfigureAwait( false );
-
-            Stream stream;
-            MessageBrokerClientStreamDecorator? decorator;
-            using ( AcquireActiveLock( traceId, out var exc ) )
-            {
-                if ( exc is not null )
-                    return exc;
-
-                decorator = _streamDecorator;
-                _streamDecorator = null;
-                _stream = _tcp.GetStream();
-                stream = _stream;
-            }
-
-            if ( decorator is not null )
-            {
-                stream = await decorator( this, ReinterpretCast.To<NetworkStream>( stream ), cancellationToken ).ConfigureAwait( false );
                 using ( AcquireActiveLock( traceId, out var exc ) )
                 {
                     if ( exc is not null )
                         return exc;
 
-                    _stream = stream;
+                    stream = _stream;
+                    timeoutToken = EventScheduler.ScheduleWriteTimeout( this );
                 }
             }
+            catch ( Exception exc )
+            {
+                return EmitError( exc, traceId );
+            }
+
+            Assume.IsNotNull( stream );
+            try
+            {
+                await stream.WriteAsync( dataToWrite, timeoutToken ).ConfigureAwait( false );
+            }
+            catch ( Exception exc )
+            {
+                return EmitError( exc, traceId );
+            }
+
+            sendPacket?.Emit( MessageBrokerClientSendPacketEvent.CreateSent( this, traceId, headerToWrite ) );
+            if ( packetCount.Value > 1 )
+                sendPacket?.Emit( MessageBrokerClientSendPacketEvent.CreateBatched( this, traceId, header, traceId ) );
+
+            return packetCount;
         }
-        catch ( Exception exc )
+        finally
         {
-            return EmitError( exc, traceId );
+            batchPoolToken.Return( this, traceId );
         }
-
-        if ( Logger.Connected is { } connected )
-            connected.Emit( MessageBrokerClientConnectedEvent.Create( this, traceId ) );
-
-        return Result.Valid;
     }
 
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private async ValueTask DisposeAndThrowIfCancellationRequestedAsync(ulong traceId, CancellationToken cancellationToken)
+    internal async ValueTask<Exception> DisposeAsync(Exception exception, ulong traceId)
     {
-        try
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-        }
-        catch ( Exception exc )
-        {
-            if ( Logger.Error is { } error )
-                error.Emit( MessageBrokerClientErrorEvent.Create( this, traceId, exc ) );
+        if ( Logger.Error is { } error )
+            error.Emit( MessageBrokerClientErrorEvent.Create( this, traceId, exception ) );
 
-            await DisposeAsync( traceId ).ConfigureAwait( false );
-            throw;
-        }
+        await DisposeAsync( traceId ).ConfigureAwait( false );
+        return exception;
     }
 
     [StackTraceHidden]
@@ -938,5 +1042,157 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
 
         if ( Logger.Disposed is { } disposed )
             disposed.Emit( MessageBrokerClientDisposedEvent.Create( this, traceId ) );
+    }
+
+    private async ValueTask<Result> WriteAsync(Protocol.PacketHeader header, ReadOnlyMemory<byte> data, ulong traceId)
+    {
+        var sendPacket = Logger.SendPacket;
+        sendPacket?.Emit( MessageBrokerClientSendPacketEvent.CreateSending( this, traceId, header ) );
+
+        Stream? stream;
+        CancellationToken timeoutToken;
+        try
+        {
+            using ( AcquireActiveLock( traceId, out var exc ) )
+            {
+                if ( exc is not null )
+                    return exc;
+
+                stream = _stream;
+                timeoutToken = EventScheduler.ScheduleWriteTimeout( this );
+            }
+        }
+        catch ( Exception exc )
+        {
+            return EmitError( exc, traceId );
+        }
+
+        Assume.IsNotNull( stream );
+        try
+        {
+            await stream.WriteAsync( data, timeoutToken ).ConfigureAwait( false );
+        }
+        catch ( Exception exc )
+        {
+            return EmitError( exc, traceId );
+        }
+
+        sendPacket?.Emit( MessageBrokerClientSendPacketEvent.CreateSent( this, traceId, header ) );
+        return Result.Valid;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private Result<int> TryPrepareBatchPacket(
+        int packetLength,
+        ref MemoryPoolToken<byte> batchPoolToken,
+        ref Protocol.PacketHeader headerToWrite,
+        ref ReadOnlyMemory<byte> dataToWrite,
+        bool reverseEndianness,
+        ulong traceId)
+    {
+        var packetCount = 1;
+        if ( MaxBatchPacketCount == 0 )
+            return packetCount;
+
+        var batchLength = unchecked( ( long )Protocol.PacketHeader.Length + Protocol.BatchHeader.Length + packetLength );
+        if ( batchLength >= MaxNetworkBatchPacketBytes )
+            return packetCount;
+
+        using ( AcquireActiveLock( traceId, out var exc ) )
+        {
+            if ( exc is not null )
+                return exc;
+
+            packetCount = WriterQueue.GetLargestAvailableBatchCount( this, ref batchLength );
+        }
+
+        if ( packetCount == 1 )
+            return packetCount;
+
+        batchPoolToken = MemoryPool.Rent( unchecked( ( int )batchLength ), out var batchData ).EnableClearing();
+        dataToWrite = batchData;
+
+        headerToWrite = Protocol.PacketHeader.Create(
+            MessageBrokerServerEndpoint.Batch,
+            unchecked( ( uint )(batchLength - Protocol.PacketHeader.Length) ) );
+
+        Protocol.BatchHeader.Serialize( batchData, headerToWrite.Payload, unchecked( ( short )packetCount ), reverseEndianness );
+        var remainingData = batchData.Slice( Protocol.PacketHeader.Length + Protocol.BatchHeader.Length );
+        using ( AcquireActiveLock( traceId, out var exc ) )
+        {
+            if ( exc is not null )
+                return exc;
+
+            WriterQueue.CopyToBatch( remainingData, packetCount );
+        }
+
+        return packetCount;
+    }
+
+    private async ValueTask<Result> ConnectToServerAsync(ulong traceId, CancellationToken cancellationToken)
+    {
+        if ( Logger.Connecting is { } connecting )
+            connecting.Emit( MessageBrokerClientConnectingEvent.Create( this, traceId ) );
+
+        try
+        {
+            CancellationToken timeoutToken;
+            using ( AcquireActiveLock( traceId, out var exc ) )
+            {
+                if ( exc is not null )
+                    return exc;
+
+                timeoutToken = EventScheduler.ScheduleConnectTimeout( this );
+            }
+
+            await _tcp.ConnectAsync( RemoteEndPoint, timeoutToken ).ConfigureAwait( false );
+
+            Stream stream;
+            MessageBrokerClientStreamDecorator? decorator;
+            using ( AcquireActiveLock( traceId, out var exc ) )
+            {
+                if ( exc is not null )
+                    return exc;
+
+                decorator = _streamDecorator;
+                _streamDecorator = null;
+                _stream = _tcp.GetStream();
+                stream = _stream;
+            }
+
+            if ( decorator is not null )
+            {
+                stream = await decorator( this, ReinterpretCast.To<NetworkStream>( stream ), cancellationToken ).ConfigureAwait( false );
+                using ( AcquireActiveLock( traceId, out var exc ) )
+                {
+                    if ( exc is not null )
+                        return exc;
+
+                    _stream = stream;
+                }
+            }
+        }
+        catch ( Exception exc )
+        {
+            return EmitError( exc, traceId );
+        }
+
+        if ( Logger.Connected is { } connected )
+            connected.Emit( MessageBrokerClientConnectedEvent.Create( this, traceId ) );
+
+        return Result.Valid;
+    }
+
+    private async ValueTask DisposeAndThrowIfCancellationRequestedAsync(ulong traceId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+        catch ( Exception exc )
+        {
+            await DisposeAsync( exc, traceId ).ConfigureAwait( false );
+            throw;
+        }
     }
 }

@@ -340,6 +340,22 @@ internal static class Protocol
             PacketCount = packetCount;
         }
 
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static void Serialize(Memory<byte> target, uint payload, short packetCount, bool reverseEndianness)
+        {
+            Assume.IsGreaterThanOrEqualTo( target.Length, PacketHeader.Length + Length );
+            if ( reverseEndianness )
+            {
+                payload = BinaryPrimitives.ReverseEndianness( payload );
+                packetCount = BinaryPrimitives.ReverseEndianness( packetCount );
+            }
+
+            var writer = new BinaryContractWriter( target.Span );
+            writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.Batch );
+            writer.MoveWrite( payload );
+            writer.Write( unchecked( ( ushort )packetCount ) );
+        }
+
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal static BatchHeader Parse(ReadOnlyMemory<byte> source, bool reverseEndianness)

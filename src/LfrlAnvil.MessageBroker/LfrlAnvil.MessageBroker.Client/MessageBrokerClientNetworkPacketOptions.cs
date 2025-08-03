@@ -27,7 +27,7 @@ namespace LfrlAnvil.MessageBroker.Client;
 /// Represents max possible length for packets of <b>Batch</b> type.
 /// </param>
 /// <param name="DesiredMaxBatchPacketCount">
-/// Desired max number of packets in a single network batch packet. Equal to <b>32767</b> by default.
+/// Desired max number of packets in a single network batch packet. Equal to <b>30</b> by default.
 /// Value will be clamped to [<b>0</b>, <b>32767</b>] range. Value equal to <b>1</b> will be changed to <b>0</b>.
 /// Actual count will be negotiated with the server during handshake.
 /// </param>

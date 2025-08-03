@@ -65,8 +65,9 @@ public readonly struct MessageBrokerClientMessagePushedEvent
     [Pure]
     public override string ToString()
     {
+        var messageId = MessageId is not null ? $", MessageId = {MessageId.Value}" : string.Empty;
         return
-            $"[MessagePushed] {Source}, Channel = [{Publisher.ChannelId}] '{Publisher.ChannelName}', Stream = [{Publisher.StreamId}] '{Publisher.StreamName}', Length = {Length}, MessageId = {MessageId?.ToString() ?? "<NULL>"}";
+            $"[MessagePushed] {Source}, Channel = [{Publisher.ChannelId}] '{Publisher.ChannelName}', Stream = [{Publisher.StreamId}] '{Publisher.StreamName}', Length = {Length}{messageId}";
     }
 
     [Pure]

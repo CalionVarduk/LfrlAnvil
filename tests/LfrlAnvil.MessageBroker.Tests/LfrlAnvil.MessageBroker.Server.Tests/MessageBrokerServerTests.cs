@@ -28,7 +28,7 @@ public class MessageBrokerServerTests : TestsBase
                 sut.AcceptableMessageTimeout.TestEquals(
                     Bounds.Create( Duration.FromMilliseconds( 1 ), Duration.FromMilliseconds( int.MaxValue ) ) ),
                 sut.AcceptablePingInterval.TestEquals( Bounds.Create( Duration.FromMilliseconds( 1 ), Duration.FromHours( 24 ) ) ),
-                sut.AcceptableMaxBatchPacketCount.TestEquals( Bounds.Create<short>( 0, short.MaxValue ) ),
+                sut.AcceptableMaxBatchPacketCount.TestEquals( Bounds.Create<short>( 0, 100 ) ),
                 sut.AcceptableMaxNetworkBatchPacketLength.TestEquals(
                     Bounds.Create( MemorySize.FromKilobytes( 16 ), MemorySize.FromMegabytes( 10 ) ) ),
                 sut.ExpressionFactory.TestNull(),

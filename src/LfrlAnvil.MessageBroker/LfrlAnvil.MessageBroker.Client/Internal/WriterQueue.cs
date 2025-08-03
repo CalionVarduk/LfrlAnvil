@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks.Sources;
@@ -21,13 +22,13 @@ namespace LfrlAnvil.MessageBroker.Client.Internal;
 
 internal struct WriterQueue
 {
-    private StackSlim<ManualResetValueTaskSource<bool>> _writerCache;
-    private QueueSlim<ManualResetValueTaskSource<bool>> _pendingWriters;
+    private StackSlim<ManualResetValueTaskSource<WriterSourceResult>> _writerCache;
+    private QueueSlim<Entry> _pendingWriters;
 
     private WriterQueue(int capacity)
     {
-        _writerCache = StackSlim<ManualResetValueTaskSource<bool>>.Create( capacity );
-        _pendingWriters = QueueSlim<ManualResetValueTaskSource<bool>>.Create();
+        _writerCache = StackSlim<ManualResetValueTaskSource<WriterSourceResult>>.Create( capacity );
+        _pendingWriters = QueueSlim<Entry>.Create();
     }
 
     [Pure]
@@ -38,43 +39,137 @@ internal struct WriterQueue
 
     internal void Dispose()
     {
-        foreach ( var source in _pendingWriters )
+        foreach ( var entry in _pendingWriters )
         {
-            if ( source.Status == ValueTaskSourceStatus.Pending )
-                source.SetResult( false );
+            if ( entry.Source.Status == ValueTaskSourceStatus.Pending )
+                entry.Source.SetResult( new WriterSourceResult( WriterSourceResultStatus.Disposed ) );
         }
 
-        _pendingWriters = QueueSlim<ManualResetValueTaskSource<bool>>.Create();
-        _writerCache = StackSlim<ManualResetValueTaskSource<bool>>.Create();
+        _pendingWriters = QueueSlim<Entry>.Create();
+        _writerCache = StackSlim<ManualResetValueTaskSource<WriterSourceResult>>.Create();
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ManualResetValueTaskSource<bool> AcquireSource()
+    internal ManualResetValueTaskSource<WriterSourceResult> AcquireSource(ReadOnlyMemory<byte> data)
     {
-        if ( ! _writerCache.TryPop( out var result ) )
-            result = new ManualResetValueTaskSource<bool>();
+        if ( ! _writerCache.TryPop( out var source ) )
+            source = new ManualResetValueTaskSource<WriterSourceResult>();
 
         if ( _pendingWriters.IsEmpty )
-            result.SetResult( true );
+            source.SetResult( new WriterSourceResult( WriterSourceResultStatus.Ready ) );
 
-        _pendingWriters.Enqueue( result );
-        return result;
+        _pendingWriters.Enqueue( new Entry( source, data ) );
+        return source;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void Release(MessageBrokerClient client, ManualResetValueTaskSource<bool> source)
+    internal void Release(MessageBrokerClient client, ManualResetValueTaskSource<WriterSourceResult> source)
     {
-        Assume.Equals( source, _pendingWriters.First() );
+        Assume.False( _pendingWriters.IsEmpty );
+        Assume.Equals( source, _pendingWriters.First().Source );
 
         _pendingWriters.Dequeue();
         source.Reset();
         _writerCache.Push( source );
-
         client.EventScheduler.ResetWriteTimeout();
+
         if ( _pendingWriters.IsEmpty )
             return;
 
         var next = _pendingWriters.First();
-        next.SetResult( true );
+        next.Source.SetResult( new WriterSourceResult( WriterSourceResultStatus.Ready ) );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void ReleaseBatched(
+        MessageBrokerClient client,
+        ManualResetValueTaskSource<WriterSourceResult> source,
+        int packetCount,
+        ulong traceId)
+    {
+        Assume.IsInRange( packetCount, 2, _pendingWriters.Count );
+        Assume.Equals( source, _pendingWriters.First().Source );
+
+        _pendingWriters.Dequeue();
+        source.Reset();
+        _writerCache.Push( source );
+        client.EventScheduler.ResetWriteTimeout();
+
+        var next = _pendingWriters.First();
+        next.Source.SetResult( new WriterSourceResult( WriterSourceResultStatus.Batched, packetCount - 1, traceId ) );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void ReleaseBatched(
+        MessageBrokerClient client,
+        ManualResetValueTaskSource<WriterSourceResult> source,
+        WriterSourceResult result)
+    {
+        if ( result.RemainingPacketCount == 1 )
+            Release( client, source );
+        else
+            ReleaseBatched( client, source, result.RemainingPacketCount, result.BatchTraceId );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal int GetLargestAvailableBatchCount(MessageBrokerClient client, ref long batchLength)
+    {
+        var packetCount = 1;
+        var slice = _pendingWriters.AsMemory().Slice( 1 );
+        if ( ! GetLargestAvailableBatchCount( client, slice.First.Span, ref packetCount, ref batchLength ) )
+            GetLargestAvailableBatchCount( client, slice.Second.Span, ref packetCount, ref batchLength );
+
+        return packetCount;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void CopyToBatch(Memory<byte> target, int packetCount)
+    {
+        var slice = _pendingWriters.AsMemory().Slice( 0, packetCount );
+        CopyToBatch( target, slice.First.Span );
+        CopyToBatch( target, slice.Second.Span );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static bool GetLargestAvailableBatchCount(
+        MessageBrokerClient client,
+        ReadOnlySpan<Entry> span,
+        ref int packetCount,
+        ref long batchLength)
+    {
+        foreach ( ref readonly var entry in span )
+        {
+            var nextBatchLength = unchecked( batchLength + entry.Data.Length );
+            if ( nextBatchLength > client.MaxNetworkBatchPacketBytes )
+                return true;
+
+            batchLength = nextBatchLength;
+            if ( ++packetCount == client.MaxBatchPacketCount )
+                return true;
+        }
+
+        return false;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static void CopyToBatch(Memory<byte> target, ReadOnlySpan<Entry> span)
+    {
+        foreach ( ref readonly var entry in span )
+        {
+            entry.Data.CopyTo( target );
+            target = target.Slice( entry.Data.Length );
+        }
+    }
+
+    private readonly struct Entry
+    {
+        internal Entry(ManualResetValueTaskSource<WriterSourceResult> source, ReadOnlyMemory<byte> data)
+        {
+            Source = source;
+            Data = data;
+        }
+
+        internal readonly ManualResetValueTaskSource<WriterSourceResult> Source;
+        internal readonly ReadOnlyMemory<byte> Data;
     }
 }

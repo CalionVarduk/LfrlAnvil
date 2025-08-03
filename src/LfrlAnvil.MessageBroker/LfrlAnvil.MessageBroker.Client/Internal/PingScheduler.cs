@@ -102,13 +102,15 @@ internal struct PingScheduler
     {
         var request = Protocol.Ping.Create();
         var buffer = new byte[Protocol.PacketHeader.Length].AsMemory();
+        bool reverseEndianness;
 
         using ( client.AcquireLock() )
         {
             if ( client.ShouldCancel )
                 return;
 
-            request.Serialize( buffer, client.IsServerLittleEndian != BitConverter.IsLittleEndian );
+            reverseEndianness = client.IsServerLittleEndian != BitConverter.IsLittleEndian;
+            request.Serialize( buffer, reverseEndianness );
             client.EventScheduler.SchedulePing( client );
         }
 
@@ -118,28 +120,9 @@ internal struct PingScheduler
             if ( ! @continue )
                 return;
 
-            ManualResetValueTaskSource<bool> writerSource;
-            using ( client.AcquireLock() )
-            {
-                if ( client.ShouldCancel )
-                    return;
-
-                var delay = client.EventScheduler.GetPingDelay( client );
-                if ( delay > Duration.Zero )
-                {
-                    client.PingScheduler._continuation.Reset();
-                    continue;
-                }
-
-                writerSource = client.WriterQueue.AcquireSource();
-            }
-
-            if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
-                return;
-
             ulong traceId;
+            ManualResetValueTaskSource<WriterSourceResult> writerSource;
             ManualResetValueTaskSource<IncomingPacketToken> responseSource;
-
             using ( client.AcquireLock() )
             {
                 if ( client.ShouldCancel )
@@ -149,30 +132,50 @@ internal struct PingScheduler
                 if ( delay > Duration.Zero )
                 {
                     client.PingScheduler._continuation.Reset();
-                    client.WriterQueue.Release( client, writerSource );
                     continue;
                 }
 
-                traceId = client.GetTraceId();
+                writerSource = client.WriterQueue.AcquireSource( buffer );
                 responseSource = client.ResponseQueue.EnqueueSource();
+                traceId = client.GetTraceId();
             }
 
             using ( MessageBrokerClientTraceEvent.CreateScope( client, traceId, MessageBrokerClientTraceEventType.Ping ) )
             {
-                var result = await client.WriteAsync( request, buffer, traceId ).ConfigureAwait( false );
-                if ( result.Exception is not null )
+                var writerResult = await writerSource.GetTask().ConfigureAwait( false );
+                switch ( writerResult.Status )
                 {
-                    await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
-                    return;
-                }
+                    case WriterSourceResultStatus.Ready:
+                    {
+                        var (packetCount, exception) = await client.WritePotentialBatchAsync( request, buffer, reverseEndianness, traceId )
+                            .ConfigureAwait( false );
 
-                using ( client.AcquireActiveLock( traceId, out var exc ) )
-                {
-                    if ( exc is not null )
+                        if ( exception is not null )
+                        {
+                            await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
+                            return;
+                        }
+
+                        if ( ! client.ReleaseWriterWithResponse( writerSource, responseSource, packetCount, traceId, out _ ) )
+                            return;
+
+                        break;
+                    }
+                    case WriterSourceResultStatus.Batched:
+                    {
+                        if ( ! client.ReleaseBatchedWriterWithResponse(
+                            writerSource,
+                            responseSource,
+                            request,
+                            writerResult,
+                            traceId,
+                            out _ ) )
+                            return;
+
+                        break;
+                    }
+                    default:
                         return;
-
-                    client.WriterQueue.Release( client, writerSource );
-                    client.ResponseQueue.ActivateTimeout( client, responseSource );
                 }
 
                 var response = await responseSource.GetTask().ConfigureAwait( false );
@@ -191,13 +194,8 @@ internal struct PingScheduler
                     return;
                 }
 
-                using ( client.AcquireActiveLock( traceId, out var exc ) )
-                {
-                    if ( exc is not null )
-                        return;
-
-                    client.ResponseQueue.Release( responseSource );
-                }
+                if ( ! client.ReleaseResponse( responseSource, traceId, out _ ) )
+                    return;
 
                 if ( response.Header.GetClientEndpoint() != MessageBrokerClientEndpoint.Pong )
                 {

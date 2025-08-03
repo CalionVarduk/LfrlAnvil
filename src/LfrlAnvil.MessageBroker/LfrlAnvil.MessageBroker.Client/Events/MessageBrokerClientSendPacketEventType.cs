@@ -27,5 +27,10 @@ public enum MessageBrokerClientSendPacketEventType : byte
     /// <summary>
     /// Specifies that an event has been emitted after the network packet send.
     /// </summary>
-    Sent = 1
+    Sent = 1,
+
+    /// <summary>
+    /// Specifies that an event has been emitted after the network packet has been sent as part of a batch.
+    /// </summary>
+    Batched = 2
 }

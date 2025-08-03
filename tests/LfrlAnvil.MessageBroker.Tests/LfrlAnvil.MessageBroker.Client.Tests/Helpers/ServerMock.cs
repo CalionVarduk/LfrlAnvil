@@ -369,6 +369,26 @@ internal sealed class ServerMock : IDisposable
             MessageBrokerServerEndpoint.PushMessage );
     }
 
+    internal byte[] ReadBatch((MessageBrokerServerEndpoint Endpoint, int Length)[] packets)
+    {
+        var data = Read( Protocol.PacketHeader.Length + Protocol.BatchHeader.Length + packets.Sum( p => p.Length ) );
+        AssertEndpoint( data, MessageBrokerServerEndpoint.Batch );
+
+        var reader = new BinaryContractReader( data );
+        reader.Move( Protocol.PacketHeader.Length );
+        var packetCount = ( int )reader.ReadInt16();
+        packets.Length.TestEquals( packetCount ).Go();
+
+        var index = Protocol.PacketHeader.Length + Protocol.BatchHeader.Length;
+        foreach ( var (endpoint, length) in packets )
+        {
+            (( MessageBrokerServerEndpoint )data[index]).TestEquals( endpoint ).Go();
+            index += length;
+        }
+
+        return data;
+    }
+
     internal byte[] Read(int length)
     {
         lock ( _listener )

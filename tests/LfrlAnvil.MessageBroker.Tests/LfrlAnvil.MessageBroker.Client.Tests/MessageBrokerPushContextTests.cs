@@ -319,7 +319,7 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
                             "[PushingMessage] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5, Confirm = False",
                             "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
                             "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
-                            "[MessagePushed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5, MessageId = <NULL>",
+                            "[MessagePushed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5",
                             "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (end)"
                         ] )
                     ] ) )
@@ -648,7 +648,7 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
                             "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessageRouting, Length = 17)",
                             "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
                             "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 15)",
-                            "[MessagePushed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5, MessageId = <NULL>",
+                            "[MessagePushed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 5",
                             "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (end)"
                         ] )
                     ] ) )

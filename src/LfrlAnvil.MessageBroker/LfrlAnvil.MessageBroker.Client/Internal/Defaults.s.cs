@@ -86,6 +86,8 @@ internal static class Defaults
 
     internal static class Memory
     {
+        private const short DefaultBatchPacketCount = 30;
+
         internal static Bounds<MemorySize> MaxNetworkPacketLengthBounds => Bounds.Create(
             MemorySize.FromKilobytes( 16 ),
             MemorySize.FromMegabytes( 1 ) );
@@ -97,6 +99,8 @@ internal static class Defaults
         private static Bounds<MemorySize> PoolSegmentLengthBounds => Bounds.Create(
             MemorySize.FromKilobytes( 16 ),
             MemorySize.FromBytes( int.MaxValue ) );
+
+        private static MemorySize NetworkLargePacketLength => MemorySize.FromMegabytes( 10 );
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -120,7 +124,7 @@ internal static class Defaults
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal static short GetActualMaxBatchPacketCount(short? value)
         {
-            var result = value?.Max( ( short )0 ) ?? 0;
+            var result = value?.Max( ( short )0 ) ?? DefaultBatchPacketCount;
             return result > 1 ? result : ( short )0;
         }
 
@@ -128,7 +132,7 @@ internal static class Defaults
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal static int GetActualMaxNetworkBatchPacketLength(MemorySize? value)
         {
-            var result = value is not null ? MaxNetworkLargePacketLengthBounds.Clamp( value.Value ) : MaxNetworkLargePacketLengthBounds.Min;
+            var result = value is not null ? MaxNetworkLargePacketLengthBounds.Clamp( value.Value ) : NetworkLargePacketLength;
             return unchecked( ( int )result.Bytes );
         }
 

@@ -188,7 +188,7 @@ internal struct PacketListener
                     return;
                 }
 
-                batchBuffer = batchBuffer.Slice( Protocol.BatchHeader.Length );
+                ReduceBatchBuffer( client, ref batchPoolToken, ref batchBuffer, Protocol.BatchHeader.Length );
                 awaitPacket?.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( client, header, batchHeader.PacketCount ) );
                 for ( var i = 0; i < batchHeader.PacketCount; ++i )
                 {
@@ -204,16 +204,8 @@ internal struct PacketListener
                     }
 
                     var elementHeader = Protocol.PacketHeader.Parse( batchBuffer.Slice( 0, Protocol.PacketHeader.Length ) );
-                    batchBuffer = batchBuffer.Slice( Protocol.PacketHeader.Length );
-                    if ( batchBuffer.Length > 0 )
-                        batchPoolToken.DecreaseLengthAtStart( batchBuffer.Length );
-                    else
-                    {
-                        Return( client, batchPoolToken );
-                        batchPoolToken = MemoryPoolToken<byte>.Empty;
-                        batchBuffer = Memory<byte>.Empty;
-                    }
 
+                    ReduceBatchBuffer( client, ref batchPoolToken, ref batchBuffer, Protocol.PacketHeader.Length );
                     awaitPacket?.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( client, elementHeader ) );
                     var elementPoolToken = MemoryPoolToken<byte>.Empty;
                     var elementBuffer = Memory<byte>.Empty;
@@ -343,6 +335,25 @@ internal struct PacketListener
                     return;
                 }
             }
+        }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static void ReduceBatchBuffer(
+        MessageBrokerRemoteClient client,
+        ref MemoryPoolToken<byte> token,
+        ref Memory<byte> data,
+        int offset)
+    {
+        Assume.IsInRange( offset, 0, data.Length );
+        data = data.Slice( offset );
+        if ( data.Length > 0 )
+            token.DecreaseLengthAtStart( data.Length );
+        else
+        {
+            Return( client, token );
+            token = MemoryPoolToken<byte>.Empty;
+            data = Memory<byte>.Empty;
         }
     }
 

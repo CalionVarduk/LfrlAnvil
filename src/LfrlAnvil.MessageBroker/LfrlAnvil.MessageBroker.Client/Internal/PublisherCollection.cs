@@ -113,51 +113,59 @@ internal struct PublisherCollection
                 poolToken = client.MemoryPool.Rent( request.Length, out var buffer ).EnableClearing();
                 request.Serialize( buffer, reverseEndianness );
 
-                ManualResetValueTaskSource<bool> writerSource;
+                ManualResetValueTaskSource<WriterSourceResult> writerSource;
                 using ( client.AcquireActiveLock( traceId, out var exc ) )
                 {
                     if ( exc is not null )
                         return exc;
 
-                    writerSource = client.WriterQueue.AcquireSource();
-                }
-
-                if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
-                    return client.EmitError( client.DisposedException(), traceId );
-
-                using ( client.AcquireActiveLock( traceId, out var exc ) )
-                {
-                    if ( exc is not null )
-                        return exc;
-
-                    client.EventScheduler.PausePing();
+                    writerSource = client.WriterQueue.AcquireSource( buffer );
                     responseSource = client.ResponseQueue.EnqueueSource();
                 }
 
-                var result = await client.WriteAsync( request.Header, buffer, traceId ).ConfigureAwait( false );
-                if ( result.Exception is not null )
+                var writerResult = await writerSource.GetTask().ConfigureAwait( false );
+                switch ( writerResult.Status )
                 {
-                    await client.DisposeAsync( traceId ).ConfigureAwait( false );
-                    return result.Exception;
-                }
+                    case WriterSourceResultStatus.Ready:
+                    {
+                        if ( ! client.PausePingSchedule( traceId, out var exc ) )
+                            return exc;
 
-                using ( client.AcquireActiveLock( traceId, out var exc ) )
-                {
-                    if ( exc is not null )
-                        return exc;
+                        var (packetCount, exception) = await client
+                            .WritePotentialBatchAsync( request.Header, buffer, reverseEndianness, traceId )
+                            .ConfigureAwait( false );
 
-                    client.WriterQueue.Release( client, writerSource );
-                    client.ResponseQueue.ActivateTimeout( client, responseSource );
-                    client.EventScheduler.SchedulePing( client );
+                        if ( exception is not null )
+                        {
+                            await client.DisposeAsync( traceId ).ConfigureAwait( false );
+                            return exception;
+                        }
+
+                        if ( ! client.ReleaseWriterWithResponse( writerSource, responseSource, packetCount, traceId, out exc ) )
+                            return exc;
+
+                        break;
+                    }
+                    case WriterSourceResultStatus.Batched:
+                    {
+                        if ( ! client.ReleaseBatchedWriterWithResponse(
+                            writerSource,
+                            responseSource,
+                            request.Header,
+                            writerResult,
+                            traceId,
+                            out var exc ) )
+                            return exc;
+
+                        break;
+                    }
+                    default:
+                        return client.EmitError( client.DisposedException(), traceId );
                 }
             }
             catch ( Exception exc )
             {
-                if ( client.Logger.Error is { } error )
-                    error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
-
-                await client.DisposeAsync( traceId ).ConfigureAwait( false );
-                return exc;
+                return await client.DisposeAsync( exc, traceId ).ConfigureAwait( false );
             }
             finally
             {
@@ -168,25 +176,10 @@ internal struct PublisherCollection
             try
             {
                 if ( response.Type != IncomingPacketToken.Result.Ok )
-                {
-                    if ( response.Type == IncomingPacketToken.Result.Disposed )
-                        return client.EmitError( client.DisposedException(), traceId );
+                    return await client.HandleResponseErrorAsync( response.Type, request.Header, traceId ).ConfigureAwait( false );
 
-                    var exception = client.ResponseTimeoutException( request.Header );
-                    if ( client.Logger.Error is { } error )
-                        error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
-
-                    await client.DisposeAsync( traceId ).ConfigureAwait( false );
-                    return exception;
-                }
-
-                using ( client.AcquireActiveLock( traceId, out var exc ) )
-                {
-                    if ( exc is not null )
-                        return exc;
-
-                    client.ResponseQueue.Release( responseSource );
-                }
+                if ( ! client.ReleaseResponse( responseSource, traceId, out var exc ) )
+                    return exc;
 
                 switch ( response.Header.GetClientEndpoint() )
                 {
@@ -216,7 +209,7 @@ internal struct PublisherCollection
                         }
 
                         MessageBrokerBindPublisherResult bindResult;
-                        using ( client.AcquireActiveLock( traceId, out var exc ) )
+                        using ( client.AcquireActiveLock( traceId, out exc ) )
                         {
                             if ( exc is not null )
                                 return exc;
@@ -279,11 +272,7 @@ internal struct PublisherCollection
             }
             catch ( Exception exc )
             {
-                if ( client.Logger.Error is { } error )
-                    error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
-
-                await client.DisposeAsync( traceId ).ConfigureAwait( false );
-                return exc;
+                return await client.DisposeAsync( exc, traceId ).ConfigureAwait( false );
             }
             finally
             {
@@ -324,51 +313,59 @@ internal struct PublisherCollection
                 poolToken = client.MemoryPool.Rent( Protocol.UnbindPublisherRequest.Length, out var buffer ).EnableClearing();
                 request.Serialize( buffer, reverseEndianness );
 
-                ManualResetValueTaskSource<bool> writerSource;
+                ManualResetValueTaskSource<WriterSourceResult> writerSource;
                 using ( client.AcquireActiveLock( traceId, out var exc ) )
                 {
                     if ( exc is not null )
                         return exc;
 
-                    writerSource = client.WriterQueue.AcquireSource();
-                }
-
-                if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
-                    return client.EmitError( client.DisposedException(), traceId );
-
-                using ( client.AcquireActiveLock( traceId, out var exc ) )
-                {
-                    if ( exc is not null )
-                        return exc;
-
-                    client.EventScheduler.PausePing();
+                    writerSource = client.WriterQueue.AcquireSource( buffer );
                     responseSource = client.ResponseQueue.EnqueueSource();
                 }
 
-                var result = await client.WriteAsync( request.Header, buffer, traceId ).ConfigureAwait( false );
-                if ( result.Exception is not null )
+                var writerResult = await writerSource.GetTask().ConfigureAwait( false );
+                switch ( writerResult.Status )
                 {
-                    await client.DisposeAsync( traceId ).ConfigureAwait( false );
-                    return result.Exception;
-                }
+                    case WriterSourceResultStatus.Ready:
+                    {
+                        if ( ! client.PausePingSchedule( traceId, out var exc ) )
+                            return exc;
 
-                using ( client.AcquireActiveLock( traceId, out var exc ) )
-                {
-                    if ( exc is not null )
-                        return exc;
+                        var (packetCount, exception) = await client
+                            .WritePotentialBatchAsync( request.Header, buffer, reverseEndianness, traceId )
+                            .ConfigureAwait( false );
 
-                    client.WriterQueue.Release( client, writerSource );
-                    client.ResponseQueue.ActivateTimeout( client, responseSource );
-                    client.EventScheduler.SchedulePing( client );
+                        if ( exception is not null )
+                        {
+                            await client.DisposeAsync( traceId ).ConfigureAwait( false );
+                            return exception;
+                        }
+
+                        if ( ! client.ReleaseWriterWithResponse( writerSource, responseSource, packetCount, traceId, out exc ) )
+                            return exc;
+
+                        break;
+                    }
+                    case WriterSourceResultStatus.Batched:
+                    {
+                        if ( ! client.ReleaseBatchedWriterWithResponse(
+                            writerSource,
+                            responseSource,
+                            request.Header,
+                            writerResult,
+                            traceId,
+                            out var exc ) )
+                            return exc;
+
+                        break;
+                    }
+                    default:
+                        return client.EmitError( client.DisposedException(), traceId );
                 }
             }
             catch ( Exception exc )
             {
-                if ( client.Logger.Error is { } error )
-                    error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
-
-                await client.DisposeAsync( traceId ).ConfigureAwait( false );
-                return exc;
+                return await client.DisposeAsync( exc, traceId ).ConfigureAwait( false );
             }
             finally
             {
@@ -379,25 +376,10 @@ internal struct PublisherCollection
             try
             {
                 if ( response.Type != IncomingPacketToken.Result.Ok )
-                {
-                    if ( response.Type == IncomingPacketToken.Result.Disposed )
-                        return client.EmitError( client.DisposedException(), traceId );
+                    return await client.HandleResponseErrorAsync( response.Type, request.Header, traceId ).ConfigureAwait( false );
 
-                    var exception = client.ResponseTimeoutException( request.Header );
-                    if ( client.Logger.Error is { } error )
-                        error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
-
-                    await client.DisposeAsync( traceId ).ConfigureAwait( false );
-                    return exception;
-                }
-
-                using ( client.AcquireActiveLock( traceId, out var exc ) )
-                {
-                    if ( exc is not null )
-                        return exc;
-
-                    client.ResponseQueue.Release( responseSource );
-                }
+                if ( ! client.ReleaseResponse( responseSource, traceId, out var exc ) )
+                    return exc;
 
                 switch ( response.Header.GetClientEndpoint() )
                 {
@@ -418,7 +400,7 @@ internal struct PublisherCollection
 
                         var parsedResponse = Protocol.PublisherUnboundResponse.Parse( response.Data );
 
-                        using ( client.AcquireActiveLock( traceId, out var exc ) )
+                        using ( client.AcquireActiveLock( traceId, out exc ) )
                         {
                             if ( exc is not null )
                                 return exc;
@@ -469,11 +451,7 @@ internal struct PublisherCollection
             }
             catch ( Exception exc )
             {
-                if ( client.Logger.Error is { } error )
-                    error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
-
-                await client.DisposeAsync( traceId ).ConfigureAwait( false );
-                return exc;
+                return await client.DisposeAsync( exc, traceId ).ConfigureAwait( false );
             }
             finally
             {
@@ -542,103 +520,110 @@ internal struct PublisherCollection
                 request = new Protocol.PushMessageHeader( context.Publisher.ChannelId, messageLength, confirm, context.ClearOnDispose );
                 request.Serialize( buffer.Slice( 0, Protocol.PushMessageHeader.Length ), reverseEndianness );
 
-                ManualResetValueTaskSource<bool>? routingWriterSource = null;
-                ManualResetValueTaskSource<bool> writerSource;
+                ManualResetValueTaskSource<WriterSourceResult>? routingWriterSource = null;
+                ManualResetValueTaskSource<WriterSourceResult> writerSource;
                 using ( client.AcquireActiveLock( traceId, out var exc ) )
                 {
                     if ( exc is not null )
                         return exc;
 
                     if ( routing.TargetCount > 0 )
-                        routingWriterSource = client.WriterQueue.AcquireSource();
+                        routingWriterSource = client.WriterQueue.AcquireSource( routingBuffer );
 
-                    writerSource = client.WriterQueue.AcquireSource();
+                    writerSource = client.WriterQueue.AcquireSource( buffer );
+                    if ( confirm )
+                        responseSource = client.ResponseQueue.EnqueueSource();
                 }
 
                 if ( routingWriterSource is not null )
                 {
-                    if ( ! await routingWriterSource.GetTask().ConfigureAwait( false ) )
-                        return client.EmitError( client.DisposedException(), traceId );
-
-                    using ( client.AcquireActiveLock( traceId, out var exc ) )
+                    var routingWriterResult = await routingWriterSource.GetTask().ConfigureAwait( false );
+                    switch ( routingWriterResult.Status )
                     {
-                        if ( exc is not null )
-                            return exc;
-
-                        client.EventScheduler.PausePing();
-                    }
-
-                    var routingResult = await client.WriteAsync( routingRequest.Header, routingBuffer, traceId ).ConfigureAwait( false );
-                    if ( routingResult.Exception is not null )
-                    {
-                        await client.DisposeAsync( traceId ).ConfigureAwait( false );
-                        return routingResult.Exception;
-                    }
-
-                    using ( client.AcquireActiveLock( traceId, out var exc ) )
-                    {
-                        if ( exc is not null )
-                            return exc;
-
-                        client.WriterQueue.Release( client, routingWriterSource );
-                    }
-
-                    if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
-                        return client.EmitError( client.DisposedException(), traceId );
-
-                    if ( confirm )
-                    {
-                        using ( client.AcquireActiveLock( traceId, out var exc ) )
+                        case WriterSourceResultStatus.Ready:
                         {
-                            if ( exc is not null )
+                            if ( ! client.PausePingSchedule( traceId, out var exc ) )
                                 return exc;
 
-                            responseSource = client.ResponseQueue.EnqueueSource();
+                            var (packetCount, exception) = await client
+                                .WritePotentialBatchAsync( routingRequest.Header, routingBuffer, reverseEndianness, traceId )
+                                .ConfigureAwait( false );
+
+                            if ( exception is not null )
+                            {
+                                await client.DisposeAsync( traceId ).ConfigureAwait( false );
+                                return exception;
+                            }
+
+                            if ( ! client.ReleaseWriter( routingWriterSource, packetCount, traceId, out exc ) )
+                                return exc;
+
+                            break;
                         }
+                        case WriterSourceResultStatus.Batched:
+                        {
+                            if ( ! client.ReleaseBatchedWriter(
+                                routingWriterSource,
+                                routingRequest.Header,
+                                routingWriterResult,
+                                traceId,
+                                out var exc ) )
+                                return exc;
+
+                            break;
+                        }
+                        default:
+                            return client.EmitError( client.DisposedException(), traceId );
                     }
                 }
-                else
-                {
-                    if ( ! await writerSource.GetTask().ConfigureAwait( false ) )
-                        return client.EmitError( client.DisposedException(), traceId );
 
-                    using ( client.AcquireActiveLock( traceId, out var exc ) )
+                var writerResult = await writerSource.GetTask().ConfigureAwait( false );
+                switch ( writerResult.Status )
+                {
+                    case WriterSourceResultStatus.Ready:
                     {
-                        if ( exc is not null )
+                        if ( ! client.PausePingSchedule( traceId, out var exc ) )
                             return exc;
 
-                        client.EventScheduler.PausePing();
-                        if ( confirm )
-                            responseSource = client.ResponseQueue.EnqueueSource();
+                        var (packetCount, exception) = await client
+                            .WritePotentialBatchAsync( request.Header, buffer, reverseEndianness, traceId )
+                            .ConfigureAwait( false );
+
+                        if ( exception is not null )
+                        {
+                            await client.DisposeAsync( traceId ).ConfigureAwait( false );
+                            return exception;
+                        }
+
+                        if ( responseSource is not null
+                            ? ! client.ReleaseWriterWithResponse( writerSource, responseSource, packetCount, traceId, out exc )
+                            : ! client.ReleaseWriter( writerSource, packetCount, traceId, out exc ) )
+                            return exc;
+
+                        break;
                     }
-                }
+                    case WriterSourceResultStatus.Batched:
+                    {
+                        if ( responseSource is not null
+                            ? ! client.ReleaseBatchedWriterWithResponse(
+                                writerSource,
+                                responseSource,
+                                request.Header,
+                                writerResult,
+                                traceId,
+                                out var exc )
+                            : ! client.ReleaseBatchedWriter( writerSource, request.Header, writerResult, traceId, out exc ) )
+                            return exc;
 
-                var result = await client.WriteAsync( request.Header, buffer, traceId ).ConfigureAwait( false );
-                if ( result.Exception is not null )
-                {
-                    await client.DisposeAsync( traceId ).ConfigureAwait( false );
-                    return result.Exception;
-                }
-
-                using ( client.AcquireActiveLock( traceId, out var exc ) )
-                {
-                    if ( exc is not null )
-                        return exc;
-
-                    client.WriterQueue.Release( client, writerSource );
-                    if ( responseSource is not null )
-                        client.ResponseQueue.ActivateTimeout( client, responseSource );
-
-                    client.EventScheduler.SchedulePing( client );
+                        break;
+                    }
+                    default:
+                        return client.EmitError( client.DisposedException(), traceId );
                 }
             }
             catch ( Exception exc )
             {
-                if ( client.Logger.Error is { } error )
-                    error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
-
-                await client.DisposeAsync( traceId ).ConfigureAwait( false );
-                return exc;
+                return await client.DisposeAsync( exc, traceId ).ConfigureAwait( false );
             }
 
             if ( responseSource is null )
@@ -653,25 +638,10 @@ internal struct PublisherCollection
             try
             {
                 if ( response.Type != IncomingPacketToken.Result.Ok )
-                {
-                    if ( response.Type == IncomingPacketToken.Result.Disposed )
-                        return client.EmitError( client.DisposedException(), traceId );
+                    return await client.HandleResponseErrorAsync( response.Type, request.Header, traceId ).ConfigureAwait( false );
 
-                    var exception = client.ResponseTimeoutException( request.Header );
-                    if ( client.Logger.Error is { } error )
-                        error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
-
-                    await client.DisposeAsync( traceId ).ConfigureAwait( false );
-                    return exception;
-                }
-
-                using ( client.AcquireActiveLock( traceId, out var exc ) )
-                {
-                    if ( exc is not null )
-                        return exc;
-
-                    client.ResponseQueue.Release( responseSource );
-                }
+                if ( ! client.ReleaseResponse( responseSource, traceId, out var exc ) )
+                    return exc;
 
                 switch ( response.Header.GetClientEndpoint() )
                 {
@@ -735,11 +705,7 @@ internal struct PublisherCollection
             }
             catch ( Exception exc )
             {
-                if ( client.Logger.Error is { } error )
-                    error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
-
-                await client.DisposeAsync( traceId ).ConfigureAwait( false );
-                return exc;
+                return await client.DisposeAsync( exc, traceId ).ConfigureAwait( false );
             }
             finally
             {

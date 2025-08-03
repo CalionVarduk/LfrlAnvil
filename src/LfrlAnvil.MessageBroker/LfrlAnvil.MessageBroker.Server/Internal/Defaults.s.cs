@@ -87,6 +87,7 @@ internal static class Defaults
     internal static class Memory
     {
         internal const int DefaultNetworkPacketLength = ( int )MemorySize.BytesPerKilobyte * 16;
+        private const short DefaultMaxBatchPacketCount = 100;
 
         internal static Bounds<MemorySize> MaxNetworkPacketLengthBounds => Bounds.Create(
             MemorySize.FromBytes( DefaultNetworkPacketLength ),
@@ -114,7 +115,7 @@ internal static class Defaults
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal static Bounds<short> GetActualBatchPacketCountBounds(short? value)
         {
-            var max = value?.Max( ( short )0 ) ?? short.MaxValue;
+            var max = value?.Max( ( short )0 ) ?? DefaultMaxBatchPacketCount;
             return Bounds.Create<short>( 0, max > 1 ? max : ( short )0 );
         }
 

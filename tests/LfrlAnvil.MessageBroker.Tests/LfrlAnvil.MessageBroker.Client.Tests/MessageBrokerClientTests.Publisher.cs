@@ -1364,7 +1364,7 @@ public partial class MessageBrokerClientTests
                                 "[PushingMessage] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 8, Confirm = False",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 18)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 18)",
-                                "[MessagePushed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 8, MessageId = <NULL>",
+                                "[MessagePushed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 8",
                                 "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (end)"
                             ] )
                         ] ) )
