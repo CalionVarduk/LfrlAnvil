@@ -454,7 +454,6 @@ internal struct ListenerCollection
                             }
 
                             var parsedResponse = Protocol.ListenerUnboundResponse.Parse( response.Data );
-
                             using ( client.AcquireActiveLock( traceId, out exc ) )
                             {
                                 if ( exc is not null )

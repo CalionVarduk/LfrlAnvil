@@ -182,9 +182,7 @@ internal struct NotificationHandler
                                 return;
                             }
 
-                            var requestHeader = Protocol.SystemNotificationHeader.Parse(
-                                notification.Data.Slice( 0, Protocol.SystemNotificationHeader.Length ) );
-
+                            var requestHeader = Protocol.SystemNotificationHeader.Parse( notification.Data );
                             if ( client.Logger.ProcessingSystemNotification is { } processingSystemNotification )
                                 processingSystemNotification.Emit(
                                     MessageBrokerClientProcessingSystemNotificationEvent.Create( client, traceId, requestHeader.Type ) );
@@ -241,9 +239,7 @@ internal struct NotificationHandler
                         return;
                     }
 
-                    var request = Protocol.MessageNotificationHeader.Parse(
-                        notification.Data.Slice( 0, Protocol.MessageNotificationHeader.Length ),
-                        reverseEndianness );
+                    var request = Protocol.MessageNotificationHeader.Parse( notification.Data, reverseEndianness );
 
                     var errors = request.StringifyErrors();
                     if ( errors.Count > 0 )
@@ -390,9 +386,7 @@ internal struct NotificationHandler
         }
 
         var data = notification.Data.Slice( Protocol.SystemNotificationHeader.Length );
-        var parsedRequest = Protocol.ObjectNameNotificationHeader.Parse(
-            data.Slice( 0, Protocol.ObjectNameNotificationHeader.Length ),
-            reverseEndianness );
+        var parsedRequest = Protocol.ObjectNameNotificationHeader.Parse( data, reverseEndianness );
 
         var requestErrors = parsedRequest.StringifySenderErrors( client.Id );
         if ( requestErrors.Count > 0 )
@@ -481,9 +475,7 @@ internal struct NotificationHandler
         }
 
         var data = notification.Data.Slice( Protocol.SystemNotificationHeader.Length );
-        var parsedRequest = Protocol.ObjectNameNotificationHeader.Parse(
-            data.Slice( 0, Protocol.ObjectNameNotificationHeader.Length ),
-            reverseEndianness );
+        var parsedRequest = Protocol.ObjectNameNotificationHeader.Parse( data, reverseEndianness );
 
         var requestErrors = parsedRequest.StringifyStreamErrors();
         if ( requestErrors.Count > 0 )

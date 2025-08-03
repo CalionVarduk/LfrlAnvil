@@ -166,7 +166,7 @@ internal struct PacketListener
                     return;
                 }
 
-                var batchHeader = Protocol.BatchHeader.Parse( batchBuffer.Slice( 0, Protocol.BatchHeader.Length ), reverseEndianness );
+                var batchHeader = Protocol.BatchHeader.Parse( batchBuffer, reverseEndianness );
                 var errors = batchHeader.StringifyErrors( client.MaxBatchPacketCount );
                 if ( errors.Count > 0 )
                 {
@@ -191,10 +191,7 @@ internal struct PacketListener
                         return;
                     }
 
-                    var elementHeader = Protocol.PacketHeader.Parse(
-                        batchBuffer.Slice( 0, Protocol.PacketHeader.Length ),
-                        reverseEndianness );
-
+                    var elementHeader = Protocol.PacketHeader.Parse( batchBuffer, reverseEndianness );
                     ReduceBatchBuffer( client, ref batchPoolToken, ref batchBuffer, Protocol.PacketHeader.Length );
                     awaitPacket?.Emit( MessageBrokerClientAwaitPacketEvent.Create( client, elementHeader ) );
                     var elementPoolToken = MemoryPoolToken<byte>.Empty;

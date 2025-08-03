@@ -59,7 +59,7 @@ internal static class Protocol
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal static PacketHeader Parse(ReadOnlyMemory<byte> source)
         {
-            Assume.Equals( source.Length, Length );
+            Assume.IsGreaterThanOrEqualTo( source.Length, Length );
             var reader = new BinaryContractReader( source.Span );
             var endpointCode = reader.MoveReadInt8();
             var payload = reader.ReadInt32();
@@ -90,7 +90,7 @@ internal static class Protocol
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void Serialize(Memory<byte> target)
         {
-            Assume.Equals( target.Length, Length );
+            Assume.IsGreaterThanOrEqualTo( target.Length, Length );
             var writer = new BinaryContractWriter( target.Span );
             writer.MoveWrite( EndpointCode );
             writer.Write( Payload );
@@ -135,7 +135,7 @@ internal static class Protocol
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal static HandshakeRequestHeader Parse(ReadOnlyMemory<byte> source)
         {
-            Assume.Equals( source.Length, Length );
+            Assume.IsGreaterThanOrEqualTo( source.Length, Length );
 
             var reader = new BinaryContractReader( source.Span );
             var flags = reader.MoveReadInt8();
@@ -194,9 +194,10 @@ internal static class Protocol
                 $"[{Header}] Flags = {Flags}, Id = {Id}, MessageTimeout = {MessageTimeout}, PingInterval = {PingInterval}, MaxNetworkPacketLength = {MaxNetworkPacketLength}, MaxNetworkMessagePacketLength = {MaxNetworkMessagePacketLength}, MaxBatchPacketCount = {MaxBatchPacketCount}, MaxNetworkBatchPacketLength = {MaxNetworkBatchPacketLength}";
         }
 
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void Serialize(Memory<byte> target, bool reverseEndianness)
         {
-            Assume.Equals( target.Length, PacketHeader.Length + Payload );
+            Assume.IsGreaterThanOrEqualTo( target.Length, PacketHeader.Length + Payload );
 
             var payload = Header.Payload;
             var id = unchecked( ( uint )Id );
@@ -259,9 +260,10 @@ internal static class Protocol
             return $"[{Header}] Flags = {Flags}";
         }
 
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void Serialize(Memory<byte> target, bool reverseEndianness)
         {
-            Assume.Equals( target.Length, PacketHeader.Length + Payload );
+            Assume.IsGreaterThanOrEqualTo( target.Length, PacketHeader.Length + Payload );
             var writer = new BinaryContractWriter( target.Span );
             writer.MoveWrite( Header.EndpointCode );
             writer.MoveWrite( reverseEndianness ? BinaryPrimitives.ReverseEndianness( Header.Payload ) : Header.Payload );
@@ -293,7 +295,7 @@ internal static class Protocol
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal static BatchHeader Parse(ReadOnlyMemory<byte> source)
         {
-            Assume.Equals( source.Length, Length );
+            Assume.IsGreaterThanOrEqualTo( source.Length, Length );
             var reader = new BinaryContractReader( source.Span );
             return new BatchHeader( unchecked( ( short )reader.ReadInt16() ) );
         }
@@ -330,7 +332,7 @@ internal static class Protocol
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal static BindPublisherRequestHeader Parse(ReadOnlyMemory<byte> source)
         {
-            Assume.Equals( source.Length, Length );
+            Assume.IsGreaterThanOrEqualTo( source.Length, Length );
 
             var reader = new BinaryContractReader( source.Span );
             var flags = reader.MoveReadInt8();
@@ -373,9 +375,10 @@ internal static class Protocol
             return $"[{Header}] Flags = {Flags}, ChannelId = {ChannelId}, StreamId = {StreamId}";
         }
 
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void Serialize(Memory<byte> target)
         {
-            Assume.Equals( target.Length, PacketHeader.Length + Payload );
+            Assume.IsGreaterThanOrEqualTo( target.Length, PacketHeader.Length + Payload );
             var writer = new BinaryContractWriter( target.Span );
             writer.MoveWrite( Header.EndpointCode );
             writer.MoveWrite( Header.Payload );
@@ -404,9 +407,10 @@ internal static class Protocol
             return $"[{Header}] Flags = {Flags}";
         }
 
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void Serialize(Memory<byte> target)
         {
-            Assume.Equals( target.Length, PacketHeader.Length + Payload );
+            Assume.IsGreaterThanOrEqualTo( target.Length, PacketHeader.Length + Payload );
             var writer = new BinaryContractWriter( target.Span );
             writer.MoveWrite( Header.EndpointCode );
             writer.MoveWrite( Header.Payload );
@@ -434,7 +438,7 @@ internal static class Protocol
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal static UnbindPublisherRequest Parse(ReadOnlyMemory<byte> source)
         {
-            Assume.Equals( source.Length, Length );
+            Assume.IsGreaterThanOrEqualTo( source.Length, Length );
             var reader = new BinaryContractReader( source.Span );
             var channelId = unchecked( ( int )reader.ReadInt32() );
             return new UnbindPublisherRequest( channelId );
@@ -466,9 +470,10 @@ internal static class Protocol
             return $"[{Header}] Flags = {Flags}";
         }
 
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void Serialize(Memory<byte> target)
         {
-            Assume.Equals( target.Length, PacketHeader.Length + Payload );
+            Assume.IsGreaterThanOrEqualTo( target.Length, PacketHeader.Length + Payload );
             var writer = new BinaryContractWriter( target.Span );
             writer.MoveWrite( Header.EndpointCode );
             writer.MoveWrite( Header.Payload );
@@ -495,9 +500,10 @@ internal static class Protocol
             return $"[{Header}] Flags = {Flags}";
         }
 
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void Serialize(Memory<byte> target)
         {
-            Assume.Equals( target.Length, PacketHeader.Length + Payload );
+            Assume.IsGreaterThanOrEqualTo( target.Length, PacketHeader.Length + Payload );
             var writer = new BinaryContractWriter( target.Span );
             writer.MoveWrite( Header.EndpointCode );
             writer.MoveWrite( Header.Payload );
@@ -556,7 +562,8 @@ internal static class Protocol
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal static BindListenerRequestHeader Parse(ReadOnlyMemory<byte> source)
         {
-            Assume.Equals( source.Length, Length );
+            Assume.IsGreaterThanOrEqualTo( source.Length, Length );
+
             var reader = new BinaryContractReader( source.Span );
             var flags = reader.MoveReadInt8();
             var prefetchHint = unchecked( ( short )reader.MoveReadInt16() );
@@ -652,9 +659,10 @@ internal static class Protocol
             return $"[{Header}] Flags = {Flags}, ChannelId = {ChannelId}, QueueId = {QueueId}";
         }
 
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void Serialize(Memory<byte> target)
         {
-            Assume.Equals( target.Length, PacketHeader.Length + Payload );
+            Assume.IsGreaterThanOrEqualTo( target.Length, PacketHeader.Length + Payload );
             var writer = new BinaryContractWriter( target.Span );
             writer.MoveWrite( Header.EndpointCode );
             writer.MoveWrite( Header.Payload );
@@ -689,9 +697,10 @@ internal static class Protocol
             return $"[{Header}] Flags = {Flags}";
         }
 
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void Serialize(Memory<byte> target)
         {
-            Assume.Equals( target.Length, PacketHeader.Length + Payload );
+            Assume.IsGreaterThanOrEqualTo( target.Length, PacketHeader.Length + Payload );
             var writer = new BinaryContractWriter( target.Span );
             writer.MoveWrite( Header.EndpointCode );
             writer.MoveWrite( Header.Payload );
@@ -719,7 +728,7 @@ internal static class Protocol
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal static UnbindListenerRequest Parse(ReadOnlyMemory<byte> source)
         {
-            Assume.Equals( source.Length, Length );
+            Assume.IsGreaterThanOrEqualTo( source.Length, Length );
             var reader = new BinaryContractReader( source.Span );
             var channelId = unchecked( ( int )reader.ReadInt32() );
             return new UnbindListenerRequest( channelId );
@@ -751,9 +760,10 @@ internal static class Protocol
             return $"[{Header}] Flags = {Flags}";
         }
 
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void Serialize(Memory<byte> target)
         {
-            Assume.Equals( target.Length, PacketHeader.Length + Payload );
+            Assume.IsGreaterThanOrEqualTo( target.Length, PacketHeader.Length + Payload );
             var writer = new BinaryContractWriter( target.Span );
             writer.MoveWrite( Header.EndpointCode );
             writer.MoveWrite( Header.Payload );
@@ -780,9 +790,10 @@ internal static class Protocol
             return $"[{Header}] Flags = {Flags}";
         }
 
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void Serialize(Memory<byte> target)
         {
-            Assume.Equals( target.Length, PacketHeader.Length + Payload );
+            Assume.IsGreaterThanOrEqualTo( target.Length, PacketHeader.Length + Payload );
             var writer = new BinaryContractWriter( target.Span );
             writer.MoveWrite( Header.EndpointCode );
             writer.MoveWrite( Header.Payload );
@@ -810,7 +821,7 @@ internal static class Protocol
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal static PushMessageRoutingHeader Parse(ReadOnlyMemory<byte> source)
         {
-            Assume.Equals( source.Length, Length );
+            Assume.IsGreaterThanOrEqualTo( source.Length, Length );
             var reader = new BinaryContractReader( source.Span );
             var targetCount = unchecked( ( short )reader.ReadInt16() );
             return new PushMessageRoutingHeader( targetCount );
@@ -848,7 +859,7 @@ internal static class Protocol
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal static PushMessageHeader Parse(ReadOnlyMemory<byte> source)
         {
-            Assume.Equals( source.Length, Length );
+            Assume.IsGreaterThanOrEqualTo( source.Length, Length );
             var reader = new BinaryContractReader( source.Span );
             var flags = reader.MoveReadInt8();
             var channelId = unchecked( ( int )reader.ReadInt32() );
@@ -881,9 +892,10 @@ internal static class Protocol
             return $"[{Header}] Id = {Id}";
         }
 
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void Serialize(Memory<byte> target)
         {
-            Assume.Equals( target.Length, PacketHeader.Length + Payload );
+            Assume.IsGreaterThanOrEqualTo( target.Length, PacketHeader.Length + Payload );
             var writer = new BinaryContractWriter( target.Span );
             writer.MoveWrite( Header.EndpointCode );
             writer.MoveWrite( Header.Payload );
@@ -910,9 +922,10 @@ internal static class Protocol
             return $"[{Header}] Flags = {Flags}";
         }
 
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void Serialize(Memory<byte> target)
         {
-            Assume.Equals( target.Length, PacketHeader.Length + Payload );
+            Assume.IsGreaterThanOrEqualTo( target.Length, PacketHeader.Length + Payload );
             var writer = new BinaryContractWriter( target.Span );
             writer.MoveWrite( Header.EndpointCode );
             writer.MoveWrite( Header.Payload );
@@ -942,7 +955,7 @@ internal static class Protocol
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal static DeadLetterQuery Parse(ReadOnlyMemory<byte> source)
         {
-            Assume.Equals( source.Length, Length );
+            Assume.IsGreaterThanOrEqualTo( source.Length, Length );
             var reader = new BinaryContractReader( source.Span );
             var queueId = unchecked( ( int )reader.MoveReadInt32() );
             var readCount = unchecked( ( int )reader.ReadInt32() );
@@ -986,9 +999,10 @@ internal static class Protocol
             return $"[{Header}] TotalCount = {TotalCount}, MaxReadCount = {MaxReadCount}, NextExpirationAt = {NextExpirationAt}";
         }
 
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void Serialize(Memory<byte> target)
         {
-            Assume.Equals( target.Length, PacketHeader.Length + Payload );
+            Assume.IsGreaterThanOrEqualTo( target.Length, PacketHeader.Length + Payload );
             var writer = new BinaryContractWriter( target.Span );
             writer.MoveWrite( Header.EndpointCode );
             writer.MoveWrite( Header.Payload );
@@ -1040,9 +1054,10 @@ internal static class Protocol
                 $"[{Header}] AckId = {AckId}, StreamId = {StreamId}, MessageId = {MessageId}, Retry = ({Retry}), Redelivery = ({Redelivery}), ChannelId = {ChannelId}, SenderId = {SenderId}, PushedAt = {PushedAt}";
         }
 
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void Serialize(Memory<byte> target)
         {
-            Assume.Equals( target.Length, PacketHeader.Length + Payload );
+            Assume.IsGreaterThanOrEqualTo( target.Length, PacketHeader.Length + Payload );
             var writer = new BinaryContractWriter( target.Span );
             writer.MoveWrite( Header.EndpointCode );
             writer.MoveWrite( Header.Payload );
@@ -1083,9 +1098,10 @@ internal static class Protocol
             return $"[{Header}] Type = {Type}, Id = {Id}, Name = ({Name})";
         }
 
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void Serialize(Memory<byte> target)
         {
-            Assume.Equals( target.Length, Length );
+            Assume.IsGreaterThanOrEqualTo( target.Length, Length );
             var writer = new BinaryContractWriter( target.Span );
             writer.MoveWrite( Header.EndpointCode );
             writer.MoveWrite( Header.Payload );
@@ -1126,7 +1142,7 @@ internal static class Protocol
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal static MessageNotificationAck Parse(ReadOnlyMemory<byte> source)
         {
-            Assume.Equals( source.Length, Length );
+            Assume.IsGreaterThanOrEqualTo( source.Length, Length );
             var reader = new BinaryContractReader( source.Span );
             var queueId = unchecked( ( int )reader.MoveReadInt32() );
             var ackId = unchecked( ( int )reader.MoveReadInt32() );
@@ -1208,7 +1224,7 @@ internal static class Protocol
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal static MessageNotificationNegativeAck Parse(ReadOnlyMemory<byte> source)
         {
-            Assume.Equals( source.Length, Length );
+            Assume.IsGreaterThanOrEqualTo( source.Length, Length );
             var reader = new BinaryContractReader( source.Span );
             var flags = reader.MoveReadInt8();
             var queueId = unchecked( ( int )reader.MoveReadInt32() );

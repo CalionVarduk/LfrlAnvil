@@ -200,8 +200,7 @@ internal struct RequestHandler
                     return await FinishInvalidRequestHandlingAsync( client, exception, traceId ).ConfigureAwait( false );
 
                 var data = request.Data;
-                var parsedRequestHeader = Protocol.BindPublisherRequestHeader.Parse(
-                    data.Slice( 0, Protocol.BindPublisherRequestHeader.Length ) );
+                var parsedRequestHeader = Protocol.BindPublisherRequestHeader.Parse( data );
 
                 var requestErrors = parsedRequestHeader.StringifyErrors( data.Length );
                 if ( requestErrors.Count > 0 )
@@ -594,8 +593,7 @@ internal struct RequestHandler
                     return await FinishInvalidRequestHandlingAsync( client, exception, traceId ).ConfigureAwait( false );
 
                 var data = request.Data;
-                var parsedRequestHeader = Protocol.BindListenerRequestHeader.Parse(
-                    data.Slice( 0, Protocol.BindListenerRequestHeader.Length ) );
+                var parsedRequestHeader = Protocol.BindListenerRequestHeader.Parse( data );
 
                 var requestErrors = parsedRequestHeader.StringifyErrors( data.Length );
                 if ( requestErrors.Count > 0 )
@@ -1064,9 +1062,7 @@ internal struct RequestHandler
                 if ( exception is not null )
                     return await FinishInvalidRequestHandlingAsync( client, exception, traceId ).ConfigureAwait( false );
 
-                parsedRequest = Protocol.PushMessageRoutingHeader.Parse(
-                    request.Data.Slice( 0, Protocol.PushMessageRoutingHeader.Length ) );
-
+                parsedRequest = Protocol.PushMessageRoutingHeader.Parse( request.Data );
                 var requestErrors = parsedRequest.StringifyErrors();
                 if ( requestErrors.Count > 0 )
                 {
@@ -1152,7 +1148,7 @@ internal struct RequestHandler
                 if ( exception is not null )
                     return await FinishInvalidRequestHandlingAsync( client, exception, traceId ).ConfigureAwait( false );
 
-                parsedRequest = Protocol.PushMessageHeader.Parse( request.Data.Slice( 0, Protocol.PushMessageHeader.Length ) );
+                parsedRequest = Protocol.PushMessageHeader.Parse( request.Data );
                 var requestErrors = parsedRequest.StringifyErrors();
                 if ( requestErrors.Count > 0 )
                 {

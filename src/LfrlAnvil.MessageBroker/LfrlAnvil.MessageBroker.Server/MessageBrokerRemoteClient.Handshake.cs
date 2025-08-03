@@ -252,7 +252,7 @@ public sealed partial class MessageBrokerRemoteClient
 
             var data = buffer.Slice( 0, packetLength.Value );
             await _stream.ReadExactlyAsync( data, timeoutToken ).ConfigureAwait( false );
-            var handshakeHeader = Protocol.HandshakeRequestHeader.Parse( data.Slice( 0, Protocol.HandshakeRequestHeader.Length ) );
+            var handshakeHeader = Protocol.HandshakeRequestHeader.Parse( data );
 
             isClientLittleEndian = handshakeHeader.IsClientLittleEndian;
             name = TextEncoding.Parse( data.Slice( Protocol.HandshakeRequestHeader.Length ) );

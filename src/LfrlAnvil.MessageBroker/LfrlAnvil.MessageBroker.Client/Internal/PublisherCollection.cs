@@ -514,11 +514,11 @@ internal struct PublisherCollection
                         routing.TargetCount,
                         unchecked( routingBuffer.Length - Protocol.PushMessageRoutingHeader.Length ) );
 
-                    routingRequest.Serialize( routingBuffer.Slice( 0, Protocol.PushMessageRoutingHeader.Length ), reverseEndianness );
+                    routingRequest.Serialize( routingBuffer, reverseEndianness );
                 }
 
                 request = new Protocol.PushMessageHeader( context.Publisher.ChannelId, messageLength, confirm );
-                request.Serialize( buffer.Slice( 0, Protocol.PushMessageHeader.Length ), reverseEndianness );
+                request.Serialize( buffer, reverseEndianness );
 
                 ManualResetValueTaskSource<WriterSourceResult>? routingWriterSource = null;
                 ManualResetValueTaskSource<WriterSourceResult> writerSource;

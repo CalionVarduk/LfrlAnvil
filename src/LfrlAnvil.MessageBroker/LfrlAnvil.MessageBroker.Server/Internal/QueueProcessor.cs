@@ -317,7 +317,7 @@ internal struct QueueProcessor
                         // clear will matter for batching since the message may come from another client
                         // with different clear buffers rule
                         poolToken = memoryPool.Rent( totalLength, streamMessage.PoolToken.Clear, out var data );
-                        header.Serialize( data.Slice( 0, Protocol.PacketHeader.Length + Protocol.MessageNotificationHeader.Payload ) );
+                        header.Serialize( data );
                         streamMessage.Data.CopyTo(
                             data.Slice( Protocol.PacketHeader.Length + Protocol.MessageNotificationHeader.Payload ) );
 

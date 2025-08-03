@@ -90,7 +90,6 @@ internal struct PacketListener
         {
             awaitPacket?.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( client ) );
 
-            Protocol.PacketHeader header;
             var timeoutToken = default( CancellationToken );
             try
             {
@@ -112,7 +111,7 @@ internal struct PacketListener
                 return;
             }
 
-            header = Protocol.PacketHeader.Parse( buffer );
+            var header = Protocol.PacketHeader.Parse( buffer );
             if ( header.GetClientEndpoint() == MessageBrokerClientEndpoint.Batch )
             {
                 awaitPacket?.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( client, header, 0 ) );
@@ -180,7 +179,7 @@ internal struct PacketListener
                     return;
                 }
 
-                var batchHeader = Protocol.BatchHeader.Parse( batchBuffer.Slice( 0, Protocol.BatchHeader.Length ) );
+                var batchHeader = Protocol.BatchHeader.Parse( batchBuffer );
                 var errors = batchHeader.StringifyErrors( client.MaxBatchPacketCount );
                 if ( errors.Count > 0 )
                 {
@@ -205,8 +204,7 @@ internal struct PacketListener
                         return;
                     }
 
-                    var elementHeader = Protocol.PacketHeader.Parse( batchBuffer.Slice( 0, Protocol.PacketHeader.Length ) );
-
+                    var elementHeader = Protocol.PacketHeader.Parse( batchBuffer );
                     ReduceBatchBuffer( client, ref batchPoolToken, ref batchBuffer, Protocol.PacketHeader.Length );
                     awaitPacket?.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( client, elementHeader ) );
                     var elementPoolToken = MemoryPoolToken<byte>.Empty;
