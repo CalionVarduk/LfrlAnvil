@@ -460,24 +460,31 @@ internal struct PublisherCollection
         }
     }
 
-    internal static async ValueTask<Result<MessageBrokerPushResult>> PushAsync(MessageBrokerPushContext context, bool confirm)
+    internal static async ValueTask<Result<MessageBrokerPushMessageFinalizer>> EnqueueAsync(
+        MessageBrokerPushContext context,
+        bool confirm)
     {
         ulong traceId;
         bool reverseEndianness;
-        var client = context.Publisher.Client;
+        var publisher = context.Publisher;
+        var client = publisher.Client;
         using ( client.AcquireLock() )
         {
             if ( client.ShouldCancel )
                 ExceptionThrower.Throw( client.DisposedException() );
 
-            if ( context.Publisher.State != MessageBrokerPublisherState.Bound )
-                return MessageBrokerPushResult.CreateNotBound( confirm );
+            if ( publisher.State != MessageBrokerPublisherState.Bound )
+                return MessageBrokerPushMessageFinalizer.CreateNotBound( context, confirm );
 
             reverseEndianness = BitConverter.IsLittleEndian != client.IsServerLittleEndian;
             traceId = client.GetTraceId();
         }
 
-        using ( MessageBrokerClientTraceEvent.CreateScope( client, traceId, MessageBrokerClientTraceEventType.PushMessage ) )
+        var failed = true;
+        if ( client.Logger.TraceStart is { } traceStart )
+            traceStart.Emit( MessageBrokerClientTraceEvent.Create( client, traceId, MessageBrokerClientTraceEventType.PushMessage ) );
+
+        try
         {
             var buffer = context.Data;
             var routing = context.Routing;
@@ -488,7 +495,7 @@ internal struct PublisherCollection
                     MessageBrokerClientPushingMessageEvent.Create(
                         client,
                         traceId,
-                        context.Publisher,
+                        publisher,
                         messageLength,
                         routing.TargetCount,
                         confirm ) );
@@ -503,21 +510,18 @@ internal struct PublisherCollection
             }
 
             ManualResetValueTaskSource<IncomingPacketToken>? responseSource = null;
-            Protocol.PushMessageHeader request;
-
             try
             {
-                var routingRequest = default( Protocol.PushMessageRoutingHeader );
                 if ( routing.TargetCount > 0 )
                 {
-                    routingRequest = new Protocol.PushMessageRoutingHeader(
+                    var routingRequest = new Protocol.PushMessageRoutingHeader(
                         routing.TargetCount,
                         unchecked( routingBuffer.Length - Protocol.PushMessageRoutingHeader.Length ) );
 
                     routingRequest.Serialize( routingBuffer, reverseEndianness );
                 }
 
-                request = new Protocol.PushMessageHeader( context.Publisher.ChannelId, messageLength, confirm );
+                var request = new Protocol.PushMessageHeader( publisher.ChannelId, messageLength, confirm );
                 request.Serialize( buffer, reverseEndianness );
 
                 ManualResetValueTaskSource<WriterSourceResult>? routingWriterSource = null;
@@ -535,8 +539,49 @@ internal struct PublisherCollection
                         responseSource = client.ResponseQueue.EnqueueSource();
                 }
 
+                failed = false;
+                return MessageBrokerPushMessageFinalizer.Create(
+                    context,
+                    routingWriterSource,
+                    writerSource,
+                    responseSource,
+                    reverseEndianness,
+                    traceId );
+            }
+            catch ( Exception exc )
+            {
+                return await client.DisposeAsync( exc, traceId ).ConfigureAwait( false );
+            }
+        }
+        finally
+        {
+            if ( failed && client.Logger.TraceEnd is { } traceEnd )
+                traceEnd.Emit( MessageBrokerClientTraceEvent.Create( client, traceId, MessageBrokerClientTraceEventType.PushMessage ) );
+        }
+    }
+
+    internal static async ValueTask<Result<MessageBrokerPushResult>> PushAsync(
+        MessageBrokerPushContext context,
+        ManualResetValueTaskSource<WriterSourceResult>? routingWriterSource,
+        ManualResetValueTaskSource<WriterSourceResult> writerSource,
+        ManualResetValueTaskSource<IncomingPacketToken>? responseSource,
+        bool reverseEndianness,
+        ulong traceId)
+    {
+        var publisher = context.Publisher;
+        var client = publisher.Client;
+        try
+        {
+            var buffer = context.Data;
+            var requestHeader = Protocol.PacketHeader.Parse( buffer, reverseEndianness );
+            var messageLength = unchecked( buffer.Length - Protocol.PushMessageHeader.Length );
+            try
+            {
                 if ( routingWriterSource is not null )
                 {
+                    var routingBuffer = context.Routing.Data;
+                    var routingRequestHeader = Protocol.PacketHeader.Parse( routingBuffer, reverseEndianness );
+
                     var routingWriterResult = await routingWriterSource.GetTask().ConfigureAwait( false );
                     switch ( routingWriterResult.Status )
                     {
@@ -546,7 +591,7 @@ internal struct PublisherCollection
                                 return exc;
 
                             var (packetCount, exception) = await client
-                                .WritePotentialBatchAsync( routingRequest.Header, routingBuffer, reverseEndianness, traceId )
+                                .WritePotentialBatchAsync( routingRequestHeader, routingBuffer, reverseEndianness, traceId )
                                 .ConfigureAwait( false );
 
                             if ( exception is not null )
@@ -564,7 +609,7 @@ internal struct PublisherCollection
                         {
                             if ( ! client.ReleaseBatchedWriter(
                                 routingWriterSource,
-                                routingRequest.Header,
+                                routingRequestHeader,
                                 routingWriterResult,
                                 traceId,
                                 out var exc ) )
@@ -586,7 +631,7 @@ internal struct PublisherCollection
                             return exc;
 
                         var (packetCount, exception) = await client
-                            .WritePotentialBatchAsync( request.Header, buffer, reverseEndianness, traceId )
+                            .WritePotentialBatchAsync( requestHeader, buffer, reverseEndianness, traceId )
                             .ConfigureAwait( false );
 
                         if ( exception is not null )
@@ -608,11 +653,11 @@ internal struct PublisherCollection
                             ? ! client.ReleaseBatchedWriterWithResponse(
                                 writerSource,
                                 responseSource,
-                                request.Header,
+                                requestHeader,
                                 writerResult,
                                 traceId,
                                 out var exc )
-                            : ! client.ReleaseBatchedWriter( writerSource, request.Header, writerResult, traceId, out exc ) )
+                            : ! client.ReleaseBatchedWriter( writerSource, requestHeader, writerResult, traceId, out exc ) )
                             return exc;
 
                         break;
@@ -629,7 +674,7 @@ internal struct PublisherCollection
             if ( responseSource is null )
             {
                 if ( client.Logger.MessagePushed is { } messagePushed )
-                    messagePushed.Emit( MessageBrokerClientMessagePushedEvent.Create( client, traceId, context.Publisher, messageLength ) );
+                    messagePushed.Emit( MessageBrokerClientMessagePushedEvent.Create( client, traceId, publisher, messageLength ) );
 
                 return MessageBrokerPushResult.CreateUnconfirmed();
             }
@@ -638,7 +683,7 @@ internal struct PublisherCollection
             try
             {
                 if ( response.Type != IncomingPacketToken.Result.Ok )
-                    return await client.HandleResponseErrorAsync( response.Type, request.Header, traceId ).ConfigureAwait( false );
+                    return await client.HandleResponseErrorAsync( response.Type, requestHeader, traceId ).ConfigureAwait( false );
 
                 if ( ! client.ReleaseResponse( responseSource, traceId, out var exc ) )
                     return exc;
@@ -667,7 +712,7 @@ internal struct PublisherCollection
                                 MessageBrokerClientMessagePushedEvent.Create(
                                     client,
                                     traceId,
-                                    context.Publisher,
+                                    publisher,
                                     messageLength,
                                     parsedResponse.Id ) );
 
@@ -692,7 +737,7 @@ internal struct PublisherCollection
                         readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header ) );
 
                         return client.EmitError(
-                            client.RequestException( request.Header, parsedResponse.StringifyErrors( context.Publisher ) ),
+                            client.RequestException( requestHeader, parsedResponse.StringifyErrors( publisher ) ),
                             traceId );
                     }
                     default:
@@ -711,6 +756,11 @@ internal struct PublisherCollection
             {
                 response.PoolToken.Return( client, traceId );
             }
+        }
+        finally
+        {
+            if ( client.Logger.TraceEnd is { } traceEnd )
+                traceEnd.Emit( MessageBrokerClientTraceEvent.Create( client, traceId, MessageBrokerClientTraceEventType.PushMessage ) );
         }
     }
 

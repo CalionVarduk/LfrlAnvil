@@ -980,6 +980,98 @@ public class MessageTests : TestsBase, IClassFixture<SharedResourceFixture>
             .Go();
     }
 
+    [Fact]
+    public async Task Server_ShouldAcceptPushedMessages_AndSendThemToAppropriateListeners_WithEnqueueingAndBatching()
+    {
+        var endSource = new SafeTaskCompletionSource();
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetNetworkPacketOptions(
+                    MessageBrokerServerNetworkPacketOptions.Default.SetMaxBatchLength( MemorySize.FromKilobytes( 20 ) ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource ) );
+
+        await server.StartAsync();
+
+        await using var client = new MessageBrokerClient(
+            ( IPEndPoint )server.LocalEndPoint,
+            "test",
+            MessageBrokerClientOptions.Default
+                .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) )
+                .SetDelaySource( _sharedDelaySource ) );
+
+        await client.StartAsync();
+
+        var sentMessageIds = new List<ulong?>();
+        var receivedMessages = new List<MessageSnapshot>();
+
+        await client.Publishers.BindAsync( "foo" );
+        await client.Listeners.BindAsync(
+            "foo",
+            (a, _) =>
+            {
+                lock ( receivedMessages )
+                    receivedMessages.Add( MessageSnapshot.FromArgs( a ) );
+
+                endSource.Complete();
+                return ValueTask.CompletedTask;
+            },
+            MessageBrokerListenerOptions.Default.EnableAcks( false ) );
+
+        var data = Enumerable.Range(
+                0,
+                ( int )client.MaxNetworkBatchPacketLength.Bytes
+                - Protocol.PacketHeader.Length
+                - Protocol.BatchHeader.Length
+                - Protocol.PushMessageHeader.Length * 3
+                - 8 )
+            .Select( static x => ( byte )x )
+            .ToArray();
+
+        var publisher = client.Publishers.TryGetByChannelId( 1 );
+        var listener = client.Listeners.TryGetByChannelId( 1 )!;
+
+        if ( publisher is not null )
+        {
+            var finalizers = new MessageBrokerPushMessageFinalizer[3];
+
+            var context = publisher.GetPushContext();
+            context.Append( [ 1, 2, 3 ] );
+            finalizers[0] = (await context.EnqueueAsync()).GetValueOrThrow();
+            context = publisher.GetPushContext();
+            context.Append( [ 4, 5, 6, 7, 8 ] );
+            finalizers[1] = (await context.EnqueueAsync()).GetValueOrThrow();
+            context = publisher.GetPushContext();
+            context.Append( data );
+            finalizers[2] = (await context.EnqueueAsync()).GetValueOrThrow();
+
+            foreach ( var f in finalizers )
+            {
+                var result = await f.PushAsync();
+                sentMessageIds.Add( result.Value.Id );
+                f.Context.Dispose();
+            }
+        }
+
+        await endSource.Task;
+
+        var sender = new MessageBrokerExternalObject( 1, "test" );
+        var stream = new MessageBrokerExternalObject( 1, "foo" );
+
+        Assertion.All(
+                sentMessageIds.TestSequence( [ 0UL, 1UL, 2UL ] ),
+                receivedMessages.TestSequence(
+                [
+                    new MessageSnapshot( listener, 0, sender, stream, 0, 0, false, MessageSnapshot.GetData( [ 1, 2, 3 ] ) ),
+                    new MessageSnapshot( listener, 1, sender, stream, 0, 0, false, MessageSnapshot.GetData( [ 4, 5, 6, 7, 8 ] ) ),
+                    new MessageSnapshot( listener, 2, sender, stream, 0, 0, false, MessageSnapshot.GetData( data ) )
+                ] ) )
+            .Go();
+    }
+
     private readonly record struct MessageSnapshot(
         MessageBrokerListener Listener,
         ulong Id,

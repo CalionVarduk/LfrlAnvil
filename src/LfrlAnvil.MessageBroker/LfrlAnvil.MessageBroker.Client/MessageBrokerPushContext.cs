@@ -164,10 +164,38 @@ public sealed class MessageBrokerPushContext : IBufferWriter<byte>, IDisposable
     /// Returned <see cref="Result{T}"/> will only be valid when either the message has been successfully enqueued on the server side,
     /// or the publisher is already locally unbound from the channel, which will cancel the request to the server.
     /// </remarks>
-    public ValueTask<Result<MessageBrokerPushResult>> PushAsync(bool confirm = true)
+    public async ValueTask<Result<MessageBrokerPushResult>> PushAsync(bool confirm = true)
+    {
+        var finalizer = await EnqueueAsync( confirm ).ConfigureAwait( false );
+        if ( finalizer.Exception is not null )
+            return finalizer.Exception;
+
+        return await finalizer.Value.PushAsync().ConfigureAwait( false );
+    }
+
+    /// <summary>
+    /// Enqueues the buffered message for sending and returns an object capable of finalizing the process.
+    /// </summary>
+    /// <param name="confirm">
+    /// Specifies whether or not the server should send confirmation that it received the message. Equal to <b>true</b> by default.
+    /// </param>
+    /// <returns>
+    /// A task that represents the operation, which returns a <see cref="Result{T}"/> instance,
+    /// with underlying <see cref="MessageBrokerPushMessageFinalizer"/> instance.
+    /// </returns>
+    /// <exception cref="ObjectDisposedException">When this context has been disposed.</exception>
+    /// <exception cref="MessageBrokerClientDisposedException">When client has already been disposed.</exception>
+    /// <remarks>
+    /// Unexpected errors encountered during enqueueing will cause the client to be automatically disposed.
+    /// Returned <see cref="Result{T}"/> will only be valid when either the message has been successfully enqueued for sending,
+    /// or the publisher is already locally unbound from the channel, which will cancel the enqueueing.
+    /// <b>Make sure to always invoke returned finalizer's <see cref="MessageBrokerPushMessageFinalizer.PushAsync"/> method,
+    /// otherwise the client may get deadlocked and may no longer be able to send any further requests to the server!</b>
+    /// </remarks>
+    public ValueTask<Result<MessageBrokerPushMessageFinalizer>> EnqueueAsync(bool confirm = true)
     {
         ObjectDisposedException.ThrowIf( _disposed.Value, this );
-        return PublisherCollection.PushAsync( this, confirm );
+        return PublisherCollection.EnqueueAsync( this, confirm );
     }
 
     /// <summary>

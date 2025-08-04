@@ -2462,7 +2462,7 @@ public partial class MessageBrokerClientTests
         public async Task Disposal_ShouldDiscardPendingMessages()
         {
             Exception? unbindException = null;
-            var endSource = new SafeTaskCompletionSource( completionCount: 3 );
+            var endSource = new SafeTaskCompletionSource( completionCount: 4 );
             var messageReceivedContinuation = new SafeTaskCompletionSource( completionCount: 3 );
             var callbackContinuation = new SafeTaskCompletionSource( completionCount: 3 );
             var unboundContinuation = new SafeTaskCompletionSource();

@@ -4,6 +4,7 @@ using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.Diagnostics;
 using LfrlAnvil.Functional;
+using LfrlAnvil.MessageBroker.Client.Events;
 using LfrlAnvil.MessageBroker.Client.Exceptions;
 using LfrlAnvil.MessageBroker.Client.Internal;
 using LfrlAnvil.MessageBroker.Client.Tests.Helpers;
@@ -357,7 +358,8 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
         var getSpanAction = Lambda.Of( () => { } );
         var advanceAction = Lambda.Of( () => { } );
         var appendAction = Lambda.Of( () => { } );
-        var sendAction = Lambda.Of( () => Task.CompletedTask );
+        var pushAction = Lambda.Of( () => Task.CompletedTask );
+        var enqueueAction = Lambda.Of( () => Task.CompletedTask );
         var addIdTargetAction = Lambda.Of( () => { } );
         var addNameTargetAction = Lambda.Of( () => { } );
         var disposeAction = Lambda.Of( () => throw new Exception() );
@@ -373,7 +375,8 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
             getSpanAction = Lambda.Of( () => { _ = ctx.GetSpan( 5 ); } );
             advanceAction = Lambda.Of( () => ctx.Advance( 5 ) );
             appendAction = Lambda.Of( () => { _ = ctx.Append( Array.Empty<byte>() ); } );
-            sendAction = Lambda.Of( async () => await ctx.PushAsync() );
+            pushAction = Lambda.Of( async () => await ctx.PushAsync() );
+            enqueueAction = Lambda.Of( async () => await ctx.EnqueueAsync() );
             addIdTargetAction = Lambda.Of( () => { _ = ctx.AddTarget( 1 ); } );
             addNameTargetAction = Lambda.Of( () => { _ = ctx.AddTarget( "foo" ); } );
             disposeAction = Lambda.Of( () => ctx.Dispose() );
@@ -386,7 +389,8 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
                 getSpanAction.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ),
                 advanceAction.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ),
                 appendAction.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ),
-                sendAction.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ),
+                pushAction.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ),
+                enqueueAction.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ),
                 addIdTargetAction.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ),
                 addNameTargetAction.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ),
                 disposeAction.Test( exc => exc.TestNull() ) )
@@ -888,5 +892,142 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
         await serverTask;
 
         action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
+    }
+
+    [Fact]
+    public async Task EnqueueAsyncWithFinalizerPushAsync_ShouldAllowToEasilyPushMessagesInBatch()
+    {
+        var logs = new EventLogger();
+        using var server = new ServerMock();
+        var remoteEndPoint = server.Start();
+
+        await using var client = new MessageBrokerClient(
+            remoteEndPoint,
+            "test",
+            MessageBrokerClientOptions.Default
+                .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySource( _sharedDelaySource )
+                .SetLogger( logs.GetLogger() ) );
+
+        await server.EstablishHandshake( client, maxBatchPacketCount: 10, maxNetworkBatchPacketLength: MemorySize.FromMegabytes( 1 ) );
+        var serverTask = server.GetTask(
+            s =>
+            {
+                s.Read( new Protocol.BindPublisherRequest( "foo", null ) );
+                s.SendPublisherBoundResponse( true, true, 1, 1 );
+            } );
+
+        await client.Publishers.BindAsync( "foo" );
+        await serverTask;
+
+        serverTask = server.GetTask(
+            s =>
+            {
+                s.ReadBatch(
+                [
+                    (MessageBrokerServerEndpoint.PushMessage, Protocol.PushMessageHeader.Length + 1),
+                    (MessageBrokerServerEndpoint.PushMessageRouting, Protocol.PushMessageRoutingHeader.Length + 5),
+                    (MessageBrokerServerEndpoint.PushMessage, Protocol.PushMessageHeader.Length + 2),
+                    (MessageBrokerServerEndpoint.PushMessage, Protocol.PushMessageHeader.Length + 3),
+                    (MessageBrokerServerEndpoint.PushMessageRouting, Protocol.PushMessageRoutingHeader.Length + 5),
+                    (MessageBrokerServerEndpoint.PushMessage, Protocol.PushMessageHeader.Length + 4)
+                ] );
+
+                s.SendMessageAcceptedResponse( 2 );
+                s.SendMessageAcceptedResponse( 3 );
+            } );
+
+        var publisher = client.Publishers.TryGetByChannelId( 1 )!;
+        var contexts = Enumerable.Range( 0, 4 ).Select( _ => publisher.GetPushContext() ).ToArray();
+
+        contexts[0].Append( [ 1 ] );
+        contexts[1].Append( [ 2, 3 ] ).AddTarget( 2 );
+        contexts[2].Append( [ 4, 5, 6 ] );
+        contexts[3].Append( [ 7, 8, 9, 10 ] ).AddTarget( "foo" );
+
+        var finalizers = new MessageBrokerPushMessageFinalizer[contexts.Length];
+        for ( var i = 0; i < contexts.Length; ++i )
+            finalizers[i] = (await contexts[i].EnqueueAsync( confirm: i > 1 )).GetValueOrThrow();
+
+        var result = new Result<MessageBrokerPushResult>[finalizers.Length];
+        for ( var i = 0; i < finalizers.Length; ++i )
+            result[i] = await finalizers[i].PushAsync();
+
+        await serverTask;
+        foreach ( var c in contexts )
+            c.Dispose();
+
+        Assertion.All(
+                result[0].Exception.TestNull(),
+                result[0].Value.NotBound.TestFalse(),
+                result[0].Value.Confirm.TestFalse(),
+                result[0].Value.Id.TestNull(),
+                result[1].Exception.TestNull(),
+                result[1].Value.NotBound.TestFalse(),
+                result[1].Value.Confirm.TestFalse(),
+                result[1].Value.Id.TestNull(),
+                result[2].Exception.TestNull(),
+                result[2].Value.NotBound.TestFalse(),
+                result[2].Value.Confirm.TestTrue(),
+                result[2].Value.Id.TestEquals( 2UL ),
+                result[3].Exception.TestNull(),
+                result[3].Value.NotBound.TestFalse(),
+                result[3].Value.Confirm.TestTrue(),
+                result[3].Value.Id.TestEquals( 3UL ),
+                logs.GetAll()
+                    .Skip( 2 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (start)",
+                            "[PushingMessage] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 1, Confirm = False",
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (Batch, Length = 81), PacketCount = 6",
+                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (Batch, Length = 81)",
+                            "[SendPacket:Batched] Client = [1] 'test', TraceId = 2, BatchTraceId = 2, Packet = (PushMessage, Length = 11)",
+                            "[MessagePushed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 1",
+                            "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (end)"
+                        ] ),
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:PushMessage] Client = [1] 'test', TraceId = 3 (start)",
+                            "[PushingMessage] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Stream = [1] 'foo', Length = 2, RoutingTargetCount = 1, Confirm = False",
+                            "[SendPacket:Batched] Client = [1] 'test', TraceId = 3, BatchTraceId = 2, Packet = (PushMessageRouting, Length = 12)",
+                            "[SendPacket:Batched] Client = [1] 'test', TraceId = 3, BatchTraceId = 2, Packet = (PushMessage, Length = 12)",
+                            "[MessagePushed] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Stream = [1] 'foo', Length = 2",
+                            "[Trace:PushMessage] Client = [1] 'test', TraceId = 3 (end)"
+                        ] ),
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:PushMessage] Client = [1] 'test', TraceId = 4 (start)",
+                            "[PushingMessage] Client = [1] 'test', TraceId = 4, Channel = [1] 'foo', Stream = [1] 'foo', Length = 3, Confirm = True",
+                            "[SendPacket:Batched] Client = [1] 'test', TraceId = 4, BatchTraceId = 2, Packet = (PushMessage, Length = 13)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 4, Packet = (MessageAcceptedResponse, Length = 13)",
+                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 4, Packet = (MessageAcceptedResponse, Length = 13)",
+                            "[MessagePushed] Client = [1] 'test', TraceId = 4, Channel = [1] 'foo', Stream = [1] 'foo', Length = 3, MessageId = 2",
+                            "[Trace:PushMessage] Client = [1] 'test', TraceId = 4 (end)"
+                        ] ),
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:PushMessage] Client = [1] 'test', TraceId = 5 (start)",
+                            "[PushingMessage] Client = [1] 'test', TraceId = 5, Channel = [1] 'foo', Stream = [1] 'foo', Length = 4, RoutingTargetCount = 1, Confirm = True",
+                            "[SendPacket:Batched] Client = [1] 'test', TraceId = 5, BatchTraceId = 2, Packet = (PushMessageRouting, Length = 12)",
+                            "[SendPacket:Batched] Client = [1] 'test', TraceId = 5, BatchTraceId = 2, Packet = (PushMessage, Length = 14)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 5, Packet = (MessageAcceptedResponse, Length = 13)",
+                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 5, Packet = (MessageAcceptedResponse, Length = 13)",
+                            "[MessagePushed] Client = [1] 'test', TraceId = 5, Channel = [1] 'foo', Stream = [1] 'foo', Length = 4, MessageId = 3",
+                            "[Trace:PushMessage] Client = [1] 'test', TraceId = 5 (end)"
+                        ] )
+                    ] ),
+                logs.GetAllAwaitPacket()
+                    .TestContainsContiguousSequence(
+                    [
+                        "[AwaitPacket] Client = [1] 'test'",
+                        "[AwaitPacket] Client = [1] 'test', Packet = (MessageAcceptedResponse, Length = 13)",
+                        "[AwaitPacket] Client = [1] 'test'",
+                        "[AwaitPacket] Client = [1] 'test', Packet = (MessageAcceptedResponse, Length = 13)"
+                    ] ) )
+            .Go();
     }
 }
