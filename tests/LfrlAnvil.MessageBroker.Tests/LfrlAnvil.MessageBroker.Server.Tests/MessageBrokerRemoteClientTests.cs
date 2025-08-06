@@ -1777,7 +1777,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                             "[Disposing] Client = [1] 'test', TraceId = 12",
                             """
                             [Error] Client = [1] 'test', TraceId = 12
-                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientException: 2 stored pending message notification(s) have been discarded due to client disposal.
+                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientException: 2 stored pending notification(s) have been discarded due to client disposal.
                             """,
                             "[Disposed] Client = [1] 'test', TraceId = 12",
                             "[Trace:Dispose] Client = [1] 'test', TraceId = 12 (end)"
@@ -1856,6 +1856,95 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                          1. Expected total packet length to be in [5, {expectedMax}] range but found {Protocol.PacketHeader.Length + payload}.
                          """
                     ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task Dispose_ShouldEndPendingResponseTraces()
+    {
+        var sendContinuation = new SafeTaskCompletionSource();
+        var disposeContinuation = new SafeTaskCompletionSource();
+        var logs = new ClientEventLogger();
+        var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
+
+        await using var server = new MessageBrokerServer(
+            originalEndPoint,
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetNetworkPacketOptions(
+                    MessageBrokerServerNetworkPacketOptions.Default
+                        .SetMaxMessageLength( MemorySize.FromKilobytes( 20 ) )
+                        .SetMaxBatchLength( MemorySize.FromKilobytes( 30 ) ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetClientLoggerFactory(
+                    _ => logs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            disposing: _ => sendContinuation.Complete(),
+                            listenerBound: _ => disposeContinuation.Complete(),
+                            sendPacket: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientSendPacketEventType.Sending
+                                    && e.Packet.Endpoint == MessageBrokerClientEndpoint.PublisherBoundResponse )
+                                    sendContinuation.Task.Wait();
+                            } ) ) ) );
+
+        await server.StartAsync();
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server );
+        await client.GetTask(
+            c =>
+            {
+                c.SendBindPublisherRequest( "foo" );
+                c.SendBindListenerRequest( "foo", false );
+            } );
+
+        await disposeContinuation.Task;
+        await Task.Delay( 50 );
+
+        var remoteClient = server.Clients.TryGetById( 1 );
+        if ( remoteClient is not null )
+            await remoteClient.DisconnectAsync();
+
+        logs.GetAll()
+            .Skip( 1 )
+            .TestSequence(
+            [
+                (t, _) => t.Logs.TestSequence(
+                [
+                    "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
+                    "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
+                    "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo'",
+                    "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
+                    "[PublisherBound] Client = [1] 'test', TraceId = 1, Channel = [1] 'foo' (created), Stream = [1] 'foo' (created)",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (PublisherBoundResponse, Length = 14)",
+                    """
+                    [Error] Client = [1] 'test', TraceId = 1
+                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientDisposedException: Operation has been cancelled because remote client [1] 'test' is disposed.
+                    """,
+                    "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (end)"
+                ] ),
+                (t, _) => t.Logs.TestSequence(
+                [
+                    "[Trace:BindListener] Client = [1] 'test', TraceId = 2 (start)",
+                    "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (BindListenerRequest, Length = 43)",
+                    "[BindingListener] Client = [1] 'test', TraceId = 2, ChannelName = 'foo', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = <disabled>, DeadLetter = <disabled>, CreateChannelIfNotExists = False",
+                    "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (BindListenerRequest, Length = 43)",
+                    "[ListenerBound] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo' (created)",
+                    """
+                    [Error] Client = [1] 'test', TraceId = 2
+                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientDisposedException: Operation has been cancelled because remote client [1] 'test' is disposed.
+                    """,
+                    "[Trace:BindListener] Client = [1] 'test', TraceId = 2 (end)"
+                ] ),
+                (t, _) => t.Logs.TestSequence(
+                [
+                    "[Trace:Dispose] Client = [1] 'test', TraceId = 3 (start)",
+                    "[Disposing] Client = [1] 'test', TraceId = 3",
+                    "[Disposed] Client = [1] 'test', TraceId = 3",
+                    "[Trace:Dispose] Client = [1] 'test', TraceId = 3 (end)"
+                ] )
+            ] )
             .Go();
     }
 }

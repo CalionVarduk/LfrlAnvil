@@ -283,9 +283,9 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string MessagesDiscarded(int count)
+    internal static string NotificationsDiscarded(int count)
     {
-        return $"{count} stored pending message notification(s) have been discarded due to client disposal.";
+        return $"{count} stored pending notification(s) have been discarded due to client disposal.";
     }
 
     [Pure]

@@ -26,12 +26,10 @@ public readonly struct MessageBrokerRemoteClientSendingSenderNameEvent
     private MessageBrokerRemoteClientSendingSenderNameEvent(
         MessageBrokerRemoteClient client,
         ulong traceId,
-        int senderId,
-        string senderName)
+        MessageBrokerRemoteClient sender)
     {
         Source = MessageBrokerRemoteClientEventSource.Create( client, traceId );
-        SenderId = senderId;
-        SenderName = senderName;
+        Sender = sender;
     }
 
     /// <summary>
@@ -40,14 +38,9 @@ public readonly struct MessageBrokerRemoteClientSendingSenderNameEvent
     public MessageBrokerRemoteClientEventSource Source { get; }
 
     /// <summary>
-    /// Sender's unique id.
+    /// Sender <see cref="MessageBrokerRemoteClient"/> whose name is to be sent.
     /// </summary>
-    public int SenderId { get; }
-
-    /// <summary>
-    /// Sender's name to send.
-    /// </summary>
-    public string SenderName { get; }
+    public MessageBrokerRemoteClient Sender { get; }
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerRemoteClientSendingSenderNameEvent"/> instance.
@@ -56,7 +49,7 @@ public readonly struct MessageBrokerRemoteClientSendingSenderNameEvent
     [Pure]
     public override string ToString()
     {
-        return $"[SendingSenderName] {Source}, Sender = [{SenderId}] '{SenderName}'";
+        return $"[SendingSenderName] {Source}, Sender = [{Sender.Id}] '{Sender.Name}'";
     }
 
     [Pure]
@@ -64,9 +57,8 @@ public readonly struct MessageBrokerRemoteClientSendingSenderNameEvent
     internal static MessageBrokerRemoteClientSendingSenderNameEvent Create(
         MessageBrokerRemoteClient client,
         ulong traceId,
-        int senderId,
-        string senderName)
+        MessageBrokerRemoteClient sender)
     {
-        return new MessageBrokerRemoteClientSendingSenderNameEvent( client, traceId, senderId, senderName );
+        return new MessageBrokerRemoteClientSendingSenderNameEvent( client, traceId, sender );
     }
 }

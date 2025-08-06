@@ -23,15 +23,10 @@ namespace LfrlAnvil.MessageBroker.Server.Events;
 /// </summary>
 public readonly struct MessageBrokerRemoteClientSendingStreamNameEvent
 {
-    private MessageBrokerRemoteClientSendingStreamNameEvent(
-        MessageBrokerRemoteClient client,
-        ulong traceId,
-        int streamId,
-        string streamName)
+    private MessageBrokerRemoteClientSendingStreamNameEvent(MessageBrokerRemoteClient client, ulong traceId, MessageBrokerStream stream)
     {
         Source = MessageBrokerRemoteClientEventSource.Create( client, traceId );
-        StreamId = streamId;
-        StreamName = streamName;
+        Stream = stream;
     }
 
     /// <summary>
@@ -40,14 +35,9 @@ public readonly struct MessageBrokerRemoteClientSendingStreamNameEvent
     public MessageBrokerRemoteClientEventSource Source { get; }
 
     /// <summary>
-    /// Stream's unique id.
+    /// <see cref="MessageBrokerStream"/> whose name is to be sent.
     /// </summary>
-    public int StreamId { get; }
-
-    /// <summary>
-    /// Stream's name to send.
-    /// </summary>
-    public string StreamName { get; }
+    public MessageBrokerStream Stream { get; }
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerRemoteClientSendingStreamNameEvent"/> instance.
@@ -56,7 +46,7 @@ public readonly struct MessageBrokerRemoteClientSendingStreamNameEvent
     [Pure]
     public override string ToString()
     {
-        return $"[SendingStreamName] {Source}, Stream = [{StreamId}] '{StreamName}'";
+        return $"[SendingStreamName] {Source}, Stream = [{Stream.Id}] '{Stream.Name}'";
     }
 
     [Pure]
@@ -64,9 +54,8 @@ public readonly struct MessageBrokerRemoteClientSendingStreamNameEvent
     internal static MessageBrokerRemoteClientSendingStreamNameEvent Create(
         MessageBrokerRemoteClient client,
         ulong traceId,
-        int streamId,
-        string streamName)
+        MessageBrokerStream stream)
     {
-        return new MessageBrokerRemoteClientSendingStreamNameEvent( client, traceId, streamId, streamName );
+        return new MessageBrokerRemoteClientSendingStreamNameEvent( client, traceId, stream );
     }
 }

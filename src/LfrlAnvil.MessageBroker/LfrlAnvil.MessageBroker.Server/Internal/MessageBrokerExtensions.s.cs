@@ -93,16 +93,25 @@ internal static class MessageBrokerExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static Exception? Return(this MemoryPoolToken<byte> token)
     {
-        using ( token.AcquireLock() )
+        if ( token.Owner is null )
+            return null;
+
+        using ( token.Owner.AcquireLock() )
             return token.TryDispose().Exception;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static void Return(this MemoryPoolToken<byte> token, MessageBrokerRemoteClient client, ulong traceId)
     {
-        var exception = token.Return();
-        if ( exception is not null && client.Logger.Error is { } error )
-            error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exception ) );
+        if ( token.Owner is not null )
+        {
+            Exception? exception;
+            using ( token.Owner.AcquireLock() )
+                exception = token.TryDispose().Exception;
+
+            if ( exception is not null && client.Logger.Error is { } error )
+                error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exception ) );
+        }
     }
 
     [Pure]

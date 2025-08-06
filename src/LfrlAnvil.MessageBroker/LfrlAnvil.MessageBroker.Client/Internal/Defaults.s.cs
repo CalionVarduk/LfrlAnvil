@@ -100,7 +100,7 @@ internal static class Defaults
             MemorySize.FromKilobytes( 16 ),
             MemorySize.FromBytes( int.MaxValue ) );
 
-        private static MemorySize NetworkLargePacketLength => MemorySize.FromMegabytes( 10 );
+        private static MemorySize NetworkBatchPacketLength => MemorySize.FromMegabytes( 2 );
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -132,7 +132,7 @@ internal static class Defaults
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal static int GetActualMaxNetworkBatchPacketLength(MemorySize? value)
         {
-            var result = value is not null ? MaxNetworkLargePacketLengthBounds.Clamp( value.Value ) : NetworkLargePacketLength;
+            var result = value is not null ? MaxNetworkLargePacketLengthBounds.Clamp( value.Value ) : NetworkBatchPacketLength;
             return unchecked( ( int )result.Bytes );
         }
 

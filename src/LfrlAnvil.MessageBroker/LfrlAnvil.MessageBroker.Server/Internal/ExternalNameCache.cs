@@ -34,6 +34,25 @@ internal struct ExternalNameCache
         return new ExternalNameCache( 64 );
     }
 
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool RequiresUpdate(MessageBrokerStream stream)
+    {
+        ref var entry = ref _entries.GetValueRefOrAddDefault( stream.Id, out var exists );
+        return ! exists || ! stream.Name.Equals( entry.Stream, StringComparison.Ordinal );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool RequiresUpdate(MessageBrokerRemoteClient client, MessageBrokerRemoteClient sender)
+    {
+        if ( ReferenceEquals( client, sender ) )
+            return false;
+
+        ref var entry = ref _entries.GetValueRefOrAddDefault( sender.Id, out var exists );
+        return ! exists || ! sender.Name.Equals( entry.Client, StringComparison.Ordinal );
+    }
+
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal bool TryUpdate(MessageBrokerStream stream)
     {

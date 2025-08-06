@@ -22,7 +22,7 @@ namespace LfrlAnvil.MessageBroker.Client;
 /// Represents available network packet options during <see cref="MessageBrokerClient"/> creation.
 /// </summary>
 /// <param name="DesiredMaxBatchLength">
-/// Desired max network batch packet length. Equal to <b>10 MB</b> by default.
+/// Desired max network batch packet length. Equal to <b>2 MB</b> by default.
 /// Value will be clamped to [<b>16 KB</b>, <b>1 GB</b>] range. Actual length will be negotiated with the server during handshake.
 /// Represents max possible length for packets of <b>Batch</b> type.
 /// </param>

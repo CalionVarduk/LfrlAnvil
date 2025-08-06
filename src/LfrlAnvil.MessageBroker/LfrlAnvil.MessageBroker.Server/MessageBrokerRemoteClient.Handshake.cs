@@ -52,6 +52,7 @@ public sealed partial class MessageBrokerRemoteClient
 
                             var packetListenerTask = PacketListener.StartUnderlyingTask( this, _stream );
                             var requestHandlerTask = RequestHandler.StartUnderlyingTask( this );
+                            var responseSenderTask = ResponseSender.StartUnderlyingTask( this );
                             var notificationSenderTask = NotificationSender.StartUnderlyingTask( this );
                             using ( AcquireActiveLock( traceId, out var exc ) )
                             {
@@ -60,6 +61,7 @@ public sealed partial class MessageBrokerRemoteClient
 
                                 PacketListener.SetUnderlyingTask( packetListenerTask );
                                 RequestHandler.SetUnderlyingTask( requestHandlerTask );
+                                ResponseSender.SetUnderlyingTask( responseSenderTask );
                                 NotificationSender.SetUnderlyingTask( notificationSenderTask );
                             }
 

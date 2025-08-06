@@ -291,6 +291,16 @@ internal static class Protocol
             PacketCount = packetCount;
         }
 
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static void Serialize(Memory<byte> target, uint payload, short packetCount)
+        {
+            Assume.IsGreaterThanOrEqualTo( target.Length, PacketHeader.Length + Length );
+            var writer = new BinaryContractWriter( target.Span );
+            writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.Batch );
+            writer.MoveWrite( payload );
+            writer.Write( unchecked( ( ushort )packetCount ) );
+        }
+
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal static BatchHeader Parse(ReadOnlyMemory<byte> source)

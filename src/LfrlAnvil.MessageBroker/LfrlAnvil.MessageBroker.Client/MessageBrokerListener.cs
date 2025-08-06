@@ -363,19 +363,25 @@ public sealed class MessageBrokerListener
         using ( AcquireLock() )
             discardedMessages = MessageEmitter.EndDispose();
 
-        EndDiscardedMessages( discardedMessages, traceId );
+        EndDiscardedMessages( ref discardedMessages, traceId );
         using ( AcquireLock() )
             _state = MessageBrokerListenerState.Disposed;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void EndDiscardedMessages(ListSlim<MessageEmitter.DiscardedNotification> discardedMessages, ulong traceId)
+    private void EndDiscardedMessages(ref ListSlim<MessageEmitter.DiscardedNotification> discardedMessages, ulong traceId)
     {
         var error = Client.Logger.Error;
         var traceEnd = Client.Logger.TraceEnd;
         foreach ( ref readonly var m in discardedMessages )
         {
             m.PoolToken.Return( Client, traceId );
+            if ( error is not null )
+            {
+                var exc = Client.DisposedException();
+                error.Emit( MessageBrokerClientErrorEvent.Create( Client, m.TraceId, exc ) );
+            }
+
             traceEnd?.Emit(
                 MessageBrokerClientTraceEvent.Create( Client, m.TraceId, MessageBrokerClientTraceEventType.MessageNotification ) );
         }
@@ -385,5 +391,7 @@ public sealed class MessageBrokerListener
             var exc = Client.MessageException( this, Resources.MessagesDiscarded( ChannelId, ChannelName, discardedMessages.Count ) );
             error.Emit( MessageBrokerClientErrorEvent.Create( Client, traceId, exc ) );
         }
+
+        discardedMessages = ListSlim<MessageEmitter.DiscardedNotification>.Create();
     }
 }

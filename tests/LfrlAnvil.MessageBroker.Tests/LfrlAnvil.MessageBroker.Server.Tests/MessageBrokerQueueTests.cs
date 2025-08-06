@@ -611,29 +611,39 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
             [
                 (t, _) => t.Logs.TestSequence(
                 [
-                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (start)",
-                    "[ProcessingMessage] Client = [1] 'test', TraceId = 2, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, Retry = 0, Redelivery = 0, Length = 2",
+                    "[Trace:SystemNotification] Client = [1] 'test', TraceId = 2 (start)",
                     "[SendingSenderName] Client = [1] 'test', TraceId = 2, Sender = [2] 'test2'",
                     "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 15)",
                     "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 15)",
                     "[SystemNotificationSent] Client = [1] 'test', TraceId = 2, Type = SenderName",
-                    "[SendingStreamName] Client = [1] 'test', TraceId = 2, Stream = [1] 'c'",
-                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 11)",
-                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 11)",
-                    "[SystemNotificationSent] Client = [1] 'test', TraceId = 2, Type = StreamName",
-                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 47)",
-                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 47)",
-                    "[MessageProcessed] Client = [1] 'test', TraceId = 2, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, Retry = 0, Redelivery = 0",
-                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (end)"
+                    "[Trace:SystemNotification] Client = [1] 'test', TraceId = 2 (end)"
                 ] ),
                 (t, _) => t.Logs.TestSequence(
                 [
-                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 3 (start)",
-                    "[ProcessingMessage] Client = [1] 'test', TraceId = 3, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 1, Retry = 0, Redelivery = 0, Length = 3",
-                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 3, Packet = (MessageNotification, Length = 48)",
-                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 3, Packet = (MessageNotification, Length = 48)",
-                    "[MessageProcessed] Client = [1] 'test', TraceId = 3, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 1, Retry = 0, Redelivery = 0",
-                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 3 (end)"
+                    "[Trace:SystemNotification] Client = [1] 'test', TraceId = 3 (start)",
+                    "[SendingStreamName] Client = [1] 'test', TraceId = 3, Stream = [1] 'c'",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 3, Packet = (SystemNotification, Length = 11)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 3, Packet = (SystemNotification, Length = 11)",
+                    "[SystemNotificationSent] Client = [1] 'test', TraceId = 3, Type = StreamName",
+                    "[Trace:SystemNotification] Client = [1] 'test', TraceId = 3 (end)"
+                ] ),
+                (t, _) => t.Logs.TestSequence(
+                [
+                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (start)",
+                    "[ProcessingMessage] Client = [1] 'test', TraceId = 4, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, Retry = 0, Redelivery = 0, Length = 2",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 47)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 47)",
+                    "[MessageProcessed] Client = [1] 'test', TraceId = 4, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, Retry = 0, Redelivery = 0",
+                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (end)"
+                ] ),
+                (t, _) => t.Logs.TestSequence(
+                [
+                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 5 (start)",
+                    "[ProcessingMessage] Client = [1] 'test', TraceId = 5, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 1, Retry = 0, Redelivery = 0, Length = 3",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 5, Packet = (MessageNotification, Length = 48)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 5, Packet = (MessageNotification, Length = 48)",
+                    "[MessageProcessed] Client = [1] 'test', TraceId = 5, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 1, Retry = 0, Redelivery = 0",
+                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 5 (end)"
                 ] )
             ] )
             .Go();
@@ -684,16 +694,21 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
             [
                 (t, _) => t.Logs.TestSequence(
                 [
-                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (start)",
-                    "[ProcessingMessage] Client = [1] 'test', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, Retry = 0, Redelivery = 0, Length = 3",
+                    "[Trace:SystemNotification] Client = [1] 'test', TraceId = 4 (start)",
                     "[SendingStreamName] Client = [1] 'test', TraceId = 4, Stream = [1] 'c'",
                     "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (SystemNotification, Length = 11)",
                     "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (SystemNotification, Length = 11)",
                     "[SystemNotificationSent] Client = [1] 'test', TraceId = 4, Type = StreamName",
-                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 48)",
-                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 48)",
-                    "[MessageProcessed] Client = [1] 'test', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, Retry = 0, Redelivery = 0",
-                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (end)"
+                    "[Trace:SystemNotification] Client = [1] 'test', TraceId = 4 (end)"
+                ] ),
+                (t, _) => t.Logs.TestSequence(
+                [
+                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 5 (start)",
+                    "[ProcessingMessage] Client = [1] 'test', TraceId = 5, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, Retry = 0, Redelivery = 0, Length = 3",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 5, Packet = (MessageNotification, Length = 48)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 5, Packet = (MessageNotification, Length = 48)",
+                    "[MessageProcessed] Client = [1] 'test', TraceId = 5, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, Retry = 0, Redelivery = 0",
+                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 5 (end)"
                 ] )
             ] )
             .Go();
@@ -805,42 +820,62 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
         await endSource.Task;
 
         clientLogs.GetAll()
-            .Where( t => t.Logs.Any( e => e.Contains( "[Trace:MessageNotification]" ) ) )
+            .Where( t => t.Logs.Any( e => e.Contains( "[Trace:MessageNotification]" ) || e.Contains( "[Trace:SystemNotification]" ) ) )
             .TestSequence(
             [
                 (t, _) => t.Logs.TestSequence(
                 [
-                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (start)",
-                    "[ProcessingMessage] Client = [1] 'test', TraceId = 2, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, Retry = 0, Redelivery = 0, Length = 2",
+                    "[Trace:SystemNotification] Client = [1] 'test', TraceId = 2 (start)",
                     "[SendingSenderName] Client = [1] 'test', TraceId = 2, Sender = [2] 'test2'",
                     "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 15)",
                     "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 15)",
                     "[SystemNotificationSent] Client = [1] 'test', TraceId = 2, Type = SenderName",
-                    "[SendingStreamName] Client = [1] 'test', TraceId = 2, Stream = [1] 'c'",
-                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 11)",
-                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 11)",
-                    "[SystemNotificationSent] Client = [1] 'test', TraceId = 2, Type = StreamName",
-                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 47)",
-                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 47)",
-                    "[MessageProcessed] Client = [1] 'test', TraceId = 2, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, Retry = 0, Redelivery = 0",
-                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (end)"
+                    "[Trace:SystemNotification] Client = [1] 'test', TraceId = 2 (end)"
                 ] ),
                 (t, _) => t.Logs.TestSequence(
                 [
-                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 5 (start)",
-                    "[ProcessingMessage] Client = [1] 'test', TraceId = 5, Sender = [2] 'test3', Channel = [1] 'd', Stream = [1] 'd', Queue = [1] 'd', MessageId = 0, Retry = 0, Redelivery = 0, Length = 3",
-                    "[SendingSenderName] Client = [1] 'test', TraceId = 5, Sender = [2] 'test3'",
-                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 5, Packet = (SystemNotification, Length = 15)",
-                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 5, Packet = (SystemNotification, Length = 15)",
-                    "[SystemNotificationSent] Client = [1] 'test', TraceId = 5, Type = SenderName",
-                    "[SendingStreamName] Client = [1] 'test', TraceId = 5, Stream = [1] 'd'",
-                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 5, Packet = (SystemNotification, Length = 11)",
-                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 5, Packet = (SystemNotification, Length = 11)",
-                    "[SystemNotificationSent] Client = [1] 'test', TraceId = 5, Type = StreamName",
-                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 5, Packet = (MessageNotification, Length = 48)",
-                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 5, Packet = (MessageNotification, Length = 48)",
-                    "[MessageProcessed] Client = [1] 'test', TraceId = 5, Sender = [2] 'test3', Channel = [1] 'd', Stream = [1] 'd', Queue = [1] 'd', MessageId = 0, Retry = 0, Redelivery = 0",
-                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 5 (end)"
+                    "[Trace:SystemNotification] Client = [1] 'test', TraceId = 3 (start)",
+                    "[SendingStreamName] Client = [1] 'test', TraceId = 3, Stream = [1] 'c'",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 3, Packet = (SystemNotification, Length = 11)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 3, Packet = (SystemNotification, Length = 11)",
+                    "[SystemNotificationSent] Client = [1] 'test', TraceId = 3, Type = StreamName",
+                    "[Trace:SystemNotification] Client = [1] 'test', TraceId = 3 (end)"
+                ] ),
+                (t, _) => t.Logs.TestSequence(
+                [
+                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (start)",
+                    "[ProcessingMessage] Client = [1] 'test', TraceId = 4, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, Retry = 0, Redelivery = 0, Length = 2",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 47)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 47)",
+                    "[MessageProcessed] Client = [1] 'test', TraceId = 4, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, Retry = 0, Redelivery = 0",
+                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (end)"
+                ] ),
+                (t, _) => t.Logs.TestSequence(
+                [
+                    "[Trace:SystemNotification] Client = [1] 'test', TraceId = 7 (start)",
+                    "[SendingSenderName] Client = [1] 'test', TraceId = 7, Sender = [2] 'test3'",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 7, Packet = (SystemNotification, Length = 15)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 7, Packet = (SystemNotification, Length = 15)",
+                    "[SystemNotificationSent] Client = [1] 'test', TraceId = 7, Type = SenderName",
+                    "[Trace:SystemNotification] Client = [1] 'test', TraceId = 7 (end)"
+                ] ),
+                (t, _) => t.Logs.TestSequence(
+                [
+                    "[Trace:SystemNotification] Client = [1] 'test', TraceId = 8 (start)",
+                    "[SendingStreamName] Client = [1] 'test', TraceId = 8, Stream = [1] 'd'",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 8, Packet = (SystemNotification, Length = 11)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 8, Packet = (SystemNotification, Length = 11)",
+                    "[SystemNotificationSent] Client = [1] 'test', TraceId = 8, Type = StreamName",
+                    "[Trace:SystemNotification] Client = [1] 'test', TraceId = 8 (end)"
+                ] ),
+                (t, _) => t.Logs.TestSequence(
+                [
+                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 9 (start)",
+                    "[ProcessingMessage] Client = [1] 'test', TraceId = 9, Sender = [2] 'test3', Channel = [1] 'd', Stream = [1] 'd', Queue = [1] 'd', MessageId = 0, Retry = 0, Redelivery = 0, Length = 3",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 9, Packet = (MessageNotification, Length = 48)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 9, Packet = (MessageNotification, Length = 48)",
+                    "[MessageProcessed] Client = [1] 'test', TraceId = 9, Sender = [2] 'test3', Channel = [1] 'd', Stream = [1] 'd', Queue = [1] 'd', MessageId = 0, Retry = 0, Redelivery = 0",
+                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 9 (end)"
                 ] )
             ] )
             .Go();

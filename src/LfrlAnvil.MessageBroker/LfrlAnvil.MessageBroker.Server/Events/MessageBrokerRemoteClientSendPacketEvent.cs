@@ -23,15 +23,19 @@ namespace LfrlAnvil.MessageBroker.Server.Events;
 /// </summary>
 public readonly struct MessageBrokerRemoteClientSendPacketEvent
 {
+    private readonly ulong _batchData;
+
     private MessageBrokerRemoteClientSendPacketEvent(
         MessageBrokerRemoteClient client,
         ulong traceId,
         MessageBrokerRemoteClientSendPacket packet,
-        MessageBrokerRemoteClientSendPacketEventType type)
+        MessageBrokerRemoteClientSendPacketEventType type,
+        ulong batchData)
     {
         Source = MessageBrokerRemoteClientEventSource.Create( client, traceId );
         Packet = packet;
         Type = type;
+        _batchData = batchData;
     }
 
     /// <summary>
@@ -51,13 +55,31 @@ public readonly struct MessageBrokerRemoteClientSendPacketEvent
     public MessageBrokerRemoteClientSendPacketEventType Type { get; }
 
     /// <summary>
+    /// Number of sent network packets.
+    /// </summary>
+    /// <remarks>
+    /// Relevant only when <see cref="Type"/> is equal to <see cref="MessageBrokerRemoteClientSendPacketEventType.Sending"/>.
+    /// </remarks>
+    public int PacketCount => Type == MessageBrokerRemoteClientSendPacketEventType.Sending ? unchecked( ( int )_batchData ) : 0;
+
+    /// <summary>
+    /// Identifier of an internal trace that sent the batch.
+    /// </summary>
+    /// <remarks>
+    /// Relevant only when <see cref="Type"/> is equal to <see cref="MessageBrokerRemoteClientSendPacketEventType.Batched"/>.
+    /// </remarks>
+    public ulong BatchTraceId => Type == MessageBrokerRemoteClientSendPacketEventType.Batched ? _batchData : 0;
+
+    /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerRemoteClientSendPacketEvent"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
-        return $"[SendPacket:{Type}] {Source}, Packet = ({Packet})";
+        var packetCount = PacketCount > 1 ? $", PacketCount = {PacketCount}" : string.Empty;
+        var batchTraceId = Type == MessageBrokerRemoteClientSendPacketEventType.Batched ? $", BatchTraceId = {BatchTraceId}" : string.Empty;
+        return $"[SendPacket:{Type}] {Source}{batchTraceId}, Packet = ({Packet}){packetCount}";
     }
 
     [Pure]
@@ -65,13 +87,15 @@ public readonly struct MessageBrokerRemoteClientSendPacketEvent
     internal static MessageBrokerRemoteClientSendPacketEvent CreateSending(
         MessageBrokerRemoteClient client,
         ulong traceId,
-        Protocol.PacketHeader header)
+        Protocol.PacketHeader header,
+        int packetCount = 1)
     {
         return new MessageBrokerRemoteClientSendPacketEvent(
             client,
             traceId,
             MessageBrokerRemoteClientSendPacket.Create( header ),
-            MessageBrokerRemoteClientSendPacketEventType.Sending );
+            MessageBrokerRemoteClientSendPacketEventType.Sending,
+            unchecked( ( ulong )packetCount ) );
     }
 
     [Pure]
@@ -85,6 +109,23 @@ public readonly struct MessageBrokerRemoteClientSendPacketEvent
             client,
             traceId,
             MessageBrokerRemoteClientSendPacket.Create( header ),
-            MessageBrokerRemoteClientSendPacketEventType.Sent );
+            MessageBrokerRemoteClientSendPacketEventType.Sent,
+            0 );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerRemoteClientSendPacketEvent CreateBatched(
+        MessageBrokerRemoteClient client,
+        ulong traceId,
+        Protocol.PacketHeader header,
+        ulong batchTraceId)
+    {
+        return new MessageBrokerRemoteClientSendPacketEvent(
+            client,
+            traceId,
+            MessageBrokerRemoteClientSendPacket.Create( header ),
+            MessageBrokerRemoteClientSendPacketEventType.Batched,
+            batchTraceId );
     }
 }

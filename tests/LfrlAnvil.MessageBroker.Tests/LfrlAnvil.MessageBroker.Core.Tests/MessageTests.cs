@@ -983,7 +983,7 @@ public class MessageTests : TestsBase, IClassFixture<SharedResourceFixture>
     [Fact]
     public async Task Server_ShouldAcceptPushedMessages_AndSendThemToAppropriateListeners_WithEnqueueingAndBatching()
     {
-        var endSource = new SafeTaskCompletionSource();
+        var endSource = new SafeTaskCompletionSource( completionCount: 3 );
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),
             MessageBrokerServerOptions.Default

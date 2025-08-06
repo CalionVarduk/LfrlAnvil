@@ -313,31 +313,143 @@ internal struct QueueProcessor
                             ? queue.Client.Server.MemoryPool
                             : queue.Client.MemoryPool;
 
-                        // TODO:
-                        // clear will matter for batching since the message may come from another client
-                        // with different clear buffers rule
                         poolToken = memoryPool.Rent( totalLength, streamMessage.PoolToken.Clear, out var data );
                         header.Serialize( data );
                         streamMessage.Data.CopyTo(
                             data.Slice( Protocol.PacketHeader.Length + Protocol.MessageNotificationHeader.Payload ) );
 
+                        var requiresSenderName = false;
+                        var requiresStreamName = false;
                         using ( AcquireActiveClientLock( queue, traceId, out var exc ) )
                         {
                             if ( exc is not null )
                                 return;
 
-                            NotificationSender.EnqueueMessageUnsafe(
-                                queue.Client,
-                                in message,
-                                retry,
-                                redelivery,
-                                streamMessage.Id,
-                                ackId,
-                                poolToken,
-                                data );
+                            var enqueued = true;
+                            var synchronizeExternalObjectNames = queue.Client.SynchronizeExternalObjectNames;
+                            if ( synchronizeExternalObjectNames )
+                            {
+                                if ( queue.Client.ExternalNameCache.RequiresUpdate( queue.Client, message.Publisher.Client ) )
+                                {
+                                    requiresSenderName = true;
+                                    enqueued = false;
+                                }
 
-                            failed = false;
-                            queue.Client.NotificationSender.SignalContinuation();
+                                if ( queue.Client.ExternalNameCache.RequiresUpdate( message.Publisher.Stream ) )
+                                {
+                                    requiresStreamName = true;
+                                    enqueued = false;
+                                }
+                            }
+
+                            if ( enqueued )
+                            {
+                                NotificationSender.EnqueueMessageUnsafe(
+                                    queue.Client,
+                                    in message,
+                                    retry,
+                                    redelivery,
+                                    streamMessage.Id,
+                                    ackId,
+                                    poolToken,
+                                    data );
+
+                                failed = false;
+                                queue.Client.NotificationSender.SignalContinuation();
+                            }
+                        }
+
+                        if ( failed )
+                        {
+                            var senderNamePoolToken = MemoryPoolToken<byte>.Empty;
+                            var senderNameData = Memory<byte>.Empty;
+                            var streamNamePoolToken = MemoryPoolToken<byte>.Empty;
+                            var streamNameData = Memory<byte>.Empty;
+                            try
+                            {
+                                if ( requiresSenderName )
+                                {
+                                    var notification = new Protocol.ObjectNameNotification(
+                                        MessageBrokerSystemNotificationType.SenderName,
+                                        message.Publisher.Client.Id,
+                                        message.Publisher.Client.Name );
+
+                                    senderNamePoolToken = queue.Client.MemoryPool.Rent(
+                                        notification.Length,
+                                        queue.Client.ClearBuffers,
+                                        out senderNameData );
+
+                                    notification.Serialize( senderNameData );
+                                }
+
+                                if ( requiresStreamName )
+                                {
+                                    var notification = new Protocol.ObjectNameNotification(
+                                        MessageBrokerSystemNotificationType.StreamName,
+                                        message.Publisher.Stream.Id,
+                                        message.Publisher.Stream.Name );
+
+                                    streamNamePoolToken = queue.Client.MemoryPool.Rent(
+                                        notification.Length,
+                                        queue.Client.ClearBuffers,
+                                        out streamNameData );
+
+                                    notification.Serialize( streamNameData );
+                                }
+
+                                var senderNameEnqueued = false;
+                                var streamNameEnqueued = false;
+                                using ( AcquireActiveClientLock( queue, traceId, out var exc ) )
+                                {
+                                    if ( exc is not null )
+                                        return;
+
+                                    if ( requiresSenderName )
+                                    {
+                                        senderNameEnqueued = NotificationSender.TryEnqueueSenderNameUnsafe(
+                                            queue.Client,
+                                            in message,
+                                            ref senderNamePoolToken,
+                                            senderNameData );
+                                    }
+
+                                    if ( requiresStreamName )
+                                    {
+                                        streamNameEnqueued = NotificationSender.TryEnqueueStreamNameUnsafe(
+                                            queue.Client,
+                                            in message,
+                                            ref streamNamePoolToken,
+                                            streamNameData );
+                                    }
+
+                                    NotificationSender.EnqueueMessageUnsafe(
+                                        queue.Client,
+                                        in message,
+                                        retry,
+                                        redelivery,
+                                        streamMessage.Id,
+                                        ackId,
+                                        poolToken,
+                                        data );
+
+                                    failed = false;
+                                    queue.Client.NotificationSender.SignalContinuation();
+                                }
+
+                                if ( requiresSenderName && ! senderNameEnqueued )
+                                    Return( queue, traceId, senderNamePoolToken );
+
+                                if ( requiresStreamName && ! streamNameEnqueued )
+                                    Return( queue, traceId, streamNamePoolToken );
+                            }
+                            finally
+                            {
+                                if ( failed )
+                                {
+                                    Return( queue, traceId, senderNamePoolToken );
+                                    Return( queue, traceId, streamNamePoolToken );
+                                }
+                            }
                         }
                     }
                     finally
@@ -353,9 +465,7 @@ internal struct QueueProcessor
                                     queue.MessageStore.RemoveUnacked( ackId );
                             }
 
-                            var exc = poolToken.Return();
-                            if ( exc is not null && queue.Logger.Error is { } error )
-                                error.Emit( MessageBrokerQueueErrorEvent.Create( queue, traceId, exc ) );
+                            Return( queue, traceId, poolToken );
                         }
                         else
                         {
@@ -452,5 +562,13 @@ internal struct QueueProcessor
             error.Emit( MessageBrokerQueueErrorEvent.Create( queue, traceId, exception ) );
 
         return default;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static void Return(MessageBrokerQueue queue, ulong traceId, MemoryPoolToken<byte> poolToken)
+    {
+        var exc = poolToken.Return();
+        if ( exc is not null && queue.Logger.Error is { } error )
+            error.Emit( MessageBrokerQueueErrorEvent.Create( queue, traceId, exc ) );
     }
 }

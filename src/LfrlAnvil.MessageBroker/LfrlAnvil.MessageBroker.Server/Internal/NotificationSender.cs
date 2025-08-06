@@ -26,13 +26,13 @@ namespace LfrlAnvil.MessageBroker.Server.Internal;
 internal struct NotificationSender
 {
     private readonly ManualResetValueTaskSource<bool> _continuation;
-    private QueueSlim<Message> _messages;
+    private QueueSlim<Notification> _notifications;
     private Task? _task;
 
     private NotificationSender(ManualResetValueTaskSource<bool> continuation)
     {
         _continuation = continuation;
-        _messages = QueueSlim<Message>.Create();
+        _notifications = QueueSlim<Notification>.Create();
         _task = null;
     }
 
@@ -76,20 +76,20 @@ internal struct NotificationSender
             _continuation.SetResult( false );
     }
 
-    internal (int DiscardedMessageCount, Chain<Exception> Exceptions) EndDispose(bool extractExceptions)
+    internal (int DiscardedNotificationCount, Chain<Exception> Exceptions) EndDispose(bool extractExceptions)
     {
-        var discardedMessageCount = _messages.Count;
+        var discardedNotificationCount = _notifications.Count;
         var exceptions = Chain<Exception>.Empty;
 
-        foreach ( ref readonly var message in _messages )
+        foreach ( ref readonly var notification in _notifications )
         {
-            var exc = message.PoolToken.Return();
+            var exc = notification.PoolToken.Return();
             if ( exc is not null && extractExceptions )
                 exceptions = exceptions.Extend( exc );
         }
 
-        _messages.Clear();
-        return (discardedMessageCount, exceptions);
+        _notifications = QueueSlim<Notification>.Create();
+        return (discardedNotificationCount, exceptions);
     }
 
     internal void SetUnderlyingTask(Task? task)
@@ -112,6 +112,45 @@ internal struct NotificationSender
             _continuation.SetResult( true );
     }
 
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static bool TryEnqueueSenderNameUnsafe(
+        MessageBrokerRemoteClient client,
+        in QueueMessage message,
+        ref MemoryPoolToken<byte> poolToken,
+        ReadOnlyMemory<byte> packet)
+    {
+        var sender = message.Publisher.Client;
+        if ( ! client.ExternalNameCache.TryUpdate( client, sender ) )
+            return false;
+
+        var writerSource = client.WriterQueue.AcquireSource( packet, client.ClearBuffers );
+        client.NotificationSender._notifications.Enqueue(
+            new Notification( in message, default, default, default, default, NotificationType.SenderName, writerSource, poolToken ) );
+
+        poolToken = MemoryPoolToken<byte>.Empty;
+        return true;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static bool TryEnqueueStreamNameUnsafe(
+        MessageBrokerRemoteClient client,
+        in QueueMessage message,
+        ref MemoryPoolToken<byte> poolToken,
+        ReadOnlyMemory<byte> packet)
+    {
+        var stream = message.Publisher.Stream;
+        if ( ! client.ExternalNameCache.TryUpdate( stream ) )
+            return false;
+
+        var writerSource = client.WriterQueue.AcquireSource( packet, client.ClearBuffers );
+        client.NotificationSender._notifications.Enqueue(
+            new Notification( in message, default, default, default, default, NotificationType.StreamName, writerSource, poolToken ) );
+
+        poolToken = MemoryPoolToken<byte>.Empty;
+        return true;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static void EnqueueMessageUnsafe(
         MessageBrokerRemoteClient client,
         in QueueMessage message,
@@ -122,22 +161,9 @@ internal struct NotificationSender
         MemoryPoolToken<byte> poolToken,
         ReadOnlyMemory<byte> packet)
     {
-        var senderName = NameNotification.Empty;
-        var streamName = NameNotification.Empty;
-        if ( client.SynchronizeExternalObjectNames )
-        {
-            var sender = message.Publisher.Client;
-            if ( client.ExternalNameCache.TryUpdate( client, sender ) )
-                senderName = new NameNotification( client.WriterQueue.AcquireSource(), sender.Id, sender.Name );
-
-            var stream = message.Publisher.Stream;
-            if ( client.ExternalNameCache.TryUpdate( stream ) )
-                streamName = new NameNotification( client.WriterQueue.AcquireSource(), stream.Id, stream.Name );
-        }
-
-        var writerSource = client.WriterQueue.AcquireSource();
-        client.NotificationSender._messages.Enqueue(
-            new Message( in message, retry, redelivery, id, ackId, poolToken, packet, writerSource, senderName, streamName ) );
+        var writerSource = client.WriterQueue.AcquireSource( packet, poolToken.Clear );
+        client.NotificationSender._notifications.Enqueue(
+            new Notification( in message, retry, redelivery, id, ackId, NotificationType.Message, writerSource, poolToken ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -152,200 +178,279 @@ internal struct NotificationSender
             while ( true )
             {
                 ulong traceId;
-                Message message;
+                Notification notification;
+                ReadOnlyMemory<byte> data;
                 using ( client.AcquireLock() )
                 {
                     if ( client.ShouldCancel )
                         return;
 
-                    if ( client.NotificationSender._messages.IsEmpty )
+                    if ( client.NotificationSender._notifications.IsEmpty )
                     {
                         client.NotificationSender._continuation.Reset();
                         break;
                     }
 
-                    message = client.NotificationSender._messages.First();
+                    notification = client.NotificationSender._notifications.First();
+                    data = notification.WriterSource.Data;
                     traceId = client.GetTraceId();
                 }
 
-                Assume.Equals( message.Listener.Client, client );
-                using ( MessageBrokerRemoteClientTraceEvent.CreateScope(
-                    client,
-                    traceId,
-                    MessageBrokerRemoteClientTraceEventType.MessageNotification ) )
+                Assume.Equals( notification.Listener.Client, client );
+                if ( notification.Type == NotificationType.Message )
                 {
-                    if ( client.Logger.ProcessingMessage is { } processingMessage )
-                        processingMessage.Emit(
-                            MessageBrokerRemoteClientProcessingMessageEvent.Create(
-                                message.Listener,
-                                traceId,
-                                message.Publisher,
-                                message.MessageId,
-                                message.AckId,
-                                message.Retry,
-                                message.Redelivery,
-                                message.Length ) );
-
-                    try
+                    using ( MessageBrokerRemoteClientTraceEvent.CreateScope(
+                        client,
+                        traceId,
+                        MessageBrokerRemoteClientTraceEventType.MessageNotification ) )
                     {
-                        if ( message.SenderName.WriterSource is not null )
+                        try
                         {
-                            if ( client.Logger.SendingSenderName is { } sendingSenderName )
-                                sendingSenderName.Emit(
-                                    MessageBrokerRemoteClientSendingSenderNameEvent.Create(
-                                        client,
+                            if ( client.Logger.ProcessingMessage is { } processingMessage )
+                                processingMessage.Emit(
+                                    MessageBrokerRemoteClientProcessingMessageEvent.Create(
+                                        notification.Listener,
                                         traceId,
-                                        message.SenderName.Id,
-                                        message.SenderName.Name ) );
+                                        notification.Publisher,
+                                        notification.MessageId,
+                                        notification.AckId,
+                                        notification.Retry,
+                                        notification.Redelivery,
+                                        GetMessageLength( data ) ) );
 
-                            if ( ! await SendObjectNameNotificationAsync(
-                                    client,
-                                    MessageBrokerSystemNotificationType.SenderName,
-                                    message.SenderName,
-                                    traceId )
-                                .ConfigureAwait( false ) )
-                                return;
-                        }
-
-                        if ( message.StreamName.WriterSource is not null )
-                        {
-                            if ( client.Logger.SendingStreamName is { } sendingStreamName )
-                                sendingStreamName.Emit(
-                                    MessageBrokerRemoteClientSendingStreamNameEvent.Create(
-                                        client,
-                                        traceId,
-                                        message.StreamName.Id,
-                                        message.StreamName.Name ) );
-
-                            if ( ! await SendObjectNameNotificationAsync(
-                                    client,
-                                    MessageBrokerSystemNotificationType.StreamName,
-                                    message.StreamName,
-                                    traceId )
-                                .ConfigureAwait( false ) )
-                                return;
-                        }
-
-                        if ( ! await message.WriterSource.GetTask().ConfigureAwait( false ) )
-                        {
-                            if ( client.Logger.Error is { } error )
-                                error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, client.DisposedException() ) );
-
-                            return;
-                        }
-
-                        var writeResult = await client.WriteAsync( message.PacketHeader, message.Packet, traceId )
-                            .ConfigureAwait( false );
-
-                        if ( writeResult.Exception is not null )
-                        {
-                            using ( client.AcquireLock() )
-                                client.NotificationSender._task = null;
-
-                            await client.DisposeAsync( traceId ).ConfigureAwait( false );
-                            return;
-                        }
-
-                        if ( client.Logger.MessageProcessed is { } messageProcessed )
-                            messageProcessed.Emit(
-                                MessageBrokerRemoteClientMessageProcessedEvent.Create(
-                                    message.Listener,
-                                    traceId,
-                                    message.Publisher,
-                                    message.MessageId,
-                                    message.AckId,
-                                    message.Retry,
-                                    message.Redelivery ) );
-
-                        if ( message.AckId <= 0 && message.Listener.DecrementPrefetchCounter() )
-                        {
-                            using ( message.Listener.Queue.AcquireLock() )
+                            var packetHeader = GetPacketHeader( data, MessageBrokerClientEndpoint.MessageNotification );
+                            var writerResult = await notification.WriterSource.GetTask().ConfigureAwait( false );
+                            switch ( writerResult.Status )
                             {
-                                if ( ! message.Listener.Queue.ShouldCancel && ! message.Listener.Queue.MessageStore.IsEmpty )
-                                    message.Listener.Queue.QueueProcessor.SignalContinuation();
+                                case WriterSourceResultStatus.Ready:
+                                {
+                                    var (packetCount, exception) = await client
+                                        .WritePotentialBatchAsync( packetHeader, data, traceId )
+                                        .ConfigureAwait( false );
+
+                                    if ( exception is not null )
+                                    {
+                                        await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
+                                        return;
+                                    }
+
+                                    if ( ! ReleaseWriter( client, notification.WriterSource, packetCount, traceId ) )
+                                        return;
+
+                                    break;
+                                }
+                                case WriterSourceResultStatus.Batched:
+                                {
+                                    if ( ! ReleaseBatchedWriter( client, notification.WriterSource, packetHeader, writerResult, traceId ) )
+                                        return;
+
+                                    break;
+                                }
+                                default:
+                                {
+                                    HandleDisposedWriter( client, traceId );
+                                    return;
+                                }
                             }
+
+                            if ( notification.AckId <= 0 && notification.Listener.DecrementPrefetchCounter() )
+                            {
+                                using ( notification.Listener.Queue.AcquireLock() )
+                                {
+                                    if ( ! notification.Listener.Queue.ShouldCancel && ! notification.Listener.Queue.MessageStore.IsEmpty )
+                                        notification.Listener.Queue.QueueProcessor.SignalContinuation();
+                                }
+                            }
+
+                            if ( client.Logger.MessageProcessed is { } messageProcessed )
+                                messageProcessed.Emit(
+                                    MessageBrokerRemoteClientMessageProcessedEvent.Create(
+                                        notification.Listener,
+                                        traceId,
+                                        notification.Publisher,
+                                        notification.MessageId,
+                                        notification.AckId,
+                                        notification.Retry,
+                                        notification.Redelivery ) );
                         }
-
-                        using ( client.AcquireActiveLock( traceId, out var exc ) )
+                        finally
                         {
-                            if ( exc is not null )
-                                return;
-
-                            client.NotificationSender._messages.Dequeue();
-                            client.WriterQueue.Release( client, message.WriterSource );
+                            notification.PoolToken.Return( client, traceId );
                         }
                     }
-                    finally
+                }
+                else
+                {
+                    using ( MessageBrokerRemoteClientTraceEvent.CreateScope(
+                        client,
+                        traceId,
+                        MessageBrokerRemoteClientTraceEventType.SystemNotification ) )
                     {
-                        message.PoolToken.Return( client, traceId );
+                        try
+                        {
+                            MessageBrokerSystemNotificationType type;
+                            if ( notification.Type == NotificationType.SenderName )
+                            {
+                                type = MessageBrokerSystemNotificationType.SenderName;
+                                if ( client.Logger.SendingSenderName is { } sendingSenderName )
+                                    sendingSenderName.Emit(
+                                        MessageBrokerRemoteClientSendingSenderNameEvent.Create(
+                                            client,
+                                            traceId,
+                                            notification.Publisher.Client ) );
+                            }
+                            else
+                            {
+                                type = MessageBrokerSystemNotificationType.StreamName;
+                                if ( client.Logger.SendingStreamName is { } sendingStreamName )
+                                    sendingStreamName.Emit(
+                                        MessageBrokerRemoteClientSendingStreamNameEvent.Create(
+                                            client,
+                                            traceId,
+                                            notification.Publisher.Stream ) );
+                            }
+
+                            var packetHeader = GetPacketHeader( data, MessageBrokerClientEndpoint.SystemNotification );
+                            var writerResult = await notification.WriterSource.GetTask().ConfigureAwait( false );
+                            switch ( writerResult.Status )
+                            {
+                                case WriterSourceResultStatus.Ready:
+                                {
+                                    var (packetCount, exception) = await client
+                                        .WritePotentialBatchAsync( packetHeader, data, traceId )
+                                        .ConfigureAwait( false );
+
+                                    if ( exception is not null )
+                                    {
+                                        await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
+                                        return;
+                                    }
+
+                                    if ( ! ReleaseWriter( client, notification.WriterSource, packetCount, traceId ) )
+                                        return;
+
+                                    break;
+                                }
+                                case WriterSourceResultStatus.Batched:
+                                {
+                                    if ( ! ReleaseBatchedWriter( client, notification.WriterSource, packetHeader, writerResult, traceId ) )
+                                        return;
+
+                                    break;
+                                }
+                                default:
+                                {
+                                    HandleDisposedWriter( client, traceId );
+                                    return;
+                                }
+                            }
+
+                            if ( client.Logger.SystemNotificationSent is { } systemNotificationSent )
+                                systemNotificationSent.Emit(
+                                    MessageBrokerRemoteClientSystemNotificationSentEvent.Create( client, traceId, type ) );
+                        }
+                        finally
+                        {
+                            notification.PoolToken.Return( client, traceId );
+                        }
                     }
                 }
             }
         }
     }
 
-    private static async ValueTask<bool> SendObjectNameNotificationAsync(
-        MessageBrokerRemoteClient client,
-        MessageBrokerSystemNotificationType type,
-        NameNotification data,
-        ulong traceId)
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static bool ReleaseWriter(MessageBrokerRemoteClient client, WriterQueue.TaskSource writer, int packetCount, ulong traceId)
     {
-        Assume.IsNotNull( data.WriterSource );
-        var notification = new Protocol.ObjectNameNotification( type, data.Id, data.Name );
-        var token = client.MemoryPool.Rent( notification.Length, client.ClearBuffers, out var buffer );
-        try
+        using ( client.AcquireActiveLock( traceId, out var exc ) )
         {
-            notification.Serialize( buffer );
-            if ( ! await data.WriterSource.GetTask().ConfigureAwait( false ) )
-            {
-                if ( client.Logger.Error is { } error )
-                    error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, client.DisposedException() ) );
-
+            if ( exc is not null )
                 return false;
-            }
 
-            var writeResult = await client.WriteAsync( notification.Header, buffer, traceId ).ConfigureAwait( false );
-            if ( writeResult.Exception is not null )
-            {
-                using ( client.AcquireLock() )
-                    client.NotificationSender._task = null;
-
-                await client.DisposeAsync( traceId ).ConfigureAwait( false );
-                return false;
-            }
-
-            if ( client.Logger.SystemNotificationSent is { } systemNotificationSent )
-                systemNotificationSent.Emit( MessageBrokerRemoteClientSystemNotificationSentEvent.Create( client, traceId, type ) );
-
-            using ( client.AcquireActiveLock( traceId, out var exc ) )
-            {
-                if ( exc is not null )
-                    return false;
-
-                client.WriterQueue.Release( client, data.WriterSource );
-            }
-        }
-        finally
-        {
-            token.Return( client, traceId );
+            client.NotificationSender._notifications.Dequeue();
+            if ( packetCount > 1 )
+                client.WriterQueue.ReleaseBatched( client, writer, packetCount, traceId );
+            else
+                client.WriterQueue.Release( client, writer );
         }
 
         return true;
     }
 
-    private readonly struct Message
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static bool ReleaseBatchedWriter(
+        MessageBrokerRemoteClient client,
+        WriterQueue.TaskSource writer,
+        Protocol.PacketHeader header,
+        WriterSourceResult writerResult,
+        ulong traceId)
     {
-        internal Message(
+        Assume.IsGreaterThan( client.MaxBatchPacketCount, 1 );
+        Assume.Equals( writerResult.Status, WriterSourceResultStatus.Batched );
+
+        if ( client.Logger.SendPacket is { } sendPacket )
+            sendPacket.Emit( MessageBrokerRemoteClientSendPacketEvent.CreateBatched( client, traceId, header, writerResult.BatchTraceId ) );
+
+        using ( client.AcquireActiveLock( traceId, out var exc ) )
+        {
+            if ( exc is not null )
+                return false;
+
+            client.NotificationSender._notifications.Dequeue();
+            client.WriterQueue.ReleaseBatched( client, writer, writerResult );
+        }
+
+        return true;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static void HandleDisposedWriter(MessageBrokerRemoteClient client, ulong traceId)
+    {
+        if ( client.Logger.Error is { } error )
+            error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, client.DisposedException() ) );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static ValueTask DisposeClientAsync(MessageBrokerRemoteClient client, ulong traceId)
+    {
+        using ( client.AcquireLock() )
+            client.NotificationSender._task = null;
+
+        return client.DisposeAsync( traceId );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static Protocol.PacketHeader GetPacketHeader(ReadOnlyMemory<byte> data, MessageBrokerClientEndpoint endpoint)
+    {
+        return Protocol.PacketHeader.Create( endpoint, unchecked( ( uint )(data.Length - Protocol.PacketHeader.Length) ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static int GetMessageLength(ReadOnlyMemory<byte> data)
+    {
+        return unchecked( data.Length - Protocol.PacketHeader.Length - Protocol.MessageNotificationHeader.Payload );
+    }
+
+    private enum NotificationType : byte
+    {
+        Message = 0,
+        SenderName = 1,
+        StreamName = 2
+    }
+
+    private readonly struct Notification
+    {
+        internal Notification(
             in QueueMessage message,
             Int31BoolPair retry,
             Int31BoolPair redelivery,
             ulong messageId,
             int ackId,
-            MemoryPoolToken<byte> poolToken,
-            ReadOnlyMemory<byte> packet,
-            ManualResetValueTaskSource<bool> writerSource,
-            NameNotification senderName,
-            NameNotification streamName)
+            NotificationType type,
+            WriterQueue.TaskSource writerSource,
+            MemoryPoolToken<byte> poolToken)
         {
             Publisher = message.Publisher;
             Listener = message.Listener;
@@ -353,11 +458,9 @@ internal struct NotificationSender
             Retry = retry;
             Redelivery = redelivery;
             AckId = ackId;
-            WriterSource = writerSource;
-            SenderName = senderName;
-            StreamName = streamName;
+            Type = type;
             PoolToken = poolToken;
-            Packet = packet;
+            WriterSource = writerSource;
         }
 
         internal readonly MessageBrokerChannelPublisherBinding Publisher;
@@ -366,45 +469,15 @@ internal struct NotificationSender
         internal readonly Int31BoolPair Retry;
         internal readonly Int31BoolPair Redelivery;
         internal readonly int AckId;
-        internal readonly ManualResetValueTaskSource<bool> WriterSource;
-        internal readonly NameNotification SenderName;
-        internal readonly NameNotification StreamName;
+        internal readonly NotificationType Type;
+        internal readonly WriterQueue.TaskSource WriterSource;
         internal readonly MemoryPoolToken<byte> PoolToken;
-        internal readonly ReadOnlyMemory<byte> Packet;
-
-        internal Protocol.PacketHeader PacketHeader => Protocol.PacketHeader.Create(
-            MessageBrokerClientEndpoint.MessageNotification,
-            ( uint )Packet.Length - Protocol.PacketHeader.Length );
-
-        internal int Length => unchecked( Packet.Length - Protocol.PacketHeader.Length - Protocol.MessageNotificationHeader.Payload );
 
         [Pure]
         public override string ToString()
         {
             return
-                $"Header = ({PacketHeader}), Publisher = ({Publisher}), Listener = ({Listener}), MessageId = {MessageId}, AckId = {AckId}, Retry = ({Retry}), Redelivery = ({Redelivery})";
-        }
-    }
-
-    private readonly struct NameNotification
-    {
-        internal static NameNotification Empty => new NameNotification( null, 0, string.Empty );
-
-        internal NameNotification(ManualResetValueTaskSource<bool>? writerSource, int id, string name)
-        {
-            WriterSource = writerSource;
-            Id = id;
-            Name = name;
-        }
-
-        internal readonly ManualResetValueTaskSource<bool>? WriterSource;
-        internal readonly int Id;
-        internal readonly string Name;
-
-        [Pure]
-        public override string ToString()
-        {
-            return $"Id = {Id}, Name = '{Name}'";
+                $"[{Type}] Publisher = ({Publisher}), Listener = ({Listener}), MessageId = {MessageId}, AckId = {AckId}, Retry = ({Retry}), Redelivery = ({Redelivery})";
         }
     }
 }

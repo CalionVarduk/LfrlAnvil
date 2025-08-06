@@ -41,32 +41,38 @@ internal struct PacketListener
         return new PacketListener( null );
     }
 
-    [MethodImpl( MethodImplOptions.NoInlining )]
-    internal static async Task StartUnderlyingTask(MessageBrokerRemoteClient client, Stream stream)
+    internal static Task StartUnderlyingTask(MessageBrokerRemoteClient client, Stream stream)
     {
-        try
-        {
-            await RunCore( client, stream ).ConfigureAwait( false );
-        }
-        catch ( Exception exc )
-        {
-            ulong traceId;
-            using ( client.AcquireLock() )
+        return Task.Run(
+            async () =>
             {
-                client.PacketListener._task = null;
-                traceId = client.GetTraceId();
-            }
+                try
+                {
+                    await RunCore( client, stream ).ConfigureAwait( false );
+                }
+                catch ( Exception exc )
+                {
+                    ulong traceId;
+                    using ( client.AcquireLock() )
+                    {
+                        client.PacketListener._task = null;
+                        traceId = client.GetTraceId();
+                    }
 
-            using ( MessageBrokerRemoteClientTraceEvent.CreateScope( client, traceId, MessageBrokerRemoteClientTraceEventType.Unexpected ) )
-            {
-                if ( client.Logger.Error is { } error )
-                    error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
+                    using ( MessageBrokerRemoteClientTraceEvent.CreateScope(
+                        client,
+                        traceId,
+                        MessageBrokerRemoteClientTraceEventType.Unexpected ) )
+                    {
+                        if ( client.Logger.Error is { } error )
+                            error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
 
-                await client.DisposeAsync( traceId ).ConfigureAwait( false );
-            }
-        }
+                        await client.DisposeAsync( traceId ).ConfigureAwait( false );
+                    }
+                }
 
-        Assume.IsGreaterThanOrEqualTo( client.State, MessageBrokerRemoteClientState.Disposing );
+                Assume.IsGreaterThanOrEqualTo( client.State, MessageBrokerRemoteClientState.Disposing );
+            } );
     }
 
     internal void SetUnderlyingTask(Task? task)

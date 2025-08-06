@@ -49,6 +49,7 @@ public sealed partial class MessageBrokerRemoteClient
     internal PacketListener PacketListener;
     internal NotificationSender NotificationSender;
     internal RequestHandler RequestHandler;
+    internal ResponseSender ResponseSender;
     internal ExternalNameCache ExternalNameCache;
     internal MessageRouting MessageRouting;
     internal int MaxNetworkBatchPacketBytes;
@@ -98,6 +99,7 @@ public sealed partial class MessageBrokerRemoteClient
         PacketListener = PacketListener.Create();
         NotificationSender = NotificationSender.Create();
         RequestHandler = RequestHandler.Create();
+        ResponseSender = ResponseSender.Create();
         ExternalNameCache = ExternalNameCache.Create();
         MessageRouting = MessageRouting.Empty;
 
@@ -650,6 +652,49 @@ public sealed partial class MessageBrokerRemoteClient
         return Result.Valid;
     }
 
+    internal async ValueTask<Result<int>> WritePotentialBatchAsync(Protocol.PacketHeader header, ReadOnlyMemory<byte> data, ulong traceId)
+    {
+        var batchPoolToken = MemoryPoolToken<byte>.Empty;
+        var dataToWrite = data;
+        var headerToWrite = header;
+        try
+        {
+            var packetCount = TryPrepareBatchPacket( data.Length, ref batchPoolToken, ref headerToWrite, ref dataToWrite, traceId );
+            if ( packetCount.Exception is not null )
+                return packetCount.Exception;
+
+            var sendPacket = Logger.SendPacket;
+            sendPacket?.Emit( MessageBrokerRemoteClientSendPacketEvent.CreateSending( this, traceId, headerToWrite, packetCount.Value ) );
+            try
+            {
+                CancellationToken timeoutToken;
+                using ( AcquireActiveLock( traceId, out var exc ) )
+                {
+                    if ( exc is not null )
+                        return exc;
+
+                    timeoutToken = EventScheduler.ScheduleWriteTimeout( this );
+                }
+
+                await _stream.WriteAsync( dataToWrite, timeoutToken ).ConfigureAwait( false );
+            }
+            catch ( Exception exc )
+            {
+                return EmitError( exc, traceId );
+            }
+
+            sendPacket?.Emit( MessageBrokerRemoteClientSendPacketEvent.CreateSent( this, traceId, headerToWrite ) );
+            if ( packetCount.Value > 1 )
+                sendPacket?.Emit( MessageBrokerRemoteClientSendPacketEvent.CreateBatched( this, traceId, header, traceId ) );
+
+            return packetCount;
+        }
+        finally
+        {
+            batchPoolToken.Return( this, traceId );
+        }
+    }
+
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal Exception EmitError(Exception exception, ulong traceId)
     {
@@ -867,6 +912,7 @@ public sealed partial class MessageBrokerRemoteClient
 
             Task? eventSchedulerTask;
             Task? requestHandlerTask;
+            Task? responseSenderTask;
             Task? packetListenerTask;
             Task? notificationSenderTask;
             ValueTaskDelaySource? ownedDelaySource;
@@ -878,9 +924,11 @@ public sealed partial class MessageBrokerRemoteClient
                 ownedDelaySource = _delaySource.DiscardOwnedSource();
                 eventSchedulerTask = EventScheduler.DiscardUnderlyingTask();
                 requestHandlerTask = RequestHandler.DiscardUnderlyingTask();
+                responseSenderTask = ResponseSender.DiscardUnderlyingTask();
                 packetListenerTask = PacketListener.DiscardUnderlyingTask();
                 notificationSenderTask = NotificationSender.DiscardUnderlyingTask();
                 RequestHandler.Dispose();
+                ResponseSender.BeginDispose();
                 EventScheduler.Dispose();
                 NotificationSender.BeginDispose();
                 WriterQueue.Dispose();
@@ -898,6 +946,9 @@ public sealed partial class MessageBrokerRemoteClient
 
             if ( requestHandlerTask is not null )
                 await requestHandlerTask.ConfigureAwait( false );
+
+            if ( responseSenderTask is not null )
+                await responseSenderTask.ConfigureAwait( false );
 
             if ( packetListenerTask is not null )
                 await packetListenerTask.ConfigureAwait( false );
@@ -937,19 +988,24 @@ public sealed partial class MessageBrokerRemoteClient
                     listener.OnClientDisconnected( traceId );
             }
 
-            int discardedMessageCount;
+            int discardedNotificationCount;
+            ListSlim<ResponseSender.DiscardedResponse> discardedMessages;
             using ( AcquireLock() )
-                (discardedMessageCount, exceptions) = NotificationSender.EndDispose( error is not null );
+            {
+                (discardedNotificationCount, exceptions) = NotificationSender.EndDispose( error is not null );
+                discardedMessages = ResponseSender.EndDispose();
+            }
 
+            EndDiscardedResponses( ref discardedMessages, traceId );
             foreach ( var exc in exceptions )
             {
                 Assume.IsNotNull( error );
                 error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
             }
 
-            if ( discardedMessageCount > 0 && error is not null )
+            if ( discardedNotificationCount > 0 && error is not null )
             {
-                var exc = this.Exception( Resources.MessagesDiscarded( discardedMessageCount ) );
+                var exc = this.Exception( Resources.NotificationsDiscarded( discardedNotificationCount ) );
                 error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
             }
 
@@ -982,6 +1038,78 @@ public sealed partial class MessageBrokerRemoteClient
             if ( ! _disconnected.Task.IsCompleted )
                 _disconnected.SetResult();
         }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private void EndDiscardedResponses(ref ListSlim<ResponseSender.DiscardedResponse> discardedResponses, ulong traceId)
+    {
+        var error = Logger.Error;
+        var traceEnd = Logger.TraceEnd;
+        foreach ( ref readonly var r in discardedResponses )
+        {
+            r.PoolToken.Return( this, traceId );
+            if ( error is not null )
+            {
+                var exc = this.DisposedException();
+                error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, r.TraceId, exc ) );
+            }
+
+            traceEnd?.Emit( MessageBrokerRemoteClientTraceEvent.Create( this, r.TraceId, r.EventType ) );
+        }
+
+        discardedResponses = ListSlim<ResponseSender.DiscardedResponse>.Create();
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private Result<int> TryPrepareBatchPacket(
+        int packetLength,
+        ref MemoryPoolToken<byte> batchPoolToken,
+        ref Protocol.PacketHeader headerToWrite,
+        ref ReadOnlyMemory<byte> dataToWrite,
+        ulong traceId)
+    {
+        var packetCount = 1;
+        if ( MaxBatchPacketCount == 0 )
+            return packetCount;
+
+        var batchLength = unchecked( ( long )Protocol.PacketHeader.Length + Protocol.BatchHeader.Length + packetLength );
+        if ( batchLength >= MaxNetworkBatchPacketBytes )
+            return packetCount;
+
+        var clearBuffer = ClearBuffers;
+        using ( AcquireActiveLock( traceId, out var exc ) )
+        {
+            if ( exc is not null )
+                return exc;
+
+            packetCount = WriterQueue.GetLargestAvailableBatchCount( this, ref batchLength, ref clearBuffer );
+        }
+
+        if ( packetCount == 1 )
+            return packetCount;
+
+        batchPoolToken = batchLength > MemoryPool.SegmentLength
+            ? Server.MemoryPool.Rent( unchecked( ( int )batchLength ), clearBuffer, out var batchData )
+            : MemoryPool.Rent( unchecked( ( int )batchLength ), clearBuffer, out batchData );
+
+        dataToWrite = batchData;
+
+        headerToWrite = Protocol.PacketHeader.Create(
+            MessageBrokerClientEndpoint.Batch,
+            unchecked( ( uint )(batchLength - Protocol.PacketHeader.Length) ) );
+
+        Protocol.BatchHeader.Serialize( batchData, headerToWrite.Payload, unchecked( ( short )packetCount ) );
+        var remainingData = batchData.Slice( Protocol.PacketHeader.Length + Protocol.BatchHeader.Length );
+
+        using ( AcquireActiveLock( traceId, out var exc ) )
+        {
+            if ( exc is not null )
+                return exc;
+
+            WriterQueue.CopyToBatch( remainingData, packetCount );
+        }
+
+        return packetCount;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

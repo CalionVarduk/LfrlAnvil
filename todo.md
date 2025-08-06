@@ -1,22 +1,21 @@
 # TODO
 
-|       Project       |              Title               |                        Details                         |                    Requirements                    |
-|:-------------------:|:--------------------------------:|:------------------------------------------------------:|:--------------------------------------------------:|
-|   MessageBroker.*   |   Max Packet Length & Batching   |   [link](#messagebroker-max-packet-length--batching)   |                                                    |
-|   MessageBroker.*   |            Permanence            |           [link](#messagebroker-permanence)            | [link](#messagebroker-max-packet-length--batching) |
-|   MessageBroker.*   |      Request-Reply Channel       |      [link](#messagebroker-request-reply-channel)      |         [link](#messagebroker-permanence)          |
-|   MessageBroker.*   |        Server Maintenance        |       [link](#messagebroker-server-maintenance)        |                                                    |
-|    Dependencies     |     Generic dependency types     |     [link](#dependencies-generic-dependency-types)     |                         -                          |
-|   Dependencies.*    |  Dependencies.ServiceProviders   |            [link](#dependencies-aspnetcore)            |   [link](#dependencies-generic-dependency-types)   |
-|    Computable.*     |       Math/Physics structs       |        [link](#computable-mathphysics-structs)         |                         -                          |
-|        Sql.*        |     Add support for triggers     |               [link](#sqlcore-triggers)                |                         -                          |
-|          -          |             Terminal             |                   [link](#terminal)                    |                         -                          |
-| Computable.Automata |     Add Context-free grammar     |                           -                            |                         -                          |
-|        Sql.*        |    Add Microsoft SQL support     |                           -                            |                         -                          |
-|     Collections     |           Add SkipList           |                           -                            |                         -                          |
-|   Reactive.State    | Async validator & change tracker | [link](#reactivestate-async-validator--change-tracker) |                         -                          |
-|        Sql.*        |         DbBatch support          |            [link](#sqlcore-dbbatch-support)            |                         -                          |
-|      Sql.Core       |          Add JSON nodes          |            [link](#sqlcore-add-json-nodes)             |                         -                          |
+|       Project       |              Title               |                        Details                         |                   Requirements                    |
+|:-------------------:|:--------------------------------:|:------------------------------------------------------:|:-------------------------------------------------:|
+|   MessageBroker.*   |            Permanence            |           [link](#messagebroker-permanence)            |                                                   |
+|   MessageBroker.*   |      Request-Reply Channel       |      [link](#messagebroker-request-reply-channel)      |         [link](#messagebroker-permanence)         |
+|   MessageBroker.*   |        Server Maintenance        |       [link](#messagebroker-server-maintenance)        |                                                   |
+|    Dependencies     |     Generic dependency types     |     [link](#dependencies-generic-dependency-types)     |                         -                         |
+|   Dependencies.*    |  Dependencies.ServiceProviders   |            [link](#dependencies-aspnetcore)            |  [link](#dependencies-generic-dependency-types)   |
+|    Computable.*     |       Math/Physics structs       |        [link](#computable-mathphysics-structs)         |                         -                         |
+|        Sql.*        |     Add support for triggers     |               [link](#sqlcore-triggers)                |                         -                         |
+|          -          |             Terminal             |                   [link](#terminal)                    |                         -                         |
+| Computable.Automata |     Add Context-free grammar     |                           -                            |                         -                         |
+|        Sql.*        |    Add Microsoft SQL support     |                           -                            |                         -                         |
+|     Collections     |           Add SkipList           |                           -                            |                         -                         |
+|   Reactive.State    | Async validator & change tracker | [link](#reactivestate-async-validator--change-tracker) |                         -                         |
+|        Sql.*        |         DbBatch support          |            [link](#sqlcore-dbbatch-support)            |                         -                         |
+|      Sql.Core       |          Add JSON nodes          |            [link](#sqlcore-add-json-nodes)             |                         -                         |
 
 ### Scribbles:
 Sql:
@@ -28,7 +27,6 @@ Sql:
 
 MessageBroker:
 
-- refactor packet read/write & payload error emitting? there's a lot of copy-pasta (wait for packet batching)
 - add some basic memory pool tracking & possibility to trim excess
 
 Reactive:
@@ -58,47 +56,6 @@ project idea:
 - write colored fore/back-ground (with temp IDisposable swapper)
 - write table
 - prompt, switch etc. for user interaction
-
-### MessageBroker: Max Packet Length & Batching
-
-- Add internal limit to single TCP packet's length (configurable, min 16KB, server defines acceptable range)
-    - data that exceeds the limit will be chunked accordingly
-        - or will it? I might give up on the whole chunking idea and just throw an error when message is too large
-        - max configurable max packet length would be 1GB (maybe less...? 100MB?), by default equal to min 16KB
-        - the limit might be linked to memory pool's segment length?
-        - configuration is server-wide, it's up to the clients to conform
-        - most endpoints (if not all except for push-message and message-notification) could have a hard limit of 16KB
-        - other endpoints could allocate buffer in steps, squaring its size each step
-        - server could have a shared large buffer memory pool, which would be used after some packet size threshold is exceeded
-    - data must be handled atomically by both client and server (impacts ack/nack)
-        - (server-side) store in some sort of temp file with managed lifetime
-        - (client-side) if client is configured to ignore large packet buffering:
-            - then read all chunks from stream and move them to a single large buffer, then notify
-            - otherwise, notify on the fly, with additional chunk-no & chunk-count & total-size info in subscriber event header
-                - basically, moves the responsibility to the consumer, but becomes more complex to handle (every msg needs to be checked)
-                - only the last chunk can be acked?
-                - any chunk can be nacked?
-                    - client may have to locally store msg ids
-                    - since server may continue sending next chunks before registering the nack and stopping
-                    - client will then continue reading re-send once server sends chunk 0 again
-                    - anything else will be discarded
-                    - or, each chunk is treated as a separate msg?
-                        - so, nack would only apply to that particular chunk instead of the whole thing
-                        - then, its on the client's consumer to correctly put all chunks together if it nacked any of them
-                - 'ignore large packet buffering' could be configurable per subscriber
-- packets queued up for sending will be batched together, as long as batch's length does not exceed packed size limit
-    - max messages-in-single-batch-count can be configured (unlimited by default) or even disabled, send only, reading does not care
-    - message readers must be prepared to handle batch packets (preserve message order)
-        - listeners will hold batch packet data in a single large buffer
-        - each msg in batch could have its own new buffer made and data could be copied from the large buffer
-        - however, that's not optimal, due to more memory usage & copying
-        - one easy solution would be to allow memory-pool to 'split' a buffer token in two, at the specified position
-        - this way, the large buffer could be split as many times as necessary
-        - no copying would be done and no additional mem-alloc would happen
-        - and each smaller split buffer would be returned to the pool when it's done
-        - which avoids the issue of ref-counting in order to return the whole large buffer
-- server's handshake request handling must verify incoming packet length
-    - the same applies to create channel, subscriber etc. requests
 
 ### MessageBroker: Permanence
 

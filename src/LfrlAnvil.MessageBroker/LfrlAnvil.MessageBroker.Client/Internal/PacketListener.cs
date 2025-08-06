@@ -40,32 +40,35 @@ internal struct PacketListener
         return new PacketListener( null );
     }
 
-    [MethodImpl( MethodImplOptions.NoInlining )]
-    internal static async Task StartUnderlyingTask(MessageBrokerClient client, Stream stream)
+    internal static Task StartUnderlyingTask(MessageBrokerClient client, Stream stream)
     {
-        try
-        {
-            await RunCore( client, stream ).ConfigureAwait( false );
-        }
-        catch ( Exception exc )
-        {
-            ulong traceId;
-            using ( client.AcquireLock() )
+        return Task.Run(
+            async () =>
             {
-                client.PacketListener._task = null;
-                traceId = client.GetTraceId();
-            }
+                try
+                {
+                    await RunCore( client, stream ).ConfigureAwait( false );
+                }
+                catch ( Exception exc )
+                {
+                    ulong traceId;
+                    using ( client.AcquireLock() )
+                    {
+                        client.PacketListener._task = null;
+                        traceId = client.GetTraceId();
+                    }
 
-            using ( MessageBrokerClientTraceEvent.CreateScope( client, traceId, MessageBrokerClientTraceEventType.Unexpected ) )
-            {
-                if ( client.Logger.Error is { } error )
-                    error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
+                    using ( MessageBrokerClientTraceEvent.CreateScope( client, traceId, MessageBrokerClientTraceEventType.Unexpected ) )
+                    {
+                        if ( client.Logger.Error is { } error )
+                            error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
 
-                await client.DisposeAsync( traceId ).ConfigureAwait( false );
-            }
-        }
+                        await client.DisposeAsync( traceId ).ConfigureAwait( false );
+                    }
+                }
 
-        Assume.IsGreaterThanOrEqualTo( client.State, MessageBrokerClientState.Disposing );
+                Assume.IsGreaterThanOrEqualTo( client.State, MessageBrokerClientState.Disposing );
+            } );
     }
 
     internal void SetUnderlyingTask(Task task)

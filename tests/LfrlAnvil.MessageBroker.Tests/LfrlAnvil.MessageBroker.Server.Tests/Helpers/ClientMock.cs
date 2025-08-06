@@ -402,6 +402,26 @@ internal sealed class ClientMock : IDisposable
         return (header.Concat( Read( entry.Payload ) ).ToArray(), entry.Index);
     }
 
+    internal byte[] ReadBatch((MessageBrokerClientEndpoint Endpoint, int Length)[] packets)
+    {
+        var data = Read( Protocol.PacketHeader.Length + Protocol.BatchHeader.Length + packets.Sum( p => p.Length ) );
+        AssertEndpoint( data, MessageBrokerClientEndpoint.Batch );
+
+        var reader = new BinaryContractReader( data );
+        reader.Move( Protocol.PacketHeader.Length );
+        var packetCount = ( int )reader.ReadInt16();
+        packets.Length.TestEquals( packetCount ).Go();
+
+        var index = Protocol.PacketHeader.Length + Protocol.BatchHeader.Length;
+        foreach ( var (endpoint, length) in packets )
+        {
+            (( MessageBrokerClientEndpoint )data[index]).TestEquals( endpoint ).Go();
+            index += length;
+        }
+
+        return data;
+    }
+
     internal byte[] Read(int length)
     {
         lock ( _client )

@@ -39,7 +39,7 @@ internal struct WriterQueue
 
     internal void Dispose()
     {
-        foreach ( var entry in _pendingWriters )
+        foreach ( ref readonly var entry in _pendingWriters )
         {
             if ( entry.Source.Status == ValueTaskSourceStatus.Pending )
                 entry.Source.SetResult( new WriterSourceResult( WriterSourceResultStatus.Disposed ) );
@@ -52,6 +52,7 @@ internal struct WriterQueue
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ManualResetValueTaskSource<WriterSourceResult> AcquireSource(ReadOnlyMemory<byte> data)
     {
+        Assume.IsGreaterThan( data.Length, 0 );
         if ( ! _writerCache.TryPop( out var source ) )
             source = new ManualResetValueTaskSource<WriterSourceResult>();
 
@@ -126,8 +127,8 @@ internal struct WriterQueue
     internal void CopyToBatch(Memory<byte> target, int packetCount)
     {
         var slice = _pendingWriters.AsMemory().Slice( 0, packetCount );
-        CopyToBatch( target, slice.First.Span );
-        CopyToBatch( target, slice.Second.Span );
+        CopyToBatch( ref target, slice.First.Span );
+        CopyToBatch( ref target, slice.Second.Span );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -152,7 +153,7 @@ internal struct WriterQueue
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static void CopyToBatch(Memory<byte> target, ReadOnlySpan<Entry> span)
+    private static void CopyToBatch(ref Memory<byte> target, ReadOnlySpan<Entry> span)
     {
         foreach ( ref readonly var entry in span )
         {

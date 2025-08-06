@@ -2568,6 +2568,10 @@ public partial class MessageBrokerClientTests
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 3, Packet = (MessageNotification, Length = 48)",
                                 "[ProcessingMessage] Client = [1] 'test', TraceId = 3, AckId = 2, StreamId = 1, MessageId = 2, Retry = 0, Redelivery = 0, ChannelId = 1, SenderId = 2, Length = 3",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 3, Packet = (MessageNotification, Length = 48)",
+                                """
+                                [Error] Client = [1] 'test', TraceId = 3
+                                LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientDisposedException: Operation has been cancelled because client 'test' is disposed.
+                                """,
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 3 (end)"
                             ] ),
                             (t, _) => t.Logs.TestSequence(
