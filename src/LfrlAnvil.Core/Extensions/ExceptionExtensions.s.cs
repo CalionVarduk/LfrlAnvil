@@ -13,9 +13,11 @@
 // limitations under the License.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
+using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Runtime.ExceptionServices;
 
 namespace LfrlAnvil.Extensions;
@@ -33,10 +35,30 @@ public static class ExceptionExtensions
     /// <remarks>See <see cref="ExceptionDispatchInfo.Throw(Exception)"/> for more information.</remarks>
     [DoesNotReturn]
     [StackTraceHidden]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Exception Rethrow(this Exception exception)
     {
         ExceptionDispatchInfo.Throw( exception );
         return exception;
+    }
+
+    /// <summary>
+    /// Consolidates a collection of <paramref name="exceptions"/> into a single exception.
+    /// </summary>
+    /// <param name="exceptions">Collection of exceptions to consolidate.</param>
+    /// <returns>
+    /// New <see cref="AggregateException"/> when <paramref name="exceptions"/> contains more than one element
+    /// or the sole exception when <paramref name="exceptions"/> contains exactly one element
+    /// or <b>null</b> when <paramref name="exceptions"/> is empty.
+    /// </returns>
+    [Pure]
+    public static Exception? Consolidate(this IEnumerable<Exception> exceptions)
+    {
+        var materialized = exceptions.Materialize();
+        return materialized.Count switch
+        {
+            0 => null,
+            1 => materialized.Single(),
+            _ => new AggregateException( materialized )
+        };
     }
 }

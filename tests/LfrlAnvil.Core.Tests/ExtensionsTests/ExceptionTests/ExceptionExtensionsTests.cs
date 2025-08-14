@@ -19,4 +19,28 @@ public class ExceptionExtensionsTests : TestsBase
                 result.GetError().StackTrace!.Split( Environment.NewLine ).TestContainsSequence( originalStackTrace ) )
             .Go();
     }
+
+    [Fact]
+    public void Consolidate_ShouldReturnNull_WhenCollectionIsEmpty()
+    {
+        var exceptions = Array.Empty<Exception>();
+        var result = exceptions.Consolidate();
+        result.TestNull().Go();
+    }
+
+    [Fact]
+    public void Consolidate_ShouldReturnFirstException_WhenCollectionContainsOnlyOneElement()
+    {
+        var exceptions = new[] { new Exception( "foo" ) };
+        var result = exceptions.Consolidate();
+        result.TestRefEquals( exceptions[0] ).Go();
+    }
+
+    [Fact]
+    public void Consolidate_ShouldReturnAggregateException_WhenCollectionContainsMoreThanOneElement()
+    {
+        var exceptions = new[] { new Exception( "foo" ), new Exception( "bar" ) };
+        var result = exceptions.Consolidate();
+        result.TestType().Exact<AggregateException>( exc => exc.InnerExceptions.TestSequence( exceptions ) ).Go();
+    }
 }
