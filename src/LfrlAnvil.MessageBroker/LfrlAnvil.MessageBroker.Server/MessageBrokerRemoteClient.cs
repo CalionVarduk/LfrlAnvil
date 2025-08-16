@@ -52,40 +52,58 @@ public sealed partial class MessageBrokerRemoteClient
     internal ResponseSender ResponseSender;
     internal ExternalNameCache ExternalNameCache;
     internal MessageRouting MessageRouting;
-    internal int MaxNetworkBatchPacketBytes;
+    internal readonly int MaxNetworkBatchPacketBytes;
     internal readonly int MaxNetworkPacketBytes;
     internal readonly int MaxNetworkMessagePacketBytes;
     internal readonly MessageBrokerRemoteClientLogger Logger;
+    internal readonly Duration MaxReadTimeout;
 
     private readonly ITimestampProvider _timestamps;
     private readonly TcpClient _tcp;
+    private readonly Stream _stream;
     private readonly TaskCompletionSource _disconnected;
     private DelaySource _delaySource;
-    private Stream _stream;
     private MessageBrokerRemoteClientState _state;
     private ulong _nextTraceId;
 
-    internal MessageBrokerRemoteClient(int id, MessageBrokerServer server, TcpClient tcp)
+    internal MessageBrokerRemoteClient(
+        int id,
+        MessageBrokerServer server,
+        string name,
+        TcpClient tcp,
+        Stream stream,
+        MemoryPool<byte> memoryPool,
+        in Protocol.HandshakeRequestHeader handshake)
     {
         _tcp = tcp;
-        _stream = _tcp.GetStream();
-        MemoryPool = new MemoryPool<byte>( unchecked( ( int )server.MaxNetworkPacketLength.Bytes ) );
+        _stream = stream;
         Server = server;
+        MemoryPool = memoryPool;
         Id = id;
-        Name = string.Empty;
-        IsLittleEndian = false;
-        MessageTimeout = server.HandshakeTimeout;
-        MaxReadTimeout = MessageTimeout;
-        PingInterval = Duration.Zero;
-        MaxNetworkPacketBytes = unchecked( ( int )server.MaxNetworkPacketLength.Bytes );
-        MaxNetworkMessagePacketBytes = unchecked( ( int )server.MaxNetworkMessagePacketLength.Bytes
+        Name = name;
+
+        IsLittleEndian = handshake.IsClientLittleEndian;
+        MessageTimeout = Server.AcceptableMessageTimeout.Clamp( handshake.MessageTimeout );
+        PingInterval = Server.AcceptablePingInterval.Clamp( handshake.PingInterval );
+        MaxReadTimeout = MessageTimeout + PingInterval;
+        MaxBatchPacketCount = Server.AcceptableMaxBatchPacketCount.Clamp( handshake.MaxBatchPacketCount );
+        if ( MaxBatchPacketCount == 1 )
+            MaxBatchPacketCount = 0;
+
+        MaxNetworkBatchPacketBytes = MaxBatchPacketCount > 0
+            ? unchecked( ( int )Server.AcceptableMaxNetworkBatchPacketLength
+                .Clamp( handshake.MaxNetworkBatchPacketLength )
+                .Bytes )
+            : 0;
+
+        SynchronizeExternalObjectNames = handshake.SynchronizeExternalObjectNames;
+        ClearBuffers = handshake.ClearBuffers;
+
+        MaxNetworkPacketBytes = unchecked( ( int )Server.MaxNetworkPacketLength.Bytes );
+        MaxNetworkMessagePacketBytes = unchecked( ( int )Server.MaxNetworkMessagePacketLength.Bytes
             - Math.Max( Protocol.PushMessageHeader.Length, Protocol.MessageNotificationHeader.Payload )
             + Protocol.PushMessageHeader.Length );
 
-        MaxNetworkBatchPacketBytes = 0;
-        MaxBatchPacketCount = 0;
-        SynchronizeExternalObjectNames = false;
-        ClearBuffers = true;
         _disconnected = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
         _state = MessageBrokerRemoteClientState.Created;
         _nextTraceId = 0;
@@ -122,47 +140,37 @@ public sealed partial class MessageBrokerRemoteClient
     /// <summary>
     /// Client's unique name.
     /// </summary>
-    /// <remarks>Value will be initialized during handshake with the remote client.</remarks>
-    public string Name { get; private set; }
+    public string Name { get; }
 
     /// <summary>
     /// Indicates client's endianness.
     /// </summary>
-    /// <remarks>Value will be initialized during handshake with the remote client.</remarks>
-    public bool IsLittleEndian { get; private set; }
+    public bool IsLittleEndian { get; }
 
     /// <summary>
     /// Send or receive message timeout.
     /// </summary>
-    /// <remarks>
-    /// Value will be initialized during handshake with the remote client.
-    /// Initially equal to <see cref="Server"/>'s <see cref="MessageBrokerServer.HandshakeTimeout"/>.
-    /// </remarks>
-    public Duration MessageTimeout { get; private set; }
+    public Duration MessageTimeout { get; }
 
     /// <summary>
     /// Send ping interval.
     /// </summary>
-    /// <remarks>Value will be initialized during handshake with the remote client.</remarks>
-    public Duration PingInterval { get; private set; }
+    public Duration PingInterval { get; }
 
     /// <summary>
     /// Max acceptable batch packet count.
     /// </summary>
-    /// <remarks>Value will be initialized during handshake with the remote client.</remarks>
-    public short MaxBatchPacketCount { get; private set; }
+    public short MaxBatchPacketCount { get; }
 
     /// <summary>
     /// Specifies whether or not synchronization of external object names is enabled.
     /// </summary>
-    /// <remarks>Value will be initialized during handshake with the remote client.</remarks>
-    public bool SynchronizeExternalObjectNames { get; private set; }
+    public bool SynchronizeExternalObjectNames { get; }
 
     /// <summary>
     /// Specifies whether or not to clear internal buffers once the server is done using them.
     /// </summary>
-    /// <remarks>Value will be initialized during handshake with the remote client.</remarks>
-    public bool ClearBuffers { get; private set; }
+    public bool ClearBuffers { get; }
 
     /// <summary>
     /// Max acceptable network batch packet length.
@@ -243,7 +251,6 @@ public sealed partial class MessageBrokerRemoteClient
     /// </summary>
     public MessageBrokerRemoteClientQueueCollection Queues => new MessageBrokerRemoteClientQueueCollection( this );
 
-    internal Duration MaxReadTimeout { get; private set; }
     internal bool ShouldCancel => _state >= MessageBrokerRemoteClientState.Disposing;
 
     /// <summary>
@@ -340,12 +347,13 @@ public sealed partial class MessageBrokerRemoteClient
                 if ( exc is not null )
                     return;
 
-                Assume.IsLessThanOrEqualTo( _state, MessageBrokerRemoteClientState.Handshaking );
+                _state = MessageBrokerRemoteClientState.Handshaking;
                 EventScheduler.SetUnderlyingTask( eventSchedulerTask );
                 var task = StartHandshakeTask( traceId );
                 PacketListener.SetUnderlyingTask( task );
-                failed = false;
             }
+
+            failed = false;
         }
         catch ( Exception exc )
         {
@@ -626,32 +634,6 @@ public sealed partial class MessageBrokerRemoteClient
         return default;
     }
 
-    internal async ValueTask<Result> WriteAsync(Protocol.PacketHeader header, ReadOnlyMemory<byte> data, ulong traceId)
-    {
-        var sendPacket = Logger.SendPacket;
-        sendPacket?.Emit( MessageBrokerRemoteClientSendPacketEvent.CreateSending( this, traceId, header ) );
-        try
-        {
-            CancellationToken timeoutToken;
-            using ( AcquireActiveLock( traceId, out var exc ) )
-            {
-                if ( exc is not null )
-                    return exc;
-
-                timeoutToken = EventScheduler.ScheduleWriteTimeout( this );
-            }
-
-            await _stream.WriteAsync( data, timeoutToken ).ConfigureAwait( false );
-        }
-        catch ( Exception exc )
-        {
-            return EmitError( exc, traceId );
-        }
-
-        sendPacket?.Emit( MessageBrokerRemoteClientSendPacketEvent.CreateSent( this, traceId, header ) );
-        return Result.Valid;
-    }
-
     internal async ValueTask<Result<int>> WritePotentialBatchAsync(Protocol.PacketHeader header, ReadOnlyMemory<byte> data, ulong traceId)
     {
         var batchPoolToken = MemoryPoolToken<byte>.Empty;
@@ -665,23 +647,17 @@ public sealed partial class MessageBrokerRemoteClient
 
             var sendPacket = Logger.SendPacket;
             sendPacket?.Emit( MessageBrokerRemoteClientSendPacketEvent.CreateSending( this, traceId, headerToWrite, packetCount.Value ) );
-            try
-            {
-                CancellationToken timeoutToken;
-                using ( AcquireActiveLock( traceId, out var exc ) )
-                {
-                    if ( exc is not null )
-                        return exc;
 
-                    timeoutToken = EventScheduler.ScheduleWriteTimeout( this );
-                }
-
-                await _stream.WriteAsync( dataToWrite, timeoutToken ).ConfigureAwait( false );
-            }
-            catch ( Exception exc )
+            CancellationToken timeoutToken;
+            using ( AcquireActiveLock( traceId, out var exc ) )
             {
-                return EmitError( exc, traceId );
+                if ( exc is not null )
+                    return exc;
+
+                timeoutToken = EventScheduler.ScheduleWriteTimeout( this );
             }
+
+            await _stream.WriteAsync( dataToWrite, timeoutToken ).ConfigureAwait( false );
 
             sendPacket?.Emit( MessageBrokerRemoteClientSendPacketEvent.CreateSent( this, traceId, headerToWrite ) );
             if ( packetCount.Value > 1 )
@@ -689,19 +665,17 @@ public sealed partial class MessageBrokerRemoteClient
 
             return packetCount;
         }
+        catch ( Exception exc )
+        {
+            if ( Logger.Error is { } error )
+                error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
+
+            return exc;
+        }
         finally
         {
             batchPoolToken.Return( this, traceId );
         }
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal Exception EmitError(Exception exception, ulong traceId)
-    {
-        if ( Logger.Error is { } error )
-            error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exception ) );
-
-        return exception;
     }
 
     internal MessageRouting.Result GetMessageRouting(ulong traceId, Protocol.PacketHeader header, int count, ReadOnlySpan<byte> data)
@@ -1115,7 +1089,11 @@ public sealed partial class MessageBrokerRemoteClient
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Exception HandleUnexpectedEndpoint(Protocol.PacketHeader header, ulong traceId)
     {
-        return EmitError( this.ProtocolException( header, Resources.UnexpectedServerEndpoint ), traceId );
+        var exc = this.ProtocolException( header, Resources.UnexpectedServerEndpoint );
+        if ( Logger.Error is { } error )
+            error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
+
+        return exc;
     }
 
     private MessageBrokerQueue RegisterQueue(string name, out bool created)

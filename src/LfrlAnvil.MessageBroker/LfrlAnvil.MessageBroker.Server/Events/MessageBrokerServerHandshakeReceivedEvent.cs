@@ -20,12 +20,13 @@ using LfrlAnvil.Diagnostics;
 namespace LfrlAnvil.MessageBroker.Server.Events;
 
 /// <summary>
-/// Represents an event emitted by <see cref="MessageBrokerRemoteClient"/> when attempting to perform a handshake with the client.
+/// Represents an event emitted by <see cref="MessageBrokerServer"/>
+/// when a <see cref="MessageBrokerRemoteClientConnector"/> received a handshake from the remote client.
 /// </summary>
-public readonly struct MessageBrokerRemoteClientHandshakingEvent
+public readonly struct MessageBrokerServerHandshakeReceivedEvent
 {
-    private MessageBrokerRemoteClientHandshakingEvent(
-        MessageBrokerRemoteClient client,
+    private MessageBrokerServerHandshakeReceivedEvent(
+        MessageBrokerRemoteClientConnector connector,
         ulong traceId,
         string clientName,
         Duration desiredMessageTimeout,
@@ -36,7 +37,8 @@ public readonly struct MessageBrokerRemoteClientHandshakingEvent
         bool clearBuffers,
         bool isClientLittleEndian)
     {
-        Source = MessageBrokerRemoteClientEventSource.Create( client, traceId );
+        Source = MessageBrokerServerEventSource.Create( connector.Server, traceId );
+        Connector = connector;
         ClientName = clientName;
         DesiredMessageTimeout = desiredMessageTimeout;
         DesiredPingInterval = desiredPingInterval;
@@ -50,7 +52,12 @@ public readonly struct MessageBrokerRemoteClientHandshakingEvent
     /// <summary>
     /// Event source.
     /// </summary>
-    public MessageBrokerRemoteClientEventSource Source { get; }
+    public MessageBrokerServerEventSource Source { get; }
+
+    /// <summary>
+    /// <see cref="MessageBrokerRemoteClientConnector"/> associated with this event.
+    /// </summary>
+    public MessageBrokerRemoteClientConnector Connector { get; }
 
     /// <summary>
     /// Client's name.
@@ -93,7 +100,7 @@ public readonly struct MessageBrokerRemoteClientHandshakingEvent
     public bool IsClientLittleEndian { get; }
 
     /// <summary>
-    /// Returns a string representation of this <see cref="MessageBrokerRemoteClientHandshakingEvent"/> instance.
+    /// Returns a string representation of this <see cref="MessageBrokerServerHandshakeReceivedEvent"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
     [Pure]
@@ -104,13 +111,13 @@ public readonly struct MessageBrokerRemoteClientHandshakingEvent
             : "<disabled>";
 
         return
-            $"[Handshaking] {Source}, ClientName = '{ClientName}', DesiredMessageTimeout = {DesiredMessageTimeout}, DesiredPingInterval = {DesiredPingInterval}, DesiredBatchPacket = {batchPacket}, SynchronizeExternalObjectNames = {SynchronizeExternalObjectNames}, ClearBuffers = {ClearBuffers}, IsClientLittleEndian = {IsClientLittleEndian}";
+            $"[HandshakeReceived] {Source}, ConnectorId = {Connector.Id}, ClientName = '{ClientName}', DesiredMessageTimeout = {DesiredMessageTimeout}, DesiredPingInterval = {DesiredPingInterval}, DesiredBatchPacket = {batchPacket}, SynchronizeExternalObjectNames = {SynchronizeExternalObjectNames}, ClearBuffers = {ClearBuffers}, IsClientLittleEndian = {IsClientLittleEndian}";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerRemoteClientHandshakingEvent Create(
-        MessageBrokerRemoteClient client,
+    internal static MessageBrokerServerHandshakeReceivedEvent Create(
+        MessageBrokerRemoteClientConnector connector,
         ulong traceId,
         string clientName,
         Duration desiredMessageTimeout,
@@ -121,8 +128,8 @@ public readonly struct MessageBrokerRemoteClientHandshakingEvent
         bool clearBuffers,
         bool isClientLittleEndian)
     {
-        return new MessageBrokerRemoteClientHandshakingEvent(
-            client,
+        return new MessageBrokerServerHandshakeReceivedEvent(
+            connector,
             traceId,
             clientName,
             desiredMessageTimeout,

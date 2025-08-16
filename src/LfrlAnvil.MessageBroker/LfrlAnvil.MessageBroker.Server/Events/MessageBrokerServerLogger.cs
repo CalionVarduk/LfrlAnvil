@@ -29,6 +29,10 @@ public readonly struct MessageBrokerServerLogger
         Action<MessageBrokerServerListenerStartedEvent>? listenerStarted,
         Action<MessageBrokerServerAwaitClientEvent>? awaitClient,
         Action<MessageBrokerServerClientAcceptedEvent>? clientAccepted,
+        Action<MessageBrokerServerConnectorStartedEvent>? connectorStarted,
+        Action<MessageBrokerServerReadPacketEvent>? readPacket,
+        Action<MessageBrokerServerSendPacketEvent>? sendPacket,
+        Action<MessageBrokerServerHandshakeReceivedEvent>? handshakeReceived,
         Action<MessageBrokerServerDisposingEvent>? disposing,
         Action<MessageBrokerServerDisposedEvent>? disposed,
         Action<MessageBrokerServerErrorEvent>? error)
@@ -39,6 +43,10 @@ public readonly struct MessageBrokerServerLogger
         ListenerStarted = listenerStarted;
         AwaitClient = awaitClient;
         ClientAccepted = clientAccepted;
+        ConnectorStarted = connectorStarted;
+        ReadPacket = readPacket;
+        SendPacket = sendPacket;
+        HandshakeReceived = handshakeReceived;
         Disposing = disposing;
         Disposed = disposed;
         Error = error;
@@ -75,6 +83,26 @@ public readonly struct MessageBrokerServerLogger
     public readonly Action<MessageBrokerServerClientAcceptedEvent>? ClientAccepted;
 
     /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerServerConnectorStartedEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerServerConnectorStartedEvent>? ConnectorStarted;
+
+    /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerServerReadPacketEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerServerReadPacketEvent>? ReadPacket;
+
+    /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerServerSendPacketEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerServerSendPacketEvent>? SendPacket;
+
+    /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerServerHandshakeReceivedEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerServerHandshakeReceivedEvent>? HandshakeReceived;
+
+    /// <summary>
     /// Optional callback for a <see cref="MessageBrokerServerDisposingEvent"/>.
     /// </summary>
     public readonly Action<MessageBrokerServerDisposingEvent>? Disposing;
@@ -98,6 +126,10 @@ public readonly struct MessageBrokerServerLogger
     /// <param name="listenerStarted">Optional <see cref="ListenerStarted"/> callback.</param>
     /// <param name="awaitClient">Optional <see cref="AwaitClient"/> callback.</param>
     /// <param name="clientAccepted">Optional <see cref="ClientAccepted"/> callback.</param>
+    /// <param name="connectorStarted">Optional <see cref="ConnectorStarted"/> callback.</param>
+    /// <param name="readPacket">Optional <see cref="ReadPacket"/> callback.</param>
+    /// <param name="sendPacket">Optional <see cref="SendPacket"/> callback.</param>
+    /// <param name="handshakeReceived">Optional <see cref="HandshakeReceived"/> callback.</param>
     /// <param name="disposing">Optional <see cref="Disposing"/> callback.</param>
     /// <param name="disposed">Optional <see cref="Disposed"/> callback.</param>
     /// <param name="error">Optional <see cref="Error"/> callback.</param>
@@ -110,6 +142,10 @@ public readonly struct MessageBrokerServerLogger
         Action<MessageBrokerServerListenerStartedEvent>? listenerStarted = null,
         Action<MessageBrokerServerAwaitClientEvent>? awaitClient = null,
         Action<MessageBrokerServerClientAcceptedEvent>? clientAccepted = null,
+        Action<MessageBrokerServerConnectorStartedEvent>? connectorStarted = null,
+        Action<MessageBrokerServerReadPacketEvent>? readPacket = null,
+        Action<MessageBrokerServerSendPacketEvent>? sendPacket = null,
+        Action<MessageBrokerServerHandshakeReceivedEvent>? handshakeReceived = null,
         Action<MessageBrokerServerDisposingEvent>? disposing = null,
         Action<MessageBrokerServerDisposedEvent>? disposed = null,
         Action<MessageBrokerServerErrorEvent>? error = null)
@@ -121,6 +157,10 @@ public readonly struct MessageBrokerServerLogger
             listenerStarted,
             awaitClient,
             clientAccepted,
+            connectorStarted,
+            readPacket,
+            sendPacket,
+            handshakeReceived,
             disposing,
             disposed,
             error );

@@ -22,6 +22,8 @@ namespace LfrlAnvil.MessageBroker.Server.Exceptions;
 /// </summary>
 public class MessageBrokerServerProtocolException : InvalidOperationException
 {
+    private readonly object _source;
+
     /// <summary>
     /// Creates a new <see cref="MessageBrokerServerProtocolException"/> instance.
     /// </summary>
@@ -34,14 +36,35 @@ public class MessageBrokerServerProtocolException : InvalidOperationException
         Chain<string> errors)
         : base( Resources.InvalidPayloadFromClient( client.Id, client.Name, endpoint, errors ) )
     {
-        Client = client;
+        _source = client;
+        Endpoint = endpoint;
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="MessageBrokerServerProtocolException"/> instance.
+    /// </summary>
+    /// <param name="connector"><see cref="MessageBrokerRemoteClientConnector"/> that encountered network protocol violation.</param>
+    /// <param name="endpoint">Server endpoint associated with network protocol violation.</param>
+    /// <param name="errors">Collection of network protocol errors.</param>
+    public MessageBrokerServerProtocolException(
+        MessageBrokerRemoteClientConnector connector,
+        MessageBrokerServerEndpoint endpoint,
+        Chain<string> errors)
+        : base( Resources.InvalidPayloadFromClient( connector.Id, endpoint, errors ) )
+    {
+        _source = connector;
         Endpoint = endpoint;
     }
 
     /// <summary>
     /// <see cref="MessageBrokerRemoteClient"/> that encountered network protocol violation.
     /// </summary>
-    public MessageBrokerRemoteClient Client { get; }
+    public MessageBrokerRemoteClient? Client => _source as MessageBrokerRemoteClient;
+
+    /// <summary>
+    /// <see cref="MessageBrokerRemoteClientConnector"/> that encountered network protocol violation.
+    /// </summary>
+    public MessageBrokerRemoteClientConnector? Connector => _source as MessageBrokerRemoteClientConnector;
 
     /// <summary>
     /// Server endpoint associated with network protocol violation.

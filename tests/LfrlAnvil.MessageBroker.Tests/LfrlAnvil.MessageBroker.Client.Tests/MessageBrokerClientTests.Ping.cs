@@ -229,7 +229,7 @@ public partial class MessageBrokerClientTests
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (Ping, Length = 5)",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 1
-                                LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Server failed to respond to 'test' client's Ping in the specified amount of time (200 milliseconds).
+                                LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Server failed to respond to 'test' client's Ping in the specified amount of time (0.2 second(s)).
                                 """,
                                 "[Disposing] Client = [1] 'test', TraceId = 1",
                                 "[Disposed] Client = [1] 'test', TraceId = 1",

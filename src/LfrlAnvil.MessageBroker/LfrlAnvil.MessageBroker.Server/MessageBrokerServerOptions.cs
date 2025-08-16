@@ -25,6 +25,10 @@ namespace LfrlAnvil.MessageBroker.Server;
 /// <summary>
 /// Represents available <see cref="MessageBrokerServer"/> creation options.
 /// </summary>
+/// <param name="RootStoragePath">
+/// Specifies the root path for permanent server storage. Lack of root path will cause the server to work in in-memory mode.
+/// Disabled by default.
+/// </param>
 /// <param name="Tcp">Available <see cref="System.Net.Sockets.TcpClient"/> options.</param>
 /// <param name="NetworkPacket">Available network packet options.</param>
 /// <param name="HandshakeTimeout">
@@ -49,6 +53,7 @@ namespace LfrlAnvil.MessageBroker.Server;
 /// <param name="QueueLoggerFactory">Factory of <see cref="MessageBrokerQueueLogger"/> instances.</param>
 /// <param name="StreamDecorator"><see cref="MessageBrokerRemoteClientStreamDecorator"/> callback.</param>
 public readonly record struct MessageBrokerServerOptions(
+    string? RootStoragePath,
     MessageBrokerServerTcpOptions Tcp,
     MessageBrokerServerNetworkPacketOptions NetworkPacket,
     Duration? HandshakeTimeout,
@@ -71,6 +76,33 @@ public readonly record struct MessageBrokerServerOptions(
     public static MessageBrokerServerOptions Default => new MessageBrokerServerOptions();
 
     /// <summary>
+    /// Allows to change <see cref="RootStoragePath"/>.
+    /// </summary>
+    /// <param name="value">New value.</param>
+    /// <returns>New <see cref="MessageBrokerServerOptions"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public MessageBrokerServerOptions SetRootStoragePath(string? value)
+    {
+        return new MessageBrokerServerOptions(
+            value,
+            Tcp,
+            NetworkPacket,
+            HandshakeTimeout,
+            AcceptableMessageTimeout,
+            AcceptablePingInterval,
+            ExpressionFactory,
+            TimestampsFactory,
+            DelaySourceFactory,
+            Logger,
+            ClientLoggerFactory,
+            ChannelLoggerFactory,
+            StreamLoggerFactory,
+            QueueLoggerFactory,
+            StreamDecorator );
+    }
+
+    /// <summary>
     /// Allows to change <see cref="Tcp"/>.
     /// </summary>
     /// <param name="value">New value.</param>
@@ -80,6 +112,7 @@ public readonly record struct MessageBrokerServerOptions(
     public MessageBrokerServerOptions SetTcpOptions(MessageBrokerServerTcpOptions value)
     {
         return new MessageBrokerServerOptions(
+            RootStoragePath,
             value,
             NetworkPacket,
             HandshakeTimeout,
@@ -106,6 +139,7 @@ public readonly record struct MessageBrokerServerOptions(
     public MessageBrokerServerOptions SetNetworkPacketOptions(MessageBrokerServerNetworkPacketOptions value)
     {
         return new MessageBrokerServerOptions(
+            RootStoragePath,
             Tcp,
             value,
             HandshakeTimeout,
@@ -132,6 +166,7 @@ public readonly record struct MessageBrokerServerOptions(
     public MessageBrokerServerOptions SetHandshakeTimeout(Duration? value)
     {
         return new MessageBrokerServerOptions(
+            RootStoragePath,
             Tcp,
             NetworkPacket,
             value,
@@ -158,6 +193,7 @@ public readonly record struct MessageBrokerServerOptions(
     public MessageBrokerServerOptions SetAcceptableMessageTimeout(Bounds<Duration>? value)
     {
         return new MessageBrokerServerOptions(
+            RootStoragePath,
             Tcp,
             NetworkPacket,
             HandshakeTimeout,
@@ -184,6 +220,7 @@ public readonly record struct MessageBrokerServerOptions(
     public MessageBrokerServerOptions SetAcceptablePingInterval(Bounds<Duration>? value)
     {
         return new MessageBrokerServerOptions(
+            RootStoragePath,
             Tcp,
             NetworkPacket,
             HandshakeTimeout,
@@ -210,6 +247,7 @@ public readonly record struct MessageBrokerServerOptions(
     public MessageBrokerServerOptions SetExpressionFactory(IParsedExpressionFactory? value)
     {
         return new MessageBrokerServerOptions(
+            RootStoragePath,
             Tcp,
             NetworkPacket,
             HandshakeTimeout,
@@ -236,6 +274,7 @@ public readonly record struct MessageBrokerServerOptions(
     public MessageBrokerServerOptions SetTimestampsFactory(Func<MessageBrokerRemoteClient, ITimestampProvider>? value)
     {
         return new MessageBrokerServerOptions(
+            RootStoragePath,
             Tcp,
             NetworkPacket,
             HandshakeTimeout,
@@ -262,6 +301,7 @@ public readonly record struct MessageBrokerServerOptions(
     public MessageBrokerServerOptions SetDelaySourceFactory(Func<MessageBrokerRemoteClient, ValueTaskDelaySource>? value)
     {
         return new MessageBrokerServerOptions(
+            RootStoragePath,
             Tcp,
             NetworkPacket,
             HandshakeTimeout,
@@ -288,6 +328,7 @@ public readonly record struct MessageBrokerServerOptions(
     public MessageBrokerServerOptions SetLogger(MessageBrokerServerLogger? value)
     {
         return new MessageBrokerServerOptions(
+            RootStoragePath,
             Tcp,
             NetworkPacket,
             HandshakeTimeout,
@@ -314,6 +355,7 @@ public readonly record struct MessageBrokerServerOptions(
     public MessageBrokerServerOptions SetClientLoggerFactory(Func<MessageBrokerRemoteClient, MessageBrokerRemoteClientLogger?>? value)
     {
         return new MessageBrokerServerOptions(
+            RootStoragePath,
             Tcp,
             NetworkPacket,
             HandshakeTimeout,
@@ -340,6 +382,7 @@ public readonly record struct MessageBrokerServerOptions(
     public MessageBrokerServerOptions SetChannelLoggerFactory(Func<MessageBrokerChannel, MessageBrokerChannelLogger?>? value)
     {
         return new MessageBrokerServerOptions(
+            RootStoragePath,
             Tcp,
             NetworkPacket,
             HandshakeTimeout,
@@ -366,6 +409,7 @@ public readonly record struct MessageBrokerServerOptions(
     public MessageBrokerServerOptions SetStreamLoggerFactory(Func<MessageBrokerStream, MessageBrokerStreamLogger?>? value)
     {
         return new MessageBrokerServerOptions(
+            RootStoragePath,
             Tcp,
             NetworkPacket,
             HandshakeTimeout,
@@ -392,6 +436,7 @@ public readonly record struct MessageBrokerServerOptions(
     public MessageBrokerServerOptions SetQueueLoggerFactory(Func<MessageBrokerQueue, MessageBrokerQueueLogger?>? value)
     {
         return new MessageBrokerServerOptions(
+            RootStoragePath,
             Tcp,
             NetworkPacket,
             HandshakeTimeout,
@@ -418,6 +463,7 @@ public readonly record struct MessageBrokerServerOptions(
     public MessageBrokerServerOptions SetStreamDecorator(MessageBrokerRemoteClientStreamDecorator? value)
     {
         return new MessageBrokerServerOptions(
+            RootStoragePath,
             Tcp,
             NetworkPacket,
             HandshakeTimeout,

@@ -254,7 +254,7 @@ public partial class MessageBrokerRemoteClientTests
                                 "[Trace:Dispose] Client = [1] 'test', TraceId = 1 (start)",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 1
-                                LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientRequestTimeoutException: Client [1] 'test' failed to send a request to the server in the specified amount of time (401 milliseconds).
+                                LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientRequestTimeoutException: Client [1] 'test' failed to send a request to the server in the specified amount of time (0.401 second(s)).
                                 """,
                                 "[Disposing] Client = [1] 'test', TraceId = 1",
                                 "[Disposed] Client = [1] 'test', TraceId = 1",

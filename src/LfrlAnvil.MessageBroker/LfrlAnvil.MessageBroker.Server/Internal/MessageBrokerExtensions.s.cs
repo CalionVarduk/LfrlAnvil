@@ -15,6 +15,8 @@
 using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Memory;
@@ -114,6 +116,68 @@ internal static class MessageBrokerExtensions
         }
     }
 
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static void TryEmitErrors(this MessageBrokerServer server, ulong traceId, Chain<Exception> exceptions)
+    {
+        if ( exceptions.Count > 0 && server.Logger.Error is { } error )
+        {
+            var exc = exceptions.Consolidate();
+            Assume.IsNotNull( exc );
+            error.Emit( MessageBrokerServerErrorEvent.Create( server, traceId, exc ) );
+        }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static void TryAddTo(this Exception? exception, ref Chain<Exception> exceptions)
+    {
+        if ( exception is not null )
+            exceptions = exceptions.Extend( exception );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static void TryAddExceptionTo(this Result result, ref Chain<Exception> exceptions)
+    {
+        result.Exception.TryAddTo( ref exceptions );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static Result TryCancel(this CancellationTokenSource source)
+    {
+        try
+        {
+            source.Cancel();
+            return Result.Valid;
+        }
+        catch ( Exception exc )
+        {
+            return exc;
+        }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static void TryCleanUp(this CancellationTokenSource source, ref Chain<Exception> exceptions)
+    {
+        source.TryCancel().TryAddExceptionTo( ref exceptions );
+        source.TryDispose().TryAddExceptionTo( ref exceptions );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static async ValueTask<Result> SafeWaitAsync(this Task? task)
+    {
+        if ( task is null )
+            return Result.Valid;
+
+        try
+        {
+            await task.ConfigureAwait( false );
+            return Result.Valid;
+        }
+        catch ( Exception exc )
+        {
+            return exc;
+        }
+    }
+
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerServerDisposedException DisposedException(this MessageBrokerServer server)
@@ -147,6 +211,13 @@ internal static class MessageBrokerExtensions
     internal static MessageBrokerRemoteClientDisposedException DisposedException(this MessageBrokerRemoteClient client)
     {
         return new MessageBrokerRemoteClientDisposedException( client );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerRemoteClientConnectorDisposedException DisposedException(this MessageBrokerRemoteClientConnector connector)
+    {
+        return new MessageBrokerRemoteClientConnectorDisposedException( connector );
     }
 
     [Pure]
@@ -242,9 +313,44 @@ internal static class MessageBrokerExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerServerProtocolException ProtocolException(
+        this MessageBrokerRemoteClientConnector connector,
+        Protocol.PacketHeader header,
+        Chain<string> errors)
+    {
+        return new MessageBrokerServerProtocolException( connector, header.GetServerEndpoint(), errors );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerServerProtocolException ProtocolException(
+        this MessageBrokerRemoteClientConnector connector,
+        Protocol.PacketHeader header,
+        string error)
+    {
+        return connector.ProtocolException( header, Chain.Create( error ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerRemoteClientRequestTimeoutException RequestTimeoutException(this MessageBrokerRemoteClient client)
     {
-        return new MessageBrokerRemoteClientRequestTimeoutException( client );
+        return MessageBrokerRemoteClientRequestTimeoutException.Create( client );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerRemoteClientRequestTimeoutException RequestHandshakeTimeoutException(this MessageBrokerRemoteClient client)
+    {
+        return MessageBrokerRemoteClientRequestTimeoutException.CreateForHandshake( client );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerRemoteClientRequestTimeoutException RequestTimeoutException(
+        this MessageBrokerRemoteClientConnector connector)
+    {
+        return new MessageBrokerRemoteClientRequestTimeoutException( connector );
     }
 
     [Pure]
@@ -281,6 +387,33 @@ internal static class MessageBrokerExtensions
             return result;
 
         return client.ProtocolException( header, Resources.UnexpectedPacketLength( result, expectedMax ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerServerProtocolException? AssertMinPayload(
+        this Protocol.PacketHeader header,
+        MessageBrokerRemoteClientConnector connector,
+        uint expectedMin)
+    {
+        return header.Payload < expectedMin
+            ? connector.ProtocolException( header, Resources.TooShortHeaderPayload( header.Payload, expectedMin ) )
+            : null;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static Result<int> AssertPacketLength(
+        this Protocol.PacketHeader header,
+        MessageBrokerRemoteClientConnector connector,
+        int expectedMax)
+    {
+        Assume.IsGreaterThanOrEqualTo( expectedMax, Protocol.PacketHeader.Length );
+        var result = unchecked( ( int )header.Payload );
+        if ( result >= 0 && result <= unchecked( expectedMax - Protocol.PacketHeader.Length ) )
+            return result;
+
+        return connector.ProtocolException( header, Resources.UnexpectedPacketLength( result, expectedMax ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

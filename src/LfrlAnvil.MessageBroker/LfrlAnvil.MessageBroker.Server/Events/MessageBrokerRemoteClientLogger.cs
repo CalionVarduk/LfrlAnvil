@@ -26,7 +26,6 @@ public readonly struct MessageBrokerRemoteClientLogger
         Action<MessageBrokerRemoteClientTraceEvent>? traceStart,
         Action<MessageBrokerRemoteClientTraceEvent>? traceEnd,
         Action<MessageBrokerRemoteClientServerTraceEvent>? serverTrace,
-        Action<MessageBrokerRemoteClientHandshakingEvent>? handshaking,
         Action<MessageBrokerRemoteClientHandshakeEstablishedEvent>? handshakeEstablished,
         Action<MessageBrokerRemoteClientAwaitPacketEvent>? awaitPacket,
         Action<MessageBrokerRemoteClientSendPacketEvent>? sendPacket,
@@ -60,7 +59,6 @@ public readonly struct MessageBrokerRemoteClientLogger
         TraceStart = traceStart;
         TraceEnd = traceEnd;
         ServerTrace = serverTrace;
-        Handshaking = handshaking;
         HandshakeEstablished = handshakeEstablished;
         AwaitPacket = awaitPacket;
         SendPacket = sendPacket;
@@ -106,11 +104,6 @@ public readonly struct MessageBrokerRemoteClientLogger
     /// Optional callback for a <see cref="MessageBrokerRemoteClientServerTraceEvent"/>.
     /// </summary>
     public readonly Action<MessageBrokerRemoteClientServerTraceEvent>? ServerTrace;
-
-    /// <summary>
-    /// Optional callback for a <see cref="MessageBrokerRemoteClientHandshakingEvent"/>.
-    /// </summary>
-    public readonly Action<MessageBrokerRemoteClientHandshakingEvent>? Handshaking;
 
     /// <summary>
     /// Optional callback for a <see cref="MessageBrokerRemoteClientHandshakeEstablishedEvent"/>.
@@ -263,7 +256,6 @@ public readonly struct MessageBrokerRemoteClientLogger
     /// <param name="traceStart">Optional <see cref="TraceStart"/> callback.</param>
     /// <param name="traceEnd">Optional <see cref="TraceEnd"/> callback.</param>
     /// <param name="serverTrace">Optional <see cref="ServerTrace"/> callback.</param>
-    /// <param name="handshaking">Optional <see cref="Handshaking"/> callback.</param>
     /// <param name="handshakeEstablished">Optional <see cref="HandshakeEstablished"/> callback.</param>
     /// <param name="awaitPacket">Optional <see cref="AwaitPacket"/> callback.</param>
     /// <param name="sendPacket">Optional <see cref="SendPacket"/> callback.</param>
@@ -299,7 +291,6 @@ public readonly struct MessageBrokerRemoteClientLogger
         Action<MessageBrokerRemoteClientTraceEvent>? traceStart = null,
         Action<MessageBrokerRemoteClientTraceEvent>? traceEnd = null,
         Action<MessageBrokerRemoteClientServerTraceEvent>? serverTrace = null,
-        Action<MessageBrokerRemoteClientHandshakingEvent>? handshaking = null,
         Action<MessageBrokerRemoteClientHandshakeEstablishedEvent>? handshakeEstablished = null,
         Action<MessageBrokerRemoteClientAwaitPacketEvent>? awaitPacket = null,
         Action<MessageBrokerRemoteClientSendPacketEvent>? sendPacket = null,
@@ -334,7 +325,6 @@ public readonly struct MessageBrokerRemoteClientLogger
             traceStart,
             traceEnd,
             serverTrace,
-            handshaking,
             handshakeEstablished,
             awaitPacket,
             sendPacket,

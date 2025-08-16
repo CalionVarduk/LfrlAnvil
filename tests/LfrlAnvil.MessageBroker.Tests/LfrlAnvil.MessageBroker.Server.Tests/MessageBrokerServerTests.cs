@@ -13,7 +13,7 @@ using LfrlAnvil.MessageBroker.Server.Tests.Helpers;
 
 namespace LfrlAnvil.MessageBroker.Server.Tests;
 
-public class MessageBrokerServerTests : TestsBase
+public partial class MessageBrokerServerTests : TestsBase
 {
     [Fact]
     public void Ctor_WithDefaultOptions_ShouldCreateCorrectServer()
@@ -21,6 +21,7 @@ public class MessageBrokerServerTests : TestsBase
         var localEndPoint = new IPEndPoint( IPAddress.Loopback, 12345 );
         var sut = new MessageBrokerServer( localEndPoint );
         Assertion.All(
+                sut.RootStorageDirectory.TestNull(),
                 sut.LocalEndPoint.TestRefEquals( localEndPoint ),
                 sut.HandshakeTimeout.TestEquals( Duration.FromSeconds( 15 ) ),
                 sut.MaxNetworkPacketLength.TestEquals( MemorySize.FromKilobytes( 16 ) ),
@@ -34,6 +35,8 @@ public class MessageBrokerServerTests : TestsBase
                 sut.ExpressionFactory.TestNull(),
                 sut.State.TestEquals( MessageBrokerServerState.Created ),
                 sut.ToString().TestEquals( $"{localEndPoint} server (Created)" ),
+                sut.Connectors.Count.TestEquals( 0 ),
+                sut.Connectors.GetAll().TestEmpty(),
                 sut.Clients.Count.TestEquals( 0 ),
                 sut.Clients.GetAll().TestEmpty(),
                 sut.Channels.Count.TestEquals( 0 ),
@@ -64,6 +67,7 @@ public class MessageBrokerServerTests : TestsBase
         var sut = new MessageBrokerServer(
             localEndPoint,
             MessageBrokerServerOptions.Default
+                .SetRootStoragePath( "./server" )
                 .SetHandshakeTimeout( Duration.FromTicks( handshakeTimeoutTicks ) )
                 .SetAcceptableMessageTimeout(
                     Bounds.Create( Duration.FromTicks( minMessageTimeoutTicks ), Duration.FromTicks( maxMessageTimeoutTicks ) ) )
@@ -78,6 +82,8 @@ public class MessageBrokerServerTests : TestsBase
                 .SetExpressionFactory( expressionFactory ) );
 
         Assertion.All(
+                sut.RootStorageDirectory.TestNotNull(
+                    d => Assertion.All( "RootStorageDirectory", d.Exists.TestFalse(), d.Name.TestEquals( "server" ) ) ),
                 sut.LocalEndPoint.TestRefEquals( localEndPoint ),
                 sut.HandshakeTimeout.TestEquals( Duration.FromMilliseconds( expectedHandshakeTimeoutMs ) ),
                 sut.MaxNetworkPacketLength.TestEquals( MemorySize.FromKilobytes( 30 ) ),
@@ -95,6 +101,8 @@ public class MessageBrokerServerTests : TestsBase
                         Duration.FromMilliseconds( expectedMaxPingIntervalMs ) ) ),
                 sut.ExpressionFactory.TestRefEquals( expressionFactory ),
                 sut.State.TestEquals( MessageBrokerServerState.Created ),
+                sut.Connectors.Count.TestEquals( 0 ),
+                sut.Connectors.GetAll().TestEmpty(),
                 sut.Clients.Count.TestEquals( 0 ),
                 sut.Clients.GetAll().TestEmpty(),
                 sut.Channels.Count.TestEquals( 0 ),
@@ -189,6 +197,61 @@ public class MessageBrokerServerTests : TestsBase
                         $"[AwaitClient] Server = {localEndPoint}"
                     ] ) )
             .Go();
+    }
+
+    [Fact]
+    public async Task StartAsync_ShouldStartServer_WithRootStorageDirectory()
+    {
+        var logs = new ServerEventLogger();
+        var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
+
+        await using var server = new MessageBrokerServer(
+            originalEndPoint,
+            MessageBrokerServerOptions.Default
+                .SetRootStoragePath( "server" )
+                .SetLogger( logs.GetLogger() ) );
+
+        var result = await server.StartAsync();
+        try
+        {
+            var localEndPoint = server.LocalEndPoint;
+
+            Assertion.All(
+                    server.RootStorageDirectory.TestNotNull(
+                        d => Assertion.All(
+                            "RootStorageDirectory",
+                            d.Exists.TestTrue(),
+                            d.GetDirectories().Select( s => s.Name ).TestSetEqual( [ "clients", "channels", "streams" ] ) ) ),
+                    result.Exception.TestNull(),
+                    server.LocalEndPoint.TestType()
+                        .AssignableTo<IPEndPoint>(
+                            e => Assertion.All(
+                                "LocalEndPoint",
+                                e.Address.TestEquals( IPAddress.Loopback ),
+                                e.Port.TestNotEquals( 0 ) ) ),
+                    server.State.TestEquals( MessageBrokerServerState.Running ),
+                    logs.GetAll()
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                $"[Trace:Start] Server = {originalEndPoint}, TraceId = 0 (start)",
+                                $"[ListenerStarting] Server = {originalEndPoint}, TraceId = 0, HandshakeTimeout = 15 second(s), AcceptableMessageTimeout = [0.001 second(s), 2147483.647 second(s)], AcceptablePingInterval = [0.001 second(s), 86400 second(s)]",
+                                $"[ListenerStarted] Server = {localEndPoint}, TraceId = 0",
+                                $"[Trace:Start] Server = {localEndPoint}, TraceId = 0 (end)"
+                            ] )
+                        ] ),
+                    logs.GetAllAwaitClient()
+                        .TestSequence(
+                        [
+                            $"[AwaitClient] Server = {localEndPoint}"
+                        ] ) )
+                .Go();
+        }
+        finally
+        {
+            server.RootStorageDirectory?.Delete( recursive: true );
+        }
     }
 
     [Fact]
@@ -375,69 +438,6 @@ public class MessageBrokerServerTests : TestsBase
                 exc => Assertion.All(
                     exc.TestType().AssignableTo<OperationCanceledException>(),
                     sut.State.TestEquals( MessageBrokerServerState.Created ) ) )
-            .Go();
-    }
-
-    [Fact]
-    public async Task ClientListener_ShouldDiscardClient_WhenClientCannotBeCreated()
-    {
-        var exception = new Exception( "failure" );
-        var endSource = new SafeTaskCompletionSource( completionCount: 2 );
-        var logs = new ServerEventLogger();
-        var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
-        await using var sut = new MessageBrokerServer(
-            originalEndPoint,
-            MessageBrokerServerOptions.Default
-                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetLogger(
-                    logs.GetLogger(
-                        MessageBrokerServerLogger.Create(
-                            awaitClient: e =>
-                            {
-                                if ( e.EndPoint is null )
-                                    endSource.Complete();
-                            } ) ) )
-                .SetClientLoggerFactory( _ => throw exception ) );
-
-        await sut.StartAsync();
-        var endPoint = sut.LocalEndPoint;
-
-        var client = new ClientMock();
-        var clientTask = Task.Factory.StartNew(
-            o =>
-            {
-                var c = ( ClientMock )o!;
-                c.Connect( endPoint );
-            },
-            client );
-
-        await clientTask;
-        await endSource.Task;
-
-        Assertion.All(
-                sut.Clients.Count.TestEquals( 0 ),
-                logs.GetAll()
-                    .Skip( 1 )
-                    .TestSequence(
-                    [
-                        (t, _) => t.Logs.TestSequence(
-                        [
-                            (e, _) => e.TestEquals( $"[Trace:AcceptClient] Server = {endPoint}, TraceId = 1 (start)" ),
-                            (e, _) => e.TestStartsWith(
-                                $"""
-                                 [Error] Server = {endPoint}, TraceId = 1
-                                 System.Exception: failure
-                                 """ ),
-                            (e, _) => e.TestEquals( $"[Trace:AcceptClient] Server = {endPoint}, TraceId = 1 (end)" )
-                        ] )
-                    ] ),
-                logs.GetAllAwaitClient()
-                    .TestSequence(
-                    [
-                        (e, _) => e.TestEquals( $"[AwaitClient] Server = {endPoint}" ),
-                        (e, _) => e.TestStartsWith( $"[AwaitClient] Server = {endPoint}, EndPoint = " ),
-                        (e, _) => e.TestEquals( $"[AwaitClient] Server = {endPoint}" )
-                    ] ) )
             .Go();
     }
 }

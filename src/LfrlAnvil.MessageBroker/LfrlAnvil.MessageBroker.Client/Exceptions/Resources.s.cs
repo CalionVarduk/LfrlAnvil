@@ -25,7 +25,7 @@ namespace LfrlAnvil.MessageBroker.Client.Exceptions;
 
 internal static class Resources
 {
-    internal const string ClientNameAlreadyExists = "Client name already exists.";
+    internal const string ClientIsAlreadyConnected = "Client is already connected.";
     internal const string UnexpectedClientEndpoint = "Received unexpected client endpoint.";
     internal const string ClientNameLengthOutOfBounds = "Server found client's name length to be out of bounds.";
     internal const string ExternalObjectNameSynchronizationIsDisabled = "External object name synchronization is disabled.";
@@ -421,8 +421,7 @@ internal static class Resources
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string ResponseTimeout(string clientName, Duration timeout, MessageBrokerServerEndpoint requestEndpoint)
     {
-        return
-            $"Server failed to respond to '{clientName}' client's {requestEndpoint} in the specified amount of time ({timeout.FullMilliseconds} milliseconds).";
+        return $"Server failed to respond to '{clientName}' client's {requestEndpoint} in the specified amount of time ({timeout}).";
     }
 
     [Pure]

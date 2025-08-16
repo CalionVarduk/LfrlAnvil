@@ -46,9 +46,7 @@ public readonly struct MessageBrokerRemoteClientEventSource
     [Pure]
     public override string ToString()
     {
-        return Client.Name.Length == 0
-            ? $"Client = [{Client.Id}], TraceId = {TraceId}"
-            : $"Client = [{Client.Id}] '{Client.Name}', TraceId = {TraceId}";
+        return $"Client = [{Client.Id}] '{Client.Name}', TraceId = {TraceId}";
     }
 
     [Pure]

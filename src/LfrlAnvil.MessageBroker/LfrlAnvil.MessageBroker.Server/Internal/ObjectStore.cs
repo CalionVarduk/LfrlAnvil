@@ -92,19 +92,6 @@ internal struct ObjectStore<T>
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal RegisterToken RegisterNull()
-    {
-        ref var byId = ref _byId.AddDefault( out var index )!;
-        return new RegisterToken( ref byId, index + 1 );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool TrySetName(T obj, string name)
-    {
-        return _byName.TryAdd( name, obj );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal T[] Clear()
     {
         var result = _cache;
@@ -154,33 +141,6 @@ internal struct ObjectStore<T>
             Assume.False( Exists );
             store._byId.Remove( Id - 1 );
             store._byName.Remove( name );
-        }
-    }
-
-    internal readonly ref struct RegisterToken
-    {
-        private readonly ref T _ref;
-
-        internal RegisterToken(ref T @ref, int id)
-        {
-            _ref = ref @ref;
-            Id = id;
-        }
-
-        internal readonly int Id;
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal T SetObject(ref ObjectStore<T> store, T obj)
-        {
-            _ref = obj;
-            store._cache = null;
-            return obj;
-        }
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal void Revert(ref ObjectStore<T> store)
-        {
-            store._byId.Remove( Id - 1 );
         }
     }
 

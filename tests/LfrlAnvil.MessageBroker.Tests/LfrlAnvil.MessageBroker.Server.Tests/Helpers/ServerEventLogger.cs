@@ -44,6 +44,26 @@ public sealed class ServerEventLogger
                 Add( e.Source.TraceId, e.ToString() );
                 logger.ClientAccepted?.Invoke( e );
             },
+            connectorStarted: e =>
+            {
+                Add( e.Source.TraceId, e.ToString() );
+                logger.ConnectorStarted?.Invoke( e );
+            },
+            readPacket: e =>
+            {
+                Add( e.Source.TraceId, e.ToString() );
+                logger.ReadPacket?.Invoke( e );
+            },
+            sendPacket: e =>
+            {
+                Add( e.Source.TraceId, e.ToString() );
+                logger.SendPacket?.Invoke( e );
+            },
+            handshakeReceived: e =>
+            {
+                Add( e.Source.TraceId, e.ToString() );
+                logger.HandshakeReceived?.Invoke( e );
+            },
             disposing: e =>
             {
                 Add( e.Source.TraceId, e.ToString() );

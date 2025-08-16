@@ -29,11 +29,6 @@ public sealed class ClientEventLogger
                 Add( e.Source.TraceId, e.ToString() );
                 logger.ServerTrace?.Invoke( e );
             },
-            handshaking: e =>
-            {
-                Add( e.Source.TraceId, e.ToString() );
-                logger.Handshaking?.Invoke( e );
-            },
             handshakeEstablished: e =>
             {
                 Add( e.Source.TraceId, e.ToString() );

@@ -630,7 +630,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             [Error] Client = 'test', TraceId = 0
                             LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientRequestException: Server rejected an invalid HandshakeRequest sent by client 'test'. Encountered 2 error(s):
                             1. Server found client's name length to be out of bounds.
-                            2. Client name already exists.
+                            2. Client is already connected.
                             """,
                             "[Disposing] Client = 'test', TraceId = 0",
                             "[Disposed] Client = 'test', TraceId = 0",
@@ -1273,7 +1273,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             "[SendPacket:Sent] Client = 'test', TraceId = 0, Packet = (HandshakeRequest, Length = 24)",
                             """
                             [Error] Client = 'test', TraceId = 0
-                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Server failed to respond to 'test' client's HandshakeRequest in the specified amount of time (1 milliseconds).
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Server failed to respond to 'test' client's HandshakeRequest in the specified amount of time (0.001 second(s)).
                             """,
                             "[Disposing] Client = 'test', TraceId = 0",
                             "[Disposed] Client = 'test', TraceId = 0",
@@ -1334,7 +1334,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             "[ReadPacket:Received] Client = 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 32)",
                             """
                             [Error] Client = 'test', TraceId = 0
-                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Server failed to respond to 'test' client's HandshakeRequest in the specified amount of time (100 milliseconds).
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Server failed to respond to 'test' client's HandshakeRequest in the specified amount of time (0.1 second(s)).
                             """,
                             "[Disposing] Client = 'test', TraceId = 0",
                             "[Disposed] Client = 'test', TraceId = 0",
@@ -1396,7 +1396,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             "[ReadPacket:Received] Client = 'test', TraceId = 0, Packet = (HandshakeRejectedResponse, Length = 6)",
                             """
                             [Error] Client = 'test', TraceId = 0
-                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Server failed to respond to 'test' client's HandshakeRequest in the specified amount of time (100 milliseconds).
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Server failed to respond to 'test' client's HandshakeRequest in the specified amount of time (0.1 second(s)).
                             """,
                             "[Disposing] Client = 'test', TraceId = 0",
                             "[Disposed] Client = 'test', TraceId = 0",

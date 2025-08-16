@@ -520,7 +520,7 @@ public partial class MessageBrokerClientTests
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 43)",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 1
-                                LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Server failed to respond to 'test' client's BindListenerRequest in the specified amount of time (1000 milliseconds).
+                                LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Server failed to respond to 'test' client's BindListenerRequest in the specified amount of time (1 second(s)).
                                 """,
                                 "[Disposing] Client = [1] 'test', TraceId = 1",
                                 "[Disposed] Client = [1] 'test', TraceId = 1",
@@ -1104,7 +1104,7 @@ public partial class MessageBrokerClientTests
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (UnbindListenerRequest, Length = 9)",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 2
-                                LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Server failed to respond to 'test' client's UnbindListenerRequest in the specified amount of time (1000 milliseconds).
+                                LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Server failed to respond to 'test' client's UnbindListenerRequest in the specified amount of time (1 second(s)).
                                 """,
                                 "[Disposing] Client = [1] 'test', TraceId = 2",
                                 "[Disposed] Client = [1] 'test', TraceId = 2",

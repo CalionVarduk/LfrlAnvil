@@ -307,7 +307,7 @@ public partial class MessageBrokerClientTests
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 1
-                                LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Server failed to respond to 'test' client's BindPublisherRequest in the specified amount of time (1000 milliseconds).
+                                LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Server failed to respond to 'test' client's BindPublisherRequest in the specified amount of time (1 second(s)).
                                 """,
                                 "[Disposing] Client = [1] 'test', TraceId = 1",
                                 "[Disposed] Client = [1] 'test', TraceId = 1",
@@ -889,7 +889,7 @@ public partial class MessageBrokerClientTests
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (UnbindPublisherRequest, Length = 9)",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 2
-                                LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Server failed to respond to 'test' client's UnbindPublisherRequest in the specified amount of time (1000 milliseconds).
+                                LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Server failed to respond to 'test' client's UnbindPublisherRequest in the specified amount of time (1 second(s)).
                                 """,
                                 "[Disposing] Client = [1] 'test', TraceId = 2",
                                 "[Disposed] Client = [1] 'test', TraceId = 2",
@@ -1563,7 +1563,7 @@ public partial class MessageBrokerClientTests
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (PushMessage, Length = 13)",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 2
-                                LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Server failed to respond to 'test' client's PushMessage in the specified amount of time (1000 milliseconds).
+                                LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Server failed to respond to 'test' client's PushMessage in the specified amount of time (1 second(s)).
                                 """,
                                 "[Disposing] Client = [1] 'test', TraceId = 2",
                                 "[Disposed] Client = [1] 'test', TraceId = 2",

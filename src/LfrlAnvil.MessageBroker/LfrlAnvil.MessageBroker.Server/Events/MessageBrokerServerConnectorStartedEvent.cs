@@ -13,20 +13,19 @@
 // limitations under the License.
 
 using System.Diagnostics.Contracts;
-using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.MessageBroker.Server.Events;
 
 /// <summary>
-/// Represents an event emitted by <see cref="MessageBrokerServer"/> when a connected <see cref="TcpClient"/> has been accepted
-/// and a new <see cref="MessageBrokerRemoteClientConnector"/> instance has been created.
+/// Represents an event emitted by <see cref="MessageBrokerServer"/>
+/// when a new <see cref="MessageBrokerRemoteClientConnector"/> has started to wait for remote client's handshake.
 /// </summary>
-public readonly struct MessageBrokerServerClientAcceptedEvent
+public readonly struct MessageBrokerServerConnectorStartedEvent
 {
-    private MessageBrokerServerClientAcceptedEvent(MessageBrokerServer server, ulong traceId, MessageBrokerRemoteClientConnector connector)
+    private MessageBrokerServerConnectorStartedEvent(MessageBrokerRemoteClientConnector connector, ulong traceId)
     {
-        Source = MessageBrokerServerEventSource.Create( server, traceId );
+        Source = MessageBrokerServerEventSource.Create( connector.Server, traceId );
         Connector = connector;
     }
 
@@ -36,27 +35,24 @@ public readonly struct MessageBrokerServerClientAcceptedEvent
     public MessageBrokerServerEventSource Source { get; }
 
     /// <summary>
-    /// Created <see cref="MessageBrokerRemoteClientConnector"/> instance.
+    /// <see cref="MessageBrokerRemoteClientConnector"/> associated with this event.
     /// </summary>
     public MessageBrokerRemoteClientConnector Connector { get; }
 
     /// <summary>
-    /// Returns a string representation of this <see cref="MessageBrokerServerClientAcceptedEvent"/> instance.
+    /// Returns a string representation of this <see cref="MessageBrokerServerConnectorStartedEvent"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
-        return $"[ClientAccepted] {Source}, ConnectorId = {Connector.Id}";
+        return $"[ConnectorStarted] {Source}, ConnectorId = {Connector.Id}";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerServerClientAcceptedEvent Create(
-        MessageBrokerServer server,
-        ulong traceId,
-        MessageBrokerRemoteClientConnector connector)
+    internal static MessageBrokerServerConnectorStartedEvent Create(MessageBrokerRemoteClientConnector connector, ulong traceId)
     {
-        return new MessageBrokerServerClientAcceptedEvent( server, traceId, connector );
+        return new MessageBrokerServerConnectorStartedEvent( connector, traceId );
     }
 }

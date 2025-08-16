@@ -15,6 +15,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
     {
         var sut = MessageBrokerServerOptions.Default;
         Assertion.All(
+                sut.RootStoragePath.TestNull(),
                 sut.Tcp.TestEquals( MessageBrokerServerTcpOptions.Default ),
                 sut.NetworkPacket.TestEquals( MessageBrokerServerNetworkPacketOptions.Default ),
                 sut.HandshakeTimeout.TestNull(),
@@ -33,6 +34,33 @@ public class MessageBrokerServerOptionsTests : TestsBase
     }
 
     [Fact]
+    public void SetRootStoragePath_ShouldChangeValue()
+    {
+        var value = "C:/server";
+        var sut = MessageBrokerServerOptions.Default;
+
+        var result = sut.SetRootStoragePath( value );
+
+        Assertion.All(
+                result.RootStoragePath.TestEquals( value ),
+                result.Tcp.TestEquals( sut.Tcp ),
+                result.NetworkPacket.TestEquals( sut.NetworkPacket ),
+                result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
+                result.AcceptableMessageTimeout.TestEquals( sut.AcceptableMessageTimeout ),
+                result.AcceptablePingInterval.TestEquals( sut.AcceptablePingInterval ),
+                result.ExpressionFactory.TestEquals( sut.ExpressionFactory ),
+                result.TimestampsFactory.TestEquals( sut.TimestampsFactory ),
+                result.DelaySourceFactory.TestEquals( sut.DelaySourceFactory ),
+                result.Logger.TestEquals( sut.Logger ),
+                result.ClientLoggerFactory.TestEquals( sut.ClientLoggerFactory ),
+                result.ChannelLoggerFactory.TestEquals( sut.ChannelLoggerFactory ),
+                result.StreamLoggerFactory.TestEquals( sut.StreamLoggerFactory ),
+                result.QueueLoggerFactory.TestEquals( sut.QueueLoggerFactory ),
+                result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
+            .Go();
+    }
+
+    [Fact]
     public void SetTcpOptions_ShouldChangeValue()
     {
         var value = MessageBrokerServerTcpOptions.Default.SetNoDelay( true ).SetSocketBufferSize( MemorySize.FromKilobytes( 16 ) );
@@ -41,6 +69,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
         var result = sut.SetTcpOptions( value );
 
         Assertion.All(
+                result.RootStoragePath.TestEquals( sut.RootStoragePath ),
                 result.Tcp.TestEquals( value ),
                 result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
@@ -72,6 +101,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
         var result = sut.SetNetworkPacketOptions( value );
 
         Assertion.All(
+                result.RootStoragePath.TestEquals( sut.RootStoragePath ),
                 result.Tcp.TestEquals( sut.Tcp ),
                 result.NetworkPacket.TestEquals( value ),
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
@@ -98,6 +128,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
         var result = sut.SetHandshakeTimeout( value );
 
         Assertion.All(
+                result.RootStoragePath.TestEquals( sut.RootStoragePath ),
                 result.Tcp.TestEquals( sut.Tcp ),
                 result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.HandshakeTimeout.TestEquals( value ),
@@ -124,6 +155,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
         var result = sut.SetAcceptableMessageTimeout( value );
 
         Assertion.All(
+                result.RootStoragePath.TestEquals( sut.RootStoragePath ),
                 result.Tcp.TestEquals( sut.Tcp ),
                 result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
@@ -150,6 +182,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
         var result = sut.SetAcceptablePingInterval( value );
 
         Assertion.All(
+                result.RootStoragePath.TestEquals( sut.RootStoragePath ),
                 result.Tcp.TestEquals( sut.Tcp ),
                 result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
@@ -176,6 +209,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
         var result = sut.SetExpressionFactory( value );
 
         Assertion.All(
+                result.RootStoragePath.TestEquals( sut.RootStoragePath ),
                 result.Tcp.TestEquals( sut.Tcp ),
                 result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
@@ -202,6 +236,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
         var result = sut.SetTimestampsFactory( value );
 
         Assertion.All(
+                result.RootStoragePath.TestEquals( sut.RootStoragePath ),
                 result.Tcp.TestEquals( sut.Tcp ),
                 result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
@@ -228,6 +263,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
         var result = sut.SetDelaySourceFactory( value );
 
         Assertion.All(
+                result.RootStoragePath.TestEquals( sut.RootStoragePath ),
                 result.Tcp.TestEquals( sut.Tcp ),
                 result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
@@ -254,6 +290,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
         var result = sut.SetLogger( value );
 
         Assertion.All(
+                result.RootStoragePath.TestEquals( sut.RootStoragePath ),
                 result.Tcp.TestEquals( sut.Tcp ),
                 result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
@@ -282,6 +319,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
         var result = sut.SetClientLoggerFactory( value );
 
         Assertion.All(
+                result.RootStoragePath.TestEquals( sut.RootStoragePath ),
                 result.Tcp.TestEquals( sut.Tcp ),
                 result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
@@ -308,6 +346,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
         var result = sut.SetChannelLoggerFactory( value );
 
         Assertion.All(
+                result.RootStoragePath.TestEquals( sut.RootStoragePath ),
                 result.Tcp.TestEquals( sut.Tcp ),
                 result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
@@ -334,6 +373,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
         var result = sut.SetStreamLoggerFactory( value );
 
         Assertion.All(
+                result.RootStoragePath.TestEquals( sut.RootStoragePath ),
                 result.Tcp.TestEquals( sut.Tcp ),
                 result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
@@ -360,6 +400,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
         var result = sut.SetQueueLoggerFactory( value );
 
         Assertion.All(
+                result.RootStoragePath.TestEquals( sut.RootStoragePath ),
                 result.Tcp.TestEquals( sut.Tcp ),
                 result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),
@@ -386,6 +427,7 @@ public class MessageBrokerServerOptionsTests : TestsBase
         var result = sut.SetStreamDecorator( value );
 
         Assertion.All(
+                result.RootStoragePath.TestEquals( sut.RootStoragePath ),
                 result.Tcp.TestEquals( sut.Tcp ),
                 result.NetworkPacket.TestEquals( sut.NetworkPacket ),
                 result.HandshakeTimeout.TestEquals( sut.HandshakeTimeout ),

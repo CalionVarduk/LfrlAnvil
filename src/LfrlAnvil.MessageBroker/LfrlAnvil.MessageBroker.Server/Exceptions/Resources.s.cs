@@ -48,6 +48,13 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string ConnectorDisposed(int id)
+    {
+        return $"Operation has been cancelled because remote client connector [{id}] is disposed.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string ChannelDisposed(int id, string name)
     {
         return $"Operation has been cancelled because channel [{id}] '{name}' is disposed.";
@@ -171,6 +178,21 @@ internal static class Resources
         Chain<string> errors)
     {
         var header = $"Server received an invalid {GetEndpoint( endpoint )} from client [{clientId}] '{clientName}'.";
+        if ( errors.Count == 0 )
+            return header;
+
+        var reasons = string.Join( Environment.NewLine, errors.Select( static (e, i) => $"{i + 1}. {e}" ) );
+        return $"{header} Encountered {errors.Count} error(s):{Environment.NewLine}{reasons}";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string InvalidPayloadFromClient(
+        int connectorId,
+        MessageBrokerServerEndpoint endpoint,
+        Chain<string> errors)
+    {
+        var header = $"Server-side connector [{connectorId}] received an invalid {GetEndpoint( endpoint )} from client.";
         if ( errors.Count == 0 )
             return header;
 
@@ -430,9 +452,9 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string DuplicateClientName(string name)
+    internal static string ClientAlreadyConnected(string name)
     {
-        return $"Client with name '{name}' already exists.";
+        return $"Client with name '{name}' is already connected.";
     }
 
     [Pure]
@@ -572,10 +594,17 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string RequestTimeout(MessageBrokerRemoteClient client)
+    internal static string RequestTimeout(MessageBrokerRemoteClient client, Duration timeout)
+    {
+        return $"Client [{client.Id}] '{client.Name}' failed to send a request to the server in the specified amount of time ({timeout}).";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string RequestTimeout(MessageBrokerRemoteClientConnector connector)
     {
         return
-            $"Client [{client.Id}] '{client.Name}' failed to send a request to the server in the specified amount of time ({client.MaxReadTimeout.FullMilliseconds} milliseconds).";
+            $"Client failed to send a request to the server-side connector [{connector.Id}] in the specified amount of time ({connector.Server.HandshakeTimeout}).";
     }
 
     [Pure]

@@ -13,7 +13,10 @@
 // limitations under the License.
 
 using System;
+using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 using System.Threading;
+using LfrlAnvil.Chrono;
 
 namespace LfrlAnvil.MessageBroker.Server.Exceptions;
 
@@ -22,18 +25,53 @@ namespace LfrlAnvil.MessageBroker.Server.Exceptions;
 /// </summary>
 public class MessageBrokerRemoteClientRequestTimeoutException : OperationCanceledException
 {
+    private readonly object _source;
+
+    private MessageBrokerRemoteClientRequestTimeoutException(MessageBrokerRemoteClient client, Duration timeout)
+        : base( Resources.RequestTimeout( client, timeout ), new CancellationToken( canceled: true ) )
+    {
+        _source = client;
+    }
+
     /// <summary>
     /// Creates a new <see cref="MessageBrokerRemoteClientRequestTimeoutException"/> instance.
     /// </summary>
-    /// <param name="client"><see cref="MessageBrokerRemoteClient"/> that encountered request timeout.</param>
-    public MessageBrokerRemoteClientRequestTimeoutException(MessageBrokerRemoteClient client)
-        : base( Resources.RequestTimeout( client ), new CancellationToken( canceled: true ) )
+    /// <param name="connector"><see cref="MessageBrokerRemoteClientConnector"/> that encountered request timeout.</param>
+    public MessageBrokerRemoteClientRequestTimeoutException(MessageBrokerRemoteClientConnector connector)
+        : base( Resources.RequestTimeout( connector ), new CancellationToken( canceled: true ) )
     {
-        Client = client;
+        _source = connector;
     }
 
     /// <summary>
     /// <see cref="MessageBrokerRemoteClient"/> that encountered request timeout.
     /// </summary>
-    public MessageBrokerRemoteClient Client { get; }
+    public MessageBrokerRemoteClient? Client => _source as MessageBrokerRemoteClient;
+
+    /// <summary>
+    /// <see cref="MessageBrokerRemoteClientConnector"/> that encountered request timeout.
+    /// </summary>
+    public MessageBrokerRemoteClientConnector? Connector => _source as MessageBrokerRemoteClientConnector;
+
+    /// <summary>
+    /// Creates a new <see cref="MessageBrokerRemoteClientRequestTimeoutException"/> instance for the handshake process.
+    /// </summary>
+    /// <param name="client"><see cref="MessageBrokerRemoteClient"/> that encountered handshake request timeout.</param>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static MessageBrokerRemoteClientRequestTimeoutException CreateForHandshake(MessageBrokerRemoteClient client)
+    {
+        return new MessageBrokerRemoteClientRequestTimeoutException( client, client.MessageTimeout );
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="MessageBrokerRemoteClientRequestTimeoutException"/> instance.
+    /// </summary>
+    /// <param name="client"><see cref="MessageBrokerRemoteClient"/> that encountered request timeout.</param>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static MessageBrokerRemoteClientRequestTimeoutException Create(MessageBrokerRemoteClient client)
+    {
+        return new MessageBrokerRemoteClientRequestTimeoutException( client, client.MaxReadTimeout );
+    }
 }

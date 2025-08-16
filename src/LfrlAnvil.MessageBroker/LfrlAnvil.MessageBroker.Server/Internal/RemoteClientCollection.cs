@@ -14,31 +14,27 @@
 
 using System;
 using System.Diagnostics.Contracts;
+using System.IO;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using LfrlAnvil.Extensions;
-using LfrlAnvil.MessageBroker.Server.Events;
+using LfrlAnvil.Memory;
+using LfrlAnvil.MessageBroker.Server.Exceptions;
 
 namespace LfrlAnvil.MessageBroker.Server.Internal;
 
 internal struct RemoteClientCollection
 {
     private ObjectStore<MessageBrokerRemoteClient> _store;
-    private readonly int _tcpSocketBufferSize;
-    private readonly bool _tcpNoDelay;
 
-    private RemoteClientCollection(MessageBrokerServerTcpOptions options)
+    private RemoteClientCollection(StringComparer nameComparer)
     {
-        _store = ObjectStore<MessageBrokerRemoteClient>.Create( StringComparer.OrdinalIgnoreCase );
-        _tcpSocketBufferSize = Defaults.Tcp.GetActualSocketBufferSize( options.SocketBufferSize );
-        _tcpNoDelay = options.NoDelay ?? Defaults.Tcp.NoDelay;
+        _store = ObjectStore<MessageBrokerRemoteClient>.Create( nameComparer );
     }
 
     [Pure]
-    internal static RemoteClientCollection Create(MessageBrokerServerTcpOptions options)
+    internal static RemoteClientCollection Create()
     {
-        return new RemoteClientCollection( options );
+        return new RemoteClientCollection( StringComparer.OrdinalIgnoreCase );
     }
 
     [Pure]
@@ -70,66 +66,35 @@ internal struct RemoteClientCollection
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static Result<MessageBrokerRemoteClient> Register(MessageBrokerServer server, TcpClient tcp, ulong traceId)
+    internal static Result<MessageBrokerRemoteClient> TryRegisterUnsafe(
+        MessageBrokerServer server,
+        TcpClient tcp,
+        Stream stream,
+        MemoryPool<byte> memoryPool,
+        string name,
+        in Protocol.HandshakeRequestHeader handshake,
+        out bool alreadyConnected)
     {
+        alreadyConnected = false;
         try
         {
-            tcp.NoDelay = server.RemoteClientCollection._tcpNoDelay;
-            tcp.ReceiveBufferSize = server.RemoteClientCollection._tcpSocketBufferSize;
-            tcp.SendBufferSize = server.RemoteClientCollection._tcpSocketBufferSize;
-
-            if ( RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) )
-                tcp.Client.SetSocketOption( SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true );
-
-            MessageBrokerRemoteClient client;
-            using ( server.AcquireActiveLock( traceId, out var exc ) )
+            var token = server.RemoteClientCollection._store.GetOrAddNull( name );
+            if ( token.Exists )
             {
-                if ( exc is not null )
-                    return exc;
-
-                var token = server.RemoteClientCollection._store.RegisterNull();
-                try
-                {
-                    client = token.SetObject(
-                        ref server.RemoteClientCollection._store,
-                        new MessageBrokerRemoteClient( token.Id, server, tcp ) );
-                }
-                catch
-                {
-                    token.Revert( ref server.RemoteClientCollection._store );
-                    throw;
-                }
+                alreadyConnected = true;
+                return server.Exception( Resources.ClientAlreadyConnected( name ) );
             }
 
-            if ( server.Logger.ClientAccepted is { } clientAccepted )
-                clientAccepted.Emit( MessageBrokerServerClientAcceptedEvent.Create( server, traceId, client ) );
-
-            return client;
-        }
-        catch ( Exception exc )
-        {
-            var error = server.Logger.Error;
-            error?.Emit( MessageBrokerServerErrorEvent.Create( server, traceId, exc ) );
-
-            var exception = tcp.TryDispose().Exception;
-            if ( exception is not null && error is not null )
-                error.Emit( MessageBrokerServerErrorEvent.Create( server, traceId, exception ) );
-
-            return exc;
-        }
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static Result<bool> RegisterName(MessageBrokerRemoteClient client, string name)
-    {
-        try
-        {
-            using ( client.Server.AcquireLock() )
+            try
             {
-                if ( client.Server.ShouldCancel )
-                    return client.Server.DisposedException();
-
-                return client.Server.RemoteClientCollection._store.TrySetName( client, name );
+                return token.SetObject(
+                    ref server.RemoteClientCollection._store,
+                    new MessageBrokerRemoteClient( token.Id, server, name, tcp, stream, memoryPool, in handshake ) );
+            }
+            catch
+            {
+                token.Revert( ref server.RemoteClientCollection._store, name );
+                throw;
             }
         }
         catch ( Exception exc )

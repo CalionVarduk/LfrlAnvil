@@ -128,9 +128,13 @@ internal struct ClientListener
             using ( server.AcquireLock() )
                 traceId = server.GetTraceId();
 
-            using ( MessageBrokerServerTraceEvent.CreateScope( server, traceId, MessageBrokerServerTraceEventType.AcceptClient ) )
+            var failed = true;
+            if ( server.Logger.TraceStart is { } traceStart )
+                traceStart.Emit( MessageBrokerServerTraceEvent.Create( server, traceId, MessageBrokerServerTraceEventType.AcceptClient ) );
+
+            try
             {
-                var result = RemoteClientCollection.Register( server, tcp, traceId );
+                var result = RemoteClientConnectorCollection.Register( server, tcp, traceId );
                 if ( result.Exception is not null )
                 {
                     if ( result.Exception is MessageBrokerServerDisposedException )
@@ -140,7 +144,14 @@ internal struct ClientListener
                 }
 
                 Assume.IsNotNull( result.Value );
+                failed = false;
                 await result.Value.StartAsync( traceId ).ConfigureAwait( false );
+            }
+            finally
+            {
+                if ( failed && server.Logger.TraceEnd is { } traceEnd )
+                    traceEnd.Emit(
+                        MessageBrokerServerTraceEvent.Create( server, traceId, MessageBrokerServerTraceEventType.AcceptClient ) );
             }
         }
     }

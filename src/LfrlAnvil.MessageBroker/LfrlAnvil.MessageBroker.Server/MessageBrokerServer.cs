@@ -15,6 +15,7 @@
 using System;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
@@ -41,6 +42,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
 {
     internal ClientListener ClientListener;
     internal RemoteClientCollection RemoteClientCollection;
+    internal RemoteClientConnectorCollection RemoteClientConnectorCollection;
     internal ChannelCollection ChannelCollection;
     internal StreamCollection StreamCollection;
     internal readonly MemoryPool<byte> MemoryPool;
@@ -49,6 +51,9 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     internal readonly Func<MessageBrokerStream, MessageBrokerStreamLogger?>? StreamLoggerFactory;
     internal readonly Func<MessageBrokerQueue, MessageBrokerQueueLogger?>? QueueLoggerFactory;
 
+    internal readonly DirectoryInfo? RootClientsDirectory;
+    internal readonly DirectoryInfo? RootChannelsDirectory;
+    internal readonly DirectoryInfo? RootStreamsDirectory;
     internal readonly MessageBrokerRemoteClientStreamDecorator? StreamDecorator;
     internal readonly Func<MessageBrokerRemoteClient, ITimestampProvider> TimestampsFactory;
     internal readonly Func<MessageBrokerRemoteClient, ValueTaskDelaySource>? DelaySourceFactory;
@@ -65,6 +70,21 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     /// <param name="options">Optional creation options.</param>
     public MessageBrokerServer(IPEndPoint localEndPoint, MessageBrokerServerOptions options = default)
     {
+        if ( string.IsNullOrWhiteSpace( options.RootStoragePath ) )
+        {
+            RootStorageDirectory = null;
+            RootClientsDirectory = null;
+            RootChannelsDirectory = null;
+            RootStreamsDirectory = null;
+        }
+        else
+        {
+            RootStorageDirectory = new DirectoryInfo( options.RootStoragePath );
+            RootClientsDirectory = new DirectoryInfo( Path.Combine( options.RootStoragePath, "clients" ) );
+            RootChannelsDirectory = new DirectoryInfo( Path.Combine( options.RootStoragePath, "channels" ) );
+            RootStreamsDirectory = new DirectoryInfo( Path.Combine( options.RootStoragePath, "streams" ) );
+        }
+
         _listener = new TcpListener( localEndPoint );
         LocalEndPoint = localEndPoint;
 
@@ -100,10 +120,16 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
             unchecked( ( int )MaxNetworkMessagePacketLength.Max( AcceptableMaxNetworkBatchPacketLength.Max ).Bytes ) );
 
         ClientListener = ClientListener.Create();
-        RemoteClientCollection = RemoteClientCollection.Create( options.Tcp );
+        RemoteClientCollection = RemoteClientCollection.Create();
+        RemoteClientConnectorCollection = RemoteClientConnectorCollection.Create( options.Tcp );
         ChannelCollection = ChannelCollection.Create();
         StreamCollection = StreamCollection.Create();
     }
+
+    /// <summary>
+    /// Specifies the root directory for permanent server storage. Lack of root directory will cause the server to work in in-memory mode.
+    /// </summary>
+    public DirectoryInfo? RootStorageDirectory { get; }
 
     /// <summary>
     /// Handshake timeout for newly connected clients.
@@ -177,6 +203,11 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
                 return _state;
         }
     }
+
+    /// <summary>
+    /// Collection of attached <see cref="MessageBrokerRemoteClientConnector"/> instances.
+    /// </summary>
+    public MessageBrokerRemoteClientConnectorCollection Connectors => new MessageBrokerRemoteClientConnectorCollection( this );
 
     /// <summary>
     /// Collection of attached <see cref="MessageBrokerRemoteClient"/> instances.
@@ -292,6 +323,17 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
 
             try
             {
+                if ( RootStorageDirectory is not null )
+                {
+                    Assume.IsNotNull( RootClientsDirectory );
+                    Assume.IsNotNull( RootChannelsDirectory );
+                    Assume.IsNotNull( RootStreamsDirectory );
+                    RootStorageDirectory.Create();
+                    RootClientsDirectory.Create();
+                    RootChannelsDirectory.Create();
+                    RootStreamsDirectory.Create();
+                }
+
                 if ( Logger.ListenerStarting is { } listenerStarting )
                     listenerStarting.Emit( MessageBrokerServerListenerStartingEvent.Create( this, traceId ) );
 
@@ -309,18 +351,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
                     listenerStarted.Emit( MessageBrokerServerListenerStartedEvent.Create( this, traceId ) );
 
                 cancellationToken.ThrowIfCancellationRequested();
-            }
-            catch ( Exception exc )
-            {
-                if ( Logger.Error is { } error )
-                    error.Emit( MessageBrokerServerErrorEvent.Create( this, traceId, exc ) );
 
-                await DisposeAsync( traceId ).ConfigureAwait( false );
-                return exc;
-            }
-
-            try
-            {
                 var clientListenerTask = ClientListener.StartUnderlyingTask( this, _listener );
                 using ( AcquireActiveLock( traceId, out var exc ) )
                 {
@@ -401,16 +432,18 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         if ( Logger.Disposing is { } disposing )
             disposing.Emit( MessageBrokerServerDisposingEvent.Create( this, traceId ) );
 
-        Exception? exception = null;
+        var exceptions = Chain<Exception>.Empty;
+        MessageBrokerRemoteClientConnector[] connectors;
         MessageBrokerRemoteClient[] clients;
         MessageBrokerStream[] streams;
         MessageBrokerChannel[] channels;
         Task? clientListenerTask;
         using ( AcquireLock() )
         {
+            connectors = RemoteClientConnectorCollection.DisposeUnsafe();
+            clients = RemoteClientCollection.DisposeUnsafe();
             channels = ChannelCollection.DisposeUnsafe();
             streams = StreamCollection.DisposeUnsafe();
-            clients = RemoteClientCollection.DisposeUnsafe();
             clientListenerTask = ClientListener.DiscardUnderlyingTask();
 
             try
@@ -419,13 +452,24 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
             }
             catch ( Exception exc )
             {
-                exception = exc;
+                exceptions = exceptions.Extend( exc );
                 clientListenerTask = null;
             }
+
+            RemoteClientConnectorCollection.DisposeCancellationSources( ref exceptions );
         }
 
-        if ( exception is not null && Logger.Error is { } error )
-            error.Emit( MessageBrokerServerErrorEvent.Create( this, traceId, exception ) );
+        this.TryEmitErrors( traceId, exceptions );
+
+        await Parallel.ForEachAsync(
+                connectors,
+                async (c, _) =>
+                {
+                    var result = await c.CancelAsync().ConfigureAwait( false );
+                    if ( result.Exception is not null && Logger.Error is { } err )
+                        err.Emit( MessageBrokerServerErrorEvent.Create( this, traceId, result.Exception ) );
+                } )
+            .ConfigureAwait( false );
 
         await Parallel.ForEachAsync( streams, (s, _) => s.OnServerDisposedAsync( traceId ) ).ConfigureAwait( false );
         foreach ( var channel in channels )
@@ -435,8 +479,9 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         foreach ( var stream in streams )
             stream.ClearMessageStore();
 
-        if ( clientListenerTask is not null )
-            await clientListenerTask.ConfigureAwait( false );
+        var taskResult = await clientListenerTask.SafeWaitAsync().ConfigureAwait( false );
+        if ( taskResult.Exception is not null && Logger.Error is { } error )
+            error.Emit( MessageBrokerServerErrorEvent.Create( this, traceId, taskResult.Exception ) );
 
         using ( AcquireLock() )
             _state = MessageBrokerServerState.Disposed;

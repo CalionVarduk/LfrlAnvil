@@ -241,7 +241,7 @@ internal static class Protocol
         {
             None = 0,
             InvalidNameLength = 1,
-            NameAlreadyExists = 2
+            AlreadyConnected = 2
         }
 
         internal const int Payload = sizeof( byte );

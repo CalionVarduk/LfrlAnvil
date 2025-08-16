@@ -278,7 +278,7 @@ internal static class Protocol
         }
 
         internal bool InvalidNameLength => (Flags & 1) != 0;
-        internal bool NameAlreadyExists => (Flags & 2) != 0;
+        internal bool AlreadyConnected => (Flags & 2) != 0;
 
         [Pure]
         public override string ToString()
@@ -304,8 +304,8 @@ internal static class Protocol
             if ( InvalidNameLength )
                 result = result.Extend( Resources.ClientNameLengthOutOfBounds );
 
-            if ( NameAlreadyExists )
-                result = result.Extend( Resources.ClientNameAlreadyExists );
+            if ( AlreadyConnected )
+                result = result.Extend( Resources.ClientIsAlreadyConnected );
 
             return result;
         }
