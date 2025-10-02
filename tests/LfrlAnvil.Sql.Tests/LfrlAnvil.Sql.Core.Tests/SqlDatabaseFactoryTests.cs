@@ -253,7 +253,8 @@ public class SqlDatabaseFactoryTests : TestsBase
                 {
                     var table = db.Schemas.Default.Objects.CreateTable( "T1" );
                     table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-                } ),
+                },
+                isTransactional: false ),
             SqlDatabaseVersion.Create(
                 new Version( "0.2" ),
                 db =>

@@ -30,11 +30,18 @@ public static class SqliteDatabaseVersion
     /// <param name="value">Identifier of this version.</param>
     /// <param name="description">Optional description of this version.</param>
     /// <param name="apply">Delegate that defines this version's changes.</param>
+    /// <param name="isTransactional">
+    /// Specifies whether or not this version's scripts should be contained in a DB transaction. Equal to <b>true</b> by default.
+    /// </param>
     /// <returns>New <see cref="SqlDatabaseVersion{TDatabaseBuilder}"/> instance.</returns>
     [Pure]
-    public static SqlDatabaseVersion<SqliteDatabaseBuilder> Create(Version value, string? description, Action<SqliteDatabaseBuilder> apply)
+    public static SqlDatabaseVersion<SqliteDatabaseBuilder> Create(
+        Version value,
+        string? description,
+        Action<SqliteDatabaseBuilder> apply,
+        bool isTransactional = true)
     {
-        return SqlDatabaseVersion.Create( value, description, apply );
+        return SqlDatabaseVersion.Create( value, description, apply, isTransactional );
     }
 
     /// <summary>
@@ -42,10 +49,16 @@ public static class SqliteDatabaseVersion
     /// </summary>
     /// <param name="value">Identifier of this version.</param>
     /// <param name="apply">Delegate that defines this version's changes.</param>
+    /// <param name="isTransactional">
+    /// Specifies whether or not this version's scripts should be contained in a DB transaction. Equal to <b>true</b> by default.
+    /// </param>
     /// <returns>New <see cref="SqlDatabaseVersion{TDatabaseBuilder}"/> instance.</returns>
     [Pure]
-    public static SqlDatabaseVersion<SqliteDatabaseBuilder> Create(Version value, Action<SqliteDatabaseBuilder> apply)
+    public static SqlDatabaseVersion<SqliteDatabaseBuilder> Create(
+        Version value,
+        Action<SqliteDatabaseBuilder> apply,
+        bool isTransactional = true)
     {
-        return SqlDatabaseVersion.Create( value, null, apply );
+        return SqlDatabaseVersion.Create( value, null, apply, isTransactional );
     }
 }

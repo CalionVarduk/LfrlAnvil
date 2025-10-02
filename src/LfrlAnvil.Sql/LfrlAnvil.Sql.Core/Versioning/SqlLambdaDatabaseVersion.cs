@@ -22,8 +22,8 @@ internal sealed class SqlLambdaDatabaseVersion<TDatabaseBuilder> : SqlDatabaseVe
 {
     private readonly Action<TDatabaseBuilder> _apply;
 
-    internal SqlLambdaDatabaseVersion(Action<TDatabaseBuilder> apply, Version value, string? description)
-        : base( value, description )
+    internal SqlLambdaDatabaseVersion(Action<TDatabaseBuilder> apply, Version value, string? description, bool isTransactional)
+        : base( value, description, isTransactional )
     {
         _apply = apply;
     }

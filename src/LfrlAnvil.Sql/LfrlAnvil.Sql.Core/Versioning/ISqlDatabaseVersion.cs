@@ -33,6 +33,11 @@ public interface ISqlDatabaseVersion
     string Description { get; }
 
     /// <summary>
+    /// Specifies whether or not this version's scripts should be contained in a DB transaction.
+    /// </summary>
+    bool IsTransactional { get; }
+
+    /// <summary>
     /// Applies changes defined by this version to the provided <paramref name="database"/>.
     /// </summary>
     /// <param name="database">Target SQL database builder.</param>

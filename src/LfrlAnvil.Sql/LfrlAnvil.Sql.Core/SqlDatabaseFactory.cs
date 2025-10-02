@@ -457,12 +457,14 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
 
                 try
                 {
-                    using var transaction = connection.BeginTransaction( IsolationLevel.Serializable );
-                    command.Transaction = transaction;
+                    using var transaction = OptionalDisposable.TryCreate(
+                        version.IsTransactional ? connection.BeginTransaction( IsolationLevel.Serializable ) : null );
+
+                    command.Transaction = transaction.Value;
 
                     statementKey = context.OnBeforeVersionActionRangeExecution( builder, statementKey, command, ref executor );
                     Assume.Equals( statementKey.Version, version.Value );
-                    Assume.Equals( command.Transaction, transaction );
+                    Assume.True( ReferenceEquals( command.Transaction, transaction.Value ) );
 
                     foreach ( var action in actions )
                     {
@@ -472,24 +474,24 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
 
                     statementKey = context.OnAfterVersionActionRangeExecution( builder, statementKey, command, ref executor );
                     Assume.Equals( statementKey.Version, version.Value );
-                    Assume.Equals( command.Transaction, transaction );
+                    Assume.True( ReferenceEquals( command.Transaction, transaction.Value ) );
 
                     if ( context.PersistLastVersionHistoryRecordOnly )
                     {
                         statementKey = statementKey.NextOrdinal();
-                        context.DeleteAllVersionHistoryRecords( transaction, statementKey, ref executor );
+                        context.DeleteAllVersionHistoryRecords( transaction.Value, statementKey, ref executor );
                     }
 
                     statementKey = statementKey.NextOrdinal();
                     context.InsertVersionHistoryRecord(
-                        transaction,
+                        transaction.Value,
                         versionOrdinal,
                         version.Value,
                         version.Description,
                         statementKey,
                         ref executor );
 
-                    transaction.Commit();
+                    transaction.Value?.Commit();
                 }
                 finally
                 {

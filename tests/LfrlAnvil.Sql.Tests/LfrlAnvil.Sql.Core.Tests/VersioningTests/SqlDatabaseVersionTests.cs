@@ -22,6 +22,7 @@ public class SqlDatabaseVersionTests : TestsBase
         Assertion.All(
                 sut.Value.TestRefEquals( version ),
                 sut.Description.TestEquals( description ),
+                sut.IsTransactional.TestTrue(),
                 apply.CallAt( 0 ).Arguments.TestSequence( [ builder ] ) )
             .Go();
     }
@@ -31,14 +32,16 @@ public class SqlDatabaseVersionTests : TestsBase
     {
         var version = Version.Parse( "1.2.3.4" );
         var apply = Substitute.For<Action<SqlDatabaseBuilder>>();
+        var isTransactional = Fixture.Create<bool>();
         var builder = SqlDatabaseBuilderMock.Create();
-        var sut = SqlDatabaseVersion.Create( version, apply );
+        var sut = SqlDatabaseVersion.Create( version, apply, isTransactional );
 
         sut.Apply( builder );
 
         Assertion.All(
                 sut.Value.TestRefEquals( version ),
                 sut.Description.TestEmpty(),
+                sut.IsTransactional.TestEquals( isTransactional ),
                 apply.CallAt( 0 ).Arguments.TestSequence( [ builder ] ) )
             .Go();
     }

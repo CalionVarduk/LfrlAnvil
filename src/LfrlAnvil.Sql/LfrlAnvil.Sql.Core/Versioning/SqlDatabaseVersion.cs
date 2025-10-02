@@ -31,10 +31,14 @@ public abstract class SqlDatabaseVersion<TDatabaseBuilder> : ISqlDatabaseVersion
     /// </summary>
     /// <param name="value">Identifier of this version.</param>
     /// <param name="description">Optional description of this version.</param>
-    protected SqlDatabaseVersion(Version value, string? description = null)
+    /// <param name="isTransactional">
+    /// Specifies whether or not this version's scripts should be contained in a DB transaction. Equal to <b>true</b> by default.
+    /// </param>
+    protected SqlDatabaseVersion(Version value, string? description = null, bool isTransactional = true)
     {
         Value = value;
         Description = description ?? string.Empty;
+        IsTransactional = isTransactional;
     }
 
     /// <inheritdoc />
@@ -42,6 +46,9 @@ public abstract class SqlDatabaseVersion<TDatabaseBuilder> : ISqlDatabaseVersion
 
     /// <inheritdoc />
     public string Description { get; }
+
+    /// <inheritdoc />
+    public bool IsTransactional { get; }
 
     /// <inheritdoc cref="ISqlDatabaseVersion.Apply(ISqlDatabaseBuilder)" />
     public abstract void Apply(TDatabaseBuilder database);
@@ -73,16 +80,20 @@ public static class SqlDatabaseVersion
     /// <param name="value">Identifier of this version.</param>
     /// <param name="description">Optional description of this version.</param>
     /// <param name="apply">Delegate that defines this version's changes.</param>
+    /// <param name="isTransactional">
+    /// Specifies whether or not this version's scripts should be contained in a DB transaction. Equal to <b>true</b> by default.
+    /// </param>
     /// <typeparam name="TDatabaseBuilder">SQL database builder type.</typeparam>
     /// <returns>New <see cref="SqlDatabaseVersion{TDatabaseBuilder}"/> instance.</returns>
     [Pure]
     public static SqlDatabaseVersion<TDatabaseBuilder> Create<TDatabaseBuilder>(
         Version value,
         string? description,
-        Action<TDatabaseBuilder> apply)
+        Action<TDatabaseBuilder> apply,
+        bool isTransactional = true)
         where TDatabaseBuilder : class, ISqlDatabaseBuilder
     {
-        return new SqlLambdaDatabaseVersion<TDatabaseBuilder>( apply, value, description );
+        return new SqlLambdaDatabaseVersion<TDatabaseBuilder>( apply, value, description, isTransactional );
     }
 
     /// <summary>
@@ -90,13 +101,19 @@ public static class SqlDatabaseVersion
     /// </summary>
     /// <param name="value">Identifier of this version.</param>
     /// <param name="apply">Delegate that defines this version's changes.</param>
+    /// <param name="isTransactional">
+    /// Specifies whether or not this version's scripts should be contained in a DB transaction. Equal to <b>true</b> by default.
+    /// </param>
     /// <typeparam name="TDatabaseBuilder">SQL database builder type.</typeparam>
     /// <returns>New <see cref="SqlDatabaseVersion{TDatabaseBuilder}"/> instance.</returns>
     [Pure]
-    public static SqlDatabaseVersion<TDatabaseBuilder> Create<TDatabaseBuilder>(Version value, Action<TDatabaseBuilder> apply)
+    public static SqlDatabaseVersion<TDatabaseBuilder> Create<TDatabaseBuilder>(
+        Version value,
+        Action<TDatabaseBuilder> apply,
+        bool isTransactional = true)
         where TDatabaseBuilder : class, ISqlDatabaseBuilder
     {
-        return Create( value, null, apply );
+        return Create( value, null, apply, isTransactional );
     }
 
     /// <summary>
@@ -105,11 +122,18 @@ public static class SqlDatabaseVersion
     /// <param name="value">Identifier of this version.</param>
     /// <param name="description">Optional description of this version.</param>
     /// <param name="apply">Delegate that defines this version's changes.</param>
+    /// <param name="isTransactional">
+    /// Specifies whether or not this version's scripts should be contained in a DB transaction. Equal to <b>true</b> by default.
+    /// </param>
     /// <returns>New <see cref="SqlDatabaseVersion{TDatabaseBuilder}"/> instance.</returns>
     [Pure]
-    public static SqlDatabaseVersion<SqlDatabaseBuilder> Create(Version value, string? description, Action<SqlDatabaseBuilder> apply)
+    public static SqlDatabaseVersion<SqlDatabaseBuilder> Create(
+        Version value,
+        string? description,
+        Action<SqlDatabaseBuilder> apply,
+        bool isTransactional = true)
     {
-        return Create<SqlDatabaseBuilder>( value, description, apply );
+        return Create<SqlDatabaseBuilder>( value, description, apply, isTransactional );
     }
 
     /// <summary>
@@ -117,10 +141,16 @@ public static class SqlDatabaseVersion
     /// </summary>
     /// <param name="value">Identifier of this version.</param>
     /// <param name="apply">Delegate that defines this version's changes.</param>
+    /// <param name="isTransactional">
+    /// Specifies whether or not this version's scripts should be contained in a DB transaction. Equal to <b>true</b> by default.
+    /// </param>
     /// <returns>New <see cref="SqlDatabaseVersion{TDatabaseBuilder}"/> instance.</returns>
     [Pure]
-    public static SqlDatabaseVersion<SqlDatabaseBuilder> Create(Version value, Action<SqlDatabaseBuilder> apply)
+    public static SqlDatabaseVersion<SqlDatabaseBuilder> Create(
+        Version value,
+        Action<SqlDatabaseBuilder> apply,
+        bool isTransactional = true)
     {
-        return Create<SqlDatabaseBuilder>( value, apply );
+        return Create<SqlDatabaseBuilder>( value, apply, isTransactional );
     }
 }

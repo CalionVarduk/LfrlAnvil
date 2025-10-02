@@ -426,7 +426,7 @@ public class SqlDatabaseCommitVersionsContext : IDisposable
     }
 
     internal void InsertVersionHistoryRecord(
-        DbTransaction transaction,
+        DbTransaction? transaction,
         int ordinal,
         Version version,
         string description,
@@ -453,7 +453,7 @@ public class SqlDatabaseCommitVersionsContext : IDisposable
     }
 
     internal void DeleteAllVersionHistoryRecords(
-        DbTransaction transaction,
+        DbTransaction? transaction,
         SqlDatabaseFactoryStatementKey key,
         ref SqlDatabaseFactoryStatementExecutor executor)
     {
