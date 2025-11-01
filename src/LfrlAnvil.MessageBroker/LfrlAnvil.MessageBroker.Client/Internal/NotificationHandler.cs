@@ -72,29 +72,34 @@ internal struct NotificationHandler
         Assume.IsGreaterThanOrEqualTo( client.State, MessageBrokerClientState.Disposing );
     }
 
-    internal void BeginDispose()
+    internal void BeginDispose(ref Chain<Exception> exceptions)
     {
-        if ( _continuation.Status == ValueTaskSourceStatus.Pending )
-            _continuation.SetResult( false );
+        try
+        {
+            if ( _continuation.Status == ValueTaskSourceStatus.Pending )
+                _continuation.SetResult( false );
+        }
+        catch ( Exception exc )
+        {
+            exceptions = exceptions.Extend( exc );
+        }
     }
 
-    internal (int DiscardedMessageCount, Chain<Exception> Exceptions) EndDispose(bool extractExceptions)
+    internal int EndDispose(ref Chain<Exception> exceptions)
     {
         var discardedMessageCount = _notifications.Count;
-        var exceptions = Chain<Exception>.Empty;
-
         foreach ( ref readonly var message in _notifications )
         {
             if ( message.Header.GetClientEndpoint() == MessageBrokerClientEndpoint.SystemNotification )
                 --discardedMessageCount;
 
             var exc = message.PoolToken.Return();
-            if ( exc is not null && extractExceptions )
+            if ( exc is not null )
                 exceptions = exceptions.Extend( exc );
         }
 
         _notifications = QueueSlim<Notification>.Create();
-        return (discardedMessageCount, exceptions);
+        return discardedMessageCount;
     }
 
     internal void SetUnderlyingTask(Task task)

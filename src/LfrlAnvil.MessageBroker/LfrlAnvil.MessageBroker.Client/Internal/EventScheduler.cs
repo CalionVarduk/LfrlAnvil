@@ -82,14 +82,29 @@ internal struct EventScheduler
         }
     }
 
-    internal void Dispose()
+    internal void Dispose(ref Chain<Exception> exceptions)
     {
-        _reset.Dispose();
-        _reset = default;
-        _writerCancellation = _writerCancellation.Cancel();
-        _readerCancellation = _readerCancellation.Cancel();
-        _nextEventTimestamp = _writerCancellation.Timestamp;
-        _nextSendPingTimestamp = _nextEventTimestamp;
+        try
+        {
+            _reset.Dispose();
+            _reset = default;
+        }
+        catch ( Exception exc )
+        {
+            exceptions = exceptions.Extend( exc );
+        }
+
+        try
+        {
+            _writerCancellation = _writerCancellation.Cancel();
+            _readerCancellation = _readerCancellation.Cancel();
+            _nextEventTimestamp = _writerCancellation.Timestamp;
+            _nextSendPingTimestamp = _nextEventTimestamp;
+        }
+        catch ( Exception exc )
+        {
+            exceptions = exceptions.Extend( exc );
+        }
     }
 
     internal void SetUnderlyingTask(Task task)

@@ -26,6 +26,7 @@ namespace LfrlAnvil.MessageBroker.Client.Exceptions;
 internal static class Resources
 {
     internal const string ClientIsAlreadyConnected = "Client is already connected.";
+    internal const string ServerIsEphemeral = "Server is ephemeral.";
     internal const string UnexpectedClientEndpoint = "Received unexpected client endpoint.";
     internal const string ClientNameLengthOutOfBounds = "Server found client's name length to be out of bounds.";
     internal const string ExternalObjectNameSynchronizationIsDisabled = "External object name synchronization is disabled.";

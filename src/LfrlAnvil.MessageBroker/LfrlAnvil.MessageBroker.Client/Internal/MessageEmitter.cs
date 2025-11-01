@@ -89,17 +89,25 @@ internal struct MessageEmitter
         Assume.IsGreaterThanOrEqualTo( listener.State, MessageBrokerListenerState.Disposing );
     }
 
-    internal void BeginDispose()
+    internal void BeginDispose(ref Chain<Exception> exceptions)
     {
-        if ( _continuation.Status == ValueTaskSourceStatus.Pending )
-            _continuation.SetResult( false );
+        try
+        {
+            if ( _continuation.Status == ValueTaskSourceStatus.Pending )
+                _continuation.SetResult( false );
+        }
+        catch ( Exception exc )
+        {
+            exceptions = exceptions.Extend( exc );
+        }
     }
 
-    internal ListSlim<DiscardedNotification> EndDispose()
+    internal DiscardedNotification[] EndDispose()
     {
-        var result = ListSlim<DiscardedNotification>.Create( _messages.Count );
+        var i = 0;
+        var result = new DiscardedNotification[_messages.Count];
         foreach ( ref readonly var message in _messages )
-            result.Add( new DiscardedNotification( message.PoolToken, message.Args.TraceId ) );
+            result[i++] = new DiscardedNotification( message.PoolToken, message.Args.TraceId );
 
         _messages = QueueSlim<Notification>.Create();
         return result;

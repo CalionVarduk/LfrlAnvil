@@ -343,7 +343,7 @@ internal struct ListenerCollection
             if ( client.ShouldCancel )
                 ExceptionThrower.Throw( client.DisposedException() );
 
-            if ( ! listener.BeginDispose() )
+            if ( ! listener.BeginUnbinding() )
                 return MessageBrokerUnbindListenerResult.CreateNotBound();
 
             reverseEndianness = BitConverter.IsLittleEndian != client.IsServerLittleEndian;
@@ -355,7 +355,7 @@ internal struct ListenerCollection
             if ( client.Logger.UnbindingListener is { } unbindingListener )
                 unbindingListener.Emit( MessageBrokerClientUnbindingListenerEvent.Create( listener, traceId ) );
 
-            var endDispose = listener.EndDisposingAsync( traceId );
+            var endUnbinding = listener.EndUnbindingAsync( traceId );
             try
             {
                 ManualResetValueTaskSource<IncomingPacketToken> responseSource;
@@ -514,7 +514,7 @@ internal struct ListenerCollection
             }
             finally
             {
-                await endDispose.ConfigureAwait( false );
+                await endUnbinding.ConfigureAwait( false );
             }
         }
     }
@@ -787,8 +787,12 @@ internal struct ListenerCollection
         return true;
     }
 
-    internal MessageBrokerListener[] Clear()
+    internal MessageBrokerListener[] BeginDispose(ref Chain<Exception> exceptions)
     {
-        return _store.ClearAndExtract();
+        var result = _store.ClearAndExtract();
+        foreach ( var listener in result )
+            listener.OnClientDisposing( ref exceptions );
+
+        return result;
     }
 }

@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks.Sources;
@@ -39,18 +40,32 @@ internal struct ResponseQueue
         return new ResponseQueue( 0 );
     }
 
-    internal void Dispose()
+    internal void Dispose(ref Chain<Exception> exceptions)
     {
         _activePendingResponses = 0;
-        foreach ( var source in _pendingResponses )
+        foreach ( ref readonly var source in _pendingResponses )
         {
-            Assume.IsNotNull( source.Source );
-            if ( source.Source.Status == ValueTaskSourceStatus.Pending )
-                source.Source.SetResult( default );
+            try
+            {
+                Assume.IsNotNull( source.Source );
+                if ( source.Source.Status == ValueTaskSourceStatus.Pending )
+                    source.Source.SetResult( default );
+            }
+            catch ( Exception exc )
+            {
+                exceptions = exceptions.Extend( exc );
+            }
         }
 
-        _pendingResponses = QueueSlim<PendingResponseSource>.Create();
-        _responseCache = StackSlim<ManualResetValueTaskSource<IncomingPacketToken>>.Create();
+        try
+        {
+            _pendingResponses = QueueSlim<PendingResponseSource>.Create();
+            _responseCache = StackSlim<ManualResetValueTaskSource<IncomingPacketToken>>.Create();
+        }
+        catch ( Exception exc )
+        {
+            exceptions = exceptions.Extend( exc );
+        }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

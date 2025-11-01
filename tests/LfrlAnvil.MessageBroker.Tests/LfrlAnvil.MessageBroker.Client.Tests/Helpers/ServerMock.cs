@@ -426,13 +426,13 @@ internal sealed class ServerMock : IDisposable
         Send( buffer );
     }
 
-    internal void SendHandshakeRejected(bool invalidNameLength, bool nameAlreadyExists, uint? payload = null)
+    internal void SendHandshakeRejected(bool invalidNameLength, bool alreadyConnected, bool ephemeralServer, uint? payload = null)
     {
         var buffer = new byte[Protocol.PacketHeader.Length + Protocol.HandshakeRejectedResponse.Length];
         var writer = new BinaryContractWriter( buffer );
         writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.HandshakeRejectedResponse );
         writer.MoveWrite( payload ?? Protocol.HandshakeRejectedResponse.Length );
-        writer.Write( ( byte )((invalidNameLength ? 1 : 0) | (nameAlreadyExists ? 2 : 0)) );
+        writer.Write( ( byte )((invalidNameLength ? 1 : 0) | (alreadyConnected ? 2 : 0) | (ephemeralServer ? 4 : 0)) );
         Send( buffer );
     }
 

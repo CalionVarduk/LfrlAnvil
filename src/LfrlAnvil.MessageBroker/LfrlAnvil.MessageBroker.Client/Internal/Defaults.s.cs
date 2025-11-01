@@ -60,6 +60,7 @@ internal static class Defaults
 
     internal static class Temporal
     {
+        internal static Duration TaskWaitTimeout => Duration.FromSeconds( 5 );
         internal static Duration Delay => Duration.FromSeconds( 15 );
         internal static Duration MaxTimeout => Duration.FromMilliseconds( int.MaxValue );
 

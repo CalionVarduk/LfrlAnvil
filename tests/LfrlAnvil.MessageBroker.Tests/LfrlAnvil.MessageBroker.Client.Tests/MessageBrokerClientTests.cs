@@ -602,7 +602,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
             {
                 s.WaitForClient();
                 s.Read( handshakeRequest );
-                s.SendHandshakeRejected( true, true );
+                s.SendHandshakeRejected( true, true, true );
             } );
 
         var result = await client.StartAsync();
@@ -628,9 +628,10 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             "[ReadPacket:Received] Client = 'test', TraceId = 0, Packet = (HandshakeRejectedResponse, Length = 6)",
                             """
                             [Error] Client = 'test', TraceId = 0
-                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientRequestException: Server rejected an invalid HandshakeRequest sent by client 'test'. Encountered 2 error(s):
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientRequestException: Server rejected an invalid HandshakeRequest sent by client 'test'. Encountered 3 error(s):
                             1. Server found client's name length to be out of bounds.
                             2. Client is already connected.
+                            3. Server is ephemeral.
                             """,
                             "[Disposing] Client = 'test', TraceId = 0",
                             "[Disposed] Client = 'test', TraceId = 0",
@@ -670,7 +671,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
             {
                 s.WaitForClient();
                 s.Read( handshakeRequest );
-                s.SendHandshakeRejected( true, true, payload: 2 );
+                s.SendHandshakeRejected( true, true, true, payload: 2 );
             } );
 
         var result = await client.StartAsync();
@@ -1522,7 +1523,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
             {
                 s.WaitForClient();
                 s.Read( handshakeRequest );
-                s.SendHandshakeRejected( true, true );
+                s.SendHandshakeRejected( true, true, true );
             } );
 
         var result = await client.StartAsync();

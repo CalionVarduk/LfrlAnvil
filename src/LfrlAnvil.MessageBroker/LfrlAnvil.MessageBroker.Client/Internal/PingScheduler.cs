@@ -71,10 +71,17 @@ internal struct PingScheduler
         Assume.IsGreaterThanOrEqualTo( client.State, MessageBrokerClientState.Disposing );
     }
 
-    internal void Dispose()
+    internal void Dispose(ref Chain<Exception> exceptions)
     {
-        if ( _continuation.Status == ValueTaskSourceStatus.Pending )
-            _continuation.SetResult( false );
+        try
+        {
+            if ( _continuation.Status == ValueTaskSourceStatus.Pending )
+                _continuation.SetResult( false );
+        }
+        catch ( Exception exc )
+        {
+            exceptions = exceptions.Extend( exc );
+        }
     }
 
     internal void SetUnderlyingTask(Task task)

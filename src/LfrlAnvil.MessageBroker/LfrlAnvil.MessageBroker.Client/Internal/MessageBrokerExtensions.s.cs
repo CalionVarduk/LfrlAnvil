@@ -15,7 +15,10 @@
 using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 using LfrlAnvil.Async;
+using LfrlAnvil.Chrono;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Memory;
 using LfrlAnvil.MessageBroker.Client.Events;
@@ -111,6 +114,51 @@ internal static class MessageBrokerExtensions
 
             if ( exception is not null && client.Logger.Error is { } error )
                 error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
+        }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static Result TryCancel(this CancellationTokenSource source)
+    {
+        try
+        {
+            source.Cancel();
+            return Result.Valid;
+        }
+        catch ( Exception exc )
+        {
+            return exc;
+        }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static async ValueTask<Result> SafeWaitAsync(this Task task)
+    {
+        try
+        {
+            await task.ConfigureAwait( false );
+            return Result.Valid;
+        }
+        catch ( Exception exc )
+        {
+            return exc;
+        }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static async ValueTask<Result> SafeCancellableWaitAsync(this Task? task, Duration? timeout = null)
+    {
+        if ( task is null )
+            return Result.Valid;
+
+        try
+        {
+            await task.WaitAsync( timeout ?? Defaults.Temporal.TaskWaitTimeout ).ConfigureAwait( false );
+            return Result.Valid;
+        }
+        catch ( Exception exc )
+        {
+            return exc;
         }
     }
 

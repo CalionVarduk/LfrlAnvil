@@ -105,8 +105,10 @@ internal static class Protocol
 
         internal HandshakeRequest(MessageBrokerClient client)
         {
-            Flags = ( byte )( /*(client.IsPersistent ? 1 : 0) |*/
-                (BitConverter.IsLittleEndian ? 2 : 0) | (client.SynchronizeExternalObjectNames ? 4 : 0) | (client.ClearBuffers ? 8 : 0));
+            Flags = ( byte )((client.IsEphemeral ? 0 : 1)
+                | (BitConverter.IsLittleEndian ? 2 : 0)
+                | (client.SynchronizeExternalObjectNames ? 4 : 0)
+                | (client.ClearBuffers ? 8 : 0));
 
             MessageTimeout = client.MessageTimeout;
             PingInterval = client.PingInterval;
@@ -279,6 +281,7 @@ internal static class Protocol
 
         internal bool InvalidNameLength => (Flags & 1) != 0;
         internal bool AlreadyConnected => (Flags & 2) != 0;
+        internal bool EphemeralServer => (Flags & 4) != 0;
 
         [Pure]
         public override string ToString()
@@ -306,6 +309,9 @@ internal static class Protocol
 
             if ( AlreadyConnected )
                 result = result.Extend( Resources.ClientIsAlreadyConnected );
+
+            if ( EphemeralServer )
+                result = result.Extend( Resources.ServerIsEphemeral );
 
             return result;
         }

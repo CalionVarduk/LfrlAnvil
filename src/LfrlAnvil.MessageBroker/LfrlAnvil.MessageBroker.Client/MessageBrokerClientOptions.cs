@@ -55,6 +55,10 @@ namespace LfrlAnvil.MessageBroker.Client;
 /// <param name="ClearBuffers">
 /// Specifies whether or not to clear internal buffers once the client is done using them. Equal to <b>false</b> by default.
 /// </param>
+/// <param name="IsEphemeral">
+/// Specifies whether or not the client should be ephemeral. Non-ephemeral clients will be persisted by the server when offline.
+/// Equal to <b>true</b> by default.
+/// </param>
 /// <param name="Timestamps"><see cref="Timestamp"/> provider.</param>
 /// <param name="DelaySource"><see cref="ValueTaskDelaySource"/> instance used for scheduling future events.</param>
 /// <param name="Logger"><see cref="MessageBrokerClientLogger"/> instance.</param>
@@ -69,6 +73,7 @@ public readonly record struct MessageBrokerClientOptions(
     Duration? ListenerDisposalTimeout,
     bool? SynchronizeExternalObjectNames,
     bool? ClearBuffers,
+    bool? IsEphemeral,
     ITimestampProvider? Timestamps,
     ValueTaskDelaySource? DelaySource,
     MessageBrokerClientLogger? Logger,
@@ -99,6 +104,7 @@ public readonly record struct MessageBrokerClientOptions(
             ListenerDisposalTimeout,
             SynchronizeExternalObjectNames,
             ClearBuffers,
+            IsEphemeral,
             Timestamps,
             DelaySource,
             Logger,
@@ -124,6 +130,7 @@ public readonly record struct MessageBrokerClientOptions(
             ListenerDisposalTimeout,
             SynchronizeExternalObjectNames,
             ClearBuffers,
+            IsEphemeral,
             Timestamps,
             DelaySource,
             Logger,
@@ -149,6 +156,7 @@ public readonly record struct MessageBrokerClientOptions(
             ListenerDisposalTimeout,
             SynchronizeExternalObjectNames,
             ClearBuffers,
+            IsEphemeral,
             Timestamps,
             DelaySource,
             Logger,
@@ -174,6 +182,7 @@ public readonly record struct MessageBrokerClientOptions(
             ListenerDisposalTimeout,
             SynchronizeExternalObjectNames,
             ClearBuffers,
+            IsEphemeral,
             Timestamps,
             DelaySource,
             Logger,
@@ -199,6 +208,7 @@ public readonly record struct MessageBrokerClientOptions(
             ListenerDisposalTimeout,
             SynchronizeExternalObjectNames,
             ClearBuffers,
+            IsEphemeral,
             Timestamps,
             DelaySource,
             Logger,
@@ -224,6 +234,7 @@ public readonly record struct MessageBrokerClientOptions(
             ListenerDisposalTimeout,
             SynchronizeExternalObjectNames,
             ClearBuffers,
+            IsEphemeral,
             Timestamps,
             DelaySource,
             Logger,
@@ -249,6 +260,7 @@ public readonly record struct MessageBrokerClientOptions(
             value,
             SynchronizeExternalObjectNames,
             ClearBuffers,
+            IsEphemeral,
             Timestamps,
             DelaySource,
             Logger,
@@ -274,6 +286,7 @@ public readonly record struct MessageBrokerClientOptions(
             ListenerDisposalTimeout,
             value,
             ClearBuffers,
+            IsEphemeral,
             Timestamps,
             DelaySource,
             Logger,
@@ -298,6 +311,33 @@ public readonly record struct MessageBrokerClientOptions(
             DesiredPingInterval,
             ListenerDisposalTimeout,
             SynchronizeExternalObjectNames,
+            value,
+            IsEphemeral,
+            Timestamps,
+            DelaySource,
+            Logger,
+            StreamDecorator );
+    }
+
+    /// <summary>
+    /// Allows to change <see cref="IsEphemeral"/>.
+    /// </summary>
+    /// <param name="value">New value</param>
+    /// <returns>New <see cref="MessageBrokerClientOptions"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public MessageBrokerClientOptions SetEphemeral(bool? value)
+    {
+        return new MessageBrokerClientOptions(
+            Tcp,
+            NetworkPacket,
+            MinMemoryPoolSegmentLength,
+            ConnectionTimeout,
+            DesiredMessageTimeout,
+            DesiredPingInterval,
+            ListenerDisposalTimeout,
+            SynchronizeExternalObjectNames,
+            ClearBuffers,
             value,
             Timestamps,
             DelaySource,
@@ -324,6 +364,7 @@ public readonly record struct MessageBrokerClientOptions(
             ListenerDisposalTimeout,
             SynchronizeExternalObjectNames,
             ClearBuffers,
+            IsEphemeral,
             value,
             DelaySource,
             Logger,
@@ -349,6 +390,7 @@ public readonly record struct MessageBrokerClientOptions(
             ListenerDisposalTimeout,
             SynchronizeExternalObjectNames,
             ClearBuffers,
+            IsEphemeral,
             Timestamps,
             value,
             Logger,
@@ -374,6 +416,7 @@ public readonly record struct MessageBrokerClientOptions(
             ListenerDisposalTimeout,
             SynchronizeExternalObjectNames,
             ClearBuffers,
+            IsEphemeral,
             Timestamps,
             DelaySource,
             value,
@@ -399,6 +442,7 @@ public readonly record struct MessageBrokerClientOptions(
             ListenerDisposalTimeout,
             SynchronizeExternalObjectNames,
             ClearBuffers,
+            IsEphemeral,
             Timestamps,
             DelaySource,
             Logger,

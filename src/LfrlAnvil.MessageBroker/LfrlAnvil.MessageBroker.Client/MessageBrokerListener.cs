@@ -33,7 +33,9 @@ public sealed class MessageBrokerListener
 {
     internal readonly CancellationTokenSource CancellationSource;
     internal MessageEmitter MessageEmitter;
+    private readonly TaskCompletionSource _disposed;
     private MessageBrokerListenerState _state;
+    private bool _autoDisposed;
 
     internal MessageBrokerListener(
         MessageBrokerClient client,
@@ -66,7 +68,9 @@ public sealed class MessageBrokerListener
         FilterExpression = filterExpression;
         Callback = callback;
         _state = MessageBrokerListenerState.Bound;
+        _autoDisposed = false;
         CancellationSource = new CancellationTokenSource();
+        _disposed = new TaskCompletionSource();
         MessageEmitter = MessageEmitter.Create();
         MessageEmitter.SetUnderlyingTask( MessageEmitter.StartUnderlyingTask( this ) );
     }
@@ -291,7 +295,7 @@ public sealed class MessageBrokerListener
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool BeginDispose()
+    internal bool BeginUnbinding()
     {
         using ( AcquireLock() )
         {
@@ -305,15 +309,104 @@ public sealed class MessageBrokerListener
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ValueTask EndDisposingAsync(ulong traceId)
+    internal void OnClientDisposing(ref Chain<Exception> exceptions)
     {
-        return DisposeAsync( MessageBrokerListenerState.Disposing, traceId );
+        using ( AcquireLock() )
+        {
+            if ( ShouldCancel )
+                return;
+
+            _autoDisposed = true;
+            _state = MessageBrokerListenerState.Disposing;
+            MessageEmitter.BeginDispose( ref exceptions );
+        }
+
+        var result = CancellationSource.TryCancel();
+        if ( result.Exception is not null )
+            exceptions = exceptions.Extend( result.Exception );
+
+        result = CancellationSource.TryDispose();
+        if ( result.Exception is not null )
+            exceptions = exceptions.Extend( result.Exception );
     }
 
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ValueTask OnClientDisposedAsync(ulong traceId)
+    internal async ValueTask EndUnbindingAsync(ulong traceId)
     {
-        return DisposeAsync( MessageBrokerListenerState.Bound, traceId );
+        try
+        {
+            Task? messageEmitterTask;
+            var exceptions = Chain<Exception>.Empty;
+
+            using ( AcquireLock() )
+            {
+                Assume.Equals( _autoDisposed, false );
+                Assume.Equals( _state, MessageBrokerListenerState.Disposing );
+                messageEmitterTask = MessageEmitter.DiscardUnderlyingTask();
+                MessageEmitter.BeginDispose( ref exceptions );
+            }
+
+            Client.EmitErrors( ref exceptions, traceId );
+            Client.EmitError( CancellationSource.TryCancel(), traceId );
+            Client.EmitError( CancellationSource.TryDispose(), traceId );
+            Client.EmitError(
+                await messageEmitterTask.SafeCancellableWaitAsync( Client.ListenerDisposalTimeout ).ConfigureAwait( false ),
+                traceId );
+
+            MessageEmitter.DiscardedNotification[] discardedMessages;
+            using ( AcquireLock() )
+                discardedMessages = MessageEmitter.EndDispose();
+
+            EndDiscardedMessages( discardedMessages, traceId );
+            using ( AcquireLock() )
+                _state = MessageBrokerListenerState.Disposed;
+        }
+        finally
+        {
+            _disposed.TrySetResult();
+        }
+    }
+
+    internal async ValueTask OnClientDisposedAsync(ulong traceId)
+    {
+        bool autoDisposed;
+        MessageBrokerListenerState state;
+        Task? messageEmitterTask = null;
+
+        using ( AcquireLock() )
+        {
+            Assume.IsGreaterThanOrEqualTo( _state, MessageBrokerListenerState.Disposing );
+            autoDisposed = _autoDisposed;
+            state = _state;
+            if ( autoDisposed )
+                messageEmitterTask = MessageEmitter.DiscardUnderlyingTask();
+        }
+
+        if ( ! autoDisposed )
+        {
+            if ( state == MessageBrokerListenerState.Disposing )
+                await _disposed.Task.ConfigureAwait( false );
+
+            return;
+        }
+
+        try
+        {
+            Client.EmitError(
+                await messageEmitterTask.SafeCancellableWaitAsync( Client.ListenerDisposalTimeout ).ConfigureAwait( false ),
+                traceId );
+
+            MessageEmitter.DiscardedNotification[] discardedMessages;
+            using ( AcquireLock() )
+                discardedMessages = MessageEmitter.EndDispose();
+
+            EndDiscardedMessages( discardedMessages, traceId );
+            using ( AcquireLock() )
+                _state = MessageBrokerListenerState.Disposed;
+        }
+        finally
+        {
+            _disposed.TrySetResult();
+        }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -322,58 +415,12 @@ public sealed class MessageBrokerListener
         return ExclusiveLock.SpinWaitEnter( CancellationSource, spinWaitMultiplier: 4 );
     }
 
-    private async ValueTask DisposeAsync(MessageBrokerListenerState expectedState, ulong traceId)
-    {
-        Task? messageEmitterTask;
-        using ( AcquireLock() )
-        {
-            if ( _state != expectedState )
-                return;
-
-            _state = MessageBrokerListenerState.Disposing;
-            messageEmitterTask = MessageEmitter.DiscardUnderlyingTask();
-            MessageEmitter.BeginDispose();
-        }
-
-        var error = Client.Logger.Error;
-        try
-        {
-            await CancellationSource.CancelAsync().ConfigureAwait( false );
-        }
-        catch ( Exception exc )
-        {
-            error?.Emit( MessageBrokerClientErrorEvent.Create( Client, traceId, exc ) );
-        }
-
-        CancellationSource.TryDispose();
-
-        if ( messageEmitterTask is not null )
-        {
-            try
-            {
-                await messageEmitterTask.WaitAsync( Client.ListenerDisposalTimeout ).ConfigureAwait( false );
-            }
-            catch ( Exception exc )
-            {
-                error?.Emit( MessageBrokerClientErrorEvent.Create( Client, traceId, exc ) );
-            }
-        }
-
-        ListSlim<MessageEmitter.DiscardedNotification> discardedMessages;
-        using ( AcquireLock() )
-            discardedMessages = MessageEmitter.EndDispose();
-
-        EndDiscardedMessages( ref discardedMessages, traceId );
-        using ( AcquireLock() )
-            _state = MessageBrokerListenerState.Disposed;
-    }
-
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void EndDiscardedMessages(ref ListSlim<MessageEmitter.DiscardedNotification> discardedMessages, ulong traceId)
+    private void EndDiscardedMessages(MessageEmitter.DiscardedNotification[] discardedMessages, ulong traceId)
     {
         var error = Client.Logger.Error;
         var traceEnd = Client.Logger.TraceEnd;
-        foreach ( ref readonly var m in discardedMessages )
+        foreach ( var m in discardedMessages )
         {
             m.PoolToken.Return( Client, traceId );
             if ( error is not null )
@@ -386,12 +433,10 @@ public sealed class MessageBrokerListener
                 MessageBrokerClientTraceEvent.Create( Client, m.TraceId, MessageBrokerClientTraceEventType.MessageNotification ) );
         }
 
-        if ( discardedMessages.Count > 0 && error is not null )
+        if ( discardedMessages.Length > 0 && error is not null )
         {
-            var exc = Client.MessageException( this, Resources.MessagesDiscarded( ChannelId, ChannelName, discardedMessages.Count ) );
+            var exc = Client.MessageException( this, Resources.MessagesDiscarded( ChannelId, ChannelName, discardedMessages.Length ) );
             error.Emit( MessageBrokerClientErrorEvent.Create( Client, traceId, exc ) );
         }
-
-        discardedMessages = ListSlim<MessageEmitter.DiscardedNotification>.Create();
     }
 }

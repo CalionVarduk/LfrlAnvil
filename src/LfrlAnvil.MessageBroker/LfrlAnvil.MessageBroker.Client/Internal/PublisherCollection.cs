@@ -764,7 +764,7 @@ internal struct PublisherCollection
         }
     }
 
-    internal void Clear()
+    internal void Dispose()
     {
         foreach ( var obj in _store )
             obj.OnClientDisposed();
