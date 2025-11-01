@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2025 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Sources;
 
 namespace LfrlAnvil.Async;
 
@@ -507,8 +506,7 @@ public abstract class Batch<T> : IBatch<T>, IDisposable, IAsyncDisposable
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void SignalFlush(bool disposing = false)
     {
-        if ( _flushContinuation.Status == ValueTaskSourceStatus.Pending )
-            _flushContinuation.SetResult( disposing );
+        _flushContinuation.TrySetResult( disposing );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

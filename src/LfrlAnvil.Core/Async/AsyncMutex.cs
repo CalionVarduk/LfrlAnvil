@@ -16,7 +16,6 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Sources;
 using LfrlAnvil.Exceptions;
 
 namespace LfrlAnvil.Async;
@@ -186,8 +185,7 @@ public sealed class AsyncMutex
 
                 CancellationTokenRegistration.Dispose();
                 CancellationTokenRegistration = default;
-                if ( Source.Status == ValueTaskSourceStatus.Pending )
-                    Source.SetResult( entered );
+                Source.TrySetResult( entered );
             }
         }
 

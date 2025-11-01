@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2025 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -84,6 +84,48 @@ public sealed class ManualResetValueTaskSource<TResult> : IValueTaskSource<TResu
     public void SetCancelled(CancellationToken cancellationToken)
     {
         SetException( new OperationCanceledException( cancellationToken ) );
+    }
+
+    /// <summary>
+    /// Attempts to complete this value task source's current operation with a successful result.
+    /// </summary>
+    /// <param name="result">Result of the operation.</param>
+    /// <returns><b>true</b> when result has been set successfully, otherwise <b>false</b>.</returns>
+    public bool TrySetResult(TResult result)
+    {
+        if ( Status != ValueTaskSourceStatus.Pending )
+            return false;
+
+        SetResult( result );
+        return true;
+    }
+
+    /// <summary>
+    /// Attempts to complete this value task source's current operation with an error.
+    /// </summary>
+    /// <param name="error">Exception of the operation.</param>
+    /// <returns><b>true</b> when exception has been set successfully, otherwise <b>false</b>.</returns>
+    public bool TrySetException(Exception error)
+    {
+        if ( Status != ValueTaskSourceStatus.Pending )
+            return false;
+
+        SetException( error );
+        return true;
+    }
+
+    /// <summary>
+    /// Attempts to complete this value task source's current operation with a cancellation.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token associated with the operation.</param>
+    /// <returns><b>true</b> when cancellation has been set successfully, otherwise <b>false</b>.</returns>
+    public bool TrySetCancelled(CancellationToken cancellationToken)
+    {
+        if ( Status != ValueTaskSourceStatus.Pending )
+            return false;
+
+        SetCancelled( cancellationToken );
+        return true;
     }
 
     /// <summary>

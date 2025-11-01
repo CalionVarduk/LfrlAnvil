@@ -42,6 +42,39 @@ public class ManualResetValueTaskSourceTests : TestsBase
     }
 
     [Fact]
+    public async Task TrySetResult_ShouldCompleteCurrentOperation_WhenTaskIsNotCompleted()
+    {
+        var sut = new ManualResetValueTaskSource<int>();
+        var completed = false;
+
+        _ = Task.Run(
+            async () =>
+            {
+                await Task.Delay( 15 );
+                completed = sut.TrySetResult( 123 );
+            } );
+
+        var result = await sut.GetTask();
+
+        Assertion.All(
+                result.TestEquals( 123 ),
+                sut.Status.TestEquals( ValueTaskSourceStatus.Succeeded ),
+                completed.TestTrue() )
+            .Go();
+    }
+
+    [Fact]
+    public void TrySetResult_ShouldDoNothing_WhenTaskIsAlreadyCompleted()
+    {
+        var sut = new ManualResetValueTaskSource<int>();
+        sut.SetException( new Exception() );
+
+        var result = sut.TrySetResult( 0 );
+
+        Assertion.All( result.TestFalse(), sut.Status.TestEquals( ValueTaskSourceStatus.Faulted ) ).Go();
+    }
+
+    [Fact]
     public void SetException_ShouldCompleteCurrentOperation()
     {
         var exception = new Exception( "foo" );
@@ -61,6 +94,41 @@ public class ManualResetValueTaskSourceTests : TestsBase
                     exc.TestRefEquals( exception ),
                     sut.Status.TestEquals( ValueTaskSourceStatus.Faulted ) ) )
             .Go();
+    }
+
+    [Fact]
+    public void TrySetException_ShouldCompleteCurrentOperation_WhenTaskIsNotCompleted()
+    {
+        var exception = new Exception( "foo" );
+        var sut = new ManualResetValueTaskSource<int>();
+        var completed = false;
+
+        _ = Task.Run(
+            async () =>
+            {
+                await Task.Delay( 15 );
+                completed = sut.TrySetException( exception );
+            } );
+
+        var action = Lambda.Of( async () => await sut.GetTask() );
+
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestRefEquals( exception ),
+                    sut.Status.TestEquals( ValueTaskSourceStatus.Faulted ),
+                    completed.TestTrue() ) )
+            .Go();
+    }
+
+    [Fact]
+    public void TrySetException_ShouldDoNothing_WhenTaskIsAlreadyCompleted()
+    {
+        var sut = new ManualResetValueTaskSource<int>();
+        sut.SetResult( 0 );
+
+        var result = sut.TrySetException( new Exception() );
+
+        Assertion.All( result.TestFalse(), sut.Status.TestEquals( ValueTaskSourceStatus.Succeeded ) ).Go();
     }
 
     [Fact]
@@ -86,6 +154,44 @@ public class ManualResetValueTaskSourceTests : TestsBase
                     exc.TestType().AssignableTo<OperationCanceledException>( e => e.CancellationToken.TestEquals( token ) ),
                     sut.Status.TestEquals( ValueTaskSourceStatus.Canceled ) ) )
             .Go();
+    }
+
+    [Fact]
+    public void TrySetCancelled_ShouldCompleteCurrentOperation_WhenTaskIsNotCompleted()
+    {
+        var cancellationTokenSource = new CancellationTokenSource();
+        var token = cancellationTokenSource.Token;
+        cancellationTokenSource.Cancel();
+        var completed = false;
+
+        var sut = new ManualResetValueTaskSource<int>();
+
+        _ = Task.Run(
+            async () =>
+            {
+                await Task.Delay( 15 );
+                completed = sut.TrySetCancelled( token );
+            } );
+
+        var action = Lambda.Of( async () => await sut.GetTask() );
+
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().AssignableTo<OperationCanceledException>( e => e.CancellationToken.TestEquals( token ) ),
+                    sut.Status.TestEquals( ValueTaskSourceStatus.Canceled ),
+                    completed.TestTrue() ) )
+            .Go();
+    }
+
+    [Fact]
+    public void TrySetCancelled_ShouldDoNothing_WhenTaskIsAlreadyCompleted()
+    {
+        var sut = new ManualResetValueTaskSource<int>();
+        sut.SetResult( 0 );
+
+        var result = sut.TrySetCancelled( default );
+
+        Assertion.All( result.TestFalse(), sut.Status.TestEquals( ValueTaskSourceStatus.Succeeded ) ).Go();
     }
 
     [Fact]
