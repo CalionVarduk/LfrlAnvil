@@ -132,34 +132,11 @@ internal static class MessageBrokerExtensions
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static async ValueTask<Result> SafeWaitAsync(this Task task)
+    internal static ValueTask<Result> AsSafeCancellable(this Task? task, Duration? timeout = null)
     {
-        try
-        {
-            await task.ConfigureAwait( false );
-            return Result.Valid;
-        }
-        catch ( Exception exc )
-        {
-            return exc;
-        }
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static async ValueTask<Result> SafeCancellableWaitAsync(this Task? task, Duration? timeout = null)
-    {
-        if ( task is null )
-            return Result.Valid;
-
-        try
-        {
-            await task.WaitAsync( timeout ?? Defaults.Temporal.TaskWaitTimeout ).ConfigureAwait( false );
-            return Result.Valid;
-        }
-        catch ( Exception exc )
-        {
-            return exc;
-        }
+        return task is null
+            ? ValueTask.FromResult( Result.Valid )
+            : task.WaitAsync( timeout ?? Defaults.Temporal.TaskWaitTimeout ).AsSafe();
     }
 
     [Pure]

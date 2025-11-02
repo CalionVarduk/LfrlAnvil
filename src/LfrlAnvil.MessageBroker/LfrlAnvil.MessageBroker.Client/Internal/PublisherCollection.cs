@@ -764,12 +764,9 @@ internal struct PublisherCollection
         }
     }
 
-    internal void Dispose()
+    internal MessageBrokerPublisher[] Dispose()
     {
-        foreach ( var obj in _store )
-            obj.OnClientDisposed();
-
-        _store.Clear();
+        return _store.ClearAndExtract();
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

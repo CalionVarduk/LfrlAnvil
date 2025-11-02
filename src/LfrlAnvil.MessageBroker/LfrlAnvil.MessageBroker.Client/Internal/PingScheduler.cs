@@ -75,8 +75,7 @@ internal struct PingScheduler
     {
         try
         {
-            if ( _continuation.Status == ValueTaskSourceStatus.Pending )
-                _continuation.SetResult( false );
+            _continuation.TrySetResult( false );
         }
         catch ( Exception exc )
         {
@@ -100,8 +99,7 @@ internal struct PingScheduler
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void SignalContinuation()
     {
-        if ( _continuation.Status == ValueTaskSourceStatus.Pending )
-            _continuation.SetResult( true );
+        _continuation.TrySetResult( true );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

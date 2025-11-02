@@ -787,12 +787,8 @@ internal struct ListenerCollection
         return true;
     }
 
-    internal MessageBrokerListener[] BeginDispose(ref Chain<Exception> exceptions)
+    internal MessageBrokerListener[] Dispose()
     {
-        var result = _store.ClearAndExtract();
-        foreach ( var listener in result )
-            listener.OnClientDisposing( ref exceptions );
-
-        return result;
+        return _store.ClearAndExtract();
     }
 }

@@ -16,7 +16,6 @@ using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Sources;
 using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Memory;
@@ -93,8 +92,7 @@ internal struct MessageEmitter
     {
         try
         {
-            if ( _continuation.Status == ValueTaskSourceStatus.Pending )
-                _continuation.SetResult( false );
+            _continuation.TrySetResult( false );
         }
         catch ( Exception exc )
         {
@@ -129,8 +127,7 @@ internal struct MessageEmitter
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static void SignalContinuation(MessageBrokerListener listener)
     {
-        if ( listener.MessageEmitter._continuation.Status == ValueTaskSourceStatus.Pending )
-            listener.MessageEmitter._continuation.SetResult( true );
+        listener.MessageEmitter._continuation.TrySetResult( true );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

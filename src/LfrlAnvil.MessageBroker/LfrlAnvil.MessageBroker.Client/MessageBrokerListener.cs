@@ -70,7 +70,7 @@ public sealed class MessageBrokerListener
         _state = MessageBrokerListenerState.Bound;
         _autoDisposed = false;
         CancellationSource = new CancellationTokenSource();
-        _disposed = new TaskCompletionSource();
+        _disposed = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
         MessageEmitter = MessageEmitter.Create();
         MessageEmitter.SetUnderlyingTask( MessageEmitter.StartUnderlyingTask( this ) );
     }
@@ -309,8 +309,9 @@ public sealed class MessageBrokerListener
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void OnClientDisposing(ref Chain<Exception> exceptions)
+    internal void OnClientDisposing(ulong traceId)
     {
+        var exceptions = Chain<Exception>.Empty;
         using ( AcquireLock() )
         {
             if ( ShouldCancel )
@@ -321,13 +322,9 @@ public sealed class MessageBrokerListener
             MessageEmitter.BeginDispose( ref exceptions );
         }
 
-        var result = CancellationSource.TryCancel();
-        if ( result.Exception is not null )
-            exceptions = exceptions.Extend( result.Exception );
-
-        result = CancellationSource.TryDispose();
-        if ( result.Exception is not null )
-            exceptions = exceptions.Extend( result.Exception );
+        Client.EmitErrors( ref exceptions, traceId );
+        Client.EmitError( CancellationSource.TryCancel(), traceId );
+        Client.EmitError( CancellationSource.TryDispose(), traceId );
     }
 
     internal async ValueTask EndUnbindingAsync(ulong traceId)
@@ -349,7 +346,7 @@ public sealed class MessageBrokerListener
             Client.EmitError( CancellationSource.TryCancel(), traceId );
             Client.EmitError( CancellationSource.TryDispose(), traceId );
             Client.EmitError(
-                await messageEmitterTask.SafeCancellableWaitAsync( Client.ListenerDisposalTimeout ).ConfigureAwait( false ),
+                await messageEmitterTask.AsSafeCancellable( Client.ListenerDisposalTimeout ).ConfigureAwait( false ),
                 traceId );
 
             MessageEmitter.DiscardedNotification[] discardedMessages;
@@ -392,7 +389,7 @@ public sealed class MessageBrokerListener
         try
         {
             Client.EmitError(
-                await messageEmitterTask.SafeCancellableWaitAsync( Client.ListenerDisposalTimeout ).ConfigureAwait( false ),
+                await messageEmitterTask.AsSafeCancellable( Client.ListenerDisposalTimeout ).ConfigureAwait( false ),
                 traceId );
 
             MessageEmitter.DiscardedNotification[] discardedMessages;

@@ -15,7 +15,6 @@
 using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks.Sources;
 using LfrlAnvil.Async;
 
 namespace LfrlAnvil.MessageBroker.Client.Internal;
@@ -43,8 +42,7 @@ internal struct WriterQueue
         {
             try
             {
-                if ( entry.Source.Status == ValueTaskSourceStatus.Pending )
-                    entry.Source.SetResult( new WriterSourceResult( WriterSourceResultStatus.Disposed ) );
+                entry.Source.TrySetResult( new WriterSourceResult( WriterSourceResultStatus.Disposed ) );
             }
             catch ( Exception exc )
             {

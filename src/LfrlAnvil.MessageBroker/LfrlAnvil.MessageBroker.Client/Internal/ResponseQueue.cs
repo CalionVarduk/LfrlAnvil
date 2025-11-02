@@ -48,8 +48,7 @@ internal struct ResponseQueue
             try
             {
                 Assume.IsNotNull( source.Source );
-                if ( source.Source.Status == ValueTaskSourceStatus.Pending )
-                    source.Source.SetResult( default );
+                source.Source.TrySetResult( default );
             }
             catch ( Exception exc )
             {

@@ -96,7 +96,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         Logger = options.Logger ?? default;
         _timestamps = options.Timestamps ?? TimestampProvider.Shared;
         _messageContextPool = StackSlim<MessageBrokerPushContext>.Create();
-        _disposed = new TaskCompletionSource();
+        _disposed = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
 
         _stream = null;
         _state = MessageBrokerClientState.Created;
@@ -1031,19 +1031,28 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
             }
 
             EmitErrors( ref exceptions, traceId );
-            EmitError( await eventSchedulerTask.SafeCancellableWaitAsync().ConfigureAwait( false ), traceId );
-            EmitError( await pingSchedulerTask.SafeCancellableWaitAsync().ConfigureAwait( false ), traceId );
-            EmitError( await packetListenerTask.SafeCancellableWaitAsync().ConfigureAwait( false ), traceId );
-            EmitError( await messageNotificationsTask.SafeCancellableWaitAsync().ConfigureAwait( false ), traceId );
+            EmitError( await eventSchedulerTask.AsSafeCancellable().ConfigureAwait( false ), traceId );
+            EmitError( await pingSchedulerTask.AsSafeCancellable().ConfigureAwait( false ), traceId );
+            EmitError( await packetListenerTask.AsSafeCancellable().ConfigureAwait( false ), traceId );
+            EmitError( await messageNotificationsTask.AsSafeCancellable().ConfigureAwait( false ), traceId );
 
             MessageBrokerListener[] listeners;
-            int discardedMessageCount;
-
+            MessageBrokerPublisher[] publishers;
             using ( AcquireLock() )
             {
-                listeners = ListenerCollection.BeginDispose( ref exceptions );
-                PublisherCollection.Dispose();
+                listeners = ListenerCollection.Dispose();
+                publishers = PublisherCollection.Dispose();
+            }
 
+            foreach ( var listener in listeners )
+                listener.OnClientDisposing( traceId );
+
+            foreach ( var publisher in publishers )
+                publisher.OnClientDisposed();
+
+            int discardedMessageCount;
+            using ( AcquireLock() )
+            {
                 var result = _tcp.TryDispose();
                 if ( result.Exception is not null )
                     exceptions = exceptions.Extend( result.Exception );
@@ -1059,9 +1068,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
             }
 
             EmitError(
-                await Parallel.ForEachAsync( listeners, (l, _) => l.OnClientDisposedAsync( traceId ) )
-                    .SafeWaitAsync()
-                    .ConfigureAwait( false ),
+                await Parallel.ForEachAsync( listeners, (l, _) => l.OnClientDisposedAsync( traceId ) ).AsSafe().ConfigureAwait( false ),
                 traceId );
 
             using ( AcquireLock() )
