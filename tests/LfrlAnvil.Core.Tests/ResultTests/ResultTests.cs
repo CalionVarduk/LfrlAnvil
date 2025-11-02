@@ -54,6 +54,23 @@ public class ResultTests : TestsBase
     }
 
     [Fact]
+    public void WithValue_ShouldCreateGenericResultWithoutException()
+    {
+        var sut = Result.Valid;
+        var result = sut.WithValue( true );
+        Assertion.All( result.Value.TestTrue(), result.Exception.TestNull() ).Go();
+    }
+
+    [Fact]
+    public void WithValue_ShouldCreateGenericResultWithException()
+    {
+        var exception = new Exception( "foo" );
+        var sut = Result.Error( exception );
+        var result = sut.WithValue( true );
+        Assertion.All( result.Value.TestTrue(), result.Exception.TestRefEquals( exception ) ).Go();
+    }
+
+    [Fact]
     public void Create_ShouldCreateGenericResultWithoutException()
     {
         var value = Fixture.Create<string>();

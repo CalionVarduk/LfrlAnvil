@@ -95,6 +95,19 @@ public readonly struct Result
     }
 
     /// <summary>
+    /// Create a <see cref="Result{T}"/> with optional value and current <see cref="Exception"/>.
+    /// </summary>
+    /// <param name="value">Optional value associated with the result.</param>
+    /// <typeparam name="T">Type of an optional value.</typeparam>
+    /// <returns>New <see cref="Result{T}"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public Result<T> WithValue<T>(T? value = default)
+    {
+        return new Result<T>( value, Exception );
+    }
+
+    /// <summary>
     /// Converts provided <paramref name="exception"/> to <see cref="Result"/>.
     /// </summary>
     /// <param name="exception">Exception from which to create an error result.</param>
