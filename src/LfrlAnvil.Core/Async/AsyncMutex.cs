@@ -157,7 +157,7 @@ public sealed class AsyncMutex
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private ExclusiveLock AcquireLock()
     {
-        return ExclusiveLock.SpinWaitEnter( _sync, spinWaitMultiplier: 4 );
+        return ExclusiveLock.Enter( _sync );
     }
 
     internal sealed class Entry

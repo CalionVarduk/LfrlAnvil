@@ -42,35 +42,6 @@ public readonly struct ExclusiveLock : IDisposable
         return new ExclusiveLock( sync );
     }
 
-    /// <summary>
-    /// Acquires an exclusive lock and creates a new <see cref="ExclusiveLock"/> by leveraging <see cref="SpinWait"/>, if necessary.
-    /// </summary>
-    /// <param name="sync">An object on which to acquire the monitor lock.</param>
-    /// <param name="spinWaitMultiplier">Optional <see cref="SpinWait"/> iteration count multiplier. Equal to <b>1</b> by default.</param>
-    /// <returns>A disposable <see cref="ExclusiveLock"/> instance.</returns>
-    /// <remarks>
-    /// Base <see cref="SpinWait"/> iteration count is equal to <b>1</b>,
-    /// when <see cref="Environment.ProcessorCount"/> is equal to <b>1</b>, otherwise it is equal to <b>35</b>.
-    /// </remarks>
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static ExclusiveLock SpinWaitEnter(object sync, int spinWaitMultiplier = 1)
-    {
-        var spinner = new SpinWait();
-        var iterations = (Environment.ProcessorCount == 1 ? 1 : 35) * spinWaitMultiplier;
-
-        while ( ! Monitor.TryEnter( sync ) )
-        {
-            spinner.SpinOnce( sleep1Threshold: -1 );
-            if ( spinner.Count >= iterations )
-            {
-                Monitor.Enter( sync );
-                break;
-            }
-        }
-
-        return new ExclusiveLock( sync );
-    }
-
     /// <inheritdoc />
     /// <remarks>Releases previously acquired monitor lock.</remarks>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

@@ -203,7 +203,7 @@ public sealed class ValueTaskDelaySource : IDisposable, IAsyncDisposable
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private ExclusiveLock AcquireLock()
     {
-        return ExclusiveLock.SpinWaitEnter( _reset, spinWaitMultiplier: 4 );
+        return ExclusiveLock.Enter( _reset );
     }
 
     [MethodImpl( MethodImplOptions.NoInlining )]

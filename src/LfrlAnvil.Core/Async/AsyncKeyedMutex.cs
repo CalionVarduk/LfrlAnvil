@@ -143,7 +143,7 @@ public sealed class AsyncKeyedMutex<TKey>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private ExclusiveLock AcquireLock()
     {
-        return ExclusiveLock.SpinWaitEnter( _entries, spinWaitMultiplier: 4 );
+        return ExclusiveLock.Enter( _entries );
     }
 
     internal sealed class Entry

@@ -64,9 +64,7 @@ public readonly struct ObjectRecyclerToken<T> : IDisposable
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public T GetObject()
     {
-        if ( Owner is null )
-            ObjectDisposedException.ThrowIf( Owner is null, typeof( ObjectRecyclerToken<T> ) );
-
+        ObjectDisposedException.ThrowIf( Owner is null, typeof( ObjectRecyclerToken<T> ) );
         return Owner.GetObject( _id );
     }
 }
