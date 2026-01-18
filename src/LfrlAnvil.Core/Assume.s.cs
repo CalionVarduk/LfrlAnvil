@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -315,7 +315,7 @@ public static class Assume
     /// <param name="condition">Condition to verify.</param>
     /// <param name="description">Optional description of the error.</param>
     [Conditional( "DEBUG" )]
-    public static void True(bool condition, [CallerArgumentExpression( "condition" )] string description = "")
+    public static void True([DoesNotReturnIf( false )] bool condition, [CallerArgumentExpression( "condition" )] string description = "")
     {
         Debug.Assert( condition, ExceptionResources.AssumedToBeTrue( description ) );
     }
@@ -326,7 +326,7 @@ public static class Assume
     /// <param name="condition">Condition to verify.</param>
     /// <param name="description">Optional description of the error.</param>
     [Conditional( "DEBUG" )]
-    public static void False(bool condition, [CallerArgumentExpression( "condition" )] string description = "")
+    public static void False([DoesNotReturnIf( true )] bool condition, [CallerArgumentExpression( "condition" )] string description = "")
     {
         Debug.Assert( ! condition, ExceptionResources.AssumedToBeFalse( description ) );
     }

@@ -1,4 +1,4 @@
-﻿// Copyright 2024-2025 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Internal;
 
 namespace LfrlAnvil.Memory;
 
@@ -27,21 +28,24 @@ public readonly struct MemoryPoolToken<T> : IDisposable
     /// <summary>
     /// An empty token.
     /// </summary>
-    public static MemoryPoolToken<T> Empty => new MemoryPoolToken<T>( null, 0, false );
+    public static MemoryPoolToken<T> Empty => new MemoryPoolToken<T>( null, 0, 0 );
 
-    private readonly int _nodeId;
+    private readonly Int31BoolPair _data;
+    private readonly uint _version;
 
-    internal MemoryPoolToken(MemoryPool<T>? owner, int nodeId, bool clear)
+    internal MemoryPoolToken(MemoryPool<T>? owner, Int31BoolPair data, uint version)
     {
-        _nodeId = nodeId;
-        Clear = clear;
+        _data = data;
+        _version = version;
         Owner = owner;
     }
+
+    private int NodeId => _data.IntValue;
 
     /// <summary>
     /// Specifies whether or not the underlying buffer will be additionally cleared during this token's disposal.
     /// </summary>
-    public bool Clear { get; }
+    public bool Clear => _data.BoolValue;
 
     /// <summary>
     /// <see cref="MemoryPool{T}"/> instance that owns this token.
@@ -53,7 +57,7 @@ public readonly struct MemoryPoolToken<T> : IDisposable
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public void Dispose()
     {
-        Owner?.Release( _nodeId, Clear );
+        Owner?.Release( NodeId, _version, Clear );
     }
 
     /// <summary>
@@ -63,7 +67,7 @@ public readonly struct MemoryPoolToken<T> : IDisposable
     [Pure]
     public override string ToString()
     {
-        return $"{MemoryPool<T>.GetLengthString( Owner, _nodeId )}{(Clear ? " (clear enabled)" : string.Empty)}";
+        return $"{MemoryPool<T>.GetLengthString( Owner, NodeId, _version )}{(Clear ? " (clear enabled)" : string.Empty)}";
     }
 
     /// <summary>
@@ -75,7 +79,7 @@ public readonly struct MemoryPoolToken<T> : IDisposable
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public MemoryPoolToken<T> EnableClearing(bool enabled = true)
     {
-        return new MemoryPoolToken<T>( Owner, _nodeId, enabled );
+        return new MemoryPoolToken<T>( Owner, new Int31BoolPair( NodeId, enabled ), _version );
     }
 
     /// <summary>
@@ -87,7 +91,7 @@ public readonly struct MemoryPoolToken<T> : IDisposable
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Memory<T> AsMemory()
     {
-        return Owner?.AsMemory( _nodeId ) ?? Memory<T>.Empty;
+        return Owner?.AsMemory( NodeId, _version ) ?? Memory<T>.Empty;
     }
 
     /// <summary>
@@ -99,7 +103,7 @@ public readonly struct MemoryPoolToken<T> : IDisposable
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Span<T> AsSpan()
     {
-        return Owner is not null ? Owner.AsSpan( _nodeId ) : Span<T>.Empty;
+        return Owner is not null ? Owner.AsSpan( NodeId, _version ) : Span<T>.Empty;
     }
 
     /// <summary>
@@ -121,7 +125,7 @@ public readonly struct MemoryPoolToken<T> : IDisposable
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public void SetLength(int length, bool trimStart = false)
     {
-        Owner?.SetLength( _nodeId, length, Clear, trimStart );
+        Owner?.SetLength( NodeId, _version, length, Clear, trimStart );
     }
 
     /// <summary>
@@ -141,7 +145,7 @@ public readonly struct MemoryPoolToken<T> : IDisposable
     /// </remarks>
     public MemoryPoolToken<T> Split(int length)
     {
-        return Owner is null || length <= 0 ? Empty : Owner.Split( _nodeId, length, Clear );
+        return Owner is null || length <= 0 ? Empty : Owner.Split( NodeId, _version, length, Clear );
     }
 
     /// <summary>
@@ -151,6 +155,6 @@ public readonly struct MemoryPoolToken<T> : IDisposable
     [Pure]
     public MemoryPool<T>.ReportInfo.Node? TryGetInfo()
     {
-        return Owner?.TryGetInfo( _nodeId );
+        return Owner?.TryGetInfo( NodeId, _version );
     }
 }

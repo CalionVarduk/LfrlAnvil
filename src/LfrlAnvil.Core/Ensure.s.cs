@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -1375,7 +1375,7 @@ public static class Ensure
     /// <param name="description">Optional description of the error.</param>
     /// <exception cref="ArgumentException">When <paramref name="condition"/> is <b>false</b>.</exception>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void True(bool condition, [CallerArgumentExpression( "condition" )] string description = "")
+    public static void True([DoesNotReturnIf( false )] bool condition, [CallerArgumentExpression( "condition" )] string description = "")
     {
         if ( ! condition )
             ExceptionThrower.Throw( Exceptions.False( description ) );
@@ -1388,7 +1388,7 @@ public static class Ensure
     /// <param name="descriptionProvider">Optional provider of a description of the error.</param>
     /// <exception cref="ArgumentException">When <paramref name="condition"/> is <b>false</b>.</exception>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void True(bool condition, Func<string>? descriptionProvider)
+    public static void True([DoesNotReturnIf( false )] bool condition, Func<string>? descriptionProvider)
     {
         if ( ! condition )
             ExceptionThrower.Throw( Exceptions.False( descriptionProvider?.Invoke() ) );
@@ -1401,7 +1401,7 @@ public static class Ensure
     /// <param name="description">Optional description of the error.</param>
     /// <exception cref="ArgumentException">When <paramref name="condition"/> is <b>true</b>.</exception>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void False(bool condition, [CallerArgumentExpression( "condition" )] string description = "")
+    public static void False([DoesNotReturnIf( true )] bool condition, [CallerArgumentExpression( "condition" )] string description = "")
     {
         if ( condition )
             ExceptionThrower.Throw( Exceptions.True( description ) );
@@ -1414,7 +1414,7 @@ public static class Ensure
     /// <param name="descriptionProvider">Optional provider of a description of the error.</param>
     /// <exception cref="ArgumentException">When <paramref name="condition"/> is <b>true</b>.</exception>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void False(bool condition, Func<string>? descriptionProvider)
+    public static void False([DoesNotReturnIf( true )] bool condition, Func<string>? descriptionProvider)
     {
         if ( condition )
             ExceptionThrower.Throw( Exceptions.True( descriptionProvider?.Invoke() ) );

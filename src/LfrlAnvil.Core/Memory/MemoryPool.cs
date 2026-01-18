@@ -1,4 +1,4 @@
-﻿// Copyright 2024-2025 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -210,6 +210,7 @@ public sealed class MemoryPool<T>
                         segmentIndex: _nextInactiveTailSegmentIndex++,
                         segmentLength: segment.Length,
                         isSegmentActive: false,
+                        version: 0,
                         nodeId: NullableIndex.Null,
                         startIndex: 0,
                         length: segment.Length,
@@ -238,6 +239,7 @@ public sealed class MemoryPool<T>
                         segmentIndex: tailNode.SegmentIndex,
                         segmentLength: segment.Length,
                         isSegmentActive: true,
+                        version: 0,
                         nodeId: NullableIndex.Null,
                         startIndex: endIndex,
                         length: segment.Length - endIndex,
@@ -258,6 +260,7 @@ public sealed class MemoryPool<T>
                         segmentIndex: node.SegmentIndex,
                         segmentLength: segment.Length,
                         isSegmentActive: true,
+                        version: node.Version,
                         nodeId: _nextNode,
                         startIndex: node.StartIndex,
                         length: node.Length,
@@ -325,6 +328,7 @@ public sealed class MemoryPool<T>
         {
             private readonly MemoryPool<T>? _pool;
             private readonly uint _flags;
+            private readonly uint _version;
             private readonly NullableIndex _nodeId;
 
             internal Node(
@@ -332,6 +336,7 @@ public sealed class MemoryPool<T>
                 int segmentIndex,
                 int segmentLength,
                 bool isSegmentActive,
+                uint version,
                 NullableIndex nodeId,
                 int startIndex,
                 int length,
@@ -339,6 +344,7 @@ public sealed class MemoryPool<T>
             {
                 _pool = pool;
                 _flags = ( uint )((isSegmentActive ? 1 : 0) | (isFragmented ? 2 : 0));
+                _version = version;
                 _nodeId = nodeId;
                 SegmentIndex = segmentIndex;
                 SegmentLength = segmentLength;
@@ -412,7 +418,7 @@ public sealed class MemoryPool<T>
                     return null;
 
                 Assume.True( IsSegmentActive );
-                return new MemoryPoolToken<T>( _pool, _nodeId.Value, clear: false );
+                return new MemoryPoolToken<T>( _pool, new Int31BoolPair( _nodeId.Value ), _version );
             }
         }
     }
@@ -420,6 +426,7 @@ public sealed class MemoryPool<T>
     private struct Node
     {
         private uint _flags;
+        internal uint Version;
         internal int SegmentIndex;
         internal int Length;
         internal int StartIndex;
@@ -479,6 +486,12 @@ public sealed class MemoryPool<T>
             Length = 0;
         }
 
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal void BumpVersion()
+        {
+            Version = unchecked( Version + 1 );
+        }
+
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         private static uint GetFlags(int fragmentationIndex)
@@ -530,8 +543,8 @@ public sealed class MemoryPool<T>
         if ( length <= 0 )
             return MemoryPoolToken<T>.Empty;
 
-        var id = Allocate( length );
-        return new MemoryPoolToken<T>( this, id, clear: false );
+        var result = Allocate( length );
+        return new MemoryPoolToken<T>( this, new Int31BoolPair( result.Id ), result.Version );
     }
 
     /// <summary>
@@ -548,8 +561,8 @@ public sealed class MemoryPool<T>
         if ( length <= 0 )
             return MemoryPoolToken<T>.Empty;
 
-        var id = AllocateAtTail( length );
-        return new MemoryPoolToken<T>( this, id, clear: false );
+        var result = AllocateAtTail( length );
+        return new MemoryPoolToken<T>( this, new Int31BoolPair( result.Id ), result.Version );
     }
 
     /// <summary>
@@ -572,9 +585,9 @@ public sealed class MemoryPool<T>
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void Release(int nodeId, bool clear)
+    internal void Release(int nodeId, uint version, bool clear)
     {
-        ref var node = ref GetSafeNodeRefOrNull( nodeId );
+        ref var node = ref GetSafeNodeRefOrNull( nodeId, version );
         if ( Unsafe.IsNullRef( ref node ) )
             return;
 
@@ -582,6 +595,7 @@ public sealed class MemoryPool<T>
         if ( clear )
             segment.AsSpan( node.StartIndex, node.Length ).Clear();
 
+        node.BumpVersion();
         if ( ! node.Next.HasValue )
             ReleaseTailNode( nodeId, ref node );
         else if ( ! node.Prev.HasValue )
@@ -591,10 +605,10 @@ public sealed class MemoryPool<T>
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void SetLength(int nodeId, int length, bool clear, bool trimStart)
+    internal void SetLength(int nodeId, uint version, int length, bool clear, bool trimStart)
     {
         Ensure.IsGreaterThan( length, 0 );
-        ref var node = ref GetSafeNodeRefOrNull( nodeId );
+        ref var node = ref GetSafeNodeRefOrNull( nodeId, version );
         if ( Unsafe.IsNullRef( ref node ) || node.Length == length )
             return;
 
@@ -605,15 +619,15 @@ public sealed class MemoryPool<T>
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal MemoryPoolToken<T> Split(int nodeId, int length, bool clear)
+    internal MemoryPoolToken<T> Split(int nodeId, uint version, int length, bool clear)
     {
         Assume.IsGreaterThan( length, 0 );
-        ref var node = ref GetSafeNodeRefOrNull( nodeId );
+        ref var node = ref GetSafeNodeRefOrNull( nodeId, version );
         if ( Unsafe.IsNullRef( ref node ) )
             return MemoryPoolToken<T>.Empty;
 
         if ( node.Length <= length )
-            return new MemoryPoolToken<T>( this, nodeId, clear );
+            return new MemoryPoolToken<T>( this, new Int31BoolPair( nodeId, clear ), version );
 
         ref var freeNode = ref AddDefaultNode( out var freeId );
         node = ref GetNodeRef( nodeId );
@@ -631,14 +645,14 @@ public sealed class MemoryPool<T>
         }
 
         node.Prev = NullableIndex.Create( freeId );
-        return new MemoryPoolToken<T>( this, freeId, clear );
+        return new MemoryPoolToken<T>( this, new Int31BoolPair( freeId, clear ), freeNode.Version );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal Memory<T> AsMemory(int nodeId)
+    internal Memory<T> AsMemory(int nodeId, uint version)
     {
-        ref var node = ref GetSafeNodeRefOrNull( nodeId );
+        ref var node = ref GetSafeNodeRefOrNull( nodeId, version );
         if ( Unsafe.IsNullRef( ref node ) )
             return Memory<T>.Empty;
 
@@ -648,9 +662,9 @@ public sealed class MemoryPool<T>
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal Span<T> AsSpan(int nodeId)
+    internal Span<T> AsSpan(int nodeId, uint version)
     {
-        ref var node = ref GetSafeNodeRefOrNull( nodeId );
+        ref var node = ref GetSafeNodeRefOrNull( nodeId, version );
         if ( Unsafe.IsNullRef( ref node ) )
             return Span<T>.Empty;
 
@@ -660,7 +674,7 @@ public sealed class MemoryPool<T>
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ReportInfo.Node? TryGetInfo(int nodeId)
+    internal ReportInfo.Node? TryGetInfo(int nodeId, uint version)
     {
         Assume.IsGreaterThanOrEqualTo( nodeId, 0 );
 
@@ -668,7 +682,7 @@ public sealed class MemoryPool<T>
         if ( nodeId < _nodes.Count )
             node = ref GetNodeRef( nodeId );
 
-        if ( Unsafe.IsNullRef( ref node ) || ! node.IsActive )
+        if ( Unsafe.IsNullRef( ref node ) || ! node.IsActive || node.Version != version )
             return null;
 
         var segment = GetSegment( node.SegmentIndex );
@@ -677,6 +691,7 @@ public sealed class MemoryPool<T>
             segmentIndex: node.SegmentIndex,
             segmentLength: segment.Length,
             isSegmentActive: true,
+            version: node.Version,
             nodeId: NullableIndex.Create( nodeId ),
             startIndex: node.StartIndex,
             length: node.Length,
@@ -687,12 +702,12 @@ public sealed class MemoryPool<T>
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string GetLengthString(MemoryPool<T>? pool, int nodeId)
+    internal static string GetLengthString(MemoryPool<T>? pool, int nodeId, uint version)
     {
         var length = 0;
         if ( pool is not null )
         {
-            ref var node = ref pool.GetSafeNodeRefOrNull( nodeId );
+            ref var node = ref pool.GetSafeNodeRefOrNull( nodeId, version );
             if ( ! Unsafe.IsNullRef( ref node ) )
                 length = node.Length;
         }
@@ -843,8 +858,8 @@ public sealed class MemoryPool<T>
             }
         }
 
-        var id = Allocate( length );
-        ref var targetNode = ref GetNodeRef( id );
+        var result = Allocate( length );
+        ref var targetNode = ref GetNodeRef( result.Id );
         node = ref GetNodeRef( nodeId );
 
         segment = GetSegment( node.SegmentIndex );
@@ -852,9 +867,11 @@ public sealed class MemoryPool<T>
         segment.AsSpan( node.StartIndex, node.Length ).CopyTo( targetSegment.AsSpan( targetNode.StartIndex ) );
 
         (node, targetNode) = (targetNode, node);
+        node.Version = targetNode.Version;
+        targetNode.Version = result.Version;
 
         if ( node.Prev.Value == nodeId )
-            node.Prev = NullableIndex.Create( id );
+            node.Prev = NullableIndex.Create( result.Id );
         else if ( node.Prev.HasValue )
         {
             ref var prev = ref GetNodeRef( node.Prev.Value );
@@ -862,35 +879,35 @@ public sealed class MemoryPool<T>
         }
 
         if ( node.Next.Value == nodeId )
-            node.Next = NullableIndex.Create( id );
+            node.Next = NullableIndex.Create( result.Id );
         else if ( node.Next.HasValue )
         {
             ref var next = ref GetNodeRef( node.Next.Value );
             next.Prev = NullableIndex.Create( nodeId );
         }
 
-        if ( targetNode.Prev.Value == id )
+        if ( targetNode.Prev.Value == result.Id )
             targetNode.Prev = NullableIndex.Create( nodeId );
         else if ( targetNode.Prev.HasValue )
         {
             ref var prev = ref GetNodeRef( targetNode.Prev.Value );
-            prev.Next = NullableIndex.Create( id );
+            prev.Next = NullableIndex.Create( result.Id );
         }
 
-        if ( targetNode.Next.Value == id )
+        if ( targetNode.Next.Value == result.Id )
             targetNode.Next = NullableIndex.Create( nodeId );
         else if ( targetNode.Next.HasValue )
         {
             ref var next = ref GetNodeRef( targetNode.Next.Value );
-            next.Prev = NullableIndex.Create( id );
+            next.Prev = NullableIndex.Create( result.Id );
         }
 
         if ( _activeListTail.Value == nodeId )
-            _activeListTail = NullableIndex.Create( id );
-        else if ( _activeListTail.Value == id )
+            _activeListTail = NullableIndex.Create( result.Id );
+        else if ( _activeListTail.Value == result.Id )
             _activeListTail = NullableIndex.Create( nodeId );
 
-        Release( id, clear );
+        Release( result.Id, result.Version, clear );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -1070,7 +1087,7 @@ public sealed class MemoryPool<T>
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private int Allocate(int length)
+    private VersionedNodeId Allocate(int length)
     {
         Assume.IsGreaterThan( length, 0 );
 
@@ -1082,13 +1099,13 @@ public sealed class MemoryPool<T>
             if ( node.Length > length )
             {
                 PartiallyAllocateAtLargestFragmentedNode( id, length );
-                return id;
+                return new VersionedNodeId( id, node.Version );
             }
 
             if ( node.Length == length )
             {
                 AllocateAtLargestFragmentedNode( ref node );
-                return id;
+                return new VersionedNodeId( id, node.Version );
             }
         }
 
@@ -1152,9 +1169,10 @@ public sealed class MemoryPool<T>
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private int AllocateFirstNodeAtTail(int length)
+    private VersionedNodeId AllocateFirstNodeAtTail(int length)
     {
         int id;
+        uint version;
         if ( length <= SegmentLength )
         {
             if ( _segments.IsEmpty )
@@ -1164,6 +1182,7 @@ public sealed class MemoryPool<T>
             }
 
             ref var node = ref AddDefaultNode( out id );
+            version = node.Version;
             node.MakeActive( 0, 0, length );
             node.Prev = NullableIndex.Null;
             node.Next = node.Prev;
@@ -1172,6 +1191,7 @@ public sealed class MemoryPool<T>
         {
             var segmentIndex = FindFittingLargeTailSegmentIndex( -1, length );
             ref var node = ref AddDefaultNode( out id );
+            version = node.Version;
             node.MakeActive( segmentIndex, 0, length );
             node.Prev = _activeListTail;
             node.Next = NullableIndex.Null;
@@ -1183,13 +1203,14 @@ public sealed class MemoryPool<T>
             }
         }
 
-        return id;
+        return new VersionedNodeId( id, version );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private int AllocateNextNodeAtTail(int length)
+    private VersionedNodeId AllocateNextNodeAtTail(int length)
     {
         int id;
+        uint version;
         ref var tail = ref GetNodeRef( _activeListTail.Value );
         var tailSegment = GetSegment( tail.SegmentIndex );
         var endIndex = tail.EndIndex;
@@ -1200,6 +1221,7 @@ public sealed class MemoryPool<T>
             ref var node = ref AddDefaultNode( out id );
             tail = ref GetNodeRef( _activeListTail.Value );
 
+            version = node.Version;
             node.MakeActive( tail.SegmentIndex, endIndex, length );
             node.Prev = _activeListTail;
             node.Next = NullableIndex.Null;
@@ -1215,6 +1237,7 @@ public sealed class MemoryPool<T>
             }
 
             ref var node = ref AddDefaultNode( out id );
+            version = node.Version;
             node.MakeActive( segmentIndex, 0, length );
             node.Next = NullableIndex.Null;
 
@@ -1247,6 +1270,7 @@ public sealed class MemoryPool<T>
             var oldTailId = _activeListTail;
             var segmentIndex = FindFittingLargeTailSegmentIndex( tail.SegmentIndex, length );
             ref var node = ref AddDefaultNode( out id );
+            version = node.Version;
             node.MakeActive( segmentIndex, 0, length );
             node.Next = NullableIndex.Null;
 
@@ -1291,15 +1315,15 @@ public sealed class MemoryPool<T>
             }
         }
 
-        return id;
+        return new VersionedNodeId( id, version );
     }
 
-    private int AllocateAtTail(int length)
+    private VersionedNodeId AllocateAtTail(int length)
     {
         Assume.IsGreaterThan( length, 0 );
-        var id = _activeListTail.HasValue ? AllocateNextNodeAtTail( length ) : AllocateFirstNodeAtTail( length );
-        _activeListTail = NullableIndex.Create( id );
-        return id;
+        var result = _activeListTail.HasValue ? AllocateNextNodeAtTail( length ) : AllocateFirstNodeAtTail( length );
+        _activeListTail = NullableIndex.Create( result.Id );
+        return result;
     }
 
     private int FindFittingLargeTailSegmentIndex(int tailIndex, int length)
@@ -1355,13 +1379,13 @@ public sealed class MemoryPool<T>
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private ref Node GetSafeNodeRefOrNull(int index)
+    private ref Node GetSafeNodeRefOrNull(int index, uint version)
     {
         Assume.IsGreaterThanOrEqualTo( index, 0 );
         if ( index < _nodes.Count )
         {
             ref var node = ref GetNodeRef( index );
-            if ( node.IsActive && ! node.FragmentationIndex.HasValue )
+            if ( node.IsActive && ! node.FragmentationIndex.HasValue && node.Version == version )
                 return ref node;
         }
 

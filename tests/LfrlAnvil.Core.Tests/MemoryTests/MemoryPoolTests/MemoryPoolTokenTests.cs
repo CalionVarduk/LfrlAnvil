@@ -768,33 +768,11 @@ public class MemoryPoolTokenTests : TestsBase
                     segmentIndex: 0,
                     segmentLength: 8,
                     isSegmentActive: true,
+                    version: 0,
                     nodeId: NullableIndex.Create( 0 ),
                     startIndex: 0,
                     length: 5,
                     isFragmented: false ) )
-            .Go();
-    }
-
-    [Fact]
-    public void TryGetInfo_ShouldReturnNodeForFragmented()
-    {
-        var pool = new MemoryPool<int>( 8 );
-        var sut = pool.Rent( 3 );
-        _ = pool.Rent( 4 );
-        sut.Dispose();
-
-        var result = sut.TryGetInfo();
-
-        result.TestEquals(
-                new MemoryPool<int>.ReportInfo.Node(
-                    pool: pool,
-                    segmentIndex: 0,
-                    segmentLength: 8,
-                    isSegmentActive: true,
-                    nodeId: NullableIndex.Create( 0 ),
-                    startIndex: 0,
-                    length: 3,
-                    isFragmented: true ) )
             .Go();
     }
 
