@@ -33,6 +33,18 @@ internal static class TextEncoding
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static Result<EncodeableText> Prepare(ReadOnlySpan<byte> value)
+    {
+        var parsed = Parse( value );
+        if ( parsed.Exception is not null )
+            return parsed.Exception;
+
+        Assume.IsNotNull( parsed.Value );
+        return Prepare( parsed.Value );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static Result<string> Parse(ReadOnlyMemory<byte> value)
     {
         return Parse( value.Span );

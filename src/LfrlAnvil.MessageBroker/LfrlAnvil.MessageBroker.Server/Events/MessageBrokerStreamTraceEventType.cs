@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,32 +20,37 @@ namespace LfrlAnvil.MessageBroker.Server.Events;
 public enum MessageBrokerStreamTraceEventType : byte
 {
     /// <summary>
+    /// Specifies that trace is related to the stream being recreated.
+    /// </summary>
+    Recreated = 0,
+
+    /// <summary>
     /// Specifies that trace is related to the channel publisher binding.
     /// </summary>
-    BindPublisher = 0,
+    BindPublisher = 1,
 
     /// <summary>
     /// Specifies that trace is related to the channel publisher unbinding.
     /// </summary>
-    UnbindPublisher = 1,
+    UnbindPublisher = 2,
 
     /// <summary>
     /// Specifies that trace is related to a message being pushed by a publisher.
     /// </summary>
-    PushMessage = 2,
+    PushMessage = 3,
 
     /// <summary>
     /// Specifies that trace is related to processing a message.
     /// </summary>
-    ProcessMessage = 3,
+    ProcessMessage = 4,
 
     /// <summary>
     /// Specifies that trace is related to the stream disposal.
     /// </summary>
-    Dispose = 4,
+    Dispose = 5,
 
     /// <summary>
     /// Specifies that trace is related to an unexpected occurrence in the stream e.g. an error.
     /// </summary>
-    Unexpected = 5
+    Unexpected = 6
 }

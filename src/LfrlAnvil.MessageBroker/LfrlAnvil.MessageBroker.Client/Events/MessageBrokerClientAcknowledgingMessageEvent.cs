@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Chrono;
-using LfrlAnvil.MessageBroker.Client.Internal;
+using LfrlAnvil.Internal;
 
 namespace LfrlAnvil.MessageBroker.Client.Events;
 
@@ -163,8 +163,8 @@ public readonly struct MessageBrokerClientAcknowledgingMessageEvent
             ackId,
             streamId,
             messageId,
-            Int31BoolPair.GetData( retry, isAutomatic ),
-            Int31BoolPair.GetData( redelivery, messageTraceId is not null ),
+            new Int31BoolPair( retry, isAutomatic ),
+            new Int31BoolPair( redelivery, messageTraceId is not null ),
             messageTraceId ?? 0,
             nackData );
     }

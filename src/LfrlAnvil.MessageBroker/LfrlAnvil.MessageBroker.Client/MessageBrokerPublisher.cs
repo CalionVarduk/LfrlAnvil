@@ -32,13 +32,20 @@ public sealed class MessageBrokerPublisher
     private readonly object _sync = new object();
     private MessageBrokerPublisherState _state;
 
-    internal MessageBrokerPublisher(MessageBrokerClient client, int channelId, string channelName, int streamId, string streamName)
+    internal MessageBrokerPublisher(
+        MessageBrokerClient client,
+        int channelId,
+        string channelName,
+        int streamId,
+        string streamName,
+        bool isEphemeral)
     {
         Client = client;
         ChannelId = channelId;
         ChannelName = channelName;
         StreamId = streamId;
         StreamName = streamName;
+        IsEphemeral = isEphemeral;
         _state = MessageBrokerPublisherState.Bound;
     }
 
@@ -66,6 +73,12 @@ public sealed class MessageBrokerPublisher
     /// Unique name of the stream to which this publisher is pushing messages.
     /// </summary>
     public string StreamName { get; }
+
+    /// <summary>
+    /// Specifies whether or not the publisher is ephemeral.
+    /// </summary>
+    /// <remarks>Ephemeral publishers will be removed by the server when client disconnects.</remarks>
+    public bool IsEphemeral { get; }
 
     /// <summary>
     /// Current publisher's state.
@@ -192,6 +205,6 @@ public sealed class MessageBrokerPublisher
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private ExclusiveLock AcquireLock()
     {
-        return ExclusiveLock.SpinWaitEnter( _sync, spinWaitMultiplier: 4 );
+        return ExclusiveLock.Enter( _sync );
     }
 }

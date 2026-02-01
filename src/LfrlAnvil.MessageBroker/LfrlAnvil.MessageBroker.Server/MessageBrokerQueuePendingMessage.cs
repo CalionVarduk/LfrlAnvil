@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ namespace LfrlAnvil.MessageBroker.Server;
 public readonly struct MessageBrokerQueuePendingMessage
 {
     internal MessageBrokerQueuePendingMessage(
-        MessageBrokerChannelPublisherBinding publisher,
+        IMessageBrokerMessagePublisher publisher,
         MessageBrokerChannelListenerBinding listener,
         int storeKey)
     {
@@ -32,9 +32,9 @@ public readonly struct MessageBrokerQueuePendingMessage
     }
 
     /// <summary>
-    /// <see cref="MessageBrokerChannelPublisherBinding"/> that pushed this message.
+    /// <see cref="IMessageBrokerMessagePublisher"/> that pushed this message.
     /// </summary>
-    public MessageBrokerChannelPublisherBinding Publisher { get; }
+    public IMessageBrokerMessagePublisher Publisher { get; }
 
     /// <summary>
     /// <see cref="MessageBrokerChannelListenerBinding"/> that handles this message.
@@ -49,14 +49,15 @@ public readonly struct MessageBrokerQueuePendingMessage
     /// <summary>
     /// Attempts to retrieve a message from the stream store by the <see cref="StoreKey"/>.
     /// </summary>
+    /// <param name="includeData">Specifies whether or not to include a copy of binary data. Equal to <b>false</b> by default.</param>
     /// <returns>
     /// <see cref="MessageBrokerStreamMessage"/> instance associated with the <see cref="StoreKey"/>
     /// or <b>null</b> if such a message doesn't exist.
     /// </returns>
     [Pure]
-    public MessageBrokerStreamMessage? TryGetMessage()
+    public MessageBrokerStreamMessage? TryGetMessage(bool includeData = false)
     {
-        return Publisher.Stream.Messages.TryGetByKey( StoreKey );
+        return Publisher.Stream.Messages.TryGetByKey( StoreKey, includeData );
     }
 
     /// <summary>

@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,11 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Exceptions;
 using LfrlAnvil.MessageBroker.Server.Internal;
@@ -32,27 +35,31 @@ public sealed class MessageBrokerQueue
     internal ReferenceStore<int, MessageBrokerChannelListenerBinding> ListenersByChannelId;
     internal QueueProcessor QueueProcessor;
     internal QueueMessageStore MessageStore;
+    internal readonly ServerStorage.Client.Queue Storage;
     internal readonly MessageBrokerQueueLogger Logger;
     internal int EventHeapIndex;
     internal int DeadLetterQueryCounter;
-    private MessageBrokerQueueState _state;
     private readonly object _sync = new object();
+    private MessageBrokerQueueState _state;
+    private TaskCompletionSource? _deactivated;
     private ulong _nextTraceId;
+    private ulong? _autoStopTraceId;
 
-    internal MessageBrokerQueue(MessageBrokerRemoteClient client, int id, string name)
+    private MessageBrokerQueue(MessageBrokerRemoteClient client, int id, string name, ulong nextTraceId, MessageBrokerQueueState state)
     {
+        Storage = client.Storage.CreateForQueue();
         Client = client;
         Id = id;
         Name = name;
         EventHeapIndex = -1;
         DeadLetterQueryCounter = 0;
-        _state = MessageBrokerQueueState.Running;
-        _nextTraceId = 0;
+        _state = state;
+        _nextTraceId = nextTraceId;
+        _autoStopTraceId = null;
         ListenersByChannelId = ReferenceStore<int, MessageBrokerChannelListenerBinding>.Create();
         MessageStore = QueueMessageStore.Create();
-        QueueProcessor = QueueProcessor.Create();
+        QueueProcessor = QueueProcessor.Create( state == MessageBrokerQueueState.Running );
         Logger = Client.Server.QueueLoggerFactory?.Invoke( this ) ?? default;
-        QueueProcessor.SetUnderlyingTask( QueueProcessor.StartUnderlyingTask( this ) );
     }
 
     /// <summary>
@@ -93,7 +100,8 @@ public sealed class MessageBrokerQueue
     /// </summary>
     public MessageBrokerQueueMessageCollection Messages => new MessageBrokerQueueMessageCollection( this );
 
-    internal bool ShouldCancel => _state >= MessageBrokerQueueState.Disposing;
+    internal bool IsInactive => _state >= MessageBrokerQueueState.Deactivating;
+    internal bool IsDisposed => _state >= MessageBrokerQueueState.Disposing;
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerQueue"/> instance.
@@ -103,6 +111,35 @@ public sealed class MessageBrokerQueue
     public override string ToString()
     {
         return $"[{Id}] '{Name}' queue ({State})";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerQueue Create(MessageBrokerRemoteClient client, int id, string name)
+    {
+        return new MessageBrokerQueue( client, id, name, nextTraceId: 0, MessageBrokerQueueState.Running );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerQueue CreateInactive(MessageBrokerRemoteClient client, int id, string name, ulong nextTraceId)
+    {
+        return new MessageBrokerQueue( client, id, name, nextTraceId, MessageBrokerQueueState.Inactive );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void StartProcessor()
+    {
+        using ( AcquireLock() )
+        {
+            if ( IsInactive )
+                return;
+
+            if ( QueueProcessor.GetUnderlyingTask() is null )
+                QueueProcessor.SetUnderlyingTask( QueueProcessor.StartUnderlyingTask( this ) );
+
+            QueueProcessor.SignalContinuation();
+        }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -116,7 +153,7 @@ public sealed class MessageBrokerQueue
         ulong traceId;
         using ( AcquireLock() )
         {
-            if ( ShouldCancel )
+            if ( IsDisposed )
                 return false;
 
             traceId = GetTraceId();
@@ -137,13 +174,14 @@ public sealed class MessageBrokerQueue
                         storeKey,
                         message.Data.Length ) );
 
-            using ( AcquireActiveLock( traceId, out var exc ) )
+            using ( AcquireAliveLock( traceId, out var exc ) )
             {
                 if ( exc is not null )
                     return false;
 
                 MessageStore.Enqueue( message.Publisher, listener, storeKey );
-                QueueProcessor.SignalContinuation();
+                if ( ! IsInactive )
+                    QueueProcessor.SignalContinuation();
             }
 
             if ( Logger.MessageEnqueued is { } messageEnqueued )
@@ -166,7 +204,7 @@ public sealed class MessageBrokerQueue
     {
         using ( AcquireLock() )
         {
-            if ( ShouldCancel )
+            if ( IsInactive )
                 return AckResult.QueueDisposed;
 
             ref var entry = ref MessageStore.GetUnackedRef( ackId );
@@ -205,7 +243,7 @@ public sealed class MessageBrokerQueue
     {
         using ( AcquireLock() )
         {
-            if ( ShouldCancel )
+            if ( IsInactive )
                 return AckResult.QueueDisposed;
 
             ref var info = ref MessageStore.GetUnackedRef( ackId );
@@ -259,7 +297,7 @@ public sealed class MessageBrokerQueue
     {
         using ( AcquireLock() )
         {
-            if ( ShouldCancel )
+            if ( IsInactive )
                 return DeadLetterQueryResult.QueueDisposed;
 
             totalCount = MessageStore.DeadLetter.Count;
@@ -290,7 +328,7 @@ public sealed class MessageBrokerQueue
                 message.StoreKey,
                 out removed );
 
-            if ( removed && message.Publisher.Stream.MessageStore.IsEmpty && ! message.Publisher.Stream.ShouldCancel )
+            if ( removed && message.Publisher.Stream.MessageStore.IsEmpty && ! message.Publisher.Stream.IsDisposed )
                 message.Publisher.Stream.StreamProcessor.SignalContinuation();
         }
 
@@ -318,6 +356,7 @@ public sealed class MessageBrokerQueue
         }
 
         _state = MessageBrokerQueueState.Disposing;
+        _deactivated = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
         return true;
     }
 
@@ -328,71 +367,430 @@ public sealed class MessageBrokerQueue
             return false;
 
         _state = MessageBrokerQueueState.Disposing;
+        _deactivated = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
         return true;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ValueTask OnClientDisconnectedAsync(ulong clientTraceId)
+    internal async ValueTask OnServerDisposingAsync(ulong clientTraceId)
     {
-        return DisposeAsync( clientTraceId, true );
+        var traceId = 0UL;
+        MessageBrokerQueueState state;
+        var exceptions = Chain<Exception>.Empty;
+        Task? processorTask = null;
+
+        using ( AcquireLock() )
+        {
+            if ( _state == MessageBrokerQueueState.Disposed )
+                return;
+
+            state = _state;
+            if ( _state == MessageBrokerQueueState.Disposing )
+            {
+                processorTask = QueueProcessor.DiscardUnderlyingTask();
+                QueueProcessor.BeginDispose( ref exceptions );
+            }
+            else
+            {
+                _state = MessageBrokerQueueState.Disposing;
+                traceId = GetTraceId();
+                _autoStopTraceId = traceId;
+                DeadLetterQueryCounter = 0;
+                _deactivated = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
+            }
+        }
+
+        if ( state == MessageBrokerQueueState.Disposing )
+        {
+            Client.EmitErrors( ref exceptions, clientTraceId );
+            Client.EmitError( await processorTask.AsSafeNonCancellable().ConfigureAwait( false ), clientTraceId );
+            return;
+        }
+
+        if ( Logger.TraceStart is { } traceStart )
+            traceStart.Emit( MessageBrokerQueueTraceEvent.Create( this, traceId, MessageBrokerQueueTraceEventType.Deactivate ) );
+
+        if ( Logger.ClientTrace is { } clientTrace )
+            clientTrace.Emit( MessageBrokerQueueClientTraceEvent.Create( this, traceId, clientTraceId ) );
+
+        if ( Logger.Deactivating is { } deactivating )
+            deactivating.Emit( MessageBrokerQueueDeactivatingEvent.Create( this, traceId, isAlive: false ) );
+
+        using ( AcquireLock() )
+        {
+            processorTask = QueueProcessor.DiscardUnderlyingTask();
+            QueueProcessor.BeginDispose( ref exceptions );
+        }
+
+        EmitErrors( ref exceptions, traceId );
+        EmitError( await processorTask.AsSafeNonCancellable().ConfigureAwait( false ), traceId );
     }
 
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ValueTask OnServerDisposedAsync(ulong clientTraceId)
+    internal async ValueTask OnClientDeactivatingAsync(bool keepAlive, ulong clientTraceId)
     {
-        return DisposeAsync( clientTraceId, false );
+        var traceId = 0UL;
+        MessageBrokerQueueState state;
+        var exceptions = Chain<Exception>.Empty;
+        Task? processorTask = null;
+
+        using ( AcquireLock() )
+        {
+            if ( _state == MessageBrokerQueueState.Disposed )
+                return;
+
+            state = _state;
+            if ( _state == MessageBrokerQueueState.Disposing )
+            {
+                processorTask = QueueProcessor.DiscardUnderlyingTask();
+                QueueProcessor.BeginDispose( ref exceptions );
+            }
+            else
+            {
+                if ( _state == MessageBrokerQueueState.Inactive && keepAlive )
+                    return;
+
+                _state = keepAlive ? MessageBrokerQueueState.Deactivating : MessageBrokerQueueState.Disposing;
+                traceId = GetTraceId();
+                _autoStopTraceId = traceId;
+                DeadLetterQueryCounter = 0;
+                _deactivated = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
+            }
+        }
+
+        if ( state == MessageBrokerQueueState.Disposing )
+        {
+            Client.EmitErrors( ref exceptions, clientTraceId );
+            Client.EmitError( await processorTask.AsSafeNonCancellable().ConfigureAwait( false ), clientTraceId );
+            return;
+        }
+
+        if ( Logger.TraceStart is { } traceStart )
+            traceStart.Emit( MessageBrokerQueueTraceEvent.Create( this, traceId, MessageBrokerQueueTraceEventType.Deactivate ) );
+
+        if ( Logger.ClientTrace is { } clientTrace )
+            clientTrace.Emit( MessageBrokerQueueClientTraceEvent.Create( this, traceId, clientTraceId ) );
+
+        if ( Logger.Deactivating is { } deactivating )
+            deactivating.Emit( MessageBrokerQueueDeactivatingEvent.Create( this, traceId, keepAlive ) );
+
+        using ( AcquireLock() )
+        {
+            processorTask = QueueProcessor.DiscardUnderlyingTask();
+            QueueProcessor.BeginDispose( ref exceptions );
+        }
+
+        EmitErrors( ref exceptions, traceId );
+        EmitError( await processorTask.AsSafeNonCancellable().ConfigureAwait( false ), traceId );
+    }
+
+    internal async ValueTask OnServerDisposedAsync(
+        bool isEphemeral,
+        Dictionary<int, MessageBrokerChannelListenerBinding> listenersByChannelId,
+        ulong clientTraceId,
+        bool storageLoaded)
+    {
+        ulong? autoDisposalTraceId;
+        MessageBrokerQueueState state;
+        TaskCompletionSource? deactivatedSource;
+
+        using ( AcquireLock() )
+        {
+            Assume.IsGreaterThanOrEqualTo( _state, MessageBrokerQueueState.Disposing );
+            state = _state;
+            autoDisposalTraceId = _autoStopTraceId;
+            deactivatedSource = _deactivated;
+        }
+
+        if ( autoDisposalTraceId is null )
+        {
+            if ( state == MessageBrokerQueueState.Disposing )
+            {
+                if ( storageLoaded )
+                    Client.EmitError( await Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), clientTraceId );
+
+                Client.EmitError( await (deactivatedSource?.Task).AsSafeCancellable().ConfigureAwait( false ), clientTraceId );
+            }
+
+            return;
+        }
+
+        try
+        {
+            QueueMessageStore.ReleaseMessages(
+                this,
+                autoDisposalTraceId.Value,
+                extractPersistentMessages: ! isEphemeral,
+                discardAllMessages: false,
+                listenersByChannelId,
+                out var pendingMessages,
+                out var unackedEntries,
+                out var retryEntries,
+                out var deadLetterEntries );
+
+            if ( ! isEphemeral )
+            {
+                bool hasListeners;
+                using ( AcquireLock() )
+                    hasListeners = ListenersByChannelId.Count > 0;
+
+                // TODO: tests
+                // - persistent queue is no longer referenced during server disposal
+
+                if ( ! hasListeners
+                    && pendingMessages.IsEmpty
+                    && unackedEntries.IsEmpty
+                    && retryEntries.IsEmpty
+                    && deadLetterEntries.IsEmpty )
+                {
+                    if ( storageLoaded )
+                        EmitError( await Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), autoDisposalTraceId.Value );
+                }
+                else
+                {
+                    EmitError(
+                        await Storage.SaveMetadataAsync( this, autoDisposalTraceId.Value ).AsSafe().ConfigureAwait( false ),
+                        autoDisposalTraceId.Value );
+
+                    if ( storageLoaded )
+                    {
+                        EmitError(
+                            await Storage.SaveAsync( this, pendingMessages, autoDisposalTraceId.Value ).AsSafe().ConfigureAwait( false ),
+                            autoDisposalTraceId.Value );
+
+                        EmitError(
+                            await Storage.SaveAsync( this, unackedEntries, autoDisposalTraceId.Value ).AsSafe().ConfigureAwait( false ),
+                            autoDisposalTraceId.Value );
+
+                        EmitError(
+                            await Storage.SaveAsync( this, retryEntries, autoDisposalTraceId.Value ).AsSafe().ConfigureAwait( false ),
+                            autoDisposalTraceId.Value );
+
+                        EmitError(
+                            await Storage.SaveAsync( this, deadLetterEntries, autoDisposalTraceId.Value ).AsSafe().ConfigureAwait( false ),
+                            autoDisposalTraceId.Value );
+                    }
+                }
+            }
+
+            using ( AcquireLock() )
+            {
+                ListenersByChannelId.Clear();
+                MessageStore.Clear();
+                _state = MessageBrokerQueueState.Disposed;
+                _autoStopTraceId = null;
+                _deactivated = null;
+            }
+
+            if ( Logger.Deactivated is { } deactivated )
+                deactivated.Emit( MessageBrokerQueueDeactivatedEvent.Create( this, autoDisposalTraceId.Value, isAlive: false ) );
+        }
+        finally
+        {
+            if ( Logger.TraceEnd is { } traceEnd )
+                traceEnd.Emit(
+                    MessageBrokerQueueTraceEvent.Create( this, autoDisposalTraceId.Value, MessageBrokerQueueTraceEventType.Deactivate ) );
+
+            deactivatedSource?.TrySetResult();
+        }
+    }
+
+    internal async ValueTask OnClientDeactivatedAsync(bool keepAlive, ulong clientTraceId)
+    {
+        ulong? autoDisposalTraceId;
+        MessageBrokerQueueState state;
+        bool dispose;
+        TaskCompletionSource? deactivatedSource;
+
+        using ( AcquireLock() )
+        {
+            Assume.IsGreaterThanOrEqualTo( _state, MessageBrokerQueueState.Deactivating );
+            Assume.NotEquals( _state, MessageBrokerQueueState.Inactive );
+            state = _state;
+            autoDisposalTraceId = _autoStopTraceId;
+            dispose = ListenersByChannelId.Count == 0 && MessageStore.IsEmpty;
+            if ( dispose )
+                _state = MessageBrokerQueueState.Disposing;
+
+            deactivatedSource = _deactivated;
+        }
+
+        if ( autoDisposalTraceId is null )
+        {
+            if ( state == MessageBrokerQueueState.Disposing )
+            {
+                Client.EmitError( await Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), clientTraceId );
+                Client.EmitError( await (deactivatedSource?.Task).AsSafeCancellable().ConfigureAwait( false ), clientTraceId );
+            }
+
+            return;
+        }
+
+        try
+        {
+            if ( keepAlive )
+            {
+                // TODO
+                // what if storage handling were to be added? there should be no overlap with server disposal/client delete
+                // so should be safe...? as long as queue processor is fully deactivated
+                // but this is another problem to solve: queue's message store must be swapped from in-memory to on-disk
+                // in one lock, also must make sure that the order of messages is preserved during the swap
+                // so the swap might have to happen inside storage async mutex lock?
+
+                // TODO: tests
+                // - persistent queue is no longer referenced during client disconnect
+                // - persistent queue forces unacked messages to be sent first on reconnect (without server disposal)
+
+                if ( dispose )
+                {
+                    using ( Client.AcquireLock() )
+                        Client.QueueStore.Remove( Id, Name );
+
+                    EmitError( await Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), autoDisposalTraceId.Value );
+
+                    using ( AcquireLock() )
+                    {
+                        ListenersByChannelId.Clear();
+                        MessageStore.Clear();
+                        _state = MessageBrokerQueueState.Disposed;
+                        _autoStopTraceId = null;
+                        _deactivated = null;
+                    }
+                }
+                else
+                {
+                    using ( AcquireLock() )
+                    {
+                        MessageStore.ExpireAllUnacked( Client.GetTimestamp() );
+                        _state = MessageBrokerQueueState.Inactive;
+                        _autoStopTraceId = null;
+                        _deactivated = null;
+                    }
+                }
+            }
+            else
+            {
+                dispose = true;
+                QueueMessageStore.ReleaseMessages(
+                    this,
+                    autoDisposalTraceId.Value,
+                    extractPersistentMessages: false,
+                    discardAllMessages: true,
+                    listenersByChannelId: null,
+                    out _,
+                    out _,
+                    out _,
+                    out _ );
+
+                EmitError( await Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), autoDisposalTraceId.Value );
+
+                using ( AcquireLock() )
+                {
+                    ListenersByChannelId.Clear();
+                    MessageStore.Clear();
+                    _state = MessageBrokerQueueState.Disposed;
+                    _autoStopTraceId = null;
+                    _deactivated = null;
+                }
+            }
+
+            if ( Logger.Deactivated is { } deactivated )
+                deactivated.Emit( MessageBrokerQueueDeactivatedEvent.Create( this, autoDisposalTraceId.Value, ! dispose ) );
+        }
+        finally
+        {
+            if ( Logger.TraceEnd is { } traceEnd )
+                traceEnd.Emit(
+                    MessageBrokerQueueTraceEvent.Create( this, autoDisposalTraceId.Value, MessageBrokerQueueTraceEventType.Deactivate ) );
+
+            deactivatedSource?.TrySetResult();
+        }
     }
 
     internal async ValueTask DisposeDueToLackOfReferencesAsync(bool ignoreProcessorTask, ulong traceId)
     {
-        Assume.Equals( State, MessageBrokerQueueState.Disposing );
-        if ( Logger.Disposing is { } disposing )
-            disposing.Emit( MessageBrokerQueueDisposingEvent.Create( this, traceId ) );
-
-        Task? processorTask;
-        using ( AcquireLock() )
+        TaskCompletionSource? deactivatedSource = null;
+        try
         {
-            Assume.Equals( ListenersByChannelId.Count, 0 );
-            Assume.True( MessageStore.IsEmpty );
+            Assume.Equals( State, MessageBrokerQueueState.Disposing );
+            if ( Logger.Deactivating is { } deactivating )
+                deactivating.Emit( MessageBrokerQueueDeactivatingEvent.Create( this, traceId, isAlive: false ) );
 
-            DeadLetterQueryCounter = 0;
-            processorTask = QueueProcessor.DiscardUnderlyingTask();
-            if ( ignoreProcessorTask )
-                processorTask = null;
-
-            QueueProcessor.Dispose();
-        }
-
-        if ( processorTask is not null )
-            await processorTask.ConfigureAwait( false );
-
-        using ( Client.AcquireLock() )
-        {
-            if ( ! Client.ShouldCancel )
+            var exceptions = Chain<Exception>.Empty;
+            Task? processorTask;
+            using ( AcquireLock() )
             {
-                Client.QueueStore.Remove( Id, Name );
-                Client.EventScheduler.RemoveQueue( this );
+                Assume.Equals( ListenersByChannelId.Count, 0 );
+                Assume.True( MessageStore.IsEmpty );
+
+                DeadLetterQueryCounter = 0;
+                processorTask = QueueProcessor.GetUnderlyingTask();
+                if ( ignoreProcessorTask )
+                    processorTask = null;
+
+                QueueProcessor.BeginDispose( ref exceptions );
+                deactivatedSource = _deactivated;
             }
+
+            EmitErrors( ref exceptions, traceId );
+            EmitError( await processorTask.AsSafeNonCancellable().ConfigureAwait( false ), traceId );
+            EmitError( await Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), traceId );
+
+            using ( Client.AcquireLock() )
+            {
+                if ( ! Client.IsDisposed )
+                {
+                    Client.QueueStore.Remove( Id, Name );
+                    using ( AcquireLock() )
+                        Client.EventScheduler.RemoveQueue( this );
+                }
+            }
+
+            using ( AcquireLock() )
+            {
+                _ = QueueProcessor.DiscardUnderlyingTask();
+                _state = MessageBrokerQueueState.Disposed;
+                _autoStopTraceId = null;
+                _deactivated = null;
+            }
+
+            if ( Logger.Deactivated is { } deactivated )
+                deactivated.Emit( MessageBrokerQueueDeactivatedEvent.Create( this, traceId, isAlive: false ) );
         }
-
-        using ( AcquireLock() )
-            _state = MessageBrokerQueueState.Disposed;
-
-        if ( Logger.Disposed is { } disposed )
-            disposed.Emit( MessageBrokerQueueDisposedEvent.Create( this, traceId ) );
+        finally
+        {
+            deactivatedSource?.TrySetResult();
+        }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ExclusiveLock AcquireLock()
     {
-        return ExclusiveLock.SpinWaitEnter( _sync, spinWaitMultiplier: 4 );
+        return ExclusiveLock.Enter( _sync );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ExclusiveLock AcquireActiveLock(ulong traceId, out MessageBrokerQueueDisposedException? exception)
+    internal ulong GetTraceId()
+    {
+        return unchecked( _nextTraceId++ );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void EmitErrors(ref Chain<Exception> exceptions, ulong traceId)
+    {
+        if ( exceptions.Count > 0 && Logger.Error is { } error )
+        {
+            foreach ( var exc in exceptions )
+                error.Emit( MessageBrokerQueueErrorEvent.Create( this, traceId, exc ) );
+        }
+
+        exceptions = Chain<Exception>.Empty;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private ExclusiveLock AcquireAliveLock(ulong traceId, out MessageBrokerQueueDisposedException? exception)
     {
         var @lock = AcquireLock();
-        if ( ! ShouldCancel )
+        if ( ! IsDisposed )
         {
             exception = null;
             return @lock;
@@ -407,63 +805,9 @@ public sealed class MessageBrokerQueue
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ulong GetTraceId()
+    private void EmitError(Result result, ulong traceId)
     {
-        return unchecked( _nextTraceId++ );
-    }
-
-    private async ValueTask DisposeAsync(ulong clientTraceId, bool decrementMessageRefCount)
-    {
-        ulong traceId;
-        using ( AcquireLock() )
-        {
-            if ( ShouldCancel )
-                return;
-
-            _state = MessageBrokerQueueState.Disposing;
-            traceId = GetTraceId();
-        }
-
-        using ( MessageBrokerQueueTraceEvent.CreateScope( this, traceId, MessageBrokerQueueTraceEventType.Dispose ) )
-        {
-            if ( Logger.ClientTrace is { } clientTrace )
-                clientTrace.Emit( MessageBrokerQueueClientTraceEvent.Create( this, traceId, clientTraceId ) );
-
-            if ( Logger.Disposing is { } disposing )
-                disposing.Emit( MessageBrokerQueueDisposingEvent.Create( this, traceId ) );
-
-            Task? processorTask;
-            using ( AcquireLock() )
-            {
-                DeadLetterQueryCounter = 0;
-                ListenersByChannelId.Clear();
-                processorTask = QueueProcessor.DiscardUnderlyingTask();
-                QueueProcessor.Dispose();
-            }
-
-            if ( processorTask is not null )
-                await processorTask.ConfigureAwait( false );
-
-            int discardedMessageCount;
-            if ( decrementMessageRefCount )
-                discardedMessageCount = QueueMessageStore.ClearAndRelease( this, traceId );
-            else
-            {
-                using ( AcquireLock() )
-                    discardedMessageCount = MessageStore.Clear();
-            }
-
-            if ( discardedMessageCount > 0 && Logger.Error is { } error )
-            {
-                var exc = this.Exception( Resources.QueueMessagesDiscarded( discardedMessageCount ) );
-                error.Emit( MessageBrokerQueueErrorEvent.Create( this, traceId, exc ) );
-            }
-
-            using ( AcquireLock() )
-                _state = MessageBrokerQueueState.Disposed;
-
-            if ( Logger.Disposed is { } disposed )
-                disposed.Emit( MessageBrokerQueueDisposedEvent.Create( this, traceId ) );
-        }
+        if ( result.Exception is not null && Logger.Error is { } error )
+            error.Emit( MessageBrokerQueueErrorEvent.Create( this, traceId, result.Exception ) );
     }
 }

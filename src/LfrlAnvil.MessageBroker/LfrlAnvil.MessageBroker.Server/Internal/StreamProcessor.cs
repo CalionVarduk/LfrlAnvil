@@ -16,7 +16,6 @@ using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Sources;
 using LfrlAnvil.Async;
 using LfrlAnvil.MessageBroker.Server.Events;
 
@@ -63,7 +62,7 @@ internal struct StreamProcessor
                     {
                         using ( stream.AcquireLock() )
                         {
-                            if ( stream.ShouldCancel )
+                            if ( stream.IsDisposed )
                                 break;
 
                             stream.StreamProcessor.SignalContinuation();
@@ -80,16 +79,29 @@ internal struct StreamProcessor
         }
     }
 
-    internal void Dispose()
+    internal Result BeginDispose()
     {
-        if ( _continuation.Status == ValueTaskSourceStatus.Pending )
-            _continuation.SetResult( false );
+        try
+        {
+            _continuation.TrySetResult( false );
+            return Result.Valid;
+        }
+        catch ( Exception exc )
+        {
+            return exc;
+        }
     }
 
     internal void SetUnderlyingTask(Task task)
     {
         Assume.IsNull( _task );
         _task = task;
+    }
+
+    [Pure]
+    internal Task? GetUnderlyingTask()
+    {
+        return _task;
     }
 
     internal Task? DiscardUnderlyingTask()
@@ -102,8 +114,7 @@ internal struct StreamProcessor
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void SignalContinuation()
     {
-        if ( _continuation.Status == ValueTaskSourceStatus.Pending )
-            _continuation.SetResult( true );
+        _continuation.TrySetResult( true );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -124,7 +135,7 @@ internal struct StreamProcessor
                 ulong traceId;
                 using ( stream.AcquireLock() )
                 {
-                    if ( stream.ShouldCancel )
+                    if ( stream.IsDisposed )
                         return;
 
                     if ( ! stream.MessageStore.TryPeekPending( out storeKey, out message, out routingData ) )

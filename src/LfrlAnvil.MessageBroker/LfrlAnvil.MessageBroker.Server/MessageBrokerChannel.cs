@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,7 +14,9 @@
 
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using LfrlAnvil.Async;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Exceptions;
 using LfrlAnvil.MessageBroker.Server.Internal;
@@ -29,17 +31,23 @@ public sealed class MessageBrokerChannel
     internal ReferenceStore<int, MessageBrokerChannelPublisherBinding> PublishersByClientId;
     internal ReferenceStore<int, MessageBrokerChannelListenerBinding> ListenersByClientId;
     internal readonly MessageBrokerChannelLogger Logger;
-    private readonly object _sync = new object();
+    internal readonly ServerStorage.Channel Storage;
+
+    private readonly TaskCompletionSource _disposed;
     private MessageBrokerChannelState _state;
     private ulong _nextTraceId;
+    private ulong? _autoDisposalTraceId;
 
-    internal MessageBrokerChannel(MessageBrokerServer server, int id, string name)
+    internal MessageBrokerChannel(MessageBrokerServer server, int id, string name, ulong nextTraceId = 0)
     {
+        Storage = server.Storage.CreateForChannel();
         Server = server;
         Id = id;
         Name = name;
         _state = MessageBrokerChannelState.Running;
-        _nextTraceId = 0;
+        _autoDisposalTraceId = null;
+        _nextTraceId = nextTraceId;
+        _disposed = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
         PublishersByClientId = ReferenceStore<int, MessageBrokerChannelPublisherBinding>.Create();
         ListenersByClientId = ReferenceStore<int, MessageBrokerChannelListenerBinding>.Create();
         Logger = Server.ChannelLoggerFactory?.Invoke( this ) ?? default;
@@ -83,7 +91,7 @@ public sealed class MessageBrokerChannel
     /// </summary>
     public MessageBrokerChannelListenerBindingCollection Listeners => new MessageBrokerChannelListenerBindingCollection( this );
 
-    internal bool ShouldCancel => _state >= MessageBrokerChannelState.Disposing;
+    internal bool IsDisposed => _state >= MessageBrokerChannelState.Disposing;
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerChannel"/> instance.
@@ -117,12 +125,54 @@ public sealed class MessageBrokerChannel
         return true;
     }
 
-    internal void OnPublisherDisposing(MessageBrokerRemoteClient client, ulong clientTraceId)
+    internal async ValueTask TryDisposeDueToLackOfReferencesAsync(ulong serverTraceId)
+    {
+        // TODO: tests
+        // - after server reload, channel is not referenced
+        // - FOR STREAMS, the same, but it will happen due to stream processor detection (implicit)
+        // - FOR QUEUES, their processors will be started on client reconnect, so only then will they have a chance to dispose themselves
+
+        ulong traceId;
+        using ( AcquireLock() )
+        {
+            if ( IsDisposed || ListenersByClientId.Count > 0 || PublishersByClientId.Count > 0 )
+                return;
+
+            _state = MessageBrokerChannelState.Disposing;
+            traceId = GetTraceId();
+        }
+
+        try
+        {
+            using ( MessageBrokerChannelTraceEvent.CreateScope( this, traceId, MessageBrokerChannelTraceEventType.Dispose ) )
+            {
+                if ( Logger.ServerTrace is { } serverTrace )
+                    serverTrace.Emit( MessageBrokerChannelServerTraceEvent.Create( this, traceId, serverTraceId ) );
+
+                if ( Logger.Disposing is { } disposing )
+                    disposing.Emit( MessageBrokerChannelDisposingEvent.Create( this, traceId ) );
+
+                EmitError( await Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), traceId );
+                EmitError( ChannelCollection.Remove( this ), traceId );
+                using ( AcquireLock() )
+                    _state = MessageBrokerChannelState.Disposed;
+
+                if ( Logger.Disposed is { } disposed )
+                    disposed.Emit( MessageBrokerChannelDisposedEvent.Create( this, traceId ) );
+            }
+        }
+        finally
+        {
+            _disposed.TrySetResult();
+        }
+    }
+
+    internal async ValueTask OnPublisherDisposingAsync(MessageBrokerRemoteClient client, ulong clientTraceId)
     {
         ulong traceId;
         using ( AcquireLock() )
         {
-            if ( ShouldCancel )
+            if ( IsDisposed )
                 return;
 
             traceId = GetTraceId();
@@ -164,16 +214,16 @@ public sealed class MessageBrokerChannel
                 publisherUnbound.Emit( MessageBrokerChannelPublisherUnboundEvent.Create( publisher, traceId, streamRemoved: false ) );
 
             if ( dispose )
-                DisposeDueToLackOfReferences( traceId );
+                await DisposeDueToLackOfReferencesAsync( traceId ).ConfigureAwait( false );
         }
     }
 
-    internal void OnListenerDisposing(MessageBrokerRemoteClient client, ulong clientTraceId)
+    internal async ValueTask OnListenerDisposingAsync(MessageBrokerRemoteClient client, ulong clientTraceId)
     {
         ulong traceId;
         using ( AcquireLock() )
         {
-            if ( ShouldCancel )
+            if ( IsDisposed )
                 return;
 
             traceId = GetTraceId();
@@ -215,29 +265,79 @@ public sealed class MessageBrokerChannel
                 listenerUnbound.Emit( MessageBrokerChannelListenerUnboundEvent.Create( listener, traceId, queueRemoved: false ) );
 
             if ( dispose )
-                DisposeDueToLackOfReferences( traceId );
+                await DisposeDueToLackOfReferencesAsync( traceId ).ConfigureAwait( false );
         }
     }
 
-    internal void OnServerDisposed(ulong serverTraceId)
+    internal void OnServerDisposing(ulong serverTraceId)
     {
         ulong traceId;
         using ( AcquireLock() )
         {
-            if ( ShouldCancel )
+            if ( IsDisposed )
                 return;
 
             _state = MessageBrokerChannelState.Disposing;
             traceId = GetTraceId();
+            _autoDisposalTraceId = traceId;
         }
 
-        using ( MessageBrokerChannelTraceEvent.CreateScope( this, traceId, MessageBrokerChannelTraceEventType.Dispose ) )
-        {
-            if ( Logger.ServerTrace is { } serverTrace )
-                serverTrace.Emit( MessageBrokerChannelServerTraceEvent.Create( this, traceId, serverTraceId ) );
+        if ( Logger.TraceStart is { } traceStart )
+            traceStart.Emit( MessageBrokerChannelTraceEvent.Create( this, traceId, MessageBrokerChannelTraceEventType.Dispose ) );
 
-            if ( Logger.Disposing is { } disposing )
-                disposing.Emit( MessageBrokerChannelDisposingEvent.Create( this, traceId ) );
+        if ( Logger.ServerTrace is { } serverTrace )
+            serverTrace.Emit( MessageBrokerChannelServerTraceEvent.Create( this, traceId, serverTraceId ) );
+
+        if ( Logger.Disposing is { } disposing )
+            disposing.Emit( MessageBrokerChannelDisposingEvent.Create( this, traceId ) );
+    }
+
+    internal async ValueTask OnServerDisposedAsync(ulong serverTraceId, bool storageLoaded)
+    {
+        ulong? autoDisposalTraceId;
+        MessageBrokerChannelState state;
+
+        using ( AcquireLock() )
+        {
+            Assume.IsGreaterThanOrEqualTo( _state, MessageBrokerChannelState.Disposing );
+            state = _state;
+            autoDisposalTraceId = _autoDisposalTraceId;
+        }
+
+        if ( autoDisposalTraceId is null )
+        {
+            if ( state == MessageBrokerChannelState.Disposing )
+            {
+                if ( storageLoaded )
+                    Server.EmitError( await Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), serverTraceId );
+
+                Server.EmitError( await _disposed.Task.AsSafeCancellable().ConfigureAwait( false ), serverTraceId );
+            }
+
+            return;
+        }
+
+        try
+        {
+            // TODO: tests
+            // - persistent channel is no longer referenced during server disposal
+
+            if ( Server.RootStorageDirectoryPath is not null )
+            {
+                bool isReferenced;
+                using ( AcquireLock() )
+                    isReferenced = PublishersByClientId.Count > 0 || ListenersByClientId.Count > 0;
+
+                if ( ! isReferenced )
+                {
+                    if ( storageLoaded )
+                        EmitError( await Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), autoDisposalTraceId.Value );
+                }
+                else
+                    EmitError(
+                        await Storage.SaveMetadataAsync( this, autoDisposalTraceId.Value ).AsSafe().ConfigureAwait( false ),
+                        autoDisposalTraceId.Value );
+            }
 
             using ( AcquireLock() )
             {
@@ -247,42 +347,62 @@ public sealed class MessageBrokerChannel
             }
 
             if ( Logger.Disposed is { } disposed )
-                disposed.Emit( MessageBrokerChannelDisposedEvent.Create( this, traceId ) );
+                disposed.Emit( MessageBrokerChannelDisposedEvent.Create( this, autoDisposalTraceId.Value ) );
         }
-    }
-
-    internal void DisposeDueToLackOfReferences(ulong traceId)
-    {
-        Assume.Equals( State, MessageBrokerChannelState.Disposing );
-        if ( Logger.Disposing is { } disposing )
-            disposing.Emit( MessageBrokerChannelDisposingEvent.Create( this, traceId ) );
-
-        var exc = ChannelCollection.Remove( this ).Exception;
-        if ( exc is not null && Logger.Error is { } error )
-            error.Emit( MessageBrokerChannelErrorEvent.Create( this, traceId, exc ) );
-
-        using ( AcquireLock() )
+        finally
         {
-            Assume.Equals( PublishersByClientId.Count, 0 );
-            Assume.Equals( ListenersByClientId.Count, 0 );
-            _state = MessageBrokerChannelState.Disposed;
-        }
+            if ( Logger.TraceEnd is { } traceEnd )
+                traceEnd.Emit(
+                    MessageBrokerChannelTraceEvent.Create( this, autoDisposalTraceId.Value, MessageBrokerChannelTraceEventType.Dispose ) );
 
-        if ( Logger.Disposed is { } disposed )
-            disposed.Emit( MessageBrokerChannelDisposedEvent.Create( this, traceId ) );
+            _disposed.TrySetResult();
+        }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ExclusiveLock AcquireLock()
     {
-        return ExclusiveLock.SpinWaitEnter( _sync, spinWaitMultiplier: 4 );
+        return ExclusiveLock.Enter( _disposed );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ExclusiveLock AcquireActiveLock(ulong traceId, out MessageBrokerChannelDisposedException? exception)
+    internal ulong GetTraceId()
+    {
+        return unchecked( _nextTraceId++ );
+    }
+
+    internal async ValueTask DisposeDueToLackOfReferencesAsync(ulong traceId)
+    {
+        try
+        {
+            Assume.Equals( State, MessageBrokerChannelState.Disposing );
+            if ( Logger.Disposing is { } disposing )
+                disposing.Emit( MessageBrokerChannelDisposingEvent.Create( this, traceId ) );
+
+            EmitError( await Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), traceId );
+            EmitError( ChannelCollection.Remove( this ), traceId );
+
+            using ( AcquireLock() )
+            {
+                Assume.Equals( PublishersByClientId.Count, 0 );
+                Assume.Equals( ListenersByClientId.Count, 0 );
+                _state = MessageBrokerChannelState.Disposed;
+            }
+
+            if ( Logger.Disposed is { } disposed )
+                disposed.Emit( MessageBrokerChannelDisposedEvent.Create( this, traceId ) );
+        }
+        finally
+        {
+            _disposed.TrySetResult();
+        }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private ExclusiveLock AcquireActiveLock(ulong traceId, out MessageBrokerChannelDisposedException? exception)
     {
         var @lock = AcquireLock();
-        if ( ! ShouldCancel )
+        if ( ! IsDisposed )
         {
             exception = null;
             return @lock;
@@ -297,8 +417,9 @@ public sealed class MessageBrokerChannel
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ulong GetTraceId()
+    private void EmitError(Result result, ulong traceId)
     {
-        return unchecked( _nextTraceId++ );
+        if ( result.Exception is not null && Logger.Error is { } error )
+            error.Emit( MessageBrokerChannelErrorEvent.Create( this, traceId, result.Exception ) );
     }
 }

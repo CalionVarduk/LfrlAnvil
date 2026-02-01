@@ -75,11 +75,18 @@ internal struct PublisherCollection
     internal static async ValueTask<Result<MessageBrokerBindPublisherResult?>> BindAsync(
         MessageBrokerClient client,
         string channelName,
-        string? streamName)
+        string? streamName,
+        bool isEphemeral)
     {
         Ensure.IsInRange( channelName.Length, Defaults.NameLengthBounds.Min, Defaults.NameLengthBounds.Max );
         if ( streamName is not null )
             Ensure.IsInRange( streamName.Length, Defaults.NameLengthBounds.Min, Defaults.NameLengthBounds.Max );
+
+        // TODO: tests
+        // - isEphemeral: false
+        // - isEphemeral: false, with ephemeral client
+        if ( client.IsEphemeral )
+            isEphemeral = true;
 
         ulong traceId;
         bool reverseEndianness;
@@ -101,7 +108,12 @@ internal struct PublisherCollection
         {
             if ( client.Logger.BindingPublisher is { } bindingPublisher )
                 bindingPublisher.Emit(
-                    MessageBrokerClientBindingPublisherEvent.Create( client, traceId, channelName, streamName ?? channelName ) );
+                    MessageBrokerClientBindingPublisherEvent.Create(
+                        client,
+                        traceId,
+                        channelName,
+                        streamName ?? channelName,
+                        isEphemeral ) );
 
             ManualResetValueTaskSource<IncomingPacketToken> responseSource;
             Protocol.BindPublisherRequest request;
@@ -109,7 +121,7 @@ internal struct PublisherCollection
             var poolToken = MemoryPoolToken<byte>.Empty;
             try
             {
-                request = new Protocol.BindPublisherRequest( channelName, streamName );
+                request = new Protocol.BindPublisherRequest( channelName, streamName, isEphemeral );
                 poolToken = client.MemoryPool.Rent( request.Length, client.ClearBuffers, out var buffer );
                 request.Serialize( buffer, reverseEndianness );
 
@@ -219,7 +231,8 @@ internal struct PublisherCollection
                                 parsedResponse.ChannelId,
                                 channelName,
                                 parsedResponse.StreamId,
-                                streamName ?? channelName );
+                                streamName ?? channelName,
+                                isEphemeral );
 
                             client.PublisherCollection._store.Add( parsedResponse.ChannelId, channelName, publisher );
                             bindResult = MessageBrokerBindPublisherResult.Create(

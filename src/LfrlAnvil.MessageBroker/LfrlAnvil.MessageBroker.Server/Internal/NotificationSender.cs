@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@ using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Sources;
 using LfrlAnvil.Async;
+using LfrlAnvil.Internal;
 using LfrlAnvil.Memory;
 using LfrlAnvil.MessageBroker.Server.Events;
 
@@ -37,9 +37,13 @@ internal struct NotificationSender
     }
 
     [Pure]
-    internal static NotificationSender Create()
+    internal static NotificationSender Create(bool running)
     {
-        return new NotificationSender( new ManualResetValueTaskSource<bool>() );
+        var source = new ManualResetValueTaskSource<bool>();
+        if ( ! running )
+            source.TrySetResult( false );
+
+        return new NotificationSender( source );
     }
 
     [MethodImpl( MethodImplOptions.NoInlining )]
@@ -63,33 +67,45 @@ internal struct NotificationSender
                 if ( client.Logger.Error is { } error )
                     error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
 
-                await client.DisposeAsync( traceId ).ConfigureAwait( false );
+                await client.DeactivateAsync( traceId ).ConfigureAwait( false );
             }
         }
 
         Assume.IsGreaterThanOrEqualTo( client.State, MessageBrokerRemoteClientState.Disposing );
     }
 
-    internal void BeginDispose()
+    internal void BeginDispose(ref Chain<Exception> exceptions)
     {
-        if ( _continuation.Status == ValueTaskSourceStatus.Pending )
-            _continuation.SetResult( false );
+        try
+        {
+            _continuation.TrySetResult( false );
+        }
+        catch ( Exception exc )
+        {
+            exceptions = exceptions.Extend( exc );
+        }
     }
 
-    internal (int DiscardedNotificationCount, Chain<Exception> Exceptions) EndDispose(bool extractExceptions)
+    internal int EndDispose(ref Chain<Exception> exceptions)
     {
         var discardedNotificationCount = _notifications.Count;
-        var exceptions = Chain<Exception>.Empty;
-
         foreach ( ref readonly var notification in _notifications )
         {
             var exc = notification.PoolToken.Return();
-            if ( exc is not null && extractExceptions )
+            if ( exc is not null )
                 exceptions = exceptions.Extend( exc );
         }
 
-        _notifications = QueueSlim<Notification>.Create();
-        return (discardedNotificationCount, exceptions);
+        try
+        {
+            _notifications = QueueSlim<Notification>.Create();
+        }
+        catch ( Exception exc )
+        {
+            exceptions = exceptions.Extend( exc );
+        }
+
+        return discardedNotificationCount;
     }
 
     internal void SetUnderlyingTask(Task? task)
@@ -108,8 +124,7 @@ internal struct NotificationSender
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void SignalContinuation()
     {
-        if ( _continuation.Status == ValueTaskSourceStatus.Pending )
-            _continuation.SetResult( true );
+        _continuation.TrySetResult( true );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -119,8 +134,7 @@ internal struct NotificationSender
         ref MemoryPoolToken<byte> poolToken,
         ReadOnlyMemory<byte> packet)
     {
-        var sender = message.Publisher.Client;
-        if ( ! client.ExternalNameCache.TryUpdate( client, sender ) )
+        if ( ! client.ExternalNameCache.TryUpdate( message.Publisher ) )
             return false;
 
         var writerSource = client.WriterQueue.AcquireSource( packet, client.ClearBuffers );
@@ -182,7 +196,7 @@ internal struct NotificationSender
                 ReadOnlyMemory<byte> data;
                 using ( client.AcquireLock() )
                 {
-                    if ( client.ShouldCancel )
+                    if ( client.IsInactive )
                         return;
 
                     if ( client.NotificationSender._notifications.IsEmpty )
@@ -257,7 +271,7 @@ internal struct NotificationSender
                             {
                                 using ( notification.Listener.Queue.AcquireLock() )
                                 {
-                                    if ( ! notification.Listener.Queue.ShouldCancel && ! notification.Listener.Queue.MessageStore.IsEmpty )
+                                    if ( ! notification.Listener.Queue.IsInactive && ! notification.Listener.Queue.MessageStore.IsEmpty )
                                         notification.Listener.Queue.QueueProcessor.SignalContinuation();
                                 }
                             }
@@ -297,7 +311,7 @@ internal struct NotificationSender
                                         MessageBrokerRemoteClientSendingSenderNameEvent.Create(
                                             client,
                                             traceId,
-                                            notification.Publisher.Client ) );
+                                            notification.Publisher ) );
                             }
                             else
                             {
@@ -407,7 +421,13 @@ internal struct NotificationSender
     private static void HandleDisposedWriter(MessageBrokerRemoteClient client, ulong traceId)
     {
         if ( client.Logger.Error is { } error )
-            error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, client.DisposedException() ) );
+        {
+            bool disposed;
+            using ( client.AcquireLock() )
+                disposed = client.IsDisposed;
+
+            error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, client.DeactivatedException( disposed ) ) );
+        }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -416,7 +436,7 @@ internal struct NotificationSender
         using ( client.AcquireLock() )
             client.NotificationSender._task = null;
 
-        return client.DisposeAsync( traceId );
+        return client.DeactivateAsync( traceId );
     }
 
     [Pure]
@@ -463,7 +483,7 @@ internal struct NotificationSender
             WriterSource = writerSource;
         }
 
-        internal readonly MessageBrokerChannelPublisherBinding Publisher;
+        internal readonly IMessageBrokerMessagePublisher Publisher;
         internal readonly MessageBrokerChannelListenerBinding Listener;
         internal readonly ulong MessageId;
         internal readonly Int31BoolPair Retry;

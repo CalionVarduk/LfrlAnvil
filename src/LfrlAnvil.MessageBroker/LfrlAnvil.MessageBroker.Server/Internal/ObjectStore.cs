@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -89,6 +89,27 @@ internal struct ObjectStore<T>
 
         ref var byId = ref _byId.AddDefault( out var index )!;
         return new GetOrAddToken( ref byId, ref byName, index + 1 );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool TryAdd(int id, string name, T obj)
+    {
+        try
+        {
+            var added = _byId.TryAdd( id - 1, obj );
+            if ( ! added )
+                return false;
+
+            if ( _byName.TryAdd( name, obj ) )
+                return true;
+
+            _byId.Remove( id - 1 );
+            return false;
+        }
+        finally
+        {
+            _cache = null;
+        }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

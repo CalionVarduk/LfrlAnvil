@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ public sealed class MessageBrokerRemoteClientConnector
 {
     private readonly TcpClient _tcp;
     private readonly TaskCompletionSource _completed;
-    private readonly MemoryPool<byte> _memoryPool;
     private CancellationTokenSource _cancellationSource;
     private Task? _handshakeTask;
     private Stream _stream;
@@ -54,7 +53,6 @@ public sealed class MessageBrokerRemoteClientConnector
         Id = id;
         _handshakeTask = null;
         _state = MessageBrokerRemoteClientConnectorState.Created;
-        _memoryPool = new MemoryPool<byte>( unchecked( ( int )server.MaxNetworkPacketLength.Bytes ) );
         _completed = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
         _cancellationSource = cancellationSource;
     }
@@ -124,7 +122,7 @@ public sealed class MessageBrokerRemoteClientConnector
         }
     }
 
-    internal bool ShouldCancel => _state >= MessageBrokerRemoteClientConnectorState.Cancelling;
+    private bool ShouldCancel => _state >= MessageBrokerRemoteClientConnectorState.Cancelling;
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerRemoteClientConnector"/> instance.
@@ -147,19 +145,19 @@ public sealed class MessageBrokerRemoteClientConnector
     public async ValueTask<Result<bool>> CancelAsync()
     {
         var cancelled = false;
-        Exception? exception = null;
+        var result = Result.Valid;
         using ( AcquireLock() )
         {
             if ( ! ShouldCancel )
             {
                 cancelled = true;
                 _state = MessageBrokerRemoteClientConnectorState.Cancelling;
-                exception = _tcp.TryDispose().Exception;
+                result = _tcp.TryDispose();
             }
         }
 
         await _completed.Task.ConfigureAwait( false );
-        return exception is not null ? Result.Error( exception, cancelled ) : Result.Create( cancelled );
+        return result.WithValue( cancelled );
     }
 
     internal async ValueTask StartAsync(ulong serverTraceId)
@@ -199,10 +197,30 @@ public sealed class MessageBrokerRemoteClientConnector
         }
     }
 
+    internal void OnServerDisposing(ulong serverTraceId)
+    {
+        Result result;
+        using ( AcquireLock() )
+        {
+            if ( ShouldCancel )
+                return;
+
+            _state = MessageBrokerRemoteClientConnectorState.Cancelling;
+            result = _tcp.TryDispose();
+        }
+
+        Server.EmitError( result, serverTraceId );
+    }
+
+    internal async ValueTask OnServerDisposedAsync(ulong serverTraceId)
+    {
+        Server.EmitError( await _completed.Task.AsSafeCancellable().ConfigureAwait( false ), serverTraceId );
+    }
+
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private ExclusiveLock AcquireLock()
     {
-        return ExclusiveLock.SpinWaitEnter( _tcp, spinWaitMultiplier: 4 );
+        return ExclusiveLock.Enter( _tcp );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -286,7 +304,7 @@ public sealed class MessageBrokerRemoteClientConnector
         var timeoutToken = default( CancellationToken );
         try
         {
-            poolToken = _memoryPool.Rent( Protocol.HandshakeRequestHeader.Length, clear: true, out var buffer );
+            poolToken = Server.MemoryPool.Rent( Protocol.HandshakeRequestHeader.Length, clear: true, out var buffer );
             using ( AcquireActiveLock( serverTraceId, out var exc ) )
             {
                 if ( exc is not null )
@@ -351,7 +369,7 @@ public sealed class MessageBrokerRemoteClientConnector
             Assume.IsNotNull( name.Value );
             if ( ! Defaults.NameLengthBounds.Contains( name.Value.Length ) )
             {
-                var exc = this.ProtocolException( header, Resources.InvalidNameLength( name.Value.Length ) );
+                var exc = this.ProtocolException( header, Resources.InvalidClientNameLength( name.Value.Length ) );
                 if ( Server.Logger.Error is { } error )
                     error.Emit( MessageBrokerServerErrorEvent.Create( Server, serverTraceId, exc ) );
 
@@ -375,7 +393,25 @@ public sealed class MessageBrokerRemoteClientConnector
                         handshakeHeader.MaxNetworkBatchPacketLength,
                         handshakeHeader.SynchronizeExternalObjectNames,
                         handshakeHeader.ClearBuffers,
+                        handshakeHeader.IsEphemeral,
                         handshakeHeader.IsClientLittleEndian ) );
+
+            if ( ! handshakeHeader.IsEphemeral && Server.RootStorageDirectoryPath is null )
+            {
+                // TODO: tests
+                // - ephemeral server, non-ephemeral client
+
+                var exc = Server.Exception( Resources.ServerIsEphemeral( name.Value ) );
+                if ( Server.Logger.Error is { } error )
+                    error.Emit( MessageBrokerServerErrorEvent.Create( Server, serverTraceId, exc ) );
+
+                return Result.Error(
+                    exc,
+                    new HandshakeResult(
+                        null,
+                        Protocol.HandshakeRejectedResponse.Reasons.EphemeralServer,
+                        handshakeHeader.IsClientLittleEndian ) );
+            }
 
             var exceptions = Chain<Exception>.Empty;
             Result<MessageBrokerRemoteClient> client;
@@ -394,7 +430,6 @@ public sealed class MessageBrokerRemoteClientConnector
                         Server,
                         _tcp,
                         stream,
-                        _memoryPool,
                         name.Value,
                         in handshakeHeader,
                         out alreadyConnected );
@@ -408,13 +443,13 @@ public sealed class MessageBrokerRemoteClientConnector
                     }
                     else if ( ! _cancellationSource.TryReset() )
                     {
-                        _cancellationSource.TryCleanUp( ref exceptions );
+                        _cancellationSource.SafeDispose( ref exceptions );
                         _cancellationSource = RemoteClientConnectorCollection.GetCancellationSourceUnsafe( Server );
                     }
                 }
             }
 
-            Server.TryEmitErrors( serverTraceId, exceptions );
+            Server.EmitErrors( ref exceptions, serverTraceId );
             if ( client.Exception is not null )
             {
                 if ( Server.Logger.Error is { } error )
@@ -466,7 +501,7 @@ public sealed class MessageBrokerRemoteClientConnector
         var poolToken = MemoryPoolToken<byte>.Empty;
         try
         {
-            poolToken = _memoryPool.Rent(
+            poolToken = Server.MemoryPool.Rent(
                 Protocol.PacketHeader.Length + Protocol.HandshakeRejectedResponse.Payload,
                 clear: true,
                 out var data );
@@ -523,22 +558,26 @@ public sealed class MessageBrokerRemoteClientConnector
                     handshakeTask = _handshakeTask;
 
                 _handshakeTask = null;
-                _tcp.TryDispose().TryAddExceptionTo( ref exceptions );
+
+                var result = _tcp.TryDispose();
+                if ( result.Exception is not null )
+                    exceptions = exceptions.Extend( result.Exception );
+
                 cancellationSource = TryResetCancellationSource( ref exceptions );
             }
 
-            var taskResult = await handshakeTask.SafeWaitAsync().ConfigureAwait( false );
-            taskResult.TryAddExceptionTo( ref exceptions );
+            Server.EmitErrors( ref exceptions, serverTraceId );
+            Server.EmitError( await handshakeTask.AsSafeCancellable().ConfigureAwait( false ), serverTraceId );
 
             using ( Server.AcquireActiveLock( serverTraceId, out var exc ) )
             {
                 if ( exc is not null )
-                    cancellationSource?.TryCleanUp( ref exceptions );
+                    cancellationSource?.SafeDispose( ref exceptions );
                 else
                     RemoteClientConnectorCollection.RemoveUnsafe( this, cancellationSource );
             }
 
-            Server.TryEmitErrors( serverTraceId, exceptions );
+            Server.EmitErrors( ref exceptions, serverTraceId );
         }
         finally
         {
@@ -552,7 +591,7 @@ public sealed class MessageBrokerRemoteClientConnector
         if ( _cancellationSource.TryReset() )
             return _cancellationSource;
 
-        _cancellationSource.TryCleanUp( ref exceptions );
+        _cancellationSource.SafeDispose( ref exceptions );
         return null;
     }
 

@@ -82,15 +82,7 @@ internal readonly struct TimeoutEntry
         if ( _source is null )
             return this;
 
-        try
-        {
-            _source.Cancel();
-        }
-        catch
-        {
-            // NOTE: do nothing
-        }
-
+        _source.TryCancel();
         _source.TryDispose();
         return Empty();
     }

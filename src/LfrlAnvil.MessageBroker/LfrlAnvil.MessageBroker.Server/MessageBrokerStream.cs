@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,10 +13,13 @@
 // limitations under the License.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
+using LfrlAnvil.Extensions;
+using LfrlAnvil.Internal;
 using LfrlAnvil.Memory;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Exceptions;
@@ -34,23 +37,27 @@ public sealed class MessageBrokerStream
     internal StreamProcessor StreamProcessor;
     internal StreamMessageStore MessageStore;
     internal readonly MessageBrokerStreamLogger Logger;
+    internal readonly ServerStorage.Stream Storage;
 
-    private readonly object _sync = new object();
+    private readonly TaskCompletionSource _disposed;
     private MessageBrokerStreamState _state;
     private ulong _nextTraceId;
+    private ulong? _autoDisposalTraceId;
 
-    internal MessageBrokerStream(MessageBrokerServer server, int id, string name)
+    internal MessageBrokerStream(MessageBrokerServer server, int id, string name, ulong nextTraceId = 0)
     {
+        Storage = server.Storage.CreateForStream();
         Server = server;
         Id = id;
         Name = name;
-        _nextTraceId = 0;
+        _nextTraceId = nextTraceId;
         _state = MessageBrokerStreamState.Running;
+        _autoDisposalTraceId = null;
+        _disposed = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
         PublishersByClientChannelIdPair = ReferenceStore<Pair<int, int>, MessageBrokerChannelPublisherBinding>.Create();
         StreamProcessor = StreamProcessor.Create();
         MessageStore = StreamMessageStore.Create();
-        Logger = server.StreamLoggerFactory?.Invoke( this ) ?? default;
-        StreamProcessor.SetUnderlyingTask( StreamProcessor.StartUnderlyingTask( this ) );
+        Logger = Server.StreamLoggerFactory?.Invoke( this ) ?? default;
     }
 
     /// <summary>
@@ -92,7 +99,7 @@ public sealed class MessageBrokerStream
     /// </summary>
     public MessageBrokerStreamMessageCollection Messages => new MessageBrokerStreamMessageCollection( this );
 
-    internal bool ShouldCancel => _state >= MessageBrokerStreamState.Disposing;
+    internal bool IsDisposed => _state >= MessageBrokerStreamState.Disposing;
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerStream"/> instance.
@@ -102,6 +109,39 @@ public sealed class MessageBrokerStream
     public override string ToString()
     {
         return $"[{Id}] '{Name}' stream ({State})";
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void FinalizeMessageReferences(ulong serverTraceId)
+    {
+        // TODO: tests
+        // - on server reload, non-pending unreferenced messages should be dropped
+
+        Chain<Exception> exceptions;
+        using ( AcquireLock() )
+        {
+            if ( IsDisposed )
+                return;
+
+            exceptions = MessageStore.FinalizeMessageReferences();
+        }
+
+        Server.EmitErrors( ref exceptions, serverTraceId );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void StartProcessor()
+    {
+        using ( AcquireLock() )
+        {
+            if ( IsDisposed )
+                return;
+
+            if ( StreamProcessor.GetUnderlyingTask() is null )
+                StreamProcessor.SetUnderlyingTask( StreamProcessor.StartUnderlyingTask( this ) );
+
+            StreamProcessor.SignalContinuation();
+        }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -116,12 +156,12 @@ public sealed class MessageBrokerStream
     {
         using ( AcquireLock() )
         {
-            if ( ShouldCancel )
+            if ( IsDisposed )
                 return PushMessageResult.StreamDisposed;
 
             using ( publisher.AcquireLock() )
             {
-                if ( publisher.ShouldCancel )
+                if ( publisher.IsInactive )
                     return PushMessageResult.BindingDisposed;
 
                 messageId = MessageStore.Add( publisher, token, data, in routing, out storeKey );
@@ -137,7 +177,7 @@ public sealed class MessageBrokerStream
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal bool TryDisposeByRemovingPublisherUnsafe(int clientId, int channelId)
     {
-        PublishersByClientChannelIdPair.Remove( new Pair<int, int>( clientId, channelId ) );
+        PublishersByClientChannelIdPair.Remove( Pair.Create( clientId, channelId ) );
         if ( PublishersByClientChannelIdPair.Count > 0 || ! MessageStore.IsEmpty )
             return false;
 
@@ -160,7 +200,7 @@ public sealed class MessageBrokerStream
         ulong traceId;
         using ( AcquireLock() )
         {
-            if ( ShouldCancel )
+            if ( IsDisposed )
                 return;
 
             traceId = GetTraceId();
@@ -178,7 +218,7 @@ public sealed class MessageBrokerStream
                 if ( exc is not null )
                     return;
 
-                if ( PublishersByClientChannelIdPair.Remove( new Pair<int, int>( client.Id, channel.Id ), out publisher )
+                if ( PublishersByClientChannelIdPair.Remove( Pair.Create( client.Id, channel.Id ), out publisher )
                     && PublishersByClientChannelIdPair.Count == 0
                     && MessageStore.IsEmpty )
                 {
@@ -206,134 +246,221 @@ public sealed class MessageBrokerStream
         }
     }
 
-    internal async ValueTask OnServerDisposedAsync(ulong serverTraceId)
+    internal async ValueTask OnServerDisposingAsync(ulong serverTraceId)
     {
-        ulong traceId;
+        var traceId = 0UL;
+        MessageBrokerStreamState state;
+        Result result;
+        Task? processorTask = null;
+
         using ( AcquireLock() )
         {
-            if ( ShouldCancel )
+            if ( _state == MessageBrokerStreamState.Disposed )
                 return;
 
-            _state = MessageBrokerStreamState.Disposing;
-            traceId = GetTraceId();
+            state = _state;
+            if ( _state != MessageBrokerStreamState.Disposing )
+            {
+                _state = MessageBrokerStreamState.Disposing;
+                traceId = GetTraceId();
+                _autoDisposalTraceId = traceId;
+            }
+            else
+            {
+                processorTask = StreamProcessor.DiscardUnderlyingTask();
+                result = StreamProcessor.BeginDispose();
+            }
         }
 
-        using ( MessageBrokerStreamTraceEvent.CreateScope( this, traceId, MessageBrokerStreamTraceEventType.Dispose ) )
+        if ( state == MessageBrokerStreamState.Disposing )
         {
-            if ( Logger.ServerTrace is { } serverTrace )
-                serverTrace.Emit( MessageBrokerStreamServerTraceEvent.Create( this, traceId, serverTraceId ) );
+            Server.EmitError( result, serverTraceId );
+            Server.EmitError( await processorTask.AsSafeNonCancellable().ConfigureAwait( false ), serverTraceId );
+            return;
+        }
 
-            if ( Logger.Disposing is { } disposing )
-                disposing.Emit( MessageBrokerStreamDisposingEvent.Create( this, traceId ) );
+        if ( Logger.TraceStart is { } traceStart )
+            traceStart.Emit( MessageBrokerStreamTraceEvent.Create( this, traceId, MessageBrokerStreamTraceEventType.Dispose ) );
 
-            Task? processorTask;
+        if ( Logger.ServerTrace is { } serverTrace )
+            serverTrace.Emit( MessageBrokerStreamServerTraceEvent.Create( this, traceId, serverTraceId ) );
+
+        if ( Logger.Disposing is { } disposing )
+            disposing.Emit( MessageBrokerStreamDisposingEvent.Create( this, traceId ) );
+
+        using ( AcquireLock() )
+        {
+            processorTask = StreamProcessor.DiscardUnderlyingTask();
+            result = StreamProcessor.BeginDispose();
+        }
+
+        EmitError( result, traceId );
+        EmitError( await processorTask.AsSafeNonCancellable().ConfigureAwait( false ), traceId );
+    }
+
+    internal async ValueTask OnServerDisposedAsync(ulong serverTraceId, bool storageLoaded)
+    {
+        ulong? autoDisposalTraceId;
+        MessageBrokerStreamState state;
+
+        using ( AcquireLock() )
+        {
+            Assume.IsGreaterThanOrEqualTo( _state, MessageBrokerStreamState.Disposing );
+            state = _state;
+            autoDisposalTraceId = _autoDisposalTraceId;
+        }
+
+        if ( autoDisposalTraceId is null )
+        {
+            if ( state == MessageBrokerStreamState.Disposing )
+            {
+                if ( storageLoaded )
+                    Server.EmitError( await Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), serverTraceId );
+
+                Server.EmitError( await _disposed.Task.AsSafeCancellable().ConfigureAwait( false ), serverTraceId );
+            }
+
+            return;
+        }
+
+        try
+        {
+            var exceptions = Chain<Exception>.Empty;
+
+            // TODO: tests
+            // - persistent stream is no longer referenced during server disposal
+
+            if ( Server.RootStorageDirectoryPath is not null )
+            {
+                bool hasPublishers;
+                NullableIndex nextPendingNodeId;
+                ulong nextMessageId;
+                ListSlim<KeyValuePair<int, StreamMessage>> messages;
+                ListSlim<KeyValuePair<ulong, ReadOnlyMemory<byte>>> routings;
+
+                using ( AcquireLock() )
+                {
+                    hasPublishers = PublishersByClientChannelIdPair.Count > 0;
+                    nextPendingNodeId = MessageStore.GetNextPendingNodeId();
+                    nextMessageId = MessageStore.GetNextMessageId();
+                    messages = MessageStore.GetMessages();
+                    routings = MessageStore.GetRoutings();
+                }
+
+                if ( ! hasPublishers && messages.IsEmpty )
+                {
+                    if ( storageLoaded )
+                        EmitError( await Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), autoDisposalTraceId.Value );
+                }
+                else
+                {
+                    EmitError(
+                        await Storage.SaveMetadataAsync( this, autoDisposalTraceId.Value ).AsSafe().ConfigureAwait( false ),
+                        autoDisposalTraceId.Value );
+
+                    if ( storageLoaded )
+                        EmitError(
+                            await Storage.SaveAsync( this, nextPendingNodeId, nextMessageId, messages, routings, autoDisposalTraceId.Value )
+                                .AsSafe()
+                                .ConfigureAwait( false ),
+                            autoDisposalTraceId.Value );
+                }
+            }
+            else
+            {
+                int discardedMessageCount;
+                using ( AcquireLock() )
+                    discardedMessageCount = MessageStore.ClearPending( ref exceptions );
+
+                EmitErrors( ref exceptions, autoDisposalTraceId.Value );
+                if ( discardedMessageCount > 0 && Logger.Error is { } error )
+                {
+                    var exc = this.Exception( Resources.StreamMessagesDiscarded( discardedMessageCount ) );
+                    error.Emit( MessageBrokerStreamErrorEvent.Create( this, autoDisposalTraceId.Value, exc ) );
+                }
+            }
+
             using ( AcquireLock() )
             {
                 PublishersByClientChannelIdPair.Clear();
-                processorTask = StreamProcessor.DiscardUnderlyingTask();
-                StreamProcessor.Dispose();
-            }
-
-            if ( processorTask is not null )
-                await processorTask.ConfigureAwait( false );
-
-            var error = Logger.Error;
-            int discardedMessageCount;
-            Chain<Exception> exceptions;
-            using ( AcquireLock() )
-                (discardedMessageCount, exceptions) = MessageStore.ClearPending( error is not null );
-
-            foreach ( var exc in exceptions )
-            {
-                Assume.IsNotNull( error );
-                error.Emit( MessageBrokerStreamErrorEvent.Create( this, traceId, exc ) );
-            }
-
-            if ( discardedMessageCount > 0 && error is not null )
-            {
-                var exc = this.Exception( Resources.StreamMessagesDiscarded( discardedMessageCount ) );
-                error.Emit( MessageBrokerStreamErrorEvent.Create( this, traceId, exc ) );
-            }
-
-            using ( AcquireLock() )
+                exceptions = MessageStore.Clear();
                 _state = MessageBrokerStreamState.Disposed;
+            }
 
+            EmitErrors( ref exceptions, autoDisposalTraceId.Value );
             if ( Logger.Disposed is { } disposed )
-                disposed.Emit( MessageBrokerStreamDisposedEvent.Create( this, traceId ) );
+                disposed.Emit( MessageBrokerStreamDisposedEvent.Create( this, autoDisposalTraceId.Value ) );
+        }
+        finally
+        {
+            if ( Logger.TraceEnd is { } traceEnd )
+                traceEnd.Emit(
+                    MessageBrokerStreamTraceEvent.Create( this, autoDisposalTraceId.Value, MessageBrokerStreamTraceEventType.Dispose ) );
+
+            _disposed.TrySetResult();
         }
     }
 
     internal async ValueTask DisposeDueToLackOfReferencesAsync(bool ignoreProcessorTask, ulong traceId)
     {
-        Assume.Equals( State, MessageBrokerStreamState.Disposing );
-        if ( Logger.Disposing is { } disposing )
-            disposing.Emit( MessageBrokerStreamDisposingEvent.Create( this, traceId ) );
-
-        Task? processorTask;
-        using ( AcquireLock() )
+        try
         {
-            Assume.Equals( PublishersByClientChannelIdPair.Count, 0 );
-            Assume.True( MessageStore.IsEmpty );
+            Assume.Equals( State, MessageBrokerStreamState.Disposing );
+            if ( Logger.Disposing is { } disposing )
+                disposing.Emit( MessageBrokerStreamDisposingEvent.Create( this, traceId ) );
 
-            processorTask = StreamProcessor.DiscardUnderlyingTask();
-            if ( ignoreProcessorTask )
-                processorTask = null;
-
-            StreamProcessor.Dispose();
-            MessageStore.Clear();
-        }
-
-        if ( processorTask is not null )
-            await processorTask.ConfigureAwait( false );
-
-        var exc = StreamCollection.Remove( this ).Exception;
-        if ( exc is not null && Logger.Error is { } error )
-            error.Emit( MessageBrokerStreamErrorEvent.Create( this, traceId, exc ) );
-
-        using ( AcquireLock() )
-            _state = MessageBrokerStreamState.Disposed;
-
-        if ( Logger.Disposed is { } disposed )
-            disposed.Emit( MessageBrokerStreamDisposedEvent.Create( this, traceId ) );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void ClearMessageStore()
-    {
-        Assume.IsGreaterThanOrEqualTo( State, MessageBrokerStreamState.Disposing );
-
-        Chain<Exception> exceptions;
-        using ( AcquireLock() )
-            exceptions = MessageStore.Clear();
-
-        if ( exceptions.Count == 0 )
-            return;
-
-        ulong traceId;
-        using ( AcquireLock() )
-            traceId = GetTraceId();
-
-        using ( MessageBrokerStreamTraceEvent.CreateScope( this, traceId, MessageBrokerStreamTraceEventType.Unexpected ) )
-        {
-            if ( Logger.Error is { } error )
+            Result result;
+            Task? processorTask;
+            using ( AcquireLock() )
             {
-                foreach ( var exc in exceptions )
-                    error.Emit( MessageBrokerStreamErrorEvent.Create( this, traceId, exc ) );
+                Assume.Equals( PublishersByClientChannelIdPair.Count, 0 );
+                Assume.True( MessageStore.IsEmpty );
+
+                processorTask = StreamProcessor.GetUnderlyingTask();
+                if ( ignoreProcessorTask )
+                    processorTask = null;
+
+                result = StreamProcessor.BeginDispose();
+                MessageStore.Clear();
             }
+
+            EmitError( result, traceId );
+            EmitError( await processorTask.AsSafeNonCancellable().ConfigureAwait( false ), traceId );
+            EmitError( await Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), traceId );
+            EmitError( StreamCollection.Remove( this ), traceId );
+
+            using ( AcquireLock() )
+            {
+                _ = StreamProcessor.DiscardUnderlyingTask();
+                _state = MessageBrokerStreamState.Disposed;
+            }
+
+            if ( Logger.Disposed is { } disposed )
+                disposed.Emit( MessageBrokerStreamDisposedEvent.Create( this, traceId ) );
+        }
+        finally
+        {
+            _disposed.TrySetResult();
         }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ExclusiveLock AcquireLock()
     {
-        return ExclusiveLock.SpinWaitEnter( _sync, spinWaitMultiplier: 4 );
+        return ExclusiveLock.Enter( _disposed );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ExclusiveLock AcquireActiveLock(ulong traceId, out MessageBrokerStreamDisposedException? exception)
+    internal ulong GetTraceId()
+    {
+        return unchecked( _nextTraceId++ );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private ExclusiveLock AcquireActiveLock(ulong traceId, out MessageBrokerStreamDisposedException? exception)
     {
         var @lock = AcquireLock();
-        if ( ! ShouldCancel )
+        if ( ! IsDisposed )
         {
             exception = null;
             return @lock;
@@ -348,8 +475,21 @@ public sealed class MessageBrokerStream
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ulong GetTraceId()
+    private void EmitError(Result result, ulong traceId)
     {
-        return unchecked( _nextTraceId++ );
+        if ( result.Exception is not null && Logger.Error is { } error )
+            error.Emit( MessageBrokerStreamErrorEvent.Create( this, traceId, result.Exception ) );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private void EmitErrors(ref Chain<Exception> exceptions, ulong traceId)
+    {
+        if ( exceptions.Count > 0 && Logger.Error is { } error )
+        {
+            foreach ( var exc in exceptions )
+                error.Emit( MessageBrokerStreamErrorEvent.Create( this, traceId, exc ) );
+        }
+
+        exceptions = Chain<Exception>.Empty;
     }
 }

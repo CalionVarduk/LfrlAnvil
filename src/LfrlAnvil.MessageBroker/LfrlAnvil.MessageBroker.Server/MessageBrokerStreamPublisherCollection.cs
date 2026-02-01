@@ -65,7 +65,7 @@ public readonly struct MessageBrokerStreamPublisherCollection
     public MessageBrokerChannelPublisherBinding? TryGetByKey(int clientId, int channelId)
     {
         using ( _stream.AcquireLock() )
-            return _stream.PublishersByClientChannelIdPair.TryGet( new Pair<int, int>( clientId, channelId ), out var result )
+            return _stream.PublishersByClientChannelIdPair.TryGet( Pair.Create( clientId, channelId ), out var result )
                 ? result
                 : null;
     }

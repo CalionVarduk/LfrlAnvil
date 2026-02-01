@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,11 @@
 using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
+using LfrlAnvil.Exceptions;
+using LfrlAnvil.MessageBroker.Server.Events;
+using LfrlAnvil.MessageBroker.Server.Exceptions;
 
 namespace LfrlAnvil.MessageBroker.Server.Internal;
 
@@ -44,14 +49,14 @@ internal struct StreamCollection
     internal static ReadOnlyArray<MessageBrokerStream> GetAll(MessageBrokerServer server)
     {
         using ( server.AcquireLock() )
-            return server.StreamCollection._store.GetAll();
+            return server.StreamCollection.GetAllUnsafe();
     }
 
     [Pure]
     internal static MessageBrokerStream? TryGetById(MessageBrokerServer server, int id)
     {
         using ( server.AcquireLock() )
-            return server.StreamCollection._store.TryGetById( id );
+            return server.StreamCollection.TryGetByIdUnsafe( id );
     }
 
     [Pure]
@@ -67,7 +72,7 @@ internal struct StreamCollection
         {
             using ( stream.Server.AcquireLock() )
             {
-                if ( ! stream.Server.ShouldCancel )
+                if ( ! stream.Server.IsDisposed )
                     RemoveUnsafe( stream );
             }
         }
@@ -77,6 +82,18 @@ internal struct StreamCollection
         }
 
         return Result.Valid;
+    }
+
+    [Pure]
+    internal ReadOnlyArray<MessageBrokerStream> GetAllUnsafe()
+    {
+        return _store.GetAll();
+    }
+
+    [Pure]
+    internal MessageBrokerStream? TryGetByIdUnsafe(int id)
+    {
+        return _store.TryGetById( id );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -110,5 +127,38 @@ internal struct StreamCollection
     internal MessageBrokerStream[] DisposeUnsafe()
     {
         return _store.Clear();
+    }
+
+    internal static async ValueTask<Result> LoadStreamsAsync(MessageBrokerServer server, ulong traceId, CancellationToken cancellationToken)
+    {
+        await foreach ( var info in server.Storage.LoadStreamsAsync( server, traceId )
+            .WithCancellation( cancellationToken )
+            .ConfigureAwait( false ) )
+        {
+            MessageBrokerStream stream;
+            using ( server.AcquireActiveLock( traceId, out var exc ) )
+            {
+                if ( exc is not null )
+                    return exc;
+
+                // TODO: tests
+                // - stream duplicate (either by id or name)
+                stream = new MessageBrokerStream( server, info.Key, info.Value.Name.Value.ToString(), info.Value.TraceId );
+                if ( ! server.StreamCollection._store.TryAdd( stream.Id, stream.Name, stream ) )
+                    ExceptionThrower.Throw( server.Exception( Resources.RecreatedStreamDuplicate( stream.Id, stream.Name ) ) );
+            }
+
+            ulong streamTraceId;
+            using ( stream.AcquireLock() )
+                streamTraceId = stream.GetTraceId();
+
+            using ( MessageBrokerStreamTraceEvent.CreateScope( stream, streamTraceId, MessageBrokerStreamTraceEventType.Recreated ) )
+            {
+                if ( stream.Logger.ServerTrace is { } serverTrace )
+                    serverTrace.Emit( MessageBrokerStreamServerTraceEvent.Create( stream, streamTraceId, traceId ) );
+            }
+        }
+
+        return Result.Valid;
     }
 }

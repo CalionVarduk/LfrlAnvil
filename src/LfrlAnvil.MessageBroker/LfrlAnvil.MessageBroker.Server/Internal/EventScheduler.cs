@@ -78,17 +78,33 @@ internal struct EventScheduler
             if ( client.Logger.Error is { } error )
                 error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exception ) );
 
-            await client.DisposeAsync( traceId ).ConfigureAwait( false );
+            await client.DeactivateAsync( traceId ).ConfigureAwait( false );
         }
     }
 
-    internal void Dispose()
+    internal void Dispose(ref Chain<Exception> exceptions)
     {
-        _reset.Dispose();
-        _writerCancellation = _writerCancellation.Cancel();
-        _readerCancellation = _readerCancellation.Cancel();
-        _nextEventTimestamp = _writerCancellation.Timestamp;
-        _queueHeap.Clear();
+        try
+        {
+            _reset.Dispose();
+            _reset = default;
+        }
+        catch ( Exception exc )
+        {
+            exceptions = exceptions.Extend( exc );
+        }
+
+        try
+        {
+            _writerCancellation = _writerCancellation.Cancel();
+            _readerCancellation = _readerCancellation.Cancel();
+            _nextEventTimestamp = _writerCancellation.Timestamp;
+            _queueHeap.Clear();
+        }
+        catch ( Exception exc )
+        {
+            exceptions = exceptions.Extend( exc );
+        }
     }
 
     internal void SetUnderlyingTask(Task task)
@@ -173,7 +189,7 @@ internal struct EventScheduler
         Duration delay;
         using ( client.AcquireLock() )
         {
-            if ( client.ShouldCancel )
+            if ( client.IsInactive )
                 return null;
 
             delay = client.EventScheduler.UpdateNextEventTimestamp( client.GetTimestamp() );
@@ -189,7 +205,7 @@ internal struct EventScheduler
 
             using ( client.AcquireLock() )
             {
-                if ( client.ShouldCancel )
+                if ( client.IsInactive )
                     return null;
 
                 client.EventScheduler._reset.Reset();

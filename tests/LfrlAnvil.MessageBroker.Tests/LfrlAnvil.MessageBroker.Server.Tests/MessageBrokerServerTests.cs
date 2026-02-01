@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -21,7 +22,7 @@ public partial class MessageBrokerServerTests : TestsBase
         var localEndPoint = new IPEndPoint( IPAddress.Loopback, 12345 );
         var sut = new MessageBrokerServer( localEndPoint );
         Assertion.All(
-                sut.RootStorageDirectory.TestNull(),
+                sut.RootStorageDirectoryPath.TestNull(),
                 sut.LocalEndPoint.TestRefEquals( localEndPoint ),
                 sut.HandshakeTimeout.TestEquals( Duration.FromSeconds( 15 ) ),
                 sut.MaxNetworkPacketLength.TestEquals( MemorySize.FromKilobytes( 16 ) ),
@@ -82,8 +83,11 @@ public partial class MessageBrokerServerTests : TestsBase
                 .SetExpressionFactory( expressionFactory ) );
 
         Assertion.All(
-                sut.RootStorageDirectory.TestNotNull(
-                    d => Assertion.All( "RootStorageDirectory", d.Exists.TestFalse(), d.Name.TestEquals( "server" ) ) ),
+                sut.RootStorageDirectoryPath.TestNotNull(
+                    d => Assertion.All(
+                        "RootStorageDirectory",
+                        Directory.Exists( d ).TestFalse(),
+                        d.TestEquals( Path.Combine( Environment.CurrentDirectory, "server" ) ) ) ),
                 sut.LocalEndPoint.TestRefEquals( localEndPoint ),
                 sut.HandshakeTimeout.TestEquals( Duration.FromMilliseconds( expectedHandshakeTimeoutMs ) ),
                 sut.MaxNetworkPacketLength.TestEquals( MemorySize.FromKilobytes( 30 ) ),
@@ -205,23 +209,28 @@ public partial class MessageBrokerServerTests : TestsBase
         var logs = new ServerEventLogger();
         var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
 
-        await using var server = new MessageBrokerServer(
-            originalEndPoint,
-            MessageBrokerServerOptions.Default
-                .SetRootStoragePath( "server" )
-                .SetLogger( logs.GetLogger() ) );
-
-        var result = await server.StartAsync();
+        string? storageRoot = null;
         try
         {
+            await using var server = new MessageBrokerServer(
+                originalEndPoint,
+                MessageBrokerServerOptions.Default
+                    .SetRootStoragePath( "server" )
+                    .SetLogger( logs.GetLogger() ) );
+
+            storageRoot = server.RootStorageDirectoryPath;
+            var result = await server.StartAsync();
+
             var localEndPoint = server.LocalEndPoint;
 
             Assertion.All(
-                    server.RootStorageDirectory.TestNotNull(
+                    server.RootStorageDirectoryPath.TestNotNull(
                         d => Assertion.All(
                             "RootStorageDirectory",
-                            d.Exists.TestTrue(),
-                            d.GetDirectories().Select( s => s.Name ).TestSetEqual( [ "clients", "channels", "streams" ] ) ) ),
+                            Directory.Exists( d ).TestTrue(),
+                            new DirectoryInfo( d ).GetDirectories()
+                                .Select( s => s.Name )
+                                .TestSetEqual( [ "clients", "channels", "streams" ] ) ) ),
                     result.Exception.TestNull(),
                     server.LocalEndPoint.TestType()
                         .AssignableTo<IPEndPoint>(
@@ -250,7 +259,8 @@ public partial class MessageBrokerServerTests : TestsBase
         }
         finally
         {
-            server.RootStorageDirectory?.Delete( recursive: true );
+            if ( storageRoot is not null && Directory.Exists( storageRoot ) )
+                Directory.Delete( storageRoot, recursive: true );
         }
     }
 
@@ -439,5 +449,48 @@ public partial class MessageBrokerServerTests : TestsBase
                     exc.TestType().AssignableTo<OperationCanceledException>(),
                     sut.State.TestEquals( MessageBrokerServerState.Created ) ) )
             .Go();
+    }
+
+    [Fact( Skip = "test" )]
+    public async Task StorageManualTest()
+    {
+        var c1Logs = new ClientEventLogger();
+        var c2Logs = new ClientEventLogger();
+
+        try
+        {
+            await using var server = new MessageBrokerServer(
+                new IPEndPoint( IPAddress.Loopback, 0 ),
+                MessageBrokerServerOptions.Default.SetRootStoragePath( "_test" )
+                    .SetAcceptablePingInterval( Bounds.Create( Duration.FromHours( 1 ), Duration.FromHours( 2 ) ) )
+                    .SetClientLoggerFactory( c => c.Id == 1 ? c1Logs.GetLogger() : c2Logs.GetLogger() ) );
+
+            await server.StartAsync();
+
+            using var c1 = new ClientMock();
+            using var c2 = new ClientMock();
+
+            await c1.EstablishHandshake( server, "c1", isEphemeral: false );
+            await c2.EstablishHandshake( server, "c2", isEphemeral: false );
+
+            await c1.GetTask(
+                c =>
+                {
+                    c.SendBindPublisherRequest( "foo" );
+                    c.ReadPublisherBoundResponse();
+                } );
+
+            await c2.GetTask(
+                c =>
+                {
+                    c.SendBindListenerRequest( "foo", false );
+                    c.ReadListenerBoundResponse();
+                    c.SendBindPublisherRequest( "bar" );
+                    c.ReadPublisherBoundResponse();
+                } );
+
+            var x = 5;
+        }
+        finally { }
     }
 }

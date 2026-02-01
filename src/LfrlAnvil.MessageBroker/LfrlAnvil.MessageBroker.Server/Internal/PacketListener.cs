@@ -67,7 +67,7 @@ internal struct PacketListener
                         if ( client.Logger.Error is { } error )
                             error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
 
-                        await client.DisposeAsync( traceId ).ConfigureAwait( false );
+                        await client.DeactivateAsync( traceId ).ConfigureAwait( false );
                     }
                 }
 
@@ -418,7 +418,7 @@ internal struct PacketListener
         using ( MessageBrokerRemoteClientTraceEvent.CreateScope( client, traceId, MessageBrokerRemoteClientTraceEventType.Unexpected ) )
         {
             poolToken.Return( client, traceId );
-            await client.DisposeAsync( traceId ).ConfigureAwait( false );
+            await client.DeactivateAsync( traceId ).ConfigureAwait( false );
         }
     }
 
@@ -432,21 +432,19 @@ internal struct PacketListener
             awaitPacket.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( client, exception ) );
 
         ulong traceId;
+        var isEphemeral = false;
         var isCancelException = exception is OperationCanceledException cancelExc && cancelExc.CancellationToken == timeoutToken;
 
         using ( client.AcquireLock() )
         {
-            if ( isCancelException && ! client.TryBeginDispose() )
+            if ( isCancelException && ! client.TryBeginDeactivate( out isEphemeral ) )
                 return;
 
             client.PacketListener._task = null;
             traceId = client.GetTraceId();
         }
 
-        using ( MessageBrokerRemoteClientTraceEvent.CreateScope(
-            client,
-            traceId,
-            MessageBrokerRemoteClientTraceEventType.Dispose ) )
+        using ( MessageBrokerRemoteClientTraceEvent.CreateScope( client, traceId, MessageBrokerRemoteClientTraceEventType.Deactivate ) )
         {
             poolToken.Return( client, traceId );
 
@@ -459,10 +457,10 @@ internal struct PacketListener
                     error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
                 }
 
-                disposeTask = client.DisposeAsyncCore( traceId );
+                disposeTask = client.DeactivateAsyncCore( traceId, isEphemeral );
             }
             else
-                disposeTask = client.DisposeAsync( traceId );
+                disposeTask = client.DeactivateAsync( traceId );
 
             await disposeTask.ConfigureAwait( false );
         }
@@ -480,15 +478,16 @@ internal struct PacketListener
     private static ExclusiveLock AcquireActiveLock(MessageBrokerRemoteClient client, out bool acquired)
     {
         var @lock = client.AcquireLock();
-        if ( ! client.ShouldCancel )
+        if ( ! client.IsInactive )
         {
             acquired = true;
             return @lock;
         }
 
+        var disposed = client.IsDisposed;
         @lock.Dispose();
         if ( client.Logger.AwaitPacket is { } awaitPacket )
-            awaitPacket.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( client, client.DisposedException() ) );
+            awaitPacket.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( client, client.DeactivatedException( disposed ) ) );
 
         acquired = false;
         return default;

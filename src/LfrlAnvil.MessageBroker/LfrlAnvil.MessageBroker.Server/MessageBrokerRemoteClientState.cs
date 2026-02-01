@@ -35,12 +35,22 @@ public enum MessageBrokerRemoteClientState : byte
     Running = 2,
 
     /// <summary>
+    /// Specifies that the client is currently being deactivated.
+    /// </summary>
+    Deactivating = 3,
+
+    /// <summary>
+    /// Specifies that the client is currently inactive.
+    /// </summary>
+    Inactive = 4,
+
+    /// <summary>
     /// Specifies the the client is currently being disposed.
     /// </summary>
-    Disposing = 3,
+    Disposing = 5,
 
     /// <summary>
     /// Specifies that the client has been disposed.
     /// </summary>
-    Disposed = 4
+    Disposed = 6
 }

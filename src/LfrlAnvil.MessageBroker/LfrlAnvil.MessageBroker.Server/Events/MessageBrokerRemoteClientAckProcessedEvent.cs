@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ public readonly struct MessageBrokerRemoteClientAckProcessedEvent
     private MessageBrokerRemoteClientAckProcessedEvent(
         MessageBrokerChannelListenerBinding listener,
         ulong traceId,
-        MessageBrokerChannelPublisherBinding publisher,
+        IMessageBrokerMessagePublisher publisher,
         int ackId,
         ulong messageId,
         int retry,
@@ -53,9 +53,9 @@ public readonly struct MessageBrokerRemoteClientAckProcessedEvent
     public MessageBrokerChannelListenerBinding Listener { get; }
 
     /// <summary>
-    /// <see cref="MessageBrokerChannelPublisherBinding"/> that pushed the message.
+    /// <see cref="IMessageBrokerMessagePublisher"/> that pushed the message.
     /// </summary>
-    public MessageBrokerChannelPublisherBinding Publisher { get; }
+    public IMessageBrokerMessagePublisher Publisher { get; }
 
     /// <summary>
     /// Unique id of the message.
@@ -90,7 +90,7 @@ public readonly struct MessageBrokerRemoteClientAckProcessedEvent
     public override string ToString()
     {
         return
-            $"[AckProcessed] {Source}, Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', Channel = [{Publisher.Channel.Id}] '{Publisher.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', Queue = [{Listener.Queue.Id}] '{Listener.Queue.Name}', AckId = {AckId}, MessageId = {MessageId}, Retry = {Retry}, Redelivery = {Redelivery}, IsNack = {IsNack}";
+            $"[AckProcessed] {Source}, Sender = [{Publisher.ClientId}] '{Publisher.ClientName}', Channel = [{Publisher.Channel.Id}] '{Publisher.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', Queue = [{Listener.Queue.Id}] '{Listener.Queue.Name}', AckId = {AckId}, MessageId = {MessageId}, Retry = {Retry}, Redelivery = {Redelivery}, IsNack = {IsNack}";
     }
 
     [Pure]
@@ -98,7 +98,7 @@ public readonly struct MessageBrokerRemoteClientAckProcessedEvent
     internal static MessageBrokerRemoteClientAckProcessedEvent Create(
         MessageBrokerChannelListenerBinding listener,
         ulong traceId,
-        MessageBrokerChannelPublisherBinding publisher,
+        IMessageBrokerMessagePublisher publisher,
         int ackId,
         ulong messageId,
         int retry,

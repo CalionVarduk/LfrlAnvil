@@ -98,6 +98,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                         b.Channel.TestRefEquals( channel ),
                         b.Stream.TestRefEquals( stream ),
                         b.Client.TestRefEquals( remoteClient ),
+                        b.IsEphemeral.TestTrue(),
                         b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Running ),
                         b.ToString().TestEquals( "[1] 'test' => [1] 'c' publisher binding (using [1] 'c' stream) (Running)" ) ) ),
                 server.Channels.Count.TestEquals( 1 ),
@@ -114,7 +115,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                         [
                             "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
                             "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 9)",
-                            "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'c'",
+                            "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'c', IsEphemeral = True",
                             "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 9)",
                             "[PublisherBound] Client = [1] 'test', TraceId = 1, Channel = [1] 'c' (created), Stream = [1] 'c' (created)",
                             "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (PublisherBoundResponse, Length = 14)",
@@ -274,7 +275,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                         [
                             "[Trace:BindPublisher] Client = [2] 'test2', TraceId = 1 (start)",
                             "[ReadPacket:Received] Client = [2] 'test2', TraceId = 1, Packet = (BindPublisherRequest, Length = 9)",
-                            "[BindingPublisher] Client = [2] 'test2', TraceId = 1, ChannelName = 'c'",
+                            "[BindingPublisher] Client = [2] 'test2', TraceId = 1, ChannelName = 'c', IsEphemeral = True",
                             "[ReadPacket:Accepted] Client = [2] 'test2', TraceId = 1, Packet = (BindPublisherRequest, Length = 9)",
                             "[PublisherBound] Client = [2] 'test2', TraceId = 1, Channel = [1] 'c', Stream = [1] 'c'",
                             "[SendPacket:Sending] Client = [2] 'test2', TraceId = 1, Packet = (PublisherBoundResponse, Length = 14)",
@@ -352,7 +353,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
         await client.GetTask(
             c =>
             {
-                c.SendBindPublisherRequest( "d", "c" );
+                c.SendBindPublisherRequest( "d", true, "c" );
                 c.ReadPublisherBoundResponse();
             } );
 
@@ -442,7 +443,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                         [
                             "[Trace:BindPublisher] Client = [1] 'test', TraceId = 2 (start)",
                             "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (BindPublisherRequest, Length = 10)",
-                            "[BindingPublisher] Client = [1] 'test', TraceId = 2, ChannelName = 'd', StreamName = 'c'",
+                            "[BindingPublisher] Client = [1] 'test', TraceId = 2, ChannelName = 'd', StreamName = 'c', IsEphemeral = True",
                             "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (BindPublisherRequest, Length = 10)",
                             "[PublisherBound] Client = [1] 'test', TraceId = 2, Channel = [2] 'd' (created), Stream = [1] 'c'",
                             "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (PublisherBoundResponse, Length = 14)",
@@ -527,7 +528,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                         [
                             "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
                             "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 9)",
-                            "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'c'",
+                            "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'c', IsEphemeral = True",
                             "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (end)"
                         ] ),
                         (t, _) => t.Logs.TestSequence(
@@ -538,8 +539,8 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                                 [Error] Client = [1] 'test', TraceId = 2
                                 System.Exception: foo
                                 """ ),
-                            (e, _) => e.TestEquals( "[Disposing] Client = [1] 'test', TraceId = 2" ),
-                            (e, _) => e.TestEquals( "[Disposed] Client = [1] 'test', TraceId = 2" ),
+                            (e, _) => e.TestEquals( "[Deactivating] Client = [1] 'test', TraceId = 2, IsAlive = False" ),
+                            (e, _) => e.TestEquals( "[Deactivated] Client = [1] 'test', TraceId = 2, IsAlive = False" ),
                             (e, _) => e.TestEquals( "[Trace:Unexpected] Client = [1] 'test', TraceId = 2 (end)" )
                         ] )
                     ] ),
@@ -596,7 +597,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                         [
                             "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
                             "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 9)",
-                            "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'c'",
+                            "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'c', IsEphemeral = True",
                             "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (end)"
                         ] ),
                         (t, _) => t.Logs.TestSequence(
@@ -607,8 +608,8 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                                 [Error] Client = [1] 'test', TraceId = 2
                                 System.Exception: foo
                                 """ ),
-                            (e, _) => e.TestEquals( "[Disposing] Client = [1] 'test', TraceId = 2" ),
-                            (e, _) => e.TestEquals( "[Disposed] Client = [1] 'test', TraceId = 2" ),
+                            (e, _) => e.TestEquals( "[Deactivating] Client = [1] 'test', TraceId = 2, IsAlive = False" ),
+                            (e, _) => e.TestEquals( "[Deactivated] Client = [1] 'test', TraceId = 2, IsAlive = False" ),
                             (e, _) => e.TestEquals( "[Trace:Unexpected] Client = [1] 'test', TraceId = 2 (end)" )
                         ] )
                     ] ),
@@ -666,8 +667,8 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid BindPublisherRequest from client [1] 'test'. Encountered 1 error(s):
                             1. Expected header payload to be at least 3 but found 2.
                             """,
-                            "[Disposing] Client = [1] 'test', TraceId = 1",
-                            "[Disposed] Client = [1] 'test', TraceId = 1",
+                            "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                             "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (end)"
                         ] )
                     ] ),
@@ -725,8 +726,8 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid BindPublisherRequest from client [1] 'test'. Encountered 1 error(s):
                             1. Expected binary channel name length to be in [0, 3] range but found 4.
                             """,
-                            "[Disposing] Client = [1] 'test', TraceId = 1",
-                            "[Disposed] Client = [1] 'test', TraceId = 1",
+                            "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                             "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (end)"
                         ] )
                     ] ),
@@ -785,8 +786,8 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid BindPublisherRequest from client [1] 'test'. Encountered 1 error(s):
                             1. Expected channel name length to be in [1, 512] range but found 0.
                             """,
-                            "[Disposing] Client = [1] 'test', TraceId = 1",
-                            "[Disposed] Client = [1] 'test', TraceId = 1",
+                            "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                             "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (end)"
                         ] )
                     ] ),
@@ -844,8 +845,8 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid BindPublisherRequest from client [1] 'test'. Encountered 1 error(s):
                             1. Expected channel name length to be in [1, 512] range but found 513.
                             """,
-                            "[Disposing] Client = [1] 'test', TraceId = 1",
-                            "[Disposed] Client = [1] 'test', TraceId = 1",
+                            "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                             "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (end)"
                         ] )
                     ] ),
@@ -883,7 +884,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
         var remoteClient = server.Clients.TryGetById( 1 );
-        await client.GetTask( c => c.SendBindPublisherRequest( "c", new string( 'x', 513 ) ) );
+        await client.GetTask( c => c.SendBindPublisherRequest( "c", true, new string( 'x', 513 ) ) );
         await endSource.Task;
 
         Assertion.All(
@@ -903,8 +904,8 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid BindPublisherRequest from client [1] 'test'. Encountered 1 error(s):
                             1. Expected stream name length to be in [1, 512] range but found 513.
                             """,
-                            "[Disposing] Client = [1] 'test', TraceId = 1",
-                            "[Disposed] Client = [1] 'test', TraceId = 1",
+                            "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                             "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (end)"
                         ] )
                     ] ),
@@ -948,7 +949,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
             {
                 c.SendBindPublisherRequest( "c" );
                 c.ReadPublisherBoundResponse();
-                c.SendBindPublisherRequest( "c", "d" );
+                c.SendBindPublisherRequest( "c", true, "d" );
                 c.ReadBindPublisherFailureResponse();
             } );
 
@@ -983,7 +984,7 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                         [
                             "[Trace:BindPublisher] Client = [1] 'test', TraceId = 2 (start)",
                             "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (BindPublisherRequest, Length = 10)",
-                            "[BindingPublisher] Client = [1] 'test', TraceId = 2, ChannelName = 'c', StreamName = 'd'",
+                            "[BindingPublisher] Client = [1] 'test', TraceId = 2, ChannelName = 'c', StreamName = 'd', IsEphemeral = True",
                             """
                             [Error] Client = [1] 'test', TraceId = 2
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerChannelPublisherBindingException: Client [1] 'test' could not be bound as a publisher to channel [1] 'c' because it is already bound as a publisher to it.
@@ -1086,11 +1087,11 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                     [
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:Dispose] Client = [1] 'test', TraceId = 2 (start)",
+                            "[Trace:Deactivate] Client = [1] 'test', TraceId = 2 (start)",
                             $"[ServerTrace] Client = [1] 'test', TraceId = 2, Correlation = (Server = {server.LocalEndPoint}, TraceId = 2)",
-                            "[Disposing] Client = [1] 'test', TraceId = 2",
-                            "[Disposed] Client = [1] 'test', TraceId = 2",
-                            "[Trace:Dispose] Client = [1] 'test', TraceId = 2 (end)"
+                            "[Deactivating] Client = [1] 'test', TraceId = 2, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 2, IsAlive = False",
+                            "[Trace:Deactivate] Client = [1] 'test', TraceId = 2 (end)"
                         ] )
                     ] ) )
             .Go();
@@ -1181,10 +1182,10 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                     [
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:Dispose] Client = [1] 'test', TraceId = 2 (start)",
-                            "[Disposing] Client = [1] 'test', TraceId = 2",
-                            "[Disposed] Client = [1] 'test', TraceId = 2",
-                            "[Trace:Dispose] Client = [1] 'test', TraceId = 2 (end)"
+                            "[Trace:Deactivate] Client = [1] 'test', TraceId = 2 (start)",
+                            "[Deactivating] Client = [1] 'test', TraceId = 2, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 2, IsAlive = False",
+                            "[Trace:Deactivate] Client = [1] 'test', TraceId = 2 (end)"
                         ] )
                     ] ) )
             .Go();
@@ -1288,10 +1289,10 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                     [
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:Dispose] Client = [1] 'test', TraceId = 2 (start)",
-                            "[Disposing] Client = [1] 'test', TraceId = 2",
-                            "[Disposed] Client = [1] 'test', TraceId = 2",
-                            "[Trace:Dispose] Client = [1] 'test', TraceId = 2 (end)"
+                            "[Trace:Deactivate] Client = [1] 'test', TraceId = 2 (start)",
+                            "[Deactivating] Client = [1] 'test', TraceId = 2, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 2, IsAlive = False",
+                            "[Trace:Deactivate] Client = [1] 'test', TraceId = 2 (end)"
                         ] )
                     ] ) )
             .Go();
@@ -1734,8 +1735,8 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid UnbindPublisherRequest from client [1] 'test'. Encountered 1 error(s):
                             1. Expected header payload to be 4 but found 3.
                             """,
-                            "[Disposing] Client = [1] 'test', TraceId = 2",
-                            "[Disposed] Client = [1] 'test', TraceId = 2",
+                            "[Deactivating] Client = [1] 'test', TraceId = 2, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 2, IsAlive = False",
                             "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 2 (end)"
                         ] )
                     ] ),
@@ -1814,8 +1815,8 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid UnbindPublisherRequest from client [1] 'test'. Encountered 1 error(s):
                             1. Expected channel ID to be greater than 0 but found 0.
                             """,
-                            "[Disposing] Client = [1] 'test', TraceId = 2",
-                            "[Disposed] Client = [1] 'test', TraceId = 2",
+                            "[Deactivating] Client = [1] 'test', TraceId = 2, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 2, IsAlive = False",
                             "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 2 (end)"
                         ] )
                     ] ),

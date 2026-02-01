@@ -68,6 +68,7 @@ public partial class MessageBrokerClientTests
                             0,
                             Duration.Zero,
                             null,
+                            true,
                             true ) );
 
                     s.SendListenerBoundResponse( true, true, 1, 1 );
@@ -1102,9 +1103,10 @@ public partial class MessageBrokerClientTests
                                         0,
                                         Duration.Zero,
                                         null,
+                                        true,
                                         true ).Header.Payload),
                                 (MessageBrokerServerEndpoint.BindPublisherRequest, Protocol.PacketHeader.Length
-                                    + ( int )new Protocol.BindPublisherRequest( "foo", null ).Header.Payload),
+                                    + ( int )new Protocol.BindPublisherRequest( "foo", null, true ).Header.Payload),
                                 (MessageBrokerServerEndpoint.Ping, Protocol.PacketHeader.Length)
                             ] );
 
@@ -1155,7 +1157,7 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindListener] Client = [1] 'test', TraceId = 4 (start)",
-                                "[BindingListener] Client = [1] 'test', TraceId = 4, ChannelName = 'foo', QueueName = 'foo', PrefetchHint = 1, MaxRetries = 0, MaxRedeliveries = 0, MinAckTimeout = 600 second(s), DeadLetter = <disabled>, CreateChannelIfNotExists = True",
+                                "[BindingListener] Client = [1] 'test', TraceId = 4, ChannelName = 'foo', QueueName = 'foo', PrefetchHint = 1, MaxRetries = 0, MaxRedeliveries = 0, MinAckTimeout = 600 second(s), DeadLetter = <disabled>, IsEphemeral = True, CreateChannelIfNotExists = True",
                                 "[SendPacket:Batched] Client = [1] 'test', TraceId = 4, BatchTraceId = 2, Packet = (BindListenerRequest, Length = 43)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 4, Packet = (ListenerBoundResponse, Length = 14)",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 4, Packet = (ListenerBoundResponse, Length = 14)",
@@ -1165,7 +1167,7 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindPublisher] Client = [1] 'test', TraceId = 5 (start)",
-                                "[BindingPublisher] Client = [1] 'test', TraceId = 5, ChannelName = 'foo', StreamName = 'foo'",
+                                "[BindingPublisher] Client = [1] 'test', TraceId = 5, ChannelName = 'foo', StreamName = 'foo', IsEphemeral = True",
                                 "[SendPacket:Batched] Client = [1] 'test', TraceId = 5, BatchTraceId = 2, Packet = (BindPublisherRequest, Length = 11)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 5, Packet = (PublisherBoundResponse, Length = 14)",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 5, Packet = (PublisherBoundResponse, Length = 14)",
@@ -1247,7 +1249,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( new Protocol.BindPublisherRequest( "foo", null ) );
+                    s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
                     s.SendPublisherBoundResponse( true, true, 1, 1 );
                     s.Read(
                         new Protocol.BindListenerRequest(
@@ -1261,6 +1263,7 @@ public partial class MessageBrokerClientTests
                             0,
                             Duration.Zero,
                             null,
+                            true,
                             true ) );
 
                     s.SendListenerBoundResponse( false, true, 1, 1 );
@@ -1511,7 +1514,7 @@ public partial class MessageBrokerClientTests
 
                             s.SendDeadLetterQueryResponse( 0, 0, Timestamp.Zero );
                             s.SendDeadLetterQueryResponse( 5, 1, nextExpirationAt );
-                            s.Read( new Protocol.BindPublisherRequest( "foo", null ) );
+                            s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
                             s.SendPublisherBoundResponse( true, true, 1, 1 );
                         } );
 
@@ -1554,7 +1557,7 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindPublisher] Client = [1] 'test', TraceId = 4 (start)",
-                                "[BindingPublisher] Client = [1] 'test', TraceId = 4, ChannelName = 'foo', StreamName = 'foo'",
+                                "[BindingPublisher] Client = [1] 'test', TraceId = 4, ChannelName = 'foo', StreamName = 'foo', IsEphemeral = True",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (BindPublisherRequest, Length = 11)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (BindPublisherRequest, Length = 11)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 4, Packet = (PublisherBoundResponse, Length = 14)",
@@ -1626,7 +1629,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( new Protocol.BindPublisherRequest( "foo", null ) );
+                    s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
                     s.SendPublisherBoundResponse( true, true, 1, 1 );
                 } );
 
@@ -1787,7 +1790,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( new Protocol.BindPublisherRequest( "foo", null ) );
+                    s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
                     s.SendPublisherBoundResponse( true, true, 1, 1 );
                 } );
 

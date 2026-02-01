@@ -909,8 +909,8 @@ public partial class MessageBrokerQueueTests
                                 LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid DeadLetterQuery from client [1] 'test'. Encountered 1 error(s):
                                 1. Expected header payload to be 8 but found 7.
                                 """,
-                                "[Disposing] Client = [1] 'test', TraceId = 2",
-                                "[Disposed] Client = [1] 'test', TraceId = 2",
+                                "[Deactivating] Client = [1] 'test', TraceId = 2, IsAlive = False",
+                                "[Deactivated] Client = [1] 'test', TraceId = 2, IsAlive = False",
                                 "[Trace:DeadLetterQuery] Client = [1] 'test', TraceId = 2 (end)"
                             ] )
                         ] ),
@@ -976,8 +976,8 @@ public partial class MessageBrokerQueueTests
                                 1. Expected queue ID to be greater than 0 but found 0.
                                 2. Expected read count to not be negative but found -1.
                                 """,
-                                "[Disposing] Client = [1] 'test', TraceId = 2",
-                                "[Disposed] Client = [1] 'test', TraceId = 2",
+                                "[Deactivating] Client = [1] 'test', TraceId = 2, IsAlive = False",
+                                "[Deactivated] Client = [1] 'test', TraceId = 2, IsAlive = False",
                                 "[Trace:DeadLetterQuery] Client = [1] 'test', TraceId = 2 (end)"
                             ] )
                         ] ),

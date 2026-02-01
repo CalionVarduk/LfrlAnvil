@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,42 +20,47 @@ namespace LfrlAnvil.MessageBroker.Server.Events;
 public enum MessageBrokerQueueTraceEventType : byte
 {
     /// <summary>
+    /// Specifies that trace is related to the queue being recreated.
+    /// </summary>
+    Recreated = 0,
+
+    /// <summary>
     /// Specifies that trace is related to the queue listener binding.
     /// </summary>
-    BindListener = 0,
+    BindListener = 1,
 
     /// <summary>
     /// Specifies that trace is related to the queue listener unbinding.
     /// </summary>
-    UnbindListener = 1,
+    UnbindListener = 2,
 
     /// <summary>
     /// Specifies that trace is related to a message being enqueued by a stream.
     /// </summary>
-    EnqueueMessage = 2,
+    EnqueueMessage = 3,
 
     /// <summary>
     /// Specifies that trace is related to processing of an enqueued message.
     /// </summary>
-    ProcessMessage = 3,
+    ProcessMessage = 4,
 
     /// <summary>
     /// Specifies that trace is related to a message notification ACK.
     /// </summary>
-    Ack = 4,
+    Ack = 5,
 
     /// <summary>
     /// Specifies that trace is related to a negative message notification ACK.
     /// </summary>
-    NegativeAck = 5,
+    NegativeAck = 6,
 
     /// <summary>
-    /// Specifies that trace is related to the queue disposal.
+    /// Specifies that trace is related to the queue deactivation.
     /// </summary>
-    Dispose = 6,
+    Deactivate = 7,
 
     /// <summary>
     /// Specifies that trace is related to an unexpected occurrence in the queue e.g. an error.
     /// </summary>
-    Unexpected = 7
+    Unexpected = 8
 }

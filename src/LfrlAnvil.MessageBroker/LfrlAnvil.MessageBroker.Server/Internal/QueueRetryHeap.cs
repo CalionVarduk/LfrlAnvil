@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -40,11 +40,17 @@ internal struct QueueRetryHeap
     internal void Add(QueueMessage message, int retry, int redelivery, Duration delay)
     {
         Assume.IsGreaterThanOrEqualTo( delay, Duration.Zero );
-        Assume.IsInRange( retry, 0, message.Listener.MaxRetries - 1 );
+        Add( message, unchecked( retry + 1 ), redelivery, message.Listener.Client.GetTimestamp() + delay );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void Add(QueueMessage message, int retry, int redelivery, Timestamp sendAt)
+    {
+        Assume.IsGreaterThanOrEqualTo( retry, 0 );
         Assume.IsGreaterThanOrEqualTo( redelivery, 0 );
 
         var index = _entries.Count;
-        _entries.Add( new Entry( message, unchecked( retry + 1 ), redelivery, message.Listener.Client.GetTimestamp() + delay ) );
+        _entries.Add( new Entry( message, retry, redelivery, sendAt ) );
         FixUp( index );
     }
 

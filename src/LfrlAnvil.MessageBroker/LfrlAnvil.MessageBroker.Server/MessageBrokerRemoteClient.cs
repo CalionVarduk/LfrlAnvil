@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Net;
@@ -40,6 +41,7 @@ namespace LfrlAnvil.MessageBroker.Server;
 public sealed partial class MessageBrokerRemoteClient
 {
     internal readonly MemoryPool<byte> MemoryPool;
+    internal readonly ServerStorage.Client Storage;
     internal ReferenceStore<int, MessageBrokerChannelPublisherBinding> PublishersByChannelId;
     internal ReferenceStore<int, MessageBrokerChannelListenerBinding> ListenersByChannelId;
     internal ObjectStore<MessageBrokerQueue> QueueStore;
@@ -58,55 +60,62 @@ public sealed partial class MessageBrokerRemoteClient
     internal readonly MessageBrokerRemoteClientLogger Logger;
     internal readonly Duration MaxReadTimeout;
 
+    private readonly object _sync = new object();
     private readonly ITimestampProvider _timestamps;
-    private readonly TcpClient _tcp;
-    private readonly Stream _stream;
-    private readonly TaskCompletionSource _disconnected;
+    private TcpClient? _tcp;
+    private Stream? _stream;
+    private TaskCompletionSource? _deactivated;
     private DelaySource _delaySource;
     private MessageBrokerRemoteClientState _state;
     private ulong _nextTraceId;
 
-    internal MessageBrokerRemoteClient(
+    private MessageBrokerRemoteClient(
         int id,
         MessageBrokerServer server,
         string name,
-        TcpClient tcp,
-        Stream stream,
-        MemoryPool<byte> memoryPool,
-        in Protocol.HandshakeRequestHeader handshake)
+        TcpClient? tcp,
+        Stream? stream,
+        Duration messageTimeout,
+        Duration pingInterval,
+        short maxBatchPacketCount,
+        MemorySize maxNetworkBatchPacketLength,
+        bool isLittleEndian,
+        bool synchronizeExternalObjectNames,
+        bool clearBuffers,
+        bool isEphemeral,
+        ulong nextTraceId,
+        MessageBrokerRemoteClientState state)
     {
+        Storage = server.Storage.CreateForClient( id, isEphemeral );
         _tcp = tcp;
         _stream = stream;
         Server = server;
-        MemoryPool = memoryPool;
         Id = id;
         Name = name;
+        MemoryPool = new MemoryPool<byte>( unchecked( ( int )server.MaxNetworkPacketLength.Bytes ) );
 
-        IsLittleEndian = handshake.IsClientLittleEndian;
-        MessageTimeout = Server.AcceptableMessageTimeout.Clamp( handshake.MessageTimeout );
-        PingInterval = Server.AcceptablePingInterval.Clamp( handshake.PingInterval );
+        IsLittleEndian = isLittleEndian;
+        MessageTimeout = Server.AcceptableMessageTimeout.Clamp( messageTimeout );
+        PingInterval = Server.AcceptablePingInterval.Clamp( pingInterval );
         MaxReadTimeout = MessageTimeout + PingInterval;
-        MaxBatchPacketCount = Server.AcceptableMaxBatchPacketCount.Clamp( handshake.MaxBatchPacketCount );
+        MaxBatchPacketCount = Server.AcceptableMaxBatchPacketCount.Clamp( maxBatchPacketCount );
         if ( MaxBatchPacketCount == 1 )
             MaxBatchPacketCount = 0;
 
         MaxNetworkBatchPacketBytes = MaxBatchPacketCount > 0
             ? unchecked( ( int )Server.AcceptableMaxNetworkBatchPacketLength
-                .Clamp( handshake.MaxNetworkBatchPacketLength )
+                .Clamp( maxNetworkBatchPacketLength )
                 .Bytes )
             : 0;
 
-        SynchronizeExternalObjectNames = handshake.SynchronizeExternalObjectNames;
-        ClearBuffers = handshake.ClearBuffers;
+        SynchronizeExternalObjectNames = synchronizeExternalObjectNames;
+        ClearBuffers = clearBuffers;
 
         MaxNetworkPacketBytes = unchecked( ( int )Server.MaxNetworkPacketLength.Bytes );
-        MaxNetworkMessagePacketBytes = unchecked( ( int )Server.MaxNetworkMessagePacketLength.Bytes
-            - Math.Max( Protocol.PushMessageHeader.Length, Protocol.MessageNotificationHeader.Payload )
-            + Protocol.PushMessageHeader.Length );
+        MaxNetworkMessagePacketBytes = Server.MaxNetworkMessagePacketBytes;
 
-        _disconnected = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
-        _state = MessageBrokerRemoteClientState.Created;
-        _nextTraceId = 0;
+        _state = state;
+        _nextTraceId = nextTraceId;
 
         PublishersByChannelId = ReferenceStore<int, MessageBrokerChannelPublisherBinding>.Create();
         ListenersByChannelId = ReferenceStore<int, MessageBrokerChannelListenerBinding>.Create();
@@ -115,11 +124,18 @@ public sealed partial class MessageBrokerRemoteClient
         RequestQueue = RequestQueue.Create();
         EventScheduler = EventScheduler.Create();
         PacketListener = PacketListener.Create();
-        NotificationSender = NotificationSender.Create();
-        RequestHandler = RequestHandler.Create();
-        ResponseSender = ResponseSender.Create();
+        NotificationSender = NotificationSender.Create( tcp is not null );
+        RequestHandler = RequestHandler.Create( tcp is not null );
+        ResponseSender = ResponseSender.Create( tcp is not null );
         ExternalNameCache = ExternalNameCache.Create();
         MessageRouting = MessageRouting.Empty;
+
+        // TODO
+        // should reconnected client run these factories again?
+        // mostly its about the delay source, external will be set to null on client deactivation
+        // so this will break during reconnect
+        //
+        // also, reconnected client must first reset underlying mrvtsc instances, before starting underlying tasks
 
         Logger = Server.RemoteClientLoggerFactory?.Invoke( this ) ?? default;
         _timestamps = Server.TimestampsFactory( this );
@@ -173,6 +189,11 @@ public sealed partial class MessageBrokerRemoteClient
     public bool ClearBuffers { get; }
 
     /// <summary>
+    /// Specifies whether or not the client is ephemeral.
+    /// </summary>
+    public bool IsEphemeral => Storage.ClientRootDir is null;
+
+    /// <summary>
     /// Max acceptable network batch packet length.
     /// </summary>
     /// <remarks>
@@ -192,7 +213,7 @@ public sealed partial class MessageBrokerRemoteClient
             {
                 try
                 {
-                    return _tcp.Client.RemoteEndPoint;
+                    return _tcp?.Client.RemoteEndPoint;
                 }
                 catch
                 {
@@ -213,7 +234,7 @@ public sealed partial class MessageBrokerRemoteClient
             {
                 try
                 {
-                    return _tcp.Client.LocalEndPoint;
+                    return _tcp?.Client.LocalEndPoint;
                 }
                 catch
                 {
@@ -251,7 +272,8 @@ public sealed partial class MessageBrokerRemoteClient
     /// </summary>
     public MessageBrokerRemoteClientQueueCollection Queues => new MessageBrokerRemoteClientQueueCollection( this );
 
-    internal bool ShouldCancel => _state >= MessageBrokerRemoteClientState.Disposing;
+    internal bool IsInactive => _state >= MessageBrokerRemoteClientState.Deactivating;
+    internal bool IsDisposed => _state >= MessageBrokerRemoteClientState.Disposing;
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerRemoteClient"/> instance.
@@ -271,50 +293,145 @@ public sealed partial class MessageBrokerRemoteClient
     {
         var traceId = 0UL;
         MessageBrokerRemoteClientState state;
+        TaskCompletionSource? deactivated;
+        bool isEphemeral;
+
         using ( AcquireLock() )
         {
             state = _state;
-            if ( TryBeginDispose() )
+            if ( TryBeginDeactivate( out isEphemeral ) )
                 traceId = GetTraceId();
+
+            deactivated = _deactivated;
         }
 
-        if ( state >= MessageBrokerRemoteClientState.Disposing )
+        if ( state >= MessageBrokerRemoteClientState.Deactivating )
         {
-            if ( state == MessageBrokerRemoteClientState.Disposing )
-                await _disconnected.Task.ConfigureAwait( false );
+            if ( state is MessageBrokerRemoteClientState.Deactivating or MessageBrokerRemoteClientState.Disposing
+                && deactivated is not null )
+                await deactivated.Task.ConfigureAwait( false );
 
             return;
         }
 
-        using ( MessageBrokerRemoteClientTraceEvent.CreateScope( this, traceId, MessageBrokerRemoteClientTraceEventType.Dispose ) )
-            await DisposeAsyncCore( traceId ).ConfigureAwait( false );
+        using ( MessageBrokerRemoteClientTraceEvent.CreateScope( this, traceId, MessageBrokerRemoteClientTraceEventType.Deactivate ) )
+            await DeactivateAsyncCore( traceId, isEphemeral ).ConfigureAwait( false );
     }
 
-    internal async ValueTask OnServerDisposedAsync(ulong serverTraceId)
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerRemoteClient Create(
+        int id,
+        MessageBrokerServer server,
+        string name,
+        TcpClient tcp,
+        Stream stream,
+        Duration messageTimeout,
+        Duration pingInterval,
+        short maxBatchPacketCount,
+        MemorySize maxNetworkBatchPacketLength,
+        bool isLittleEndian,
+        bool synchronizeExternalObjectNames,
+        bool clearBuffers,
+        bool isEphemeral)
+    {
+        return new MessageBrokerRemoteClient(
+            id,
+            server,
+            name,
+            tcp,
+            stream,
+            messageTimeout,
+            pingInterval,
+            maxBatchPacketCount,
+            maxNetworkBatchPacketLength,
+            isLittleEndian,
+            synchronizeExternalObjectNames,
+            clearBuffers,
+            isEphemeral,
+            nextTraceId: 0,
+            MessageBrokerRemoteClientState.Created );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerRemoteClient CreateInactive(int id, MessageBrokerServer server, string name, ulong nextTraceId)
+    {
+        return new MessageBrokerRemoteClient(
+            id,
+            server,
+            name,
+            tcp: null,
+            stream: null,
+            messageTimeout: server.HandshakeTimeout,
+            pingInterval: server.AcceptablePingInterval.Min,
+            maxBatchPacketCount: 0,
+            maxNetworkBatchPacketLength: MemorySize.Zero,
+            isLittleEndian: BitConverter.IsLittleEndian,
+            synchronizeExternalObjectNames: false,
+            clearBuffers: true,
+            isEphemeral: false,
+            nextTraceId,
+            MessageBrokerRemoteClientState.Inactive );
+    }
+
+    internal async ValueTask OnServerDisposedAsync(ulong serverTraceId, bool storageLoaded)
     {
         var traceId = 0UL;
         MessageBrokerRemoteClientState state;
+        TaskCompletionSource? deactivated;
+        bool isEphemeral;
+
         using ( AcquireLock() )
         {
             state = _state;
-            if ( TryBeginDispose() )
+            if ( TryBeginDeactivate( out isEphemeral, forceDisposal: true ) )
                 traceId = GetTraceId();
+
+            deactivated = _deactivated;
         }
 
-        if ( state >= MessageBrokerRemoteClientState.Disposing )
+        if ( state >= MessageBrokerRemoteClientState.Deactivating )
         {
-            if ( state == MessageBrokerRemoteClientState.Disposing )
-                await _disconnected.Task.ConfigureAwait( false );
+            if ( state is MessageBrokerRemoteClientState.Deactivating or MessageBrokerRemoteClientState.Disposing
+                && deactivated is not null )
+                await deactivated.Task.ConfigureAwait( false );
 
-            return;
+            if ( state >= MessageBrokerRemoteClientState.Disposing )
+                return;
+
+            using ( AcquireLock() )
+            {
+                if ( _state == MessageBrokerRemoteClientState.Disposed )
+                    return;
+
+                state = _state;
+                if ( _state == MessageBrokerRemoteClientState.Inactive )
+                {
+                    Assume.Equals( IsEphemeral, isEphemeral );
+                    _state = MessageBrokerRemoteClientState.Disposing;
+                    traceId = GetTraceId();
+                    _deactivated = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
+                }
+
+                deactivated = _deactivated;
+            }
+
+            if ( state == MessageBrokerRemoteClientState.Disposing )
+            {
+                if ( deactivated is not null )
+                    await deactivated.Task.ConfigureAwait( false );
+
+                return;
+            }
         }
 
-        using ( MessageBrokerRemoteClientTraceEvent.CreateScope( this, traceId, MessageBrokerRemoteClientTraceEventType.Dispose ) )
+        using ( MessageBrokerRemoteClientTraceEvent.CreateScope( this, traceId, MessageBrokerRemoteClientTraceEventType.Deactivate ) )
         {
             if ( Logger.ServerTrace is { } serverTrace )
                 serverTrace.Emit( MessageBrokerRemoteClientServerTraceEvent.Create( this, traceId, serverTraceId ) );
 
-            await DisposeAsyncCore( traceId, serverDisposed: true ).ConfigureAwait( false );
+            await DeactivateAsyncCore( traceId, isEphemeral, ClientStopReason.Server, storageLoaded ).ConfigureAwait( false );
         }
     }
 
@@ -333,6 +450,7 @@ public sealed partial class MessageBrokerRemoteClient
 
         try
         {
+            await Storage.SaveMetadataAsync( this, traceId, skipDisposed: true ).ConfigureAwait( false );
             using ( AcquireActiveLock( traceId, out var exc ) )
             {
                 if ( exc is not null )
@@ -360,7 +478,7 @@ public sealed partial class MessageBrokerRemoteClient
             if ( Logger.Error is { } error )
                 error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
 
-            await DisposeAsync( traceId ).ConfigureAwait( false );
+            await DeactivateAsync( traceId ).ConfigureAwait( false );
         }
         finally
         {
@@ -373,6 +491,7 @@ public sealed partial class MessageBrokerRemoteClient
         MessageBrokerChannel channel,
         bool channelCreated,
         string streamName,
+        bool isEphemeral,
         ref MessageBrokerChannelPublisherBinding? publisher,
         ref ulong channelTraceId,
         ref MessageBrokerStream? stream,
@@ -381,7 +500,7 @@ public sealed partial class MessageBrokerRemoteClient
     {
         using ( channel.AcquireLock() )
         {
-            if ( channel.ShouldCancel )
+            if ( channel.IsDisposed )
                 return BindResult.ChannelDisposed;
 
             var token = channel.PublishersByClientId.GetOrAddNull( Id );
@@ -397,7 +516,7 @@ public sealed partial class MessageBrokerRemoteClient
                 stream = StreamCollection.RegisterUnsafe( Server, streamName, out streamCreated );
                 using ( stream.AcquireLock() )
                 {
-                    if ( stream.ShouldCancel )
+                    if ( stream.IsDisposed )
                     {
                         token.Revert( ref channel.PublishersByClientId, Id );
                         if ( channelCreated )
@@ -410,7 +529,7 @@ public sealed partial class MessageBrokerRemoteClient
                     {
                         publisher = token.SetObject(
                             ref channel.PublishersByClientId,
-                            new MessageBrokerChannelPublisherBinding( this, channel, stream ) );
+                            MessageBrokerChannelPublisherBinding.Create( this, channel, stream, isEphemeral ) );
                     }
                     catch
                     {
@@ -421,7 +540,7 @@ public sealed partial class MessageBrokerRemoteClient
                     }
 
                     PublishersByChannelId.Add( channel.Id, publisher );
-                    stream.PublishersByClientChannelIdPair.Add( new Pair<int, int>( Id, channel.Id ), publisher );
+                    stream.PublishersByClientChannelIdPair.Add( Pair.Create( Id, channel.Id ), publisher );
                     channelTraceId = channel.GetTraceId();
                     streamTraceId = stream.GetTraceId();
                 }
@@ -447,7 +566,7 @@ public sealed partial class MessageBrokerRemoteClient
     {
         using ( channel.AcquireLock() )
         {
-            if ( channel.ShouldCancel )
+            if ( channel.IsDisposed )
                 return UnbindResult.ChannelDisposed;
 
             if ( ! PublishersByChannelId.TryGet( channel.Id, out publisher ) )
@@ -456,16 +575,15 @@ public sealed partial class MessageBrokerRemoteClient
             stream = publisher.Stream;
             using ( stream.AcquireLock() )
             {
-                if ( stream.ShouldCancel )
+                if ( stream.IsDisposed )
                     return UnbindResult.ParentDisposed;
 
                 using ( publisher.AcquireLock() )
                 {
-                    if ( publisher.ShouldCancel )
+                    if ( publisher.IsInactive )
                         return UnbindResult.BindingDisposed;
 
                     publisher.BeginDisposingUnsafe();
-                    PublishersByChannelId.Remove( channel.Id );
                     disposingChannel = channel.TryDisposeByRemovingPublisherUnsafe( Id );
                     disposingStream = stream.TryDisposeByRemovingPublisherUnsafe( Id, channel.Id );
                     channelTraceId = channel.GetTraceId();
@@ -482,6 +600,7 @@ public sealed partial class MessageBrokerRemoteClient
         bool channelCreated,
         string queueName,
         string? filterExpression,
+        bool isEphemeral,
         IParsedExpressionDelegate<MessageBrokerFilterExpressionContext, bool>? filterExpressionDelegate,
         in Protocol.BindListenerRequestHeader header,
         ref MessageBrokerChannelListenerBinding? listener,
@@ -492,7 +611,7 @@ public sealed partial class MessageBrokerRemoteClient
     {
         using ( channel.AcquireLock() )
         {
-            if ( channel.ShouldCancel )
+            if ( channel.IsDisposed )
                 return BindResult.ChannelDisposed;
 
             var token = channel.ListenersByClientId.GetOrAddNull( Id );
@@ -508,7 +627,7 @@ public sealed partial class MessageBrokerRemoteClient
                 queue = RegisterQueue( queueName, out queueCreated );
                 using ( queue.AcquireLock() )
                 {
-                    if ( queue.ShouldCancel )
+                    if ( queue.IsInactive )
                     {
                         token.Revert( ref channel.ListenersByClientId, Id );
                         if ( channelCreated )
@@ -517,26 +636,18 @@ public sealed partial class MessageBrokerRemoteClient
                         return BindResult.ParentDisposed;
                     }
 
-                    if ( queueCreated )
-                        EventScheduler.AddQueue( queue );
-
                     try
                     {
                         listener = token.SetObject(
                             ref channel.ListenersByClientId,
-                            new MessageBrokerChannelListenerBinding(
+                            MessageBrokerChannelListenerBinding.Create(
                                 this,
                                 channel,
                                 queue,
-                                header.PrefetchHint,
-                                header.MaxRetries,
-                                header.RetryDelay,
-                                header.MaxRedeliveries,
-                                header.MinAckTimeout,
-                                header.DeadLetterCapacityHint,
-                                header.MinDeadLetterRetention,
+                                in header,
                                 filterExpression,
-                                filterExpressionDelegate ) );
+                                filterExpressionDelegate,
+                                isEphemeral ) );
                     }
                     catch
                     {
@@ -550,6 +661,9 @@ public sealed partial class MessageBrokerRemoteClient
                     queue.ListenersByChannelId.Add( channel.Id, listener );
                     channelTraceId = channel.GetTraceId();
                     queueTraceId = queue.GetTraceId();
+
+                    if ( queueCreated )
+                        EventScheduler.AddQueue( queue );
                 }
             }
             catch
@@ -573,7 +687,7 @@ public sealed partial class MessageBrokerRemoteClient
     {
         using ( channel.AcquireLock() )
         {
-            if ( channel.ShouldCancel )
+            if ( channel.IsDisposed )
                 return UnbindResult.ChannelDisposed;
 
             if ( ! ListenersByChannelId.TryGet( channel.Id, out listener ) )
@@ -582,16 +696,15 @@ public sealed partial class MessageBrokerRemoteClient
             queue = listener.Queue;
             using ( queue.AcquireLock() )
             {
-                if ( queue.ShouldCancel )
+                if ( queue.IsInactive )
                     return UnbindResult.ParentDisposed;
 
                 using ( listener.AcquireLock() )
                 {
-                    if ( listener.ShouldCancel )
+                    if ( listener.IsInactive )
                         return UnbindResult.BindingDisposed;
 
                     listener.BeginDisposingUnsafe();
-                    ListenersByChannelId.Remove( channel.Id );
                     disposingChannel = channel.TryDisposeByRemovingListenerUnsafe( Id );
                     disposingQueue = queue.TryDisposeByRemovingListenerUnsafe( channel.Id );
                     channelTraceId = channel.GetTraceId();
@@ -613,21 +726,22 @@ public sealed partial class MessageBrokerRemoteClient
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ExclusiveLock AcquireLock()
     {
-        return ExclusiveLock.SpinWaitEnter( _tcp, spinWaitMultiplier: 4 );
+        return ExclusiveLock.Enter( _sync );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ExclusiveLock AcquireActiveLock(ulong traceId, out MessageBrokerRemoteClientDisposedException? exception)
+    internal ExclusiveLock AcquireActiveLock(ulong traceId, out MessageBrokerRemoteClientDeactivatedException? exception)
     {
         var @lock = AcquireLock();
-        if ( ! ShouldCancel )
+        if ( ! IsInactive )
         {
             exception = null;
             return @lock;
         }
 
+        var disposed = IsDisposed;
         @lock.Dispose();
-        exception = this.DisposedException();
+        exception = this.DeactivatedException( disposed );
         if ( Logger.Error is { } error )
             error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exception ) );
 
@@ -648,16 +762,19 @@ public sealed partial class MessageBrokerRemoteClient
             var sendPacket = Logger.SendPacket;
             sendPacket?.Emit( MessageBrokerRemoteClientSendPacketEvent.CreateSending( this, traceId, headerToWrite, packetCount.Value ) );
 
+            Stream stream;
             CancellationToken timeoutToken;
             using ( AcquireActiveLock( traceId, out var exc ) )
             {
                 if ( exc is not null )
                     return exc;
 
+                Assume.IsNotNull( _stream );
+                stream = _stream;
                 timeoutToken = EventScheduler.ScheduleWriteTimeout( this );
             }
 
-            await _stream.WriteAsync( dataToWrite, timeoutToken ).ConfigureAwait( false );
+            await stream.WriteAsync( dataToWrite, timeoutToken ).ConfigureAwait( false );
 
             sendPacket?.Emit( MessageBrokerRemoteClientSendPacketEvent.CreateSent( this, traceId, headerToWrite ) );
             if ( packetCount.Value > 1 )
@@ -849,40 +966,80 @@ public sealed partial class MessageBrokerRemoteClient
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void EmitError(Result result, ulong traceId)
+    {
+        if ( result.Exception is not null && Logger.Error is { } error )
+            error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, result.Exception ) );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void EmitErrors(ref Chain<Exception> exceptions, ulong traceId)
+    {
+        if ( exceptions.Count > 0 && Logger.Error is { } error )
+        {
+            foreach ( var exc in exceptions )
+                error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
+        }
+
+        exceptions = Chain<Exception>.Empty;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal MemoryPool<byte> GetMemoryPool(int length)
+    {
+        return length <= MemoryPool.SegmentLength ? MemoryPool : Server.MemoryPool;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ulong GetTraceId()
     {
         return unchecked( _nextTraceId++ );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool TryBeginDispose()
+    internal bool TryBeginDeactivate(out bool isEphemeral, bool forceDisposal = false)
     {
-        if ( ShouldCancel )
+        if ( IsInactive )
+        {
+            isEphemeral = false;
             return false;
+        }
 
-        _state = MessageBrokerRemoteClientState.Disposing;
+        _state = forceDisposal || IsEphemeral ? MessageBrokerRemoteClientState.Disposing : MessageBrokerRemoteClientState.Deactivating;
+        isEphemeral = IsEphemeral;
+        _deactivated = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
         return true;
     }
 
-    internal ValueTask DisposeAsync(ulong traceId)
+    internal ValueTask DeactivateAsync(ulong traceId)
     {
+        bool isEphemeral;
         using ( AcquireLock() )
         {
-            if ( ShouldCancel )
+            if ( IsInactive )
                 return ValueTask.CompletedTask;
 
-            _state = MessageBrokerRemoteClientState.Disposing;
+            _state = IsEphemeral ? MessageBrokerRemoteClientState.Disposing : MessageBrokerRemoteClientState.Deactivating;
+            isEphemeral = IsEphemeral;
+            _deactivated = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
         }
 
-        return DisposeAsyncCore( traceId );
+        return DeactivateAsyncCore( traceId, isEphemeral );
     }
 
-    internal async ValueTask DisposeAsyncCore(ulong traceId, bool serverDisposed = false)
+    internal async ValueTask DeactivateAsyncCore(
+        ulong traceId,
+        bool isEphemeral,
+        ClientStopReason reason = ClientStopReason.Disconnect,
+        bool storageLoaded = false)
     {
+        TaskCompletionSource? deactivatedSource = null;
         try
         {
-            if ( Logger.Disposing is { } disposing )
-                disposing.Emit( MessageBrokerRemoteClientDisposingEvent.Create( this, traceId ) );
+            var keepAlive = ! isEphemeral && reason == ClientStopReason.Disconnect;
+            if ( Logger.Deactivating is { } deactivating )
+                deactivating.Emit( MessageBrokerRemoteClientDeactivatingEvent.Create( this, traceId, keepAlive ) );
 
             Task? eventSchedulerTask;
             Task? requestHandlerTask;
@@ -890,132 +1047,221 @@ public sealed partial class MessageBrokerRemoteClient
             Task? packetListenerTask;
             Task? notificationSenderTask;
             ValueTaskDelaySource? ownedDelaySource;
+            var exceptions = Chain<Exception>.Empty;
 
-            var error = Logger.Error;
-            Chain<Exception> exceptions;
             using ( AcquireLock() )
             {
-                ownedDelaySource = _delaySource.DiscardOwnedSource();
+                deactivatedSource = _deactivated;
+                ownedDelaySource = keepAlive ? null : _delaySource.DiscardOwnedSource();
                 eventSchedulerTask = EventScheduler.DiscardUnderlyingTask();
                 requestHandlerTask = RequestHandler.DiscardUnderlyingTask();
                 responseSenderTask = ResponseSender.DiscardUnderlyingTask();
                 packetListenerTask = PacketListener.DiscardUnderlyingTask();
                 notificationSenderTask = NotificationSender.DiscardUnderlyingTask();
-                RequestHandler.Dispose();
-                ResponseSender.BeginDispose();
-                EventScheduler.Dispose();
-                NotificationSender.BeginDispose();
-                WriterQueue.Dispose();
-                exceptions = RequestQueue.Dispose( error is not null );
+                RequestHandler.Dispose( ref exceptions );
+                ResponseSender.BeginDispose( ref exceptions );
+                EventScheduler.Dispose( ref exceptions );
+                NotificationSender.BeginDispose( ref exceptions );
+                WriterQueue.Dispose( ref exceptions );
             }
 
-            foreach ( var exc in exceptions )
-            {
-                Assume.IsNotNull( error );
-                error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
-            }
+            EmitErrors( ref exceptions, traceId );
+            EmitError( await eventSchedulerTask.AsSafeCancellable().ConfigureAwait( false ), traceId );
+            EmitError( await requestHandlerTask.AsSafeNonCancellable().ConfigureAwait( false ), traceId );
+            EmitError( await responseSenderTask.AsSafeNonCancellable().ConfigureAwait( false ), traceId );
+            EmitError( await packetListenerTask.AsSafeNonCancellable().ConfigureAwait( false ), traceId );
+            EmitError( await notificationSenderTask.AsSafeNonCancellable().ConfigureAwait( false ), traceId );
 
-            if ( eventSchedulerTask is not null )
-                await eventSchedulerTask.ConfigureAwait( false );
-
-            if ( requestHandlerTask is not null )
-                await requestHandlerTask.ConfigureAwait( false );
-
-            if ( responseSenderTask is not null )
-                await responseSenderTask.ConfigureAwait( false );
-
-            if ( packetListenerTask is not null )
-                await packetListenerTask.ConfigureAwait( false );
-
-            if ( notificationSenderTask is not null )
-                await notificationSenderTask.ConfigureAwait( false );
-
-            MessageBrokerChannelPublisherBinding[] publishers;
-            MessageBrokerChannelListenerBinding[] listeners;
-            MessageBrokerQueue[] queues;
-            Exception? exception;
+            ReadOnlyArray<MessageBrokerChannelPublisherBinding> publishers;
+            ReadOnlyArray<MessageBrokerChannelListenerBinding> listeners;
+            ReadOnlyArray<MessageBrokerQueue> queues;
             using ( AcquireLock() )
             {
-                publishers = PublishersByChannelId.ClearAndExtract();
-                listeners = ListenersByChannelId.ClearAndExtract();
-                queues = QueueStore.Clear();
-                exception = _tcp.TryDispose().Exception;
+                RequestQueue.Dispose( ref exceptions );
+                publishers = PublishersByChannelId.GetAll();
+                listeners = ListenersByChannelId.GetAll();
+                queues = QueueStore.GetAll();
+                foreach ( var queue in queues )
+                {
+                    using ( queue.AcquireLock() )
+                        queue.EventHeapIndex = -1;
+                }
             }
 
-            if ( exception is not null )
-                error?.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exception ) );
+            EmitErrors( ref exceptions, traceId );
 
-            if ( serverDisposed )
+            if ( reason == ClientStopReason.Server )
             {
-                await Parallel.ForEachAsync( queues, (q, _) => q.OnServerDisposedAsync( traceId ) ).ConfigureAwait( false );
+                EmitError(
+                    await Parallel.ForEachAsync( queues, (q, _) => q.OnServerDisposingAsync( traceId ) ).AsSafe().ConfigureAwait( false ),
+                    traceId );
+
                 foreach ( var publisher in publishers )
-                    publisher.OnServerDisposed();
+                    publisher.OnServerDisposing();
 
                 foreach ( var listener in listeners )
-                    listener.OnServerDisposed();
+                    listener.OnServerDisposing();
             }
             else
             {
-                await Parallel.ForEachAsync( queues, (q, _) => q.OnClientDisconnectedAsync( traceId ) ).ConfigureAwait( false );
-                await Parallel.ForEachAsync( publishers, (p, _) => p.OnClientDisconnectedAsync( traceId ) ).ConfigureAwait( false );
+                EmitError(
+                    await Parallel.ForEachAsync( queues, (q, _) => q.OnClientDeactivatingAsync( keepAlive, traceId ) )
+                        .AsSafe()
+                        .ConfigureAwait( false ),
+                    traceId );
+
+                foreach ( var publisher in publishers )
+                    publisher.OnClientDeactivating( keepAlive );
+
                 foreach ( var listener in listeners )
-                    listener.OnClientDisconnected( traceId );
+                    listener.OnClientDeactivating( keepAlive );
+
+                // TODO
+                // reconnecting non-ephemeral client as ephemeral will load all its data from storage,
+                // delete the storage right after, and mark it as ephemeral
+                // so disposal/stopping should be fine after that
+                //
+                // reconnecting will require careful locking in case disposal (or irrecoverable error) happens during reconnect
+                // it would be best not to force the client to wait until storage is loaded
+                // let's just connect and move on, server will load storage async, and then continue as normal
+                // although some data may have to be loaded immediately, like listeners and publishers
+                // but queue messages may probably be loaded completely async
+                //
+                // wait, during client stop, the client remains fully in-memory, along with its children
+                // so that's a quick operation, the most important one is rewiring queues and client underlying tasks
+                // so that they become active again
             }
 
+            bool disposed;
             int discardedNotificationCount;
-            ListSlim<ResponseSender.DiscardedResponse> discardedMessages;
+            ListSlim<ResponseSender.DiscardedResponse> discardedResponses;
             using ( AcquireLock() )
             {
-                (discardedNotificationCount, exceptions) = NotificationSender.EndDispose( error is not null );
-                discardedMessages = ResponseSender.EndDispose();
+                var result = _tcp?.TryDispose() ?? Result.Valid;
+                if ( result.Exception is not null )
+                    exceptions = exceptions.Extend( result.Exception );
+
+                discardedNotificationCount = NotificationSender.EndDispose( ref exceptions );
+                discardedResponses = ResponseSender.EndDispose( ref exceptions );
+                disposed = IsDisposed;
             }
 
-            EndDiscardedResponses( ref discardedMessages, traceId );
-            foreach ( var exc in exceptions )
-            {
-                Assume.IsNotNull( error );
-                error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
-            }
+            EmitErrors( ref exceptions, traceId );
+            EndDiscardedResponses( ref discardedResponses, disposed, traceId );
 
-            if ( discardedNotificationCount > 0 && error is not null )
+            if ( discardedNotificationCount > 0 && Logger.Error is { } error )
             {
                 var exc = this.Exception( Resources.NotificationsDiscarded( discardedNotificationCount ) );
                 error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
             }
 
+            if ( reason == ClientStopReason.Server )
+            {
+                var listenersByChannelId = new Dictionary<int, MessageBrokerChannelListenerBinding>( capacity: listeners.Count );
+                foreach ( var listener in listeners )
+                    listenersByChannelId[listener.Channel.Id] = listener;
+
+                EmitError(
+                    await Parallel.ForEachAsync( listeners, (l, _) => l.OnServerDisposedAsync( traceId, storageLoaded ) )
+                        .AsSafe()
+                        .ConfigureAwait( false ),
+                    traceId );
+
+                EmitError(
+                    await Parallel.ForEachAsync( publishers, (p, _) => p.OnServerDisposedAsync( traceId, storageLoaded ) )
+                        .AsSafe()
+                        .ConfigureAwait( false ),
+                    traceId );
+
+                EmitError(
+                    await Parallel.ForEachAsync(
+                            queues,
+                            (q, _) => q.OnServerDisposedAsync( isEphemeral, listenersByChannelId, traceId, storageLoaded ) )
+                        .AsSafe()
+                        .ConfigureAwait( false ),
+                    traceId );
+            }
+            else
+            {
+                EmitError(
+                    await Parallel.ForEachAsync( listeners, (l, _) => l.OnClientDeactivatedAsync( keepAlive, traceId ) )
+                        .AsSafe()
+                        .ConfigureAwait( false ),
+                    traceId );
+
+                EmitError(
+                    await Parallel.ForEachAsync( publishers, (p, _) => p.OnClientDeactivatedAsync( keepAlive, traceId ) )
+                        .AsSafe()
+                        .ConfigureAwait( false ),
+                    traceId );
+
+                EmitError(
+                    await Parallel.ForEachAsync( queues, (q, _) => q.OnClientDeactivatedAsync( keepAlive, traceId ) )
+                        .AsSafe()
+                        .ConfigureAwait( false ),
+                    traceId );
+            }
+
             using ( AcquireLock() )
             {
-                exception = MessageRouting.PoolToken.Return();
+                var exc = MessageRouting.PoolToken.Return();
+                if ( exc is not null )
+                    exceptions = exceptions.Extend( exc );
+
                 MessageRouting = MessageRouting.Empty;
                 ExternalNameCache.Clear();
-                _state = MessageBrokerRemoteClientState.Disposed;
             }
 
-            if ( exception is not null )
-                error?.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exception ) );
+            EmitErrors( ref exceptions, traceId );
+
+            if ( keepAlive )
+            {
+                using ( AcquireLock() )
+                {
+                    _state = MessageBrokerRemoteClientState.Inactive;
+                    _deactivated = null;
+                    _stream = null;
+                    _tcp = null;
+                }
+            }
+            else
+            {
+                if ( reason == ClientStopReason.Server )
+                    EmitError( await Storage.SaveMetadataAsync( this, traceId ).AsSafe().ConfigureAwait( false ), traceId );
+                else
+                {
+                    if ( reason == ClientStopReason.Delete )
+                        EmitError( await Storage.DeleteAsync().AsSafe().ConfigureAwait( false ), traceId );
+
+                    EmitError( RemoteClientCollection.Remove( this ), traceId );
+                }
+
+                using ( AcquireLock() )
+                {
+                    PublishersByChannelId.Clear();
+                    ListenersByChannelId.Clear();
+                    QueueStore.Clear();
+                    _state = MessageBrokerRemoteClientState.Disposed;
+                    _deactivated = null;
+                    _stream = null;
+                    _tcp = null;
+                }
+            }
 
             if ( ownedDelaySource is not null )
-                await ownedDelaySource.TryDisposeAsync().ConfigureAwait( false );
+                EmitError( await ownedDelaySource.TryDisposeAsync().ConfigureAwait( false ), traceId );
 
-            if ( ! serverDisposed )
-            {
-                var removeException = RemoteClientCollection.Remove( this ).Exception;
-                if ( removeException is not null )
-                    error?.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, removeException ) );
-            }
-
-            if ( Logger.Disposed is { } disposed )
-                disposed.Emit( MessageBrokerRemoteClientDisposedEvent.Create( this, traceId ) );
+            if ( Logger.Deactivated is { } deactivated )
+                deactivated.Emit( MessageBrokerRemoteClientDeactivatedEvent.Create( this, traceId, keepAlive ) );
         }
         finally
         {
-            if ( ! _disconnected.Task.IsCompleted )
-                _disconnected.SetResult();
+            deactivatedSource?.TrySetResult();
         }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void EndDiscardedResponses(ref ListSlim<ResponseSender.DiscardedResponse> discardedResponses, ulong traceId)
+    private void EndDiscardedResponses(ref ListSlim<ResponseSender.DiscardedResponse> discardedResponses, bool disposed, ulong traceId)
     {
         var error = Logger.Error;
         var traceEnd = Logger.TraceEnd;
@@ -1024,7 +1270,7 @@ public sealed partial class MessageBrokerRemoteClient
             r.PoolToken.Return( this, traceId );
             if ( error is not null )
             {
-                var exc = this.DisposedException();
+                var exc = this.DeactivatedException( disposed );
                 error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, r.TraceId, exc ) );
             }
 
@@ -1062,10 +1308,8 @@ public sealed partial class MessageBrokerRemoteClient
         if ( packetCount == 1 )
             return packetCount;
 
-        batchPoolToken = batchLength > MemoryPool.SegmentLength
-            ? Server.MemoryPool.Rent( unchecked( ( int )batchLength ), clearBuffer, out var batchData )
-            : MemoryPool.Rent( unchecked( ( int )batchLength ), clearBuffer, out batchData );
-
+        var memoryPool = GetMemoryPool( unchecked( ( int )batchLength ) );
+        batchPoolToken = memoryPool.Rent( unchecked( ( int )batchLength ), clearBuffer, out var batchData );
         dataToWrite = batchData;
 
         headerToWrite = Protocol.PacketHeader.Create(
@@ -1108,7 +1352,7 @@ public sealed partial class MessageBrokerRemoteClient
         try
         {
             created = true;
-            return token.SetObject( ref QueueStore, new MessageBrokerQueue( this, token.Id, name ) );
+            return token.SetObject( ref QueueStore, MessageBrokerQueue.Create( this, token.Id, name ) );
         }
         catch
         {

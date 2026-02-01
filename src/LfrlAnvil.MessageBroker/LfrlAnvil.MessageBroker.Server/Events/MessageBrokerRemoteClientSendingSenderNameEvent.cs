@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@ public readonly struct MessageBrokerRemoteClientSendingSenderNameEvent
     private MessageBrokerRemoteClientSendingSenderNameEvent(
         MessageBrokerRemoteClient client,
         ulong traceId,
-        MessageBrokerRemoteClient sender)
+        IMessageBrokerMessagePublisher publisher)
     {
         Source = MessageBrokerRemoteClientEventSource.Create( client, traceId );
-        Sender = sender;
+        Publisher = publisher;
     }
 
     /// <summary>
@@ -38,9 +38,9 @@ public readonly struct MessageBrokerRemoteClientSendingSenderNameEvent
     public MessageBrokerRemoteClientEventSource Source { get; }
 
     /// <summary>
-    /// Sender <see cref="MessageBrokerRemoteClient"/> whose name is to be sent.
+    /// <see cref="IMessageBrokerMessagePublisher"/> whose owner's name is to be sent.
     /// </summary>
-    public MessageBrokerRemoteClient Sender { get; }
+    public IMessageBrokerMessagePublisher Publisher { get; }
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerRemoteClientSendingSenderNameEvent"/> instance.
@@ -49,7 +49,7 @@ public readonly struct MessageBrokerRemoteClientSendingSenderNameEvent
     [Pure]
     public override string ToString()
     {
-        return $"[SendingSenderName] {Source}, Sender = [{Sender.Id}] '{Sender.Name}'";
+        return $"[SendingSenderName] {Source}, Sender = [{Publisher.ClientId}] '{Publisher.ClientName}'";
     }
 
     [Pure]
@@ -57,8 +57,8 @@ public readonly struct MessageBrokerRemoteClientSendingSenderNameEvent
     internal static MessageBrokerRemoteClientSendingSenderNameEvent Create(
         MessageBrokerRemoteClient client,
         ulong traceId,
-        MessageBrokerRemoteClient sender)
+        IMessageBrokerMessagePublisher publisher)
     {
-        return new MessageBrokerRemoteClientSendingSenderNameEvent( client, traceId, sender );
+        return new MessageBrokerRemoteClientSendingSenderNameEvent( client, traceId, publisher );
     }
 }

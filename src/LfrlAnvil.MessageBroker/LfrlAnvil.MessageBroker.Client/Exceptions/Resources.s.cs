@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -147,13 +147,6 @@ internal static class Resources
     internal static string SenderIdIsNotPositive(int received)
     {
         return $"Expected sender ID to be greater than 0 but found {received}.";
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string SenderIdEqualsClientId(int received)
-    {
-        return $"Expected sender ID {received} to not be equal to client's ID.";
     }
 
     [Pure]

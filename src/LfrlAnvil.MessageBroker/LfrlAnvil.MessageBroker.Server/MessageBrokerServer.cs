@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -35,6 +35,15 @@ using LfrlAnvil.MessageBroker.Server.Internal;
 
 namespace LfrlAnvil.MessageBroker.Server;
 
+// TODO: NEXT
+// x add to do comments to define what tests to add...
+// - then, write tests
+// - then, add client reconnect
+// - then, add tests for that
+// - then, add client delete method
+// - then, add tests for that
+// - done?
+
 /// <summary>
 /// Represents a message broker server.
 /// </summary>
@@ -51,16 +60,18 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     internal readonly Func<MessageBrokerStream, MessageBrokerStreamLogger?>? StreamLoggerFactory;
     internal readonly Func<MessageBrokerQueue, MessageBrokerQueueLogger?>? QueueLoggerFactory;
 
-    internal readonly DirectoryInfo? RootClientsDirectory;
-    internal readonly DirectoryInfo? RootChannelsDirectory;
-    internal readonly DirectoryInfo? RootStreamsDirectory;
+    internal readonly ServerStorage Storage;
     internal readonly MessageBrokerRemoteClientStreamDecorator? StreamDecorator;
     internal readonly Func<MessageBrokerRemoteClient, ITimestampProvider> TimestampsFactory;
     internal readonly Func<MessageBrokerRemoteClient, ValueTaskDelaySource>? DelaySourceFactory;
     internal readonly MessageBrokerServerLogger Logger;
+    internal readonly int MaxNetworkMessagePacketBytes;
 
     private readonly TcpListener _listener;
+    private readonly TaskCompletionSource _disposed;
+    private FileStream? _storageLock;
     private MessageBrokerServerState _state;
+    private bool _storageLoaded;
     private ulong _nextTraceId;
 
     /// <summary>
@@ -70,21 +81,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     /// <param name="options">Optional creation options.</param>
     public MessageBrokerServer(IPEndPoint localEndPoint, MessageBrokerServerOptions options = default)
     {
-        if ( string.IsNullOrWhiteSpace( options.RootStoragePath ) )
-        {
-            RootStorageDirectory = null;
-            RootClientsDirectory = null;
-            RootChannelsDirectory = null;
-            RootStreamsDirectory = null;
-        }
-        else
-        {
-            RootStorageDirectory = new DirectoryInfo( options.RootStoragePath );
-            RootClientsDirectory = new DirectoryInfo( Path.Combine( options.RootStoragePath, "clients" ) );
-            RootChannelsDirectory = new DirectoryInfo( Path.Combine( options.RootStoragePath, "channels" ) );
-            RootStreamsDirectory = new DirectoryInfo( Path.Combine( options.RootStoragePath, "streams" ) );
-        }
-
+        Storage = ServerStorage.Create( options.RootStoragePath );
         _listener = new TcpListener( localEndPoint );
         LocalEndPoint = localEndPoint;
 
@@ -95,6 +92,10 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         MaxNetworkMessagePacketLength = Defaults.Memory.GetActualMaxNetworkLargePacketLength(
             MaxNetworkPacketLength,
             options.NetworkPacket.MaxMessageLength );
+
+        MaxNetworkMessagePacketBytes = unchecked( ( int )MaxNetworkMessagePacketLength.Bytes
+            - Math.Max( Protocol.PushMessageHeader.Length, Protocol.MessageNotificationHeader.Payload )
+            + Protocol.PushMessageHeader.Length );
 
         AcceptableMaxNetworkBatchPacketLength = Bounds.Create(
             MaxNetworkPacketLength,
@@ -119,17 +120,13 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         MemoryPool = new MemoryPool<byte>(
             unchecked( ( int )MaxNetworkMessagePacketLength.Max( AcceptableMaxNetworkBatchPacketLength.Max ).Bytes ) );
 
+        _disposed = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
         ClientListener = ClientListener.Create();
         RemoteClientCollection = RemoteClientCollection.Create();
         RemoteClientConnectorCollection = RemoteClientConnectorCollection.Create( options.Tcp );
         ChannelCollection = ChannelCollection.Create();
         StreamCollection = StreamCollection.Create();
     }
-
-    /// <summary>
-    /// Specifies the root directory for permanent server storage. Lack of root directory will cause the server to work in in-memory mode.
-    /// </summary>
-    public DirectoryInfo? RootStorageDirectory { get; }
 
     /// <summary>
     /// Handshake timeout for newly connected clients.
@@ -192,6 +189,12 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     public IParsedExpressionFactory? ExpressionFactory { get; }
 
     /// <summary>
+    /// Specifies the root directory for permanent server storage.
+    /// Lack of root directory will cause the server to be ephemeral and work in in-memory mode.
+    /// </summary>
+    public string? RootStorageDirectoryPath => Storage.ServerRootDir;
+
+    /// <summary>
     /// Current server's state.
     /// </summary>
     /// <remarks>See <see cref="MessageBrokerServerState"/> for more information.</remarks>
@@ -224,7 +227,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     /// </summary>
     public MessageBrokerStreamCollection Streams => new MessageBrokerStreamCollection( this );
 
-    internal bool ShouldCancel => _state >= MessageBrokerServerState.Disposing;
+    internal bool IsDisposed => _state >= MessageBrokerServerState.Disposing;
 
     /// <inheritdoc />
     public void Dispose()
@@ -235,13 +238,21 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
-        ulong traceId;
+        var traceId = 0UL;
+        MessageBrokerServerState state;
         using ( AcquireLock() )
         {
-            if ( ! TryBeginDispose() )
-                return;
+            state = _state;
+            if ( TryBeginDispose() )
+                traceId = GetTraceId();
+        }
 
-            traceId = GetTraceId();
+        if ( state >= MessageBrokerServerState.Disposing )
+        {
+            if ( state == MessageBrokerServerState.Disposing )
+                await _disposed.Task.ConfigureAwait( false );
+
+            return;
         }
 
         using ( MessageBrokerServerTraceEvent.CreateScope( this, traceId, MessageBrokerServerTraceEventType.Dispose ) )
@@ -275,13 +286,38 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     /// </remarks>
     public async ValueTask<Result> StartAsync(CancellationToken cancellationToken = default)
     {
-        ulong traceId;
         using ( AcquireLock() )
         {
-            if ( ShouldCancel )
+            if ( IsDisposed )
                 ExceptionThrower.Throw( this.DisposedException() );
 
-            traceId = GetTraceId();
+            AssertState( MessageBrokerServerState.Created );
+        }
+
+        ulong traceId;
+        var @continue = false;
+        var storageLock = await Storage.LockAsync( this ).ConfigureAwait( false );
+        try
+        {
+            var metadata = await Storage.LoadMetadataAsync( this ).ConfigureAwait( false );
+            using ( AcquireLock() )
+            {
+                if ( IsDisposed )
+                    ExceptionThrower.Throw( this.DisposedException() );
+
+                if ( metadata is not null )
+                    _nextTraceId = metadata.Value.TraceId;
+
+                _storageLock = storageLock;
+                traceId = GetTraceId();
+            }
+
+            @continue = true;
+        }
+        finally
+        {
+            if ( ! @continue && storageLock is not null )
+                await storageLock.DisposeAsync().ConfigureAwait( false );
         }
 
         using ( MessageBrokerServerTraceEvent.CreateScope( this, traceId, MessageBrokerServerTraceEventType.Start ) )
@@ -308,30 +344,99 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
                     AssertState( MessageBrokerServerState.Created );
                     _state = MessageBrokerServerState.Starting;
                 }
-            }
-            catch ( Exception exc )
-            {
-                if ( Logger.Error is { } error )
-                    error.Emit( MessageBrokerServerErrorEvent.Create( this, traceId, exc ) );
 
-                if ( exc is MessageBrokerServerStateException )
-                    throw;
-
-                await DisposeAsync( traceId ).ConfigureAwait( false );
-                return exc;
-            }
-
-            try
-            {
-                if ( RootStorageDirectory is not null )
+                if ( Storage.ServerRootDir is not null )
                 {
-                    Assume.IsNotNull( RootClientsDirectory );
-                    Assume.IsNotNull( RootChannelsDirectory );
-                    Assume.IsNotNull( RootStreamsDirectory );
-                    RootStorageDirectory.Create();
-                    RootClientsDirectory.Create();
-                    RootChannelsDirectory.Create();
-                    RootStreamsDirectory.Create();
+                    // TODO: tests
+                    // - non-ephemeral, save and load a bunch of correct data (one test, happy path)
+                    // - also, do the same in core tests
+
+                    if ( Logger.StorageLoading is { } storageLoading )
+                        storageLoading.Emit( MessageBrokerServerStorageLoadingEvent.Create( this, traceId, Storage.ServerRootDir ) );
+
+                    var result = await ChannelCollection.LoadChannelsAsync( this, traceId, cancellationToken ).ConfigureAwait( false );
+                    if ( result.Exception is not null )
+                        return result.Exception;
+
+                    result = await StreamCollection.LoadStreamsAsync( this, traceId, cancellationToken ).ConfigureAwait( false );
+                    if ( result.Exception is not null )
+                        return result.Exception;
+
+                    result = await RemoteClientCollection.LoadClientsAsync( this, traceId, cancellationToken ).ConfigureAwait( false );
+                    if ( result.Exception is not null )
+                        return result.Exception;
+
+                    ReadOnlyArray<MessageBrokerChannel> channels;
+                    ReadOnlyArray<MessageBrokerStream> streams;
+                    ReadOnlyArray<MessageBrokerRemoteClient> clients;
+                    using ( AcquireActiveLock( traceId, out var exc ) )
+                    {
+                        if ( exc is not null )
+                            return exc;
+
+                        channels = ChannelCollection.GetAllUnsafe();
+                        streams = StreamCollection.GetAllUnsafe();
+                        clients = RemoteClientCollection.GetAllUnsafe();
+                    }
+
+                    foreach ( var stream in streams )
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        await stream.Storage.LoadMessagesAsync( stream, traceId ).ConfigureAwait( false );
+                    }
+
+                    var queueCount = 0;
+                    var publisherCount = 0;
+                    var listenerCount = 0;
+                    foreach ( var client in clients )
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+
+                        ReadOnlyArray<MessageBrokerQueue> queues;
+                        using ( client.AcquireLock() )
+                        {
+                            queues = client.QueueStore.GetAll();
+                            queueCount += queues.Count;
+                            publisherCount += client.PublishersByChannelId.Count;
+                            listenerCount += client.ListenersByChannelId.Count;
+                        }
+
+                        foreach ( var queue in queues )
+                        {
+                            cancellationToken.ThrowIfCancellationRequested();
+                            await queue.Storage.LoadMessagesAsync( queue, traceId ).ConfigureAwait( false );
+                        }
+                    }
+
+                    foreach ( var stream in streams )
+                        stream.FinalizeMessageReferences( traceId );
+
+                    await Parallel.ForEachAsync( channels, cancellationToken, (c, _) => c.TryDisposeDueToLackOfReferencesAsync( traceId ) )
+                        .ConfigureAwait( false );
+
+                    using ( AcquireActiveLock( traceId, out var exc ) )
+                    {
+                        if ( exc is not null )
+                            return exc;
+
+                        _storageLoaded = true;
+                    }
+
+                    if ( Logger.StorageLoaded is { } storageLoaded )
+                        storageLoaded.Emit(
+                            MessageBrokerServerStorageLoadedEvent.Create(
+                                this,
+                                traceId,
+                                Storage.ServerRootDir,
+                                channels.Count,
+                                streams.Count,
+                                clients.Count,
+                                queueCount,
+                                publisherCount,
+                                listenerCount ) );
+
+                    foreach ( var stream in streams )
+                        stream.StartProcessor();
                 }
 
                 if ( Logger.ListenerStarting is { } listenerStarting )
@@ -366,6 +471,9 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
                 if ( Logger.Error is { } error )
                     error.Emit( MessageBrokerServerErrorEvent.Create( this, traceId, exc ) );
 
+                if ( exc is MessageBrokerServerStateException )
+                    throw;
+
                 await DisposeAsync( traceId ).ConfigureAwait( false );
                 return exc;
             }
@@ -377,14 +485,14 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ExclusiveLock AcquireLock()
     {
-        return ExclusiveLock.SpinWaitEnter( _listener, spinWaitMultiplier: 4 );
+        return ExclusiveLock.Enter( _listener );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ExclusiveLock AcquireActiveLock(ulong traceId, out MessageBrokerServerDisposedException? exception)
     {
         var @lock = AcquireLock();
-        if ( ! ShouldCancel )
+        if ( ! IsDisposed )
         {
             exception = null;
             return @lock;
@@ -399,6 +507,25 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void EmitError(Result result, ulong traceId)
+    {
+        if ( result.Exception is not null && Logger.Error is { } error )
+            error.Emit( MessageBrokerServerErrorEvent.Create( this, traceId, result.Exception ) );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void EmitErrors(ref Chain<Exception> exceptions, ulong traceId)
+    {
+        if ( exceptions.Count > 0 && Logger.Error is { } error )
+        {
+            foreach ( var exc in exceptions )
+                error.Emit( MessageBrokerServerErrorEvent.Create( this, traceId, exc ) );
+        }
+
+        exceptions = Chain<Exception>.Empty;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ulong GetTraceId()
     {
         return unchecked( _nextTraceId++ );
@@ -407,7 +534,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal bool TryBeginDispose()
     {
-        if ( ShouldCancel )
+        if ( IsDisposed )
             return false;
 
         _state = MessageBrokerServerState.Disposing;
@@ -418,7 +545,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     {
         using ( AcquireLock() )
         {
-            if ( ShouldCancel )
+            if ( IsDisposed )
                 return ValueTask.CompletedTask;
 
             _state = MessageBrokerServerState.Disposing;
@@ -429,65 +556,158 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
 
     internal async ValueTask DisposeAsyncCore(ulong traceId)
     {
-        if ( Logger.Disposing is { } disposing )
-            disposing.Emit( MessageBrokerServerDisposingEvent.Create( this, traceId ) );
-
-        var exceptions = Chain<Exception>.Empty;
-        MessageBrokerRemoteClientConnector[] connectors;
-        MessageBrokerRemoteClient[] clients;
-        MessageBrokerStream[] streams;
-        MessageBrokerChannel[] channels;
-        Task? clientListenerTask;
-        using ( AcquireLock() )
+        FileStream? storageLock = null;
+        try
         {
-            connectors = RemoteClientConnectorCollection.DisposeUnsafe();
-            clients = RemoteClientCollection.DisposeUnsafe();
-            channels = ChannelCollection.DisposeUnsafe();
-            streams = StreamCollection.DisposeUnsafe();
-            clientListenerTask = ClientListener.DiscardUnderlyingTask();
+            if ( Logger.Disposing is { } disposing )
+                disposing.Emit( MessageBrokerServerDisposingEvent.Create( this, traceId ) );
 
+            bool storageLoaded;
+            var exceptions = Chain<Exception>.Empty;
+            MessageBrokerRemoteClientConnector[] connectors;
+            MessageBrokerRemoteClient[] clients;
+            MessageBrokerStream[] streams;
+            MessageBrokerChannel[] channels;
+            Task? clientListenerTask;
+
+            using ( AcquireLock() )
+            {
+                storageLoaded = _storageLoaded;
+                storageLock = _storageLock;
+                _storageLock = null;
+                clientListenerTask = ClientListener.DiscardUnderlyingTask();
+                try
+                {
+                    _listener.Stop();
+                }
+                catch ( Exception exc )
+                {
+                    exceptions = exceptions.Extend( exc );
+                    clientListenerTask = null;
+                }
+
+                connectors = RemoteClientConnectorCollection.DisposeUnsafe( ref exceptions );
+                clients = RemoteClientCollection.DisposeUnsafe();
+                channels = ChannelCollection.DisposeUnsafe();
+                streams = StreamCollection.DisposeUnsafe();
+            }
+
+            EmitErrors( ref exceptions, traceId );
+
+            // TODO:
+            // (sync) begin shutdown of all connectors
+            // ^ change state
+            // ^ begin cancelling, but don't wait
+            // (async) begin shutdown of all streams
+            // ^ change state
+            // ^ stop processors (wait until stopped, this way no more data will flow to client listeners/queues)
+            // (sync) begin shutdown of all channels
+            // ^ change state
+            // (sync) begin shutdown of all clients
+            // ^ change state
+            // ^ close tcp
+            // ^ change publishers/listeners/queues state
+            // ^ begin stopping internal tasks, no need to wait for them (same goes for queues), although might as well wait?
+            // ^ essentially, dispose everything except for relationships between objects and underlying message stores <= stuff that requires persistence
+            // ^ waiting for client should be fine, since they are the last thing to begin shutting down
+            // ---
+            // (async) finish shutdown of all clients (begin and finish shutdown phases could be merge into one)
+            // ^ if ephemeral, then clear collections, finalize listeners/publishers/queues disposal and done (also, delete storage, client is allowed to change to ephemeral when connecting)
+            // ^ otherwise, persist header + listeners/publishers/queues (along with messages)
+            // ^ then clear collections and done
+            // (async) finish shutdown of all streams <= this is the most complex part
+            // ^ if bound only to ephemeral publishers, then clear collections + messages and done (also, delete storage)
+            // ^ otherwise, persist header + messages (all) and done
+            // ^ message persistence:
+            //   - don't persist ref-count (rebuild on reload)
+            //     ^ during reload, some messages may have to be removed immediately due to only being referenced by dropped ephemeral listeners
+            //     ^ it would be better not to store such messages to begin with
+            //     ^ it might be better to remove references 1-by-1 when finalizing ephemeral client disposal
+            //     ^ this way, channels/streams will be naturally trimmed to what's actually necessary (and may not even have to be persisted due to no more references)
+            //   - persist a number of pending messages (its always a sequence at the end of message list)
+            //   - if from ephemeral publisher, then needs to store its id AND name
+            //   - otherwise, store id only
+            // (async) finish shutdown of all channels
+            // ^ if bound only to ephemeral publishers/listeners, then clear collections and done (also, delete storage)
+            // ^ otherwise, persist header
+            // (async) wait for all connectors to finish shutting down
+            // (async) wait for client listener task to complete, store stuff and done
+
+            // TODO: NEXT STEPS:
+            // x go through client disconnect separately
+            // x add IsEphemeral flag to Bind protocol
+            // x implement server reload
+            // x refactor server reload (create protocol-like dtos for storage contracts etc.)
+            // x probably should implement some sort of server directory lock, so that only one server instance can use it at a time
+            //   - apparently, FileStream to some .lock file, OpenOrCreate, no share, DeleteOnClose should be fine
+            // - implement dynamic non-ephemeral client reconnect
+            //   - this requires mutable remote-client, listener, publisher and queue
+            // - add client delete method
+            // - tests...
+            // - that's it!
+            //   - add a to do entry for not keeping disconnected client's data in memory, but rather storing it on the disk
+            //     - requires a swap of queue processor task which will open a file stream with some sort of buffering
+            //     - on client reconnect, load everything from the disk to memory
+            //     - I _might_ implement it at some point in the near future...
+            //   - add a to do entry for more efficient stream message store storage, on the disk
+            //     - requires some sort of LRU in-memory cache with the ability to load data from the disk, random access
+            //     - would require multiple file blocks of const size, and each message would need to know
+            //     - which file contains it and at what offset does it start
+            //     - chances for me implementing it are close to zero - maybe when I'm done playing around with actual apps
+
+            foreach ( var connector in connectors )
+                connector.OnServerDisposing( traceId );
+
+            EmitError(
+                await Parallel.ForEachAsync( streams, (s, _) => s.OnServerDisposingAsync( traceId ) ).AsSafe().ConfigureAwait( false ),
+                traceId );
+
+            foreach ( var channel in channels )
+                channel.OnServerDisposing( traceId );
+
+            EmitError(
+                await Parallel.ForEachAsync( clients, (c, _) => c.OnServerDisposedAsync( traceId, storageLoaded ) )
+                    .AsSafe()
+                    .ConfigureAwait( false ),
+                traceId );
+
+            EmitError(
+                await Parallel.ForEachAsync( streams, (s, _) => s.OnServerDisposedAsync( traceId, storageLoaded ) )
+                    .AsSafe()
+                    .ConfigureAwait( false ),
+                traceId );
+
+            EmitError(
+                await Parallel.ForEachAsync( channels, (c, _) => c.OnServerDisposedAsync( traceId, storageLoaded ) )
+                    .AsSafe()
+                    .ConfigureAwait( false ),
+                traceId );
+
+            EmitError(
+                await Parallel.ForEachAsync( connectors, (c, _) => c.OnServerDisposedAsync( traceId ) ).AsSafe().ConfigureAwait( false ),
+                traceId );
+
+            EmitError( await clientListenerTask.AsSafeCancellable().ConfigureAwait( false ), traceId );
+            EmitError( await Storage.SaveMetadataAsync( this, traceId ).AsSafe().ConfigureAwait( false ), traceId );
+
+            using ( AcquireLock() )
+                _state = MessageBrokerServerState.Disposed;
+
+            if ( Logger.Disposed is { } disposed )
+                disposed.Emit( MessageBrokerServerDisposedEvent.Create( this, traceId ) );
+        }
+        finally
+        {
             try
             {
-                _listener.Stop();
+                if ( storageLock is not null )
+                    await storageLock.DisposeAsync().ConfigureAwait( false );
             }
-            catch ( Exception exc )
+            finally
             {
-                exceptions = exceptions.Extend( exc );
-                clientListenerTask = null;
+                _disposed.TrySetResult();
             }
-
-            RemoteClientConnectorCollection.DisposeCancellationSources( ref exceptions );
         }
-
-        this.TryEmitErrors( traceId, exceptions );
-
-        await Parallel.ForEachAsync(
-                connectors,
-                async (c, _) =>
-                {
-                    var result = await c.CancelAsync().ConfigureAwait( false );
-                    if ( result.Exception is not null && Logger.Error is { } err )
-                        err.Emit( MessageBrokerServerErrorEvent.Create( this, traceId, result.Exception ) );
-                } )
-            .ConfigureAwait( false );
-
-        await Parallel.ForEachAsync( streams, (s, _) => s.OnServerDisposedAsync( traceId ) ).ConfigureAwait( false );
-        foreach ( var channel in channels )
-            channel.OnServerDisposed( traceId );
-
-        await Parallel.ForEachAsync( clients, (c, _) => c.OnServerDisposedAsync( traceId ) ).ConfigureAwait( false );
-        foreach ( var stream in streams )
-            stream.ClearMessageStore();
-
-        var taskResult = await clientListenerTask.SafeWaitAsync().ConfigureAwait( false );
-        if ( taskResult.Exception is not null && Logger.Error is { } error )
-            error.Emit( MessageBrokerServerErrorEvent.Create( this, traceId, taskResult.Exception ) );
-
-        using ( AcquireLock() )
-            _state = MessageBrokerServerState.Disposed;
-
-        if ( Logger.Disposed is { } disposed )
-            disposed.Emit( MessageBrokerServerDisposedEvent.Create( this, traceId ) );
     }
 
     [StackTraceHidden]

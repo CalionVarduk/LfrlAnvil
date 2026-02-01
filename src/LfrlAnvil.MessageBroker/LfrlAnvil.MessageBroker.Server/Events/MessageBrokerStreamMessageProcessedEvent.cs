@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ namespace LfrlAnvil.MessageBroker.Server.Events;
 public readonly struct MessageBrokerStreamMessageProcessedEvent
 {
     private MessageBrokerStreamMessageProcessedEvent(
-        MessageBrokerChannelPublisherBinding publisher,
+        IMessageBrokerMessagePublisher publisher,
         ulong traceId,
         ulong messageId,
         int failures,
@@ -43,9 +43,9 @@ public readonly struct MessageBrokerStreamMessageProcessedEvent
     public MessageBrokerStreamEventSource Source { get; }
 
     /// <summary>
-    /// <see cref="MessageBrokerChannelPublisherBinding"/> that pushed the message.
+    /// <see cref="IMessageBrokerMessagePublisher"/> that pushed the message.
     /// </summary>
-    public MessageBrokerChannelPublisherBinding Publisher { get; }
+    public IMessageBrokerMessagePublisher Publisher { get; }
 
     /// <summary>
     /// Unique id of the message.
@@ -70,13 +70,13 @@ public readonly struct MessageBrokerStreamMessageProcessedEvent
     public override string ToString()
     {
         return
-            $"[MessageProcessed] {Source}, Channel = [{Publisher.Channel.Id}] '{Publisher.Channel.Name}', Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', MessageId = {MessageId}, Failures = {Failures}, Filtered = {Filtered}";
+            $"[MessageProcessed] {Source}, Channel = [{Publisher.Channel.Id}] '{Publisher.Channel.Name}', Sender = [{Publisher.ClientId}] '{Publisher.ClientName}', MessageId = {MessageId}, Failures = {Failures}, Filtered = {Filtered}";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerStreamMessageProcessedEvent Create(
-        MessageBrokerChannelPublisherBinding publisher,
+        IMessageBrokerMessagePublisher publisher,
         ulong traceId,
         ulong messageId,
         int failures,

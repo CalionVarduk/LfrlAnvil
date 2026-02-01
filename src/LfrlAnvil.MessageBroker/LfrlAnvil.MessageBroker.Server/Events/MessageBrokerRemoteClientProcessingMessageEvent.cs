@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.MessageBroker.Server.Internal;
+using LfrlAnvil.Internal;
 
 namespace LfrlAnvil.MessageBroker.Server.Events;
 
@@ -29,7 +29,7 @@ public readonly struct MessageBrokerRemoteClientProcessingMessageEvent
     private MessageBrokerRemoteClientProcessingMessageEvent(
         MessageBrokerChannelListenerBinding listener,
         ulong traceId,
-        MessageBrokerChannelPublisherBinding publisher,
+        IMessageBrokerMessagePublisher publisher,
         ulong messageId,
         int ackId,
         Int31BoolPair retry,
@@ -57,9 +57,9 @@ public readonly struct MessageBrokerRemoteClientProcessingMessageEvent
     public MessageBrokerChannelListenerBinding Listener { get; }
 
     /// <summary>
-    /// <see cref="MessageBrokerChannelPublisherBinding"/> that sent the message.
+    /// <see cref="IMessageBrokerMessagePublisher"/> that sent the message.
     /// </summary>
-    public MessageBrokerChannelPublisherBinding Publisher { get; }
+    public IMessageBrokerMessagePublisher Publisher { get; }
 
     /// <summary>
     /// Unique id of the message.
@@ -118,7 +118,7 @@ public readonly struct MessageBrokerRemoteClientProcessingMessageEvent
         var isRetry = IsRetry ? " (active)" : string.Empty;
         var isRedelivery = IsRedelivery ? " (active)" : string.Empty;
         return
-            $"[ProcessingMessage] {Source}, Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', Queue = [{Listener.Queue.Id}] '{Listener.Queue.Name}'{ackId}, MessageId = {MessageId}, Retry = {Retry}{isRetry}, Redelivery = {Redelivery}{isRedelivery}, Length = {Length}";
+            $"[ProcessingMessage] {Source}, Sender = [{Publisher.ClientId}] '{Publisher.ClientName}', Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', Queue = [{Listener.Queue.Id}] '{Listener.Queue.Name}'{ackId}, MessageId = {MessageId}, Retry = {Retry}{isRetry}, Redelivery = {Redelivery}{isRedelivery}, Length = {Length}";
     }
 
     [Pure]
@@ -126,7 +126,7 @@ public readonly struct MessageBrokerRemoteClientProcessingMessageEvent
     internal static MessageBrokerRemoteClientProcessingMessageEvent Create(
         MessageBrokerChannelListenerBinding listener,
         ulong traceId,
-        MessageBrokerChannelPublisherBinding publisher,
+        IMessageBrokerMessagePublisher publisher,
         ulong messageId,
         int ackId,
         Int31BoolPair retry,

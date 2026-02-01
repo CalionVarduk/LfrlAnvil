@@ -37,8 +37,8 @@ public readonly struct MessageBrokerQueueLogger
         Action<MessageBrokerQueueMessageDiscardedEvent>? messageDiscarded,
         Action<MessageBrokerQueueAckProcessedEvent>? ackProcessed,
         Action<MessageBrokerQueueNegativeAckProcessedEvent>? negativeAckProcessed,
-        Action<MessageBrokerQueueDisposingEvent>? disposing,
-        Action<MessageBrokerQueueDisposedEvent>? disposed,
+        Action<MessageBrokerQueueDeactivatingEvent>? deactivating,
+        Action<MessageBrokerQueueDeactivatedEvent>? deactivated,
         Action<MessageBrokerQueueErrorEvent>? error)
     {
         TraceStart = traceStart;
@@ -55,8 +55,8 @@ public readonly struct MessageBrokerQueueLogger
         MessageDiscarded = messageDiscarded;
         AckProcessed = ackProcessed;
         NegativeAckProcessed = negativeAckProcessed;
-        Disposing = disposing;
-        Disposed = disposed;
+        Deactivating = deactivating;
+        Deactivated = deactivated;
         Error = error;
     }
 
@@ -131,14 +131,14 @@ public readonly struct MessageBrokerQueueLogger
     public readonly Action<MessageBrokerQueueNegativeAckProcessedEvent>? NegativeAckProcessed;
 
     /// <summary>
-    /// Optional callback for a <see cref="MessageBrokerQueueDisposingEvent"/>.
+    /// Optional callback for a <see cref="MessageBrokerQueueDeactivatingEvent"/>.
     /// </summary>
-    public readonly Action<MessageBrokerQueueDisposingEvent>? Disposing;
+    public readonly Action<MessageBrokerQueueDeactivatingEvent>? Deactivating;
 
     /// <summary>
-    /// Optional callback for a <see cref="MessageBrokerQueueDisposedEvent"/>.
+    /// Optional callback for a <see cref="MessageBrokerQueueDeactivatedEvent"/>.
     /// </summary>
-    public readonly Action<MessageBrokerQueueDisposedEvent>? Disposed;
+    public readonly Action<MessageBrokerQueueDeactivatedEvent>? Deactivated;
 
     /// <summary>
     /// Optional callback for a <see cref="MessageBrokerQueueErrorEvent"/>.
@@ -162,8 +162,8 @@ public readonly struct MessageBrokerQueueLogger
     /// <param name="messageDiscarded">Optional <see cref="MessageDiscarded"/> callback.</param>
     /// <param name="ackProcessed">Optional <see cref="AckProcessed"/> callback.</param>
     /// <param name="negativeAckProcessed">Optional <see cref="NegativeAckProcessed"/> callback.</param>
-    /// <param name="disposing">Optional <see cref="Disposing"/> callback.</param>
-    /// <param name="disposed">Optional <see cref="Disposed"/> callback.</param>
+    /// <param name="deactivating">Optional <see cref="Deactivating"/> callback.</param>
+    /// <param name="deactivated">Optional <see cref="Deactivated"/> callback.</param>
     /// <param name="error">Optional <see cref="Error"/> callback.</param>
     /// <returns>New <see cref="MessageBrokerQueueLogger"/> instance.</returns>
     [Pure]
@@ -182,8 +182,8 @@ public readonly struct MessageBrokerQueueLogger
         Action<MessageBrokerQueueMessageDiscardedEvent>? messageDiscarded = null,
         Action<MessageBrokerQueueAckProcessedEvent>? ackProcessed = null,
         Action<MessageBrokerQueueNegativeAckProcessedEvent>? negativeAckProcessed = null,
-        Action<MessageBrokerQueueDisposingEvent>? disposing = null,
-        Action<MessageBrokerQueueDisposedEvent>? disposed = null,
+        Action<MessageBrokerQueueDeactivatingEvent>? deactivating = null,
+        Action<MessageBrokerQueueDeactivatedEvent>? deactivated = null,
         Action<MessageBrokerQueueErrorEvent>? error = null)
     {
         return new MessageBrokerQueueLogger(
@@ -201,8 +201,8 @@ public readonly struct MessageBrokerQueueLogger
             messageDiscarded,
             ackProcessed,
             negativeAckProcessed,
-            disposing,
-            disposed,
+            deactivating,
+            deactivated,
             error );
     }
 }

@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Chrono;
@@ -23,6 +24,8 @@ namespace LfrlAnvil.MessageBroker.Server.Internal;
 
 internal struct StreamMessageStore
 {
+    private const int InitialPendingRefCount = -1;
+
     private SparseListSlim<Entry> _store;
     private QueueSlim<RoutingEntry> _routing;
     private ulong _nextMessageId;
@@ -152,6 +155,59 @@ internal struct StreamMessageStore
         return true;
     }
 
+    internal bool TryIncrementRefCount(int key, out StreamMessage message, out bool isPending)
+    {
+        ref var entry = ref _store[key];
+        if ( Unsafe.IsNullRef( ref entry ) )
+        {
+            message = default;
+            isPending = default;
+            return false;
+        }
+
+        message = entry.Message;
+        isPending = entry.RefCount == InitialPendingRefCount;
+        if ( ! isPending )
+            entry.RefCount += 1;
+
+        return true;
+    }
+
+    internal void DecrementRefCount(int key)
+    {
+        ref var entry = ref _store[key];
+        if ( ! Unsafe.IsNullRef( ref entry ) )
+            entry.RefCount -= 1;
+    }
+
+    internal Chain<Exception> FinalizeMessageReferences()
+    {
+        var exceptions = Chain<Exception>.Empty;
+        var toDelete = ListSlim<KeyValuePair<int, MemoryPoolToken<byte>>>.Create();
+
+        var node = _store.First;
+        while ( node is not null )
+        {
+            ref var entry = ref node.Value.Value;
+            if ( entry.RefCount == InitialPendingRefCount )
+                entry.RefCount = 1;
+            else if ( entry.RefCount == 0 )
+                toDelete.Add( KeyValuePair.Create( node.Value.Index, entry.Message.PoolToken ) );
+
+            node = node.Value.Next;
+        }
+
+        foreach ( var (index, poolToken) in toDelete )
+        {
+            _store.Remove( index );
+            var exc = poolToken.Return();
+            if ( exc is not null )
+                exceptions = exceptions.Extend( exc );
+        }
+
+        return exceptions;
+    }
+
     internal void IncreaseRefCount(int key, int count)
     {
         Assume.IsGreaterThan( count, 0 );
@@ -185,11 +241,83 @@ internal struct StreamMessageStore
         return true;
     }
 
-    internal (int DiscardedMessageCount, Chain<Exception> Exceptions) ClearPending(bool extractExceptions)
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool LoadMessage(int key, StreamMessage message)
+    {
+        ref var entry = ref _store.GetRefOrAddDefault( key, out var exists );
+        if ( exists )
+            return false;
+
+        entry = new Entry( in message );
+        return true;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void LoadRouting(MemoryPoolToken<byte> poolToken, Memory<byte> data, ulong messageId)
+    {
+        _routing.Enqueue( new RoutingEntry( poolToken, data, messageId ) );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool Initialize(ulong nextMessageId, NullableIndex nextPendingNodeId)
+    {
+        _nextMessageId = nextMessageId;
+        _nextPendingNodeId = nextPendingNodeId;
+        if ( ! _nextPendingNodeId.HasValue )
+            return true;
+
+        var next = _store.GetNode( _nextPendingNodeId.Value );
+        if ( next is null )
+            return false;
+
+        do
+        {
+            ref var entry = ref next.Value.Value;
+            entry.RefCount = InitialPendingRefCount;
+            next = next.Value.Next;
+        }
+        while ( next.HasValue );
+
+        return true;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal NullableIndex GetNextPendingNodeId()
+    {
+        return _nextPendingNodeId;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal ulong GetNextMessageId()
+    {
+        return _nextMessageId;
+    }
+
+    [Pure]
+    internal ListSlim<KeyValuePair<int, StreamMessage>> GetMessages()
+    {
+        var result = ListSlim<KeyValuePair<int, StreamMessage>>.Create( minCapacity: _store.Count );
+        foreach ( var e in _store )
+            result.Add( KeyValuePair.Create( e.Key, e.Value.Message ) );
+
+        return result;
+    }
+
+    [Pure]
+    internal ListSlim<KeyValuePair<ulong, ReadOnlyMemory<byte>>> GetRoutings()
+    {
+        var result = ListSlim<KeyValuePair<ulong, ReadOnlyMemory<byte>>>.Create( minCapacity: _routing.Count );
+        foreach ( ref readonly var e in _routing )
+            result.Add( KeyValuePair.Create( e.MessageId, e.Data ) );
+
+        return result;
+    }
+
+    internal int ClearPending(ref Chain<Exception> exceptions)
     {
         var discardedMessageCount = 0;
-        var exceptions = Chain<Exception>.Empty;
-
         if ( _nextPendingNodeId.HasValue )
         {
             var node = _store.GetNode( _nextPendingNodeId.Value );
@@ -200,7 +328,7 @@ internal struct StreamMessageStore
                 if ( --entry.RefCount <= 0 )
                 {
                     var exc = entry.Message.PoolToken.Return();
-                    if ( exc is not null && extractExceptions )
+                    if ( exc is not null )
                         exceptions = exceptions.Extend( exc );
 
                     _store.Remove( node.Value.Index );
@@ -216,17 +344,16 @@ internal struct StreamMessageStore
         foreach ( ref readonly var entry in _routing )
         {
             var exc = entry.PoolToken.Return();
-            if ( exc is not null && extractExceptions )
+            if ( exc is not null )
                 exceptions = exceptions.Extend( exc );
         }
 
         _routing = QueueSlim<RoutingEntry>.Create();
-        return (discardedMessageCount, exceptions);
+        return discardedMessageCount;
     }
 
     internal Chain<Exception> Clear()
     {
-        Assume.Equals( _nextPendingNodeId, NullableIndex.Null );
         var exceptions = Chain<Exception>.Empty;
 
         var node = _store.First;
@@ -257,6 +384,12 @@ internal struct StreamMessageStore
             RefCount = 1;
         }
 
+        internal Entry(in StreamMessage message)
+        {
+            Message = message;
+            RefCount = 0;
+        }
+
         internal readonly StreamMessage Message;
         internal int RefCount;
 
@@ -273,7 +406,7 @@ internal struct StreamMessageStore
         internal readonly ReadOnlyMemory<byte> Data;
         internal readonly ulong MessageId;
 
-        public RoutingEntry(MemoryPoolToken<byte> poolToken, ReadOnlyMemory<byte> data, ulong messageId)
+        internal RoutingEntry(MemoryPoolToken<byte> poolToken, ReadOnlyMemory<byte> data, ulong messageId)
         {
             PoolToken = poolToken;
             Data = data;

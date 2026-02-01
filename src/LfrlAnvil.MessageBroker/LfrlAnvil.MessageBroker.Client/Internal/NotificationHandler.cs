@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -279,7 +279,7 @@ internal struct NotificationHandler
                         listener = client.ListenerCollection.TryGetByChannelIdUnsafe( request.ChannelId );
                         if ( listener is not null )
                         {
-                            sender = client.ExternalNameCache.GetSender( client, request.SenderId );
+                            sender = client.ExternalNameCache.GetSender( request.SenderId );
                             stream = client.ExternalNameCache.GetStream( request.StreamId );
                         }
                     }
@@ -390,7 +390,7 @@ internal struct NotificationHandler
         var data = notification.Data.Slice( Protocol.SystemNotificationHeader.Length );
         var parsedRequest = Protocol.ObjectNameNotificationHeader.Parse( data, reverseEndianness );
 
-        var requestErrors = parsedRequest.StringifySenderErrors( client.Id );
+        var requestErrors = parsedRequest.StringifySenderErrors();
         if ( requestErrors.Count > 0 )
         {
             if ( client.Logger.Error is { } error )

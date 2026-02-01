@@ -138,8 +138,8 @@ public partial class MessageBrokerRemoteClientTests
                                 LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid ConfirmHandshakeResponse from client [1] 'test'. Encountered 1 error(s):
                                 1. Received unexpected server endpoint.
                                 """,
-                                "[Disposing] Client = [1] 'test', TraceId = 1",
-                                "[Disposed] Client = [1] 'test', TraceId = 1",
+                                "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                                "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                                 "[Trace:Unexpected] Client = [1] 'test', TraceId = 1 (end)"
                             ] )
                         ] ),
@@ -197,8 +197,8 @@ public partial class MessageBrokerRemoteClientTests
                                 LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid Ping from client [1] 'test'. Encountered 1 error(s):
                                 1. Expected endianness verification payload to be 0102fdfe but found 00000001.
                                 """,
-                                "[Disposing] Client = [1] 'test', TraceId = 1",
-                                "[Disposed] Client = [1] 'test', TraceId = 1",
+                                "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                                "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                                 "[Trace:Ping] Client = [1] 'test', TraceId = 1 (end)"
                             ] )
                         ] ),
@@ -229,7 +229,7 @@ public partial class MessageBrokerRemoteClientTests
                             MessageBrokerRemoteClientLogger.Create(
                                 traceEnd: e =>
                                 {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.Dispose )
+                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.Deactivate )
                                         endSource.Complete();
                                 },
                                 error: e => exception = e.Exception ) ) ) );
@@ -251,14 +251,14 @@ public partial class MessageBrokerRemoteClientTests
                         [
                             (t, _) => t.Logs.TestSequence(
                             [
-                                "[Trace:Dispose] Client = [1] 'test', TraceId = 1 (start)",
+                                "[Trace:Deactivate] Client = [1] 'test', TraceId = 1 (start)",
                                 """
                                 [Error] Client = [1] 'test', TraceId = 1
                                 LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientRequestTimeoutException: Client [1] 'test' failed to send a request to the server in the specified amount of time (0.401 second(s)).
                                 """,
-                                "[Disposing] Client = [1] 'test', TraceId = 1",
-                                "[Disposed] Client = [1] 'test', TraceId = 1",
-                                "[Trace:Dispose] Client = [1] 'test', TraceId = 1 (end)"
+                                "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                                "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                                "[Trace:Deactivate] Client = [1] 'test', TraceId = 1 (end)"
                             ] )
                         ] ),
                     logs.GetAllAwaitPacket()

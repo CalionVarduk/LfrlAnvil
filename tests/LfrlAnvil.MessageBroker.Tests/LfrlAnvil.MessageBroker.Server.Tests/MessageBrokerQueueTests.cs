@@ -650,7 +650,7 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
     }
 
     [Fact]
-    public async Task MessageNotification_ShouldOnlyBePrecededByStreamName_WhenClientSendsMessageToSelf()
+    public async Task MessageNotification_ShouldBePrecededBySenderAndStreamNames_WhenClientSendsMessageToSelf()
     {
         var endSource = new SafeTaskCompletionSource();
         var clientLogs = new ClientEventLogger();
@@ -681,6 +681,9 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                 c.ReadListenerBoundResponse();
                 c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
                 c.ReadObjectNameSystemNotification(
+                    new Protocol.ObjectNameNotification( MessageBrokerSystemNotificationType.SenderName, 1, "test" ) );
+
+                c.ReadObjectNameSystemNotification(
                     new Protocol.ObjectNameNotification( MessageBrokerSystemNotificationType.StreamName, 1, "c" ) );
 
                 c.ReadMessageNotification( 3 );
@@ -695,20 +698,29 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                 (t, _) => t.Logs.TestSequence(
                 [
                     "[Trace:SystemNotification] Client = [1] 'test', TraceId = 4 (start)",
-                    "[SendingStreamName] Client = [1] 'test', TraceId = 4, Stream = [1] 'c'",
-                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (SystemNotification, Length = 11)",
-                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (SystemNotification, Length = 11)",
-                    "[SystemNotificationSent] Client = [1] 'test', TraceId = 4, Type = StreamName",
+                    "[SendingSenderName] Client = [1] 'test', TraceId = 4, Sender = [1] 'test'",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (SystemNotification, Length = 14)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (SystemNotification, Length = 14)",
+                    "[SystemNotificationSent] Client = [1] 'test', TraceId = 4, Type = SenderName",
                     "[Trace:SystemNotification] Client = [1] 'test', TraceId = 4 (end)"
                 ] ),
                 (t, _) => t.Logs.TestSequence(
                 [
-                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 5 (start)",
-                    "[ProcessingMessage] Client = [1] 'test', TraceId = 5, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, Retry = 0, Redelivery = 0, Length = 3",
-                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 5, Packet = (MessageNotification, Length = 48)",
-                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 5, Packet = (MessageNotification, Length = 48)",
-                    "[MessageProcessed] Client = [1] 'test', TraceId = 5, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, Retry = 0, Redelivery = 0",
-                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 5 (end)"
+                    "[Trace:SystemNotification] Client = [1] 'test', TraceId = 5 (start)",
+                    "[SendingStreamName] Client = [1] 'test', TraceId = 5, Stream = [1] 'c'",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 5, Packet = (SystemNotification, Length = 11)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 5, Packet = (SystemNotification, Length = 11)",
+                    "[SystemNotificationSent] Client = [1] 'test', TraceId = 5, Type = StreamName",
+                    "[Trace:SystemNotification] Client = [1] 'test', TraceId = 5 (end)"
+                ] ),
+                (t, _) => t.Logs.TestSequence(
+                [
+                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 6 (start)",
+                    "[ProcessingMessage] Client = [1] 'test', TraceId = 6, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, Retry = 0, Redelivery = 0, Length = 3",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 6, Packet = (MessageNotification, Length = 48)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 6, Packet = (MessageNotification, Length = 48)",
+                    "[MessageProcessed] Client = [1] 'test', TraceId = 6, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, Retry = 0, Redelivery = 0",
+                    "[Trace:MessageNotification] Client = [1] 'test', TraceId = 6 (end)"
                 ] )
             ] )
             .Go();
@@ -739,7 +751,7 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                                     } ) );
 
                         return MessageBrokerRemoteClientLogger.Create(
-                            disposed: _ =>
+                            deactivated: _ =>
                             {
                                 if ( ! isDisposed.Value )
                                 {
@@ -900,7 +912,7 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                         MessageBrokerQueueLogger.Create(
                             traceEnd: e =>
                             {
-                                if ( e.Type == MessageBrokerQueueTraceEventType.Dispose )
+                                if ( e.Type == MessageBrokerQueueTraceEventType.Deactivate )
                                     endSource.Complete();
                                 else if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
                                     listenerDisposedSource.Task.Wait();
@@ -955,10 +967,10 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                     [
                         (t, _) => t.Logs.TestSequence(
                         [
-                            $"[Trace:Dispose] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id} (start)",
-                            $"[Disposing] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id}",
-                            $"[Disposed] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id}",
-                            $"[Trace:Dispose] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id} (end)"
+                            $"[Trace:Deactivate] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id} (start)",
+                            $"[Deactivating] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id}, IsAlive = False",
+                            $"[Deactivated] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id}, IsAlive = False",
+                            $"[Trace:Deactivate] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id} (end)"
                         ] )
                     ] ) )
             .Go();
@@ -1184,15 +1196,15 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                     [
                         (t, _) => t.Logs.TestSequence(
                         [
-                            $"[Trace:Dispose] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id} (start)",
+                            $"[Trace:Deactivate] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id} (start)",
                             $"[ClientTrace] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id}, ClientTraceId = 3",
-                            $"[Disposing] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id}",
+                            $"[Deactivating] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id}, IsAlive = False",
                             $"""
                              [Error] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id}
                              LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerQueueException: 1 enqueued message(s) have been discarded due to client disposal.
                              """,
-                            $"[Disposed] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id}",
-                            $"[Trace:Dispose] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id} (end)"
+                            $"[Deactivated] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id}, IsAlive = False",
+                            $"[Trace:Deactivate] Client = [2] 'test2', Queue = [1] 'c', TraceId = {t.Id} (end)"
                         ] )
                     ] ) )
             .Go();

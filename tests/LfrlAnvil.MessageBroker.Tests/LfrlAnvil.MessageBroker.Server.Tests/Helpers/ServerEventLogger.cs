@@ -24,6 +24,16 @@ public sealed class ServerEventLogger
                 Add( e.Source.TraceId, $"{e} (end)" );
                 logger.TraceEnd?.Invoke( e );
             },
+            storageLoading: e =>
+            {
+                Add( e.Source.TraceId, e.ToString() );
+                logger.StorageLoading?.Invoke( e );
+            },
+            storageLoaded: e =>
+            {
+                Add( e.Source.TraceId, e.ToString() );
+                logger.StorageLoaded?.Invoke( e );
+            },
             listenerStarting: e =>
             {
                 Add( e.Source.TraceId, e.ToString() );

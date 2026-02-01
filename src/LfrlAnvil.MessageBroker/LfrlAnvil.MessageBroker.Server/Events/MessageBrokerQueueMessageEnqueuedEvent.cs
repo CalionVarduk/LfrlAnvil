@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ public readonly struct MessageBrokerQueueMessageEnqueuedEvent
     private MessageBrokerQueueMessageEnqueuedEvent(
         MessageBrokerChannelListenerBinding listener,
         ulong traceId,
-        MessageBrokerChannelPublisherBinding publisher,
+        IMessageBrokerMessagePublisher publisher,
         ulong messageId)
     {
         Source = MessageBrokerQueueEventSource.Create( listener.Queue, traceId );
@@ -45,9 +45,9 @@ public readonly struct MessageBrokerQueueMessageEnqueuedEvent
     public MessageBrokerChannelListenerBinding Listener { get; }
 
     /// <summary>
-    /// <see cref="MessageBrokerChannelPublisherBinding"/> that pushed the message.
+    /// <see cref="IMessageBrokerMessagePublisher"/> that pushed the message.
     /// </summary>
-    public MessageBrokerChannelPublisherBinding Publisher { get; }
+    public IMessageBrokerMessagePublisher Publisher { get; }
 
     /// <summary>
     /// Unique id of the message.
@@ -62,7 +62,7 @@ public readonly struct MessageBrokerQueueMessageEnqueuedEvent
     public override string ToString()
     {
         return
-            $"[MessageEnqueued] {Source}, Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', MessageId = {MessageId}";
+            $"[MessageEnqueued] {Source}, Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Sender = [{Publisher.ClientId}] '{Publisher.ClientName}', MessageId = {MessageId}";
     }
 
     [Pure]
@@ -70,7 +70,7 @@ public readonly struct MessageBrokerQueueMessageEnqueuedEvent
     internal static MessageBrokerQueueMessageEnqueuedEvent Create(
         MessageBrokerChannelListenerBinding listener,
         ulong traceId,
-        MessageBrokerChannelPublisherBinding publisher,
+        IMessageBrokerMessagePublisher publisher,
         ulong messageId)
     {
         return new MessageBrokerQueueMessageEnqueuedEvent( listener, traceId, publisher, messageId );

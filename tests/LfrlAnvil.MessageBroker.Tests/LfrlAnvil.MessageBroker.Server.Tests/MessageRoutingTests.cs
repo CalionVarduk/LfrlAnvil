@@ -187,8 +187,8 @@ public class MessageRoutingTests : TestsBase, IClassFixture<SharedResourceFixtur
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid PushMessageRouting from client [1] 'test'. Encountered 1 error(s):
                             1. Expected header payload to be at least 2 but found 1.
                             """,
-                            "[Disposing] Client = [1] 'test', TraceId = 1",
-                            "[Disposed] Client = [1] 'test', TraceId = 1",
+                            "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                             "[Trace:PushMessageRouting] Client = [1] 'test', TraceId = 1 (end)"
                         ] )
                     ] ) )
@@ -237,8 +237,8 @@ public class MessageRoutingTests : TestsBase, IClassFixture<SharedResourceFixtur
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid PushMessageRouting from client [1] 'test'. Encountered 1 error(s):
                             1. Expected target count to be greater than 0 but found 0.
                             """,
-                            "[Disposing] Client = [1] 'test', TraceId = 1",
-                            "[Disposed] Client = [1] 'test', TraceId = 1",
+                            "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                             "[Trace:PushMessageRouting] Client = [1] 'test', TraceId = 1 (end)"
                         ] )
                     ] ) )
@@ -293,8 +293,8 @@ public class MessageRoutingTests : TestsBase, IClassFixture<SharedResourceFixtur
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid PushMessageRouting from client [1] 'test'. Encountered 1 error(s):
                             1. Message routing is already enqueued.
                             """,
-                            "[Disposing] Client = [1] 'test', TraceId = 2",
-                            "[Disposed] Client = [1] 'test', TraceId = 2",
+                            "[Deactivating] Client = [1] 'test', TraceId = 2, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 2, IsAlive = False",
                             "[Trace:PushMessageRouting] Client = [1] 'test', TraceId = 2 (end)"
                         ] )
                     ] ) )
@@ -344,8 +344,8 @@ public class MessageRoutingTests : TestsBase, IClassFixture<SharedResourceFixtur
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid PushMessageRouting from client [1] 'test'. Encountered 1 error(s):
                             1. Expected packet element length at index 0 to be at least 5 but found 4.
                             """,
-                            "[Disposing] Client = [1] 'test', TraceId = 1",
-                            "[Disposed] Client = [1] 'test', TraceId = 1",
+                            "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                             "[Trace:PushMessageRouting] Client = [1] 'test', TraceId = 1 (end)"
                         ] )
                     ] ) )
@@ -395,8 +395,8 @@ public class MessageRoutingTests : TestsBase, IClassFixture<SharedResourceFixtur
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid PushMessageRouting from client [1] 'test'. Encountered 1 error(s):
                             1. Expected packet element length at index 0 to be at least 5 but found 4.
                             """,
-                            "[Disposing] Client = [1] 'test', TraceId = 1",
-                            "[Disposed] Client = [1] 'test', TraceId = 1",
+                            "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                             "[Trace:PushMessageRouting] Client = [1] 'test', TraceId = 1 (end)"
                         ] )
                     ] ) )
@@ -446,8 +446,8 @@ public class MessageRoutingTests : TestsBase, IClassFixture<SharedResourceFixtur
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid PushMessageRouting from client [1] 'test'. Encountered 1 error(s):
                             1. Expected target ID at index 1 to be greater than 0 but found 0.
                             """,
-                            "[Disposing] Client = [1] 'test', TraceId = 1",
-                            "[Disposed] Client = [1] 'test', TraceId = 1",
+                            "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                             "[Trace:PushMessageRouting] Client = [1] 'test', TraceId = 1 (end)"
                         ] )
                     ] ) )
@@ -497,8 +497,8 @@ public class MessageRoutingTests : TestsBase, IClassFixture<SharedResourceFixtur
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid PushMessageRouting from client [1] 'test'. Encountered 1 error(s):
                             1. Expected target name length at index 1 to be in [1, 512] range but found 0.
                             """,
-                            "[Disposing] Client = [1] 'test', TraceId = 1",
-                            "[Disposed] Client = [1] 'test', TraceId = 1",
+                            "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                             "[Trace:PushMessageRouting] Client = [1] 'test', TraceId = 1 (end)"
                         ] )
                     ] ) )
@@ -548,8 +548,8 @@ public class MessageRoutingTests : TestsBase, IClassFixture<SharedResourceFixtur
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid PushMessageRouting from client [1] 'test'. Encountered 1 error(s):
                             1. Expected target name length at index 1 to be in [1, 512] range but found 513.
                             """,
-                            "[Disposing] Client = [1] 'test', TraceId = 1",
-                            "[Disposed] Client = [1] 'test', TraceId = 1",
+                            "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                             "[Trace:PushMessageRouting] Client = [1] 'test', TraceId = 1 (end)"
                         ] )
                     ] ) )
@@ -603,8 +603,8 @@ public class MessageRoutingTests : TestsBase, IClassFixture<SharedResourceFixtur
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid PushMessageRouting from client [1] 'test'. Encountered 1 error(s):
                             1. Target count 3 is larger than actual element count 2.
                             """,
-                            "[Disposing] Client = [1] 'test', TraceId = 1",
-                            "[Disposed] Client = [1] 'test', TraceId = 1",
+                            "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                             "[Trace:PushMessageRouting] Client = [1] 'test', TraceId = 1 (end)"
                         ] )
                     ] ) )
@@ -654,8 +654,8 @@ public class MessageRoutingTests : TestsBase, IClassFixture<SharedResourceFixtur
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid PushMessageRouting from client [1] 'test'. Encountered 1 error(s):
                             1. Header payload is too large by 5.
                             """,
-                            "[Disposing] Client = [1] 'test', TraceId = 1",
-                            "[Disposed] Client = [1] 'test', TraceId = 1",
+                            "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                             "[Trace:PushMessageRouting] Client = [1] 'test', TraceId = 1 (end)"
                         ] )
                     ] ) )

@@ -82,6 +82,7 @@ public readonly struct MessageBrokerPublisherCollection
     /// <param name="streamName">
     /// Optional unique name of the stream to which to push messages. Equal to the provided <paramref name="channelName"/> by default.
     /// </param>
+    /// <param name="isEphemeral">Specifies whether or not the publisher will be ephemeral. Equal to <b>false</b> by default.</param>
     /// <returns>
     /// A task that represents the operation, which returns a <see cref="Result{T}"/> instance,
     /// with underlying <see cref="MessageBrokerBindPublisherResult"/> instance.
@@ -99,8 +100,11 @@ public readonly struct MessageBrokerPublisherCollection
     /// Returned <see cref="Result{T}"/> will only be valid when either the client has been successfully bound as publisher to the channel
     /// on the server side, or the client is already locally bound as publisher to the channel, which will cancel the request to the server.
     /// </remarks>
-    public ValueTask<Result<MessageBrokerBindPublisherResult?>> BindAsync(string channelName, string? streamName = null)
+    public ValueTask<Result<MessageBrokerBindPublisherResult?>> BindAsync(
+        string channelName,
+        string? streamName = null,
+        bool isEphemeral = false)
     {
-        return PublisherCollection.BindAsync( _client, channelName, streamName );
+        return PublisherCollection.BindAsync( _client, channelName, streamName, isEphemeral );
     }
 }

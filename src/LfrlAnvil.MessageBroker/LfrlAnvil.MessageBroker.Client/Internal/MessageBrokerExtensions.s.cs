@@ -253,7 +253,7 @@ internal static class MessageBrokerExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static ExclusiveLock AcquireLock(this MemoryPool<byte> pool)
     {
-        return ExclusiveLock.SpinWaitEnter( pool, spinWaitMultiplier: 4 );
+        return ExclusiveLock.Enter( pool );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

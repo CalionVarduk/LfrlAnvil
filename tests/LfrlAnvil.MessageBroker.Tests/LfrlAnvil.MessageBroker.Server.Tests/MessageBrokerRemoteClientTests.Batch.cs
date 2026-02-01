@@ -80,7 +80,7 @@ public partial class MessageBrokerRemoteClientTests
                             [
                                 "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
-                                "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo'",
+                                "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', IsEphemeral = True",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
                                 "[PublisherBound] Client = [1] 'test', TraceId = 1, Channel = [1] 'foo' (created), Stream = [1] 'foo' (created)",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (PublisherBoundResponse, Length = 14)",
@@ -126,6 +126,8 @@ public partial class MessageBrokerRemoteClientTests
             var endSource = new SafeTaskCompletionSource( completionCount: 3 );
             var pushMessageContinuation = new SafeTaskCompletionSource();
             var logs = new ClientEventLogger();
+            var streamRemoved = Atomic.Create( false );
+
             await using var server = new MessageBrokerServer(
                 new IPEndPoint( IPAddress.Loopback, 0 ),
                 MessageBrokerServerOptions.Default
@@ -148,7 +150,8 @@ public partial class MessageBrokerRemoteClientTests
 
                                     if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
                                         pushMessageContinuation.Complete();
-                                } ) ) ) );
+                                },
+                                publisherUnbound: e => streamRemoved.Value = e.StreamRemoved ) ) ) );
 
             await server.StartAsync();
 
@@ -182,7 +185,7 @@ public partial class MessageBrokerRemoteClientTests
                             [
                                 "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
-                                "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo'",
+                                "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', IsEphemeral = True",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
                                 "[PublisherBound] Client = [1] 'test', TraceId = 1, Channel = [1] 'foo' (created), Stream = [1] 'foo' (created)",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (PublisherBoundResponse, Length = 14)",
@@ -204,7 +207,7 @@ public partial class MessageBrokerRemoteClientTests
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 3, Packet = (UnbindPublisherRequest, Length = 9)",
                                 "[UnbindingPublisher] Client = [1] 'test', TraceId = 3, ChannelId = 1",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 3, Packet = (UnbindPublisherRequest, Length = 9)",
-                                "[PublisherUnbound] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo' (removed), Stream = [1] 'foo' (removed)",
+                                $"[PublisherUnbound] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo' (removed), Stream = [1] 'foo'{(streamRemoved.Value ? " (removed)" : string.Empty)}",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 3, Packet = (PublisherUnboundResponse, Length = 6)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 3, Packet = (PublisherUnboundResponse, Length = 6)",
                                 "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 3 (end)"
@@ -279,7 +282,7 @@ public partial class MessageBrokerRemoteClientTests
                             [
                                 "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
-                                "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo'",
+                                "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', IsEphemeral = True",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
                                 "[PublisherBound] Client = [1] 'test', TraceId = 1, Channel = [1] 'foo' (created), Stream = [1] 'foo' (created)",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (PublisherBoundResponse, Length = 14)",
@@ -341,8 +344,8 @@ public partial class MessageBrokerRemoteClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:Unexpected] Client = [1] 'test', TraceId = 1 (start)",
-                                "[Disposing] Client = [1] 'test', TraceId = 1",
-                                "[Disposed] Client = [1] 'test', TraceId = 1",
+                                "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                                "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                                 "[Trace:Unexpected] Client = [1] 'test', TraceId = 1 (end)"
                             ] )
                         ] ),
@@ -393,8 +396,8 @@ public partial class MessageBrokerRemoteClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:Unexpected] Client = [1] 'test', TraceId = 1 (start)",
-                                "[Disposing] Client = [1] 'test', TraceId = 1",
-                                "[Disposed] Client = [1] 'test', TraceId = 1",
+                                "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                                "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                                 "[Trace:Unexpected] Client = [1] 'test', TraceId = 1 (end)"
                             ] )
                         ] ),
@@ -449,8 +452,8 @@ public partial class MessageBrokerRemoteClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:Unexpected] Client = [1] 'test', TraceId = 1 (start)",
-                                "[Disposing] Client = [1] 'test', TraceId = 1",
-                                "[Disposed] Client = [1] 'test', TraceId = 1",
+                                "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                                "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                                 "[Trace:Unexpected] Client = [1] 'test', TraceId = 1 (end)"
                             ] )
                         ] ),
@@ -501,8 +504,8 @@ public partial class MessageBrokerRemoteClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:Unexpected] Client = [1] 'test', TraceId = 1 (start)",
-                                "[Disposing] Client = [1] 'test', TraceId = 1",
-                                "[Disposed] Client = [1] 'test', TraceId = 1",
+                                "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                                "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                                 "[Trace:Unexpected] Client = [1] 'test', TraceId = 1 (end)"
                             ] )
                         ] ),
@@ -569,8 +572,8 @@ public partial class MessageBrokerRemoteClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:Unexpected] Client = [1] 'test', TraceId = 1 (start)",
-                                "[Disposing] Client = [1] 'test', TraceId = 1",
-                                "[Disposed] Client = [1] 'test', TraceId = 1",
+                                "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                                "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                                 "[Trace:Unexpected] Client = [1] 'test', TraceId = 1 (end)"
                             ] )
                         ] ),
@@ -627,8 +630,8 @@ public partial class MessageBrokerRemoteClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:Unexpected] Client = [1] 'test', TraceId = 1 (start)",
-                                "[Disposing] Client = [1] 'test', TraceId = 1",
-                                "[Disposed] Client = [1] 'test', TraceId = 1",
+                                "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                                "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                                 "[Trace:Unexpected] Client = [1] 'test', TraceId = 1 (end)"
                             ] )
                         ] ),
@@ -689,8 +692,8 @@ public partial class MessageBrokerRemoteClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 $"[Trace:Unexpected] Client = [1] 'test', TraceId = {t.Id} (start)",
-                                $"[Disposing] Client = [1] 'test', TraceId = {t.Id}",
-                                $"[Disposed] Client = [1] 'test', TraceId = {t.Id}",
+                                $"[Deactivating] Client = [1] 'test', TraceId = {t.Id}, IsAlive = False",
+                                $"[Deactivated] Client = [1] 'test', TraceId = {t.Id}, IsAlive = False",
                                 $"[Trace:Unexpected] Client = [1] 'test', TraceId = {t.Id} (end)"
                             ] )
                         ] ),
@@ -860,7 +863,7 @@ public partial class MessageBrokerRemoteClientTests
                     [
                         "[Trace:BindPublisher] Client = [2] 'test2', TraceId = 3 (start)",
                         "[ReadPacket:Received] Client = [2] 'test2', TraceId = 3, Packet = (BindPublisherRequest, Length = 11)",
-                        "[BindingPublisher] Client = [2] 'test2', TraceId = 3, ChannelName = 'bar'",
+                        "[BindingPublisher] Client = [2] 'test2', TraceId = 3, ChannelName = 'bar', IsEphemeral = True",
                         "[ReadPacket:Accepted] Client = [2] 'test2', TraceId = 3, Packet = (BindPublisherRequest, Length = 11)",
                         "[PublisherBound] Client = [2] 'test2', TraceId = 3, Channel = [2] 'bar' (created), Stream = [2] 'bar' (created)",
                         "[SendPacket:Batched] Client = [2] 'test2', TraceId = 3, BatchTraceId = 2, Packet = (PublisherBoundResponse, Length = 14)",
@@ -870,7 +873,7 @@ public partial class MessageBrokerRemoteClientTests
                     [
                         "[Trace:BindListener] Client = [2] 'test2', TraceId = 4 (start)",
                         "[ReadPacket:Received] Client = [2] 'test2', TraceId = 4, Packet = (BindListenerRequest, Length = 43)",
-                        "[BindingListener] Client = [2] 'test2', TraceId = 4, ChannelName = 'foo', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = <disabled>, DeadLetter = <disabled>, CreateChannelIfNotExists = False",
+                        "[BindingListener] Client = [2] 'test2', TraceId = 4, ChannelName = 'foo', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = <disabled>, DeadLetter = <disabled>, IsEphemeral = True, CreateChannelIfNotExists = False",
                         "[ReadPacket:Accepted] Client = [2] 'test2', TraceId = 4, Packet = (BindListenerRequest, Length = 43)",
                         "[ListenerBound] Client = [2] 'test2', TraceId = 4, Channel = [1] 'foo', Queue = [1] 'foo' (created)",
                         "[SendPacket:Batched] Client = [2] 'test2', TraceId = 4, BatchTraceId = 2, Packet = (ListenerBoundResponse, Length = 14)",
@@ -1017,7 +1020,7 @@ public partial class MessageBrokerRemoteClientTests
                     [
                         "[Trace:BindPublisher] Client = [1] 'test', TraceId = 2 (start)",
                         "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (BindPublisherRequest, Length = 11)",
-                        "[BindingPublisher] Client = [1] 'test', TraceId = 2, ChannelName = 'foo'",
+                        "[BindingPublisher] Client = [1] 'test', TraceId = 2, ChannelName = 'foo', IsEphemeral = True",
                         "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (BindPublisherRequest, Length = 11)",
                         "[PublisherBound] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo' (created), Stream = [1] 'foo' (created)",
                         "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (Batch, Length = 35), PacketCount = 2",
@@ -1029,7 +1032,7 @@ public partial class MessageBrokerRemoteClientTests
                     [
                         "[Trace:BindListener] Client = [1] 'test', TraceId = 3 (start)",
                         "[ReadPacket:Received] Client = [1] 'test', TraceId = 3, Packet = (BindListenerRequest, Length = 43)",
-                        "[BindingListener] Client = [1] 'test', TraceId = 3, ChannelName = 'foo', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = <disabled>, DeadLetter = <disabled>, CreateChannelIfNotExists = False",
+                        "[BindingListener] Client = [1] 'test', TraceId = 3, ChannelName = 'foo', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = <disabled>, DeadLetter = <disabled>, IsEphemeral = True, CreateChannelIfNotExists = False",
                         "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 3, Packet = (BindListenerRequest, Length = 43)",
                         "[ListenerBound] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [1] 'foo' (created)",
                         "[SendPacket:Batched] Client = [1] 'test', TraceId = 3, BatchTraceId = 2, Packet = (ListenerBoundResponse, Length = 14)",
@@ -1160,7 +1163,7 @@ public partial class MessageBrokerRemoteClientTests
                     [
                         "[Trace:BindListener] Client = [2] 'test2', TraceId = 2 (start)",
                         "[ReadPacket:Received] Client = [2] 'test2', TraceId = 2, Packet = (BindListenerRequest, Length = 43)",
-                        "[BindingListener] Client = [2] 'test2', TraceId = 2, ChannelName = 'foo', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = <disabled>, DeadLetter = <disabled>, CreateChannelIfNotExists = False",
+                        "[BindingListener] Client = [2] 'test2', TraceId = 2, ChannelName = 'foo', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = <disabled>, DeadLetter = <disabled>, IsEphemeral = True, CreateChannelIfNotExists = False",
                         "[ReadPacket:Accepted] Client = [2] 'test2', TraceId = 2, Packet = (BindListenerRequest, Length = 43)",
                         "[ListenerBound] Client = [2] 'test2', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo' (created)",
                         "[SendPacket:Sending] Client = [2] 'test2', TraceId = 2, Packet = (Batch, Length = 16384), PacketCount = 3",
@@ -1307,7 +1310,7 @@ public partial class MessageBrokerRemoteClientTests
                     [
                         "[Trace:BindListener] Client = [2] 'test2', TraceId = 2 (start)",
                         "[ReadPacket:Received] Client = [2] 'test2', TraceId = 2, Packet = (BindListenerRequest, Length = 43)",
-                        "[BindingListener] Client = [2] 'test2', TraceId = 2, ChannelName = 'foo', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = <disabled>, DeadLetter = <disabled>, CreateChannelIfNotExists = False",
+                        "[BindingListener] Client = [2] 'test2', TraceId = 2, ChannelName = 'foo', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = <disabled>, DeadLetter = <disabled>, IsEphemeral = True, CreateChannelIfNotExists = False",
                         "[ReadPacket:Accepted] Client = [2] 'test2', TraceId = 2, Packet = (BindListenerRequest, Length = 43)",
                         "[ListenerBound] Client = [2] 'test2', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo' (created)",
                         "[SendPacket:Sending] Client = [2] 'test2', TraceId = 2, Packet = (ListenerBoundResponse, Length = 14)",

@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ public readonly struct MessageBrokerQueueMessageDiscardedEvent
     private MessageBrokerQueueMessageDiscardedEvent(
         MessageBrokerChannelListenerBinding listener,
         ulong traceId,
-        MessageBrokerChannelPublisherBinding publisher,
+        IMessageBrokerMessagePublisher publisher,
         int storeKey,
         int retry,
         int redelivery,
@@ -55,9 +55,9 @@ public readonly struct MessageBrokerQueueMessageDiscardedEvent
     public MessageBrokerChannelListenerBinding Listener { get; }
 
     /// <summary>
-    /// <see cref="MessageBrokerChannelPublisherBinding"/> that pushed this message.
+    /// <see cref="IMessageBrokerMessagePublisher"/> that pushed this message.
     /// </summary>
-    public MessageBrokerChannelPublisherBinding Publisher { get; }
+    public IMessageBrokerMessagePublisher Publisher { get; }
 
     /// <summary>
     /// Key of the stream's message store entry associated with this message.
@@ -99,7 +99,7 @@ public readonly struct MessageBrokerQueueMessageDiscardedEvent
     public override string ToString()
     {
         return
-            $"[MessageDiscarded] {Source}, Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', Reason = {Reason}, StoreKey = {StoreKey}, Retry = {Retry}, Redelivery = {Redelivery}, MessageRemoved = {MessageRemoved}, MovedToDeadLetter = {MovedToDeadLetter}";
+            $"[MessageDiscarded] {Source}, Sender = [{Publisher.ClientId}] '{Publisher.ClientName}', Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', Reason = {Reason}, StoreKey = {StoreKey}, Retry = {Retry}, Redelivery = {Redelivery}, MessageRemoved = {MessageRemoved}, MovedToDeadLetter = {MovedToDeadLetter}";
     }
 
     [Pure]
@@ -107,7 +107,7 @@ public readonly struct MessageBrokerQueueMessageDiscardedEvent
     internal static MessageBrokerQueueMessageDiscardedEvent Create(
         MessageBrokerChannelListenerBinding listener,
         ulong traceId,
-        MessageBrokerChannelPublisherBinding publisher,
+        IMessageBrokerMessagePublisher publisher,
         int storeKey,
         int retry,
         int redelivery,

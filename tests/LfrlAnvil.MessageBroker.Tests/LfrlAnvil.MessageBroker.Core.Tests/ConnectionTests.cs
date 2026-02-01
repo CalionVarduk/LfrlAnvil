@@ -117,7 +117,7 @@ public class ConnectionTests : TestsBase, IClassFixture<SharedResourceFixture>
                     _ => MessageBrokerRemoteClientLogger.Create(
                         traceEnd: e =>
                         {
-                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.Dispose )
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.Deactivate )
                                 endSource.Complete();
                         } ) ) );
 

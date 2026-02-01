@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Diagnostics;
+using LfrlAnvil.Internal;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Exceptions;
 
@@ -120,6 +121,7 @@ internal static class Protocol
             MaxNetworkBatchPacketLength = maxNetworkBatchPacketLength;
         }
 
+        internal bool IsEphemeral => (Flags & 1) == 0;
         internal bool IsClientLittleEndian => (Flags & 2) != 0;
         internal bool SynchronizeExternalObjectNames => (Flags & 4) != 0;
         internal bool ClearBuffers => (Flags & 8) != 0;
@@ -241,7 +243,8 @@ internal static class Protocol
         {
             None = 0,
             InvalidNameLength = 1,
-            AlreadyConnected = 2
+            AlreadyConnected = 2,
+            EphemeralServer = 4
         }
 
         internal const int Payload = sizeof( byte );
@@ -332,6 +335,8 @@ internal static class Protocol
             ChannelNameLength = channelNameLength;
         }
 
+        internal bool IsEphemeral => (Flags & 1) == 0;
+
         [Pure]
         public override string ToString()
         {
@@ -346,7 +351,6 @@ internal static class Protocol
 
             var reader = new BinaryContractReader( source.Span );
             var flags = reader.MoveReadInt8();
-            Assume.Equals( flags, 0 );
             var channelNameLength = ( int )reader.ReadInt16();
 
             return new BindPublisherRequestHeader( flags, channelNameLength );
@@ -535,7 +539,7 @@ internal static class Protocol
         internal readonly int ChannelNameLength;
         internal readonly int QueueNameLength;
 
-        private BindListenerRequestHeader(
+        internal BindListenerRequestHeader(
             byte flags,
             short prefetchHint,
             int maxRetries,
@@ -559,7 +563,8 @@ internal static class Protocol
             QueueNameLength = queueNameLength;
         }
 
-        internal bool CreateChannelIfNotExists => (Flags & 1) != 0;
+        internal bool IsEphemeral => (Flags & 1) == 0;
+        internal bool CreateChannelIfNotExists => (Flags & 2) != 0;
 
         [Pure]
         public override string ToString()

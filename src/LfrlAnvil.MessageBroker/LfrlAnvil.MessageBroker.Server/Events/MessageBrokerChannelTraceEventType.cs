@@ -20,27 +20,32 @@ namespace LfrlAnvil.MessageBroker.Server.Events;
 public enum MessageBrokerChannelTraceEventType : byte
 {
     /// <summary>
+    /// Specifies that trace is related to the channel being recreated.
+    /// </summary>
+    Recreated = 0,
+
+    /// <summary>
     /// Specifies that trace is related to the channel listener binding.
     /// </summary>
-    BindListener = 0,
+    BindListener = 1,
 
     /// <summary>
     /// Specifies that trace is related to the channel listener unbinding.
     /// </summary>
-    UnbindListener = 1,
+    UnbindListener = 2,
 
     /// <summary>
     /// Specifies that trace is related to the channel publisher binding.
     /// </summary>
-    BindPublisher = 2,
+    BindPublisher = 3,
 
     /// <summary>
     /// Specifies that trace is related to the channel publisher unbinding.
     /// </summary>
-    UnbindPublisher = 3,
+    UnbindPublisher = 4,
 
     /// <summary>
     /// Specifies that trace is related to the channel disposal.
     /// </summary>
-    Dispose = 4
+    Dispose = 5
 }

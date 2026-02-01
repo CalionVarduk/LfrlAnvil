@@ -46,7 +46,7 @@ public partial class MessageBrokerClientTests
 
             var channelName = "foo";
             var streamName = "bar";
-            var bindRequest = new Protocol.BindPublisherRequest( channelName, streamName );
+            var bindRequest = new Protocol.BindPublisherRequest( channelName, streamName, true );
             var serverTask = server.GetTask(
                 s =>
                 {
@@ -87,6 +87,7 @@ public partial class MessageBrokerClientTests
                                 publisher.ChannelName.TestEquals( channelName ),
                                 publisher.StreamId.TestEquals( 2 ),
                                 publisher.StreamName.TestEquals( streamName ),
+                                publisher.IsEphemeral.TestTrue(),
                                 publisher.State.TestEquals( MessageBrokerPublisherState.Bound ),
                                 publisher.ToString()
                                     .TestEquals(
@@ -98,7 +99,7 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
-                                $"[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = '{channelName}', StreamName = '{streamName}'",
+                                $"[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = '{channelName}', StreamName = '{streamName}', IsEphemeral = True",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 14)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 14)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (PublisherBoundResponse, Length = 14)",
@@ -133,7 +134,7 @@ public partial class MessageBrokerClientTests
             await server.EstablishHandshake( client );
 
             var channelName = "foo";
-            var bindRequest = new Protocol.BindPublisherRequest( channelName, null );
+            var bindRequest = new Protocol.BindPublisherRequest( channelName, null, true );
             var serverTask = server.GetTask(
                 s =>
                 {
@@ -179,7 +180,7 @@ public partial class MessageBrokerClientTests
             await server.EstablishHandshake( client );
 
             var channelName = "foo";
-            var bindRequest = new Protocol.BindPublisherRequest( channelName, null );
+            var bindRequest = new Protocol.BindPublisherRequest( channelName, null, true );
             var serverTask = server.GetTask(
                 s =>
                 {
@@ -302,7 +303,7 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
-                                "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', StreamName = 'foo'",
+                                "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', StreamName = 'foo', IsEphemeral = True",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
                                 """
@@ -370,7 +371,7 @@ public partial class MessageBrokerClientTests
 
             await server.EstablishHandshake( client );
 
-            var bindRequest = new Protocol.BindPublisherRequest( "foo", null );
+            var bindRequest = new Protocol.BindPublisherRequest( "foo", null, true );
             var serverTask = server.GetTask(
                 s =>
                 {
@@ -396,7 +397,7 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
-                                "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', StreamName = 'foo'",
+                                "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', StreamName = 'foo', IsEphemeral = True",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (PublisherBoundResponse, Length = 14)",
@@ -438,7 +439,7 @@ public partial class MessageBrokerClientTests
 
             await server.EstablishHandshake( client );
 
-            var bindRequest = new Protocol.BindPublisherRequest( "foo", null );
+            var bindRequest = new Protocol.BindPublisherRequest( "foo", null, true );
             var serverTask = server.GetTask(
                 s =>
                 {
@@ -464,7 +465,7 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
-                                "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', StreamName = 'foo'",
+                                "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', StreamName = 'foo', IsEphemeral = True",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (PublisherBoundResponse, Length = 13)",
@@ -505,7 +506,7 @@ public partial class MessageBrokerClientTests
 
             await server.EstablishHandshake( client );
 
-            var bindRequest = new Protocol.BindPublisherRequest( "foo", null );
+            var bindRequest = new Protocol.BindPublisherRequest( "foo", null, true );
             var serverTask = server.GetTask(
                 s =>
                 {
@@ -531,7 +532,7 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
-                                "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', StreamName = 'foo'",
+                                "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', StreamName = 'foo', IsEphemeral = True",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherFailureResponse, Length = 6)",
@@ -572,7 +573,7 @@ public partial class MessageBrokerClientTests
 
             await server.EstablishHandshake( client );
 
-            var bindRequest = new Protocol.BindPublisherRequest( "foo", null );
+            var bindRequest = new Protocol.BindPublisherRequest( "foo", null, true );
             var serverTask = server.GetTask(
                 s =>
                 {
@@ -598,7 +599,7 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
-                                "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', StreamName = 'foo'",
+                                "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', StreamName = 'foo', IsEphemeral = True",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherFailureResponse, Length = 5)",
@@ -639,7 +640,7 @@ public partial class MessageBrokerClientTests
 
             await server.EstablishHandshake( client );
 
-            var bindRequest = new Protocol.BindPublisherRequest( "foo", null );
+            var bindRequest = new Protocol.BindPublisherRequest( "foo", null, true );
             var serverTask = server.GetTask(
                 s =>
                 {
@@ -665,7 +666,7 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
-                                "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', StreamName = 'foo'",
+                                "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', StreamName = 'foo', IsEphemeral = True",
                                 "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
                                 "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
                                 """
@@ -710,7 +711,7 @@ public partial class MessageBrokerClientTests
             var channelId = 1;
             var channelName = "foo";
             await server.EstablishHandshake( client );
-            var bindRequest = new Protocol.BindPublisherRequest( channelName, null );
+            var bindRequest = new Protocol.BindPublisherRequest( channelName, null, true );
 
             var serverTask = server.GetTask(
                 s =>
@@ -788,7 +789,7 @@ public partial class MessageBrokerClientTests
             await server.EstablishHandshake( client );
 
             var channelName = "foo";
-            var bindRequest = new Protocol.BindPublisherRequest( channelName, null );
+            var bindRequest = new Protocol.BindPublisherRequest( channelName, null, true );
             var serverTask = server.GetTask(
                 s =>
                 {
@@ -821,7 +822,7 @@ public partial class MessageBrokerClientTests
         public async Task UnbindAsync_ShouldThrowMessageBrokerClientDisposedException_WhenClientIsDisposed()
         {
             var client = new MessageBrokerClient( new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
-            var publisher = new MessageBrokerPublisher( client, 1, "foo", 1, "foo" );
+            var publisher = new MessageBrokerPublisher( client, 1, "foo", 1, "foo", true );
             await client.DisposeAsync();
 
             Exception? exception = null;
@@ -857,7 +858,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.BindPublisherRequest( "foo", null );
+                    var request = new Protocol.BindPublisherRequest( "foo", null, true );
                     s.Read( request );
                     s.SendPublisherBoundResponse( true, true, 1, 1 );
                 } );
@@ -930,7 +931,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.BindPublisherRequest( "foo", null );
+                    var request = new Protocol.BindPublisherRequest( "foo", null, true );
                     s.Read( request );
                     s.SendPublisherBoundResponse( true, true, 1, 1 );
                 } );
@@ -969,7 +970,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.BindPublisherRequest( "foo", null );
+                    var request = new Protocol.BindPublisherRequest( "foo", null, true );
                     s.Read( request );
                     s.SendPublisherBoundResponse( true, true, 1, 1 );
                     s.ReadUnbindPublisherRequest();
@@ -1042,7 +1043,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.BindPublisherRequest( "foo", null );
+                    var request = new Protocol.BindPublisherRequest( "foo", null, true );
                     s.Read( request );
                     s.SendPublisherBoundResponse( true, true, 1, 1 );
                     s.ReadUnbindPublisherRequest();
@@ -1115,7 +1116,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.BindPublisherRequest( "foo", null );
+                    var request = new Protocol.BindPublisherRequest( "foo", null, true );
                     s.Read( request );
                     s.SendPublisherBoundResponse( true, true, 1, 1 );
                     s.ReadUnbindPublisherRequest();
@@ -1188,7 +1189,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.BindPublisherRequest( "foo", null );
+                    var request = new Protocol.BindPublisherRequest( "foo", null, true );
                     s.Read( request );
                     s.SendPublisherBoundResponse( true, true, 1, 1 );
                     s.ReadUnbindPublisherRequest();
@@ -1260,7 +1261,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( new Protocol.BindPublisherRequest( "foo", null ) );
+                    s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
                     s.SendPublisherBoundResponse( true, true, 1, 1 );
                 } );
 
@@ -1332,7 +1333,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( new Protocol.BindPublisherRequest( "foo", null ) );
+                    s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
                     s.SendPublisherBoundResponse( true, true, 1, 1 );
                 } );
 
@@ -1391,7 +1392,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( new Protocol.BindPublisherRequest( "foo", null ) );
+                    s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
                     s.SendPublisherBoundResponse( true, true, 1, 1 );
                 } );
 
@@ -1466,7 +1467,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( new Protocol.BindPublisherRequest( "foo", null ) );
+                    s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
                     s.SendPublisherBoundResponse( true, true, 1, 1 );
                     s.ReadUnbindPublisherRequest();
                     s.SendPublisherUnboundResponse( true, true );
@@ -1495,7 +1496,7 @@ public partial class MessageBrokerClientTests
         public async Task PushAsync_ShouldThrowMessageBrokerClientDisposedException_WhenClientIsDisposed()
         {
             var client = new MessageBrokerClient( new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
-            var publisher = new MessageBrokerPublisher( client, 1, "foo", 1, "foo" );
+            var publisher = new MessageBrokerPublisher( client, 1, "foo", 1, "foo", true );
             var context = publisher.GetPushContext();
             await client.DisposeAsync();
 
@@ -1532,7 +1533,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    s.Read( new Protocol.BindPublisherRequest( "foo", null ) );
+                    s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
                     s.SendPublisherBoundResponse( true, true, 1, 1 );
                 } );
 
@@ -1605,7 +1606,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.BindPublisherRequest( "foo", null );
+                    var request = new Protocol.BindPublisherRequest( "foo", null, true );
                     s.Read( request );
                     s.SendPublisherBoundResponse( true, true, 1, 1 );
                 } );
@@ -1645,7 +1646,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.BindPublisherRequest( "foo", null );
+                    var request = new Protocol.BindPublisherRequest( "foo", null, true );
                     s.Read( request );
                     s.SendPublisherBoundResponse( true, true, 1, 1 );
                     s.ReadPushMessage( data.Length );
@@ -1719,7 +1720,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.BindPublisherRequest( "foo", null );
+                    var request = new Protocol.BindPublisherRequest( "foo", null, true );
                     s.Read( request );
                     s.SendPublisherBoundResponse( true, true, 1, 1 );
                     s.ReadPushMessage( data.Length );
@@ -1793,7 +1794,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.BindPublisherRequest( "foo", null );
+                    var request = new Protocol.BindPublisherRequest( "foo", null, true );
                     s.Read( request );
                     s.SendPublisherBoundResponse( true, true, 1, 1 );
                     s.ReadPushMessage( data.Length );
@@ -1867,7 +1868,7 @@ public partial class MessageBrokerClientTests
             var serverTask = server.GetTask(
                 s =>
                 {
-                    var request = new Protocol.BindPublisherRequest( "foo", null );
+                    var request = new Protocol.BindPublisherRequest( "foo", null, true );
                     s.Read( request );
                     s.SendPublisherBoundResponse( true, true, 1, 1 );
                     s.ReadPushMessage( data.Length );

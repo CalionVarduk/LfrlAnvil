@@ -80,6 +80,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                         r.MaxNetworkBatchPacketLength.TestEquals( MemorySize.FromMegabytes( 1 ) ),
                         r.SynchronizeExternalObjectNames.TestFalse(),
                         r.ClearBuffers.TestFalse(),
+                        r.IsEphemeral.TestTrue(),
                         r.State.TestEquals( MessageBrokerRemoteClientState.Running ),
                         r.ToString().TestEquals( "[1] 'test' client (Running)" ),
                         r.Publishers.Count.TestEquals( 0 ),
@@ -96,7 +97,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                             $"[ClientAccepted] Server = {server.LocalEndPoint}, TraceId = 1, ConnectorId = 1",
                             $"[ConnectorStarted] Server = {server.LocalEndPoint}, TraceId = 1, ConnectorId = 1",
                             $"[ReadPacket:Received] Server = {server.LocalEndPoint}, TraceId = 1, ConnectorId = 1, Packet = (HandshakeRequest, Length = 24)",
-                            $"[HandshakeReceived] Server = {server.LocalEndPoint}, TraceId = 1, ConnectorId = 1, ClientName = 'test', DesiredMessageTimeout = 1 second(s), DesiredPingInterval = 10 second(s), DesiredBatchPacket = (MaxPacketCount = 5, MaxLength = 1048576 B), SynchronizeExternalObjectNames = False, ClearBuffers = False, IsClientLittleEndian = {BitConverter.IsLittleEndian}",
+                            $"[HandshakeReceived] Server = {server.LocalEndPoint}, TraceId = 1, ConnectorId = 1, ClientName = 'test', DesiredMessageTimeout = 1 second(s), DesiredPingInterval = 10 second(s), DesiredBatchPacket = (MaxPacketCount = 5, MaxLength = 1048576 B), SynchronizeExternalObjectNames = False, ClearBuffers = False, IsEphemeral = True, IsClientLittleEndian = {BitConverter.IsLittleEndian}",
                             $"[ReadPacket:Accepted] Server = {server.LocalEndPoint}, TraceId = 1, ConnectorId = 1, Packet = (HandshakeRequest, Length = 24)",
                             $"[Trace:AcceptClient] Server = {server.LocalEndPoint}, TraceId = 1 (end)"
                         ] )
@@ -298,6 +299,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                         r.LocalEndPoint.TestNotNull(),
                         r.RemoteEndPoint.TestNotNull(),
                         r.IsLittleEndian.TestTrue(),
+                        r.IsEphemeral.TestTrue(),
                         r.MessageTimeout.TestEquals( Duration.FromSeconds( 1 ) ),
                         r.PingInterval.TestEquals( Duration.FromSeconds( 10 ) ),
                         r.MaxBatchPacketCount.TestEquals( ( short )0 ),
@@ -316,6 +318,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                         r.LocalEndPoint.TestNotNull(),
                         r.RemoteEndPoint.TestNotNull(),
                         r.IsLittleEndian.TestTrue(),
+                        r.IsEphemeral.TestTrue(),
                         r.MessageTimeout.TestEquals( Duration.FromSeconds( 1.5 ) ),
                         r.PingInterval.TestEquals( Duration.FromSeconds( 15 ) ),
                         r.MaxBatchPacketCount.TestEquals( ( short )10 ),
@@ -335,7 +338,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                             $"[ClientAccepted] Server = {server.LocalEndPoint}, TraceId = 1, ConnectorId = 1",
                             $"[ConnectorStarted] Server = {server.LocalEndPoint}, TraceId = 1, ConnectorId = 1",
                             $"[ReadPacket:Received] Server = {server.LocalEndPoint}, TraceId = 1, ConnectorId = 1, Packet = (HandshakeRequest, Length = 23)",
-                            $"[HandshakeReceived] Server = {server.LocalEndPoint}, TraceId = 1, ConnectorId = 1, ClientName = 'foo', DesiredMessageTimeout = 0.5 second(s), DesiredPingInterval = 5 second(s), DesiredBatchPacket = <disabled>, SynchronizeExternalObjectNames = False, ClearBuffers = False, IsClientLittleEndian = {BitConverter.IsLittleEndian}",
+                            $"[HandshakeReceived] Server = {server.LocalEndPoint}, TraceId = 1, ConnectorId = 1, ClientName = 'foo', DesiredMessageTimeout = 0.5 second(s), DesiredPingInterval = 5 second(s), DesiredBatchPacket = <disabled>, SynchronizeExternalObjectNames = False, ClearBuffers = False, IsEphemeral = True, IsClientLittleEndian = {BitConverter.IsLittleEndian}",
                             $"[ReadPacket:Accepted] Server = {server.LocalEndPoint}, TraceId = 1, ConnectorId = 1, Packet = (HandshakeRequest, Length = 23)",
                             $"[Trace:AcceptClient] Server = {server.LocalEndPoint}, TraceId = 1 (end)"
                         ] ),
@@ -345,7 +348,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                             $"[ClientAccepted] Server = {server.LocalEndPoint}, TraceId = 2, ConnectorId = 1",
                             $"[ConnectorStarted] Server = {server.LocalEndPoint}, TraceId = 2, ConnectorId = 1",
                             $"[ReadPacket:Received] Server = {server.LocalEndPoint}, TraceId = 2, ConnectorId = 1, Packet = (HandshakeRequest, Length = 23)",
-                            $"[HandshakeReceived] Server = {server.LocalEndPoint}, TraceId = 2, ConnectorId = 1, ClientName = 'bar', DesiredMessageTimeout = 2 second(s), DesiredPingInterval = 20 second(s), DesiredBatchPacket = (MaxPacketCount = 10, MaxLength = 2097152 B), SynchronizeExternalObjectNames = False, ClearBuffers = False, IsClientLittleEndian = {BitConverter.IsLittleEndian}",
+                            $"[HandshakeReceived] Server = {server.LocalEndPoint}, TraceId = 2, ConnectorId = 1, ClientName = 'bar', DesiredMessageTimeout = 2 second(s), DesiredPingInterval = 20 second(s), DesiredBatchPacket = (MaxPacketCount = 10, MaxLength = 2097152 B), SynchronizeExternalObjectNames = False, ClearBuffers = False, IsEphemeral = True, IsClientLittleEndian = {BitConverter.IsLittleEndian}",
                             $"[ReadPacket:Accepted] Server = {server.LocalEndPoint}, TraceId = 2, ConnectorId = 1, Packet = (HandshakeRequest, Length = 23)",
                             $"[Trace:AcceptClient] Server = {server.LocalEndPoint}, TraceId = 2 (end)"
                         ] )
@@ -467,8 +470,8 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                                 [Error] Client = [1] 'test', TraceId = 0
                                 System.ObjectDisposedException:
                                 """ ),
-                            (e, _) => e.TestEquals( "[Disposing] Client = [1] 'test', TraceId = 0" ),
-                            (e, _) => e.TestEquals( "[Disposed] Client = [1] 'test', TraceId = 0" ),
+                            (e, _) => e.TestEquals( "[Deactivating] Client = [1] 'test', TraceId = 0, IsAlive = False" ),
+                            (e, _) => e.TestEquals( "[Deactivated] Client = [1] 'test', TraceId = 0, IsAlive = False" ),
                             (e, _) => e.TestEquals( "[Trace:Start] Client = [1] 'test', TraceId = 0 (end)" )
                         ] )
                     ] ),
@@ -523,8 +526,8 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                             $"[ServerTrace] Client = [1] 'test', TraceId = 0, Correlation = (Server = {server.LocalEndPoint}, TraceId = 1)",
                             "[SendPacket:Sending] Client = [1] 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 32)",
                             "[SendPacket:Sent] Client = [1] 'test', TraceId = 0, Packet = (HandshakeAcceptedResponse, Length = 32)",
-                            "[Disposing] Client = [1] 'test', TraceId = 0",
-                            "[Disposed] Client = [1] 'test', TraceId = 0",
+                            "[Deactivating] Client = [1] 'test', TraceId = 0, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 0, IsAlive = False",
                             "[Trace:Start] Client = [1] 'test', TraceId = 0 (end)"
                         ] )
                     ] ),
@@ -594,8 +597,8 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid <unrecognized-endpoint-0> from client [1] 'test'. Encountered 1 error(s):
                             1. Received unexpected server endpoint.
                             """,
-                            "[Disposing] Client = [1] 'test', TraceId = 0",
-                            "[Disposed] Client = [1] 'test', TraceId = 0",
+                            "[Deactivating] Client = [1] 'test', TraceId = 0, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 0, IsAlive = False",
                             "[Trace:Start] Client = [1] 'test', TraceId = 0 (end)"
                         ] )
                     ] ),
@@ -661,8 +664,8 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid ConfirmHandshakeResponse from client [1] 'test'. Encountered 1 error(s):
                             1. Expected endianness verification payload to be 0102fdfe but found 00000001.
                             """,
-                            "[Disposing] Client = [1] 'test', TraceId = 0",
-                            "[Disposed] Client = [1] 'test', TraceId = 0",
+                            "[Deactivating] Client = [1] 'test', TraceId = 0, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 0, IsAlive = False",
                             "[Trace:Start] Client = [1] 'test', TraceId = 0 (end)",
                         ] )
                     ] ),
@@ -725,8 +728,8 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                             [Error] Client = [1] 'test', TraceId = 0
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientRequestTimeoutException: Client [1] 'test' failed to send a request to the server in the specified amount of time (0.1 second(s)).
                             """,
-                            "[Disposing] Client = [1] 'test', TraceId = 0",
-                            "[Disposed] Client = [1] 'test', TraceId = 0",
+                            "[Deactivating] Client = [1] 'test', TraceId = 0, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 0, IsAlive = False",
                             "[Trace:Start] Client = [1] 'test', TraceId = 0 (end)"
                         ] )
                     ] ),
@@ -755,7 +758,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                         MessageBrokerRemoteClientLogger.Create(
                             traceEnd: e =>
                             {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.Dispose )
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.Deactivate )
                                     endSource.Complete();
                             } ) ) ) );
 
@@ -786,10 +789,10 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                     [
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:Dispose] Client = [1] 'test', TraceId = 1 (start)",
-                            "[Disposing] Client = [1] 'test', TraceId = 1",
-                            "[Disposed] Client = [1] 'test', TraceId = 1",
-                            "[Trace:Dispose] Client = [1] 'test', TraceId = 1 (end)"
+                            "[Trace:Deactivate] Client = [1] 'test', TraceId = 1 (start)",
+                            "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                            "[Trace:Deactivate] Client = [1] 'test', TraceId = 1 (end)"
                         ] )
                     ] ) )
             .Go();
@@ -881,8 +884,8 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                             [Error] Client = [1] 'test', TraceId = 1
                             System.OperationCanceledException: Operation has been cancelled because external delay value task source has been disposed.
                             """,
-                            "[Disposing] Client = [1] 'test', TraceId = 1",
-                            "[Disposed] Client = [1] 'test', TraceId = 1",
+                            "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                             "[Trace:Unexpected] Client = [1] 'test', TraceId = 1 (end)"
                         ] )
                     ] ),
@@ -927,10 +930,10 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                             traceEnd: e =>
                             {
                                 if ( e.Type is MessageBrokerRemoteClientTraceEventType.MessageNotification
-                                    or MessageBrokerRemoteClientTraceEventType.Dispose )
+                                    or MessageBrokerRemoteClientTraceEventType.Deactivate )
                                     endSource.Complete();
                             },
-                            disposing: _ => disposeContinuation.Complete(),
+                            deactivating: _ => disposeContinuation.Complete(),
                             error: e => exception = e.Exception ) ) )
                 .SetQueueLoggerFactory( _ => MessageBrokerQueueLogger.Create( messageProcessed: _ => pushContinuation.Complete() ) ) );
 
@@ -1015,20 +1018,20 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                             "[SendPacket:Sending] Client = [1] 'test', TraceId = 11, Packet = (MessageNotification, Length = 48)",
                             """
                             [Error] Client = [1] 'test', TraceId = 11
-                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientDisposedException: Operation has been cancelled because remote client [1] 'test' is disposed.
+                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientDeactivatedException: Operation has been cancelled because remote client [1] 'test' is disposed.
                             """,
                             "[Trace:MessageNotification] Client = [1] 'test', TraceId = 11 (end)"
                         ] ),
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:Dispose] Client = [1] 'test', TraceId = 12 (start)",
-                            "[Disposing] Client = [1] 'test', TraceId = 12",
+                            "[Trace:Deactivate] Client = [1] 'test', TraceId = 12 (start)",
+                            "[Deactivating] Client = [1] 'test', TraceId = 12, IsAlive = False",
                             """
                             [Error] Client = [1] 'test', TraceId = 12
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientException: 2 stored pending notification(s) have been discarded due to client disposal.
                             """,
-                            "[Disposed] Client = [1] 'test', TraceId = 12",
-                            "[Trace:Dispose] Client = [1] 'test', TraceId = 12 (end)"
+                            "[Deactivated] Client = [1] 'test', TraceId = 12, IsAlive = False",
+                            "[Trace:Deactivate] Client = [1] 'test', TraceId = 12 (end)"
                         ] )
                     ] ) )
             .Go();
@@ -1089,8 +1092,8 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                         (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:Unexpected] Client = [1] 'test', TraceId = 1 (start)",
-                            "[Disposing] Client = [1] 'test', TraceId = 1",
-                            "[Disposed] Client = [1] 'test', TraceId = 1",
+                            "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                             "[Trace:Unexpected] Client = [1] 'test', TraceId = 1 (end)"
                         ] )
                     ] ),
@@ -1127,7 +1130,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                 .SetClientLoggerFactory(
                     _ => logs.GetLogger(
                         MessageBrokerRemoteClientLogger.Create(
-                            disposing: _ => sendContinuation.Complete(),
+                            deactivating: _ => sendContinuation.Complete(),
                             listenerBound: _ => disposeContinuation.Complete(),
                             sendPacket: e =>
                             {
@@ -1162,13 +1165,13 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                 [
                     "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
                     "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
-                    "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo'",
+                    "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', IsEphemeral = True",
                     "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
                     "[PublisherBound] Client = [1] 'test', TraceId = 1, Channel = [1] 'foo' (created), Stream = [1] 'foo' (created)",
                     "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (PublisherBoundResponse, Length = 14)",
                     """
                     [Error] Client = [1] 'test', TraceId = 1
-                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientDisposedException: Operation has been cancelled because remote client [1] 'test' is disposed.
+                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientDeactivatedException: Operation has been cancelled because remote client [1] 'test' is disposed.
                     """,
                     "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (end)"
                 ] ),
@@ -1176,21 +1179,21 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                 [
                     "[Trace:BindListener] Client = [1] 'test', TraceId = 2 (start)",
                     "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (BindListenerRequest, Length = 43)",
-                    "[BindingListener] Client = [1] 'test', TraceId = 2, ChannelName = 'foo', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = <disabled>, DeadLetter = <disabled>, CreateChannelIfNotExists = False",
+                    "[BindingListener] Client = [1] 'test', TraceId = 2, ChannelName = 'foo', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = <disabled>, DeadLetter = <disabled>, IsEphemeral = True, CreateChannelIfNotExists = False",
                     "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (BindListenerRequest, Length = 43)",
                     "[ListenerBound] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo' (created)",
                     """
                     [Error] Client = [1] 'test', TraceId = 2
-                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientDisposedException: Operation has been cancelled because remote client [1] 'test' is disposed.
+                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientDeactivatedException: Operation has been cancelled because remote client [1] 'test' is disposed.
                     """,
                     "[Trace:BindListener] Client = [1] 'test', TraceId = 2 (end)"
                 ] ),
                 (t, _) => t.Logs.TestSequence(
                 [
-                    "[Trace:Dispose] Client = [1] 'test', TraceId = 3 (start)",
-                    "[Disposing] Client = [1] 'test', TraceId = 3",
-                    "[Disposed] Client = [1] 'test', TraceId = 3",
-                    "[Trace:Dispose] Client = [1] 'test', TraceId = 3 (end)"
+                    "[Trace:Deactivate] Client = [1] 'test', TraceId = 3 (start)",
+                    "[Deactivating] Client = [1] 'test', TraceId = 3, IsAlive = False",
+                    "[Deactivated] Client = [1] 'test', TraceId = 3, IsAlive = False",
+                    "[Trace:Deactivate] Client = [1] 'test', TraceId = 3 (end)"
                 ] )
             ] )
             .Go();

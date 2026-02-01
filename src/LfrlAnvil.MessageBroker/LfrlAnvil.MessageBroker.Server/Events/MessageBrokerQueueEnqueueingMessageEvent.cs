@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ public readonly struct MessageBrokerQueueEnqueueingMessageEvent
     private MessageBrokerQueueEnqueueingMessageEvent(
         MessageBrokerChannelListenerBinding listener,
         ulong traceId,
-        MessageBrokerChannelPublisherBinding publisher,
+        IMessageBrokerMessagePublisher publisher,
         ulong messageId,
         int storeKey,
         int length)
@@ -49,9 +49,9 @@ public readonly struct MessageBrokerQueueEnqueueingMessageEvent
     public MessageBrokerChannelListenerBinding Listener { get; }
 
     /// <summary>
-    /// <see cref="MessageBrokerChannelPublisherBinding"/> that pushed the message.
+    /// <see cref="IMessageBrokerMessagePublisher"/> that pushed the message.
     /// </summary>
-    public MessageBrokerChannelPublisherBinding Publisher { get; }
+    public IMessageBrokerMessagePublisher Publisher { get; }
 
     /// <summary>
     /// Unique id of the message.
@@ -76,7 +76,7 @@ public readonly struct MessageBrokerQueueEnqueueingMessageEvent
     public override string ToString()
     {
         return
-            $"[EnqueueingMessage] {Source}, Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', MessageId = {MessageId}, StoreKey = {StoreKey}, Length = {Length}";
+            $"[EnqueueingMessage] {Source}, Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Sender = [{Publisher.ClientId}] '{Publisher.ClientName}', MessageId = {MessageId}, StoreKey = {StoreKey}, Length = {Length}";
     }
 
     [Pure]
@@ -84,7 +84,7 @@ public readonly struct MessageBrokerQueueEnqueueingMessageEvent
     internal static MessageBrokerQueueEnqueueingMessageEvent Create(
         MessageBrokerChannelListenerBinding listener,
         ulong traceId,
-        MessageBrokerChannelPublisherBinding publisher,
+        IMessageBrokerMessagePublisher publisher,
         ulong messageId,
         int storeKey,
         int length)

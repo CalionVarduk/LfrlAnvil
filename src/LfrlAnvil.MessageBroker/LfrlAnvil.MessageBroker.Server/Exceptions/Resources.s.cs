@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,6 +32,10 @@ internal static class Resources
     internal const string ExternalDelaySourceHasBeenDisposed
         = "Operation has been cancelled because external delay value task source has been disposed.";
 
+    internal const string InvalidFileHeader = "File contains invalid metadata header.";
+    internal const string FileNameDoesNotContainValidId = "File name doesn't contain a valid ID.";
+    internal const string MissingFile = "File is missing.";
+
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string InvalidServerState(MessageBrokerServerState actual, MessageBrokerServerState expected)
@@ -41,9 +45,9 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string ClientDisposed(int id, string name)
+    internal static string ClientDeactivated(int id, string name, bool disposed)
     {
-        return $"Operation has been cancelled because remote client [{id}] '{name}' is disposed.";
+        return $"Operation has been cancelled because remote client [{id}] '{name}' is {(disposed ? "disposed" : "deactivated")}.";
     }
 
     [Pure]
@@ -202,10 +206,22 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string InvalidNameLength(int length)
+    internal static string InvalidStorage(string filePath, Chain<string> errors)
+    {
+        var header = $"Server storage file '{filePath}' contains invalid data.";
+        if ( errors.Count == 0 )
+            return header;
+
+        var reasons = string.Join( Environment.NewLine, errors.Select( static (e, i) => $"{i + 1}. {e}" ) );
+        return $"{header} Encountered {errors.Count} error(s):{Environment.NewLine}{reasons}";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string InvalidClientNameLength(int length)
     {
         return
-            $"Expected name length to be in [{Defaults.NameLengthBounds.Min}, {Defaults.NameLengthBounds.Max}] range but found {length}.";
+            $"Expected client name length to be in [{Defaults.NameLengthBounds.Min}, {Defaults.NameLengthBounds.Max}] range but found {length}.";
     }
 
     [Pure]
@@ -230,6 +246,13 @@ internal static class Resources
     {
         return
             $"Expected queue name length to be in [{Defaults.NameLengthBounds.Min}, {Defaults.NameLengthBounds.Max}] range but found {length}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string InvalidBinaryClientNameLength(int length)
+    {
+        return $"Expected binary channel name length to be in [1, {Defaults.Memory.DefaultNetworkPacketLength}] range but found {length}.";
     }
 
     [Pure]
@@ -452,6 +475,13 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string ServerIsEphemeral(string clientName)
+    {
+        return $"Non-ephemeral client with name '{clientName}' cannot be connected because the server is ephemeral.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string ClientAlreadyConnected(string name)
     {
         return $"Client with name '{name}' is already connected.";
@@ -605,6 +635,238 @@ internal static class Resources
     {
         return
             $"Client failed to send a request to the server-side connector [{connector.Id}] in the specified amount of time ({connector.Server.HandshakeTimeout}).";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string InvalidFileLength(int expected, long actual)
+    {
+        return $"Expected file length to be equal to {expected} but found {actual}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string InvalidFileMinLength(long expectedMin, long actual)
+    {
+        return $"Expected file length to be greater than or equal to {expectedMin} but found {actual}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string InvalidFileLength(int expectedMin, int expectedMax, long actual)
+    {
+        return $"Expected file length to be in [{expectedMin}, {expectedMax}] range but found {actual}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string RecreatedChannelDuplicate(int id, string name)
+    {
+        return $"Recreated channel [{id}] '{name}' is a duplicate.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string RecreatedStreamDuplicate(int id, string name)
+    {
+        return $"Recreated stream [{id}] '{name}' is a duplicate.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string RecreatedClientDuplicate(int id, string name)
+    {
+        return $"Recreated client [{id}] '{name}' is a duplicate.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string RecreatedMessageDuplicate(int storeKey)
+    {
+        return $"Recreated message with key '{storeKey}' is duplicated.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string RecreatedQueueDuplicate(MessageBrokerRemoteClient client, int id, string name)
+    {
+        return $"Recreated queue [{id}] '{name}' for client [{client.Id}] '{client.Name}' is a duplicate.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string RecreatedPublisherDuplicate(MessageBrokerRemoteClient client, MessageBrokerChannel channel)
+    {
+        return $"Recreated publisher for client [{client.Id}] '{client.Name}' and channel [{channel.Id}] '{channel.Name}' is a duplicate.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string RecreatedListenerDuplicate(MessageBrokerRemoteClient client, MessageBrokerChannel channel)
+    {
+        return $"Recreated listener for client [{client.Id}] '{client.Name}' and channel [{channel.Id}] '{channel.Name}' is a duplicate.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string PublisherChannelDoesNotExist(MessageBrokerRemoteClient client, int channelId)
+    {
+        return
+            $"Publisher for client [{client.Id}] '{client.Name}' and channel with ID {channelId} cannot be recreated because channel does not exist.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string PublisherStreamDoesNotExist(MessageBrokerRemoteClient client, int channelId, int streamId)
+    {
+        return
+            $"Publisher for client [{client.Id}] '{client.Name}' and channel with ID {channelId} cannot be recreated because stream with ID {streamId} does not exist.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string ListenerChannelDoesNotExist(MessageBrokerRemoteClient client, int channelId)
+    {
+        return
+            $"Listener for client [{client.Id}] '{client.Name}' and channel with ID {channelId} cannot be recreated because channel does not exist.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string ListenerQueueDoesNotExist(MessageBrokerRemoteClient client, MessageBrokerChannel channel, int queueId)
+    {
+        return
+            $"Listener for client [{client.Id}] '{client.Name}' and channel [{channel.Id}] '{channel.Name}' cannot be recreated because queue with ID {queueId} does not exist.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string MessageCountIsNegative(int value)
+    {
+        return $"Expected message count to not be negative but found {value}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string RoutingCountIsNegative(int value)
+    {
+        return $"Expected routing count to not be negative but found {value}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string VirtualIdIsNotPositive(int value)
+    {
+        return $"Expected virtual ID to be positive but found {value}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string SenderIdIsNotPositive(int value)
+    {
+        return $"Expected sender ID to be positive but found {value}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string StoreKeyIsNegative(int value)
+    {
+        return $"Expected store key to not be negative but found {value}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string InvalidDataLength(MessageBrokerServer server, int value)
+    {
+        return $"Expected data length to be in [0, {server.MaxNetworkMessagePacketBytes}] range but found {value}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string DiscardedDataLengthIsPositive(int value)
+    {
+        return $"Expected discarded data length to not be positive but found {value}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string InvalidRoutingDataLength(int value, int max)
+    {
+        return $"Expected data length to be in [0, {max}] range but found {value}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string StreamDoesNotExist(int streamId)
+    {
+        return $"Stream with ID {streamId} does not exist.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string ChannelDoesNotExist(int channelId)
+    {
+        return $"Channel with ID {channelId} does not exist.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string ClientDoesNotExist(int clientId)
+    {
+        return $"Client with ID {clientId} does not exist.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string MessageDoesNotExist(ulong messageId)
+    {
+        return $"Message with ID {messageId} does not exist.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string StreamMessageDoesNotExist(MessageBrokerStream stream, int storeKey)
+    {
+        return $"Stream [{stream.Id}] '{stream.Name}' does not contain a message with key {storeKey}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string PendingStreamMessageCannotBeReferencedByQueue(MessageBrokerStream stream, int storeKey)
+    {
+        return $"Message with key {storeKey} in stream [{stream.Id}] '{stream.Name}' is pending and cannot be referenced by a queue.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string ListenerDoesNotExist(MessageBrokerChannel channel, MessageBrokerStream stream, int storeKey)
+    {
+        return
+            $"Failed to enqueue a message from stream [{stream.Id}] '{stream.Name}' with store key {storeKey} because Listener for channel [{channel.Id}] '{channel.Name}' does not exist.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string EphemeralSenderDoesNotExist(int senderId)
+    {
+        return $"Ephemeral sender with ID {senderId} does not exist.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string NextPendingMessageDoesNotExist(int storeKey)
+    {
+        return $"Next pending message with key {storeKey} does not exist.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string ListenerMetadataWarnings(MessageBrokerRemoteClient client, int channelId, Chain<string> warnings)
+    {
+        Assume.IsNotEmpty( warnings );
+        var header = $"Listener for client [{client.Id}] '{client.Name}' and channel with ID {channelId} has invalid metadata.";
+        var issues = string.Join( Environment.NewLine, warnings.Select( static (w, i) => $"{i + 1}. {w}" ) );
+        return $"{header} Encountered {warnings.Count} issue(s):{Environment.NewLine}{issues}";
     }
 
     [Pure]

@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@ using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Sources;
 using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Computable.Expressions;
@@ -38,9 +37,13 @@ internal struct RequestHandler
     }
 
     [Pure]
-    internal static RequestHandler Create()
+    internal static RequestHandler Create(bool running)
     {
-        return new RequestHandler( new ManualResetValueTaskSource<bool>() );
+        var source = new ManualResetValueTaskSource<bool>();
+        if ( ! running )
+            source.TrySetResult( false );
+
+        return new RequestHandler( source );
     }
 
     [MethodImpl( MethodImplOptions.NoInlining )]
@@ -64,17 +67,23 @@ internal struct RequestHandler
                 if ( client.Logger.Error is { } error )
                     error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
 
-                await client.DisposeAsync( traceId ).ConfigureAwait( false );
+                await client.DeactivateAsync( traceId ).ConfigureAwait( false );
             }
         }
 
         Assume.IsGreaterThanOrEqualTo( client.State, MessageBrokerRemoteClientState.Disposing );
     }
 
-    internal void Dispose()
+    internal void Dispose(ref Chain<Exception> exceptions)
     {
-        if ( _continuation.Status == ValueTaskSourceStatus.Pending )
-            _continuation.SetResult( false );
+        try
+        {
+            _continuation.TrySetResult( false );
+        }
+        catch ( Exception exc )
+        {
+            exceptions = exceptions.Extend( exc );
+        }
     }
 
     internal void SetUnderlyingTask(Task task)
@@ -93,8 +102,7 @@ internal struct RequestHandler
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void SignalContinuation()
     {
-        if ( _continuation.Status == ValueTaskSourceStatus.Pending )
-            _continuation.SetResult( true );
+        _continuation.TrySetResult( true );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -117,7 +125,7 @@ internal struct RequestHandler
                 IncomingPacketToken request;
                 using ( client.AcquireLock() )
                 {
-                    if ( client.ShouldCancel )
+                    if ( client.IsInactive )
                         return;
 
                     request = client.RequestQueue.Dequeue();
@@ -172,7 +180,7 @@ internal struct RequestHandler
 
             using ( client.AcquireLock() )
             {
-                if ( client.ShouldCancel )
+                if ( client.IsInactive )
                     return;
 
                 client.RequestHandler._continuation.Reset();
@@ -198,6 +206,7 @@ internal struct RequestHandler
         {
             var readPacket = client.Logger.ReadPacket;
             bool channelCreated;
+            bool isEphemeral;
             var streamCreated = false;
             ulong channelTraceId = 0;
             ulong streamTraceId = 0;
@@ -242,6 +251,8 @@ internal struct RequestHandler
 
                 streamName = TextEncoding.Parse(
                     data.Slice( Protocol.BindPublisherRequestHeader.Length + parsedRequestHeader.ChannelNameLength ) );
+
+                isEphemeral = parsedRequestHeader.IsEphemeral || client.IsEphemeral;
             }
             finally
             {
@@ -260,7 +271,12 @@ internal struct RequestHandler
 
             if ( client.Logger.BindingPublisher is { } bindingPublisher )
                 bindingPublisher.Emit(
-                    MessageBrokerRemoteClientBindingPublisherEvent.Create( client, traceId, channelName.Value, streamName.Value ) );
+                    MessageBrokerRemoteClientBindingPublisherEvent.Create(
+                        client,
+                        traceId,
+                        channelName.Value,
+                        streamName.Value,
+                        isEphemeral ) );
 
             if ( streamName.Value.Length == 0 )
                 streamName = channelName;
@@ -282,6 +298,7 @@ internal struct RequestHandler
                             channel,
                             channelCreated,
                             streamName.Value,
+                            isEphemeral,
                             ref publisher,
                             ref channelTraceId,
                             ref stream,
@@ -340,8 +357,12 @@ internal struct RequestHandler
                     if ( channel.Logger.ClientTrace is { } clientTrace )
                         clientTrace.Emit( MessageBrokerChannelClientTraceEvent.Create( channel, channelTraceId, client, traceId ) );
 
-                    if ( channelCreated && channel.Logger.Created is { } created )
-                        created.Emit( MessageBrokerChannelCreatedEvent.Create( channel, channelTraceId ) );
+                    if ( channelCreated )
+                    {
+                        await channel.Storage.SaveMetadataAsync( channel, channelTraceId, skipDisposed: true ).ConfigureAwait( false );
+                        if ( channel.Logger.Created is { } created )
+                            created.Emit( MessageBrokerChannelCreatedEvent.Create( channel, channelTraceId ) );
+                    }
 
                     if ( channel.Logger.PublisherBound is { } channelPublisherBound )
                         channelPublisherBound.Emit(
@@ -356,14 +377,20 @@ internal struct RequestHandler
                     if ( stream.Logger.ClientTrace is { } clientTrace )
                         clientTrace.Emit( MessageBrokerStreamClientTraceEvent.Create( stream, streamTraceId, client, traceId ) );
 
-                    if ( streamCreated && stream.Logger.Created is { } created )
-                        created.Emit( MessageBrokerStreamCreatedEvent.Create( stream, streamTraceId ) );
+                    if ( streamCreated )
+                    {
+                        await stream.Storage.SaveMetadataAsync( stream, streamTraceId, skipDisposed: true ).ConfigureAwait( false );
+                        if ( stream.Logger.Created is { } created )
+                            created.Emit( MessageBrokerStreamCreatedEvent.Create( stream, streamTraceId ) );
+                    }
 
                     if ( stream.Logger.PublisherBound is { } streamPublisherBound )
                         streamPublisherBound.Emit(
                             MessageBrokerStreamPublisherBoundEvent.Create( publisher, streamTraceId, channelCreated ) );
                 }
 
+                stream.StartProcessor();
+                await client.Storage.SaveMetadataAsync( publisher, traceId ).ConfigureAwait( false );
                 if ( client.Logger.PublisherBound is { } publisherBound )
                     publisherBound.Emit(
                         MessageBrokerRemoteClientPublisherBoundEvent.Create( publisher, traceId, channelCreated, streamCreated ) );
@@ -517,8 +544,7 @@ internal struct RequestHandler
                             MessageBrokerStreamPublisherUnboundEvent.Create( publisher, streamTraceId, disposingChannel ) );
 
                     if ( disposingStream )
-                        await stream.DisposeDueToLackOfReferencesAsync( ignoreProcessorTask: false, streamTraceId )
-                            .ConfigureAwait( false );
+                        await stream.DisposeDueToLackOfReferencesAsync( ignoreProcessorTask: false, streamTraceId ).ConfigureAwait( false );
                 }
 
                 using ( MessageBrokerChannelTraceEvent.CreateScope(
@@ -534,10 +560,10 @@ internal struct RequestHandler
                             MessageBrokerChannelPublisherUnboundEvent.Create( publisher, channelTraceId, disposingStream ) );
 
                     if ( disposingChannel )
-                        channel.DisposeDueToLackOfReferences( channelTraceId );
+                        await channel.DisposeDueToLackOfReferencesAsync( channelTraceId ).ConfigureAwait( false );
                 }
 
-                publisher.EndDisposing();
+                await publisher.EndDisposingAsync( traceId ).ConfigureAwait( false );
                 if ( client.Logger.PublisherUnbound is { } publisherUnbound )
                     publisherUnbound.Emit(
                         MessageBrokerRemoteClientPublisherUnboundEvent.Create( publisher, traceId, disposingChannel, disposingStream ) );
@@ -664,6 +690,7 @@ internal struct RequestHandler
 
             Assume.IsNotNull( filterExpression.Value );
             var rawFilterExpression = filterExpression.Value.Length > 0 ? filterExpression.Value : null;
+            var isEphemeral = parsedRequestHeader.IsEphemeral || client.IsEphemeral;
 
             if ( client.Logger.BindingListener is { } bindingListener )
                 bindingListener.Emit(
@@ -680,7 +707,8 @@ internal struct RequestHandler
                         parsedRequestHeader.MinAckTimeout,
                         parsedRequestHeader.DeadLetterCapacityHint,
                         parsedRequestHeader.MinDeadLetterRetention,
-                        parsedRequestHeader.CreateChannelIfNotExists ) );
+                        parsedRequestHeader.CreateChannelIfNotExists,
+                        isEphemeral ) );
 
             if ( queueName.Value.Length == 0 )
                 queueName = channelName;
@@ -752,6 +780,7 @@ internal struct RequestHandler
                                     channelCreated,
                                     queueName.Value,
                                     rawFilterExpression,
+                                    isEphemeral,
                                     filterExpressionDelegate,
                                     in parsedRequestHeader,
                                     ref listener,
@@ -818,8 +847,12 @@ internal struct RequestHandler
                     if ( channel.Logger.ClientTrace is { } clientTrace )
                         clientTrace.Emit( MessageBrokerChannelClientTraceEvent.Create( channel, channelTraceId, client, traceId ) );
 
-                    if ( channelCreated && channel.Logger.Created is { } created )
-                        created.Emit( MessageBrokerChannelCreatedEvent.Create( channel, channelTraceId ) );
+                    if ( channelCreated )
+                    {
+                        await channel.Storage.SaveMetadataAsync( channel, channelTraceId, skipDisposed: true ).ConfigureAwait( false );
+                        if ( channel.Logger.Created is { } created )
+                            created.Emit( MessageBrokerChannelCreatedEvent.Create( channel, channelTraceId ) );
+                    }
 
                     if ( channel.Logger.ListenerBound is { } channelListenerBound )
                         channelListenerBound.Emit(
@@ -831,13 +864,19 @@ internal struct RequestHandler
                     if ( queue.Logger.ClientTrace is { } clientTrace )
                         clientTrace.Emit( MessageBrokerQueueClientTraceEvent.Create( queue, queueTraceId, traceId ) );
 
-                    if ( queueCreated && queue.Logger.Created is { } created )
-                        created.Emit( MessageBrokerQueueCreatedEvent.Create( queue, queueTraceId ) );
+                    if ( queueCreated )
+                    {
+                        await queue.Storage.SaveMetadataAsync( queue, queueTraceId, skipDisposed: true ).ConfigureAwait( false );
+                        if ( queue.Logger.Created is { } created )
+                            created.Emit( MessageBrokerQueueCreatedEvent.Create( queue, queueTraceId ) );
+                    }
 
                     if ( queue.Logger.ListenerBound is { } queueListenerBound )
                         queueListenerBound.Emit( MessageBrokerQueueListenerBoundEvent.Create( listener, queueTraceId, channelCreated ) );
                 }
 
+                queue.StartProcessor();
+                await client.Storage.SaveMetadataAsync( listener, traceId ).ConfigureAwait( false );
                 if ( client.Logger.ListenerBound is { } listenerBound )
                     listenerBound.Emit(
                         MessageBrokerRemoteClientListenerBoundEvent.Create( listener, traceId, channelCreated, queueCreated ) );
@@ -1009,10 +1048,10 @@ internal struct RequestHandler
                             MessageBrokerChannelListenerUnboundEvent.Create( listener, channelTraceId, disposingQueue ) );
 
                     if ( disposingChannel )
-                        channel.DisposeDueToLackOfReferences( channelTraceId );
+                        await channel.DisposeDueToLackOfReferencesAsync( channelTraceId ).ConfigureAwait( false );
                 }
 
-                listener.EndDisposing();
+                await listener.EndDisposingAsync( traceId ).ConfigureAwait( false );
                 if ( client.Logger.ListenerUnbound is { } listenerUnbound )
                     listenerUnbound.Emit(
                         MessageBrokerRemoteClientListenerUnboundEvent.Create( listener, traceId, disposingChannel, disposingQueue ) );
@@ -1113,7 +1152,7 @@ internal struct RequestHandler
             bool failed;
             using ( client.AcquireLock() )
             {
-                failed = client.ShouldCancel;
+                failed = client.IsInactive;
                 if ( ! failed )
                     client.MessageRouting = routingResult.Value;
             }
@@ -1827,7 +1866,7 @@ internal struct RequestHandler
         using ( client.AcquireLock() )
             client.RequestHandler._task = null;
 
-        return client.DisposeAsync( traceId );
+        return client.DeactivateAsync( traceId );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -1837,7 +1876,7 @@ internal struct RequestHandler
         out MessageBrokerServerDisposedException? exception)
     {
         var @lock = client.Server.AcquireLock();
-        if ( ! client.Server.ShouldCancel )
+        if ( ! client.Server.IsDisposed )
         {
             exception = null;
             return @lock;

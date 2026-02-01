@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,7 +24,8 @@ namespace LfrlAnvil.MessageBroker.Server;
 public readonly struct MessageBrokerStreamMessage
 {
     internal MessageBrokerStreamMessage(
-        MessageBrokerChannelPublisherBinding publisher,
+        IMessageBrokerMessagePublisher publisher,
+        ReadOnlyArray<byte> data,
         MemorySize length,
         ulong id,
         Timestamp pushedAt,
@@ -32,6 +33,7 @@ public readonly struct MessageBrokerStreamMessage
         int refCount)
     {
         Publisher = publisher;
+        Data = data;
         Length = length;
         Id = id;
         PushedAt = pushedAt;
@@ -40,9 +42,18 @@ public readonly struct MessageBrokerStreamMessage
     }
 
     /// <summary>
-    /// <see cref="MessageBrokerChannelPublisherBinding"/> that pushed this message.
+    /// <see cref="IMessageBrokerMessagePublisher"/> that pushed this message.
     /// </summary>
-    public MessageBrokerChannelPublisherBinding Publisher { get; }
+    public IMessageBrokerMessagePublisher Publisher { get; }
+
+    // TODO: tests
+    // - Data access
+
+    /// <summary>
+    /// Binary data of this message.
+    /// </summary>
+    /// <remarks>Will be empty when data was not requested.</remarks>
+    public ReadOnlyArray<byte> Data { get; }
 
     /// <summary>
     /// Length of this message.

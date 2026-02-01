@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -45,12 +45,13 @@ public readonly struct MessageBrokerStreamMessageCollection
     /// Attempts to retrieve a message from the store by its store <paramref name="key"/>.
     /// </summary>
     /// <param name="key">Store key of the message to retrieve.</param>
+    /// <param name="includeData">Specifies whether or not to include a copy of binary data. Equal to <b>false</b> by default.</param>
     /// <returns>
     /// <see cref="MessageBrokerStreamMessage"/> instance associated with the given store <paramref name="key"/>
     /// or <b>null</b> if such a message doesn't exist.
     /// </returns>
     [Pure]
-    public MessageBrokerStreamMessage? TryGetByKey(int key)
+    public MessageBrokerStreamMessage? TryGetByKey(int key, bool includeData = false)
     {
         using ( _stream.AcquireLock() )
         {
@@ -59,6 +60,7 @@ public readonly struct MessageBrokerStreamMessageCollection
 
             return new MessageBrokerStreamMessage(
                 message.Publisher,
+                includeData ? message.Data.ToArray() : ReadOnlyArray<byte>.Empty,
                 MemorySize.FromBytes( message.Data.Length ),
                 message.Id,
                 message.PushedAt,

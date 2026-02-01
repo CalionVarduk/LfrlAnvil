@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ public readonly struct MessageBrokerServerLogger
     private MessageBrokerServerLogger(
         Action<MessageBrokerServerTraceEvent>? traceStart,
         Action<MessageBrokerServerTraceEvent>? traceEnd,
+        Action<MessageBrokerServerStorageLoadingEvent>? storageLoading,
+        Action<MessageBrokerServerStorageLoadedEvent>? storageLoaded,
         Action<MessageBrokerServerListenerStartingEvent>? listenerStarting,
         Action<MessageBrokerServerListenerStartedEvent>? listenerStarted,
         Action<MessageBrokerServerAwaitClientEvent>? awaitClient,
@@ -39,6 +41,8 @@ public readonly struct MessageBrokerServerLogger
     {
         TraceStart = traceStart;
         TraceEnd = traceEnd;
+        StorageLoading = storageLoading;
+        StorageLoaded = storageLoaded;
         ListenerStarting = listenerStarting;
         ListenerStarted = listenerStarted;
         AwaitClient = awaitClient;
@@ -61,6 +65,16 @@ public readonly struct MessageBrokerServerLogger
     /// Optional callback for a <see cref="MessageBrokerServerTraceEvent"/> emitted during operation trace end.
     /// </summary>
     public readonly Action<MessageBrokerServerTraceEvent>? TraceEnd;
+
+    /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerServerStorageLoadingEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerServerStorageLoadingEvent>? StorageLoading;
+
+    /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerServerStorageLoadedEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerServerStorageLoadedEvent>? StorageLoaded;
 
     /// <summary>
     /// Optional callback for a <see cref="MessageBrokerServerListenerStartingEvent"/>.
@@ -122,6 +136,8 @@ public readonly struct MessageBrokerServerLogger
     /// </summary>
     /// <param name="traceStart">Optional <see cref="TraceStart"/> callback.</param>
     /// <param name="traceEnd">Optional <see cref="TraceEnd"/> callback.</param>
+    /// <param name="storageLoading">Optional <see cref="StorageLoading"/> callback.</param>
+    /// <param name="storageLoaded">Optional <see cref="StorageLoaded"/> callback.</param>
     /// <param name="listenerStarting">Optional <see cref="ListenerStarting"/> callback.</param>
     /// <param name="listenerStarted">Optional <see cref="ListenerStarted"/> callback.</param>
     /// <param name="awaitClient">Optional <see cref="AwaitClient"/> callback.</param>
@@ -138,6 +154,8 @@ public readonly struct MessageBrokerServerLogger
     public static MessageBrokerServerLogger Create(
         Action<MessageBrokerServerTraceEvent>? traceStart = null,
         Action<MessageBrokerServerTraceEvent>? traceEnd = null,
+        Action<MessageBrokerServerStorageLoadingEvent>? storageLoading = null,
+        Action<MessageBrokerServerStorageLoadedEvent>? storageLoaded = null,
         Action<MessageBrokerServerListenerStartingEvent>? listenerStarting = null,
         Action<MessageBrokerServerListenerStartedEvent>? listenerStarted = null,
         Action<MessageBrokerServerAwaitClientEvent>? awaitClient = null,
@@ -153,6 +171,8 @@ public readonly struct MessageBrokerServerLogger
         return new MessageBrokerServerLogger(
             traceStart,
             traceEnd,
+            storageLoading,
+            storageLoaded,
             listenerStarting,
             listenerStarted,
             awaitClient,

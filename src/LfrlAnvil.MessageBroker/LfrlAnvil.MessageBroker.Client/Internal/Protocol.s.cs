@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Diagnostics;
+using LfrlAnvil.Internal;
 using LfrlAnvil.MessageBroker.Client.Events;
 using LfrlAnvil.MessageBroker.Client.Exceptions;
 
@@ -393,9 +394,9 @@ internal static class Protocol
         internal readonly EncodeableText ChannelName;
         internal readonly EncodeableText StreamName;
 
-        internal BindPublisherRequest(string channelName, string? streamName)
+        internal BindPublisherRequest(string channelName, string? streamName, bool isEphemeral)
         {
-            Flags = 0;
+            Flags = ( byte )(isEphemeral ? 0 : 1);
             ChannelName = TextEncoding.Prepare( channelName ).GetValueOrThrow();
             StreamName = TextEncoding.Prepare( streamName ?? string.Empty ).GetValueOrThrow();
             Header = PacketHeader.Create(
@@ -666,7 +667,8 @@ internal static class Protocol
             int deadLetterCapacityHint,
             Duration minDeadLetterRetention,
             string? filterExpression,
-            bool createChannelIfNotExists)
+            bool createChannelIfNotExists,
+            bool isEphemeral)
         {
             Assume.IsGreaterThan( prefetchHint, 0 );
             Assume.IsGreaterThanOrEqualTo( maxRetries, 0 );
@@ -675,7 +677,7 @@ internal static class Protocol
             Assume.IsGreaterThanOrEqualTo( minAckTimeout, Duration.Zero );
             Assume.IsGreaterThanOrEqualTo( deadLetterCapacityHint, 0 );
             Assume.IsGreaterThanOrEqualTo( minDeadLetterRetention, Duration.Zero );
-            Flags = ( byte )(createChannelIfNotExists ? 1 : 0);
+            Flags = ( byte )((isEphemeral ? 0 : 1) | (createChannelIfNotExists ? 2 : 0));
             PrefetchHint = prefetchHint;
             MaxRetries = maxRetries;
             RetryDelay = retryDelay;
@@ -1450,16 +1452,9 @@ internal static class Protocol
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal Chain<string> StringifySenderErrors(int clientId)
+        internal Chain<string> StringifySenderErrors()
         {
-            var result = Chain<string>.Empty;
-            if ( Id <= 0 )
-                result = result.Extend( Resources.SenderIdIsNotPositive( Id ) );
-
-            if ( Id == clientId )
-                result = result.Extend( Resources.SenderIdEqualsClientId( Id ) );
-
-            return result;
+            return Id <= 0 ? Chain.Create( Resources.SenderIdIsNotPositive( Id ) ) : Chain<string>.Empty;
         }
 
         [Pure]

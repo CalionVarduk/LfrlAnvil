@@ -304,9 +304,9 @@ public class MessageBrokerStreamTests : TestsBase, IClassFixture<SharedResourceF
             {
                 c.SendBindPublisherRequest( "c" );
                 c.ReadPublisherBoundResponse();
-                c.SendBindPublisherRequest( "d", "c" );
+                c.SendBindPublisherRequest( "d", true, "c" );
                 c.ReadPublisherBoundResponse();
-                c.SendBindPublisherRequest( "e", "c" );
+                c.SendBindPublisherRequest( "e", true, "c" );
                 c.ReadPublisherBoundResponse();
                 c.SendPushMessage( 1, [ 1 ] );
                 c.SendPushMessage( 2, [ 2, 3 ] );
@@ -624,8 +624,8 @@ public class MessageBrokerStreamTests : TestsBase, IClassFixture<SharedResourceF
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid PushMessage from client [1] 'test'. Encountered 1 error(s):
                             1. Expected header payload to be at least 5 but found 4.
                             """,
-                            "[Disposing] Client = [1] 'test', TraceId = 2",
-                            "[Disposed] Client = [1] 'test', TraceId = 2",
+                            "[Deactivating] Client = [1] 'test', TraceId = 2, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 2, IsAlive = False",
                             "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (end)"
                         ] )
                     ] ),
@@ -705,8 +705,8 @@ public class MessageBrokerStreamTests : TestsBase, IClassFixture<SharedResourceF
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid PushMessage from client [1] 'test'. Encountered 1 error(s):
                             1. Expected channel ID to be greater than 0 but found 0.
                             """,
-                            "[Disposing] Client = [1] 'test', TraceId = 2",
-                            "[Disposed] Client = [1] 'test', TraceId = 2",
+                            "[Deactivating] Client = [1] 'test', TraceId = 2, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 2, IsAlive = False",
                             "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (end)"
                         ] )
                     ] ),

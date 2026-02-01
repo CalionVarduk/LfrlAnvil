@@ -51,6 +51,7 @@ public sealed class MessageBrokerListener
         int deadLetterCapacityHint,
         Duration minDeadLetterRetention,
         string? filterExpression,
+        bool isEphemeral,
         MessageBrokerListenerCallback callback)
     {
         Client = client;
@@ -66,6 +67,7 @@ public sealed class MessageBrokerListener
         DeadLetterCapacityHint = deadLetterCapacityHint;
         MinDeadLetterRetention = minDeadLetterRetention;
         FilterExpression = filterExpression;
+        IsEphemeral = isEphemeral;
         Callback = callback;
         _state = MessageBrokerListenerState.Bound;
         _autoDisposed = false;
@@ -157,6 +159,12 @@ public sealed class MessageBrokerListener
     /// Specifies server-side message filter expression.
     /// </summary>
     public string? FilterExpression { get; }
+
+    /// <summary>
+    /// Specifies whether or not the listener is ephemeral.
+    /// </summary>
+    /// <remarks>Ephemeral listeners will be removed by the server when client disconnects.</remarks>
+    public bool IsEphemeral { get; }
 
     /// <summary>
     /// Specifies whether or not the <see cref="Client"/> is expected to send ACK or negative ACK to the server
@@ -409,7 +417,7 @@ public sealed class MessageBrokerListener
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ExclusiveLock AcquireLock()
     {
-        return ExclusiveLock.SpinWaitEnter( CancellationSource, spinWaitMultiplier: 4 );
+        return ExclusiveLock.Enter( _disposed );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

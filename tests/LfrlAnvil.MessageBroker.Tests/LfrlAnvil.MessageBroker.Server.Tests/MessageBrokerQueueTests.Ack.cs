@@ -331,8 +331,8 @@ public partial class MessageBrokerQueueTests
                                 "[Trace:Ack] Client = [1] 'test', Queue = [1] 'c', TraceId = 4 (start)",
                                 "[ClientTrace] Client = [1] 'test', Queue = [1] 'c', TraceId = 4, ClientTraceId = 7",
                                 $"[AckProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 4, AckId = 1, MessageRemoved = {messageRemoved.Value}",
-                                "[Disposing] Client = [1] 'test', Queue = [1] 'c', TraceId = 4",
-                                "[Disposed] Client = [1] 'test', Queue = [1] 'c', TraceId = 4",
+                                "[Deactivating] Client = [1] 'test', Queue = [1] 'c', TraceId = 4, IsAlive = False",
+                                "[Deactivated] Client = [1] 'test', Queue = [1] 'c', TraceId = 4, IsAlive = False",
                                 "[Trace:Ack] Client = [1] 'test', Queue = [1] 'c', TraceId = 4 (end)"
                             ] )
                         ] ) )
@@ -646,8 +646,8 @@ public partial class MessageBrokerQueueTests
                                 LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid MessageNotificationAck from client [1] 'test'. Encountered 1 error(s):
                                 1. Expected header payload to be 28 but found 27.
                                 """,
-                                "[Disposing] Client = [1] 'test', TraceId = 1",
-                                "[Disposed] Client = [1] 'test', TraceId = 1",
+                                "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                                "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                                 "[Trace:Ack] Client = [1] 'test', TraceId = 1 (end)"
                             ] )
                         ] ) )
@@ -700,8 +700,8 @@ public partial class MessageBrokerQueueTests
                                 4. Expected retry to not be negative but found -3.
                                 5. Expected redelivery to not be negative but found -4.
                                 """,
-                                "[Disposing] Client = [1] 'test', TraceId = 1",
-                                "[Disposed] Client = [1] 'test', TraceId = 1",
+                                "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                                "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                                 "[Trace:Ack] Client = [1] 'test', TraceId = 1 (end)"
                             ] )
                         ] ) )
@@ -1197,8 +1197,8 @@ public partial class MessageBrokerQueueTests
                                 "[ClientTrace] Client = [1] 'test', Queue = [1] 'c', TraceId = 4, ClientTraceId = 7",
                                 $"[MessageDiscarded] Client = [1] 'test', Queue = [1] 'c', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Reason = MaxRetriesReached, StoreKey = 0, Retry = 0, Redelivery = 0, MessageRemoved = {messageRemoved.Value}, MovedToDeadLetter = False",
                                 $"[NegativeAckProcessed] Client = [1] 'test', Queue = [1] 'c', TraceId = 4, AckId = 1, MessageRemoved = {messageRemoved.Value}",
-                                "[Disposing] Client = [1] 'test', Queue = [1] 'c', TraceId = 4",
-                                "[Disposed] Client = [1] 'test', Queue = [1] 'c', TraceId = 4",
+                                "[Deactivating] Client = [1] 'test', Queue = [1] 'c', TraceId = 4, IsAlive = False",
+                                "[Deactivated] Client = [1] 'test', Queue = [1] 'c', TraceId = 4, IsAlive = False",
                                 "[Trace:NegativeAck] Client = [1] 'test', Queue = [1] 'c', TraceId = 4 (end)"
                             ] )
                         ] ) )
@@ -1420,8 +1420,8 @@ public partial class MessageBrokerQueueTests
                                 LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid MessageNotificationNack from client [1] 'test'. Encountered 1 error(s):
                                 1. Expected header payload to be 33 but found 32.
                                 """,
-                                "[Disposing] Client = [1] 'test', TraceId = 1",
-                                "[Disposed] Client = [1] 'test', TraceId = 1",
+                                "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                                "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                                 "[Trace:NegativeAck] Client = [1] 'test', TraceId = 1 (end)"
                             ] )
                         ] ) )
@@ -1485,8 +1485,8 @@ public partial class MessageBrokerQueueTests
                                 5. Expected redelivery to not be negative but found -4.
                                 6. Expected explicit delay to not be negative but found -0.001 second(s).
                                 """,
-                                "[Disposing] Client = [1] 'test', TraceId = 1",
-                                "[Disposed] Client = [1] 'test', TraceId = 1",
+                                "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                                "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                                 "[Trace:NegativeAck] Client = [1] 'test', TraceId = 1 (end)"
                             ] )
                         ] ) )
@@ -1537,8 +1537,8 @@ public partial class MessageBrokerQueueTests
                                 LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid MessageNotificationNack from client [1] 'test'. Encountered 1 error(s):
                                 1. Expected disabled explicit delay to be equal to 0 found 0.001 second(s).
                                 """,
-                                "[Disposing] Client = [1] 'test', TraceId = 1",
-                                "[Disposed] Client = [1] 'test', TraceId = 1",
+                                "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                                "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                                 "[Trace:NegativeAck] Client = [1] 'test', TraceId = 1 (end)"
                             ] )
                         ] ) )
@@ -1817,7 +1817,7 @@ public partial class MessageBrokerQueueTests
         [Fact]
         public async Task AckTimeout_ShouldIgnoreMessagesTargetedToDisposedListeners()
         {
-            var endSource = new SafeTaskCompletionSource( completionCount: 4 );
+            var endSource = new SafeTaskCompletionSource( completionCount: 5 );
             var listenerUnbound = new SafeTaskCompletionSource();
             var firstProcess = new SafeTaskCompletionSource();
             var clientLogs = new ClientEventLogger();
@@ -1859,6 +1859,8 @@ public partial class MessageBrokerQueueTests
                                         endSource.Complete();
                                         listenerUnbound.Task.Wait();
                                     }
+                                    else if ( e.Type == MessageBrokerQueueTraceEventType.UnbindListener )
+                                        endSource.Complete();
                                 },
                                 messageProcessed: e => ackExpireDatesByQueueTraceId[e.Source.TraceId] = e.AckExpiresAt,
                                 messageDiscarded: e => messageRemoved.Value = e.MessageRemoved ) ) ) );
@@ -2375,7 +2377,7 @@ public partial class MessageBrokerQueueTests
         [Fact]
         public async Task Retry_ShouldNotBeScheduled_WhenNegativeAckContainsNoRetryFlag()
         {
-            var endSource = new SafeTaskCompletionSource( completionCount: 2 );
+            var endSource = new SafeTaskCompletionSource( completionCount: 3 );
             var clientLogs = new ClientEventLogger();
             var queueLogs = new QueueEventLogger();
             var ackExpireDatesByQueueTraceId = new ConcurrentDictionary<ulong, Timestamp>();
@@ -2397,6 +2399,11 @@ public partial class MessageBrokerQueueTests
                     .SetQueueLoggerFactory(
                         _ => queueLogs.GetLogger(
                             MessageBrokerQueueLogger.Create(
+                                traceEnd: e =>
+                                {
+                                    if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
+                                        endSource.Complete();
+                                },
                                 messageProcessed: e => ackExpireDatesByQueueTraceId[e.Source.TraceId] = e.AckExpiresAt,
                                 messageDiscarded: e => messageRemoved.Value = e.MessageRemoved ) ) ) );
 

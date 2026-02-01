@@ -18,34 +18,40 @@ using System.Runtime.CompilerServices;
 namespace LfrlAnvil.MessageBroker.Server.Events;
 
 /// <summary>
-/// Represents an event emitted by <see cref="MessageBrokerRemoteClient"/> when it's started to be disposed.
+/// Represents an event emitted by <see cref="MessageBrokerQueue"/> when it's deactivated.
 /// </summary>
-public readonly struct MessageBrokerRemoteClientDisposingEvent
+public readonly struct MessageBrokerQueueDeactivatedEvent
 {
-    private MessageBrokerRemoteClientDisposingEvent(MessageBrokerRemoteClient client, ulong traceId)
+    private MessageBrokerQueueDeactivatedEvent(MessageBrokerQueue queue, ulong traceId, bool isAlive)
     {
-        Source = MessageBrokerRemoteClientEventSource.Create( client, traceId );
+        Source = MessageBrokerQueueEventSource.Create( queue, traceId );
+        IsAlive = isAlive;
     }
 
     /// <summary>
     /// Event source.
     /// </summary>
-    public MessageBrokerRemoteClientEventSource Source { get; }
+    public MessageBrokerQueueEventSource Source { get; }
 
     /// <summary>
-    /// Returns a string representation of this <see cref="MessageBrokerRemoteClientDisposingEvent"/> instance.
+    /// Specifies whether or not the queue remains alive after its deactivation.
+    /// </summary>
+    public bool IsAlive { get; }
+
+    /// <summary>
+    /// Returns a string representation of this <see cref="MessageBrokerQueueDeactivatedEvent"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
-        return $"[Disposing] {Source}";
+        return $"[Deactivated] {Source}, IsAlive = {IsAlive}";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerRemoteClientDisposingEvent Create(MessageBrokerRemoteClient client, ulong traceId)
+    internal static MessageBrokerQueueDeactivatedEvent Create(MessageBrokerQueue queue, ulong traceId, bool isAlive)
     {
-        return new MessageBrokerRemoteClientDisposingEvent( client, traceId );
+        return new MessageBrokerQueueDeactivatedEvent( queue, traceId, isAlive );
     }
 }

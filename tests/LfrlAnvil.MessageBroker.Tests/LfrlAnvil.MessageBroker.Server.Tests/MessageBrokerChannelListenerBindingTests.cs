@@ -120,6 +120,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         s.DeadLetterCapacityHint.TestEquals( 0 ),
                         s.MinDeadLetterRetention.TestEquals( Duration.Zero ),
                         s.FilterExpression.TestNull(),
+                        s.IsEphemeral.TestTrue(),
                         s.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ),
                         s.ToString().TestEquals( "[1] 'test' => [1] 'c' listener binding (using [1] 'c' queue) (Running)" ) ) ),
                 server.Channels.Count.TestEquals( 1 ),
@@ -133,7 +134,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         [
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
                             "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 41)",
-                            "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'c', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = 600 second(s), DeadLetter = <disabled>, CreateChannelIfNotExists = True",
+                            "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'c', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = 600 second(s), DeadLetter = <disabled>, IsEphemeral = True, CreateChannelIfNotExists = True",
                             "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 41)",
                             "[ListenerBound] Client = [1] 'test', TraceId = 1, Channel = [1] 'c' (created), Queue = [1] 'c' (created)",
                             "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (ListenerBoundResponse, Length = 14)",
@@ -279,6 +280,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         s.DeadLetterCapacityHint.TestEquals( 100 ),
                         s.MinDeadLetterRetention.TestEquals( Duration.FromHours( 1 ) ),
                         s.FilterExpression.TestEquals( "c.Data.Length > 10i" ),
+                        s.IsEphemeral.TestTrue(),
                         s.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ) ) ),
                 server.Channels.Count.TestEquals( 1 ),
                 server.Channels.GetAll().TestSequence( [ (ch, _) => ch.TestRefEquals( channel ) ] ),
@@ -292,7 +294,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 2 (start)",
                             "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (BindListenerRequest, Length = 60)",
                             """
-                            [BindingListener] Client = [1] 'test', TraceId = 2, ChannelName = 'c', PrefetchHint = 10, MaxRetries = 2, RetryDelay = 10 second(s), MaxRedeliveries = 3, MinAckTimeout = 600 second(s), DeadLetter = (CapacityHint = 100, MinRetention = 3600 second(s)), CreateChannelIfNotExists = False, FilterExpression:
+                            [BindingListener] Client = [1] 'test', TraceId = 2, ChannelName = 'c', PrefetchHint = 10, MaxRetries = 2, RetryDelay = 10 second(s), MaxRedeliveries = 3, MinAckTimeout = 600 second(s), DeadLetter = (CapacityHint = 100, MinRetention = 3600 second(s)), IsEphemeral = True, CreateChannelIfNotExists = False, FilterExpression:
                             c.Data.Length > 10i
                             """,
                             "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (BindListenerRequest, Length = 60)",
@@ -455,7 +457,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         [
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 2 (start)",
                             "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (BindListenerRequest, Length = 42)",
-                            "[BindingListener] Client = [1] 'test', TraceId = 2, ChannelName = 'd', QueueName = 'c', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = 600 second(s), DeadLetter = <disabled>, CreateChannelIfNotExists = True",
+                            "[BindingListener] Client = [1] 'test', TraceId = 2, ChannelName = 'd', QueueName = 'c', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = 600 second(s), DeadLetter = <disabled>, IsEphemeral = True, CreateChannelIfNotExists = True",
                             "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (BindListenerRequest, Length = 42)",
                             "[ListenerBound] Client = [1] 'test', TraceId = 2, Channel = [2] 'd' (created), Queue = [1] 'c'",
                             "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (ListenerBoundResponse, Length = 14)",
@@ -542,7 +544,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         [
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
                             "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 41)",
-                            "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'c', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = 600 second(s), DeadLetter = <disabled>, CreateChannelIfNotExists = True",
+                            "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'c', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = 600 second(s), DeadLetter = <disabled>, IsEphemeral = True, CreateChannelIfNotExists = True",
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (end)"
                         ] ),
                         (t, _) => t.Logs.TestSequence(
@@ -553,8 +555,8 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                                 [Error] Client = [1] 'test', TraceId = 2
                                 System.Exception: foo
                                 """ ),
-                            (e, _) => e.TestEquals( "[Disposing] Client = [1] 'test', TraceId = 2" ),
-                            (e, _) => e.TestEquals( "[Disposed] Client = [1] 'test', TraceId = 2" ),
+                            (e, _) => e.TestEquals( "[Deactivating] Client = [1] 'test', TraceId = 2, IsAlive = False" ),
+                            (e, _) => e.TestEquals( "[Deactivated] Client = [1] 'test', TraceId = 2, IsAlive = False" ),
                             (e, _) => e.TestEquals( "[Trace:Unexpected] Client = [1] 'test', TraceId = 2 (end)" )
                         ] )
                     ] ),
@@ -611,7 +613,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         [
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
                             "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 41)",
-                            "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'c', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = 600 second(s), DeadLetter = <disabled>, CreateChannelIfNotExists = True",
+                            "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'c', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = 600 second(s), DeadLetter = <disabled>, IsEphemeral = True, CreateChannelIfNotExists = True",
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (end)"
                         ] ),
                         (t, _) => t.Logs.TestSequence(
@@ -622,8 +624,8 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                                 [Error] Client = [1] 'test', TraceId = 2
                                 System.Exception: foo
                                 """ ),
-                            (e, _) => e.TestEquals( "[Disposing] Client = [1] 'test', TraceId = 2" ),
-                            (e, _) => e.TestEquals( "[Disposed] Client = [1] 'test', TraceId = 2" ),
+                            (e, _) => e.TestEquals( "[Deactivating] Client = [1] 'test', TraceId = 2, IsAlive = False" ),
+                            (e, _) => e.TestEquals( "[Deactivated] Client = [1] 'test', TraceId = 2, IsAlive = False" ),
                             (e, _) => e.TestEquals( "[Trace:Unexpected] Client = [1] 'test', TraceId = 2 (end)" )
                         ] )
                     ] ),
@@ -680,8 +682,8 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid BindListenerRequest from client [1] 'test'. Encountered 1 error(s):
                             1. Expected header payload to be at least 35 but found 34.
                             """,
-                            "[Disposing] Client = [1] 'test', TraceId = 1",
-                            "[Disposed] Client = [1] 'test', TraceId = 1",
+                            "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (end)"
                         ] )
                     ] ),
@@ -739,8 +741,8 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                             1. Expected binary channel name length to be in [0, 3] range but found 4.
                             2. Expected binary queue name length to be in [0, -1] range but found 0.
                             """,
-                            "[Disposing] Client = [1] 'test', TraceId = 1",
-                            "[Disposed] Client = [1] 'test', TraceId = 1",
+                            "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (end)"
                         ] )
                     ] ),
@@ -799,8 +801,8 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid BindListenerRequest from client [1] 'test'. Encountered 1 error(s):
                             1. Expected channel name length to be in [1, 512] range but found 0.
                             """,
-                            "[Disposing] Client = [1] 'test', TraceId = 1",
-                            "[Disposed] Client = [1] 'test', TraceId = 1",
+                            "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (end)"
                         ] )
                     ] ),
@@ -858,8 +860,8 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid BindListenerRequest from client [1] 'test'. Encountered 1 error(s):
                             1. Expected channel name length to be in [1, 512] range but found 513.
                             """,
-                            "[Disposing] Client = [1] 'test', TraceId = 1",
-                            "[Disposed] Client = [1] 'test', TraceId = 1",
+                            "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (end)"
                         ] )
                     ] ),
@@ -917,8 +919,8 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid BindListenerRequest from client [1] 'test'. Encountered 1 error(s):
                             1. Expected queue name length to be in [1, 512] range but found 513.
                             """,
-                            "[Disposing] Client = [1] 'test', TraceId = 1",
-                            "[Disposed] Client = [1] 'test', TraceId = 1",
+                            "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (end)"
                         ] )
                     ] ),
@@ -1038,8 +1040,8 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                              [Error] Client = [1] 'test', TraceId = 1
                              LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid BindListenerRequest from client [1] 'test'. {expectedError}
                              """,
-                            "[Disposing] Client = [1] 'test', TraceId = 1",
-                            "[Disposed] Client = [1] 'test', TraceId = 1",
+                            "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (end)"
                         ] )
                     ] ),
@@ -1117,7 +1119,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         [
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 2 (start)",
                             "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (BindListenerRequest, Length = 41)",
-                            "[BindingListener] Client = [1] 'test', TraceId = 2, ChannelName = 'c', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = 600 second(s), DeadLetter = <disabled>, CreateChannelIfNotExists = False",
+                            "[BindingListener] Client = [1] 'test', TraceId = 2, ChannelName = 'c', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = 600 second(s), DeadLetter = <disabled>, IsEphemeral = True, CreateChannelIfNotExists = False",
                             """
                             [Error] Client = [1] 'test', TraceId = 2
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerChannelListenerBindingException: Client [1] 'test' could not be bound as a listener to channel [1] 'c' because it is already bound as a listener to it.
@@ -1193,7 +1195,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         [
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
                             "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 41)",
-                            "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'c', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = 600 second(s), DeadLetter = <disabled>, CreateChannelIfNotExists = False",
+                            "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'c', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = 600 second(s), DeadLetter = <disabled>, IsEphemeral = True, CreateChannelIfNotExists = False",
                             """
                             [Error] Client = [1] 'test', TraceId = 1
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerChannelListenerBindingException: Client [1] 'test' could not be bound as a listener to a non-existing channel 'c'.
@@ -1266,7 +1268,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
                             "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 51)",
                             """
-                            [BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'c', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = <disabled>, DeadLetter = <disabled>, CreateChannelIfNotExists = False, FilterExpression:
+                            [BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'c', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = <disabled>, DeadLetter = <disabled>, IsEphemeral = True, CreateChannelIfNotExists = False, FilterExpression:
                             expression
                             """,
                             """
@@ -1356,7 +1358,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 51)" ),
                             (e, _) => e.TestEquals(
                                 """
-                                [BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'c', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = <disabled>, DeadLetter = <disabled>, CreateChannelIfNotExists = False, FilterExpression:
+                                [BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'c', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = <disabled>, DeadLetter = <disabled>, IsEphemeral = True, CreateChannelIfNotExists = False, FilterExpression:
                                 expression
                                 """ ),
                             (e, _) => e.TestStartsWith(
@@ -1452,7 +1454,7 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
                             "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 76)",
                             """
-                            [BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'c', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = <disabled>, DeadLetter = <disabled>, CreateChannelIfNotExists = False, FilterExpression:
+                            [BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'c', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = <disabled>, DeadLetter = <disabled>, IsEphemeral = True, CreateChannelIfNotExists = False, FilterExpression:
                             a.Data.Length + b.Data.Length < 10i
                             """,
                             """
@@ -1552,11 +1554,11 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                     [
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:Dispose] Client = [1] 'test', Queue = [1] 'c', TraceId = 1 (start)",
+                            "[Trace:Deactivate] Client = [1] 'test', Queue = [1] 'c', TraceId = 1 (start)",
                             "[ClientTrace] Client = [1] 'test', Queue = [1] 'c', TraceId = 1, ClientTraceId = 2",
-                            "[Disposing] Client = [1] 'test', Queue = [1] 'c', TraceId = 1",
-                            "[Disposed] Client = [1] 'test', Queue = [1] 'c', TraceId = 1",
-                            "[Trace:Dispose] Client = [1] 'test', Queue = [1] 'c', TraceId = 1 (end)"
+                            "[Deactivating] Client = [1] 'test', Queue = [1] 'c', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', Queue = [1] 'c', TraceId = 1, IsAlive = False",
+                            "[Trace:Deactivate] Client = [1] 'test', Queue = [1] 'c', TraceId = 1 (end)"
                         ] )
                     ] ),
                 clientLogs.GetAll()
@@ -1565,11 +1567,11 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                     [
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:Dispose] Client = [1] 'test', TraceId = 2 (start)",
+                            "[Trace:Deactivate] Client = [1] 'test', TraceId = 2 (start)",
                             $"[ServerTrace] Client = [1] 'test', TraceId = 2, Correlation = (Server = {server.LocalEndPoint}, TraceId = 2)",
-                            "[Disposing] Client = [1] 'test', TraceId = 2",
-                            "[Disposed] Client = [1] 'test', TraceId = 2",
-                            "[Trace:Dispose] Client = [1] 'test', TraceId = 2 (end)"
+                            "[Deactivating] Client = [1] 'test', TraceId = 2, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 2, IsAlive = False",
+                            "[Trace:Deactivate] Client = [1] 'test', TraceId = 2 (end)"
                         ] )
                     ] ) )
             .Go();
@@ -1644,19 +1646,19 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                     [
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:UnbindPublisher] Channel = [1] 'c', TraceId = 2 (start)",
+                            "[Trace:UnbindListener] Channel = [1] 'c', TraceId = 2 (start)",
                             "[ClientTrace] Channel = [1] 'c', TraceId = 2, Correlation = (Client = [1] 'test', TraceId = 3)",
-                            "[PublisherUnbound] Channel = [1] 'c', TraceId = 2, Client = [1] 'test', Stream = [1] 'c'",
-                            "[Trace:UnbindPublisher] Channel = [1] 'c', TraceId = 2 (end)"
+                            "[ListenerUnbound] Channel = [1] 'c', TraceId = 2, Client = [1] 'test', Queue = [1] 'c'",
+                            "[Trace:UnbindListener] Channel = [1] 'c', TraceId = 2 (end)"
                         ] ),
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:UnbindListener] Channel = [1] 'c', TraceId = 3 (start)",
+                            "[Trace:UnbindPublisher] Channel = [1] 'c', TraceId = 3 (start)",
                             "[ClientTrace] Channel = [1] 'c', TraceId = 3, Correlation = (Client = [1] 'test', TraceId = 3)",
-                            "[ListenerUnbound] Channel = [1] 'c', TraceId = 3, Client = [1] 'test', Queue = [1] 'c'",
+                            "[PublisherUnbound] Channel = [1] 'c', TraceId = 3, Client = [1] 'test', Stream = [1] 'c'",
                             "[Disposing] Channel = [1] 'c', TraceId = 3",
                             "[Disposed] Channel = [1] 'c', TraceId = 3",
-                            "[Trace:UnbindListener] Channel = [1] 'c', TraceId = 3 (end)"
+                            "[Trace:UnbindPublisher] Channel = [1] 'c', TraceId = 3 (end)"
                         ] )
                     ] ),
                 queueLogs.GetAll()
@@ -1665,11 +1667,11 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                     [
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:Dispose] Client = [1] 'test', Queue = [1] 'c', TraceId = 1 (start)",
+                            "[Trace:Deactivate] Client = [1] 'test', Queue = [1] 'c', TraceId = 1 (start)",
                             "[ClientTrace] Client = [1] 'test', Queue = [1] 'c', TraceId = 1, ClientTraceId = 3",
-                            "[Disposing] Client = [1] 'test', Queue = [1] 'c', TraceId = 1",
-                            "[Disposed] Client = [1] 'test', Queue = [1] 'c', TraceId = 1",
-                            "[Trace:Dispose] Client = [1] 'test', Queue = [1] 'c', TraceId = 1 (end)"
+                            "[Deactivating] Client = [1] 'test', Queue = [1] 'c', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', Queue = [1] 'c', TraceId = 1, IsAlive = False",
+                            "[Trace:Deactivate] Client = [1] 'test', Queue = [1] 'c', TraceId = 1 (end)"
                         ] )
                     ] ),
                 clientLogs.GetAll()
@@ -1678,10 +1680,10 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                     [
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:Dispose] Client = [1] 'test', TraceId = 3 (start)",
-                            "[Disposing] Client = [1] 'test', TraceId = 3",
-                            "[Disposed] Client = [1] 'test', TraceId = 3",
-                            "[Trace:Dispose] Client = [1] 'test', TraceId = 3 (end)"
+                            "[Trace:Deactivate] Client = [1] 'test', TraceId = 3 (start)",
+                            "[Deactivating] Client = [1] 'test', TraceId = 3, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 3, IsAlive = False",
+                            "[Trace:Deactivate] Client = [1] 'test', TraceId = 3 (end)"
                         ] )
                     ] ) )
             .Go();
@@ -1779,11 +1781,11 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                     [
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:Dispose] Client = [2] 'test2', Queue = [1] 'c', TraceId = 1 (start)",
+                            "[Trace:Deactivate] Client = [2] 'test2', Queue = [1] 'c', TraceId = 1 (start)",
                             "[ClientTrace] Client = [2] 'test2', Queue = [1] 'c', TraceId = 1, ClientTraceId = 2",
-                            "[Disposing] Client = [2] 'test2', Queue = [1] 'c', TraceId = 1",
-                            "[Disposed] Client = [2] 'test2', Queue = [1] 'c', TraceId = 1",
-                            "[Trace:Dispose] Client = [2] 'test2', Queue = [1] 'c', TraceId = 1 (end)"
+                            "[Deactivating] Client = [2] 'test2', Queue = [1] 'c', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [2] 'test2', Queue = [1] 'c', TraceId = 1, IsAlive = False",
+                            "[Trace:Deactivate] Client = [2] 'test2', Queue = [1] 'c', TraceId = 1 (end)"
                         ] )
                     ] ),
                 clientLogs.GetAll()
@@ -1792,10 +1794,10 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                     [
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:Dispose] Client = [2] 'test2', TraceId = 2 (start)",
-                            "[Disposing] Client = [2] 'test2', TraceId = 2",
-                            "[Disposed] Client = [2] 'test2', TraceId = 2",
-                            "[Trace:Dispose] Client = [2] 'test2', TraceId = 2 (end)"
+                            "[Trace:Deactivate] Client = [2] 'test2', TraceId = 2 (start)",
+                            "[Deactivating] Client = [2] 'test2', TraceId = 2, IsAlive = False",
+                            "[Deactivated] Client = [2] 'test2', TraceId = 2, IsAlive = False",
+                            "[Trace:Deactivate] Client = [2] 'test2', TraceId = 2 (end)"
                         ] )
                     ] ) )
             .Go();
@@ -1881,11 +1883,11 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                     [
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:Dispose] Client = [1] 'test', Queue = [1] 'c', TraceId = 1 (start)",
+                            "[Trace:Deactivate] Client = [1] 'test', Queue = [1] 'c', TraceId = 1 (start)",
                             "[ClientTrace] Client = [1] 'test', Queue = [1] 'c', TraceId = 1, ClientTraceId = 2",
-                            "[Disposing] Client = [1] 'test', Queue = [1] 'c', TraceId = 1",
-                            "[Disposed] Client = [1] 'test', Queue = [1] 'c', TraceId = 1",
-                            "[Trace:Dispose] Client = [1] 'test', Queue = [1] 'c', TraceId = 1 (end)"
+                            "[Deactivating] Client = [1] 'test', Queue = [1] 'c', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', Queue = [1] 'c', TraceId = 1, IsAlive = False",
+                            "[Trace:Deactivate] Client = [1] 'test', Queue = [1] 'c', TraceId = 1 (end)"
                         ] )
                     ] ),
                 clientLogs.GetAll()
@@ -1894,10 +1896,10 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                     [
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:Dispose] Client = [1] 'test', TraceId = 2 (start)",
-                            "[Disposing] Client = [1] 'test', TraceId = 2",
-                            "[Disposed] Client = [1] 'test', TraceId = 2",
-                            "[Trace:Dispose] Client = [1] 'test', TraceId = 2 (end)"
+                            "[Trace:Deactivate] Client = [1] 'test', TraceId = 2 (start)",
+                            "[Deactivating] Client = [1] 'test', TraceId = 2, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 2, IsAlive = False",
+                            "[Trace:Deactivate] Client = [1] 'test', TraceId = 2 (end)"
                         ] )
                     ] ) )
             .Go();
@@ -2004,11 +2006,11 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                     [
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:Dispose] Client = [2] 'test2', Queue = [1] 'c', TraceId = 1 (start)",
+                            "[Trace:Deactivate] Client = [2] 'test2', Queue = [1] 'c', TraceId = 1 (start)",
                             "[ClientTrace] Client = [2] 'test2', Queue = [1] 'c', TraceId = 1, ClientTraceId = 2",
-                            "[Disposing] Client = [2] 'test2', Queue = [1] 'c', TraceId = 1",
-                            "[Disposed] Client = [2] 'test2', Queue = [1] 'c', TraceId = 1",
-                            "[Trace:Dispose] Client = [2] 'test2', Queue = [1] 'c', TraceId = 1 (end)"
+                            "[Deactivating] Client = [2] 'test2', Queue = [1] 'c', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [2] 'test2', Queue = [1] 'c', TraceId = 1, IsAlive = False",
+                            "[Trace:Deactivate] Client = [2] 'test2', Queue = [1] 'c', TraceId = 1 (end)"
                         ] )
                     ] ),
                 clientLogs.GetAll()
@@ -2017,10 +2019,10 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                     [
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:Dispose] Client = [2] 'test2', TraceId = 2 (start)",
-                            "[Disposing] Client = [2] 'test2', TraceId = 2",
-                            "[Disposed] Client = [2] 'test2', TraceId = 2",
-                            "[Trace:Dispose] Client = [2] 'test2', TraceId = 2 (end)"
+                            "[Trace:Deactivate] Client = [2] 'test2', TraceId = 2 (start)",
+                            "[Deactivating] Client = [2] 'test2', TraceId = 2, IsAlive = False",
+                            "[Deactivated] Client = [2] 'test2', TraceId = 2, IsAlive = False",
+                            "[Trace:Deactivate] Client = [2] 'test2', TraceId = 2 (end)"
                         ] )
                     ] ) )
             .Go();
@@ -2142,8 +2144,8 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                             "[Trace:UnbindListener] Client = [1] 'test', Queue = [1] 'c', TraceId = 1 (start)",
                             "[ClientTrace] Client = [1] 'test', Queue = [1] 'c', TraceId = 1, ClientTraceId = 2",
                             "[ListenerUnbound] Client = [1] 'test', Queue = [1] 'c', TraceId = 1, Channel = [1] 'c' (removed)",
-                            "[Disposing] Client = [1] 'test', Queue = [1] 'c', TraceId = 1",
-                            "[Disposed] Client = [1] 'test', Queue = [1] 'c', TraceId = 1",
+                            "[Deactivating] Client = [1] 'test', Queue = [1] 'c', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', Queue = [1] 'c', TraceId = 1, IsAlive = False",
                             "[Trace:UnbindListener] Client = [1] 'test', Queue = [1] 'c', TraceId = 1 (end)"
                         ] )
                     ] ) )
@@ -2289,8 +2291,8 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                             "[Trace:UnbindListener] Client = [2] 'test2', Queue = [1] 'c', TraceId = 1 (start)",
                             "[ClientTrace] Client = [2] 'test2', Queue = [1] 'c', TraceId = 1, ClientTraceId = 2",
                             "[ListenerUnbound] Client = [2] 'test2', Queue = [1] 'c', TraceId = 1, Channel = [1] 'c'",
-                            "[Disposing] Client = [2] 'test2', Queue = [1] 'c', TraceId = 1",
-                            "[Disposed] Client = [2] 'test2', Queue = [1] 'c', TraceId = 1",
+                            "[Deactivating] Client = [2] 'test2', Queue = [1] 'c', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [2] 'test2', Queue = [1] 'c', TraceId = 1, IsAlive = False",
                             "[Trace:UnbindListener] Client = [2] 'test2', Queue = [1] 'c', TraceId = 1 (end)"
                         ] )
                     ] ) )
@@ -2536,8 +2538,8 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                             "[Trace:UnbindListener] Client = [1] 'test', Queue = [1] 'c', TraceId = 1 (start)",
                             "[ClientTrace] Client = [1] 'test', Queue = [1] 'c', TraceId = 1, ClientTraceId = 3",
                             "[ListenerUnbound] Client = [1] 'test', Queue = [1] 'c', TraceId = 1, Channel = [1] 'c'",
-                            "[Disposing] Client = [1] 'test', Queue = [1] 'c', TraceId = 1",
-                            "[Disposed] Client = [1] 'test', Queue = [1] 'c', TraceId = 1",
+                            "[Deactivating] Client = [1] 'test', Queue = [1] 'c', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', Queue = [1] 'c', TraceId = 1, IsAlive = False",
                             "[Trace:UnbindListener] Client = [1] 'test', Queue = [1] 'c', TraceId = 1 (end)"
                         ] )
                     ] ) )
@@ -2603,8 +2605,8 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid UnbindListenerRequest from client [1] 'test'. Encountered 1 error(s):
                             1. Expected header payload to be 4 but found 3.
                             """,
-                            "[Disposing] Client = [1] 'test', TraceId = 2",
-                            "[Disposed] Client = [1] 'test', TraceId = 2",
+                            "[Deactivating] Client = [1] 'test', TraceId = 2, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 2, IsAlive = False",
                             "[Trace:UnbindListener] Client = [1] 'test', TraceId = 2 (end)"
                         ] )
                     ] ),
@@ -2685,8 +2687,8 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid UnbindListenerRequest from client [1] 'test'. Encountered 1 error(s):
                             1. Expected channel ID to be greater than 0 but found 0.
                             """,
-                            "[Disposing] Client = [1] 'test', TraceId = 2",
-                            "[Disposed] Client = [1] 'test', TraceId = 2",
+                            "[Deactivating] Client = [1] 'test', TraceId = 2, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 2, IsAlive = False",
                             "[Trace:UnbindListener] Client = [1] 'test', TraceId = 2 (end)"
                         ] )
                     ] ),

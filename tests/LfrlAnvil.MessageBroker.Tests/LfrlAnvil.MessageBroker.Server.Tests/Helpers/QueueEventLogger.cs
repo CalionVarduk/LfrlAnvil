@@ -83,15 +83,15 @@ public sealed class QueueEventLogger
                 Add( e.Source.TraceId, e.ToString() );
                 logger.NegativeAckProcessed?.Invoke( e );
             },
-            disposing: e =>
+            deactivating: e =>
             {
                 Add( e.Source.TraceId, e.ToString() );
-                logger.Disposing?.Invoke( e );
+                logger.Deactivating?.Invoke( e );
             },
-            disposed: e =>
+            deactivated: e =>
             {
                 Add( e.Source.TraceId, e.ToString() );
-                logger.Disposed?.Invoke( e );
+                logger.Deactivated?.Invoke( e );
             },
             error: e =>
             {

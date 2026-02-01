@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@ using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Sources;
 using LfrlAnvil.Async;
 using LfrlAnvil.Memory;
 using LfrlAnvil.MessageBroker.Server.Events;
@@ -37,9 +36,13 @@ internal struct ResponseSender
     }
 
     [Pure]
-    internal static ResponseSender Create()
+    internal static ResponseSender Create(bool running)
     {
-        return new ResponseSender( new ManualResetValueTaskSource<bool>() );
+        var source = new ManualResetValueTaskSource<bool>();
+        if ( ! running )
+            source.TrySetResult( false );
+
+        return new ResponseSender( source );
     }
 
     [MethodImpl( MethodImplOptions.NoInlining )]
@@ -63,26 +66,41 @@ internal struct ResponseSender
                 if ( client.Logger.Error is { } error )
                     error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
 
-                await client.DisposeAsync( traceId ).ConfigureAwait( false );
+                await client.DeactivateAsync( traceId ).ConfigureAwait( false );
             }
         }
 
         Assume.IsGreaterThanOrEqualTo( client.State, MessageBrokerRemoteClientState.Disposing );
     }
 
-    internal void BeginDispose()
+    internal void BeginDispose(ref Chain<Exception> exceptions)
     {
-        if ( _continuation.Status == ValueTaskSourceStatus.Pending )
-            _continuation.SetResult( false );
+        try
+        {
+            _continuation.TrySetResult( false );
+        }
+        catch ( Exception exc )
+        {
+            exceptions = exceptions.Extend( exc );
+        }
     }
 
-    internal ListSlim<DiscardedResponse> EndDispose()
+    internal ListSlim<DiscardedResponse> EndDispose(ref Chain<Exception> exceptions)
     {
-        var result = ListSlim<DiscardedResponse>.Create( _responses.Count );
-        foreach ( ref readonly var response in _responses )
-            result.Add( new DiscardedResponse( response.PoolToken, response.EventType, response.TraceId ) );
+        var result = ListSlim<DiscardedResponse>.Create();
+        try
+        {
+            result = ListSlim<DiscardedResponse>.Create( _responses.Count );
+            foreach ( ref readonly var response in _responses )
+                result.Add( new DiscardedResponse( response.PoolToken, response.EventType, response.TraceId ) );
 
-        _responses = QueueSlim<Entry>.Create();
+            _responses = QueueSlim<Entry>.Create();
+        }
+        catch ( Exception exc )
+        {
+            exceptions = exceptions.Extend( exc );
+        }
+
         return result;
     }
 
@@ -102,8 +120,7 @@ internal struct ResponseSender
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void SignalContinuation()
     {
-        if ( _continuation.Status == ValueTaskSourceStatus.Pending )
-            _continuation.SetResult( true );
+        _continuation.TrySetResult( true );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -135,7 +152,7 @@ internal struct ResponseSender
                 ReadOnlyMemory<byte> data;
                 using ( client.AcquireLock() )
                 {
-                    if ( client.ShouldCancel )
+                    if ( client.IsInactive )
                         return;
 
                     Assume.False( client.ResponseSender._responses.IsEmpty );
@@ -160,7 +177,7 @@ internal struct ResponseSender
                                 using ( client.AcquireLock() )
                                     client.ResponseSender._task = null;
 
-                                await client.DisposeAsync( response.TraceId ).ConfigureAwait( false );
+                                await client.DeactivateAsync( response.TraceId ).ConfigureAwait( false );
                                 return;
                             }
 
@@ -205,8 +222,17 @@ internal struct ResponseSender
                         default:
                         {
                             if ( client.Logger.Error is { } error )
+                            {
+                                bool disposed;
+                                using ( client.AcquireLock() )
+                                    disposed = client.IsDisposed;
+
                                 error.Emit(
-                                    MessageBrokerRemoteClientErrorEvent.Create( client, response.TraceId, client.DisposedException() ) );
+                                    MessageBrokerRemoteClientErrorEvent.Create(
+                                        client,
+                                        response.TraceId,
+                                        client.DeactivatedException( disposed ) ) );
+                            }
 
                             return;
                         }
@@ -222,7 +248,7 @@ internal struct ResponseSender
 
             using ( client.AcquireLock() )
             {
-                if ( client.ShouldCancel )
+                if ( client.IsInactive )
                     return;
 
                 client.ResponseSender._continuation.Reset();

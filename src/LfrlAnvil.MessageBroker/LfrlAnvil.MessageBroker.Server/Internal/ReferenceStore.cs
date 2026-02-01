@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -78,6 +78,19 @@ internal struct ReferenceStore<TKey, T>
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool TryAdd(TKey key, T obj)
+    {
+        try
+        {
+            return _map.TryAdd( key, obj );
+        }
+        finally
+        {
+            _cache = null;
+        }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal bool Remove(TKey key)
     {
         try
@@ -101,16 +114,6 @@ internal struct ReferenceStore<TKey, T>
         {
             _cache = null;
         }
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal T[] ClearAndExtract()
-    {
-        var result = _cache;
-        _cache = null;
-        result ??= ToArray();
-        _map.Clear();
-        return result;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

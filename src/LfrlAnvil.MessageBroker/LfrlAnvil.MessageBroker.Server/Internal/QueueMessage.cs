@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,14 +18,14 @@ namespace LfrlAnvil.MessageBroker.Server.Internal;
 
 internal readonly struct QueueMessage
 {
-    internal QueueMessage(MessageBrokerChannelPublisherBinding publisher, MessageBrokerChannelListenerBinding listener, int storeKey)
+    internal QueueMessage(IMessageBrokerMessagePublisher publisher, MessageBrokerChannelListenerBinding listener, int storeKey)
     {
         Publisher = publisher;
         Listener = listener;
         StoreKey = storeKey;
     }
 
-    internal readonly MessageBrokerChannelPublisherBinding Publisher;
+    internal readonly IMessageBrokerMessagePublisher Publisher;
     internal readonly MessageBrokerChannelListenerBinding Listener;
     internal readonly int StoreKey;
 

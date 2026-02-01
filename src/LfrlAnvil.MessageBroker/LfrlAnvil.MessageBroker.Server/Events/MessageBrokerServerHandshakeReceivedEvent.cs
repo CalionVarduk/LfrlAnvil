@@ -35,6 +35,7 @@ public readonly struct MessageBrokerServerHandshakeReceivedEvent
         MemorySize maxNetworkBatchPacketLength,
         bool synchronizeExternalObjectNames,
         bool clearBuffers,
+        bool isEphemeral,
         bool isClientLittleEndian)
     {
         Source = MessageBrokerServerEventSource.Create( connector.Server, traceId );
@@ -46,6 +47,7 @@ public readonly struct MessageBrokerServerHandshakeReceivedEvent
         MaxBatchPacketCount = maxBatchPacketCount;
         SynchronizeExternalObjectNames = synchronizeExternalObjectNames;
         ClearBuffers = clearBuffers;
+        IsEphemeral = isEphemeral;
         IsClientLittleEndian = isClientLittleEndian;
     }
 
@@ -95,6 +97,11 @@ public readonly struct MessageBrokerServerHandshakeReceivedEvent
     public bool ClearBuffers { get; }
 
     /// <summary>
+    /// Specifies whether or not the client is ephemeral.
+    /// </summary>
+    public bool IsEphemeral { get; }
+
+    /// <summary>
     /// Indicates client's endianness.
     /// </summary>
     public bool IsClientLittleEndian { get; }
@@ -111,7 +118,7 @@ public readonly struct MessageBrokerServerHandshakeReceivedEvent
             : "<disabled>";
 
         return
-            $"[HandshakeReceived] {Source}, ConnectorId = {Connector.Id}, ClientName = '{ClientName}', DesiredMessageTimeout = {DesiredMessageTimeout}, DesiredPingInterval = {DesiredPingInterval}, DesiredBatchPacket = {batchPacket}, SynchronizeExternalObjectNames = {SynchronizeExternalObjectNames}, ClearBuffers = {ClearBuffers}, IsClientLittleEndian = {IsClientLittleEndian}";
+            $"[HandshakeReceived] {Source}, ConnectorId = {Connector.Id}, ClientName = '{ClientName}', DesiredMessageTimeout = {DesiredMessageTimeout}, DesiredPingInterval = {DesiredPingInterval}, DesiredBatchPacket = {batchPacket}, SynchronizeExternalObjectNames = {SynchronizeExternalObjectNames}, ClearBuffers = {ClearBuffers}, IsEphemeral = {IsEphemeral}, IsClientLittleEndian = {IsClientLittleEndian}";
     }
 
     [Pure]
@@ -126,6 +133,7 @@ public readonly struct MessageBrokerServerHandshakeReceivedEvent
         MemorySize maxNetworkBatchPacketLength,
         bool synchronizeExternalObjectNames,
         bool clearBuffers,
+        bool isEphemeral,
         bool isClientLittleEndian)
     {
         return new MessageBrokerServerHandshakeReceivedEvent(
@@ -138,6 +146,7 @@ public readonly struct MessageBrokerServerHandshakeReceivedEvent
             maxNetworkBatchPacketLength,
             synchronizeExternalObjectNames,
             clearBuffers,
+            isEphemeral,
             isClientLittleEndian );
     }
 }

@@ -52,8 +52,8 @@ public readonly struct MessageBrokerRemoteClientLogger
         Action<MessageBrokerRemoteClientSendingSenderNameEvent>? sendingSenderName,
         Action<MessageBrokerRemoteClientSendingStreamNameEvent>? sendingStreamName,
         Action<MessageBrokerRemoteClientSystemNotificationSentEvent>? systemNotificationSent,
-        Action<MessageBrokerRemoteClientDisposingEvent>? disposing,
-        Action<MessageBrokerRemoteClientDisposedEvent>? disposed,
+        Action<MessageBrokerRemoteClientDeactivatingEvent>? deactivating,
+        Action<MessageBrokerRemoteClientDeactivatedEvent>? deactivated,
         Action<MessageBrokerRemoteClientErrorEvent>? error)
     {
         TraceStart = traceStart;
@@ -85,8 +85,8 @@ public readonly struct MessageBrokerRemoteClientLogger
         SendingSenderName = sendingSenderName;
         SendingStreamName = sendingStreamName;
         SystemNotificationSent = systemNotificationSent;
-        Disposing = disposing;
-        Disposed = disposed;
+        Deactivating = deactivating;
+        Deactivated = deactivated;
         Error = error;
     }
 
@@ -236,14 +236,14 @@ public readonly struct MessageBrokerRemoteClientLogger
     public readonly Action<MessageBrokerRemoteClientSystemNotificationSentEvent>? SystemNotificationSent;
 
     /// <summary>
-    /// Optional callback for a <see cref="MessageBrokerRemoteClientDisposingEvent"/>.
+    /// Optional callback for a <see cref="MessageBrokerRemoteClientDeactivatingEvent"/>.
     /// </summary>
-    public readonly Action<MessageBrokerRemoteClientDisposingEvent>? Disposing;
+    public readonly Action<MessageBrokerRemoteClientDeactivatingEvent>? Deactivating;
 
     /// <summary>
-    /// Optional callback for a <see cref="MessageBrokerRemoteClientDisposedEvent"/>.
+    /// Optional callback for a <see cref="MessageBrokerRemoteClientDeactivatedEvent"/>.
     /// </summary>
-    public readonly Action<MessageBrokerRemoteClientDisposedEvent>? Disposed;
+    public readonly Action<MessageBrokerRemoteClientDeactivatedEvent>? Deactivated;
 
     /// <summary>
     /// Optional callback for a <see cref="MessageBrokerRemoteClientErrorEvent"/>.
@@ -277,13 +277,13 @@ public readonly struct MessageBrokerRemoteClientLogger
     /// <param name="processingAck">Optional <see cref="ProcessingAck"/> callback.</param>
     /// <param name="processingNegativeAck">Optional <see cref="ProcessingNegativeAck"/> callback.</param>
     /// <param name="ackProcessed">Optional <see cref="AckProcessed"/> callback.</param>
-    ///     /// <param name="queryingDeadLetter">Optional <see cref="QueryingDeadLetter"/> callback.</param>
+    /// <param name="queryingDeadLetter">Optional <see cref="QueryingDeadLetter"/> callback.</param>
     /// <param name="deadLetterQueried">Optional <see cref="DeadLetterQueried"/> callback.</param>
     /// <param name="sendingSenderName">Optional <see cref="SendingSenderName"/> callback.</param>
     /// <param name="sendingStreamName">Optional <see cref="SendingStreamName"/> callback.</param>
     /// <param name="systemNotificationSent">Optional <see cref="SystemNotificationSent"/> callback.</param>
-    /// <param name="disposing">Optional <see cref="Disposing"/> callback.</param>
-    /// <param name="disposed">Optional <see cref="Disposed"/> callback.</param>
+    /// <param name="deactivating">Optional <see cref="Deactivating"/> callback.</param>
+    /// <param name="deactivated">Optional <see cref="Deactivated"/> callback.</param>
     /// <param name="error">Optional <see cref="Error"/> callback.</param>
     /// <returns>New <see cref="MessageBrokerRemoteClientLogger"/> instance.</returns>
     [Pure]
@@ -317,8 +317,8 @@ public readonly struct MessageBrokerRemoteClientLogger
         Action<MessageBrokerRemoteClientSendingSenderNameEvent>? sendingSenderName = null,
         Action<MessageBrokerRemoteClientSendingStreamNameEvent>? sendingStreamName = null,
         Action<MessageBrokerRemoteClientSystemNotificationSentEvent>? systemNotificationSent = null,
-        Action<MessageBrokerRemoteClientDisposingEvent>? disposing = null,
-        Action<MessageBrokerRemoteClientDisposedEvent>? disposed = null,
+        Action<MessageBrokerRemoteClientDeactivatingEvent>? deactivating = null,
+        Action<MessageBrokerRemoteClientDeactivatedEvent>? deactivated = null,
         Action<MessageBrokerRemoteClientErrorEvent>? error = null)
     {
         return new MessageBrokerRemoteClientLogger(
@@ -351,8 +351,8 @@ public readonly struct MessageBrokerRemoteClientLogger
             sendingSenderName,
             sendingStreamName,
             systemNotificationSent,
-            disposing,
-            disposed,
+            deactivating,
+            deactivated,
             error );
     }
 }

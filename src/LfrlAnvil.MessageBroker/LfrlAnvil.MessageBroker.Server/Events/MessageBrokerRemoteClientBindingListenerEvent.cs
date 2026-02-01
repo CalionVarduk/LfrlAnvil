@@ -37,7 +37,8 @@ public readonly struct MessageBrokerRemoteClientBindingListenerEvent
         Duration minAckTimeout,
         int deadLetterCapacityHint,
         Duration minDeadLetterRetention,
-        bool createChannelIfNotExists)
+        bool createChannelIfNotExists,
+        bool isEphemeral)
     {
         Source = MessageBrokerRemoteClientEventSource.Create( client, traceId );
         ChannelName = channelName;
@@ -51,6 +52,7 @@ public readonly struct MessageBrokerRemoteClientBindingListenerEvent
         DeadLetterCapacityHint = deadLetterCapacityHint;
         MinDeadLetterRetention = minDeadLetterRetention;
         CreateChannelIfNotExists = createChannelIfNotExists;
+        IsEphemeral = isEphemeral;
     }
 
     /// <summary>
@@ -87,6 +89,11 @@ public readonly struct MessageBrokerRemoteClientBindingListenerEvent
     /// Specifies whether or not the client requested channel creation if it doesn't exist.
     /// </summary>
     public bool CreateChannelIfNotExists { get; }
+
+    /// <summary>
+    /// Specifies whether or not the listener will be ephemeral.
+    /// </summary>
+    public bool IsEphemeral { get; }
 
     /// <summary>
     /// Listener's retry delay.
@@ -132,7 +139,7 @@ public readonly struct MessageBrokerRemoteClientBindingListenerEvent
 
         var filterExpression = FilterExpression is not null ? $", FilterExpression:{Environment.NewLine}{FilterExpression}" : string.Empty;
         return
-            $"[BindingListener] {Source}, ChannelName = '{ChannelName}'{queue}, PrefetchHint = {PrefetchHint}, MaxRetries = {MaxRetries}, RetryDelay = {RetryDelay}, MaxRedeliveries = {MaxRedeliveries}, {minAckTimeout}, {deadLetter}, CreateChannelIfNotExists = {CreateChannelIfNotExists}{filterExpression}";
+            $"[BindingListener] {Source}, ChannelName = '{ChannelName}'{queue}, PrefetchHint = {PrefetchHint}, MaxRetries = {MaxRetries}, RetryDelay = {RetryDelay}, MaxRedeliveries = {MaxRedeliveries}, {minAckTimeout}, {deadLetter}, IsEphemeral = {IsEphemeral}, CreateChannelIfNotExists = {CreateChannelIfNotExists}{filterExpression}";
     }
 
     [Pure]
@@ -150,7 +157,8 @@ public readonly struct MessageBrokerRemoteClientBindingListenerEvent
         Duration minAckTimeout,
         int deadLetterCapacityHint,
         Duration minDeadLetterRetention,
-        bool createChannelIfNotExists)
+        bool createChannelIfNotExists,
+        bool isEphemeral)
     {
         return new MessageBrokerRemoteClientBindingListenerEvent(
             client,
@@ -165,6 +173,7 @@ public readonly struct MessageBrokerRemoteClientBindingListenerEvent
             minAckTimeout,
             deadLetterCapacityHint,
             minDeadLetterRetention,
-            createChannelIfNotExists );
+            createChannelIfNotExists,
+            isEphemeral );
     }
 }

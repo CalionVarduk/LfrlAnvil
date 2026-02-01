@@ -26,11 +26,13 @@ public readonly struct MessageBrokerRemoteClientBindingPublisherEvent
         MessageBrokerRemoteClient client,
         ulong traceId,
         string channelName,
-        string streamName)
+        string streamName,
+        bool isEphemeral)
     {
         Source = MessageBrokerRemoteClientEventSource.Create( client, traceId );
         ChannelName = channelName;
         StreamName = streamName;
+        IsEphemeral = isEphemeral;
     }
 
     /// <summary>
@@ -49,6 +51,11 @@ public readonly struct MessageBrokerRemoteClientBindingPublisherEvent
     public string StreamName { get; }
 
     /// <summary>
+    /// Specifies whether or not the publisher will be ephemeral.
+    /// </summary>
+    public bool IsEphemeral { get; }
+
+    /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerRemoteClientBindingPublisherEvent"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
@@ -56,7 +63,7 @@ public readonly struct MessageBrokerRemoteClientBindingPublisherEvent
     public override string ToString()
     {
         var stream = StreamName.Length > 0 ? $", StreamName = '{StreamName}'" : string.Empty;
-        return $"[BindingPublisher] {Source}, ChannelName = '{ChannelName}'{stream}";
+        return $"[BindingPublisher] {Source}, ChannelName = '{ChannelName}'{stream}, IsEphemeral = {IsEphemeral}";
     }
 
     [Pure]
@@ -65,8 +72,9 @@ public readonly struct MessageBrokerRemoteClientBindingPublisherEvent
         MessageBrokerRemoteClient client,
         ulong traceId,
         string channelName,
-        string streamName)
+        string streamName,
+        bool isEphemeral)
     {
-        return new MessageBrokerRemoteClientBindingPublisherEvent( client, traceId, channelName, streamName );
+        return new MessageBrokerRemoteClientBindingPublisherEvent( client, traceId, channelName, streamName, isEphemeral );
     }
 }

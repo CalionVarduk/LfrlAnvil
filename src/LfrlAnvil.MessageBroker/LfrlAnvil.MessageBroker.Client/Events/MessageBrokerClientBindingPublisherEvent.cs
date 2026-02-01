@@ -22,11 +22,17 @@ namespace LfrlAnvil.MessageBroker.Client.Events;
 /// </summary>
 public readonly struct MessageBrokerClientBindingPublisherEvent
 {
-    private MessageBrokerClientBindingPublisherEvent(MessageBrokerClient client, ulong traceId, string channelName, string streamName)
+    private MessageBrokerClientBindingPublisherEvent(
+        MessageBrokerClient client,
+        ulong traceId,
+        string channelName,
+        string streamName,
+        bool isEphemeral)
     {
         Source = MessageBrokerClientEventSource.Create( client, traceId );
         ChannelName = channelName;
         StreamName = streamName;
+        IsEphemeral = isEphemeral;
     }
 
     /// <summary>
@@ -45,13 +51,18 @@ public readonly struct MessageBrokerClientBindingPublisherEvent
     public string StreamName { get; }
 
     /// <summary>
+    /// Specifies whether or not the publisher will be ephemeral.
+    /// </summary>
+    public bool IsEphemeral { get; }
+
+    /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerClientBindingPublisherEvent"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
-        return $"[BindingPublisher] {Source}, ChannelName = '{ChannelName}', StreamName = '{StreamName}'";
+        return $"[BindingPublisher] {Source}, ChannelName = '{ChannelName}', StreamName = '{StreamName}', IsEphemeral = {IsEphemeral}";
     }
 
     [Pure]
@@ -60,8 +71,9 @@ public readonly struct MessageBrokerClientBindingPublisherEvent
         MessageBrokerClient client,
         ulong traceId,
         string channelName,
-        string streamName)
+        string streamName,
+        bool isEphemeral)
     {
-        return new MessageBrokerClientBindingPublisherEvent( client, traceId, channelName, streamName );
+        return new MessageBrokerClientBindingPublisherEvent( client, traceId, channelName, streamName, isEphemeral );
     }
 }

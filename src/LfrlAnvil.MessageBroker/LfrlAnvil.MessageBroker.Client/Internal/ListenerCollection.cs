@@ -85,11 +85,18 @@ internal struct ListenerCollection
         string? queueName,
         MessageBrokerListenerCallback callback,
         MessageBrokerListenerOptions options,
-        bool createChannelIfNotExists)
+        bool createChannelIfNotExists,
+        bool isEphemeral)
     {
         Ensure.IsInRange( channelName.Length, Defaults.NameLengthBounds.Min, Defaults.NameLengthBounds.Max );
         if ( queueName is not null )
             Ensure.IsInRange( queueName.Length, Defaults.NameLengthBounds.Min, Defaults.NameLengthBounds.Max );
+
+        // TODO: tests
+        // - isEphemeral: false
+        // - isEphemeral: false, with ephemeral client
+        if ( client.IsEphemeral )
+            isEphemeral = true;
 
         var prefetchHint = options.PrefetchHint;
         var maxRetries = options.MaxRetries;
@@ -133,7 +140,8 @@ internal struct ListenerCollection
                         deadLetterCapacityHint,
                         minDeadLetterRetention,
                         filterExpression,
-                        createChannelIfNotExists ) );
+                        createChannelIfNotExists,
+                        isEphemeral ) );
 
             ManualResetValueTaskSource<IncomingPacketToken> responseSource;
             Protocol.BindListenerRequest request;
@@ -152,7 +160,8 @@ internal struct ListenerCollection
                     deadLetterCapacityHint,
                     minDeadLetterRetention,
                     filterExpression,
-                    createChannelIfNotExists );
+                    createChannelIfNotExists,
+                    isEphemeral );
 
                 poolToken = client.MemoryPool.Rent( request.Length, client.ClearBuffers, out var buffer );
                 request.Serialize( buffer, reverseEndianness );
@@ -272,6 +281,7 @@ internal struct ListenerCollection
                                 deadLetterCapacityHint,
                                 minDeadLetterRetention,
                                 filterExpression,
+                                isEphemeral,
                                 callback );
 
                             client.ListenerCollection._store.Add( parsedResponse.ChannelId, channelName, listener );

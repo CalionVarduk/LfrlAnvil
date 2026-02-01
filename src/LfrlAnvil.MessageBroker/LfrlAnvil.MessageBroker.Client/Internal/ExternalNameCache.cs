@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -44,13 +44,10 @@ internal struct ExternalNameCache
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal MessageBrokerExternalObject GetSender(MessageBrokerClient client, int senderId)
+    internal MessageBrokerExternalObject GetSender(int senderId)
     {
-        if ( senderId == 0 )
-            return new MessageBrokerExternalObject( senderId );
-
-        return senderId == client.Id
-            ? new MessageBrokerExternalObject( senderId, client.Name )
+        return senderId == 0
+            ? new MessageBrokerExternalObject( senderId )
             : new MessageBrokerExternalObject( senderId, _entries.TryGetValue( senderId - 1, out var entry ) ? entry.Client : null );
     }
 

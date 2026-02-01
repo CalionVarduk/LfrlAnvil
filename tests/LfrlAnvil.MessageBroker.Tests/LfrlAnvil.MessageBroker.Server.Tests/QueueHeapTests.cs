@@ -18,7 +18,7 @@ public class QueueHeapTests : TestsBase
     public async Task RetryHeap_Add_ShouldSatisfyHeapInvariant()
     {
         var client = await CreateClient();
-        var channel = CreateChannel( client.Server );
+        var channel = CreateChannel( client );
         var publisher = CreatePublisher( client, channel );
         var listener = CreateListener( client, channel );
 
@@ -42,7 +42,7 @@ public class QueueHeapTests : TestsBase
     public async Task RetryHeap_Pop_ShouldCauseEntriesToBeRemovedInOrder()
     {
         var client = await CreateClient();
-        var channel = CreateChannel( client.Server );
+        var channel = CreateChannel( client );
         var publisher = CreatePublisher( client, channel );
         var listener = CreateListener( client, channel );
 
@@ -91,7 +91,7 @@ public class QueueHeapTests : TestsBase
     {
         var timestamps = new TimestampProviderMock();
         var client = await CreateClient( timestamps );
-        var channel = CreateChannel( client.Server );
+        var channel = CreateChannel( client );
         var publisher = CreatePublisher( client, channel );
         var listener = CreateListener( client, channel );
         var queues = Enumerable.Range( 1, 10 ).Select( id => CreateQueue( client, id ) ).ToList();
@@ -238,7 +238,7 @@ public class QueueHeapTests : TestsBase
     {
         var timestamps = new TimestampProviderMock();
         var client = await CreateClient( timestamps );
-        var channel = CreateChannel( client.Server );
+        var channel = CreateChannel( client );
         var publisher = CreatePublisher( client, channel );
         var listener = CreateListener( client, channel );
         var queues = Enumerable.Range( 1, 5 ).Select( id => CreateQueue( client, id ) ).ToList();
@@ -364,41 +364,46 @@ public class QueueHeapTests : TestsBase
     }
 
     [Pure]
-    private static MessageBrokerChannel CreateChannel(MessageBrokerServer server)
+    private static MessageBrokerChannel CreateChannel(MessageBrokerRemoteClient client)
     {
-        return new MessageBrokerChannel( server, 1, "foo" );
+        return new MessageBrokerChannel( client.Server, 1, "foo" );
     }
 
     [Pure]
     private static MessageBrokerQueue CreateQueue(MessageBrokerRemoteClient client, int id)
     {
-        return new MessageBrokerQueue( client, id, $"foo_{id}" );
+        return MessageBrokerQueue.Create( client, id, $"foo_{id}" );
     }
 
     [Pure]
     private static MessageBrokerChannelPublisherBinding CreatePublisher(MessageBrokerRemoteClient client, MessageBrokerChannel channel)
     {
         var stream = new MessageBrokerStream( client.Server, 1, "foo" );
-        return new MessageBrokerChannelPublisherBinding( client, channel, stream );
+        return MessageBrokerChannelPublisherBinding.Create( client, channel, stream, true );
     }
 
     [Pure]
     private static MessageBrokerChannelListenerBinding CreateListener(MessageBrokerRemoteClient client, MessageBrokerChannel channel)
     {
         var queue = CreateQueue( client, 1 );
-        return new MessageBrokerChannelListenerBinding(
+        return MessageBrokerChannelListenerBinding.Create(
             client,
             channel,
             queue,
-            1,
-            1,
-            Duration.Zero,
-            0,
-            Duration.FromSeconds( 1 ),
-            1,
-            Duration.FromSeconds( 3 ),
+            new Protocol.BindListenerRequestHeader(
+                0,
+                1,
+                1,
+                Duration.Zero,
+                0,
+                Duration.FromSeconds( 1 ),
+                1,
+                Duration.FromSeconds( 3 ),
+                0,
+                0 ),
             null,
-            null );
+            null,
+            true );
     }
 
     private sealed class TimestampProviderMock : TimestampProviderBase

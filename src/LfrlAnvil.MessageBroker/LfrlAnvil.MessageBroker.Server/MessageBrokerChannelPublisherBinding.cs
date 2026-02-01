@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,26 +16,34 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
+using LfrlAnvil.Extensions;
+using LfrlAnvil.MessageBroker.Server.Internal;
 
 namespace LfrlAnvil.MessageBroker.Server;
 
 /// <summary>
 /// Represents a message broker channel binding for a publisher, which allows clients to publish messages through channels.
 /// </summary>
-public sealed class MessageBrokerChannelPublisherBinding
+public sealed class MessageBrokerChannelPublisherBinding : IMessageBrokerMessagePublisher
 {
     private readonly object _sync = new object();
     private MessageBrokerChannelPublisherBindingState _state;
+    private TaskCompletionSource? _deactivated;
+    private InterlockedBoolean _isEphemeral;
+    private bool _autoDisposed;
 
-    internal MessageBrokerChannelPublisherBinding(
+    private MessageBrokerChannelPublisherBinding(
         MessageBrokerRemoteClient client,
         MessageBrokerChannel channel,
-        MessageBrokerStream stream)
+        MessageBrokerStream stream,
+        bool isEphemeral,
+        MessageBrokerChannelPublisherBindingState state)
     {
         Client = client;
         Channel = channel;
         Stream = stream;
-        _state = MessageBrokerChannelPublisherBindingState.Running;
+        _isEphemeral = new InterlockedBoolean( isEphemeral );
+        _state = state;
     }
 
     /// <summary>
@@ -54,6 +62,11 @@ public sealed class MessageBrokerChannelPublisherBinding
     public MessageBrokerStream Stream { get; }
 
     /// <summary>
+    /// Specifies whether or not the listener is ephemeral.
+    /// </summary>
+    public bool IsEphemeral => _isEphemeral.Value;
+
+    /// <summary>
     /// Current publisher's state.
     /// </summary>
     /// <remarks>See <see cref="MessageBrokerChannelPublisherBindingState"/> for more information.</remarks>
@@ -66,7 +79,58 @@ public sealed class MessageBrokerChannelPublisherBinding
         }
     }
 
-    internal bool ShouldCancel => _state >= MessageBrokerChannelPublisherBindingState.Disposing;
+    internal bool IsInactive => _state >= MessageBrokerChannelPublisherBindingState.Deactivating;
+    internal bool IsDisposed => _state >= MessageBrokerChannelPublisherBindingState.Disposing;
+
+    int IMessageBrokerMessagePublisher.ClientId => Client.Id;
+    string IMessageBrokerMessagePublisher.ClientName => Client.Name;
+    bool IMessageBrokerMessagePublisher.IsClientEphemeral => Client.IsEphemeral;
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerChannelPublisherBinding Create(
+        MessageBrokerRemoteClient client,
+        MessageBrokerChannel channel,
+        MessageBrokerStream stream,
+        bool isEphemeral)
+    {
+        return new MessageBrokerChannelPublisherBinding(
+            client,
+            channel,
+            stream,
+            isEphemeral,
+            MessageBrokerChannelPublisherBindingState.Running );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerChannelPublisherBinding CreateInactive(
+        MessageBrokerRemoteClient client,
+        MessageBrokerChannel channel,
+        MessageBrokerStream stream)
+    {
+        return new MessageBrokerChannelPublisherBinding(
+            client,
+            channel,
+            stream,
+            isEphemeral: false,
+            MessageBrokerChannelPublisherBindingState.Inactive );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerChannelPublisherBinding CreateDisposed(
+        MessageBrokerRemoteClient client,
+        MessageBrokerChannel channel,
+        MessageBrokerStream stream)
+    {
+        return new MessageBrokerChannelPublisherBinding(
+            client,
+            channel,
+            stream,
+            isEphemeral: true,
+            MessageBrokerChannelPublisherBindingState.Disposed );
+    }
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerChannelPublisherBinding"/> instance.
@@ -79,32 +143,161 @@ public sealed class MessageBrokerChannelPublisherBinding
             $"[{Client.Id}] '{Client.Name}' => [{Channel.Id}] '{Channel.Name}' publisher binding (using [{Stream.Id}] '{Stream.Name}' stream) ({State})";
     }
 
-    internal void OnServerDisposed()
+    internal void OnServerDisposing()
     {
         using ( AcquireLock() )
         {
-            if ( ShouldCancel )
-                return;
-
-            _state = MessageBrokerChannelPublisherBindingState.Disposed;
-        }
-    }
-
-    internal async ValueTask OnClientDisconnectedAsync(ulong traceId)
-    {
-        using ( AcquireLock() )
-        {
-            if ( ShouldCancel )
+            if ( IsDisposed )
                 return;
 
             _state = MessageBrokerChannelPublisherBindingState.Disposing;
+            _deactivated = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
+            _autoDisposed = true;
         }
+    }
 
-        await Stream.OnPublisherDisposingAsync( Client, Channel, traceId ).ConfigureAwait( false );
-        Channel.OnPublisherDisposing( Client, traceId );
+    internal void OnClientDeactivating(bool keepAlive)
+    {
+        using ( AcquireLock() )
+        {
+            if ( _state == MessageBrokerChannelPublisherBindingState.Disposed )
+                return;
+
+            if ( keepAlive && ! IsEphemeral )
+            {
+                if ( IsInactive )
+                    return;
+
+                _state = MessageBrokerChannelPublisherBindingState.Deactivating;
+            }
+            else
+                _state = MessageBrokerChannelPublisherBindingState.Disposing;
+
+            _deactivated = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
+            _autoDisposed = true;
+        }
+    }
+
+    internal async ValueTask OnServerDisposedAsync(ulong clientTraceId, bool storageLoaded)
+    {
+        bool isEphemeral;
+        bool autoDisposed;
+        MessageBrokerChannelPublisherBindingState state;
+        TaskCompletionSource? deactivated;
 
         using ( AcquireLock() )
-            _state = MessageBrokerChannelPublisherBindingState.Disposed;
+        {
+            Assume.IsGreaterThanOrEqualTo( _state, MessageBrokerChannelPublisherBindingState.Disposing );
+            state = _state;
+            autoDisposed = _autoDisposed;
+            isEphemeral = IsEphemeral;
+            deactivated = _deactivated;
+        }
+
+        if ( ! autoDisposed )
+        {
+            if ( state == MessageBrokerChannelPublisherBindingState.Disposing )
+            {
+                if ( storageLoaded )
+                    Client.EmitError( await Client.Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), clientTraceId );
+
+                Client.EmitError( await (deactivated?.Task).AsSafeCancellable().ConfigureAwait( false ), clientTraceId );
+            }
+
+            return;
+        }
+
+        try
+        {
+            if ( isEphemeral )
+            {
+                using ( Stream.AcquireLock() )
+                    Stream.PublishersByClientChannelIdPair.Remove( Pair.Create( Client.Id, Channel.Id ) );
+
+                using ( Channel.AcquireLock() )
+                    Channel.PublishersByClientId.Remove( Client.Id );
+            }
+            else
+                Client.EmitError(
+                    await Client.Storage.SaveMetadataAsync( this, clientTraceId ).AsSafe().ConfigureAwait( false ),
+                    clientTraceId );
+
+            using ( AcquireLock() )
+            {
+                _state = MessageBrokerChannelPublisherBindingState.Disposed;
+                _autoDisposed = false;
+                _deactivated = null;
+            }
+        }
+        finally
+        {
+            deactivated?.TrySetResult();
+        }
+    }
+
+    internal async ValueTask OnClientDeactivatedAsync(bool keepAlive, ulong clientTraceId)
+    {
+        bool dispose;
+        bool autoDisposed;
+        MessageBrokerChannelPublisherBindingState state;
+        TaskCompletionSource? deactivated;
+
+        using ( AcquireLock() )
+        {
+            Assume.IsGreaterThanOrEqualTo( _state, MessageBrokerChannelPublisherBindingState.Deactivating );
+            Assume.NotEquals( _state, MessageBrokerChannelPublisherBindingState.Inactive );
+            state = _state;
+            autoDisposed = _autoDisposed;
+            deactivated = _deactivated;
+            dispose = IsEphemeral || ! keepAlive;
+        }
+
+        if ( ! autoDisposed )
+        {
+            if ( state == MessageBrokerChannelPublisherBindingState.Disposing )
+            {
+                Client.EmitError( await Client.Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), clientTraceId );
+                Client.EmitError( await (deactivated?.Task).AsSafeCancellable().ConfigureAwait( false ), clientTraceId );
+            }
+
+            return;
+        }
+
+        try
+        {
+            if ( dispose )
+            {
+                if ( keepAlive )
+                {
+                    using ( Client.AcquireLock() )
+                        Client.PublishersByChannelId.Remove( Channel.Id );
+                }
+
+                await Stream.OnPublisherDisposingAsync( Client, Channel, clientTraceId ).ConfigureAwait( false );
+                await Channel.OnPublisherDisposingAsync( Client, clientTraceId ).ConfigureAwait( false );
+                Client.EmitError( await Client.Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), clientTraceId );
+
+                using ( AcquireLock() )
+                {
+                    _state = MessageBrokerChannelPublisherBindingState.Disposed;
+                    _autoDisposed = false;
+                    _deactivated = null;
+                }
+            }
+            else
+            {
+                using ( AcquireLock() )
+                {
+                    _state = MessageBrokerChannelPublisherBindingState.Inactive;
+                    _autoDisposed = false;
+                    _deactivated = null;
+                }
+            }
+        }
+        finally
+        {
+            deactivated?.TrySetResult();
+        }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -112,21 +305,40 @@ public sealed class MessageBrokerChannelPublisherBinding
     {
         Assume.Equals( _state, MessageBrokerChannelPublisherBindingState.Running );
         _state = MessageBrokerChannelPublisherBindingState.Disposing;
+        _deactivated = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void EndDisposing()
+    internal async ValueTask EndDisposingAsync(ulong clientTraceId)
     {
-        using ( AcquireLock() )
+        TaskCompletionSource? deactivated = null;
+        try
         {
-            Assume.Equals( _state, MessageBrokerChannelPublisherBindingState.Disposing );
-            _state = MessageBrokerChannelPublisherBindingState.Disposed;
+            Assume.Equals( State, MessageBrokerChannelPublisherBindingState.Disposing );
+            Client.EmitError( await Client.Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), clientTraceId );
+
+            using ( Client.AcquireLock() )
+            {
+                if ( ! Client.IsDisposed )
+                    Client.PublishersByChannelId.Remove( Channel.Id );
+            }
+
+            using ( AcquireLock() )
+            {
+                _state = MessageBrokerChannelPublisherBindingState.Disposed;
+                deactivated = _deactivated;
+                _deactivated = null;
+            }
+        }
+        finally
+        {
+            deactivated?.TrySetResult();
         }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ExclusiveLock AcquireLock()
     {
-        return ExclusiveLock.SpinWaitEnter( _sync, spinWaitMultiplier: 4 );
+        return ExclusiveLock.Enter( _sync );
     }
 }

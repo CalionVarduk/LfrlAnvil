@@ -70,7 +70,7 @@ public partial class MessageBrokerServerTests
                                 (e, _) => e.TestEquals(
                                     $"[ReadPacket:Received] Server = {endPoint}, TraceId = 1, ConnectorId = 1, Packet = (HandshakeRequest, Length = 23)" ),
                                 (e, _) => e.TestEquals(
-                                    $"[HandshakeReceived] Server = {endPoint}, TraceId = 1, ConnectorId = 1, ClientName = 'foo', DesiredMessageTimeout = 1 second(s), DesiredPingInterval = 10 second(s), DesiredBatchPacket = <disabled>, SynchronizeExternalObjectNames = False, ClearBuffers = False, IsClientLittleEndian = {BitConverter.IsLittleEndian}" ),
+                                    $"[HandshakeReceived] Server = {endPoint}, TraceId = 1, ConnectorId = 1, ClientName = 'foo', DesiredMessageTimeout = 1 second(s), DesiredPingInterval = 10 second(s), DesiredBatchPacket = <disabled>, SynchronizeExternalObjectNames = False, ClearBuffers = False, IsEphemeral = True, IsClientLittleEndian = {BitConverter.IsLittleEndian}" ),
                                 (e, _) => e.TestStartsWith(
                                     $"""
                                      [Error] Server = {endPoint}, TraceId = 1
@@ -545,7 +545,7 @@ public partial class MessageBrokerServerTests
                                 $"""
                                  [Error] Server = {endPoint}, TraceId = 1
                                  LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server-side connector [1] received an invalid HandshakeRequest from client. Encountered 1 error(s):
-                                 1. Expected name length to be in [1, 512] range but found 513.
+                                 1. Expected client name length to be in [1, 512] range but found 513.
                                  """,
                                 $"[SendPacket:Sending] Server = {endPoint}, TraceId = 1, ConnectorId = 1, Packet = (HandshakeRejectedResponse, Length = 6)",
                                 $"[SendPacket:Sent] Server = {endPoint}, TraceId = 1, ConnectorId = 1, Packet = (HandshakeRejectedResponse, Length = 6)",
@@ -604,7 +604,7 @@ public partial class MessageBrokerServerTests
                                 $"""
                                  [Error] Server = {endPoint}, TraceId = 1
                                  LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server-side connector [1] received an invalid HandshakeRequest from client. Encountered 1 error(s):
-                                 1. Expected name length to be in [1, 512] range but found 0.
+                                 1. Expected client name length to be in [1, 512] range but found 0.
                                  """,
                                 $"[SendPacket:Sending] Server = {endPoint}, TraceId = 1, ConnectorId = 1, Packet = (HandshakeRejectedResponse, Length = 6)",
                                 $"[SendPacket:Sent] Server = {endPoint}, TraceId = 1, ConnectorId = 1, Packet = (HandshakeRejectedResponse, Length = 6)",

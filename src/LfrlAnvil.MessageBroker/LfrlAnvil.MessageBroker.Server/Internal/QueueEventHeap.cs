@@ -107,7 +107,7 @@ internal struct QueueEventHeap
 
             using ( queue.AcquireLock() )
             {
-                if ( ! queue.ShouldCancel && ! queue.MessageStore.IsEmpty )
+                if ( ! queue.IsInactive && ! queue.MessageStore.IsEmpty )
                     queue.QueueProcessor.SignalContinuation();
             }
         }

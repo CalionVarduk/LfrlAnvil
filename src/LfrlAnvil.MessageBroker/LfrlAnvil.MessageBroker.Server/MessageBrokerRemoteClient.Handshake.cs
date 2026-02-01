@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Memory;
@@ -40,16 +41,19 @@ public sealed partial class MessageBrokerRemoteClient
                     if ( result.Exception is not null )
                         return;
 
+                    Stream stream;
                     using ( AcquireActiveLock( traceId, out var exc ) )
                     {
                         if ( exc is not null )
                             return;
 
+                        Assume.IsNotNull( _stream );
+                        stream = _stream;
                         PacketListener.SetUnderlyingTask( null );
                         _state = MessageBrokerRemoteClientState.Running;
                     }
 
-                    var packetListenerTask = PacketListener.StartUnderlyingTask( this, _stream );
+                    var packetListenerTask = PacketListener.StartUnderlyingTask( this, stream );
                     var requestHandlerTask = RequestHandler.StartUnderlyingTask( this );
                     var responseSenderTask = ResponseSender.StartUnderlyingTask( this );
                     var notificationSenderTask = NotificationSender.StartUnderlyingTask( this );
@@ -78,7 +82,7 @@ public sealed partial class MessageBrokerRemoteClient
                         using ( AcquireLock() )
                             PacketListener.SetUnderlyingTask( null );
 
-                        await DisposeAsync( traceId ).ConfigureAwait( false );
+                        await DeactivateAsync( traceId ).ConfigureAwait( false );
                     }
 
                     if ( Logger.TraceEnd is { } traceEnd )
@@ -105,16 +109,19 @@ public sealed partial class MessageBrokerRemoteClient
 
             response.Serialize( data, IsLittleEndian != BitConverter.IsLittleEndian );
 
+            Stream stream;
             CancellationToken timeoutToken;
             using ( AcquireActiveLock( traceId, out var exc ) )
             {
                 if ( exc is not null )
                     return exc;
 
+                Assume.IsNotNull( _stream );
+                stream = _stream;
                 timeoutToken = EventScheduler.ScheduleWriteTimeout( this );
             }
 
-            await _stream.WriteAsync( data, timeoutToken ).ConfigureAwait( false );
+            await stream.WriteAsync( data, timeoutToken ).ConfigureAwait( false );
 
             sendPacket?.Emit( MessageBrokerRemoteClientSendPacketEvent.CreateSent( this, traceId, response.Header ) );
             return Result.Valid;
@@ -144,16 +151,19 @@ public sealed partial class MessageBrokerRemoteClient
         {
             poolToken = MemoryPool.Rent( Protocol.PacketHeader.Length, ClearBuffers, out var data );
 
+            Stream stream;
             using ( AcquireActiveLock( traceId, out var exc ) )
             {
                 if ( exc is not null )
                     return exc;
 
+                Assume.IsNotNull( _stream );
+                stream = _stream;
                 EventScheduler.ResetWriteTimeout();
                 timeoutToken = EventScheduler.ScheduleReadTimeout( this );
             }
 
-            await _stream.ReadExactlyAsync( data, timeoutToken ).ConfigureAwait( false );
+            await stream.ReadExactlyAsync( data, timeoutToken ).ConfigureAwait( false );
             header = Protocol.PacketHeader.Parse( data );
         }
         catch ( Exception exc )

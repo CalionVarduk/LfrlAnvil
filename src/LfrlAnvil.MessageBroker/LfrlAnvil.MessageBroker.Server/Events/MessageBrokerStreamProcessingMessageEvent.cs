@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ namespace LfrlAnvil.MessageBroker.Server.Events;
 public readonly struct MessageBrokerStreamProcessingMessageEvent
 {
     private MessageBrokerStreamProcessingMessageEvent(
-        MessageBrokerChannelPublisherBinding publisher,
+        IMessageBrokerMessagePublisher publisher,
         ulong traceId,
         ulong messageId,
         int length,
@@ -44,9 +44,9 @@ public readonly struct MessageBrokerStreamProcessingMessageEvent
     public MessageBrokerStreamEventSource Source { get; }
 
     /// <summary>
-    /// <see cref="MessageBrokerChannelPublisherBinding"/> that pushed the message.
+    /// <see cref="IMessageBrokerMessagePublisher"/> that pushed the message.
     /// </summary>
-    public MessageBrokerChannelPublisherBinding Publisher { get; }
+    public IMessageBrokerMessagePublisher Publisher { get; }
 
     /// <summary>
     /// Unique id of the message.
@@ -76,13 +76,13 @@ public readonly struct MessageBrokerStreamProcessingMessageEvent
     public override string ToString()
     {
         return
-            $"[ProcessingMessage] {Source}, Channel = [{Publisher.Channel.Id}] '{Publisher.Channel.Name}', Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', MessageId = {MessageId}, Length = {Length}, HasRouting = {HasRouting}, ListenerCount = {Listeners.Count}";
+            $"[ProcessingMessage] {Source}, Channel = [{Publisher.Channel.Id}] '{Publisher.Channel.Name}', Sender = [{Publisher.ClientId}] '{Publisher.ClientName}', MessageId = {MessageId}, Length = {Length}, HasRouting = {HasRouting}, ListenerCount = {Listeners.Count}";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerStreamProcessingMessageEvent Create(
-        MessageBrokerChannelPublisherBinding publisher,
+        IMessageBrokerMessagePublisher publisher,
         ulong traceId,
         ulong messageId,
         int length,

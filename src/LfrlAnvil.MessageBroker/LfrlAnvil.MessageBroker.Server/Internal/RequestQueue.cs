@@ -34,18 +34,23 @@ internal struct RequestQueue
         return new RequestQueue( 0 );
     }
 
-    internal Chain<Exception> Dispose(bool extractExceptions)
+    internal void Dispose(ref Chain<Exception> exceptions)
     {
-        var exceptions = Chain<Exception>.Empty;
         foreach ( ref readonly var request in _pendingRequests )
         {
             var exc = request.PoolToken.Return();
-            if ( exc is not null && extractExceptions )
+            if ( exc is not null )
                 exceptions = exceptions.Extend( exc );
         }
 
-        _pendingRequests = QueueSlim<IncomingPacketToken>.Create();
-        return exceptions;
+        try
+        {
+            _pendingRequests = QueueSlim<IncomingPacketToken>.Create();
+        }
+        catch ( Exception exc )
+        {
+            exceptions = exceptions.Extend( exc );
+        }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

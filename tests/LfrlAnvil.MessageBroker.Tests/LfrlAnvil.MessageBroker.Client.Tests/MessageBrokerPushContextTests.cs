@@ -40,7 +40,7 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
         var serverTask = server.GetTask(
             s =>
             {
-                s.Read( new Protocol.BindPublisherRequest( "foo", null ) );
+                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
                 s.SendPublisherBoundResponse( true, true, 1, 1 );
             } );
 
@@ -123,7 +123,7 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
         var serverTask = server.GetTask(
             s =>
             {
-                s.Read( new Protocol.BindPublisherRequest( "foo", null ) );
+                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
                 s.SendPublisherBoundResponse( true, true, 1, 1 );
             } );
 
@@ -210,7 +210,7 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
         var serverTask = server.GetTask(
             s =>
             {
-                s.Read( new Protocol.BindPublisherRequest( "foo", null ) );
+                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
                 s.SendPublisherBoundResponse( true, true, 1, 1 );
             } );
 
@@ -285,7 +285,7 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
         var serverTask = server.GetTask(
             s =>
             {
-                s.Read( new Protocol.BindPublisherRequest( "foo", null ) );
+                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
                 s.SendPublisherBoundResponse( true, true, 1, 1 );
             } );
 
@@ -345,7 +345,7 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
         var serverTask = server.GetTask(
             s =>
             {
-                s.Read( new Protocol.BindPublisherRequest( "foo", null ) );
+                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
                 s.SendPublisherBoundResponse( true, true, 1, 1 );
             } );
 
@@ -415,7 +415,7 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
         var serverTask = server.GetTask(
             s =>
             {
-                s.Read( new Protocol.BindPublisherRequest( "foo", null ) );
+                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
                 s.SendPublisherBoundResponse( true, true, 1, 1 );
             } );
 
@@ -449,7 +449,7 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
         var serverTask = server.GetTask(
             s =>
             {
-                s.Read( new Protocol.BindPublisherRequest( "foo", null ) );
+                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
                 s.SendPublisherBoundResponse( true, true, 1, 1 );
             } );
 
@@ -527,7 +527,7 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
         var serverTask = server.GetTask(
             s =>
             {
-                s.Read( new Protocol.BindPublisherRequest( "foo", null ) );
+                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
                 s.SendPublisherBoundResponse( true, true, 1, 1 );
             } );
 
@@ -609,7 +609,7 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
         var serverTask = server.GetTask(
             s =>
             {
-                s.Read( new Protocol.BindPublisherRequest( "foo", null ) );
+                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
                 s.SendPublisherBoundResponse( true, true, 1, 1 );
             } );
 
@@ -679,7 +679,7 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
         var serverTask = server.GetTask(
             s =>
             {
-                s.Read( new Protocol.BindPublisherRequest( "foo", null ) );
+                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
                 s.SendPublisherBoundResponse( true, true, 1, 1 );
             } );
 
@@ -757,7 +757,7 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
         var serverTask = server.GetTask(
             s =>
             {
-                s.Read( new Protocol.BindPublisherRequest( "foo", null ) );
+                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
                 s.SendPublisherBoundResponse( true, true, 1, 1 );
             } );
 
@@ -796,7 +796,7 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
         var serverTask = server.GetTask(
             s =>
             {
-                s.Read( new Protocol.BindPublisherRequest( "foo", null ) );
+                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
                 s.SendPublisherBoundResponse( true, true, 1, 1 );
             } );
 
@@ -834,7 +834,7 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
         var serverTask = server.GetTask(
             s =>
             {
-                s.Read( new Protocol.BindPublisherRequest( "foo", null ) );
+                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
                 s.SendPublisherBoundResponse( true, true, 1, 1 );
             } );
 
@@ -874,7 +874,7 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
         var serverTask = server.GetTask(
             s =>
             {
-                s.Read( new Protocol.BindPublisherRequest( "foo", null ) );
+                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
                 s.SendPublisherBoundResponse( true, true, 1, 1 );
             } );
 
@@ -914,7 +914,7 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
         var serverTask = server.GetTask(
             s =>
             {
-                s.Read( new Protocol.BindPublisherRequest( "foo", null ) );
+                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
                 s.SendPublisherBoundResponse( true, true, 1, 1 );
             } );
 

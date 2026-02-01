@@ -203,23 +203,22 @@ public class MessageTests : TestsBase, IClassFixture<SharedResourceFixture>
 
         await endSource.Task;
 
-        var sender1 = new MessageBrokerExternalObject( 1, "test" );
-        var sender2 = new MessageBrokerExternalObject( 1 );
+        var sender = new MessageBrokerExternalObject( 1 );
         var stream = new MessageBrokerExternalObject( 1 );
 
         Assertion.All(
                 sentMessageIds.TestSequence( [ 0UL, 1UL, 2UL ] ),
                 receivedMessages1.TestSequence(
                 [
-                    new MessageSnapshot( listener1, 0, sender1, stream, 0, 0, false, MessageSnapshot.GetData( [ 1 ] ) ),
-                    new MessageSnapshot( listener1, 1, sender1, stream, 0, 0, false, MessageSnapshot.GetData( [ 2, 3 ] ) ),
-                    new MessageSnapshot( listener1, 2, sender1, stream, 0, 0, false, MessageSnapshot.GetData( [ 4, 5, 6 ] ) )
+                    new MessageSnapshot( listener1, 0, sender, stream, 0, 0, false, MessageSnapshot.GetData( [ 1 ] ) ),
+                    new MessageSnapshot( listener1, 1, sender, stream, 0, 0, false, MessageSnapshot.GetData( [ 2, 3 ] ) ),
+                    new MessageSnapshot( listener1, 2, sender, stream, 0, 0, false, MessageSnapshot.GetData( [ 4, 5, 6 ] ) )
                 ] ),
                 receivedMessages2.TestSequence(
                 [
-                    new MessageSnapshot( listener2, 0, sender2, stream, 0, 0, false, MessageSnapshot.GetData( [ 1 ] ) ),
-                    new MessageSnapshot( listener2, 1, sender2, stream, 0, 0, false, MessageSnapshot.GetData( [ 2, 3 ] ) ),
-                    new MessageSnapshot( listener2, 2, sender2, stream, 0, 0, false, MessageSnapshot.GetData( [ 4, 5, 6 ] ) )
+                    new MessageSnapshot( listener2, 0, sender, stream, 0, 0, false, MessageSnapshot.GetData( [ 1 ] ) ),
+                    new MessageSnapshot( listener2, 1, sender, stream, 0, 0, false, MessageSnapshot.GetData( [ 2, 3 ] ) ),
+                    new MessageSnapshot( listener2, 2, sender, stream, 0, 0, false, MessageSnapshot.GetData( [ 4, 5, 6 ] ) )
                 ] ) )
             .Go();
     }

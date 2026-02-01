@@ -44,6 +44,7 @@ internal sealed class ClientMock : IDisposable
     [Pure]
     internal static byte[] PrepareBindPublisherRequest(
         string channelName,
+        bool isEphemeral = true,
         string? streamName = null,
         short? channelNameLength = null,
         uint? payload = null)
@@ -61,7 +62,7 @@ internal sealed class ClientMock : IDisposable
             payload
             ?? ( uint )(Protocol.BindPublisherRequestHeader.Length + preparedChannelName.ByteCount + preparedStreamName.ByteCount) );
 
-        writer.MoveWrite( 0 );
+        writer.MoveWrite( ( byte )(isEphemeral ? 0 : 1) );
         writer.MoveWrite( ( ushort )(channelNameLength ?? preparedChannelName.ByteCount) );
         preparedChannelName.Encode( writer.GetSpan( preparedChannelName.ByteCount ) ).ThrowIfError();
         writer.Move( preparedChannelName.ByteCount );
@@ -85,6 +86,7 @@ internal sealed class ClientMock : IDisposable
     internal static byte[] PrepareBindListenerRequest(
         string channelName,
         bool createChannelIfNotExists,
+        bool isEphemeral = true,
         short? prefetchHint = null,
         int? maxRetries = null,
         Duration? retryDelay = null,
@@ -116,7 +118,7 @@ internal sealed class ClientMock : IDisposable
                 + preparedQueueName.ByteCount
                 + preparedFilterExpression.ByteCount) );
 
-        writer.MoveWrite( ( byte )(createChannelIfNotExists ? 1 : 0) );
+        writer.MoveWrite( ( byte )((isEphemeral ? 0 : 1) | (createChannelIfNotExists ? 2 : 0)) );
         writer.MoveWrite( ( ushort )(prefetchHint ?? 1) );
         writer.MoveWrite( ( uint )(maxRetries ?? 0) );
         writer.MoveWrite( ( uint )(retryDelay?.FullMilliseconds ?? 0) );
@@ -441,6 +443,7 @@ internal sealed class ClientMock : IDisposable
         MemorySize? maxNetworkBatchPacketLength = null,
         bool synchronizeExternalObjectNames = false,
         bool clearBuffers = false,
+        bool isEphemeral = true,
         uint? payload = null)
     {
         var preparedName = EncodeableText.Create( TextEncoding.Instance, name ).GetValueOrThrow();
@@ -464,7 +467,10 @@ internal sealed class ClientMock : IDisposable
         writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.HandshakeRequest );
         writer.MoveWrite( payloadToSend );
         writer.MoveWrite(
-            ( byte )((BitConverter.IsLittleEndian ? 2 : 0) | (synchronizeExternalObjectNames ? 4 : 0) | (clearBuffers ? 8 : 0)) );
+            ( byte )((isEphemeral ? 0 : 1)
+                | (BitConverter.IsLittleEndian ? 2 : 0)
+                | (synchronizeExternalObjectNames ? 4 : 0)
+                | (clearBuffers ? 8 : 0)) );
 
         writer.MoveWrite( messageTimeoutMs );
         writer.MoveWrite( pingIntervalMs );
@@ -490,11 +496,12 @@ internal sealed class ClientMock : IDisposable
 
     internal void SendBindPublisherRequest(
         string channelName,
+        bool isEphemeral = true,
         string? streamName = null,
         short? channelNameLength = null,
         uint? payload = null)
     {
-        Send( PrepareBindPublisherRequest( channelName, streamName, channelNameLength, payload ) );
+        Send( PrepareBindPublisherRequest( channelName, isEphemeral, streamName, channelNameLength, payload ) );
     }
 
     internal void SendUnbindPublisherRequest(int channelId, uint? payload = null)
@@ -505,6 +512,7 @@ internal sealed class ClientMock : IDisposable
     internal void SendBindListenerRequest(
         string channelName,
         bool createChannelIfNotExists,
+        bool isEphemeral = true,
         short? prefetchHint = null,
         int? maxRetries = null,
         Duration? retryDelay = null,
@@ -522,6 +530,7 @@ internal sealed class ClientMock : IDisposable
             PrepareBindListenerRequest(
                 channelName,
                 createChannelIfNotExists,
+                isEphemeral,
                 prefetchHint,
                 maxRetries,
                 retryDelay,
@@ -621,7 +630,8 @@ internal sealed class ClientMock : IDisposable
         Duration? pingInterval = null,
         short? maxBatchPacketCount = null,
         MemorySize? maxNetworkBatchPacketLength = null,
-        bool synchronizeExternalObjectNames = false)
+        bool synchronizeExternalObjectNames = false,
+        bool isEphemeral = true)
     {
         return Task.Factory.StartNew(
             () =>
@@ -633,7 +643,8 @@ internal sealed class ClientMock : IDisposable
                     pingInterval ?? Duration.FromSeconds( 10 ),
                     maxBatchPacketCount,
                     maxNetworkBatchPacketLength,
-                    synchronizeExternalObjectNames );
+                    synchronizeExternalObjectNames,
+                    isEphemeral: isEphemeral );
 
                 ReadHandshakeAcceptedResponse();
                 SendConfirmHandshakeResponse();

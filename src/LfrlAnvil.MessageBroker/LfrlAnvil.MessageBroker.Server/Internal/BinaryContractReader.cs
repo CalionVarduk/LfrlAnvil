@@ -97,4 +97,12 @@ internal ref struct BinaryContractReader
         Move( sizeof( ulong ) );
         return result;
     }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal ReadOnlySpan<byte> GetSpan(int length)
+    {
+        Assume.IsGreaterThanOrEqualTo( length, 0 );
+        return MemoryMarshal.CreateReadOnlySpan( ref _first, length );
+    }
 }

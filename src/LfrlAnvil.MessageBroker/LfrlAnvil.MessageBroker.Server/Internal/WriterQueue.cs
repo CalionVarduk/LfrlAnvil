@@ -37,16 +37,30 @@ internal struct WriterQueue
         return new WriterQueue( 0 );
     }
 
-    internal void Dispose()
+    internal void Dispose(ref Chain<Exception> exceptions)
     {
         foreach ( ref readonly var source in _pendingWriters )
         {
-            if ( source.Status == ValueTaskSourceStatus.Pending )
-                source.SetResult( new WriterSourceResult( WriterSourceResultStatus.Disposed ) );
+            try
+            {
+                if ( source.Status == ValueTaskSourceStatus.Pending )
+                    source.SetResult( new WriterSourceResult( WriterSourceResultStatus.Disposed ) );
+            }
+            catch ( Exception exc )
+            {
+                exceptions = exceptions.Extend( exc );
+            }
         }
 
-        _pendingWriters = QueueSlim<TaskSource>.Create();
-        _writerCache = StackSlim<TaskSource>.Create();
+        try
+        {
+            _pendingWriters = QueueSlim<TaskSource>.Create();
+            _writerCache = StackSlim<TaskSource>.Create();
+        }
+        catch ( Exception exc )
+        {
+            exceptions = exceptions.Extend( exc );
+        }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

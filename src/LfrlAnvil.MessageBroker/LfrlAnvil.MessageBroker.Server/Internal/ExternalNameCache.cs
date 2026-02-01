@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -44,13 +44,10 @@ internal struct ExternalNameCache
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool RequiresUpdate(MessageBrokerRemoteClient client, MessageBrokerRemoteClient sender)
+    internal bool RequiresUpdate(IMessageBrokerMessagePublisher publisher)
     {
-        if ( ReferenceEquals( client, sender ) )
-            return false;
-
-        ref var entry = ref _entries.GetValueRefOrAddDefault( sender.Id, out var exists );
-        return ! exists || ! sender.Name.Equals( entry.Client, StringComparison.Ordinal );
+        ref var entry = ref _entries.GetValueRefOrAddDefault( publisher.ClientId, out var exists );
+        return ! exists || ! publisher.ClientName.Equals( entry.Client, StringComparison.Ordinal );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -63,14 +60,12 @@ internal struct ExternalNameCache
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool TryUpdate(MessageBrokerRemoteClient client, MessageBrokerRemoteClient sender)
+    internal bool TryUpdate(IMessageBrokerMessagePublisher publisher)
     {
-        if ( ReferenceEquals( client, sender ) )
-            return false;
-
-        ref var entry = ref _entries.GetValueRefOrAddDefault( sender.Id, out var exists );
-        var changed = ! exists || ! sender.Name.Equals( entry.Client, StringComparison.Ordinal );
-        entry.Client = sender.Name;
+        var clientName = publisher.ClientName;
+        ref var entry = ref _entries.GetValueRefOrAddDefault( publisher.ClientId, out var exists );
+        var changed = ! exists || ! clientName.Equals( entry.Client, StringComparison.Ordinal );
+        entry.Client = clientName;
         return changed;
     }
 

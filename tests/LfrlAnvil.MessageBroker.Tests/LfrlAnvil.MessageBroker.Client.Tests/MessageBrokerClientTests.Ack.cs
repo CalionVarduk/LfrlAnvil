@@ -867,7 +867,8 @@ public partial class MessageBrokerClientTests
             int deadLetterCapacity = 0,
             Duration deadLetterRetention = default,
             string? filterExpression = null,
-            bool createChannelIfNotExists = true)
+            bool createChannelIfNotExists = true,
+            bool isEphemeral = true)
         {
             return new Protocol.BindListenerRequest(
                 channelName,
@@ -880,7 +881,8 @@ public partial class MessageBrokerClientTests
                 deadLetterCapacity,
                 deadLetterRetention,
                 filterExpression,
-                createChannelIfNotExists );
+                createChannelIfNotExists,
+                isEphemeral );
         }
     }
 }

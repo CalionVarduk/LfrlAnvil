@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@ using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Sources;
 using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Internal;
 using LfrlAnvil.Memory;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Exceptions;
@@ -37,9 +37,13 @@ internal struct QueueProcessor
     }
 
     [Pure]
-    internal static QueueProcessor Create()
+    internal static QueueProcessor Create(bool running)
     {
-        return new QueueProcessor( new ManualResetValueTaskSource<bool>() );
+        var source = new ManualResetValueTaskSource<bool>();
+        if ( ! running )
+            source.TrySetResult( false );
+
+        return new QueueProcessor( source );
     }
 
     [MethodImpl( MethodImplOptions.NoInlining )]
@@ -66,7 +70,7 @@ internal struct QueueProcessor
                     {
                         using ( queue.AcquireLock() )
                         {
-                            if ( queue.ShouldCancel )
+                            if ( queue.IsInactive )
                                 break;
 
                             queue.QueueProcessor.SignalContinuation();
@@ -83,16 +87,28 @@ internal struct QueueProcessor
         }
     }
 
-    internal void Dispose()
+    internal void BeginDispose(ref Chain<Exception> exceptions)
     {
-        if ( _continuation.Status == ValueTaskSourceStatus.Pending )
-            _continuation.SetResult( false );
+        try
+        {
+            _continuation.TrySetResult( false );
+        }
+        catch ( Exception exc )
+        {
+            exceptions = exceptions.Extend( exc );
+        }
     }
 
     internal void SetUnderlyingTask(Task task)
     {
         Assume.IsNull( _task );
         _task = task;
+    }
+
+    [Pure]
+    internal Task? GetUnderlyingTask()
+    {
+        return _task;
     }
 
     internal Task? DiscardUnderlyingTask()
@@ -105,10 +121,16 @@ internal struct QueueProcessor
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void SignalContinuation()
     {
-        if ( _continuation.Status == ValueTaskSourceStatus.Pending )
-            _continuation.SetResult( true );
+        _continuation.TrySetResult( true );
     }
 
+    // TODO
+    // initial non-ephemeral inactive queue implementation could simply hold everything in memory just like it is doing now
+    // just don't have an active queue processor
+    // and make sure that listener/queue state doesn't block stream processor from pushing messages to the queue
+    //
+    // later, this can be improved to work with an alternative queue processor which immediately pushes messages to an append-only log file
+    // so nothing is stored in memory for disconnected clients
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static async ValueTask RunCore(MessageBrokerQueue queue)
     {
@@ -130,7 +152,7 @@ internal struct QueueProcessor
                 bool hasMessage;
                 using ( queue.AcquireLock() )
                 {
-                    if ( queue.ShouldCancel )
+                    if ( queue.IsInactive )
                         return;
 
                     hasMessage = queue.MessageStore.TryPeekNext(
@@ -302,17 +324,14 @@ internal struct QueueProcessor
                             redelivery,
                             streamMessage.Id,
                             message.Publisher.Channel.Id,
-                            message.Publisher.Client.Id,
+                            message.Publisher.ClientId,
                             streamMessage.PushedAt,
                             streamMessage.Data.Length );
 
                         var totalLength = Protocol.PacketHeader.Length + unchecked( ( int )header.Header.Payload );
                         Assume.IsLessThanOrEqualTo( totalLength, queue.Client.Server.MaxNetworkMessagePacketLength.Bytes );
 
-                        var memoryPool = totalLength > queue.Client.MemoryPool.SegmentLength
-                            ? queue.Client.Server.MemoryPool
-                            : queue.Client.MemoryPool;
-
+                        var memoryPool = queue.Client.GetMemoryPool( totalLength );
                         poolToken = memoryPool.Rent( totalLength, streamMessage.PoolToken.Clear, out var data );
                         header.Serialize( data );
                         streamMessage.Data.CopyTo(
@@ -329,7 +348,7 @@ internal struct QueueProcessor
                             var synchronizeExternalObjectNames = queue.Client.SynchronizeExternalObjectNames;
                             if ( synchronizeExternalObjectNames )
                             {
-                                if ( queue.Client.ExternalNameCache.RequiresUpdate( queue.Client, message.Publisher.Client ) )
+                                if ( queue.Client.ExternalNameCache.RequiresUpdate( message.Publisher ) )
                                 {
                                     requiresSenderName = true;
                                     enqueued = false;
@@ -371,8 +390,8 @@ internal struct QueueProcessor
                                 {
                                     var notification = new Protocol.ObjectNameNotification(
                                         MessageBrokerSystemNotificationType.SenderName,
-                                        message.Publisher.Client.Id,
-                                        message.Publisher.Client.Name );
+                                        message.Publisher.ClientId,
+                                        message.Publisher.ClientName );
 
                                     senderNamePoolToken = queue.Client.MemoryPool.Rent(
                                         notification.Length,
@@ -456,6 +475,40 @@ internal struct QueueProcessor
                     {
                         if ( failed )
                         {
+                            // TODO:
+                            // one edge case to think about
+                            // if non-ephemeral listener has prefetch hint X and client disconnects
+                            // and that listener has X pending unACKed messages (will be redelivered on reconnect)
+                            // and then client reconnects but reduces listeners prefetch hint to lower than X
+                            // will redeliveries be consumed correctly?
+                            //
+                            // I think it will be fine, as long as listener prefetch counters correctly reflect
+                            // initial number of unACKed queue messages related to them
+                            //
+                            // the only issue is that the lowered prefetch hint will be initially ignored
+                            // due to larger number of messages to redeliver, which won't wait until prefetch counter is released enough
+                            // I think that's acceptable, client seems to be ok with it, there is no prefetch validation
+                            //
+                            // however, a test that verifies that would be useful
+                            //
+                            // there is another, probably more important issue
+                            // retry & redelivery limits on the listener
+                            // if listener is reactivated with lower limits but some messages are pending/retrying etc.
+                            // with larger retry/redelivery values than the new limits
+                            // then it might end up not working - some assumptions or actual validations may block it
+                            // solution: respect old limits one last time and send those messages anyway
+                            // if client is no longer interested, then they can send a proper NACK
+
+                            // TODO: TESTS
+                            // - listener starts with prefetch hint 2, 2 messages are sent to client, unacked
+                            //   client disconnects, inactive listener receives another message
+                            //   client reconnects, then binds the same listener with 1 prefetch hint
+                            //   should send both unacked messages immediately, should send third message only when both get acked
+                            // - listener starts with max-redelivery = max, single message gets sent without acks 3 times
+                            //   client disconnects, client reconnects, binds the same listener with max-redelivery = 1
+                            //   message should be sent one last time, even though redelivery count exceeds max
+                            // - same with max-retries
+                            // - what about dead letter count? they might get marked as exceeded immediately on listener rebind, which is fine
                             if ( messageType != QueueMessageStore.MessageType.Redelivery )
                                 message.Listener.DecrementPrefetchCounter();
 
@@ -494,7 +547,7 @@ internal struct QueueProcessor
                 using ( queue.AcquireLock() )
                     traceId = queue.GetTraceId();
 
-                using ( MessageBrokerQueueTraceEvent.CreateScope( queue, traceId, MessageBrokerQueueTraceEventType.Dispose ) )
+                using ( MessageBrokerQueueTraceEvent.CreateScope( queue, traceId, MessageBrokerQueueTraceEventType.Deactivate ) )
                     await queue.DisposeDueToLackOfReferencesAsync( ignoreProcessorTask: true, traceId ).ConfigureAwait( false );
 
                 return;
@@ -503,7 +556,7 @@ internal struct QueueProcessor
             using ( queue.Client.AcquireLock() )
             using ( queue.AcquireLock() )
             {
-                if ( ! queue.ShouldCancel )
+                if ( ! queue.Client.IsInactive )
                     queue.Client.EventScheduler.UpdateQueue( queue );
             }
         }
@@ -547,17 +600,18 @@ internal struct QueueProcessor
     private static ExclusiveLock AcquireActiveClientLock(
         MessageBrokerQueue queue,
         ulong traceId,
-        out MessageBrokerRemoteClientDisposedException? exception)
+        out MessageBrokerRemoteClientDeactivatedException? exception)
     {
         var @lock = queue.Client.AcquireLock();
-        if ( ! queue.Client.ShouldCancel )
+        if ( ! queue.Client.IsInactive )
         {
             exception = null;
             return @lock;
         }
 
+        var disposed = queue.Client.IsDisposed;
         @lock.Dispose();
-        exception = queue.Client.DisposedException();
+        exception = queue.Client.DeactivatedException( disposed );
         if ( queue.Logger.Error is { } error )
             error.Emit( MessageBrokerQueueErrorEvent.Create( queue, traceId, exception ) );
 

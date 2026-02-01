@@ -636,7 +636,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ExclusiveLock AcquireLock()
     {
-        return ExclusiveLock.SpinWaitEnter( _tcp, spinWaitMultiplier: 4 );
+        return ExclusiveLock.Enter( _tcp );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

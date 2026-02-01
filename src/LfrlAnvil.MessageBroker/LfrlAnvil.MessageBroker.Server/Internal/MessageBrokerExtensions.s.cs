@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -117,30 +117,6 @@ internal static class MessageBrokerExtensions
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static void TryEmitErrors(this MessageBrokerServer server, ulong traceId, Chain<Exception> exceptions)
-    {
-        if ( exceptions.Count > 0 && server.Logger.Error is { } error )
-        {
-            var exc = exceptions.Consolidate();
-            Assume.IsNotNull( exc );
-            error.Emit( MessageBrokerServerErrorEvent.Create( server, traceId, exc ) );
-        }
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static void TryAddTo(this Exception? exception, ref Chain<Exception> exceptions)
-    {
-        if ( exception is not null )
-            exceptions = exceptions.Extend( exception );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static void TryAddExceptionTo(this Result result, ref Chain<Exception> exceptions)
-    {
-        result.Exception.TryAddTo( ref exceptions );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static Result TryCancel(this CancellationTokenSource source)
     {
         try
@@ -155,27 +131,29 @@ internal static class MessageBrokerExtensions
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static void TryCleanUp(this CancellationTokenSource source, ref Chain<Exception> exceptions)
+    internal static ValueTask<Result> AsSafeCancellable(this Task? task)
     {
-        source.TryCancel().TryAddExceptionTo( ref exceptions );
-        source.TryDispose().TryAddExceptionTo( ref exceptions );
+        return task is null
+            ? ValueTask.FromResult( Result.Valid )
+            : task.WaitAsync( Defaults.Temporal.TaskWaitTimeout ).AsSafe();
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static async ValueTask<Result> SafeWaitAsync(this Task? task)
+    internal static ValueTask<Result> AsSafeNonCancellable(this Task? task)
     {
-        if ( task is null )
-            return Result.Valid;
+        return task?.AsSafe() ?? ValueTask.FromResult( Result.Valid );
+    }
 
-        try
-        {
-            await task.ConfigureAwait( false );
-            return Result.Valid;
-        }
-        catch ( Exception exc )
-        {
-            return exc;
-        }
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static void SafeDispose(this CancellationTokenSource source, ref Chain<Exception> exceptions)
+    {
+        var result = source.TryCancel();
+        if ( result.Exception is not null )
+            exceptions = exceptions.Extend( result.Exception );
+
+        result = source.TryDispose();
+        if ( result.Exception is not null )
+            exceptions = exceptions.Extend( result.Exception );
     }
 
     [Pure]
@@ -208,9 +186,9 @@ internal static class MessageBrokerExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerRemoteClientDisposedException DisposedException(this MessageBrokerRemoteClient client)
+    internal static MessageBrokerRemoteClientDeactivatedException DeactivatedException(this MessageBrokerRemoteClient client, bool disposed)
     {
-        return new MessageBrokerRemoteClientDisposedException( client );
+        return new MessageBrokerRemoteClientDeactivatedException( client, disposed );
     }
 
     [Pure]
@@ -333,6 +311,16 @@ internal static class MessageBrokerExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerServerStorageException StorageException(
+        this MessageBrokerServer server,
+        string filePath,
+        Chain<string> errors)
+    {
+        return new MessageBrokerServerStorageException( server, filePath, errors );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerRemoteClientRequestTimeoutException RequestTimeoutException(this MessageBrokerRemoteClient client)
     {
         return MessageBrokerRemoteClientRequestTimeoutException.Create( client );
@@ -419,7 +407,7 @@ internal static class MessageBrokerExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static ExclusiveLock AcquireLock(this MemoryPool<byte> pool)
     {
-        return ExclusiveLock.SpinWaitEnter( pool, spinWaitMultiplier: 4 );
+        return ExclusiveLock.Enter( pool );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

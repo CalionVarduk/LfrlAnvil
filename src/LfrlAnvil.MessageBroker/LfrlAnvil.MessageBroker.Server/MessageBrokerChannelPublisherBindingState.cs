@@ -25,12 +25,22 @@ public enum MessageBrokerChannelPublisherBindingState : byte
     Running = 0,
 
     /// <summary>
+    /// Specifies that the publisher binding is currently being deactivated.
+    /// </summary>
+    Deactivating = 1,
+
+    /// <summary>
+    /// Specifies that the publisher binding is currently inactive.
+    /// </summary>
+    Inactive = 2,
+
+    /// <summary>
     /// Specifies that the publisher binding is currently being disposed.
     /// </summary>
-    Disposing = 1,
+    Disposing = 3,
 
     /// <summary>
     /// Specifies that the publisher binding has been disposed.
     /// </summary>
-    Disposed = 2
+    Disposed = 4
 }

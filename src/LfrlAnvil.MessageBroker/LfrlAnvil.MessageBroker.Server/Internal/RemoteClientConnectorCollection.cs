@@ -148,19 +148,16 @@ internal struct RemoteClientConnectorCollection
         }
     }
 
-    internal void DisposeCancellationSources(ref Chain<Exception> exceptions)
+    internal MessageBrokerRemoteClientConnector[] DisposeUnsafe(ref Chain<Exception> exceptions)
     {
         foreach ( var source in _readCancellationSourceCache )
-            source.TryCleanUp( ref exceptions );
+            source.SafeDispose( ref exceptions );
 
-        _readCancellationSourceCache = StackSlim<CancellationTokenSource>.Create();
-    }
-
-    internal MessageBrokerRemoteClientConnector[] DisposeUnsafe()
-    {
         var result = _cache;
         _cache = null;
         result ??= ToArray();
+
+        _readCancellationSourceCache = StackSlim<CancellationTokenSource>.Create();
         _connectors = SparseListSlim<MessageBrokerRemoteClientConnector>.Create();
         return result;
     }

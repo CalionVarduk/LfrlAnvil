@@ -18,34 +18,40 @@ using System.Runtime.CompilerServices;
 namespace LfrlAnvil.MessageBroker.Server.Events;
 
 /// <summary>
-/// Represents an event emitted by <see cref="MessageBrokerQueue"/> when it's started to be disposed.
+/// Represents an event emitted by <see cref="MessageBrokerRemoteClient"/> when it's deactivated.
 /// </summary>
-public readonly struct MessageBrokerQueueDisposingEvent
+public readonly struct MessageBrokerRemoteClientDeactivatedEvent
 {
-    private MessageBrokerQueueDisposingEvent(MessageBrokerQueue queue, ulong traceId)
+    private MessageBrokerRemoteClientDeactivatedEvent(MessageBrokerRemoteClient client, ulong traceId, bool isAlive)
     {
-        Source = MessageBrokerQueueEventSource.Create( queue, traceId );
+        Source = MessageBrokerRemoteClientEventSource.Create( client, traceId );
+        IsAlive = isAlive;
     }
 
     /// <summary>
     /// Event source.
     /// </summary>
-    public MessageBrokerQueueEventSource Source { get; }
+    public MessageBrokerRemoteClientEventSource Source { get; }
 
     /// <summary>
-    /// Returns a string representation of this <see cref="MessageBrokerQueueDisposingEvent"/> instance.
+    /// Specifies whether or not the client remains alive after deactivation.
+    /// </summary>
+    public bool IsAlive { get; }
+
+    /// <summary>
+    /// Returns a string representation of this <see cref="MessageBrokerRemoteClientDeactivatedEvent"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
-        return $"[Disposing] {Source}";
+        return $"[Deactivated] {Source}, IsAlive = {IsAlive}";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerQueueDisposingEvent Create(MessageBrokerQueue queue, ulong traceId)
+    internal static MessageBrokerRemoteClientDeactivatedEvent Create(MessageBrokerRemoteClient client, ulong traceId, bool isAlive)
     {
-        return new MessageBrokerQueueDisposingEvent( queue, traceId );
+        return new MessageBrokerRemoteClientDeactivatedEvent( client, traceId, isAlive );
     }
 }

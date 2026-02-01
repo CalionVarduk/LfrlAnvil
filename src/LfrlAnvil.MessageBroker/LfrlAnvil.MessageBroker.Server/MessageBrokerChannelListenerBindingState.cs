@@ -25,12 +25,22 @@ public enum MessageBrokerChannelListenerBindingState : byte
     Running = 0,
 
     /// <summary>
+    /// Specifies that the listener binding is currently being deactivated.
+    /// </summary>
+    Deactivating = 1,
+
+    /// <summary>
+    /// Specifies that the listener binding is currently inactive.
+    /// </summary>
+    Inactive = 2,
+
+    /// <summary>
     /// Specifies that the listener binding is currently being disposed.
     /// </summary>
-    Disposing = 1,
+    Disposing = 3,
 
     /// <summary>
     /// Specifies that the listener binding has been disposed.
     /// </summary>
-    Disposed = 2
+    Disposed = 4
 }

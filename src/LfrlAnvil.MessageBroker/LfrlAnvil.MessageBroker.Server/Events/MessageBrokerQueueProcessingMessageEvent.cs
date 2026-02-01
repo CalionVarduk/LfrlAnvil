@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.MessageBroker.Server.Internal;
+using LfrlAnvil.Internal;
 
 namespace LfrlAnvil.MessageBroker.Server.Events;
 
@@ -29,7 +29,7 @@ public readonly struct MessageBrokerQueueProcessingMessageEvent
     private MessageBrokerQueueProcessingMessageEvent(
         MessageBrokerChannelListenerBinding listener,
         ulong traceId,
-        MessageBrokerChannelPublisherBinding publisher,
+        IMessageBrokerMessagePublisher publisher,
         int storeKey,
         bool isFromDeadLetter,
         Int31BoolPair retry,
@@ -55,9 +55,9 @@ public readonly struct MessageBrokerQueueProcessingMessageEvent
     public MessageBrokerChannelListenerBinding Listener { get; }
 
     /// <summary>
-    /// <see cref="MessageBrokerChannelPublisherBinding"/> that pushed the message.
+    /// <see cref="IMessageBrokerMessagePublisher"/> that pushed the message.
     /// </summary>
-    public MessageBrokerChannelPublisherBinding Publisher { get; }
+    public IMessageBrokerMessagePublisher Publisher { get; }
 
     /// <summary>
     /// Key of the stream's message store entry associated with the message.
@@ -99,7 +99,7 @@ public readonly struct MessageBrokerQueueProcessingMessageEvent
         var isRetry = IsRetry ? " (active)" : string.Empty;
         var isRedelivery = IsRedelivery ? " (active)" : string.Empty;
         return
-            $"[ProcessingMessage] {Source}, Sender = [{Publisher.Client.Id}] '{Publisher.Client.Name}', Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', StoreKey = {StoreKey}, Retry = {Retry}{isRetry}, Redelivery = {Redelivery}{isRedelivery}, IsFromDeadLetter = {IsFromDeadLetter}";
+            $"[ProcessingMessage] {Source}, Sender = [{Publisher.ClientId}] '{Publisher.ClientName}', Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', StoreKey = {StoreKey}, Retry = {Retry}{isRetry}, Redelivery = {Redelivery}{isRedelivery}, IsFromDeadLetter = {IsFromDeadLetter}";
     }
 
     [Pure]
@@ -107,7 +107,7 @@ public readonly struct MessageBrokerQueueProcessingMessageEvent
     internal static MessageBrokerQueueProcessingMessageEvent Create(
         MessageBrokerChannelListenerBinding listener,
         ulong traceId,
-        MessageBrokerChannelPublisherBinding publisher,
+        IMessageBrokerMessagePublisher publisher,
         int storeKey,
         bool isFromDeadLetter,
         Int31BoolPair retry,

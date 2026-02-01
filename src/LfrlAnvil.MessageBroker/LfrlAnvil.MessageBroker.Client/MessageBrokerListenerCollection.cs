@@ -88,6 +88,7 @@ public readonly struct MessageBrokerListenerCollection
     /// <param name="createChannelIfNotExists">
     /// Specifies whether or not the server should create the channel if it does not exist yet. Equal to <b>true</b> by default.
     /// </param>
+    /// <param name="isEphemeral">Specifies whether or not the listener will be ephemeral. Equal to <b>false</b> by default.</param>
     /// <returns>
     /// A task that represents the operation, which returns a <see cref="Result{T}"/> instance,
     /// with underlying <see cref="MessageBrokerBindListenerResult"/> instance.
@@ -110,8 +111,9 @@ public readonly struct MessageBrokerListenerCollection
         MessageBrokerListenerCallback callback,
         MessageBrokerListenerOptions options = default,
         string? queueName = null,
-        bool createChannelIfNotExists = true)
+        bool createChannelIfNotExists = true,
+        bool isEphemeral = false)
     {
-        return ListenerCollection.BindAsync( _client, channelName, queueName, callback, options, createChannelIfNotExists );
+        return ListenerCollection.BindAsync( _client, channelName, queueName, callback, options, createChannelIfNotExists, isEphemeral );
     }
 }
