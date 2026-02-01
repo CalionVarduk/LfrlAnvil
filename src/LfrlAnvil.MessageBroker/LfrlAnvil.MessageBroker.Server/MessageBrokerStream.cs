@@ -250,7 +250,7 @@ public sealed class MessageBrokerStream
     {
         var traceId = 0UL;
         MessageBrokerStreamState state;
-        Result result;
+        var result = Result.Valid;
         Task? processorTask = null;
 
         using ( AcquireLock() )

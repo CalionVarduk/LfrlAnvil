@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ public sealed class AsyncMutex
     /// </param>
     /// <returns>New <see cref="ValueTask{TResult}"/> instance which returns an <see cref="AsyncMutexLock"/> value.</returns>
     /// <exception cref="OperationCanceledException">
-    /// When provided <see cref="cancellationToken"/> was cancelled before the lock was acquired.
+    /// When provided <paramref name="cancellationToken"/> was cancelled before the lock was acquired.
     /// </exception>
     public async ValueTask<AsyncMutexLock> EnterAsync(CancellationToken cancellationToken = default)
     {

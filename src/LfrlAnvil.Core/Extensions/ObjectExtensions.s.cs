@@ -1,4 +1,4 @@
-﻿// Copyright 2024-2025 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -300,7 +300,7 @@ public static class ObjectExtensions
     }
 
     /// <summary>
-    /// Clamps the value to the provided [<paramref cref="min"/>, <paramref cref="max"/>] range.
+    /// Clamps the value to the provided [<paramref name="min"/>, <paramref name="max"/>] range.
     /// </summary>
     /// <param name="source">Value to clamp.</param>
     /// <param name="min">Min value.</param>
