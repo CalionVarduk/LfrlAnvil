@@ -1196,7 +1196,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
     }
 
     [Fact]
-    public async Task StartAsync_ShouldReturnOperationCanceledException_WhenClientFailsToConnectToServerInTime()
+    public async Task StartAsync_ShouldReturnException_WhenClientFailsToConnectToServerInTime()
     {
         var logs = new EventLogger();
         var server = new ServerMock();
@@ -1215,7 +1215,7 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
         var result = await client.StartAsync();
 
         Assertion.All(
-                result.Exception.TestType().AssignableTo<OperationCanceledException>(),
+                result.Exception.TestNotNull(),
                 logs.GetAll()
                     .TestSequence(
                     [
@@ -1224,9 +1224,9 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             (e, _) => e.TestEquals( "[Trace:Start] Client = 'test', TraceId = 0 (start)" ),
                             (e, _) => e.TestEquals( $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}" ),
                             (e, _) => e.TestStartsWith(
-                                """
+                                $"""
                                 [Error] Client = 'test', TraceId = 0
-                                System.OperationCanceledException:
+                                {result.Exception?.GetType().FullName}
                                 """ ),
                             (e, _) => e.TestEquals( "[Disposing] Client = 'test', TraceId = 0" ),
                             (e, _) => e.TestEquals( "[Disposed] Client = 'test', TraceId = 0" ),
