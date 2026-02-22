@@ -185,16 +185,15 @@ public class TaskRegistryTests : TestsBase
         foreach ( var source in taskSources )
             sut.Add( source.Task );
 
-        Task.Run(
-            async () =>
-            {
-                await Task.Delay( 1 );
-                taskSources[0].SetResult();
-                await Task.Delay( 1 );
-                taskSources[1].SetResult();
-                await Task.Delay( 1 );
-                taskSources[2].SetResult();
-            } );
+        Task.Run( async () =>
+        {
+            await Task.Delay( 1 );
+            taskSources[0].SetResult();
+            await Task.Delay( 1 );
+            taskSources[1].SetResult();
+            await Task.Delay( 1 );
+            taskSources[2].SetResult();
+        } );
 
         sut.Dispose();
 
@@ -212,16 +211,15 @@ public class TaskRegistryTests : TestsBase
         foreach ( var source in taskSources )
             sut.Add( source.Task );
 
-        Task.Run(
-            async () =>
-            {
-                await Task.Delay( 1 );
-                taskSources[0].SetResult();
-                await Task.Delay( 1 );
-                taskSources[1].SetCanceled();
-                await Task.Delay( 1 );
-                taskSources[2].SetResult();
-            } );
+        Task.Run( async () =>
+        {
+            await Task.Delay( 1 );
+            taskSources[0].SetResult();
+            await Task.Delay( 1 );
+            taskSources[1].SetCanceled();
+            await Task.Delay( 1 );
+            taskSources[2].SetResult();
+        } );
 
         sut.Dispose();
 
@@ -239,24 +237,22 @@ public class TaskRegistryTests : TestsBase
         foreach ( var source in taskSources )
             sut.Add( source.Task );
 
-        Task.Run(
-            async () =>
-            {
-                await Task.Delay( 1 );
-                taskSources[0].SetResult();
-                await Task.Delay( 1 );
-                taskSources[1].SetException( new Exception() );
-                await Task.Delay( 1 );
-                taskSources[2].SetResult();
-            } );
+        Task.Run( async () =>
+        {
+            await Task.Delay( 1 );
+            taskSources[0].SetResult();
+            await Task.Delay( 1 );
+            taskSources[1].SetException( new Exception() );
+            await Task.Delay( 1 );
+            taskSources[2].SetResult();
+        } );
 
         var action = Lambda.Of( () => sut.Dispose() );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<AggregateException>(),
-                    taskSources.TestAll( (s, _) => s.Task.IsCompleted.TestTrue() ),
-                    sut.Count.TestEquals( 0 ) ) )
+        action.Test( exc => Assertion.All(
+                exc.TestType().Exact<AggregateException>(),
+                taskSources.TestAll( (s, _) => s.Task.IsCompleted.TestTrue() ),
+                sut.Count.TestEquals( 0 ) ) )
             .Go();
     }
 

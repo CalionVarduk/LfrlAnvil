@@ -623,12 +623,11 @@ public class FloatBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionCompareFloatOperator(),
             expectedNodeType: ExpressionType.Call,
             (left, right, result) => result.TestType()
-                .AssignableTo<MethodCallExpression>(
-                    methodCallResult => Assertion.All(
-                        "methodCallResult",
-                        methodCallResult.Object.TestRefEquals( left ),
-                        methodCallResult.Arguments.TestSequence( [ right ] ),
-                        methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
+                .AssignableTo<MethodCallExpression>( methodCallResult => Assertion.All(
+                    "methodCallResult",
+                    methodCallResult.Object.TestRefEquals( left ),
+                    methodCallResult.Arguments.TestSequence( [ right ] ),
+                    methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
     }
 
     [Theory]
@@ -657,12 +656,11 @@ public class FloatBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Call,
             leftValue: Fixture.Create<float>(),
             (left, right, result) => result.TestType()
-                .AssignableTo<MethodCallExpression>(
-                    methodCallResult => Assertion.All(
-                        "methodCallResult",
-                        methodCallResult.Object.TestRefEquals( left ),
-                        methodCallResult.Arguments.TestSequence( [ right ] ),
-                        methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
+                .AssignableTo<MethodCallExpression>( methodCallResult => Assertion.All(
+                    "methodCallResult",
+                    methodCallResult.Object.TestRefEquals( left ),
+                    methodCallResult.Arguments.TestSequence( [ right ] ),
+                    methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
     }
 
     [Fact]
@@ -673,11 +671,10 @@ public class FloatBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Call,
             rightValue: Fixture.Create<float>(),
             (left, right, result) => result.TestType()
-                .AssignableTo<MethodCallExpression>(
-                    methodCallResult => Assertion.All(
-                        "methodCallResult",
-                        methodCallResult.Object.TestRefEquals( left ),
-                        methodCallResult.Arguments.TestSequence( [ right ] ),
-                        methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
+                .AssignableTo<MethodCallExpression>( methodCallResult => Assertion.All(
+                    "methodCallResult",
+                    methodCallResult.Object.TestRefEquals( left ),
+                    methodCallResult.Arguments.TestSequence( [ right ] ),
+                    methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
     }
 }

@@ -23,9 +23,8 @@ public class BigIntUnaryOperatorTests : UnaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             operandValue: 123,
             (_, result) => result.TestType()
-                .AssignableTo<ConstantExpression>(
-                    constantResult =>
-                        constantResult.Value.TestEquals( new BigInteger( -123 ) ) ) );
+                .AssignableTo<ConstantExpression>( constantResult =>
+                    constantResult.Value.TestEquals( new BigInteger( -123 ) ) ) );
     }
 
     [Fact]
@@ -45,8 +44,7 @@ public class BigIntUnaryOperatorTests : UnaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             operandValue: 123,
             (_, result) => result.TestType()
-                .AssignableTo<ConstantExpression>(
-                    constantResult =>
-                        constantResult.Value.TestEquals( ~new BigInteger( 123 ) ) ) );
+                .AssignableTo<ConstantExpression>( constantResult =>
+                    constantResult.Value.TestEquals( ~new BigInteger( 123 ) ) ) );
     }
 }

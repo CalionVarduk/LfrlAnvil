@@ -11,9 +11,8 @@ public abstract class ValidatorTestsBase : TestsBase
         params ValidationMessage<TResource>[] expected)
     {
         return result.TestSequence(
-            expected.Select(
-                e => ( Func<ValidationMessage<TResource>, int, Assertion> )((r, _) => Assertion.All(
-                    r.Resource.TestEquals( e.Resource ),
-                    (r.Parameters ?? Array.Empty<object?>()).TestSequence( e.Parameters ?? Array.Empty<object?>() ) )) ) );
+            expected.Select( e => ( Func<ValidationMessage<TResource>, int, Assertion> )((r, _) => Assertion.All(
+                r.Resource.TestEquals( e.Resource ),
+                (r.Parameters ?? Array.Empty<object?>()).TestSequence( e.Parameters ?? Array.Empty<object?>() ) )) ) );
     }
 }

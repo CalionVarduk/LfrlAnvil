@@ -26,12 +26,11 @@ public class ManualResetValueTaskSourceTests : TestsBase
     {
         var sut = new ManualResetValueTaskSource<int>();
 
-        _ = Task.Run(
-            async () =>
-            {
-                await Task.Delay( 15 );
-                sut.SetResult( 123 );
-            } );
+        _ = Task.Run( async () =>
+        {
+            await Task.Delay( 15 );
+            sut.SetResult( 123 );
+        } );
 
         var result = await sut.GetTask();
 
@@ -47,12 +46,11 @@ public class ManualResetValueTaskSourceTests : TestsBase
         var sut = new ManualResetValueTaskSource<int>();
         var completed = false;
 
-        _ = Task.Run(
-            async () =>
-            {
-                await Task.Delay( 15 );
-                completed = sut.TrySetResult( 123 );
-            } );
+        _ = Task.Run( async () =>
+        {
+            await Task.Delay( 15 );
+            completed = sut.TrySetResult( 123 );
+        } );
 
         var result = await sut.GetTask();
 
@@ -80,19 +78,17 @@ public class ManualResetValueTaskSourceTests : TestsBase
         var exception = new Exception( "foo" );
         var sut = new ManualResetValueTaskSource<int>();
 
-        _ = Task.Run(
-            async () =>
-            {
-                await Task.Delay( 15 );
-                sut.SetException( exception );
-            } );
+        _ = Task.Run( async () =>
+        {
+            await Task.Delay( 15 );
+            sut.SetException( exception );
+        } );
 
         var action = Lambda.Of( async () => await sut.GetTask() );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestRefEquals( exception ),
-                    sut.Status.TestEquals( ValueTaskSourceStatus.Faulted ) ) )
+        action.Test( exc => Assertion.All(
+                exc.TestRefEquals( exception ),
+                sut.Status.TestEquals( ValueTaskSourceStatus.Faulted ) ) )
             .Go();
     }
 
@@ -103,20 +99,18 @@ public class ManualResetValueTaskSourceTests : TestsBase
         var sut = new ManualResetValueTaskSource<int>();
         var completed = false;
 
-        _ = Task.Run(
-            async () =>
-            {
-                await Task.Delay( 15 );
-                completed = sut.TrySetException( exception );
-            } );
+        _ = Task.Run( async () =>
+        {
+            await Task.Delay( 15 );
+            completed = sut.TrySetException( exception );
+        } );
 
         var action = Lambda.Of( async () => await sut.GetTask() );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestRefEquals( exception ),
-                    sut.Status.TestEquals( ValueTaskSourceStatus.Faulted ),
-                    completed.TestTrue() ) )
+        action.Test( exc => Assertion.All(
+                exc.TestRefEquals( exception ),
+                sut.Status.TestEquals( ValueTaskSourceStatus.Faulted ),
+                completed.TestTrue() ) )
             .Go();
     }
 
@@ -140,19 +134,17 @@ public class ManualResetValueTaskSourceTests : TestsBase
 
         var sut = new ManualResetValueTaskSource<int>();
 
-        _ = Task.Run(
-            async () =>
-            {
-                await Task.Delay( 15 );
-                sut.SetCancelled( token );
-            } );
+        _ = Task.Run( async () =>
+        {
+            await Task.Delay( 15 );
+            sut.SetCancelled( token );
+        } );
 
         var action = Lambda.Of( async () => await sut.GetTask() );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestType().AssignableTo<OperationCanceledException>( e => e.CancellationToken.TestEquals( token ) ),
-                    sut.Status.TestEquals( ValueTaskSourceStatus.Canceled ) ) )
+        action.Test( exc => Assertion.All(
+                exc.TestType().AssignableTo<OperationCanceledException>( e => e.CancellationToken.TestEquals( token ) ),
+                sut.Status.TestEquals( ValueTaskSourceStatus.Canceled ) ) )
             .Go();
     }
 
@@ -166,20 +158,18 @@ public class ManualResetValueTaskSourceTests : TestsBase
 
         var sut = new ManualResetValueTaskSource<int>();
 
-        _ = Task.Run(
-            async () =>
-            {
-                await Task.Delay( 15 );
-                completed = sut.TrySetCancelled( token );
-            } );
+        _ = Task.Run( async () =>
+        {
+            await Task.Delay( 15 );
+            completed = sut.TrySetCancelled( token );
+        } );
 
         var action = Lambda.Of( async () => await sut.GetTask() );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestType().AssignableTo<OperationCanceledException>( e => e.CancellationToken.TestEquals( token ) ),
-                    sut.Status.TestEquals( ValueTaskSourceStatus.Canceled ),
-                    completed.TestTrue() ) )
+        action.Test( exc => Assertion.All(
+                exc.TestType().AssignableTo<OperationCanceledException>( e => e.CancellationToken.TestEquals( token ) ),
+                sut.Status.TestEquals( ValueTaskSourceStatus.Canceled ),
+                completed.TestTrue() ) )
             .Go();
     }
 
@@ -199,22 +189,20 @@ public class ManualResetValueTaskSourceTests : TestsBase
     {
         var sut = new ManualResetValueTaskSource<int>();
 
-        _ = Task.Run(
-            async () =>
-            {
-                await Task.Delay( 15 );
-                sut.SetResult( 123 );
-            } );
+        _ = Task.Run( async () =>
+        {
+            await Task.Delay( 15 );
+            sut.SetResult( 123 );
+        } );
 
         _ = await sut.GetTask();
         sut.Reset();
 
-        _ = Task.Run(
-            async () =>
-            {
-                await Task.Delay( 15 );
-                sut.SetResult( 456 );
-            } );
+        _ = Task.Run( async () =>
+        {
+            await Task.Delay( 15 );
+            sut.SetResult( 456 );
+        } );
 
         var result = await sut.GetTask();
 

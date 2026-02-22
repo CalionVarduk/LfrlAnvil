@@ -34,32 +34,30 @@ public partial class CollectionVariableRootTests
                 sut.Elements.AddedElementKeys.TestEmpty(),
                 sut.Elements.RemovedElementKeys.TestEmpty(),
                 onChange.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e =>
-                            Assertion.All(
-                                "changeEvent",
-                                e[0].Variable.TestRefEquals( sut ),
-                                e[0].PreviousState.TestEquals( VariableState.Default ),
-                                e[0].NewState.TestEquals( sut.State ),
-                                e[0].SourceEvent.TestRefEquals( onVariableChange ),
-                                e[0].AddedElements.TestEmpty(),
-                                e[0].RemovedElements.TestEmpty(),
-                                e[0].RestoredElements.TestEmpty(),
-                                e[0].Source.TestEquals( VariableChangeSource.ChildNode ) ) ),
+                    .Then( e =>
+                        Assertion.All(
+                            "changeEvent",
+                            e[0].Variable.TestRefEquals( sut ),
+                            e[0].PreviousState.TestEquals( VariableState.Default ),
+                            e[0].NewState.TestEquals( sut.State ),
+                            e[0].SourceEvent.TestRefEquals( onVariableChange ),
+                            e[0].AddedElements.TestEmpty(),
+                            e[0].RemovedElements.TestEmpty(),
+                            e[0].RestoredElements.TestEmpty(),
+                            e[0].Source.TestEquals( VariableChangeSource.ChildNode ) ) ),
                 onValidate.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e =>
-                            Assertion.All(
-                                "validateEvent",
-                                e[0].Variable.TestRefEquals( sut ),
-                                e[0].PreviousState.TestEquals( sut.State ),
-                                e[0].NewState.TestEquals( sut.State ),
-                                e[0].SourceEvent.TestRefEquals( onVariableValidate ),
-                                e[0].PreviousErrors.TestEmpty(),
-                                e[0].NewErrors.TestEmpty(),
-                                e[0].PreviousWarnings.TestEmpty(),
-                                e[0].NewWarnings.TestEmpty(),
-                                e[0].AssociatedChange.TestNull() ) ) )
+                    .Then( e =>
+                        Assertion.All(
+                            "validateEvent",
+                            e[0].Variable.TestRefEquals( sut ),
+                            e[0].PreviousState.TestEquals( sut.State ),
+                            e[0].NewState.TestEquals( sut.State ),
+                            e[0].SourceEvent.TestRefEquals( onVariableValidate ),
+                            e[0].PreviousErrors.TestEmpty(),
+                            e[0].NewErrors.TestEmpty(),
+                            e[0].PreviousWarnings.TestEmpty(),
+                            e[0].NewWarnings.TestEmpty(),
+                            e[0].AssociatedChange.TestNull() ) ) )
             .Go();
     }
 
@@ -90,32 +88,30 @@ public partial class CollectionVariableRootTests
                 sut.Elements.AddedElementKeys.TestEmpty(),
                 sut.Elements.RemovedElementKeys.TestEmpty(),
                 onChange.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e =>
-                            Assertion.All(
-                                "changeEvent",
-                                e[0].Variable.TestRefEquals( sut ),
-                                e[0].PreviousState.TestEquals( VariableState.Default ),
-                                e[0].NewState.TestEquals( VariableState.Default ),
-                                e[0].SourceEvent.TestRefEquals( onVariableChange ),
-                                e[0].AddedElements.TestEmpty(),
-                                e[0].RemovedElements.TestEmpty(),
-                                e[0].RestoredElements.TestEmpty(),
-                                e[0].Source.TestEquals( VariableChangeSource.ChildNode ) ) ),
+                    .Then( e =>
+                        Assertion.All(
+                            "changeEvent",
+                            e[0].Variable.TestRefEquals( sut ),
+                            e[0].PreviousState.TestEquals( VariableState.Default ),
+                            e[0].NewState.TestEquals( VariableState.Default ),
+                            e[0].SourceEvent.TestRefEquals( onVariableChange ),
+                            e[0].AddedElements.TestEmpty(),
+                            e[0].RemovedElements.TestEmpty(),
+                            e[0].RestoredElements.TestEmpty(),
+                            e[0].Source.TestEquals( VariableChangeSource.ChildNode ) ) ),
                 onValidate.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e =>
-                            Assertion.All(
-                                "validateEvent",
-                                e[0].Variable.TestRefEquals( sut ),
-                                e[0].PreviousState.TestEquals( VariableState.Default ),
-                                e[0].NewState.TestEquals( sut.State ),
-                                e[0].SourceEvent.TestRefEquals( onVariableValidate ),
-                                e[0].PreviousErrors.TestEmpty(),
-                                e[0].NewErrors.TestEmpty(),
-                                e[0].PreviousWarnings.TestEmpty(),
-                                e[0].NewWarnings.TestEmpty(),
-                                e[0].AssociatedChange.TestNull() ) ) )
+                    .Then( e =>
+                        Assertion.All(
+                            "validateEvent",
+                            e[0].Variable.TestRefEquals( sut ),
+                            e[0].PreviousState.TestEquals( VariableState.Default ),
+                            e[0].NewState.TestEquals( sut.State ),
+                            e[0].SourceEvent.TestRefEquals( onVariableValidate ),
+                            e[0].PreviousErrors.TestEmpty(),
+                            e[0].NewErrors.TestEmpty(),
+                            e[0].PreviousWarnings.TestEmpty(),
+                            e[0].NewWarnings.TestEmpty(),
+                            e[0].AssociatedChange.TestNull() ) ) )
             .Go();
     }
 
@@ -146,32 +142,30 @@ public partial class CollectionVariableRootTests
                 sut.Elements.AddedElementKeys.TestEmpty(),
                 sut.Elements.RemovedElementKeys.TestEmpty(),
                 onChange.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e =>
-                            Assertion.All(
-                                "changeEvent",
-                                e[0].Variable.TestRefEquals( sut ),
-                                e[0].PreviousState.TestEquals( VariableState.Default ),
-                                e[0].NewState.TestEquals( VariableState.Default ),
-                                e[0].SourceEvent.TestRefEquals( onVariableChange ),
-                                e[0].AddedElements.TestEmpty(),
-                                e[0].RemovedElements.TestEmpty(),
-                                e[0].RestoredElements.TestEmpty(),
-                                e[0].Source.TestEquals( VariableChangeSource.ChildNode ) ) ),
+                    .Then( e =>
+                        Assertion.All(
+                            "changeEvent",
+                            e[0].Variable.TestRefEquals( sut ),
+                            e[0].PreviousState.TestEquals( VariableState.Default ),
+                            e[0].NewState.TestEquals( VariableState.Default ),
+                            e[0].SourceEvent.TestRefEquals( onVariableChange ),
+                            e[0].AddedElements.TestEmpty(),
+                            e[0].RemovedElements.TestEmpty(),
+                            e[0].RestoredElements.TestEmpty(),
+                            e[0].Source.TestEquals( VariableChangeSource.ChildNode ) ) ),
                 onValidate.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e =>
-                            Assertion.All(
-                                "validateEvent",
-                                e[0].Variable.TestRefEquals( sut ),
-                                e[0].PreviousState.TestEquals( VariableState.Default ),
-                                e[0].NewState.TestEquals( sut.State ),
-                                e[0].SourceEvent.TestRefEquals( onVariableValidate ),
-                                e[0].PreviousErrors.TestEmpty(),
-                                e[0].NewErrors.TestEmpty(),
-                                e[0].PreviousWarnings.TestEmpty(),
-                                e[0].NewWarnings.TestEmpty(),
-                                e[0].AssociatedChange.TestNull() ) ) )
+                    .Then( e =>
+                        Assertion.All(
+                            "validateEvent",
+                            e[0].Variable.TestRefEquals( sut ),
+                            e[0].PreviousState.TestEquals( VariableState.Default ),
+                            e[0].NewState.TestEquals( sut.State ),
+                            e[0].SourceEvent.TestRefEquals( onVariableValidate ),
+                            e[0].PreviousErrors.TestEmpty(),
+                            e[0].NewErrors.TestEmpty(),
+                            e[0].PreviousWarnings.TestEmpty(),
+                            e[0].NewWarnings.TestEmpty(),
+                            e[0].AssociatedChange.TestNull() ) ) )
             .Go();
     }
 
@@ -373,32 +367,30 @@ public partial class CollectionVariableRootTests
                 sut.Elements.RemovedElementKeys.TestSetEqual( [ element.Key ] ),
                 sut.GetChildren().TestSetEqual( [ element ] ),
                 onChange.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e =>
-                            Assertion.All(
-                                "changeEvent",
-                                e[0].Variable.TestRefEquals( sut ),
-                                e[0].PreviousState.TestEquals( VariableState.Default ),
-                                e[0].NewState.TestEquals( sut.State ),
-                                e[0].SourceEvent.TestNull(),
-                                e[0].AddedElements.TestEmpty(),
-                                e[0].RemovedElements.TestSequence( [ element ] ),
-                                e[0].RestoredElements.TestEmpty(),
-                                e[0].Source.TestEquals( VariableChangeSource.Change ) ) ),
+                    .Then( e =>
+                        Assertion.All(
+                            "changeEvent",
+                            e[0].Variable.TestRefEquals( sut ),
+                            e[0].PreviousState.TestEquals( VariableState.Default ),
+                            e[0].NewState.TestEquals( sut.State ),
+                            e[0].SourceEvent.TestNull(),
+                            e[0].AddedElements.TestEmpty(),
+                            e[0].RemovedElements.TestSequence( [ element ] ),
+                            e[0].RestoredElements.TestEmpty(),
+                            e[0].Source.TestEquals( VariableChangeSource.Change ) ) ),
                 onValidate.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e =>
-                            Assertion.All(
-                                "validateEvent",
-                                e[0].Variable.TestRefEquals( sut ),
-                                e[0].PreviousState.TestEquals( VariableState.Default ),
-                                e[0].NewState.TestEquals( sut.State ),
-                                e[0].SourceEvent.TestNull(),
-                                e[0].PreviousErrors.TestEmpty(),
-                                e[0].NewErrors.TestEmpty(),
-                                e[0].PreviousWarnings.TestEmpty(),
-                                e[0].NewWarnings.TestEmpty(),
-                                e[0].AssociatedChange.TestRefEquals( onChange.FirstOrDefault() ) ) ),
+                    .Then( e =>
+                        Assertion.All(
+                            "validateEvent",
+                            e[0].Variable.TestRefEquals( sut ),
+                            e[0].PreviousState.TestEquals( VariableState.Default ),
+                            e[0].NewState.TestEquals( sut.State ),
+                            e[0].SourceEvent.TestNull(),
+                            e[0].PreviousErrors.TestEmpty(),
+                            e[0].NewErrors.TestEmpty(),
+                            e[0].PreviousWarnings.TestEmpty(),
+                            e[0].NewWarnings.TestEmpty(),
+                            e[0].AssociatedChange.TestRefEquals( onChange.FirstOrDefault() ) ) ),
                 errorsValidator.TestReceivedCalls( v => { _ = v.Validate( sut.Elements ); }, count: 1 ),
                 warningsValidator.TestReceivedCalls( v => { _ = v.Validate( sut.Elements ); }, count: 1 ) )
             .Go();
@@ -435,32 +427,30 @@ public partial class CollectionVariableRootTests
                 sut.Elements.RemovedElementKeys.TestEmpty(),
                 sut.GetChildren().TestEmpty(),
                 onChange.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e =>
-                            Assertion.All(
-                                "changeEvent",
-                                e[0].Variable.TestRefEquals( sut ),
-                                e[0].PreviousState.TestEquals( VariableState.Changed ),
-                                e[0].NewState.TestEquals( sut.State ),
-                                e[0].SourceEvent.TestNull(),
-                                e[0].AddedElements.TestEmpty(),
-                                e[0].RemovedElements.TestSequence( [ element ] ),
-                                e[0].RestoredElements.TestEmpty(),
-                                e[0].Source.TestEquals( VariableChangeSource.Change ) ) ),
+                    .Then( e =>
+                        Assertion.All(
+                            "changeEvent",
+                            e[0].Variable.TestRefEquals( sut ),
+                            e[0].PreviousState.TestEquals( VariableState.Changed ),
+                            e[0].NewState.TestEquals( sut.State ),
+                            e[0].SourceEvent.TestNull(),
+                            e[0].AddedElements.TestEmpty(),
+                            e[0].RemovedElements.TestSequence( [ element ] ),
+                            e[0].RestoredElements.TestEmpty(),
+                            e[0].Source.TestEquals( VariableChangeSource.Change ) ) ),
                 onValidate.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e =>
-                            Assertion.All(
-                                "validateEvent",
-                                e[0].Variable.TestRefEquals( sut ),
-                                e[0].PreviousState.TestEquals( VariableState.Changed ),
-                                e[0].NewState.TestEquals( sut.State ),
-                                e[0].SourceEvent.TestNull(),
-                                e[0].PreviousErrors.TestEmpty(),
-                                e[0].NewErrors.TestEmpty(),
-                                e[0].PreviousWarnings.TestEmpty(),
-                                e[0].NewWarnings.TestEmpty(),
-                                e[0].AssociatedChange.TestRefEquals( onChange.FirstOrDefault() ) ) ),
+                    .Then( e =>
+                        Assertion.All(
+                            "validateEvent",
+                            e[0].Variable.TestRefEquals( sut ),
+                            e[0].PreviousState.TestEquals( VariableState.Changed ),
+                            e[0].NewState.TestEquals( sut.State ),
+                            e[0].SourceEvent.TestNull(),
+                            e[0].PreviousErrors.TestEmpty(),
+                            e[0].NewErrors.TestEmpty(),
+                            e[0].PreviousWarnings.TestEmpty(),
+                            e[0].NewWarnings.TestEmpty(),
+                            e[0].AssociatedChange.TestRefEquals( onChange.FirstOrDefault() ) ) ),
                 errorsValidator.TestReceivedCalls( v => { _ = v.Validate( sut.Elements ); }, count: 1 ),
                 warningsValidator.TestReceivedCalls( v => { _ = v.Validate( sut.Elements ); }, count: 1 ) )
             .Go();

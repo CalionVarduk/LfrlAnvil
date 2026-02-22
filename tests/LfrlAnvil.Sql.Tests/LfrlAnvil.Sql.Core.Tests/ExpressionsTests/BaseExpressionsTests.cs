@@ -499,10 +499,9 @@ public partial class BaseExpressionsTests : TestsBase
                 sut.NodeType.TestEquals( SqlNodeType.Switch ),
                 sut.Default.TestRefEquals( whenFalse ),
                 sut.Cases.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        c => Assertion.All(
-                            c[0].Condition.TestRefEquals( condition ),
-                            c[0].Expression.TestRefEquals( whenTrue ) ) ) )
+                    .Then( c => Assertion.All(
+                        c[0].Condition.TestRefEquals( condition ),
+                        c[0].Expression.TestRefEquals( whenTrue ) ) ) )
             .Go();
     }
 
@@ -1314,9 +1313,9 @@ public partial class BaseExpressionsTests : TestsBase
                     BATCH
                     (
                       SELECT a, b FROM foo;
-                    
+
                       SELECT b, c FROM bar;
-                    
+
                       INSERT INTO qux (x, y) VALUES (1, 'foo');
                     )
                     """ ) )

@@ -9,12 +9,11 @@ public class InExclusiveRangeValidatorTests : ValidatorTestsBase
     [Fact]
     public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenMinIsGreaterThanMax()
     {
-        var action = Lambda.Of(
-            () => new IsInExclusiveRangeValidator<int, string>(
-                min: 2,
-                max: 1,
-                Comparer<int>.Default,
-                failureResult: Fixture.Create<string>() ) );
+        var action = Lambda.Of( () => new IsInExclusiveRangeValidator<int, string>(
+            min: 2,
+            max: 1,
+            Comparer<int>.Default,
+            failureResult: Fixture.Create<string>() ) );
 
         action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }

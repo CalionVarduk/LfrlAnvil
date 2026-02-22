@@ -60,12 +60,11 @@ public class DirectedGraphEdgeExtensionsTests : TestsBase
 
         var result = sut.GetInfo( a );
 
-        result.TestNotNull(
-                r => Assertion.All(
-                    "result",
-                    r.Edge.TestRefEquals( sut ),
-                    r.From.TestRefEquals( a ),
-                    r.To.TestRefEquals( b ) ) )
+        result.TestNotNull( r => Assertion.All(
+                "result",
+                r.Edge.TestRefEquals( sut ),
+                r.From.TestRefEquals( a ),
+                r.To.TestRefEquals( b ) ) )
             .Go();
     }
 
@@ -79,12 +78,11 @@ public class DirectedGraphEdgeExtensionsTests : TestsBase
 
         var result = sut.GetInfo( b );
 
-        result.TestNotNull(
-                r => Assertion.All(
-                    "result",
-                    r.Edge.TestRefEquals( sut ),
-                    r.From.TestRefEquals( b ),
-                    r.To.TestRefEquals( a ) ) )
+        result.TestNotNull( r => Assertion.All(
+                "result",
+                r.Edge.TestRefEquals( sut ),
+                r.From.TestRefEquals( b ),
+                r.To.TestRefEquals( a ) ) )
             .Go();
     }
 

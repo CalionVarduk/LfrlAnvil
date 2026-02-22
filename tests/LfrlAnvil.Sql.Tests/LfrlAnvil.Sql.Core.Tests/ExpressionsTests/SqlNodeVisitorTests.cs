@@ -1127,8 +1127,8 @@ public class SqlNodeVisitorTests : TestsBase
     public void VisitCommonTableExpressionRecordSet_ShouldDoNothing()
     {
         var sut = new Visitor();
-        var action = Lambda.Of(
-            () => sut.VisitCommonTableExpressionRecordSet( SqlNode.RawQuery( "SELECT * FROM foo" ).ToCte( "bar" ).RecordSet ) );
+        var action = Lambda.Of( () =>
+            sut.VisitCommonTableExpressionRecordSet( SqlNode.RawQuery( "SELECT * FROM foo" ).ToCte( "bar" ).RecordSet ) );
 
         action.Test( exc => exc.TestNull() ).Go();
     }
@@ -1137,12 +1137,11 @@ public class SqlNodeVisitorTests : TestsBase
     public void VisitNewTable_ShouldDoNothing()
     {
         var sut = new Visitor();
-        var action = Lambda.Of(
-            () => sut.VisitNewTable(
-                SqlNode.CreateTable(
-                        SqlRecordSetInfo.Create( "foo" ),
-                        new[] { SqlNode.Column<int>( "a", defaultValue: SqlNode.Parameter( "a" ) ) } )
-                    .AsSet( "bar" ) ) );
+        var action = Lambda.Of( () => sut.VisitNewTable(
+            SqlNode.CreateTable(
+                    SqlRecordSetInfo.Create( "foo" ),
+                    new[] { SqlNode.Column<int>( "a", defaultValue: SqlNode.Parameter( "a" ) ) } )
+                .AsSet( "bar" ) ) );
 
         action.Test( exc => exc.TestNull() ).Go();
     }
@@ -1151,8 +1150,8 @@ public class SqlNodeVisitorTests : TestsBase
     public void VisitNewView_ShouldDoNothing()
     {
         var sut = new Visitor();
-        var action = Lambda.Of(
-            () => sut.VisitNewView( SqlNode.RawQuery( "SELECT * FROM foo" ).ToCreateView( SqlRecordSetInfo.Create( "foo" ) ).AsSet() ) );
+        var action = Lambda.Of( () =>
+            sut.VisitNewView( SqlNode.RawQuery( "SELECT * FROM foo" ).ToCreateView( SqlRecordSetInfo.Create( "foo" ) ).AsSet() ) );
 
         action.Test( exc => exc.TestNull() ).Go();
     }
@@ -1208,13 +1207,12 @@ public class SqlNodeVisitorTests : TestsBase
     public void VisitSelectCompoundField_ShouldDoNothing()
     {
         var sut = new Visitor();
-        var action = Lambda.Of(
-            () => sut.VisitSelectCompoundField(
-                ( SqlSelectCompoundFieldNode )SqlNode.RawRecordSet( "foo" )
-                    .ToDataSource()
-                    .Select( x => new[] { x.From["x"].AsSelf() } )
-                    .CompoundWith( SqlNode.RawRecordSet( "bar" ).ToDataSource().Select( x => new[] { x.From["x"].AsSelf() } ).ToUnion() )
-                    .Selection[0] ) );
+        var action = Lambda.Of( () => sut.VisitSelectCompoundField(
+            ( SqlSelectCompoundFieldNode )SqlNode.RawRecordSet( "foo" )
+                .ToDataSource()
+                .Select( x => new[] { x.From["x"].AsSelf() } )
+                .CompoundWith( SqlNode.RawRecordSet( "bar" ).ToDataSource().Select( x => new[] { x.From["x"].AsSelf() } ).ToUnion() )
+                .Selection[0] ) );
 
         action.Test( exc => exc.TestNull() ).Go();
     }
@@ -1459,8 +1457,8 @@ public class SqlNodeVisitorTests : TestsBase
     public void VisitWindowFrame_ShouldDoNothing()
     {
         var sut = new Visitor();
-        var action = Lambda.Of(
-            () => sut.VisitWindowFrame( SqlNode.RowsWindowFrame( SqlWindowFrameBoundary.CurrentRow, SqlWindowFrameBoundary.CurrentRow ) ) );
+        var action = Lambda.Of( () =>
+            sut.VisitWindowFrame( SqlNode.RowsWindowFrame( SqlWindowFrameBoundary.CurrentRow, SqlWindowFrameBoundary.CurrentRow ) ) );
 
         action.Test( exc => exc.TestNull() ).Go();
     }
@@ -1704,8 +1702,8 @@ public class SqlNodeVisitorTests : TestsBase
     public void VisitRenameTable_ShouldDoNothing()
     {
         var sut = new Visitor();
-        var action = Lambda.Of(
-            () => sut.VisitRenameTable( SqlNode.RenameTable( SqlRecordSetInfo.Create( "a" ), SqlSchemaObjectName.Create( "b" ) ) ) );
+        var action = Lambda.Of( () =>
+            sut.VisitRenameTable( SqlNode.RenameTable( SqlRecordSetInfo.Create( "a" ), SqlSchemaObjectName.Create( "b" ) ) ) );
 
         action.Test( exc => exc.TestNull() ).Go();
     }
@@ -1757,8 +1755,8 @@ public class SqlNodeVisitorTests : TestsBase
     public void VisitDropIndex_ShouldDoNothing()
     {
         var sut = new Visitor();
-        var action = Lambda.Of(
-            () => sut.VisitDropIndex( SqlNode.DropIndex( SqlRecordSetInfo.Create( "foo" ), SqlSchemaObjectName.Create( "a" ) ) ) );
+        var action = Lambda.Of( () =>
+            sut.VisitDropIndex( SqlNode.DropIndex( SqlRecordSetInfo.Create( "foo" ), SqlSchemaObjectName.Create( "a" ) ) ) );
 
         action.Test( exc => exc.TestNull() ).Go();
     }

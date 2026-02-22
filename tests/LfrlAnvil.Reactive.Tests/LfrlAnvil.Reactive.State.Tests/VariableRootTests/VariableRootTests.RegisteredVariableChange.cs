@@ -34,23 +34,21 @@ public partial class VariableRootTests
                 sut.Nodes.ReadOnlyNodeKeys.TestEmpty(),
                 sut.Nodes.DirtyNodeKeys.TestSetEqual( [ key ] ),
                 onChange.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e => Assertion.All(
-                            "changeEvent",
-                            e[0].Variable.TestRefEquals( sut ),
-                            e[0].NodeKey.TestEquals( key ),
-                            e[0].PreviousState.TestEquals( VariableState.Default ),
-                            e[0].NewState.TestEquals( sut.State ),
-                            e[0].SourceEvent.TestRefEquals( onVariableChange ) ) ),
+                    .Then( e => Assertion.All(
+                        "changeEvent",
+                        e[0].Variable.TestRefEquals( sut ),
+                        e[0].NodeKey.TestEquals( key ),
+                        e[0].PreviousState.TestEquals( VariableState.Default ),
+                        e[0].NewState.TestEquals( sut.State ),
+                        e[0].SourceEvent.TestRefEquals( onVariableChange ) ) ),
                 onValidate.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e => Assertion.All(
-                            "validateEvent",
-                            e[0].Variable.TestRefEquals( sut ),
-                            e[0].NodeKey.TestEquals( key ),
-                            e[0].PreviousState.TestEquals( sut.State ),
-                            e[0].NewState.TestEquals( sut.State ),
-                            e[0].SourceEvent.TestRefEquals( onVariableValidate ) ) ) )
+                    .Then( e => Assertion.All(
+                        "validateEvent",
+                        e[0].Variable.TestRefEquals( sut ),
+                        e[0].NodeKey.TestEquals( key ),
+                        e[0].PreviousState.TestEquals( sut.State ),
+                        e[0].NewState.TestEquals( sut.State ),
+                        e[0].SourceEvent.TestRefEquals( onVariableValidate ) ) ) )
             .Go();
     }
 
@@ -83,23 +81,21 @@ public partial class VariableRootTests
                 sut.Nodes.ReadOnlyNodeKeys.TestEmpty(),
                 sut.Nodes.DirtyNodeKeys.TestSetEqual( [ key ] ),
                 onChange.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e => Assertion.All(
-                            "changeEvent",
-                            e[0].Variable.TestRefEquals( sut ),
-                            e[0].NodeKey.TestEquals( key ),
-                            e[0].PreviousState.TestEquals( VariableState.Default ),
-                            e[0].NewState.TestEquals( VariableState.Dirty ),
-                            e[0].SourceEvent.TestRefEquals( onVariableChange ) ) ),
+                    .Then( e => Assertion.All(
+                        "changeEvent",
+                        e[0].Variable.TestRefEquals( sut ),
+                        e[0].NodeKey.TestEquals( key ),
+                        e[0].PreviousState.TestEquals( VariableState.Default ),
+                        e[0].NewState.TestEquals( VariableState.Dirty ),
+                        e[0].SourceEvent.TestRefEquals( onVariableChange ) ) ),
                 onValidate.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e => Assertion.All(
-                            "validateEvent",
-                            e[0].Variable.TestRefEquals( sut ),
-                            e[0].NodeKey.TestEquals( key ),
-                            e[0].PreviousState.TestEquals( VariableState.Dirty ),
-                            e[0].NewState.TestEquals( sut.State ),
-                            e[0].SourceEvent.TestRefEquals( onVariableValidate ) ) ) )
+                    .Then( e => Assertion.All(
+                        "validateEvent",
+                        e[0].Variable.TestRefEquals( sut ),
+                        e[0].NodeKey.TestEquals( key ),
+                        e[0].PreviousState.TestEquals( VariableState.Dirty ),
+                        e[0].NewState.TestEquals( sut.State ),
+                        e[0].SourceEvent.TestRefEquals( onVariableValidate ) ) ) )
             .Go();
     }
 
@@ -133,23 +129,21 @@ public partial class VariableRootTests
                 sut.Nodes.ReadOnlyNodeKeys.TestEmpty(),
                 sut.Nodes.DirtyNodeKeys.TestSetEqual( [ key ] ),
                 onChange.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e => Assertion.All(
-                            "changeEvent",
-                            e[0].Variable.TestRefEquals( sut ),
-                            e[0].NodeKey.TestEquals( key ),
-                            e[0].PreviousState.TestEquals( VariableState.Default ),
-                            e[0].NewState.TestEquals( VariableState.Dirty ),
-                            e[0].SourceEvent.TestRefEquals( onVariableChange ) ) ),
+                    .Then( e => Assertion.All(
+                        "changeEvent",
+                        e[0].Variable.TestRefEquals( sut ),
+                        e[0].NodeKey.TestEquals( key ),
+                        e[0].PreviousState.TestEquals( VariableState.Default ),
+                        e[0].NewState.TestEquals( VariableState.Dirty ),
+                        e[0].SourceEvent.TestRefEquals( onVariableChange ) ) ),
                 onValidate.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e => Assertion.All(
-                            "validateEvent",
-                            e[0].Variable.TestRefEquals( sut ),
-                            e[0].NodeKey.TestEquals( key ),
-                            e[0].PreviousState.TestEquals( VariableState.Dirty ),
-                            e[0].NewState.TestEquals( sut.State ),
-                            e[0].SourceEvent.TestRefEquals( onVariableValidate ) ) ) )
+                    .Then( e => Assertion.All(
+                        "validateEvent",
+                        e[0].Variable.TestRefEquals( sut ),
+                        e[0].NodeKey.TestEquals( key ),
+                        e[0].PreviousState.TestEquals( VariableState.Dirty ),
+                        e[0].NewState.TestEquals( sut.State ),
+                        e[0].SourceEvent.TestRefEquals( onVariableValidate ) ) ) )
             .Go();
     }
 
@@ -179,14 +173,13 @@ public partial class VariableRootTests
                 sut.Nodes.ReadOnlyNodeKeys.TestSetEqual( [ key ] ),
                 sut.Nodes.DirtyNodeKeys.TestEmpty(),
                 onChange.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e => Assertion.All(
-                            "changeEvent",
-                            e[0].Variable.TestRefEquals( sut ),
-                            e[0].NodeKey.TestEquals( key ),
-                            e[0].PreviousState.TestEquals( VariableState.Default ),
-                            e[0].NewState.TestEquals( sut.State ),
-                            e[0].SourceEvent.TestRefEquals( onVariableChange ) ) ),
+                    .Then( e => Assertion.All(
+                        "changeEvent",
+                        e[0].Variable.TestRefEquals( sut ),
+                        e[0].NodeKey.TestEquals( key ),
+                        e[0].PreviousState.TestEquals( VariableState.Default ),
+                        e[0].NewState.TestEquals( sut.State ),
+                        e[0].SourceEvent.TestRefEquals( onVariableChange ) ) ),
                 onValidate.TestEmpty() )
             .Go();
     }

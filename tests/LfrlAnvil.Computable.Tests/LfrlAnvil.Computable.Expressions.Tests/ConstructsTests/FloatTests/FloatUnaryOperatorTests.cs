@@ -22,8 +22,7 @@ public class FloatUnaryOperatorTests : UnaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             operandValue: 123,
             (_, result) => result.TestType()
-                .AssignableTo<ConstantExpression>(
-                    constantResult =>
-                        constantResult.Value.TestEquals( -123.0F ) ) );
+                .AssignableTo<ConstantExpression>( constantResult =>
+                    constantResult.Value.TestEquals( -123.0F ) ) );
     }
 }

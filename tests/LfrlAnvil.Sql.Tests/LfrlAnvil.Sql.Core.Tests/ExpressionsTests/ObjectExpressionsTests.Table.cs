@@ -73,10 +73,9 @@ public partial class ObjectExpressionsTests
                     result.Name.TestEquals( "Col0" ),
                     result.RecordSet.TestRefEquals( sut ),
                     result.TestType()
-                        .AssignableTo<SqlColumnNode>(
-                            column => Assertion.All(
-                                column.Value.TestRefEquals( table.Columns.Get( "Col0" ) ),
-                                column.Type.TestEquals( TypeNullability.Create<int>() ) ) ),
+                        .AssignableTo<SqlColumnNode>( column => Assertion.All(
+                            column.Value.TestRefEquals( table.Columns.Get( "Col0" ) ),
+                            column.Type.TestEquals( TypeNullability.Create<int>() ) ) ),
                     text.TestEquals( "[common].[foo].[Col0] : System.Int32" ) )
                 .Go();
         }

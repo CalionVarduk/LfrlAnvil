@@ -43,12 +43,11 @@ public class TimeZoneInfoExtensionsTests : TestsBase
         var sut = TimeZoneFactory.Create(
             timeZoneOffset,
             ruleRanges
-                .Select(
-                    r => TimeZoneFactory.CreateRule(
-                        start: r.Start,
-                        end: r.End,
-                        transitionStart: new DateTime( 1, 2, 1, 12, 0, 0 ),
-                        transitionEnd: new DateTime( 1, 11, 1, 12, 0, 0 ) ) )
+                .Select( r => TimeZoneFactory.CreateRule(
+                    start: r.Start,
+                    end: r.End,
+                    transitionStart: new DateTime( 1, 2, 1, 12, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 11, 1, 12, 0, 0 ) ) )
                 .ToArray() );
 
         var result = sut.GetActiveAdjustmentRule( dateTimeToTest );
@@ -68,21 +67,19 @@ public class TimeZoneInfoExtensionsTests : TestsBase
         var sut = TimeZoneFactory.Create(
             timeZoneOffset,
             ruleRanges
-                .Select(
-                    r => TimeZoneFactory.CreateRule(
-                        start: r.Start,
-                        end: r.End,
-                        transitionStart: new DateTime( 1, 2, 1, 12, 0, 0 ),
-                        transitionEnd: new DateTime( 1, 11, 1, 12, 0, 0 ) ) )
+                .Select( r => TimeZoneFactory.CreateRule(
+                    start: r.Start,
+                    end: r.End,
+                    transitionStart: new DateTime( 1, 2, 1, 12, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 11, 1, 12, 0, 0 ) ) )
                 .ToArray() );
 
         var result = sut.GetActiveAdjustmentRule( dateTimeToTest );
 
-        result.TestNotNull(
-                r => Assertion.All(
-                    "result.Value",
-                    r.DateStart.TestEquals( expectedRange.Start ),
-                    r.DateEnd.TestEquals( expectedRange.End ) ) )
+        result.TestNotNull( r => Assertion.All(
+                "result.Value",
+                r.DateStart.TestEquals( expectedRange.Start ),
+                r.DateEnd.TestEquals( expectedRange.End ) ) )
             .Go();
     }
 
@@ -97,12 +94,11 @@ public class TimeZoneInfoExtensionsTests : TestsBase
         var sut = TimeZoneFactory.Create(
             timeZoneOffset,
             ruleRanges
-                .Select(
-                    r => TimeZoneFactory.CreateRule(
-                        start: r.Start,
-                        end: r.End,
-                        transitionStart: new DateTime( 1, 2, 1, 12, 0, 0 ),
-                        transitionEnd: new DateTime( 1, 11, 1, 12, 0, 0 ) ) )
+                .Select( r => TimeZoneFactory.CreateRule(
+                    start: r.Start,
+                    end: r.End,
+                    transitionStart: new DateTime( 1, 2, 1, 12, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 11, 1, 12, 0, 0 ) ) )
                 .ToArray() );
 
         var result = sut.GetActiveAdjustmentRuleIndex( dateTimeToTest );
@@ -122,12 +118,11 @@ public class TimeZoneInfoExtensionsTests : TestsBase
         var sut = TimeZoneFactory.Create(
             timeZoneOffset,
             ruleRanges
-                .Select(
-                    r => TimeZoneFactory.CreateRule(
-                        start: r.Start,
-                        end: r.End,
-                        transitionStart: new DateTime( 1, 2, 1, 12, 0, 0 ),
-                        transitionEnd: new DateTime( 1, 11, 1, 12, 0, 0 ) ) )
+                .Select( r => TimeZoneFactory.CreateRule(
+                    start: r.Start,
+                    end: r.End,
+                    transitionStart: new DateTime( 1, 2, 1, 12, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 11, 1, 12, 0, 0 ) ) )
                 .ToArray() );
 
         var result = sut.GetActiveAdjustmentRuleIndex( dateTimeToTest );

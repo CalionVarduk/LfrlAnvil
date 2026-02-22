@@ -925,14 +925,13 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.GetNode( index );
 
-        result.TestNotNull(
-                value => Assertion.All(
-                    "result.Value",
-                    value.Index.TestEquals( index ),
-                    value.Value.TestEquals( expectedValue ),
-                    (value.Prev?.Index).TestEquals( expectedPrev ),
-                    (value.Next?.Index).TestEquals( expectedNext ),
-                    value.ToString().TestEquals( expectedString ) ) )
+        result.TestNotNull( value => Assertion.All(
+                "result.Value",
+                value.Index.TestEquals( index ),
+                value.Value.TestEquals( expectedValue ),
+                (value.Prev?.Index).TestEquals( expectedPrev ),
+                (value.Next?.Index).TestEquals( expectedNext ),
+                value.ToString().TestEquals( expectedString ) ) )
             .Go();
     }
 
@@ -1453,22 +1452,20 @@ public class LinkedListSlimTests : TestsBase
     [Pure]
     private static Assertion AssertFirst<T>(LinkedListSlim<T> source, int index, T value)
     {
-        return source.First.TestNotNull(
-            first => Assertion.All(
-                "First.Value",
-                first.Index.TestEquals( index ),
-                first.Value.TestEquals( value ),
-                first.Prev.TestNull() ) );
+        return source.First.TestNotNull( first => Assertion.All(
+            "First.Value",
+            first.Index.TestEquals( index ),
+            first.Value.TestEquals( value ),
+            first.Prev.TestNull() ) );
     }
 
     [Pure]
     private static Assertion AssertLast<T>(LinkedListSlim<T> source, int index, T value)
     {
-        return source.Last.TestNotNull(
-            last => Assertion.All(
-                "Last.Value",
-                last.Index.TestEquals( index ),
-                last.Value.TestEquals( value ),
-                last.Next.TestNull() ) );
+        return source.Last.TestNotNull( last => Assertion.All(
+            "Last.Value",
+            last.Index.TestEquals( index ),
+            last.Value.TestEquals( value ),
+            last.Next.TestNull() ) );
     }
 }

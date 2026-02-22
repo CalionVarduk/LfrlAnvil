@@ -62,8 +62,8 @@ public class ValidationMessageFormatterTests : TestsBase
     [Fact]
     public void Format_ShouldCreateNewBuilderWithText_WhenStringBuilderIsNullAndMessagesAreNotEmpty_WithPrefixAndPostfixAll()
     {
-        var sut = new Formatter(
-            () => ValidationMessageFormatterArgs.Default.SetPrefixAll( "[prefix all: {0}] " ).SetPostfixAll( " [postfix all]" ) );
+        var sut = new Formatter( () =>
+            ValidationMessageFormatterArgs.Default.SetPrefixAll( "[prefix all: {0}] " ).SetPostfixAll( " [postfix all]" ) );
 
         var message1 = ValidationMessage.Create( "RESOURCE_ONE_{0}", 123 );
         var message2 = ValidationMessage.Create( "RESOURCE_TWO_{0}_{1}", 456, 789 );
@@ -77,8 +77,8 @@ public class ValidationMessageFormatterTests : TestsBase
     [Fact]
     public void Format_ShouldCreateNewBuilderWithText_WhenStringBuilderIsNullAndMessagesAreNotEmpty_WithPrefixAndPostfixEach()
     {
-        var sut = new Formatter(
-            () => ValidationMessageFormatterArgs.Default.SetPrefixEach( "[prefix each] " ).SetPostfixEach( " [postfix each]" ) );
+        var sut = new Formatter( () =>
+            ValidationMessageFormatterArgs.Default.SetPrefixEach( "[prefix each] " ).SetPostfixEach( " [postfix each]" ) );
 
         var message1 = ValidationMessage.Create( "RESOURCE_ONE_{0}", 123 );
         var message2 = ValidationMessage.Create( "RESOURCE_TWO_{0}_{1}", 456, 789 );
@@ -107,13 +107,12 @@ public class ValidationMessageFormatterTests : TestsBase
     [Fact]
     public void Format_ShouldCreateNewBuilderWithText_WhenStringBuilderIsNullAndMessagesAreNotEmpty_WithAllArgsChanged()
     {
-        var sut = new Formatter(
-            () => ValidationMessageFormatterArgs.Default.SetPrefixAll( "[prefix all: {0}] " )
-                .SetPostfixAll( " [postfix all]" )
-                .SetPrefixEach( "[prefix each] " )
-                .SetPostfixEach( " [postfix each]" )
-                .SetSeparator( " & " )
-                .SetIncludeIndex( true ) );
+        var sut = new Formatter( () => ValidationMessageFormatterArgs.Default.SetPrefixAll( "[prefix all: {0}] " )
+            .SetPostfixAll( " [postfix all]" )
+            .SetPrefixEach( "[prefix each] " )
+            .SetPostfixEach( " [postfix each]" )
+            .SetSeparator( " & " )
+            .SetIncludeIndex( true ) );
 
         var message1 = ValidationMessage.Create( "RESOURCE_ONE_{0}", 123 );
         var message2 = ValidationMessage.Create( "RESOURCE_TWO_{0}_{1}", 456, 789 );

@@ -29,9 +29,8 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
 
         var action = Lambda.Of( () => sut.GetResult() );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ValueAccessException>( e => e.MemberName.TestEquals( nameof( TypeCast<TSource, TDestination>.Result ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ValueAccessException>( e => e.MemberName.TestEquals( nameof( TypeCast<TSource, TDestination>.Result ) ) ) )
             .Go();
     }
 
@@ -305,9 +304,8 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
 
         var action = Lambda.Of( () => ( TDestination )sut );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ValueAccessException>( e => e.MemberName.TestEquals( nameof( TypeCast<TSource, TDestination>.Result ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ValueAccessException>( e => e.MemberName.TestEquals( nameof( TypeCast<TSource, TDestination>.Result ) ) ) )
             .Go();
     }
 

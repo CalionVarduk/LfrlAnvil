@@ -124,12 +124,11 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var action = Lambda.Of( () => sut.Add( first, newSecond ) );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<ArgumentException>(),
-                    sut.Count.TestEquals( 1 ),
-                    sut.Forward[first].TestEquals( oldSecond ),
-                    sut.Reverse[oldSecond].TestEquals( first ) ) )
+        action.Test( exc => Assertion.All(
+                exc.TestType().Exact<ArgumentException>(),
+                sut.Count.TestEquals( 1 ),
+                sut.Forward[first].TestEquals( oldSecond ),
+                sut.Reverse[oldSecond].TestEquals( first ) ) )
             .Go();
     }
 
@@ -143,12 +142,11 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var action = Lambda.Of( () => sut.Add( newFirst, second ) );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<ArgumentException>(),
-                    sut.Count.TestEquals( 1 ),
-                    sut.Forward[oldFirst].TestEquals( second ),
-                    sut.Reverse[second].TestEquals( oldFirst ) ) )
+        action.Test( exc => Assertion.All(
+                exc.TestType().Exact<ArgumentException>(),
+                sut.Count.TestEquals( 1 ),
+                sut.Forward[oldFirst].TestEquals( second ),
+                sut.Reverse[second].TestEquals( oldFirst ) ) )
             .Go();
     }
 
@@ -251,12 +249,11 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var action = Lambda.Of( () => sut.UpdateForward( first2, second ) );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<ArgumentException>(),
-                    sut.Count.TestEquals( 1 ),
-                    sut.Forward[first1].TestEquals( second ),
-                    sut.Reverse[second].TestEquals( first1 ) ) )
+        action.Test( exc => Assertion.All(
+                exc.TestType().Exact<ArgumentException>(),
+                sut.Count.TestEquals( 1 ),
+                sut.Forward[first1].TestEquals( second ),
+                sut.Reverse[second].TestEquals( first1 ) ) )
             .Go();
     }
 
@@ -270,10 +267,9 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var action = Lambda.Of( () => sut.UpdateForward( first, second ) );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<KeyNotFoundException>(),
-                    sut.Count.TestEquals( 0 ) ) )
+        action.Test( exc => Assertion.All(
+                exc.TestType().Exact<KeyNotFoundException>(),
+                sut.Count.TestEquals( 0 ) ) )
             .Go();
     }
 
@@ -358,12 +354,11 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var action = Lambda.Of( () => sut.UpdateReverse( second2, first ) );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<ArgumentException>(),
-                    sut.Count.TestEquals( 1 ),
-                    sut.Forward[first].TestEquals( second1 ),
-                    sut.Reverse[second1].TestEquals( first ) ) )
+        action.Test( exc => Assertion.All(
+                exc.TestType().Exact<ArgumentException>(),
+                sut.Count.TestEquals( 1 ),
+                sut.Forward[first].TestEquals( second1 ),
+                sut.Reverse[second1].TestEquals( first ) ) )
             .Go();
     }
 
@@ -377,10 +372,9 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var action = Lambda.Of( () => sut.UpdateReverse( second, first ) );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<KeyNotFoundException>(),
-                    sut.Count.TestEquals( 0 ) ) )
+        action.Test( exc => Assertion.All(
+                exc.TestType().Exact<KeyNotFoundException>(),
+                sut.Count.TestEquals( 0 ) ) )
             .Go();
     }
 

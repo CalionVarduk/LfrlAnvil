@@ -49,12 +49,11 @@ public class EventListenerGroupByDecoratorTests : TestsBase
 
         Assertion.All(
                 actualEvents.Count.TestEquals( expectedEvents.Length ),
-                actualEvents.TestAll(
-                    (e, i) => Assertion.All(
-                        "event",
-                        e.Key.TestEquals( expectedEvents[i].Key ),
-                        e.Event.TestEquals( expectedEvents[i].Event ),
-                        e.AllEvents.TestSequence( expectedEvents[i].AllEvents ) ) ) )
+                actualEvents.TestAll( (e, i) => Assertion.All(
+                    "event",
+                    e.Key.TestEquals( expectedEvents[i].Key ),
+                    e.Event.TestEquals( expectedEvents[i].Event ),
+                    e.AllEvents.TestSequence( expectedEvents[i].AllEvents ) ) ) )
             .Go();
     }
 
@@ -104,12 +103,11 @@ public class EventListenerGroupByDecoratorTests : TestsBase
 
         Assertion.All(
                 actualEvents.Count.TestEquals( expectedEvents.Length ),
-                actualEvents.TestAll(
-                    (e, i) => Assertion.All(
-                        "event",
-                        e.Key.TestEquals( expectedEvents[i].Key ),
-                        e.Event.TestEquals( expectedEvents[i].Event ),
-                        e.AllEvents.TestSequence( expectedEvents[i].AllEvents ) ) ) )
+                actualEvents.TestAll( (e, i) => Assertion.All(
+                    "event",
+                    e.Key.TestEquals( expectedEvents[i].Key ),
+                    e.Event.TestEquals( expectedEvents[i].Event ),
+                    e.AllEvents.TestSequence( expectedEvents[i].AllEvents ) ) ) )
             .Go();
     }
 }

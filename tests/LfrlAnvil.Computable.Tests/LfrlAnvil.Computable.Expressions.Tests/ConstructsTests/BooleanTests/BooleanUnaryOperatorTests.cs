@@ -24,8 +24,7 @@ public class BooleanUnaryOperatorTests : UnaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             operandValue: operand,
             (_, result) => result.TestType()
-                .AssignableTo<ConstantExpression>(
-                    constantResult =>
-                        constantResult.Value.TestEquals( expected ) ) );
+                .AssignableTo<ConstantExpression>( constantResult =>
+                    constantResult.Value.TestEquals( expected ) ) );
     }
 }

@@ -112,11 +112,10 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var action = Lambda.Of( () => sut.Add( item ) );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<OverflowException>(),
-                    sut.Count.TestEquals( 1 ),
-                    sut.FullCount.TestEquals( int.MaxValue ) ) )
+        action.Test( exc => Assertion.All(
+                exc.TestType().Exact<OverflowException>(),
+                sut.Count.TestEquals( 1 ),
+                sut.FullCount.TestEquals( int.MaxValue ) ) )
             .Go();
     }
 

@@ -88,12 +88,10 @@ public partial class MySqlNodeInterpreterTests
                 .GroupBy( s => new[] { s["common.foo"]["b"] } )
                 .AndHaving( s => s["common.foo"]["b"] < SqlNode.Literal( 100 ) )
                 .Window( wnd )
-                .Select(
-                    s => new SqlSelectNode[]
-                    {
-                        s["common.foo"]["b"].As( "a" ),
-                        SqlNode.AggregateFunctions.Count( s.GetAll().ToExpression() ).Over( wnd ).As( "b" )
-                    } )
+                .Select( s => new SqlSelectNode[]
+                {
+                    s["common.foo"]["b"].As( "a" ), SqlNode.AggregateFunctions.Count( s.GetAll().ToExpression() ).Over( wnd ).As( "b" )
+                } )
                 .OrderBy( s => new[] { s.DataSource["common.foo"]["b"].Asc() } )
                 .Limit( SqlNode.Literal( 50 ) )
                 .Offset( SqlNode.Literal( 100 ) );
@@ -151,12 +149,10 @@ public partial class MySqlNodeInterpreterTests
                 .GroupBy( s => new[] { s["common.foo"]["b"] } )
                 .AndHaving( s => s["common.foo"]["b"] < SqlNode.Literal( 100 ) )
                 .Window( wnd )
-                .Select(
-                    s => new SqlSelectNode[]
-                    {
-                        s["common.foo"]["b"].As( "a" ),
-                        SqlNode.AggregateFunctions.Count( s.GetAll().ToExpression() ).Over( wnd ).As( "b" )
-                    } )
+                .Select( s => new SqlSelectNode[]
+                {
+                    s["common.foo"]["b"].As( "a" ), SqlNode.AggregateFunctions.Count( s.GetAll().ToExpression() ).Over( wnd ).As( "b" )
+                } )
                 .OrderBy( s => new[] { s.DataSource["common.foo"]["b"].Asc() } )
                 .Limit( SqlNode.Literal( 50 ) )
                 .Offset( SqlNode.Literal( 100 ) );

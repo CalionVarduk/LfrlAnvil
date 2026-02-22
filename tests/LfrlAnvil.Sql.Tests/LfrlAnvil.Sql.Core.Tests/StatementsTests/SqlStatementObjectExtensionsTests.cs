@@ -45,12 +45,11 @@ public class SqlStatementObjectExtensionsTests : TestsBase
 
         Assertion.All(
                 command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => r.AsSpan().TestSequence( [ 1, "foo" ] ),
-                        (r, _) => r.AsSpan().TestSequence( [ 2, "bar" ] )
-                    ] ) ) )
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => r.AsSpan().TestSequence( [ 1, "foo" ] ),
+                    (r, _) => r.AsSpan().TestSequence( [ 2, "bar" ] )
+                ] ) ) )
             .Go();
     }
 
@@ -82,12 +81,11 @@ public class SqlStatementObjectExtensionsTests : TestsBase
         Assertion.All(
                 command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
                 command.CommandText.TestRefEquals( sql ),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => r.AsSpan().TestSequence( [ 1, "foo" ] ),
-                        (r, _) => r.AsSpan().TestSequence( [ 2, "bar" ] )
-                    ] ) ) )
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => r.AsSpan().TestSequence( [ 1, "foo" ] ),
+                    (r, _) => r.AsSpan().TestSequence( [ 2, "bar" ] )
+                ] ) ) )
             .Go();
     }
 
@@ -187,12 +185,11 @@ public class SqlStatementObjectExtensionsTests : TestsBase
 
         Assertion.All(
                 command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => r.AsSpan().TestSequence( [ 1, "foo" ] ),
-                        (r, _) => r.AsSpan().TestSequence( [ 2, "bar" ] )
-                    ] ) ) )
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => r.AsSpan().TestSequence( [ 1, "foo" ] ),
+                    (r, _) => r.AsSpan().TestSequence( [ 2, "bar" ] )
+                ] ) ) )
             .Go();
     }
 
@@ -224,12 +221,11 @@ public class SqlStatementObjectExtensionsTests : TestsBase
         Assertion.All(
                 command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
                 command.CommandText.TestRefEquals( sql ),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => r.AsSpan().TestSequence( [ 1, "foo" ] ),
-                        (r, _) => r.AsSpan().TestSequence( [ 2, "bar" ] )
-                    ] ) ) )
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => r.AsSpan().TestSequence( [ 1, "foo" ] ),
+                    (r, _) => r.AsSpan().TestSequence( [ 2, "bar" ] )
+                ] ) ) )
             .Go();
     }
 

@@ -205,10 +205,9 @@ public class SqlDatabaseFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create( "DataSource=testing", history, SqlCreateDatabaseOptions.Default.SetMode( mode ) ) );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestRefEquals( exception ),
-                    sut.Connection.State.TestEquals( ConnectionState.Closed ) ) )
+        action.Test( exc => Assertion.All(
+                exc.TestRefEquals( exception ),
+                sut.Connection.State.TestEquals( ConnectionState.Closed ) ) )
             .Go();
     }
 
@@ -1492,8 +1491,8 @@ public class SqlDatabaseFactoryTests : TestsBase
         var caughtEvents = new List<string>();
 
         var sut = new SqlDatabaseFactoryMock();
-        sut.ConnectionChangeCallbacks.Add(
-            e => caughtEvents.Add( $"[Initial] {e.StateChange.OriginalState} => {e.StateChange.CurrentState}" ) );
+        sut.ConnectionChangeCallbacks.Add( e =>
+            caughtEvents.Add( $"[Initial] {e.StateChange.OriginalState} => {e.StateChange.CurrentState}" ) );
 
         sut.Connection.EnqueueResultSets(
             new[]
@@ -1512,8 +1511,8 @@ public class SqlDatabaseFactoryTests : TestsBase
                 new Version( "0.1" ),
                 db =>
                 {
-                    db.AddConnectionChangeCallback(
-                        e => caughtEvents.Add( $"[0.1] {e.StateChange.OriginalState} => {e.StateChange.CurrentState}" ) );
+                    db.AddConnectionChangeCallback( e =>
+                        caughtEvents.Add( $"[0.1] {e.StateChange.OriginalState} => {e.StateChange.CurrentState}" ) );
                 } ) );
 
         sut.Create( "DataSource=testing", history, SqlCreateDatabaseOptions.Default.SetMode( mode ) );
@@ -1531,16 +1530,16 @@ public class SqlDatabaseFactoryTests : TestsBase
         var caughtEvents = new List<string>();
 
         var sut = new SqlDatabaseFactoryMock();
-        sut.ConnectionChangeCallbacks.Add(
-            e => caughtEvents.Add( $"[Initial] {e.StateChange.OriginalState} => {e.StateChange.CurrentState}" ) );
+        sut.ConnectionChangeCallbacks.Add( e =>
+            caughtEvents.Add( $"[Initial] {e.StateChange.OriginalState} => {e.StateChange.CurrentState}" ) );
 
         var history = new SqlDatabaseVersionHistory(
             SqlDatabaseVersion.Create(
                 new Version( "0.1" ),
                 db =>
                 {
-                    db.AddConnectionChangeCallback(
-                        e => caughtEvents.Add( $"[0.1] {e.StateChange.OriginalState} => {e.StateChange.CurrentState}" ) );
+                    db.AddConnectionChangeCallback( e =>
+                        caughtEvents.Add( $"[0.1] {e.StateChange.OriginalState} => {e.StateChange.CurrentState}" ) );
                 } ) );
 
         sut.Create( "DataSource=testing", history, SqlCreateDatabaseOptions.Default.SetMode( mode ) );
@@ -1554,16 +1553,16 @@ public class SqlDatabaseFactoryTests : TestsBase
         var caughtEvents = new List<string>();
 
         var sut = new SqlDatabaseFactoryMock();
-        sut.ConnectionChangeCallbacks.Add(
-            e => caughtEvents.Add( $"[Initial] {e.StateChange.OriginalState} => {e.StateChange.CurrentState}" ) );
+        sut.ConnectionChangeCallbacks.Add( e =>
+            caughtEvents.Add( $"[Initial] {e.StateChange.OriginalState} => {e.StateChange.CurrentState}" ) );
 
         var history = new SqlDatabaseVersionHistory(
             SqlDatabaseVersion.Create(
                 new Version( "0.1" ),
                 db =>
                 {
-                    db.AddConnectionChangeCallback(
-                        e => caughtEvents.Add( $"[0.1] {e.StateChange.OriginalState} => {e.StateChange.CurrentState}" ) );
+                    db.AddConnectionChangeCallback( e =>
+                        caughtEvents.Add( $"[0.1] {e.StateChange.OriginalState} => {e.StateChange.CurrentState}" ) );
                 } ) );
 
         sut.Create( "DataSource=testing", history, SqlCreateDatabaseOptions.Default.SetMode( SqlDatabaseCreateMode.Commit ) );

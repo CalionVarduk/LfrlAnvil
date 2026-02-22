@@ -217,7 +217,7 @@ public class ExpressionTraitsTests : TestsBase
                     RECURSIVE [B] (
                       
                       SELECT * FROM bar
-                    
+
                       UNION
                       
                       SELECT * FROM B

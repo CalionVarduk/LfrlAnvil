@@ -8,8 +8,8 @@ public class StringLengthInRangeValidatorTests : ValidatorTestsBase
     [Fact]
     public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenMinLengthIsLessThanZero()
     {
-        var action = Lambda.Of(
-            () => new IsLengthInRangeValidator<string>( minLength: -1, maxLength: 0, failureResult: Fixture.Create<string>() ) );
+        var action = Lambda.Of( () =>
+            new IsLengthInRangeValidator<string>( minLength: -1, maxLength: 0, failureResult: Fixture.Create<string>() ) );
 
         action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
@@ -17,8 +17,8 @@ public class StringLengthInRangeValidatorTests : ValidatorTestsBase
     [Fact]
     public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenMinLengthIsGreaterThanMaxLength()
     {
-        var action = Lambda.Of(
-            () => new IsLengthInRangeValidator<string>( minLength: 2, maxLength: 1, failureResult: Fixture.Create<string>() ) );
+        var action = Lambda.Of( () =>
+            new IsLengthInRangeValidator<string>( minLength: 2, maxLength: 1, failureResult: Fixture.Create<string>() ) );
 
         action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }

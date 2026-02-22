@@ -147,10 +147,9 @@ public class SqlParameterBinderCreationOptionsTests : TestsBase
 
         Assertion.All(
                 result.SelectorsByParameterName.TestNull(),
-                result.MembersByMemberName.TestNotNull(
-                    members => Assertion.All(
-                        members.Keys.TestSetEqual( [ "foo", "bar", "lorem" ] ),
-                        members.Values.TestSetEqual( [ cfg1, cfg2, cfg3 ] ) ) ) )
+                result.MembersByMemberName.TestNotNull( members => Assertion.All(
+                    members.Keys.TestSetEqual( [ "foo", "bar", "lorem" ] ),
+                    members.Values.TestSetEqual( [ cfg1, cfg2, cfg3 ] ) ) ) )
             .Go();
     }
 
@@ -168,10 +167,9 @@ public class SqlParameterBinderCreationOptionsTests : TestsBase
 
         Assertion.All(
                 result.SelectorsByParameterName.TestNull(),
-                result.MembersByMemberName.TestNotNull(
-                    members => Assertion.All(
-                        members.Keys.TestSetEqual( [ "foo", "bar" ] ),
-                        members.Values.TestSetEqual( [ cfg1, cfg3 ] ) ) ) )
+                result.MembersByMemberName.TestNotNull( members => Assertion.All(
+                    members.Keys.TestSetEqual( [ "foo", "bar" ] ),
+                    members.Values.TestSetEqual( [ cfg1, cfg3 ] ) ) ) )
             .Go();
     }
 
@@ -199,10 +197,9 @@ public class SqlParameterBinderCreationOptionsTests : TestsBase
 
         Assertion.All(
                 result.MembersByMemberName.TestNull(),
-                result.SelectorsByParameterName.TestNotNull(
-                    selectors => Assertion.All(
-                        selectors.Keys.TestSetEqual( [ "foo" ] ),
-                        selectors.Values.TestSetEqual( [ cfg ] ) ) ) )
+                result.SelectorsByParameterName.TestNotNull( selectors => Assertion.All(
+                    selectors.Keys.TestSetEqual( [ "foo" ] ),
+                    selectors.Values.TestSetEqual( [ cfg ] ) ) ) )
             .Go();
     }
 
@@ -232,10 +229,9 @@ public class SqlParameterBinderCreationOptionsTests : TestsBase
         Assertion.All(
                 result.MembersByMemberName.TestNull(),
                 result.SelectorsByParameterName.TestNotNull(),
-                result.SelectorsByParameterName.TestNotNull(
-                    selectors => Assertion.All(
-                        selectors.Keys.TestSetEqual( [ "foo" ] ),
-                        selectors.Values.TestSetEqual( [ cfg2 ] ) ) ) )
+                result.SelectorsByParameterName.TestNotNull( selectors => Assertion.All(
+                    selectors.Keys.TestSetEqual( [ "foo" ] ),
+                    selectors.Values.TestSetEqual( [ cfg2 ] ) ) ) )
             .Go();
     }
 
@@ -252,14 +248,12 @@ public class SqlParameterBinderCreationOptionsTests : TestsBase
 
         Assertion.All(
                 result.MembersByMemberName.TestNotNull(),
-                result.MembersByMemberName.TestNotNull(
-                    members => Assertion.All(
-                        members.Keys.TestSetEqual( [ "foo", "bar" ] ),
-                        members.Values.TestSetEqual( [ cfg1, cfg2 ] ) ) ),
-                result.SelectorsByParameterName.TestNotNull(
-                    selectors => Assertion.All(
-                        selectors.Keys.TestSetEqual( [ "foo", "qux" ] ),
-                        selectors.Values.TestSetEqual( [ cfg3, cfg4 ] ) ) ) )
+                result.MembersByMemberName.TestNotNull( members => Assertion.All(
+                    members.Keys.TestSetEqual( [ "foo", "bar" ] ),
+                    members.Values.TestSetEqual( [ cfg1, cfg2 ] ) ) ),
+                result.SelectorsByParameterName.TestNotNull( selectors => Assertion.All(
+                    selectors.Keys.TestSetEqual( [ "foo", "qux" ] ),
+                    selectors.Values.TestSetEqual( [ cfg3, cfg4 ] ) ) ) )
             .Go();
     }
 

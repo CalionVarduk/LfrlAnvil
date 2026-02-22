@@ -18,8 +18,8 @@ public class SqlAsyncQueryReaderExpressionTests : TestsBase
         var dialect = new SqlDialect( "foo" );
         var rowType = typeof( object[] );
 
-        var initExpression = Lambda.ExpressionOf(
-            (DbDataReaderMock r) => new SqlAsyncQueryReaderInitResult( new[] { r.GetOrdinal( "a" ), r.GetOrdinal( "b" ) }, null ) );
+        var initExpression = Lambda.ExpressionOf( (DbDataReaderMock r) =>
+            new SqlAsyncQueryReaderInitResult( new[] { r.GetOrdinal( "a" ), r.GetOrdinal( "b" ) }, null ) );
 
         var createRowExpression = Lambda.ExpressionOf( (DbDataReaderMock r, int[] o) => o.Select( r.GetValue ).ToArray() );
         var expression = SqlAsyncQueryLambdaExpression<DbDataReaderMock, object[]>.Create( initExpression, createRowExpression );
@@ -35,12 +35,11 @@ public class SqlAsyncQueryReaderExpressionTests : TestsBase
                 queryReader.Dialect.TestRefEquals( dialect ),
                 result.IsEmpty.TestFalse(),
                 result.ResultSetFields.ToArray().TestEmpty(),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => r.TestSequence( [ "foo", 3 ] ),
-                        (r, _) => r.TestSequence( [ "lorem", 5 ] )
-                    ] ) ) )
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => r.TestSequence( [ "foo", 3 ] ),
+                    (r, _) => r.TestSequence( [ "lorem", 5 ] )
+                ] ) ) )
             .Go();
     }
 }

@@ -97,14 +97,12 @@ public class AsyncManualResetEventTests : TestsBase
         var delay4 = sut.GetResetEvent().WaitAsync( Duration.FromMilliseconds( 150 ) );
         var delay5 = sut.GetResetEvent().WaitAsync( Duration.FromMilliseconds( 120 ) );
 
-        var tasks = new[] { delay1, delay2, delay3, delay4, delay5 }.Select(
-                d =>
-                    Task.Factory.StartNew(
-                        async () =>
-                        {
-                            await d;
-                            return completionOrder.Next();
-                        } ) )
+        var tasks = new[] { delay1, delay2, delay3, delay4, delay5 }.Select( d =>
+                Task.Factory.StartNew( async () =>
+                {
+                    await d;
+                    return completionOrder.Next();
+                } ) )
             .ToArray();
 
         var result = await Task.WhenAll( tasks );
@@ -134,14 +132,12 @@ public class AsyncManualResetEventTests : TestsBase
         var delay6 = sut.GetResetEvent().WaitAsync( Duration.FromMilliseconds( 240 ) );
         var delay7 = signaled2.Value.WaitAsync( Duration.FromMilliseconds( 270 ) );
 
-        var tasks = new[] { delay1, delay2, delay3, delay4, delay5, delay6, delay7 }.Select(
-                d =>
-                    Task.Factory.StartNew(
-                        async () =>
-                        {
-                            var result = await d;
-                            return (completionOrder.Next(), result);
-                        } ) )
+        var tasks = new[] { delay1, delay2, delay3, delay4, delay5, delay6, delay7 }.Select( d =>
+                Task.Factory.StartNew( async () =>
+                {
+                    var result = await d;
+                    return (completionOrder.Next(), result);
+                } ) )
             .ToArray();
 
         var result = await Task.WhenAll( tasks );

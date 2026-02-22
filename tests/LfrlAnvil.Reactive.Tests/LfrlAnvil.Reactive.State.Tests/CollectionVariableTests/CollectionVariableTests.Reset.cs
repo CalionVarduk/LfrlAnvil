@@ -52,30 +52,28 @@ public partial class CollectionVariableTests
                 sut.Errors.TestEmpty(),
                 sut.Warnings.TestEmpty(),
                 onChangeEvents.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e => Assertion.All(
-                            "changeEvent",
-                            e[0].Source.TestEquals( VariableChangeSource.Reset ),
-                            e[0].RefreshedElements.TestEmpty(),
-                            e[0].RemovedElements.Select( el => el.Element ).TestSequence( [ elements[1], elements[3], elements[5] ] ),
-                            e[0].AddedElements.Select( el => el.Element ).TestSequence( [ allElements[4], allElements[7] ] ),
-                            e[0]
-                                .ReplacedElements.Select( el => (el.Element, el.PreviousElement) )
-                                .TestSequence(
-                                    [ (newElements[0], elements[0]), (newElements[1], elements[2]), (newElements[3], elements[4]) ] ) ) ),
+                    .Then( e => Assertion.All(
+                        "changeEvent",
+                        e[0].Source.TestEquals( VariableChangeSource.Reset ),
+                        e[0].RefreshedElements.TestEmpty(),
+                        e[0].RemovedElements.Select( el => el.Element ).TestSequence( [ elements[1], elements[3], elements[5] ] ),
+                        e[0].AddedElements.Select( el => el.Element ).TestSequence( [ allElements[4], allElements[7] ] ),
+                        e[0]
+                            .ReplacedElements.Select( el => (el.Element, el.PreviousElement) )
+                            .TestSequence(
+                                [ (newElements[0], elements[0]), (newElements[1], elements[2]), (newElements[3], elements[4]) ] ) ) ),
                 onValidateEvents.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e => Assertion.All(
-                            "validateEvent",
-                            e[0]
-                                .Elements.Select( el => el.Element )
-                                .TestSequence(
-                                [
-                                    newElements[0], newElements[1], newElements[2], newElements[3], newElements[4], elements[1],
-                                    elements[3],
-                                    elements[5]
-                                ] ),
-                            e[0].AssociatedChange.TestRefEquals( onChangeEvents.FirstOrDefault() ) ) ) )
+                    .Then( e => Assertion.All(
+                        "validateEvent",
+                        e[0]
+                            .Elements.Select( el => el.Element )
+                            .TestSequence(
+                            [
+                                newElements[0], newElements[1], newElements[2], newElements[3], newElements[4], elements[1],
+                                elements[3],
+                                elements[5]
+                            ] ),
+                        e[0].AssociatedChange.TestRefEquals( onChangeEvents.FirstOrDefault() ) ) ) )
             .Go();
     }
 
@@ -149,32 +147,30 @@ public partial class CollectionVariableTests
                 sut.Errors.TestEmpty(),
                 sut.Warnings.TestEmpty(),
                 onChangeEvents.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e => Assertion.All(
-                            "changeEvent",
-                            e[0].Source.TestEquals( VariableChangeSource.Reset ),
-                            e[0].RefreshedElements.TestEmpty(),
-                            e[0].RemovedElements.Select( el => el.Element ).TestSequence( [ elements[2], elements[3], elements[5] ] ),
-                            e[0]
-                                .AddedElements.Select( el => el.Element )
-                                .TestSequence( [ allElements[4], allElements[8], allElements[9] ] ),
-                            e[0]
-                                .ReplacedElements.Select( el => (el.Element, el.PreviousElement) )
-                                .TestSequence(
-                                    [ (newElements[0], elements[0]), (newElements[1], elements[1]), (newElements[3], elements[4]) ] ) ) ),
+                    .Then( e => Assertion.All(
+                        "changeEvent",
+                        e[0].Source.TestEquals( VariableChangeSource.Reset ),
+                        e[0].RefreshedElements.TestEmpty(),
+                        e[0].RemovedElements.Select( el => el.Element ).TestSequence( [ elements[2], elements[3], elements[5] ] ),
+                        e[0]
+                            .AddedElements.Select( el => el.Element )
+                            .TestSequence( [ allElements[4], allElements[8], allElements[9] ] ),
+                        e[0]
+                            .ReplacedElements.Select( el => (el.Element, el.PreviousElement) )
+                            .TestSequence(
+                                [ (newElements[0], elements[0]), (newElements[1], elements[1]), (newElements[3], elements[4]) ] ) ) ),
                 onValidateEvents.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e => Assertion.All(
-                            "validateEvent",
-                            e[0]
-                                .Elements.Select( el => el.Element )
-                                .TestSequence(
-                                [
-                                    newElements[0], newElements[1], newElements[2], newElements[3], newElements[4], newElements[5],
-                                    elements[2],
-                                    elements[3], elements[5]
-                                ] ),
-                            e[0].AssociatedChange.TestRefEquals( onChangeEvents.FirstOrDefault() ) ) ) )
+                    .Then( e => Assertion.All(
+                        "validateEvent",
+                        e[0]
+                            .Elements.Select( el => el.Element )
+                            .TestSequence(
+                            [
+                                newElements[0], newElements[1], newElements[2], newElements[3], newElements[4], newElements[5],
+                                elements[2],
+                                elements[3], elements[5]
+                            ] ),
+                        e[0].AssociatedChange.TestRefEquals( onChangeEvents.FirstOrDefault() ) ) ) )
             .Go();
     }
 

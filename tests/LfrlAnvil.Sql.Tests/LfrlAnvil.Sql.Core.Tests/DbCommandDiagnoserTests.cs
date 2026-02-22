@@ -50,19 +50,18 @@ public class DbCommandDiagnoserTests : TestsBase
 
         var action = Lambda.Of( () => sut.Execute( command, args, invoker ) );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestRefEquals( exception ),
-                    invoker.CallAt( 0 ).Arguments.TestSequence( [ command ] ),
-                    beforeExecute.CallAt( 0 ).Arguments.TestSequence( [ command, args ] ),
-                    afterExecute.CallAt( 0 )
-                        .Arguments.TestSequence(
-                        [
-                            (a, _) => a.TestRefEquals( command ),
-                            (a, _) => a.TestRefEquals( args ),
-                            (a, _) => a.TestType().Exact<TimeSpan>( t => t.TestGreaterThanOrEqualTo( TimeSpan.Zero ) ),
-                            (a, _) => a.TestRefEquals( exception )
-                        ] ) ) )
+        action.Test( exc => Assertion.All(
+                exc.TestRefEquals( exception ),
+                invoker.CallAt( 0 ).Arguments.TestSequence( [ command ] ),
+                beforeExecute.CallAt( 0 ).Arguments.TestSequence( [ command, args ] ),
+                afterExecute.CallAt( 0 )
+                    .Arguments.TestSequence(
+                    [
+                        (a, _) => a.TestRefEquals( command ),
+                        (a, _) => a.TestRefEquals( args ),
+                        (a, _) => a.TestType().Exact<TimeSpan>( t => t.TestGreaterThanOrEqualTo( TimeSpan.Zero ) ),
+                        (a, _) => a.TestRefEquals( exception )
+                    ] ) ) )
             .Go();
     }
 
@@ -109,19 +108,18 @@ public class DbCommandDiagnoserTests : TestsBase
 
         var action = Lambda.Of( async () => await sut.ExecuteAsync( command, args, invoker ) );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestRefEquals( exception ),
-                    invoker.CallAt( 0 ).Arguments.TestSequence( [ command ] ),
-                    beforeExecute.CallAt( 0 ).Arguments.TestSequence( [ command, args ] ),
-                    afterExecute.CallAt( 0 )
-                        .Arguments.TestSequence(
-                        [
-                            (a, _) => a.TestRefEquals( command ),
-                            (a, _) => a.TestRefEquals( args ),
-                            (a, _) => a.TestType().Exact<TimeSpan>( t => t.TestGreaterThanOrEqualTo( TimeSpan.Zero ) ),
-                            (a, _) => a.TestRefEquals( exception )
-                        ] ) ) )
+        action.Test( exc => Assertion.All(
+                exc.TestRefEquals( exception ),
+                invoker.CallAt( 0 ).Arguments.TestSequence( [ command ] ),
+                beforeExecute.CallAt( 0 ).Arguments.TestSequence( [ command, args ] ),
+                afterExecute.CallAt( 0 )
+                    .Arguments.TestSequence(
+                    [
+                        (a, _) => a.TestRefEquals( command ),
+                        (a, _) => a.TestRefEquals( args ),
+                        (a, _) => a.TestType().Exact<TimeSpan>( t => t.TestGreaterThanOrEqualTo( TimeSpan.Zero ) ),
+                        (a, _) => a.TestRefEquals( exception )
+                    ] ) ) )
             .Go();
     }
 
@@ -168,19 +166,18 @@ public class DbCommandDiagnoserTests : TestsBase
 
         var action = Lambda.Of( async () => await sut.ExecuteAsync( command, args, invoker ) );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestRefEquals( exception ),
-                    invoker.CallAt( 0 ).Arguments.TestSequence( [ command ] ),
-                    beforeExecute.CallAt( 0 ).Arguments.TestSequence( [ command, args ] ),
-                    afterExecute.CallAt( 0 )
-                        .Arguments.TestSequence(
-                        [
-                            (a, _) => a.TestRefEquals( command ),
-                            (a, _) => a.TestRefEquals( args ),
-                            (a, _) => a.TestType().Exact<TimeSpan>( t => t.TestGreaterThanOrEqualTo( TimeSpan.Zero ) ),
-                            (a, _) => a.TestRefEquals( exception )
-                        ] ) ) )
+        action.Test( exc => Assertion.All(
+                exc.TestRefEquals( exception ),
+                invoker.CallAt( 0 ).Arguments.TestSequence( [ command ] ),
+                beforeExecute.CallAt( 0 ).Arguments.TestSequence( [ command, args ] ),
+                afterExecute.CallAt( 0 )
+                    .Arguments.TestSequence(
+                    [
+                        (a, _) => a.TestRefEquals( command ),
+                        (a, _) => a.TestRefEquals( args ),
+                        (a, _) => a.TestType().Exact<TimeSpan>( t => t.TestGreaterThanOrEqualTo( TimeSpan.Zero ) ),
+                        (a, _) => a.TestRefEquals( exception )
+                    ] ) ) )
             .Go();
     }
 }

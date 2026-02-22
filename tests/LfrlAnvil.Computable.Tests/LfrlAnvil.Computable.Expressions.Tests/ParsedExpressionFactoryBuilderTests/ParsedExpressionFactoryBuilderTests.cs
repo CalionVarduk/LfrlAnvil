@@ -56,8 +56,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     public void SetNumberParserProvider_ShouldUpdateDelegateToNewObject()
     {
         var sut = new ParsedExpressionFactoryBuilder();
-        var @delegate = Lambda.Of(
-            (ParsedExpressionNumberParserParams p) => ParsedExpressionNumberParser.CreateDefaultDecimal( p.Configuration ) );
+        var @delegate = Lambda.Of( (ParsedExpressionNumberParserParams p) =>
+            ParsedExpressionNumberParser.CreateDefaultDecimal( p.Configuration ) );
 
         var result = sut.SetNumberParserProvider( @delegate );
 
@@ -71,8 +71,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     public void SetDefaultNumberParserProvider_ShouldUpdateDelegateToNull()
     {
         var sut = new ParsedExpressionFactoryBuilder();
-        var @delegate = Lambda.Of(
-            (ParsedExpressionNumberParserParams p) => ParsedExpressionNumberParser.CreateDefaultDecimal( p.Configuration ) );
+        var @delegate = Lambda.Of( (ParsedExpressionNumberParserParams p) =>
+            ParsedExpressionNumberParser.CreateDefaultDecimal( p.Configuration ) );
 
         sut.SetNumberParserProvider( @delegate );
 

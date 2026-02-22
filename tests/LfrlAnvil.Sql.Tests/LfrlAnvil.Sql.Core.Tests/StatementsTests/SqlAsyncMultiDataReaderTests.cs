@@ -81,24 +81,21 @@ public class SqlAsyncMultiDataReaderTests : TestsBase
 
         Assertion.All(
                 command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
-                set1.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => r.AsSpan().TestSequence( [ 1, "foo" ] ),
-                        (r, _) => r.AsSpan().TestSequence( [ 2, "bar" ] )
-                    ] ) ),
-                set2.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => r.AsSpan().TestSequence( [ "x1", "y1" ] ),
-                        (r, _) => r.AsSpan().TestSequence( [ "x2", null ] )
-                    ] ) ),
-                set3.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => r.AsSpan().TestSequence( [ true, 5.0 ] ),
-                        (r, _) => r.AsSpan().TestSequence( [ false, null ] )
-                    ] ) ) )
+                set1.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => r.AsSpan().TestSequence( [ 1, "foo" ] ),
+                    (r, _) => r.AsSpan().TestSequence( [ 2, "bar" ] )
+                ] ) ),
+                set2.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => r.AsSpan().TestSequence( [ "x1", "y1" ] ),
+                    (r, _) => r.AsSpan().TestSequence( [ "x2", null ] )
+                ] ) ),
+                set3.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => r.AsSpan().TestSequence( [ true, 5.0 ] ),
+                    (r, _) => r.AsSpan().TestSequence( [ false, null ] )
+                ] ) ) )
             .Go();
     }
 
@@ -239,24 +236,21 @@ public class SqlAsyncMultiDataReaderTests : TestsBase
                 command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
                 result.TestSequence(
                 [
-                    (set1, _) => set1.Rows.TestNotNull(
-                        rows => rows.TestSequence(
-                        [
-                            (r, _) => r.AsSpan().TestSequence( [ 1, "foo" ] ),
-                            (r, _) => r.AsSpan().TestSequence( [ 2, "bar" ] )
-                        ] ) ),
-                    (set2, _) => set2.Rows.TestNotNull(
-                        rows => rows.TestSequence(
-                        [
-                            (r, _) => r.AsSpan().TestSequence( [ "x1", "y1" ] ),
-                            (r, _) => r.AsSpan().TestSequence( [ "x2", null ] )
-                        ] ) ),
-                    (set3, _) => set3.Rows.TestNotNull(
-                        rows => rows.TestSequence(
-                        [
-                            (r, _) => r.AsSpan().TestSequence( [ true, 5.0 ] ),
-                            (r, _) => r.AsSpan().TestSequence( [ false, null ] )
-                        ] ) )
+                    (set1, _) => set1.Rows.TestNotNull( rows => rows.TestSequence(
+                    [
+                        (r, _) => r.AsSpan().TestSequence( [ 1, "foo" ] ),
+                        (r, _) => r.AsSpan().TestSequence( [ 2, "bar" ] )
+                    ] ) ),
+                    (set2, _) => set2.Rows.TestNotNull( rows => rows.TestSequence(
+                    [
+                        (r, _) => r.AsSpan().TestSequence( [ "x1", "y1" ] ),
+                        (r, _) => r.AsSpan().TestSequence( [ "x2", null ] )
+                    ] ) ),
+                    (set3, _) => set3.Rows.TestNotNull( rows => rows.TestSequence(
+                    [
+                        (r, _) => r.AsSpan().TestSequence( [ true, 5.0 ] ),
+                        (r, _) => r.AsSpan().TestSequence( [ false, null ] )
+                    ] ) )
                 ] ) )
             .Go();
     }

@@ -811,12 +811,10 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<IFoo>() );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<InvalidDependencyCastException>(
-                        e => Assertion.All(
-                            e.DependencyType.TestEquals( typeof( IFoo ) ),
-                            e.ResultType.TestEquals( typeof( string ) ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<InvalidDependencyCastException>( e => Assertion.All(
+                    e.DependencyType.TestEquals( typeof( IFoo ) ),
+                    e.ResultType.TestEquals( typeof( string ) ) ) ) )
             .Go();
     }
 
@@ -832,12 +830,10 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve( typeof( IFoo ) ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<InvalidDependencyCastException>(
-                        e => Assertion.All(
-                            e.DependencyType.TestEquals( typeof( IFoo ) ),
-                            e.ResultType.TestEquals( typeof( string ) ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<InvalidDependencyCastException>( e => Assertion.All(
+                    e.DependencyType.TestEquals( typeof( IFoo ) ),
+                    e.ResultType.TestEquals( typeof( string ) ) ) ) )
             .Go();
     }
 
@@ -889,18 +885,15 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<IFoo>() );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<CircularDependencyReferenceException>(
-                        e => Assertion.All(
-                            e.DependencyType.TestEquals( typeof( IFoo ) ),
-                            e.ImplementorType.TestEquals( typeof( IFoo ) ),
-                            e.InnerException.TestType()
-                                .AssignableTo<CircularDependencyReferenceException>(
-                                    inner => Assertion.All(
-                                        inner.DependencyType.TestEquals( typeof( IFoo ) ),
-                                        inner.ImplementorType.TestEquals( typeof( IFoo ) ),
-                                        inner.InnerException.TestNull() ) ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<CircularDependencyReferenceException>( e => Assertion.All(
+                    e.DependencyType.TestEquals( typeof( IFoo ) ),
+                    e.ImplementorType.TestEquals( typeof( IFoo ) ),
+                    e.InnerException.TestType()
+                        .AssignableTo<CircularDependencyReferenceException>( inner => Assertion.All(
+                            inner.DependencyType.TestEquals( typeof( IFoo ) ),
+                            inner.ImplementorType.TestEquals( typeof( IFoo ) ),
+                            inner.InnerException.TestNull() ) ) ) ) )
             .Go();
     }
 
@@ -926,33 +919,27 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve( type ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<CircularDependencyReferenceException>(
-                        e => Assertion.All(
-                            e.DependencyType.TestEquals( type ),
-                            e.ImplementorType.TestEquals( type ),
-                            e.InnerException.TestType()
-                                .AssignableTo<CircularDependencyReferenceException>(
-                                    inner1 => Assertion.All(
-                                        inner1.DependencyType.TestEquals( firstType ),
-                                        inner1.ImplementorType.TestEquals( firstType ),
-                                        inner1.InnerException.TestType()
-                                            .AssignableTo<CircularDependencyReferenceException>(
-                                                inner2 => Assertion.All(
-                                                    inner2.DependencyType.TestEquals( secondType ),
-                                                    inner2.ImplementorType.TestEquals( secondType ),
-                                                    inner2.InnerException.TestType()
-                                                        .AssignableTo<CircularDependencyReferenceException>(
-                                                            inner3 => Assertion.All(
-                                                                inner3.DependencyType.TestEquals( thirdType ),
-                                                                inner3.ImplementorType.TestEquals( thirdType ),
-                                                                inner3.InnerException.TestType()
-                                                                    .AssignableTo<CircularDependencyReferenceException>(
-                                                                        inner4 => Assertion.All(
-                                                                            inner4.DependencyType.TestEquals( type ),
-                                                                            inner4.ImplementorType.TestEquals( type ),
-                                                                            inner4.InnerException.TestNull() ) ) ) ) ) ) ) ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<CircularDependencyReferenceException>( e => Assertion.All(
+                    e.DependencyType.TestEquals( type ),
+                    e.ImplementorType.TestEquals( type ),
+                    e.InnerException.TestType()
+                        .AssignableTo<CircularDependencyReferenceException>( inner1 => Assertion.All(
+                            inner1.DependencyType.TestEquals( firstType ),
+                            inner1.ImplementorType.TestEquals( firstType ),
+                            inner1.InnerException.TestType()
+                                .AssignableTo<CircularDependencyReferenceException>( inner2 => Assertion.All(
+                                    inner2.DependencyType.TestEquals( secondType ),
+                                    inner2.ImplementorType.TestEquals( secondType ),
+                                    inner2.InnerException.TestType()
+                                        .AssignableTo<CircularDependencyReferenceException>( inner3 => Assertion.All(
+                                            inner3.DependencyType.TestEquals( thirdType ),
+                                            inner3.ImplementorType.TestEquals( thirdType ),
+                                            inner3.InnerException.TestType()
+                                                .AssignableTo<CircularDependencyReferenceException>( inner4 => Assertion.All(
+                                                    inner4.DependencyType.TestEquals( type ),
+                                                    inner4.ImplementorType.TestEquals( type ),
+                                                    inner4.InnerException.TestNull() ) ) ) ) ) ) ) ) ) ) )
             .Go();
     }
 
@@ -970,13 +957,11 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve( type ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<CircularDependencyReferenceException>(
-                        e => Assertion.All(
-                            e.DependencyType.TestEquals( type ),
-                            e.ImplementorType.TestEquals( type ),
-                            e.InnerException.TestNotNull() ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<CircularDependencyReferenceException>( e => Assertion.All(
+                    e.DependencyType.TestEquals( type ),
+                    e.ImplementorType.TestEquals( type ),
+                    e.InnerException.TestNotNull() ) ) )
             .Go();
     }
 
@@ -985,12 +970,11 @@ public class DependencyContainerTests : DependencyTestsBase
     {
         var builder = new DependencyContainerBuilder();
         builder.Add<IQux>()
-            .FromFactory(
-                s =>
-                {
-                    _ = s.Locator.Resolve<IBar>();
-                    return new Implementor();
-                } );
+            .FromFactory( s =>
+            {
+                _ = s.Locator.Resolve<IBar>();
+                return new Implementor();
+            } );
 
         builder.Add<IBar>().FromFactory( s => new ChainableBar( s.Locator.Resolve<IQux>() ) );
         builder.Add<IFoo>().FromType<ChainableFoo>();
@@ -998,28 +982,23 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<IFoo>() );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<CircularDependencyReferenceException>(
-                        e => Assertion.All(
-                            e.DependencyType.TestEquals( typeof( IFoo ) ),
-                            e.ImplementorType.TestEquals( typeof( IFoo ) ),
-                            e.InnerException.TestType()
-                                .AssignableTo<CircularDependencyReferenceException>(
-                                    inner1 => Assertion.All(
-                                        inner1.DependencyType.TestEquals( typeof( IBar ) ),
-                                        inner1.ImplementorType.TestEquals( typeof( IBar ) ),
-                                        inner1.InnerException.TestType()
-                                            .AssignableTo<CircularDependencyReferenceException>(
-                                                inner2 => Assertion.All(
-                                                    inner2.DependencyType.TestEquals( typeof( IQux ) ),
-                                                    inner2.ImplementorType.TestEquals( typeof( IQux ) ),
-                                                    inner2.InnerException.TestType()
-                                                        .AssignableTo<CircularDependencyReferenceException>(
-                                                            inner3 => Assertion.All(
-                                                                inner3.DependencyType.TestEquals( typeof( IBar ) ),
-                                                                inner3.ImplementorType.TestEquals( typeof( IBar ) ),
-                                                                inner3.InnerException.TestNull() ) ) ) ) ) ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<CircularDependencyReferenceException>( e => Assertion.All(
+                    e.DependencyType.TestEquals( typeof( IFoo ) ),
+                    e.ImplementorType.TestEquals( typeof( IFoo ) ),
+                    e.InnerException.TestType()
+                        .AssignableTo<CircularDependencyReferenceException>( inner1 => Assertion.All(
+                            inner1.DependencyType.TestEquals( typeof( IBar ) ),
+                            inner1.ImplementorType.TestEquals( typeof( IBar ) ),
+                            inner1.InnerException.TestType()
+                                .AssignableTo<CircularDependencyReferenceException>( inner2 => Assertion.All(
+                                    inner2.DependencyType.TestEquals( typeof( IQux ) ),
+                                    inner2.ImplementorType.TestEquals( typeof( IQux ) ),
+                                    inner2.InnerException.TestType()
+                                        .AssignableTo<CircularDependencyReferenceException>( inner3 => Assertion.All(
+                                            inner3.DependencyType.TestEquals( typeof( IBar ) ),
+                                            inner3.ImplementorType.TestEquals( typeof( IBar ) ),
+                                            inner3.InnerException.TestNull() ) ) ) ) ) ) ) ) )
             .Go();
     }
 
@@ -1036,28 +1015,24 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<IFoo>()
             .SetLifetime( lifetime )
             .FromType<Implementor>()
-            .SetOnResolvingCallback(
-                (_, s) =>
-                {
-                    var __ = s.Locator.Resolve<IFoo>();
-                } );
+            .SetOnResolvingCallback( (_, s) =>
+            {
+                var __ = s.Locator.Resolve<IFoo>();
+            } );
 
         var sut = builder.Build();
 
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<IFoo>() );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<CircularDependencyReferenceException>(
-                        e => Assertion.All(
-                            e.DependencyType.TestEquals( typeof( IFoo ) ),
-                            e.ImplementorType.TestEquals( typeof( IFoo ) ),
-                            e.InnerException.TestType()
-                                .AssignableTo<CircularDependencyReferenceException>(
-                                    inner => Assertion.All(
-                                        inner.DependencyType.TestEquals( typeof( IFoo ) ),
-                                        inner.ImplementorType.TestEquals( typeof( IFoo ) ),
-                                        inner.InnerException.TestNull() ) ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<CircularDependencyReferenceException>( e => Assertion.All(
+                    e.DependencyType.TestEquals( typeof( IFoo ) ),
+                    e.ImplementorType.TestEquals( typeof( IFoo ) ),
+                    e.InnerException.TestType()
+                        .AssignableTo<CircularDependencyReferenceException>( inner => Assertion.All(
+                            inner.DependencyType.TestEquals( typeof( IFoo ) ),
+                            inner.ImplementorType.TestEquals( typeof( IFoo ) ),
+                            inner.InnerException.TestNull() ) ) ) ) )
             .Go();
     }
 
@@ -1074,34 +1049,30 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<IFoo>()
             .SetLifetime( lifetime )
             .FromType<Implementor>()
-            .SetOnResolvingCallback(
-                (_, s) =>
+            .SetOnResolvingCallback( (_, s) =>
+            {
+                if ( forceCycle )
                 {
-                    if ( forceCycle )
-                    {
-                        var __ = s.Locator.Resolve<IFoo>();
-                    }
-                    else
-                        forceCycle = true;
-                } );
+                    var __ = s.Locator.Resolve<IFoo>();
+                }
+                else
+                    forceCycle = true;
+            } );
 
         var sut = builder.Build();
 
         _ = sut.RootScope.Locator.Resolve<IFoo>();
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<IFoo>() );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<CircularDependencyReferenceException>(
-                        e => Assertion.All(
-                            e.DependencyType.TestEquals( typeof( IFoo ) ),
-                            e.ImplementorType.TestEquals( typeof( IFoo ) ),
-                            e.InnerException.TestType()
-                                .AssignableTo<CircularDependencyReferenceException>(
-                                    inner => Assertion.All(
-                                        inner.DependencyType.TestEquals( typeof( IFoo ) ),
-                                        inner.ImplementorType.TestEquals( typeof( IFoo ) ),
-                                        inner.InnerException.TestNull() ) ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<CircularDependencyReferenceException>( e => Assertion.All(
+                    e.DependencyType.TestEquals( typeof( IFoo ) ),
+                    e.ImplementorType.TestEquals( typeof( IFoo ) ),
+                    e.InnerException.TestType()
+                        .AssignableTo<CircularDependencyReferenceException>( inner => Assertion.All(
+                            inner.DependencyType.TestEquals( typeof( IFoo ) ),
+                            inner.ImplementorType.TestEquals( typeof( IFoo ) ),
+                            inner.InnerException.TestNull() ) ) ) ) )
             .Go();
     }
 
@@ -1123,18 +1094,15 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<IFoo>() );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<CircularDependencyReferenceException>(
-                        e => Assertion.All(
-                            e.DependencyType.TestEquals( typeof( IFoo ) ),
-                            e.ImplementorType.TestEquals( typeof( IFoo ) ),
-                            e.InnerException.TestType()
-                                .AssignableTo<CircularDependencyReferenceException>(
-                                    inner => Assertion.All(
-                                        inner.DependencyType.TestEquals( typeof( IFoo ) ),
-                                        inner.ImplementorType.TestEquals( typeof( IFoo ) ),
-                                        inner.InnerException.TestNull() ) ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<CircularDependencyReferenceException>( e => Assertion.All(
+                    e.DependencyType.TestEquals( typeof( IFoo ) ),
+                    e.ImplementorType.TestEquals( typeof( IFoo ) ),
+                    e.InnerException.TestType()
+                        .AssignableTo<CircularDependencyReferenceException>( inner => Assertion.All(
+                            inner.DependencyType.TestEquals( typeof( IFoo ) ),
+                            inner.ImplementorType.TestEquals( typeof( IFoo ) ),
+                            inner.InnerException.TestNull() ) ) ) ) )
             .Go();
     }
 
@@ -1538,8 +1506,8 @@ public class DependencyContainerTests : DependencyTestsBase
         var result = sut.RootScope.Locator.Resolve<IFoo>();
 
         result.TestType()
-            .Exact<ChainableFieldFoo>(
-                foo => foo.Bar.TestType().Exact<ChainableFieldBar>( bar => bar.Qux.TestType().Exact<Implementor>() ) )
+            .Exact<ChainableFieldFoo>( foo =>
+                foo.Bar.TestType().Exact<ChainableFieldBar>( bar => bar.Qux.TestType().Exact<Implementor>() ) )
             .Go();
     }
 
@@ -1623,10 +1591,10 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<IWithText>() );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<InvalidDependencyCastException>(
-                        e => Assertion.All( e.DependencyType.TestEquals( typeof( string ) ), e.ResultType.TestNull() ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<InvalidDependencyCastException>( e => Assertion.All(
+                    e.DependencyType.TestEquals( typeof( string ) ),
+                    e.ResultType.TestNull() ) ) )
             .Go();
     }
 
@@ -1644,10 +1612,10 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<IWithText>() );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<InvalidDependencyCastException>(
-                        e => Assertion.All( e.DependencyType.TestEquals( typeof( int ) ), e.ResultType.TestNull() ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<InvalidDependencyCastException>( e => Assertion.All(
+                    e.DependencyType.TestEquals( typeof( int ) ),
+                    e.ResultType.TestNull() ) ) )
             .Go();
     }
 
@@ -1665,10 +1633,10 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<IWithText>() );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<InvalidDependencyCastException>(
-                        e => Assertion.All( e.DependencyType.TestEquals( typeof( byte? ) ), e.ResultType.TestNull() ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<InvalidDependencyCastException>( e => Assertion.All(
+                    e.DependencyType.TestEquals( typeof( byte? ) ),
+                    e.ResultType.TestNull() ) ) )
             .Go();
     }
 
@@ -1816,9 +1784,8 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<IQux>().FromType<Implementor>();
         builder.Add<IWithText>().FromType<ExplicitCtorImplementor>();
         builder.Add<SameCtorScoreImplementor>()
-            .FromConstructor(
-                o => o.ResolveParameter( p => p.Name == "bar1", typeof( IBar ) )
-                    .ResolveParameter( p => p.Name == "qux1", typeof( IQux ) ) );
+            .FromConstructor( o => o.ResolveParameter( p => p.Name == "bar1", typeof( IBar ) )
+                .ResolveParameter( p => p.Name == "qux1", typeof( IQux ) ) );
 
         var sut = builder.Build();
 
@@ -2368,12 +2335,11 @@ public class DependencyContainerTests : DependencyTestsBase
         _ = taskFactory2.StartNew( () => sut.EnterWriteLock() );
         await Task.Delay( 15 );
 
-        _ = taskFactory1.StartNew(
-            () =>
-            {
-                sut.DisposeGracefully();
-                taskSource.SetResult();
-            } );
+        _ = taskFactory1.StartNew( () =>
+        {
+            sut.DisposeGracefully();
+            taskSource.SetResult();
+        } );
 
         await Task.Delay( 50 );
         await taskFactory3.StartNew( () => sut.ExitReadLock() );

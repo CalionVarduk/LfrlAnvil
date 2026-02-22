@@ -167,16 +167,15 @@ public partial class PostgreSqlNodeInterpreterTests
             var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
 
             sut.Visit(
-                dataSource.ToUpdate(
-                    s => new[]
-                    {
-                        s["foo"]["b"]
-                            .Assign(
-                                SqlNode.RawRecordSet( "bar" )
-                                    .ToDataSource()
-                                    .AndWhere( b => b.From["x"] == s["foo"]["a"] )
-                                    .Select( b => new[] { b.From["y"].AsSelf() } ) )
-                    } ) );
+                dataSource.ToUpdate( s => new[]
+                {
+                    s["foo"]["b"]
+                        .Assign(
+                            SqlNode.RawRecordSet( "bar" )
+                                .ToDataSource()
+                                .AndWhere( b => b.From["x"] == s["foo"]["a"] )
+                                .Select( b => new[] { b.From["y"].AsSelf() } ) )
+                } ) );
 
             sut.Context.Sql.ToString()
                 .TestEquals(
@@ -199,12 +198,10 @@ public partial class PostgreSqlNodeInterpreterTests
             var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
 
             sut.Visit(
-                dataSource.ToUpdate(
-                    s => new[]
-                    {
-                        s["foo"]["a"].Assign( s["foo"]["a"] + SqlNode.Literal( 1 ) ),
-                        s["foo"]["b"].Assign( s["foo"]["c"] * s["foo"]["d"] )
-                    } ) );
+                dataSource.ToUpdate( s => new[]
+                {
+                    s["foo"]["a"].Assign( s["foo"]["a"] + SqlNode.Literal( 1 ) ), s["foo"]["b"].Assign( s["foo"]["c"] * s["foo"]["d"] )
+                } ) );
 
             sut.Context.Sql.ToString()
                 .TestEquals(
@@ -500,16 +497,15 @@ public partial class PostgreSqlNodeInterpreterTests
             var dataSource = foo.Join( other.InnerOn( foo["a"] == other["a"] ) );
 
             sut.Visit(
-                dataSource.ToUpdate(
-                    s => new[]
-                    {
-                        s["f"]["b"]
-                            .Assign(
-                                SqlNode.RawRecordSet( "qux" )
-                                    .ToDataSource()
-                                    .AndWhere( b => b.From["x"] == s["f"]["a"] )
-                                    .Select( b => new[] { (s["bar"]["y"] + b.From["y"]).As( "y" ) } ) )
-                    } ) );
+                dataSource.ToUpdate( s => new[]
+                {
+                    s["f"]["b"]
+                        .Assign(
+                            SqlNode.RawRecordSet( "qux" )
+                                .ToDataSource()
+                                .AndWhere( b => b.From["x"] == s["f"]["a"] )
+                                .Select( b => new[] { (s["bar"]["y"] + b.From["y"]).As( "y" ) } ) )
+                } ) );
 
             sut.Context.Sql.ToString()
                 .TestEquals(
@@ -537,12 +533,11 @@ public partial class PostgreSqlNodeInterpreterTests
             var dataSource = foo.Join( other.InnerOn( foo["a"] == other["a"] ) );
 
             sut.Visit(
-                dataSource.ToUpdate(
-                    s => new[]
-                    {
-                        s["f"]["a"].Assign( s["f"]["a"] + s["bar"]["a"] + SqlNode.Literal( 1 ) ),
-                        s["f"]["b"].Assign( s["f"]["c"] * s["f"]["d"] )
-                    } ) );
+                dataSource.ToUpdate( s => new[]
+                {
+                    s["f"]["a"].Assign( s["f"]["a"] + s["bar"]["a"] + SqlNode.Literal( 1 ) ),
+                    s["f"]["b"].Assign( s["f"]["c"] * s["f"]["d"] )
+                } ) );
 
             sut.Context.Sql.ToString()
                 .TestEquals(
@@ -861,17 +856,16 @@ public partial class PostgreSqlNodeInterpreterTests
                 .GroupBy( s => new[] { s["f"]["b"] } );
 
             sut.Visit(
-                dataSource.ToUpdate(
-                    s => new[]
-                    {
-                        s["f"]["a"]
-                            .Assign(
-                                table.ToRecordSet( "x" )
-                                    .ToDataSource()
-                                    .AndWhere( t => t["x"]["a"] > dataSource["f"]["a"] )
-                                    .Select( t => new[] { t["x"]["b"].AsSelf() } ) ),
-                        s["f"]["b"].Assign( s["f"]["c"] * s["f"]["d"] )
-                    } ) );
+                dataSource.ToUpdate( s => new[]
+                {
+                    s["f"]["a"]
+                        .Assign(
+                            table.ToRecordSet( "x" )
+                                .ToDataSource()
+                                .AndWhere( t => t["x"]["a"] > dataSource["f"]["a"] )
+                                .Select( t => new[] { t["x"]["b"].AsSelf() } ) ),
+                    s["f"]["b"].Assign( s["f"]["c"] * s["f"]["d"] )
+                } ) );
 
             sut.Context.Sql.ToString()
                 .TestSatisfySql(
@@ -910,17 +904,16 @@ public partial class PostgreSqlNodeInterpreterTests
                 .GroupBy( s => new[] { s["f"]["b"] } );
 
             sut.Visit(
-                dataSource.ToUpdate(
-                    s => new[]
-                    {
-                        s["f"]["a"]
-                            .Assign(
-                                table.ToRecordSet( "x" )
-                                    .ToDataSource()
-                                    .AndWhere( t => t["x"]["a"] > dataSource["f"]["a"] )
-                                    .Select( t => new[] { t["x"]["b"].AsSelf() } ) ),
-                        s["f"]["b"].Assign( s["f"]["c"] * s["f"]["d"] )
-                    } ) );
+                dataSource.ToUpdate( s => new[]
+                {
+                    s["f"]["a"]
+                        .Assign(
+                            table.ToRecordSet( "x" )
+                                .ToDataSource()
+                                .AndWhere( t => t["x"]["a"] > dataSource["f"]["a"] )
+                                .Select( t => new[] { t["x"]["b"].AsSelf() } ) ),
+                    s["f"]["b"].Assign( s["f"]["c"] * s["f"]["d"] )
+                } ) );
 
             sut.Context.Sql.ToString()
                 .TestSatisfySql(
@@ -958,11 +951,10 @@ public partial class PostgreSqlNodeInterpreterTests
                 .GroupBy( s => new[] { s["f"]["b"] } );
 
             sut.Visit(
-                dataSource.ToUpdate(
-                    s => new[]
-                    {
-                        s["f"]["b"].Assign( s["f"]["b"] + s["bar"]["b"] ), s["f"]["c"].Assign( s["f"]["c"] + SqlNode.Literal( 1 ) )
-                    } ) );
+                dataSource.ToUpdate( s => new[]
+                {
+                    s["f"]["b"].Assign( s["f"]["b"] + s["bar"]["b"] ), s["f"]["c"].Assign( s["f"]["c"] + SqlNode.Literal( 1 ) )
+                } ) );
 
             sut.Context.Sql.ToString()
                 .TestSatisfySql(
@@ -995,11 +987,10 @@ public partial class PostgreSqlNodeInterpreterTests
                 .GroupBy( s => new[] { s["f"]["b"] } );
 
             sut.Visit(
-                dataSource.ToUpdate(
-                    s => new[]
-                    {
-                        s["f"]["c"].Assign( s["f"]["c"] + s["bar"]["c"] ), s["f"]["d"].Assign( s["f"]["d"] + SqlNode.Literal( 1 ) )
-                    } ) );
+                dataSource.ToUpdate( s => new[]
+                {
+                    s["f"]["c"].Assign( s["f"]["c"] + s["bar"]["c"] ), s["f"]["d"].Assign( s["f"]["d"] + SqlNode.Literal( 1 ) )
+                } ) );
 
             sut.Context.Sql.ToString()
                 .TestSatisfySql(
@@ -1077,13 +1068,12 @@ public partial class PostgreSqlNodeInterpreterTests
             var dataSource = foo.Join( SqlJoinDefinition.Inner( subQuery, x => x.Inner["x"] == foo["b"] ) );
 
             sut.Visit(
-                dataSource.ToUpdate(
-                    s => new[]
-                    {
-                        s["f"]["b"].Assign( s["lorem"]["x"] + SqlNode.Literal( 1 ) ),
-                        s["f"]["d"].Assign( s["f"]["d"] + SqlNode.Literal( 1 ) ),
-                        s["f"]["c"].Assign( s["f"]["c"] * s["lorem"]["y"] )
-                    } ) );
+                dataSource.ToUpdate( s => new[]
+                {
+                    s["f"]["b"].Assign( s["lorem"]["x"] + SqlNode.Literal( 1 ) ),
+                    s["f"]["d"].Assign( s["f"]["d"] + SqlNode.Literal( 1 ) ),
+                    s["f"]["c"].Assign( s["f"]["c"] * s["lorem"]["y"] )
+                } ) );
 
             sut.Context.Sql.ToString()
                 .TestSatisfySql(
@@ -1118,13 +1108,12 @@ public partial class PostgreSqlNodeInterpreterTests
                 .GroupBy( d => new[] { d["f"]["a"] } );
 
             sut.Visit(
-                dataSource.ToUpdate(
-                    s => new[]
-                    {
-                        s["f"]["b"].Assign( s["lorem"]["x"] + SqlNode.Literal( 1 ) ),
-                        s["f"]["d"].Assign( s["f"]["d"] + SqlNode.Literal( 1 ) ),
-                        s["f"]["c"].Assign( s["f"]["c"] * s["lorem"]["y"] )
-                    } ) );
+                dataSource.ToUpdate( s => new[]
+                {
+                    s["f"]["b"].Assign( s["lorem"]["x"] + SqlNode.Literal( 1 ) ),
+                    s["f"]["d"].Assign( s["f"]["d"] + SqlNode.Literal( 1 ) ),
+                    s["f"]["c"].Assign( s["f"]["c"] * s["lorem"]["y"] )
+                } ) );
 
             sut.Context.Sql.ToString()
                 .TestSatisfySql(
@@ -1160,10 +1149,8 @@ public partial class PostgreSqlNodeInterpreterTests
             var node = SqlNode.RawRecordSet( "foo" ).ToDataSource().GroupBy( s => new[] { s["foo"]["x"] } ).ToUpdate();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Test(
-                    exc => exc.TestType()
-                        .Exact<SqlNodeVisitorException>(
-                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+            action.Test( exc => exc.TestType()
+                    .Exact<SqlNodeVisitorException>( e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
                 .Go();
         }
 
@@ -1175,10 +1162,8 @@ public partial class PostgreSqlNodeInterpreterTests
             var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).GroupBy( s => new[] { s["bar"]["x"] } ).ToUpdate();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Test(
-                    exc => exc.TestType()
-                        .Exact<SqlNodeVisitorException>(
-                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+            action.Test( exc => exc.TestType()
+                    .Exact<SqlNodeVisitorException>( e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
                 .Go();
         }
 
@@ -1190,10 +1175,8 @@ public partial class PostgreSqlNodeInterpreterTests
             var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).GroupBy( s => new[] { s["bar"]["x"] } ).ToUpdate();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Test(
-                    exc => exc.TestType()
-                        .Exact<SqlNodeVisitorException>(
-                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+            action.Test( exc => exc.TestType()
+                    .Exact<SqlNodeVisitorException>( e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
                 .Go();
         }
 
@@ -1206,10 +1189,8 @@ public partial class PostgreSqlNodeInterpreterTests
             var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).GroupBy( s => new[] { s["bar"]["x"] } ).ToUpdate();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Test(
-                    exc => exc.TestType()
-                        .Exact<SqlNodeVisitorException>(
-                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+            action.Test( exc => exc.TestType()
+                    .Exact<SqlNodeVisitorException>( e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
                 .Go();
         }
 
@@ -1229,10 +1210,8 @@ public partial class PostgreSqlNodeInterpreterTests
             var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).GroupBy( s => new[] { s["bar"]["x"] } ).ToUpdate();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Test(
-                    exc => exc.TestType()
-                        .Exact<SqlNodeVisitorException>(
-                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+            action.Test( exc => exc.TestType()
+                    .Exact<SqlNodeVisitorException>( e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
                 .Go();
         }
 
@@ -1252,10 +1231,8 @@ public partial class PostgreSqlNodeInterpreterTests
             var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).GroupBy( s => new[] { s["bar"]["x"] } ).ToUpdate();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Test(
-                    exc => exc.TestType()
-                        .Exact<SqlNodeVisitorException>(
-                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+            action.Test( exc => exc.TestType()
+                    .Exact<SqlNodeVisitorException>( e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
                 .Go();
         }
     }

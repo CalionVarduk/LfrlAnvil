@@ -134,11 +134,10 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
     {
         var (firstEvent, secondEvent) = Fixture.CreateManyDistinct<TEvent>( count: 2 );
         var sut = new EventPublisher<TEvent>();
-        var listener1 = EventListener.Create(
-            (TEvent e) =>
-            {
-                if ( e!.Equals( firstEvent ) ) sut.Publish( secondEvent );
-            } );
+        var listener1 = EventListener.Create( (TEvent e) =>
+        {
+            if ( e!.Equals( firstEvent ) ) sut.Publish( secondEvent );
+        } );
 
         var listener2 = Substitute.For<IEventListener<TEvent>>();
         sut.Listen( listener1 );
@@ -246,12 +245,10 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
 
         var action = Lambda.Of( () => sut.Listen( listener ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<InvalidArgumentTypeException>(
-                        e => Assertion.All(
-                            e.Argument.TestRefEquals( listener ),
-                            e.ExpectedType.TestEquals( typeof( IEventListener<TEvent> ) ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<InvalidArgumentTypeException>( e => Assertion.All(
+                    e.Argument.TestRefEquals( listener ),
+                    e.ExpectedType.TestEquals( typeof( IEventListener<TEvent> ) ) ) ) )
             .Go();
     }
 
@@ -277,10 +274,10 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
 
         var action = Lambda.Of( () => sut.Publish( @event ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<InvalidArgumentTypeException>(
-                        e => Assertion.All( e.Argument.TestRefEquals( @event ), e.ExpectedType.TestEquals( typeof( TEvent ) ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<InvalidArgumentTypeException>( e => Assertion.All(
+                    e.Argument.TestRefEquals( @event ),
+                    e.ExpectedType.TestEquals( typeof( TEvent ) ) ) ) )
             .Go();
     }
 }

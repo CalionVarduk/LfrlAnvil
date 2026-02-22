@@ -43,12 +43,11 @@ public partial class ObjectExpressionsTests
             var result = sut.GetKnownFields();
 
             result.TestCount( count => count.TestEquals( 2 ) )
-                .Then(
-                    r => Assertion.All(
-                        r[0].Name.TestEquals( "a" ),
-                        r[0].RecordSet.TestRefEquals( sut ),
-                        r[1].Name.TestEquals( "b" ),
-                        r[1].RecordSet.TestRefEquals( sut ) ) )
+                .Then( r => Assertion.All(
+                    r[0].Name.TestEquals( "a" ),
+                    r[0].RecordSet.TestRefEquals( sut ),
+                    r[1].Name.TestEquals( "b" ),
+                    r[1].RecordSet.TestRefEquals( sut ) ) )
                 .Go();
         }
 

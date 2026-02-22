@@ -60,17 +60,16 @@ public partial class CollectionVariableTests : TestsBase
         Assertion.All(
                 sut.State.TestEquals( VariableState.ReadOnly ),
                 onChangeEvents.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e => Assertion.All(
-                            "changeEvent",
-                            e[0].Variable.TestRefEquals( sut ),
-                            e[0].PreviousState.TestEquals( VariableState.Default ),
-                            e[0].NewState.TestEquals( sut.State ),
-                            e[0].Source.TestEquals( VariableChangeSource.SetReadOnly ),
-                            e[0].AddedElements.TestEmpty(),
-                            e[0].RemovedElements.TestEmpty(),
-                            e[0].RefreshedElements.TestEmpty(),
-                            e[0].ReplacedElements.TestEmpty() ) ) )
+                    .Then( e => Assertion.All(
+                        "changeEvent",
+                        e[0].Variable.TestRefEquals( sut ),
+                        e[0].PreviousState.TestEquals( VariableState.Default ),
+                        e[0].NewState.TestEquals( sut.State ),
+                        e[0].Source.TestEquals( VariableChangeSource.SetReadOnly ),
+                        e[0].AddedElements.TestEmpty(),
+                        e[0].RemovedElements.TestEmpty(),
+                        e[0].RefreshedElements.TestEmpty(),
+                        e[0].ReplacedElements.TestEmpty() ) ) )
             .Go();
     }
 
@@ -89,17 +88,16 @@ public partial class CollectionVariableTests : TestsBase
         Assertion.All(
                 sut.State.TestEquals( VariableState.Default ),
                 onChangeEvents.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e => Assertion.All(
-                            "changeEvent",
-                            e[0].Variable.TestRefEquals( sut ),
-                            e[0].PreviousState.TestEquals( VariableState.ReadOnly ),
-                            e[0].NewState.TestEquals( sut.State ),
-                            e[0].Source.TestEquals( VariableChangeSource.SetReadOnly ),
-                            e[0].AddedElements.TestEmpty(),
-                            e[0].RemovedElements.TestEmpty(),
-                            e[0].RefreshedElements.TestEmpty(),
-                            e[0].ReplacedElements.TestEmpty() ) ) )
+                    .Then( e => Assertion.All(
+                        "changeEvent",
+                        e[0].Variable.TestRefEquals( sut ),
+                        e[0].PreviousState.TestEquals( VariableState.ReadOnly ),
+                        e[0].NewState.TestEquals( sut.State ),
+                        e[0].Source.TestEquals( VariableChangeSource.SetReadOnly ),
+                        e[0].AddedElements.TestEmpty(),
+                        e[0].RemovedElements.TestEmpty(),
+                        e[0].RefreshedElements.TestEmpty(),
+                        e[0].ReplacedElements.TestEmpty() ) ) )
             .Go();
     }
 

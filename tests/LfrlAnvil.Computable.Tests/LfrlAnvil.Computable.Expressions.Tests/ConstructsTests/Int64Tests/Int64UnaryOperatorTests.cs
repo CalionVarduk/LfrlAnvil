@@ -22,9 +22,8 @@ public class Int64UnaryOperatorTests : UnaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             operandValue: 123,
             (_, result) => result.TestType()
-                .AssignableTo<ConstantExpression>(
-                    constantResult =>
-                        constantResult.Value.TestEquals( -123L ) ) );
+                .AssignableTo<ConstantExpression>( constantResult =>
+                    constantResult.Value.TestEquals( -123L ) ) );
     }
 
     [Fact]
@@ -44,8 +43,7 @@ public class Int64UnaryOperatorTests : UnaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             operandValue: 123,
             (_, result) => result.TestType()
-                .AssignableTo<ConstantExpression>(
-                    constantResult =>
-                        constantResult.Value.TestEquals( ~123L ) ) );
+                .AssignableTo<ConstantExpression>( constantResult =>
+                    constantResult.Value.TestEquals( ~123L ) ) );
     }
 }

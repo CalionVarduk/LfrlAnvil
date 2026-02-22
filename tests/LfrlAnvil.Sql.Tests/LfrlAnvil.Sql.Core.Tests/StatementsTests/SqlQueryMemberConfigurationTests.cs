@@ -57,11 +57,11 @@ public class SqlQueryMemberConfigurationTests : TestsBase
     public void From_WithMapping_ShouldCreateConfigurationWithCustomMappingWithConstexprNameParameter()
     {
         var nameSource = static (string n) => "lorem" + n;
-        var mapping = Lambda.ExpressionOf(
-            (ISqlDataRecordFacade<IDataReader> facade) => facade.GetNullable( nameSource( "ipsum" ), 5 ) + int.Parse( "5" ) );
+        var mapping = Lambda.ExpressionOf( (ISqlDataRecordFacade<IDataReader> facade) =>
+            facade.GetNullable( nameSource( "ipsum" ), 5 ) + int.Parse( "5" ) );
 
-        var expectedMapping = Lambda.ExpressionOf(
-            (ISqlDataRecordFacade<IDataReader> facade) => facade.GetNullable( "loremipsum", 5 ) + int.Parse( "5" ) );
+        var expectedMapping = Lambda.ExpressionOf( (ISqlDataRecordFacade<IDataReader> facade) =>
+            facade.GetNullable( "loremipsum", 5 ) + int.Parse( "5" ) );
 
         var sut = SqlQueryMemberConfiguration.From( "foo", mapping );
 
@@ -79,9 +79,8 @@ public class SqlQueryMemberConfigurationTests : TestsBase
     [Fact]
     public void From_WithMapping_ShouldThrowSqlCompilerConfigurationException_WhenMappingContainsUnresolvableNameParameters()
     {
-        var mapping = Lambda.ExpressionOf(
-            (ISqlDataRecordFacade<IDataRecord> facade) =>
-                facade.Get<int>( facade.Record.GetString( 0 ) ) + facade.Get<int>( facade.Record.GetString( 1 ) ) );
+        var mapping = Lambda.ExpressionOf( (ISqlDataRecordFacade<IDataRecord> facade) =>
+            facade.Get<int>( facade.Record.GetString( 0 ) ) + facade.Get<int>( facade.Record.GetString( 1 ) ) );
 
         var action = Lambda.Of( () => SqlQueryMemberConfiguration.From( "foo", mapping ) );
 

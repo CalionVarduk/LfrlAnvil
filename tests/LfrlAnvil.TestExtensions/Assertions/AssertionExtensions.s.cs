@@ -1112,14 +1112,13 @@ public static class AssertionExtensions
         var lockReset = new ManualResetEventSlim( false );
         var actionReset = new ManualResetEventSlim( false );
 
-        var task = Task.Run(
-            () =>
-            {
-                actionReset.Wait();
-                lockReset.Set();
-                source();
-                actionEnd();
-            } );
+        var task = Task.Run( () =>
+        {
+            actionReset.Wait();
+            lockReset.Set();
+            source();
+            actionEnd();
+        } );
 
         lock ( sync )
         {
@@ -1131,12 +1130,11 @@ public static class AssertionExtensions
 
         await task;
 
-        return Assertion.CallOrder(
-            () =>
-            {
-                lockEnd();
-                actionEnd();
-            } );
+        return Assertion.CallOrder( () =>
+        {
+            lockEnd();
+            actionEnd();
+        } );
     }
 
     [Pure]

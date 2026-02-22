@@ -58,8 +58,11 @@ public class IntegerPartitionTests : TestsBase
     [Fact]
     public void Ctor_ShouldThrowOverflowException_WhenCommonNumeratorSumIsTooLarge()
     {
-        var action = Lambda.Of(
-            () => new IntegerPartition( Fixture.Create<ulong>(), Fraction.MaxValue, Fraction.MaxValue, new Fraction( 2 ) ) );
+        var action = Lambda.Of( () => new IntegerPartition(
+            Fixture.Create<ulong>(),
+            Fraction.MaxValue,
+            Fraction.MaxValue,
+            new Fraction( 2 ) ) );
 
         action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }

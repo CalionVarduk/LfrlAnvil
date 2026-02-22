@@ -91,10 +91,9 @@ public partial class ObjectExpressionsTests
                     result.Name.TestEquals( "a" ),
                     result.RecordSet.TestRefEquals( sut ),
                     result.TestType()
-                        .AssignableTo<SqlQueryDataFieldNode>(
-                            dataField => Assertion.All(
-                                dataField.Selection.TestRefEquals( selection ),
-                                dataField.Expression.TestRefEquals( dataSource["common.T1"]["a"] ) ) ),
+                        .AssignableTo<SqlQueryDataFieldNode>( dataField => Assertion.All(
+                            dataField.Selection.TestRefEquals( selection ),
+                            dataField.Expression.TestRefEquals( dataSource["common.T1"]["a"] ) ) ),
                     text.TestEquals( "[A].[a]" ) )
                 .Go();
         }

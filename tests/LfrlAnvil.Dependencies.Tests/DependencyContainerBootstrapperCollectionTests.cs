@@ -42,13 +42,12 @@ public class DependencyContainerBootstrapperCollectionTests : TestsBase
                 first.TestReceivedCalls( x => x.Bootstrap( builder ), count: 1 ),
                 second.TestReceivedCalls( x => x.Bootstrap( builder ), count: 1 ),
                 third.TestReceivedCalls( x => x.Bootstrap( builder ), count: 1 ),
-                Assertion.CallOrder(
-                    () =>
-                    {
-                        first.Bootstrap( builder );
-                        second.Bootstrap( builder );
-                        third.Bootstrap( builder );
-                    } ) )
+                Assertion.CallOrder( () =>
+                {
+                    first.Bootstrap( builder );
+                    second.Bootstrap( builder );
+                    third.Bootstrap( builder );
+                } ) )
             .Go();
     }
 

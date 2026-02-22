@@ -814,21 +814,19 @@ public class ZonedYearTests : TestsBase
         var result = sut.GetAllWeeks( weekStart ).ToList();
 
         Assertion.All(
-                result.Select(
-                        w => new
+                result.Select( w => new
+                    {
+                        w.Year,
+                        w.Start.DayOfWeek,
+                        w.TimeZone
+                    } )
+                    .TestAll( (e, _) => e.TestEquals(
+                        new
                         {
-                            w.Year,
-                            w.Start.DayOfWeek,
-                            w.TimeZone
-                        } )
-                    .TestAll(
-                        (e, _) => e.TestEquals(
-                            new
-                            {
-                                sut.Year,
-                                DayOfWeek = weekStart,
-                                sut.TimeZone
-                            } ) ),
+                            sut.Year,
+                            DayOfWeek = weekStart,
+                            sut.TimeZone
+                        } ) ),
                 result.Select( w => w.WeekOfYear ).TestSequence( Enumerable.Range( 1, expectedWeekCount ) ) )
             .Go();
     }
@@ -855,19 +853,17 @@ public class ZonedYearTests : TestsBase
         var result = sut.GetAllMonths().ToList();
 
         Assertion.All(
-                result.Select(
-                        d => new
+                result.Select( d => new
+                    {
+                        d.Year,
+                        d.TimeZone
+                    } )
+                    .TestAll( (e, _) => e.TestEquals(
+                        new
                         {
-                            d.Year,
-                            d.TimeZone
-                        } )
-                    .TestAll(
-                        (e, _) => e.TestEquals(
-                            new
-                            {
-                                sut.Year,
-                                sut.TimeZone
-                            } ) ),
+                            sut.Year,
+                            sut.TimeZone
+                        } ) ),
                 result.Select( d => ( int )d.Month ).TestSequence( Enumerable.Range( 1, 12 ) ) )
             .Go();
     }
@@ -881,19 +877,17 @@ public class ZonedYearTests : TestsBase
         var result = sut.GetAllDays().ToList();
 
         Assertion.All(
-                result.Select(
-                        d => new
+                result.Select( d => new
+                    {
+                        d.Year,
+                        d.TimeZone
+                    } )
+                    .TestAll( (e, _) => e.TestEquals(
+                        new
                         {
-                            d.Year,
-                            d.TimeZone
-                        } )
-                    .TestAll(
-                        (e, _) => e.TestEquals(
-                            new
-                            {
-                                sut.Year,
-                                sut.TimeZone
-                            } ) ),
+                            sut.Year,
+                            sut.TimeZone
+                        } ) ),
                 result.Select( d => d.DayOfYear ).TestSequence( Enumerable.Range( 1, expectedDayCount ) ) )
             .Go();
     }

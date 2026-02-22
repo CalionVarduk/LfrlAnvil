@@ -79,12 +79,11 @@ public abstract class GenericDecoratedEventSourceTests<TRootEvent, TNextEvent, T
         var rootListener = Substitute.For<IEventListener<TRootEvent>>();
         var decorator = Substitute.For<IEventListenerDecorator<TRootEvent, TNextEvent>>();
         decorator.Decorate( listener, Arg.Any<IEventSubscriber>() )
-            .Returns(
-                c =>
-                {
-                    c.ArgAt<IEventSubscriber>( 1 ).Dispose();
-                    return rootListener;
-                } );
+            .Returns( c =>
+            {
+                c.ArgAt<IEventSubscriber>( 1 ).Dispose();
+                return rootListener;
+            } );
 
         var sut = new EventPublisher<TRootEvent>();
         var result = sut.Decorate( decorator );
@@ -185,12 +184,11 @@ public abstract class GenericDecoratedEventSourceTests<TRootEvent, TNextEvent, T
         var listener = Substitute.For<IEventListener<TLastEvent>>();
         var nestedDecorator = Substitute.For<IEventListenerDecorator<TNextEvent, TLastEvent>>();
         nestedDecorator.Decorate( listener, Arg.Any<IEventSubscriber>() )
-            .Returns(
-                c =>
-                {
-                    c.ArgAt<IEventSubscriber>( 1 ).Dispose();
-                    return Substitute.For<IEventListener<TNextEvent>>();
-                } );
+            .Returns( c =>
+            {
+                c.ArgAt<IEventSubscriber>( 1 ).Dispose();
+                return Substitute.For<IEventListener<TNextEvent>>();
+            } );
 
         var sut = new EventPublisher<TRootEvent>();
         var result = sut.Decorate( decorator ).Decorate( nestedDecorator );
@@ -264,12 +262,10 @@ public abstract class GenericDecoratedEventSourceTests<TRootEvent, TNextEvent, T
 
         var action = Lambda.Of( () => sut.Listen( listener ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<InvalidArgumentTypeException>(
-                        e => Assertion.All(
-                            e.Argument.TestRefEquals( listener ),
-                            e.ExpectedType.TestEquals( typeof( IEventListener<TNextEvent> ) ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<InvalidArgumentTypeException>( e => Assertion.All(
+                    e.Argument.TestRefEquals( listener ),
+                    e.ExpectedType.TestEquals( typeof( IEventListener<TNextEvent> ) ) ) ) )
             .Go();
     }
 }

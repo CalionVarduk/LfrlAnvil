@@ -164,19 +164,18 @@ public class ObjectRecyclerTests : TestsBase
 
         var action = Lambda.Of( () => sut.Dispose() );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<AggregateException>( e => e.InnerExceptions.TestSequence( [ exc1, exc2 ] ) ),
-                    sut.ObjectCount.TestEquals( 0 ),
-                    sut.ActiveObjectCount.TestEquals( 0 ),
-                    first.ToString().TestEquals( "(disposed)" ),
-                    second.ToString().TestEquals( "(disposed)" ),
-                    third.ToString().TestEquals( "(disposed)" ),
-                    fourth.ToString().TestEquals( "(disposed)" ),
-                    obj1.IsDisposed.TestTrue(),
-                    obj2.IsDisposed.TestTrue(),
-                    obj3.IsDisposed.TestTrue(),
-                    obj4.IsDisposed.TestTrue() ) )
+        action.Test( exc => Assertion.All(
+                exc.TestType().Exact<AggregateException>( e => e.InnerExceptions.TestSequence( [ exc1, exc2 ] ) ),
+                sut.ObjectCount.TestEquals( 0 ),
+                sut.ActiveObjectCount.TestEquals( 0 ),
+                first.ToString().TestEquals( "(disposed)" ),
+                second.ToString().TestEquals( "(disposed)" ),
+                third.ToString().TestEquals( "(disposed)" ),
+                fourth.ToString().TestEquals( "(disposed)" ),
+                obj1.IsDisposed.TestTrue(),
+                obj2.IsDisposed.TestTrue(),
+                obj3.IsDisposed.TestTrue(),
+                obj4.IsDisposed.TestTrue() ) )
             .Go();
     }
 
@@ -392,19 +391,18 @@ public class ObjectRecyclerTests : TestsBase
 
         var action = Lambda.Of( () => sut.TrimExcess() );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<AggregateException>( e => e.InnerExceptions.TestSequence( [ exc1, exc2 ] ) ),
-                    sut.ObjectCount.TestEquals( 2 ),
-                    sut.ActiveObjectCount.TestEquals( 2 ),
-                    objA.Freed.TestFalse(),
-                    objA.IsDisposed.TestFalse(),
-                    objB.Freed.TestFalse(),
-                    objB.IsDisposed.TestFalse(),
-                    objC.Freed.TestTrue(),
-                    objC.IsDisposed.TestTrue(),
-                    objD.Freed.TestTrue(),
-                    objD.IsDisposed.TestTrue() ) )
+        action.Test( exc => Assertion.All(
+                exc.TestType().Exact<AggregateException>( e => e.InnerExceptions.TestSequence( [ exc1, exc2 ] ) ),
+                sut.ObjectCount.TestEquals( 2 ),
+                sut.ActiveObjectCount.TestEquals( 2 ),
+                objA.Freed.TestFalse(),
+                objA.IsDisposed.TestFalse(),
+                objB.Freed.TestFalse(),
+                objB.IsDisposed.TestFalse(),
+                objC.Freed.TestTrue(),
+                objC.IsDisposed.TestTrue(),
+                objD.Freed.TestTrue(),
+                objD.IsDisposed.TestTrue() ) )
             .Go();
     }
 

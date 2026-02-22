@@ -279,11 +279,10 @@ public class SqliteDatabaseFactoryTests : TestsBase
 
         Assertion.All(
                 result.Exception.TestType()
-                    .AssignableTo<SqliteForeignKeyCheckException>(
-                        e =>
-                            Assertion.All(
-                                e.Version.TestEquals( Version.Parse( "0.2" ) ),
-                                e.FailedTableNames.TestSequence( [ "foo_T" ] ) ) ),
+                    .AssignableTo<SqliteForeignKeyCheckException>( e =>
+                        Assertion.All(
+                            e.Version.TestEquals( Version.Parse( "0.2" ) ),
+                            e.FailedTableNames.TestSequence( [ "foo_T" ] ) ) ),
                 result.CommittedVersions.ToArray().Select( v => v.Value ).TestSequence( [ Version.Parse( "0.1" ) ] ),
                 result.PendingVersions.ToArray().Select( v => v.Value ).TestSequence( [ Version.Parse( "0.2" ), Version.Parse( "0.3" ) ] ),
                 result.OldVersion.TestEquals( SqlDatabaseVersionHistory.InitialVersion ),
@@ -1635,42 +1634,37 @@ public class SqliteDatabaseFactoryTests : TestsBase
 
                 callback.CallCount()
                     .TestEquals( 4 )
-                    .Then(
-                        _ => Assertion.All(
-                            callback.CallAt( 0 )
-                                .Arguments[0]
-                                .TestType()
-                                .Exact<SqlDatabaseConnectionChangeEvent>(
-                                    e =>
-                                        Assertion.All(
-                                            e.StateChange.OriginalState.TestEquals( ConnectionState.Closed ),
-                                            e.StateChange.CurrentState.TestEquals( ConnectionState.Open ) ) ),
-                            callback.CallAt( 1 )
-                                .Arguments[0]
-                                .TestType()
-                                .Exact<SqlDatabaseConnectionChangeEvent>(
-                                    e =>
-                                        Assertion.All(
-                                            e.StateChange.OriginalState.TestEquals( ConnectionState.Open ),
-                                            e.StateChange.CurrentState.TestEquals( ConnectionState.Closed ) ) ),
-                            callback.CallAt( 2 )
-                                .Arguments[0]
-                                .TestType()
-                                .Exact<SqlDatabaseConnectionChangeEvent>(
-                                    e =>
-                                        Assertion.All(
-                                            e.Connection.TestRefEquals( connection ),
-                                            e.StateChange.OriginalState.TestEquals( ConnectionState.Closed ),
-                                            e.StateChange.CurrentState.TestEquals( ConnectionState.Open ) ) ),
-                            callback.CallAt( 3 )
-                                .Arguments[0]
-                                .TestType()
-                                .Exact<SqlDatabaseConnectionChangeEvent>(
-                                    e =>
-                                        Assertion.All(
-                                            e.Connection.TestRefEquals( connection ),
-                                            e.StateChange.OriginalState.TestEquals( ConnectionState.Open ),
-                                            e.StateChange.CurrentState.TestEquals( ConnectionState.Closed ) ) ) ) )
+                    .Then( _ => Assertion.All(
+                        callback.CallAt( 0 )
+                            .Arguments[0]
+                            .TestType()
+                            .Exact<SqlDatabaseConnectionChangeEvent>( e =>
+                                Assertion.All(
+                                    e.StateChange.OriginalState.TestEquals( ConnectionState.Closed ),
+                                    e.StateChange.CurrentState.TestEquals( ConnectionState.Open ) ) ),
+                        callback.CallAt( 1 )
+                            .Arguments[0]
+                            .TestType()
+                            .Exact<SqlDatabaseConnectionChangeEvent>( e =>
+                                Assertion.All(
+                                    e.StateChange.OriginalState.TestEquals( ConnectionState.Open ),
+                                    e.StateChange.CurrentState.TestEquals( ConnectionState.Closed ) ) ),
+                        callback.CallAt( 2 )
+                            .Arguments[0]
+                            .TestType()
+                            .Exact<SqlDatabaseConnectionChangeEvent>( e =>
+                                Assertion.All(
+                                    e.Connection.TestRefEquals( connection ),
+                                    e.StateChange.OriginalState.TestEquals( ConnectionState.Closed ),
+                                    e.StateChange.CurrentState.TestEquals( ConnectionState.Open ) ) ),
+                        callback.CallAt( 3 )
+                            .Arguments[0]
+                            .TestType()
+                            .Exact<SqlDatabaseConnectionChangeEvent>( e =>
+                                Assertion.All(
+                                    e.Connection.TestRefEquals( connection ),
+                                    e.StateChange.OriginalState.TestEquals( ConnectionState.Open ),
+                                    e.StateChange.CurrentState.TestEquals( ConnectionState.Closed ) ) ) ) )
                     .Go();
             }
             finally

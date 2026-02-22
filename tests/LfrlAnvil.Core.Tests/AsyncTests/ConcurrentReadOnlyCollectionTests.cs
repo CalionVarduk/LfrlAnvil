@@ -40,12 +40,11 @@ public class ConcurrentReadOnlyCollectionTests : TestsBase
         var hasLock = false;
 
         var collection = Substitute.For<IReadOnlyCollection<int>>();
-        collection.Count.Returns(
-            _ =>
-            {
-                hasLock = Monitor.IsEntered( sync );
-                return Fixture.Create<int>();
-            } );
+        collection.Count.Returns( _ =>
+        {
+            hasLock = Monitor.IsEntered( sync );
+            return Fixture.Create<int>();
+        } );
 
         var sut = new ConcurrentReadOnlyCollection<int>( collection, sync );
 

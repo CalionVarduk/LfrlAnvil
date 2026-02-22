@@ -765,12 +765,11 @@ public class GenericBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionCompareOperator(),
             expectedNodeType: ExpressionType.Call,
             (left, right, result) => result.TestType()
-                .AssignableTo<MethodCallExpression>(
-                    methodCallResult => Assertion.All(
-                        "methodCallResult",
-                        methodCallResult.Object.TestRefEquals( left ),
-                        methodCallResult.Arguments.TestSequence( [ right ] ),
-                        methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
+                .AssignableTo<MethodCallExpression>( methodCallResult => Assertion.All(
+                    "methodCallResult",
+                    methodCallResult.Object.TestRefEquals( left ),
+                    methodCallResult.Arguments.TestSequence( [ right ] ),
+                    methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
     }
 
     [Fact]
@@ -782,12 +781,11 @@ public class GenericBinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: Fixture.Create<string>(),
             rightValue: Fixture.Create<string>(),
             (left, right, result) => result.TestType()
-                .AssignableTo<MethodCallExpression>(
-                    methodCallResult => Assertion.All(
-                        "methodCallResult",
-                        methodCallResult.Object.TestRefEquals( left ),
-                        methodCallResult.Arguments.TestSequence( [ right ] ),
-                        methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
+                .AssignableTo<MethodCallExpression>( methodCallResult => Assertion.All(
+                    "methodCallResult",
+                    methodCallResult.Object.TestRefEquals( left ),
+                    methodCallResult.Arguments.TestSequence( [ right ] ),
+                    methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
     }
 
     [Fact]
@@ -798,12 +796,11 @@ public class GenericBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Call,
             leftValue: Fixture.Create<string>(),
             (left, right, result) => result.TestType()
-                .AssignableTo<MethodCallExpression>(
-                    methodCallResult => Assertion.All(
-                        "methodCallResult",
-                        methodCallResult.Object.TestRefEquals( left ),
-                        methodCallResult.Arguments.TestSequence( [ right ] ),
-                        methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
+                .AssignableTo<MethodCallExpression>( methodCallResult => Assertion.All(
+                    "methodCallResult",
+                    methodCallResult.Object.TestRefEquals( left ),
+                    methodCallResult.Arguments.TestSequence( [ right ] ),
+                    methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
     }
 
     [Fact]
@@ -814,12 +811,11 @@ public class GenericBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Call,
             rightValue: Fixture.Create<string>(),
             (left, right, result) => result.TestType()
-                .AssignableTo<MethodCallExpression>(
-                    methodCallResult => Assertion.All(
-                        "methodCallResult",
-                        methodCallResult.Object.TestRefEquals( left ),
-                        methodCallResult.Arguments.TestSequence( [ right ] ),
-                        methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
+                .AssignableTo<MethodCallExpression>( methodCallResult => Assertion.All(
+                    "methodCallResult",
+                    methodCallResult.Object.TestRefEquals( left ),
+                    methodCallResult.Arguments.TestSequence( [ right ] ),
+                    methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
     }
 
     [Fact]
@@ -883,17 +879,15 @@ public class GenericBinaryOperatorTests : BinaryOperatorsTestsBase
                 result.NodeType.TestEquals( ExpressionType.Coalesce ),
                 result.Type.TestEquals( typeof( string ) ),
                 result.TestType()
-                    .AssignableTo<BinaryExpression>(
-                        binary => Assertion.All(
-                            "binary",
-                            binary.Left.TestRefEquals( left ),
-                            binary.Right.NodeType.TestEquals( ExpressionType.Throw ),
-                            binary.Right.TestType()
-                                .AssignableTo<UnaryExpression>(
-                                    @throw => Assertion.All(
-                                        "@throw",
-                                        @throw.Type.TestEquals( typeof( string ) ),
-                                        @throw.Operand.TestRefEquals( exception ) ) ) ) ) )
+                    .AssignableTo<BinaryExpression>( binary => Assertion.All(
+                        "binary",
+                        binary.Left.TestRefEquals( left ),
+                        binary.Right.NodeType.TestEquals( ExpressionType.Throw ),
+                        binary.Right.TestType()
+                            .AssignableTo<UnaryExpression>( @throw => Assertion.All(
+                                "@throw",
+                                @throw.Type.TestEquals( typeof( string ) ),
+                                @throw.Operand.TestRefEquals( exception ) ) ) ) ) )
             .Go();
     }
 

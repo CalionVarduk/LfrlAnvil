@@ -47,12 +47,11 @@ public class PipelineTests : TestsBase
     {
         var processors = new[]
         {
-            PipelineProcessor.Create<int, int>(
-                c =>
-                {
-                    c.SetResult( c.Args + c.Result );
-                    c.Complete();
-                } ),
+            PipelineProcessor.Create<int, int>( c =>
+            {
+                c.SetResult( c.Args + c.Result );
+                c.Complete();
+            } ),
             PipelineProcessor.Create<int, int>( c => c.SetResult( c.Result + 2 ) ),
             PipelineProcessor.Create<int, int>( c => c.SetResult( c.Result + 3 ) )
         };
@@ -86,24 +85,21 @@ public class PipelineTests : TestsBase
     {
         var processors = new[]
         {
-            PipelineProcessor.Create<int, Task<int>>(
-                c =>
-                {
-                    var factory = async (Task<int> t) => c.Args + await t;
-                    c.SetResult( factory( c.Result ) );
-                } ),
-            PipelineProcessor.Create<int, Task<int>>(
-                c =>
-                {
-                    var factory = async (Task<int> t) => await t + 2;
-                    c.SetResult( factory( c.Result ) );
-                } ),
-            PipelineProcessor.Create<int, Task<int>>(
-                c =>
-                {
-                    var factory = async (Task<int> t) => await t + 3;
-                    c.SetResult( factory( c.Result ) );
-                } )
+            PipelineProcessor.Create<int, Task<int>>( c =>
+            {
+                var factory = async (Task<int> t) => c.Args + await t;
+                c.SetResult( factory( c.Result ) );
+            } ),
+            PipelineProcessor.Create<int, Task<int>>( c =>
+            {
+                var factory = async (Task<int> t) => await t + 2;
+                c.SetResult( factory( c.Result ) );
+            } ),
+            PipelineProcessor.Create<int, Task<int>>( c =>
+            {
+                var factory = async (Task<int> t) => await t + 3;
+                c.SetResult( factory( c.Result ) );
+            } )
         };
 
         var sut = new Pipeline<int, Task<int>>( processors, defaultResult: Task.FromResult( 1 ) );

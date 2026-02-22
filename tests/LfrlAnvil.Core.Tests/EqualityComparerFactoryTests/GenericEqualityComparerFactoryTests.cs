@@ -13,12 +13,11 @@ public abstract class GenericEqualityComparerFactoryTests<T> : TestsBase
         var defaultComparer = EqualityComparer<T>.Default;
         var customComparerCalled = false;
 
-        var sut = EqualityComparerFactory<T>.Create(
-            (a, b) =>
-            {
-                customComparerCalled = true;
-                return defaultComparer.Equals( a, b );
-            } );
+        var sut = EqualityComparerFactory<T>.Create( (a, b) =>
+        {
+            customComparerCalled = true;
+            return defaultComparer.Equals( a, b );
+        } );
 
         var result = sut.Equals( obj1, obj2 );
 

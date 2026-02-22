@@ -51,10 +51,10 @@ public abstract class GenericEventListenerTests<TEvent> : TestsBase
 
         var action = Lambda.Of( () => sut.React( @event ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<InvalidArgumentTypeException>(
-                        e => Assertion.All( e.Argument.TestRefEquals( @event ), e.ExpectedType.TestEquals( typeof( TEvent ) ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<InvalidArgumentTypeException>( e => Assertion.All(
+                    e.Argument.TestRefEquals( @event ),
+                    e.ExpectedType.TestEquals( typeof( TEvent ) ) ) ) )
             .Go();
     }
 

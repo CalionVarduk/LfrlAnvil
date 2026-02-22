@@ -72,13 +72,13 @@ public class SqlObjectBuilderReferenceCollectionTests : TestsBase
         var obj = SqlDatabaseBuilderMock.Create().Schemas.Default;
         var sut = obj.ReferencingObjects;
 
-        var action = Lambda.Of(
-            () => sut.GetReference( SqlObjectBuilderReferenceSource.Create( obj.Objects.CreateTable( "T" ), property ) ) );
+        var action
+            = Lambda.Of( () => sut.GetReference( SqlObjectBuilderReferenceSource.Create( obj.Objects.CreateTable( "T" ), property ) ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( SqlDialectMock.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 

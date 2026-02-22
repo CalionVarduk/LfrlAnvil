@@ -28,10 +28,9 @@ public class AsyncMutexTests : TestsBase
         var sut = new AsyncMutex();
         var action = Lambda.Of( async () => await sut.EnterAsync( new CancellationToken( canceled: true ) ) );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestType().AssignableTo<OperationCanceledException>(),
-                    sut.Participants.TestEquals( 0 ) ) )
+        action.Test( exc => Assertion.All(
+                exc.TestType().AssignableTo<OperationCanceledException>(),
+                sut.Participants.TestEquals( 0 ) ) )
             .Go();
     }
 
@@ -55,20 +54,18 @@ public class AsyncMutexTests : TestsBase
         var sut = new AsyncMutex();
         var token = await sut.EnterAsync();
 
-        var action = Lambda.Of(
-            async () =>
-            {
-                source.CancelAfter( TimeSpan.FromMilliseconds( 15 ) );
-                var result = sut.EnterAsync( source.Token );
-                _ = sut.EnterAsync();
-                await result;
-            } );
+        var action = Lambda.Of( async () =>
+        {
+            source.CancelAfter( TimeSpan.FromMilliseconds( 15 ) );
+            var result = sut.EnterAsync( source.Token );
+            _ = sut.EnterAsync();
+            await result;
+        } );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestType().AssignableTo<OperationCanceledException>(),
-                    token.Mutex.TestRefEquals( sut ),
-                    sut.Participants.TestEquals( 2 ) ) )
+        action.Test( exc => Assertion.All(
+                exc.TestType().AssignableTo<OperationCanceledException>(),
+                token.Mutex.TestRefEquals( sut ),
+                sut.Participants.TestEquals( 2 ) ) )
             .Go();
     }
 
@@ -88,12 +85,11 @@ public class AsyncMutexTests : TestsBase
     {
         var sut = new AsyncMutex();
         var first = await sut.EnterAsync();
-        _ = Task.Run(
-            async () =>
-            {
-                await Task.Delay( 15 );
-                first.Dispose();
-            } );
+        _ = Task.Run( async () =>
+        {
+            await Task.Delay( 15 );
+            first.Dispose();
+        } );
 
         var token = await sut.EnterAsync();
         _ = sut.EnterAsync();
@@ -114,12 +110,11 @@ public class AsyncMutexTests : TestsBase
     {
         var sut = new AsyncMutex();
         var first = await sut.EnterAsync();
-        _ = Task.Run(
-            async () =>
-            {
-                await Task.Delay( 15 );
-                first.Dispose();
-            } );
+        _ = Task.Run( async () =>
+        {
+            await Task.Delay( 15 );
+            first.Dispose();
+        } );
 
         _ = await sut.EnterAsync();
         var action = Lambda.Of( () => first.Dispose() );

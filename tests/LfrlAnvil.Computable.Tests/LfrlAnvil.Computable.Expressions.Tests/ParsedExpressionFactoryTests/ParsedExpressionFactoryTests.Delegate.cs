@@ -596,18 +596,17 @@ public partial class ParsedExpressionFactoryTests
         var result = @delegate.Invoke();
 
         result.TestCount( count => count.TestEquals( 3 ) )
-            .Then(
-                values =>
-                {
-                    var first = values[0];
-                    var second = values[1];
-                    var third = values[2];
-                    return Assertion.All(
-                        "values",
-                        first.TestSequence( [ "a" ] ),
-                        second.TestEmpty(),
-                        third.TestSequence( [ "b", "c" ] ) );
-                } )
+            .Then( values =>
+            {
+                var first = values[0];
+                var second = values[1];
+                var third = values[2];
+                return Assertion.All(
+                    "values",
+                    first.TestSequence( [ "a" ] ),
+                    second.TestEmpty(),
+                    third.TestSequence( [ "b", "c" ] ) );
+            } )
             .Go();
     }
 
@@ -2298,8 +2297,8 @@ public partial class ParsedExpressionFactoryTests
     public void DelegateInvoke_ShouldReturnCorrectResult_WhenIndexerCallVariadicIsCalledDirectly()
     {
         var input = "INDEXER_CALL( 'foo' , 1 )";
-        var builder = new ParsedExpressionFactoryBuilder().SetNumberParserProvider(
-            p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) );
+        var builder = new ParsedExpressionFactoryBuilder().SetNumberParserProvider( p =>
+            ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) );
 
         var sut = builder.Build();
 

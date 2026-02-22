@@ -54,11 +54,10 @@ public class TimerTaskCollectionTests : TestsBase
 
         var action = Lambda.Of( () => source.RegisterTasks( tasks ) );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<ArgumentException>(),
-                    source.HasSubscribers.TestFalse(),
-                    tasks.TestAll( (t, _) => t.IsDisposed.TestTrue() ) ) )
+        action.Test( exc => Assertion.All(
+                exc.TestType().Exact<ArgumentException>(),
+                source.HasSubscribers.TestFalse(),
+                tasks.TestAll( (t, _) => t.IsDisposed.TestTrue() ) ) )
             .Go();
     }
 
@@ -751,9 +750,8 @@ public class TimerTaskCollectionTests : TestsBase
                     .Invocation.TestEquals( new ReactiveTaskInvocationParams( 0, timestamp1, timestamp1 ) ),
                 fooTask.Completions.ElementAtOrDefault( 0 )
                     .Exception.TestType()
-                    .AssignableTo<AggregateException>(
-                        e => e.InnerExceptions.TestSequence(
-                            taskSource.Task.Exception?.InnerExceptions ?? Enumerable.Empty<Exception>() ) ),
+                    .AssignableTo<AggregateException>( e =>
+                        e.InnerExceptions.TestSequence( taskSource.Task.Exception?.InnerExceptions ?? Enumerable.Empty<Exception>() ) ),
                 fooTask.Completions.ElementAtOrDefault( 0 ).CancellationReason.TestNull(),
                 AssertTaskSnapshot(
                     sut.TryGetTaskSnapshot( "foo" ),
@@ -1013,17 +1011,15 @@ public class TimerTaskCollectionTests : TestsBase
 
         var action = Lambda.Of( () => sut.Dispose() );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<AggregateException>(
-                        e => Assertion.All(
-                            e.InnerExceptions.Count.TestEquals( 2 ),
-                            e.InnerExceptions.ElementAtOrDefault( 0 ).TestRefEquals( disposalException ),
-                            e.InnerExceptions.ElementAtOrDefault( 1 )
-                                .TestType()
-                                .AssignableTo<AggregateException>( inner => inner.InnerExceptions.TestSequence( [ tokenException ] ) ),
-                            fooTask.IsDisposed.TestTrue(),
-                            barTask.IsDisposed.TestTrue() ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<AggregateException>( e => Assertion.All(
+                    e.InnerExceptions.Count.TestEquals( 2 ),
+                    e.InnerExceptions.ElementAtOrDefault( 0 ).TestRefEquals( disposalException ),
+                    e.InnerExceptions.ElementAtOrDefault( 1 )
+                        .TestType()
+                        .AssignableTo<AggregateException>( inner => inner.InnerExceptions.TestSequence( [ tokenException ] ) ),
+                    fooTask.IsDisposed.TestTrue(),
+                    barTask.IsDisposed.TestTrue() ) ) )
             .Go();
     }
 
@@ -1150,44 +1146,43 @@ public class TimerTaskCollectionTests : TestsBase
         long activeTasks = 0,
         long maxActiveTasks = 0)
     {
-        return snapshot.TestNotNull(
-            s =>
+        return snapshot.TestNotNull( s =>
+        {
+            var assertions = new List<Assertion>
             {
-                var assertions = new List<Assertion>
-                {
-                    s.Task.TestRefEquals( task ),
-                    s.FirstInvocationTimestamp.TestEquals( firstInvocationTimestamp ),
-                    s.LastInvocationTimestamp.TestEquals( lastInvocationTimestamp ),
-                    s.TotalInvocations.TestEquals( totalInvocations ),
-                    s.ActiveInvocations.TestEquals( activeInvocations ),
-                    s.CompletedInvocations.TestEquals( completedInvocations ),
-                    s.SkippedInvocations.TestEquals( skippedInvocations ),
-                    s.DelayedInvocations.TestEquals( delayedInvocations ),
-                    s.FailedInvocations.TestEquals( failedInvocations ),
-                    s.CancelledInvocations.TestEquals( cancelledInvocations ),
-                    s.QueuedInvocations.TestEquals( queuedInvocations ),
-                    s.MaxQueuedInvocations.TestEquals( maxQueuedInvocations ),
-                    s.ActiveTasks.TestEquals( activeTasks ),
-                    s.MaxActiveTasks.TestEquals( maxActiveTasks ),
-                };
+                s.Task.TestRefEquals( task ),
+                s.FirstInvocationTimestamp.TestEquals( firstInvocationTimestamp ),
+                s.LastInvocationTimestamp.TestEquals( lastInvocationTimestamp ),
+                s.TotalInvocations.TestEquals( totalInvocations ),
+                s.ActiveInvocations.TestEquals( activeInvocations ),
+                s.CompletedInvocations.TestEquals( completedInvocations ),
+                s.SkippedInvocations.TestEquals( skippedInvocations ),
+                s.DelayedInvocations.TestEquals( delayedInvocations ),
+                s.FailedInvocations.TestEquals( failedInvocations ),
+                s.CancelledInvocations.TestEquals( cancelledInvocations ),
+                s.QueuedInvocations.TestEquals( queuedInvocations ),
+                s.MaxQueuedInvocations.TestEquals( maxQueuedInvocations ),
+                s.ActiveTasks.TestEquals( activeTasks ),
+                s.MaxActiveTasks.TestEquals( maxActiveTasks ),
+            };
 
-                if ( completedInvocations > 0 )
-                {
-                    assertions.Add( s.MinElapsedTime.Ticks.TestGreaterThanOrEqualTo( 0 ) );
-                    assertions.Add( s.MinElapsedTime.Ticks.TestLessThanOrEqualTo( s.MaxElapsedTime.Ticks ) );
-                    assertions.Add( s.MaxElapsedTime.Ticks.TestGreaterThanOrEqualTo( s.MinElapsedTime.Ticks ) );
-                    assertions.Add( s.AverageElapsedTime.Ticks.TestGreaterThanOrEqualTo( s.MinElapsedTime.Ticks ) );
-                    assertions.Add( s.AverageElapsedTime.Ticks.TestLessThanOrEqualTo( s.MaxElapsedTime.Ticks ) );
-                }
-                else
-                {
-                    assertions.Add( s.MinElapsedTime.TestEquals( Duration.MaxValue ) );
-                    assertions.Add( s.MaxElapsedTime.TestEquals( Duration.MinValue ) );
-                    assertions.Add( s.AverageElapsedTime.TestEquals( FloatingDuration.Zero ) );
-                }
+            if ( completedInvocations > 0 )
+            {
+                assertions.Add( s.MinElapsedTime.Ticks.TestGreaterThanOrEqualTo( 0 ) );
+                assertions.Add( s.MinElapsedTime.Ticks.TestLessThanOrEqualTo( s.MaxElapsedTime.Ticks ) );
+                assertions.Add( s.MaxElapsedTime.Ticks.TestGreaterThanOrEqualTo( s.MinElapsedTime.Ticks ) );
+                assertions.Add( s.AverageElapsedTime.Ticks.TestGreaterThanOrEqualTo( s.MinElapsedTime.Ticks ) );
+                assertions.Add( s.AverageElapsedTime.Ticks.TestLessThanOrEqualTo( s.MaxElapsedTime.Ticks ) );
+            }
+            else
+            {
+                assertions.Add( s.MinElapsedTime.TestEquals( Duration.MaxValue ) );
+                assertions.Add( s.MaxElapsedTime.TestEquals( Duration.MinValue ) );
+                assertions.Add( s.AverageElapsedTime.TestEquals( FloatingDuration.Zero ) );
+            }
 
-                return Assertion.All( "snapshot", assertions );
-            } );
+            return Assertion.All( "snapshot", assertions );
+        } );
     }
 
     private sealed class TimerTask : TimerTask<string>

@@ -591,10 +591,8 @@ public partial class MySqlNodeInterpreterTests : TestsBase
         var sut = CreateInterpreter();
         var node = SqlNode.RawRecordSet( "foo" ).FullOn( SqlNode.RawCondition( "bar.a = foo.a" ) );
         var action = Lambda.Of( () => sut.Visit( node ) );
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<UnrecognizedSqlNodeException>(
-                        e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<UnrecognizedSqlNodeException>( e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
             .Go();
     }
 
@@ -816,16 +814,15 @@ public partial class MySqlNodeInterpreterTests : TestsBase
 
         var query = foo
             .Join( bar.InnerOn( bar["c"] == foo["a"] ), qux.LeftOn( qux["e"] == foo["b"] ) )
-            .Select(
-                s => new SqlSelectNode[]
-                {
-                    s["common.foo"]["a"].AsSelf(),
-                    s["common.foo"]["b"].As( "x" ),
-                    s["lorem"].GetAll(),
-                    s["common.qux"]["e"].AsSelf(),
-                    s["common.qux"]["f"].As( "y" ),
-                    SqlNode.Parameter<int>( "p" ).As( "z" )
-                } );
+            .Select( s => new SqlSelectNode[]
+            {
+                s["common.foo"]["a"].AsSelf(),
+                s["common.foo"]["b"].As( "x" ),
+                s["lorem"].GetAll(),
+                s["common.qux"]["e"].AsSelf(),
+                s["common.qux"]["f"].As( "y" ),
+                SqlNode.Parameter<int>( "p" ).As( "z" )
+            } );
 
         sut.Visit( query );
 
@@ -871,22 +868,20 @@ public partial class MySqlNodeInterpreterTests : TestsBase
             .With( cba, zyx )
             .Distinct()
             .AndWhere( s => s["common.qux"]["f"] > SqlNode.Literal( 50 ) )
-            .AndWhere(
-                s => s["common.foo"]["a"]
-                    .InQuery( zyx.RecordSet.ToDataSource().Select( z => new[] { z.From.GetUnsafeField( "h" ).AsSelf() } ) ) )
+            .AndWhere( s => s["common.foo"]["a"]
+                .InQuery( zyx.RecordSet.ToDataSource().Select( z => new[] { z.From.GetUnsafeField( "h" ).AsSelf() } ) ) )
             .GroupBy( s => new[] { s["common.foo"]["b"] } )
             .GroupBy( s => new[] { s["lorem"]["c"] } )
             .AndHaving( s => s["common.foo"]["b"] < SqlNode.Literal( 100 ) )
             .OrHaving( s => s["lorem"]["c"].IsBetween( SqlNode.Literal( 0 ), SqlNode.Literal( 75 ) ) )
             .Window( wnd1, wnd2 )
-            .Select(
-                s => new SqlSelectNode[]
-                {
-                    s["common.foo"]["b"].As( "x" ),
-                    s["lorem"]["c"].AsSelf(),
-                    SqlNode.AggregateFunctions.Count( s.GetAll().ToExpression() ).As( "v" ),
-                    SqlNode.AggregateFunctions.Sum( s["common.foo"]["a"] ).Over( wnd1 ).As( "w" )
-                } )
+            .Select( s => new SqlSelectNode[]
+            {
+                s["common.foo"]["b"].As( "x" ),
+                s["lorem"]["c"].AsSelf(),
+                SqlNode.AggregateFunctions.Count( s.GetAll().ToExpression() ).As( "v" ),
+                SqlNode.AggregateFunctions.Sum( s["common.foo"]["a"] ).Over( wnd1 ).As( "w" )
+            } )
             .OrderBy( s => new[] { s.DataSource["common.foo"]["b"].Asc() } )
             .OrderBy( s => new[] { s.DataSource["lorem"]["c"].Desc() } )
             .Limit( SqlNode.Literal( 50 ) )
@@ -951,7 +946,7 @@ public partial class MySqlNodeInterpreterTests : TestsBase
                 `zyx` AS (
                   
                   SELECT * FROM xyz JOIN cba ON cba.h = xyz.h
-                
+
                   UNION
                   
                   SELECT * FROM zyx
@@ -1098,11 +1093,11 @@ public partial class MySqlNodeInterpreterTests : TestsBase
                 (
                   
                   SELECT * FROM foo
-                
+
                   UNION ALL
                   
                   SELECT * FROM bar
-                
+
                   UNION
                   
                   SELECT * FROM qux
@@ -1238,7 +1233,7 @@ public partial class MySqlNodeInterpreterTests : TestsBase
                 `B` AS (
                   
                   SELECT * FROM bar
-                
+
                   UNION
                   
                   SELECT * FROM B
@@ -1309,7 +1304,7 @@ public partial class MySqlNodeInterpreterTests : TestsBase
                 `A` AS (
                   
                   SELECT * FROM foo
-                
+
                   UNION ALL
                   
                   SELECT * FROM A WHERE A.depth < 10
@@ -1356,10 +1351,8 @@ public partial class MySqlNodeInterpreterTests : TestsBase
 
         var action = Lambda.Of( () => sut.Visit( node ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<UnrecognizedSqlNodeException>(
-                        e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<UnrecognizedSqlNodeException>( e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
             .Go();
     }
 
@@ -1509,11 +1502,10 @@ public partial class MySqlNodeInterpreterTests : TestsBase
             .GroupBy( s => new[] { s["common.foo"]["b"] } )
             .AndHaving( s => s["common.foo"]["b"] < SqlNode.Literal( 100 ) )
             .Window( wnd )
-            .Select(
-                s => new SqlSelectNode[]
-                {
-                    s["common.foo"]["b"].As( "a" ), SqlNode.AggregateFunctions.Count( s.GetAll().ToExpression() ).Over( wnd ).As( "b" )
-                } )
+            .Select( s => new SqlSelectNode[]
+            {
+                s["common.foo"]["b"].As( "a" ), SqlNode.AggregateFunctions.Count( s.GetAll().ToExpression() ).Over( wnd ).As( "b" )
+            } )
             .OrderBy( s => new[] { s.DataSource["common.foo"]["b"].Asc() } )
             .Limit( SqlNode.Literal( 50 ) )
             .Offset( SqlNode.Literal( 100 ) );
@@ -1673,10 +1665,8 @@ public partial class MySqlNodeInterpreterTests : TestsBase
 
         var action = Lambda.Of( () => sut.Visit( node ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<UnrecognizedSqlNodeException>(
-                        e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<UnrecognizedSqlNodeException>( e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
             .Go();
     }
 

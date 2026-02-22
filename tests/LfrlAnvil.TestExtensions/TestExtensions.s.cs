@@ -43,14 +43,13 @@ public static class TestExtensions
     public static IEnumerable<object?[]> ConvertResult<TSource, TDest>(this IEnumerable<object?[]> source, Func<TSource, TDest> mapper)
     {
         return source
-            .Select(
-                objects =>
-                {
-                    if ( objects[^1] is not TSource sourceResult )
-                        throw new InvalidCastException( $"Result is not of {typeof( TSource ).FullName} type" );
+            .Select( objects =>
+            {
+                if ( objects[^1] is not TSource sourceResult )
+                    throw new InvalidCastException( $"Result is not of {typeof( TSource ).FullName} type" );
 
-                    objects[^1] = mapper( sourceResult );
-                    return objects;
-                } );
+                objects[^1] = mapper( sourceResult );
+                return objects;
+            } );
     }
 }

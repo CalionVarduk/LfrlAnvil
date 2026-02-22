@@ -639,12 +639,11 @@ public class DecimalBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionCompareDecimalOperator(),
             expectedNodeType: ExpressionType.Call,
             (left, right, result) => result.TestType()
-                .AssignableTo<MethodCallExpression>(
-                    methodCallResult => Assertion.All(
-                        "methodCallResult",
-                        methodCallResult.Object.TestRefEquals( left ),
-                        methodCallResult.Arguments.TestSequence( [ right ] ),
-                        methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
+                .AssignableTo<MethodCallExpression>( methodCallResult => Assertion.All(
+                    "methodCallResult",
+                    methodCallResult.Object.TestRefEquals( left ),
+                    methodCallResult.Arguments.TestSequence( [ right ] ),
+                    methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
     }
 
     [Theory]
@@ -673,12 +672,11 @@ public class DecimalBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Call,
             leftValue: Fixture.Create<decimal>(),
             (left, right, result) => result.TestType()
-                .AssignableTo<MethodCallExpression>(
-                    methodCallResult => Assertion.All(
-                        "methodCallResult",
-                        methodCallResult.Object.TestRefEquals( left ),
-                        methodCallResult.Arguments.TestSequence( [ right ] ),
-                        methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
+                .AssignableTo<MethodCallExpression>( methodCallResult => Assertion.All(
+                    "methodCallResult",
+                    methodCallResult.Object.TestRefEquals( left ),
+                    methodCallResult.Arguments.TestSequence( [ right ] ),
+                    methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
     }
 
     [Fact]
@@ -689,11 +687,10 @@ public class DecimalBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Call,
             rightValue: Fixture.Create<decimal>(),
             (left, right, result) => result.TestType()
-                .AssignableTo<MethodCallExpression>(
-                    methodCallResult => Assertion.All(
-                        "methodCallResult",
-                        methodCallResult.Object.TestRefEquals( left ),
-                        methodCallResult.Arguments.TestSequence( [ right ] ),
-                        methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
+                .AssignableTo<MethodCallExpression>( methodCallResult => Assertion.All(
+                    "methodCallResult",
+                    methodCallResult.Object.TestRefEquals( left ),
+                    methodCallResult.Arguments.TestSequence( [ right ] ),
+                    methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
     }
 }

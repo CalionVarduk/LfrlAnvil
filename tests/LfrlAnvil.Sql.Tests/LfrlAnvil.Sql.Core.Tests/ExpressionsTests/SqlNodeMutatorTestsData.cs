@@ -1733,7 +1733,7 @@ public class SqlNodeMutatorTestsData
                     RECURSIVE [u] (
                       
                       SELECT * FROM qux
-                    
+
                       UNION
                       
                       SELECT * FROM lorem
@@ -1844,7 +1844,7 @@ public class SqlNodeMutatorTestsData
                     BATCH
                     (
                       SELECT * FROM qux;
-                    
+
                       SELECT * FROM bar;
                     )
                     """ ),
@@ -1855,7 +1855,7 @@ public class SqlNodeMutatorTestsData
                     BATCH
                     (
                       SELECT * FROM foo;
-                    
+
                       SELECT * FROM qux;
                     )
                     """ ),

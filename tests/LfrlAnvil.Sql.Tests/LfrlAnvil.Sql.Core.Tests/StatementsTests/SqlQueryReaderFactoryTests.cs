@@ -52,13 +52,12 @@ public class SqlQueryReaderFactoryTests : TestsBase
         Assertion.All(
                 queryReader.Dialect.TestRefEquals( sut.Dialect ),
                 result.IsEmpty.TestFalse(),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => r.AsSpan().TestSequence( [ 1, "foo", 5.0, true ] ),
-                        (r, _) => r.AsSpan().TestSequence( [ 2, "bar", null, false ] ),
-                        (r, _) => r.AsSpan().TestSequence( [ 3, "lorem", 10.0, null ] )
-                    ] ) ),
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => r.AsSpan().TestSequence( [ 1, "foo", 5.0, true ] ),
+                    (r, _) => r.AsSpan().TestSequence( [ 2, "bar", null, false ] ),
+                    (r, _) => r.AsSpan().TestSequence( [ 3, "lorem", 10.0, null ] )
+                ] ) ),
                 result.ResultSetFields.TestSequence(
                 [
                     new SqlResultSetField( 0, "a" ), new SqlResultSetField( 1, "b" ), new SqlResultSetField( 2, "c" ),
@@ -109,13 +108,12 @@ public class SqlQueryReaderFactoryTests : TestsBase
         Assertion.All(
                 queryReader.Dialect.TestRefEquals( sut.Dialect ),
                 result.IsEmpty.TestFalse(),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => r.AsSpan().TestSequence( [ 1, "foo", 5.0, true ] ),
-                        (r, _) => r.AsSpan().TestSequence( [ 2, "bar", null, false ] ),
-                        (r, _) => r.AsSpan().TestSequence( [ 3, "lorem", 10.0, null ] )
-                    ] ) ),
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => r.AsSpan().TestSequence( [ 1, "foo", 5.0, true ] ),
+                    (r, _) => r.AsSpan().TestSequence( [ 2, "bar", null, false ] ),
+                    (r, _) => r.AsSpan().TestSequence( [ 3, "lorem", 10.0, null ] )
+                ] ) ),
                 result.ResultSetFields[0].Ordinal.TestEquals( 0 ),
                 result.ResultSetFields[0].Name.TestEquals( "a" ),
                 result.ResultSetFields[0].IsUsed.TestTrue(),
@@ -191,17 +189,16 @@ public class SqlQueryReaderFactoryTests : TestsBase
         Assertion.All(
                 queryReader.Dialect.TestRefEquals( sut.Dialect ),
                 result.IsEmpty.TestFalse(),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => Assertion.All(
-                            r.A.TestEquals( 1 ),
-                            r.B.TestEquals( "foo" ),
-                            r.C.TestEquals( 5.0 ),
-                            r.D.TestEquals( true ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
-                    ] ) ),
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => Assertion.All(
+                        r.A.TestEquals( 1 ),
+                        r.B.TestEquals( "foo" ),
+                        r.C.TestEquals( 5.0 ),
+                        r.D.TestEquals( true ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
+                ] ) ),
                 result.ResultSetFields.TestEmpty() )
             .Go();
     }
@@ -229,17 +226,16 @@ public class SqlQueryReaderFactoryTests : TestsBase
         Assertion.All(
                 queryReader.Dialect.TestRefEquals( sut.Dialect ),
                 result.IsEmpty.TestFalse(),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => Assertion.All(
-                            r.A.TestEquals( 1 ),
-                            r.B.TestEquals( "foo" ),
-                            r.C.TestEquals( 5.0 ),
-                            r.D.TestEquals( true ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
-                    ] ) ),
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => Assertion.All(
+                        r.A.TestEquals( 1 ),
+                        r.B.TestEquals( "foo" ),
+                        r.C.TestEquals( 5.0 ),
+                        r.D.TestEquals( true ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
+                ] ) ),
                 result.ResultSetFields.TestSequence(
                 [
                     new SqlResultSetField( 0, "a" ), new SqlResultSetField( 1, "b" ), new SqlResultSetField( 2, "c" ),
@@ -271,17 +267,16 @@ public class SqlQueryReaderFactoryTests : TestsBase
         Assertion.All(
                 queryReader.Dialect.TestRefEquals( sut.Dialect ),
                 result.IsEmpty.TestFalse(),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => Assertion.All(
-                            r.A.TestEquals( 1 ),
-                            r.B.TestEquals( "foo" ),
-                            r.C.TestEquals( 5.0 ),
-                            r.D.TestEquals( true ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
-                    ] ) ),
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => Assertion.All(
+                        r.A.TestEquals( 1 ),
+                        r.B.TestEquals( "foo" ),
+                        r.C.TestEquals( 5.0 ),
+                        r.D.TestEquals( true ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
+                ] ) ),
                 result.ResultSetFields[0].Ordinal.TestEquals( 0 ),
                 result.ResultSetFields[0].Name.TestEquals( "a" ),
                 result.ResultSetFields[0].IsUsed.TestTrue(),
@@ -321,17 +316,16 @@ public class SqlQueryReaderFactoryTests : TestsBase
         Assertion.All(
                 queryReader.Dialect.TestRefEquals( sut.Dialect ),
                 result.IsEmpty.TestFalse(),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => Assertion.All(
-                            r.A.TestEquals( 1 ),
-                            r.B.TestEquals( "foo" ),
-                            r.C.TestEquals( 5.0 ),
-                            r.D.TestEquals( true ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
-                    ] ) ) )
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => Assertion.All(
+                        r.A.TestEquals( 1 ),
+                        r.B.TestEquals( "foo" ),
+                        r.C.TestEquals( 5.0 ),
+                        r.D.TestEquals( true ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
+                ] ) ) )
             .Go();
     }
 
@@ -355,17 +349,16 @@ public class SqlQueryReaderFactoryTests : TestsBase
         Assertion.All(
                 queryReader.Dialect.TestRefEquals( sut.Dialect ),
                 result.IsEmpty.TestFalse(),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => Assertion.All(
-                            r.A.TestEquals( 1 ),
-                            r.B.TestEquals( "foo" ),
-                            r.C.TestEquals( 5.0 ),
-                            r.D.TestEquals( "x" ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( "y" ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
-                    ] ) ) )
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => Assertion.All(
+                        r.A.TestEquals( 1 ),
+                        r.B.TestEquals( "foo" ),
+                        r.C.TestEquals( 5.0 ),
+                        r.D.TestEquals( "x" ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( "y" ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
+                ] ) ) )
             .Go();
     }
 
@@ -390,27 +383,26 @@ public class SqlQueryReaderFactoryTests : TestsBase
         Assertion.All(
                 queryReader.Dialect.TestRefEquals( sut.Dialect ),
                 result.IsEmpty.TestFalse(),
-                result.Rows.TestNotNull(
-                    rows => Assertion.All(
-                        rows.Capacity.TestEquals( 50 ),
-                        rows.TestSequence(
-                        [
-                            (r, _) => Assertion.All(
-                                r.A.TestEquals( 1 ),
-                                r.B.TestEquals( "foo" ),
-                                r.C.TestEquals( 5.0 ),
-                                r.D.TestEquals( true ) ),
-                            (r, _) => Assertion.All(
-                                r.A.TestEquals( 2 ),
-                                r.B.TestEquals( "bar" ),
-                                r.C.TestNull(),
-                                r.D.TestEquals( false ) ),
-                            (r, _) => Assertion.All(
-                                r.A.TestEquals( 3 ),
-                                r.B.TestEquals( "lorem" ),
-                                r.C.TestEquals( 10.0 ),
-                                r.D.TestNull() )
-                        ] ) ) ) )
+                result.Rows.TestNotNull( rows => Assertion.All(
+                    rows.Capacity.TestEquals( 50 ),
+                    rows.TestSequence(
+                    [
+                        (r, _) => Assertion.All(
+                            r.A.TestEquals( 1 ),
+                            r.B.TestEquals( "foo" ),
+                            r.C.TestEquals( 5.0 ),
+                            r.D.TestEquals( true ) ),
+                        (r, _) => Assertion.All(
+                            r.A.TestEquals( 2 ),
+                            r.B.TestEquals( "bar" ),
+                            r.C.TestNull(),
+                            r.D.TestEquals( false ) ),
+                        (r, _) => Assertion.All(
+                            r.A.TestEquals( 3 ),
+                            r.B.TestEquals( "lorem" ),
+                            r.C.TestEquals( 10.0 ),
+                            r.D.TestNull() )
+                    ] ) ) ) )
             .Go();
     }
 
@@ -435,13 +427,12 @@ public class SqlQueryReaderFactoryTests : TestsBase
         Assertion.All(
                 queryReader.Dialect.TestRefEquals( sut.Dialect ),
                 result.IsEmpty.TestFalse(),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => Assertion.All( r.A.TestEquals( 1 ), r.B.TestEquals( "foo" ), r.C.TestNull(), r.D.TestEquals( true ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestNull(), r.D.TestNull() )
-                    ] ) ) )
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => Assertion.All( r.A.TestEquals( 1 ), r.B.TestEquals( "foo" ), r.C.TestNull(), r.D.TestEquals( true ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestNull(), r.D.TestNull() )
+                ] ) ) )
             .Go();
     }
 
@@ -466,17 +457,16 @@ public class SqlQueryReaderFactoryTests : TestsBase
         Assertion.All(
                 queryReader.Dialect.TestRefEquals( sut.Dialect ),
                 result.IsEmpty.TestFalse(),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => Assertion.All(
-                            r.A.TestEquals( 1 ),
-                            r.B.TestEquals( "foo" ),
-                            r.C.TestEquals( 5.0 ),
-                            r.D.TestEquals( true ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
-                    ] ) ) )
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => Assertion.All(
+                        r.A.TestEquals( 1 ),
+                        r.B.TestEquals( "foo" ),
+                        r.C.TestEquals( 5.0 ),
+                        r.D.TestEquals( true ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
+                ] ) ) )
             .Go();
     }
 
@@ -507,21 +497,20 @@ public class SqlQueryReaderFactoryTests : TestsBase
         Assertion.All(
                 queryReader.Dialect.TestRefEquals( sut.Dialect ),
                 result.IsEmpty.TestFalse(),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => Assertion.All(
-                            r.A.TestEquals( 1 ),
-                            r.B.TestEquals( "foo" ),
-                            r.C.TestEquals( 4.0 ),
-                            r.D.TestEquals( true ) ),
-                        (r, _) => Assertion.All(
-                            r.A.TestEquals( 2 ),
-                            r.B.TestEquals( "bar" ),
-                            r.C.TestEquals( 5.0 ),
-                            r.D.TestEquals( false ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 8.0 ), r.D.TestNull() )
-                    ] ) ) )
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => Assertion.All(
+                        r.A.TestEquals( 1 ),
+                        r.B.TestEquals( "foo" ),
+                        r.C.TestEquals( 4.0 ),
+                        r.D.TestEquals( true ) ),
+                    (r, _) => Assertion.All(
+                        r.A.TestEquals( 2 ),
+                        r.B.TestEquals( "bar" ),
+                        r.C.TestEquals( 5.0 ),
+                        r.D.TestEquals( false ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 8.0 ), r.D.TestNull() )
+                ] ) ) )
             .Go();
     }
 
@@ -554,21 +543,20 @@ public class SqlQueryReaderFactoryTests : TestsBase
         Assertion.All(
                 queryReader.Dialect.TestRefEquals( sut.Dialect ),
                 result.IsEmpty.TestFalse(),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => Assertion.All(
-                            r.A.TestEquals( 1 ),
-                            r.B.TestEquals( "foo" ),
-                            r.C.TestEquals( 11.0 ),
-                            r.D.TestEquals( true ) ),
-                        (r, _) => Assertion.All(
-                            r.A.TestEquals( 2 ),
-                            r.B.TestEquals( "bar" ),
-                            r.C.TestEquals( 1.0 ),
-                            r.D.TestEquals( false ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
-                    ] ) ) )
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => Assertion.All(
+                        r.A.TestEquals( 1 ),
+                        r.B.TestEquals( "foo" ),
+                        r.C.TestEquals( 11.0 ),
+                        r.D.TestEquals( true ) ),
+                    (r, _) => Assertion.All(
+                        r.A.TestEquals( 2 ),
+                        r.B.TestEquals( "bar" ),
+                        r.C.TestEquals( 1.0 ),
+                        r.D.TestEquals( false ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
+                ] ) ) )
             .Go();
     }
 
@@ -588,8 +576,8 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.Create<UnsafeRow>(
             SqlQueryReaderCreationOptions.Default.EnableAlwaysTestingForNull()
-                .SetRowTypeMemberPredicate(
-                    m => m.MemberType == MemberTypes.Property || (m.MemberType == MemberTypes.Field && (( FieldInfo )m).IsPublic) )
+                .SetRowTypeMemberPredicate( m =>
+                    m.MemberType == MemberTypes.Property || (m.MemberType == MemberTypes.Field && (( FieldInfo )m).IsPublic) )
                 .SetRowTypeConstructorPredicate( c => c.GetParameters().Length == 0 ) );
 
         var result = queryReader.Read( reader );
@@ -597,17 +585,16 @@ public class SqlQueryReaderFactoryTests : TestsBase
         Assertion.All(
                 queryReader.Dialect.TestRefEquals( sut.Dialect ),
                 result.IsEmpty.TestFalse(),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => Assertion.All(
-                            r.A.TestEquals( 1 ),
-                            r.B.TestEquals( "foo" ),
-                            r.C.TestEquals( 0.0 ),
-                            r.D.TestEquals( "x" ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 0 ), r.B.TestEquals( "bar" ), r.C.TestEquals( 5.0 ), r.D.TestNull() ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestNull(), r.C.TestEquals( 10.0 ), r.D.TestEquals( "y" ) )
-                    ] ) ) )
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => Assertion.All(
+                        r.A.TestEquals( 1 ),
+                        r.B.TestEquals( "foo" ),
+                        r.C.TestEquals( 0.0 ),
+                        r.D.TestEquals( "x" ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 0 ), r.B.TestEquals( "bar" ), r.C.TestEquals( 5.0 ), r.D.TestNull() ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestNull(), r.C.TestEquals( 10.0 ), r.D.TestEquals( "y" ) )
+                ] ) ) )
             .Go();
     }
 
@@ -632,17 +619,16 @@ public class SqlQueryReaderFactoryTests : TestsBase
         Assertion.All(
                 queryReader.Dialect.TestRefEquals( sut.Dialect ),
                 result.IsEmpty.TestFalse(),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => Assertion.All(
-                            r.A.TestEquals( 1 ),
-                            r.B.TestEquals( "foo" ),
-                            r.C.TestEquals( 0.0 ),
-                            r.D.TestEquals( "x" ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 0 ), r.B.TestEquals( "bar" ), r.C.TestEquals( 5.0 ), r.D.TestNull() ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestNull(), r.C.TestEquals( 10.0 ), r.D.TestEquals( "y" ) )
-                    ] ) ) )
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => Assertion.All(
+                        r.A.TestEquals( 1 ),
+                        r.B.TestEquals( "foo" ),
+                        r.C.TestEquals( 0.0 ),
+                        r.D.TestEquals( "x" ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 0 ), r.B.TestEquals( "bar" ), r.C.TestEquals( 5.0 ), r.D.TestNull() ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestNull(), r.C.TestEquals( 10.0 ), r.D.TestEquals( "y" ) )
+                ] ) ) )
             .Go();
     }
 
@@ -674,8 +660,8 @@ public class SqlQueryReaderFactoryTests : TestsBase
     public void CreateExpression_ShouldThrowSqlCompilerException_WhenNoValidConstructorForRowTypeIsFound()
     {
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
-        var action = Lambda.Of(
-            () => sut.CreateExpression<RowRecord>( SqlQueryReaderCreationOptions.Default.SetRowTypeConstructorPredicate( _ => false ) ) );
+        var action = Lambda.Of( () =>
+            sut.CreateExpression<RowRecord>( SqlQueryReaderCreationOptions.Default.SetRowTypeConstructorPredicate( _ => false ) ) );
 
         action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
@@ -692,8 +678,8 @@ public class SqlQueryReaderFactoryTests : TestsBase
     public void CreateExpression_ShouldThrowSqlCompilerException_WhenNoValidMemberForRowTypeIsFound()
     {
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
-        var action = Lambda.Of(
-            () => sut.CreateExpression<Row>( SqlQueryReaderCreationOptions.Default.SetRowTypeMemberPredicate( _ => false ) ) );
+        var action = Lambda.Of( () =>
+            sut.CreateExpression<Row>( SqlQueryReaderCreationOptions.Default.SetRowTypeMemberPredicate( _ => false ) ) );
 
         action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
@@ -736,13 +722,12 @@ public class SqlQueryReaderFactoryTests : TestsBase
         Assertion.All(
                 queryReader.Dialect.TestRefEquals( sut.Dialect ),
                 result.IsEmpty.TestFalse(),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => r.AsSpan().TestSequence( [ 1, "foo", 5.0, true ] ),
-                        (r, _) => r.AsSpan().TestSequence( [ 2, "bar", null, false ] ),
-                        (r, _) => r.AsSpan().TestSequence( [ 3, "lorem", 10.0, null ] )
-                    ] ) ),
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => r.AsSpan().TestSequence( [ 1, "foo", 5.0, true ] ),
+                    (r, _) => r.AsSpan().TestSequence( [ 2, "bar", null, false ] ),
+                    (r, _) => r.AsSpan().TestSequence( [ 3, "lorem", 10.0, null ] )
+                ] ) ),
                 result.ResultSetFields.TestSequence(
                 [
                     new SqlResultSetField( 0, "a" ), new SqlResultSetField( 1, "b" ), new SqlResultSetField( 2, "c" ),
@@ -795,13 +780,12 @@ public class SqlQueryReaderFactoryTests : TestsBase
         Assertion.All(
                 queryReader.Dialect.TestRefEquals( sut.Dialect ),
                 result.IsEmpty.TestFalse(),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => r.AsSpan().TestSequence( [ 1, "foo", 5.0, true ] ),
-                        (r, _) => r.AsSpan().TestSequence( [ 2, "bar", null, false ] ),
-                        (r, _) => r.AsSpan().TestSequence( [ 3, "lorem", 10.0, null ] )
-                    ] ) ),
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => r.AsSpan().TestSequence( [ 1, "foo", 5.0, true ] ),
+                    (r, _) => r.AsSpan().TestSequence( [ 2, "bar", null, false ] ),
+                    (r, _) => r.AsSpan().TestSequence( [ 3, "lorem", 10.0, null ] )
+                ] ) ),
                 result.ResultSetFields[0].Ordinal.TestEquals( 0 ),
                 result.ResultSetFields[0].Name.TestEquals( "a" ),
                 result.ResultSetFields[0].IsUsed.TestTrue(),
@@ -877,17 +861,16 @@ public class SqlQueryReaderFactoryTests : TestsBase
         Assertion.All(
                 queryReader.Dialect.TestRefEquals( sut.Dialect ),
                 result.IsEmpty.TestFalse(),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => Assertion.All(
-                            r.A.TestEquals( 1 ),
-                            r.B.TestEquals( "foo" ),
-                            r.C.TestEquals( 5.0 ),
-                            r.D.TestEquals( true ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
-                    ] ) ),
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => Assertion.All(
+                        r.A.TestEquals( 1 ),
+                        r.B.TestEquals( "foo" ),
+                        r.C.TestEquals( 5.0 ),
+                        r.D.TestEquals( true ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
+                ] ) ),
                 result.ResultSetFields.TestEmpty() )
             .Go();
     }
@@ -915,17 +898,16 @@ public class SqlQueryReaderFactoryTests : TestsBase
         Assertion.All(
                 queryReader.Dialect.TestRefEquals( sut.Dialect ),
                 result.IsEmpty.TestFalse(),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => Assertion.All(
-                            r.A.TestEquals( 1 ),
-                            r.B.TestEquals( "foo" ),
-                            r.C.TestEquals( 5.0 ),
-                            r.D.TestEquals( true ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
-                    ] ) ),
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => Assertion.All(
+                        r.A.TestEquals( 1 ),
+                        r.B.TestEquals( "foo" ),
+                        r.C.TestEquals( 5.0 ),
+                        r.D.TestEquals( true ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
+                ] ) ),
                 result.ResultSetFields.TestSequence(
                 [
                     new SqlResultSetField( 0, "a" ), new SqlResultSetField( 1, "b" ), new SqlResultSetField( 2, "c" ),
@@ -958,17 +940,16 @@ public class SqlQueryReaderFactoryTests : TestsBase
         Assertion.All(
                 queryReader.Dialect.TestRefEquals( sut.Dialect ),
                 result.IsEmpty.TestFalse(),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => Assertion.All(
-                            r.A.TestEquals( 1 ),
-                            r.B.TestEquals( "foo" ),
-                            r.C.TestEquals( 5.0 ),
-                            r.D.TestEquals( true ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
-                    ] ) ),
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => Assertion.All(
+                        r.A.TestEquals( 1 ),
+                        r.B.TestEquals( "foo" ),
+                        r.C.TestEquals( 5.0 ),
+                        r.D.TestEquals( true ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
+                ] ) ),
                 result.ResultSetFields[0].Ordinal.TestEquals( 0 ),
                 result.ResultSetFields[0].Name.TestEquals( "a" ),
                 result.ResultSetFields[0].IsUsed.TestTrue(),
@@ -1008,17 +989,16 @@ public class SqlQueryReaderFactoryTests : TestsBase
         Assertion.All(
                 queryReader.Dialect.TestRefEquals( sut.Dialect ),
                 result.IsEmpty.TestFalse(),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => Assertion.All(
-                            r.A.TestEquals( 1 ),
-                            r.B.TestEquals( "foo" ),
-                            r.C.TestEquals( 5.0 ),
-                            r.D.TestEquals( true ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
-                    ] ) ) )
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => Assertion.All(
+                        r.A.TestEquals( 1 ),
+                        r.B.TestEquals( "foo" ),
+                        r.C.TestEquals( 5.0 ),
+                        r.D.TestEquals( true ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
+                ] ) ) )
             .Go();
     }
 
@@ -1043,17 +1023,16 @@ public class SqlQueryReaderFactoryTests : TestsBase
         Assertion.All(
                 queryReader.Dialect.TestRefEquals( sut.Dialect ),
                 result.IsEmpty.TestFalse(),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => Assertion.All(
-                            r.A.TestEquals( 1 ),
-                            r.B.TestEquals( "foo" ),
-                            r.C.TestEquals( 5.0 ),
-                            r.D.TestEquals( "x" ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( "y" ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
-                    ] ) ) )
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => Assertion.All(
+                        r.A.TestEquals( 1 ),
+                        r.B.TestEquals( "foo" ),
+                        r.C.TestEquals( 5.0 ),
+                        r.D.TestEquals( "x" ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( "y" ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
+                ] ) ) )
             .Go();
     }
 
@@ -1078,27 +1057,26 @@ public class SqlQueryReaderFactoryTests : TestsBase
         Assertion.All(
                 queryReader.Dialect.TestRefEquals( sut.Dialect ),
                 result.IsEmpty.TestFalse(),
-                result.Rows.TestNotNull(
-                    rows => Assertion.All(
-                        rows.Capacity.TestEquals( 50 ),
-                        rows.TestSequence(
-                        [
-                            (r, _) => Assertion.All(
-                                r.A.TestEquals( 1 ),
-                                r.B.TestEquals( "foo" ),
-                                r.C.TestEquals( 5.0 ),
-                                r.D.TestEquals( true ) ),
-                            (r, _) => Assertion.All(
-                                r.A.TestEquals( 2 ),
-                                r.B.TestEquals( "bar" ),
-                                r.C.TestNull(),
-                                r.D.TestEquals( false ) ),
-                            (r, _) => Assertion.All(
-                                r.A.TestEquals( 3 ),
-                                r.B.TestEquals( "lorem" ),
-                                r.C.TestEquals( 10.0 ),
-                                r.D.TestNull() )
-                        ] ) ) ) )
+                result.Rows.TestNotNull( rows => Assertion.All(
+                    rows.Capacity.TestEquals( 50 ),
+                    rows.TestSequence(
+                    [
+                        (r, _) => Assertion.All(
+                            r.A.TestEquals( 1 ),
+                            r.B.TestEquals( "foo" ),
+                            r.C.TestEquals( 5.0 ),
+                            r.D.TestEquals( true ) ),
+                        (r, _) => Assertion.All(
+                            r.A.TestEquals( 2 ),
+                            r.B.TestEquals( "bar" ),
+                            r.C.TestNull(),
+                            r.D.TestEquals( false ) ),
+                        (r, _) => Assertion.All(
+                            r.A.TestEquals( 3 ),
+                            r.B.TestEquals( "lorem" ),
+                            r.C.TestEquals( 10.0 ),
+                            r.D.TestNull() )
+                    ] ) ) ) )
             .Go();
     }
 
@@ -1123,13 +1101,12 @@ public class SqlQueryReaderFactoryTests : TestsBase
         Assertion.All(
                 queryReader.Dialect.TestRefEquals( sut.Dialect ),
                 result.IsEmpty.TestFalse(),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => Assertion.All( r.A.TestEquals( 1 ), r.B.TestEquals( "foo" ), r.C.TestNull(), r.D.TestEquals( true ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestNull(), r.D.TestNull() )
-                    ] ) ) )
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => Assertion.All( r.A.TestEquals( 1 ), r.B.TestEquals( "foo" ), r.C.TestNull(), r.D.TestEquals( true ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestNull(), r.D.TestNull() )
+                ] ) ) )
             .Go();
     }
 
@@ -1155,17 +1132,16 @@ public class SqlQueryReaderFactoryTests : TestsBase
         Assertion.All(
                 queryReader.Dialect.TestRefEquals( sut.Dialect ),
                 result.IsEmpty.TestFalse(),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => Assertion.All(
-                            r.A.TestEquals( 1 ),
-                            r.B.TestEquals( "foo" ),
-                            r.C.TestEquals( 5.0 ),
-                            r.D.TestEquals( true ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
-                    ] ) ) )
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => Assertion.All(
+                        r.A.TestEquals( 1 ),
+                        r.B.TestEquals( "foo" ),
+                        r.C.TestEquals( 5.0 ),
+                        r.D.TestEquals( true ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 2 ), r.B.TestEquals( "bar" ), r.C.TestNull(), r.D.TestEquals( false ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
+                ] ) ) )
             .Go();
     }
 
@@ -1196,21 +1172,20 @@ public class SqlQueryReaderFactoryTests : TestsBase
         Assertion.All(
                 queryReader.Dialect.TestRefEquals( sut.Dialect ),
                 result.IsEmpty.TestFalse(),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => Assertion.All(
-                            r.A.TestEquals( 1 ),
-                            r.B.TestEquals( "foo" ),
-                            r.C.TestEquals( 4.0 ),
-                            r.D.TestEquals( true ) ),
-                        (r, _) => Assertion.All(
-                            r.A.TestEquals( 2 ),
-                            r.B.TestEquals( "bar" ),
-                            r.C.TestEquals( 5.0 ),
-                            r.D.TestEquals( false ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 8.0 ), r.D.TestNull() )
-                    ] ) ) )
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => Assertion.All(
+                        r.A.TestEquals( 1 ),
+                        r.B.TestEquals( "foo" ),
+                        r.C.TestEquals( 4.0 ),
+                        r.D.TestEquals( true ) ),
+                    (r, _) => Assertion.All(
+                        r.A.TestEquals( 2 ),
+                        r.B.TestEquals( "bar" ),
+                        r.C.TestEquals( 5.0 ),
+                        r.D.TestEquals( false ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 8.0 ), r.D.TestNull() )
+                ] ) ) )
             .Go();
     }
 
@@ -1243,21 +1218,20 @@ public class SqlQueryReaderFactoryTests : TestsBase
         Assertion.All(
                 queryReader.Dialect.TestRefEquals( sut.Dialect ),
                 result.IsEmpty.TestFalse(),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => Assertion.All(
-                            r.A.TestEquals( 1 ),
-                            r.B.TestEquals( "foo" ),
-                            r.C.TestEquals( 11.0 ),
-                            r.D.TestEquals( true ) ),
-                        (r, _) => Assertion.All(
-                            r.A.TestEquals( 2 ),
-                            r.B.TestEquals( "bar" ),
-                            r.C.TestEquals( 1.0 ),
-                            r.D.TestEquals( false ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
-                    ] ) ) )
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => Assertion.All(
+                        r.A.TestEquals( 1 ),
+                        r.B.TestEquals( "foo" ),
+                        r.C.TestEquals( 11.0 ),
+                        r.D.TestEquals( true ) ),
+                    (r, _) => Assertion.All(
+                        r.A.TestEquals( 2 ),
+                        r.B.TestEquals( "bar" ),
+                        r.C.TestEquals( 1.0 ),
+                        r.D.TestEquals( false ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestEquals( "lorem" ), r.C.TestEquals( 10.0 ), r.D.TestNull() )
+                ] ) ) )
             .Go();
     }
 
@@ -1277,8 +1251,8 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.CreateAsync<UnsafeRow>(
             SqlQueryReaderCreationOptions.Default.EnableAlwaysTestingForNull()
-                .SetRowTypeMemberPredicate(
-                    m => m.MemberType == MemberTypes.Property || (m.MemberType == MemberTypes.Field && (( FieldInfo )m).IsPublic) )
+                .SetRowTypeMemberPredicate( m =>
+                    m.MemberType == MemberTypes.Property || (m.MemberType == MemberTypes.Field && (( FieldInfo )m).IsPublic) )
                 .SetRowTypeConstructorPredicate( c => c.GetParameters().Length == 0 ) );
 
         var result = await queryReader.ReadAsync( reader );
@@ -1286,17 +1260,16 @@ public class SqlQueryReaderFactoryTests : TestsBase
         Assertion.All(
                 queryReader.Dialect.TestRefEquals( sut.Dialect ),
                 result.IsEmpty.TestFalse(),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => Assertion.All(
-                            r.A.TestEquals( 1 ),
-                            r.B.TestEquals( "foo" ),
-                            r.C.TestEquals( 0.0 ),
-                            r.D.TestEquals( "x" ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 0 ), r.B.TestEquals( "bar" ), r.C.TestEquals( 5.0 ), r.D.TestNull() ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestNull(), r.C.TestEquals( 10.0 ), r.D.TestEquals( "y" ) )
-                    ] ) ) )
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => Assertion.All(
+                        r.A.TestEquals( 1 ),
+                        r.B.TestEquals( "foo" ),
+                        r.C.TestEquals( 0.0 ),
+                        r.D.TestEquals( "x" ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 0 ), r.B.TestEquals( "bar" ), r.C.TestEquals( 5.0 ), r.D.TestNull() ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestNull(), r.C.TestEquals( 10.0 ), r.D.TestEquals( "y" ) )
+                ] ) ) )
             .Go();
     }
 
@@ -1322,17 +1295,16 @@ public class SqlQueryReaderFactoryTests : TestsBase
         Assertion.All(
                 queryReader.Dialect.TestRefEquals( sut.Dialect ),
                 result.IsEmpty.TestFalse(),
-                result.Rows.TestNotNull(
-                    rows => rows.TestSequence(
-                    [
-                        (r, _) => Assertion.All(
-                            r.A.TestEquals( 1 ),
-                            r.B.TestEquals( "foo" ),
-                            r.C.TestEquals( 0.0 ),
-                            r.D.TestEquals( "x" ) ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 0 ), r.B.TestEquals( "bar" ), r.C.TestEquals( 5.0 ), r.D.TestNull() ),
-                        (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestNull(), r.C.TestEquals( 10.0 ), r.D.TestEquals( "y" ) )
-                    ] ) ) )
+                result.Rows.TestNotNull( rows => rows.TestSequence(
+                [
+                    (r, _) => Assertion.All(
+                        r.A.TestEquals( 1 ),
+                        r.B.TestEquals( "foo" ),
+                        r.C.TestEquals( 0.0 ),
+                        r.D.TestEquals( "x" ) ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 0 ), r.B.TestEquals( "bar" ), r.C.TestEquals( 5.0 ), r.D.TestNull() ),
+                    (r, _) => Assertion.All( r.A.TestEquals( 3 ), r.B.TestNull(), r.C.TestEquals( 10.0 ), r.D.TestEquals( "y" ) )
+                ] ) ) )
             .Go();
     }
 
@@ -1377,9 +1349,8 @@ public class SqlQueryReaderFactoryTests : TestsBase
     public void CreateAsyncExpression_ShouldThrowSqlCompilerException_WhenNoValidConstructorForRowTypeIsFound()
     {
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
-        var action = Lambda.Of(
-            () => sut.CreateAsyncExpression<RowRecord>(
-                SqlQueryReaderCreationOptions.Default.SetRowTypeConstructorPredicate( _ => false ) ) );
+        var action = Lambda.Of( () =>
+            sut.CreateAsyncExpression<RowRecord>( SqlQueryReaderCreationOptions.Default.SetRowTypeConstructorPredicate( _ => false ) ) );
 
         action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
@@ -1396,8 +1367,8 @@ public class SqlQueryReaderFactoryTests : TestsBase
     public void CreateAsyncExpression_ShouldThrowSqlCompilerException_WhenNoValidMemberForRowTypeIsFound()
     {
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
-        var action = Lambda.Of(
-            () => sut.CreateAsyncExpression<Row>( SqlQueryReaderCreationOptions.Default.SetRowTypeMemberPredicate( _ => false ) ) );
+        var action = Lambda.Of( () =>
+            sut.CreateAsyncExpression<Row>( SqlQueryReaderCreationOptions.Default.SetRowTypeMemberPredicate( _ => false ) ) );
 
         action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }

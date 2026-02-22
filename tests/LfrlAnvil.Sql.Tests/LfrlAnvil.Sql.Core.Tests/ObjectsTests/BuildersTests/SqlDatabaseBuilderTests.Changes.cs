@@ -153,11 +153,10 @@ public partial class SqlDatabaseBuilderTests
                     sut.ActiveObject.TestNull(),
                     sut.ActiveObjectExistenceState.TestEquals( default ),
                     actions.Length.TestEquals( 1 ),
-                    actions.TestAll(
-                        (a, _) => Assertion.All(
-                            a.Sql.TestNull(),
-                            a.OnCommandSetup.TestRefEquals( setupCallback ),
-                            a.Timeout.TestEquals( timeout ) ) ) )
+                    actions.TestAll( (a, _) => Assertion.All(
+                        a.Sql.TestNull(),
+                        a.OnCommandSetup.TestRefEquals( setupCallback ),
+                        a.Timeout.TestEquals( timeout ) ) ) )
                 .Go();
         }
 
@@ -236,10 +235,9 @@ public partial class SqlDatabaseBuilderTests
                     sut.ActiveObject.TestNull(),
                     sut.ActiveObjectExistenceState.TestEquals( default ),
                     actions.Length.TestEquals( 1 ),
-                    actions.TestAll(
-                        (a, _) => Assertion.All(
-                            a.Sql.TestEquals( $"{statement}{Environment.NewLine}" ),
-                            a.Timeout.TestEquals( timeout ) ) ) )
+                    actions.TestAll( (a, _) => Assertion.All(
+                        a.Sql.TestEquals( $"{statement}{Environment.NewLine}" ),
+                        a.Timeout.TestEquals( timeout ) ) ) )
                 .Go();
         }
 
@@ -303,10 +301,10 @@ public partial class SqlDatabaseBuilderTests
             var sut = SqlDatabaseBuilderMock.Create().Changes;
             var action = Lambda.Of( () => sut.AddStatement( SqlNode.RawStatement( Fixture.Create<string>(), SqlNode.Parameter( "a" ) ) ) );
 
-            action.Test(
-                    exc => exc.TestType()
-                        .Exact<SqlObjectBuilderException>(
-                            e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            action.Test( exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                        e.Dialect.TestEquals( SqlDialectMock.Instance ),
+                        e.Errors.Count.TestEquals( 1 ) ) ) )
                 .Go();
         }
 
@@ -332,11 +330,10 @@ public partial class SqlDatabaseBuilderTests
                     sut.ActiveObject.TestNull(),
                     sut.ActiveObjectExistenceState.TestEquals( default ),
                     actions.Length.TestEquals( 1 ),
-                    actions.TestAll(
-                        (a, _) => Assertion.All(
-                            a.Sql.TestEquals( $"{statement}{Environment.NewLine}" ),
-                            a.OnCommandSetup.TestNotNull(),
-                            a.Timeout.TestEquals( timeout ) ) ) )
+                    actions.TestAll( (a, _) => Assertion.All(
+                        a.Sql.TestEquals( $"{statement}{Environment.NewLine}" ),
+                        a.OnCommandSetup.TestNotNull(),
+                        a.Timeout.TestEquals( timeout ) ) ) )
                 .Go();
         }
 
@@ -426,11 +423,10 @@ public partial class SqlDatabaseBuilderTests
                     sut.ActiveObject.TestNull(),
                     sut.ActiveObjectExistenceState.TestEquals( default ),
                     actions.Length.TestEquals( 1 ),
-                    actions.TestAll(
-                        (a, _) => Assertion.All(
-                            a.Sql.TestEquals( $"{statement}{Environment.NewLine}" ),
-                            a.OnCommandSetup.TestNotNull(),
-                            a.Timeout.TestEquals( timeout ) ) ) )
+                    actions.TestAll( (a, _) => Assertion.All(
+                        a.Sql.TestEquals( $"{statement}{Environment.NewLine}" ),
+                        a.OnCommandSetup.TestNotNull(),
+                        a.Timeout.TestEquals( timeout ) ) ) )
                 .Go();
         }
 
@@ -498,10 +494,9 @@ public partial class SqlDatabaseBuilderTests
         {
             var sut = SqlDatabaseBuilderMock.Create().Changes;
 
-            var action = Lambda.Of(
-                () => sut.AddParameterizedStatement(
-                    SqlNode.RawStatement( Fixture.Create<string>(), SqlNode.Parameter<string>( "a" ) ),
-                    new Source { A = 1 } ) );
+            var action = Lambda.Of( () => sut.AddParameterizedStatement(
+                SqlNode.RawStatement( Fixture.Create<string>(), SqlNode.Parameter<string>( "a" ) ),
+                new Source { A = 1 } ) );
 
             action.Test( exc => exc.TestType().Exact<SqlCompilerException>() ).Go();
         }

@@ -687,13 +687,12 @@ public class ReactiveTimerTests : TestsBase
         timestampProvider.GetNow().Returns( timestamps );
 
         var sut = new ReactiveTimer( timestampProvider, interval, count: 4 );
-        var listener = EventListener.Create<WithInterval<long>>(
-            e =>
-            {
-                actualEvents.Add( e );
-                if ( e.Event == 1 )
-                    sut.Stop();
-            } );
+        var listener = EventListener.Create<WithInterval<long>>( e =>
+        {
+            actualEvents.Add( e );
+            if ( e.Event == 1 )
+                sut.Stop();
+        } );
 
         sut.Listen( listener );
 
@@ -793,12 +792,11 @@ public class ReactiveTimerTests : TestsBase
 
         var sut = new ReactiveTimer( timestampProvider, interval );
 
-        var listener = EventListener.Create<WithInterval<long>>(
-            e =>
-            {
-                actualEvents.Add( e );
-                sut.Stop();
-            } );
+        var listener = EventListener.Create<WithInterval<long>>( e =>
+        {
+            actualEvents.Add( e );
+            sut.Stop();
+        } );
 
         sut.Listen( listener );
         sut.Run();

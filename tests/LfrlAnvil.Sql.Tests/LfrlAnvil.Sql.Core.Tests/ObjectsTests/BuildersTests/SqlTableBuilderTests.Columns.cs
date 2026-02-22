@@ -56,10 +56,10 @@ public partial class SqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.Create( "C" ) );
 
-            action.Test(
-                    exc => exc.TestType()
-                        .Exact<SqlObjectBuilderException>(
-                            e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            action.Test( exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                        e.Dialect.TestEquals( SqlDialectMock.Instance ),
+                        e.Errors.Count.TestEquals( 1 ) ) ) )
                 .Go();
         }
 
@@ -73,10 +73,10 @@ public partial class SqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.Create( "C" ) );
 
-            action.Test(
-                    exc => exc.TestType()
-                        .Exact<SqlObjectBuilderException>(
-                            e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            action.Test( exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                        e.Dialect.TestEquals( SqlDialectMock.Instance ),
+                        e.Errors.Count.TestEquals( 1 ) ) ) )
                 .Go();
         }
 
@@ -93,10 +93,10 @@ public partial class SqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.Create( name ) );
 
-            action.Test(
-                    exc => exc.TestType()
-                        .Exact<SqlObjectBuilderException>(
-                            e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            action.Test( exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                        e.Dialect.TestEquals( SqlDialectMock.Instance ),
+                        e.Errors.Count.TestEquals( 1 ) ) ) )
                 .Go();
         }
 
@@ -160,10 +160,10 @@ public partial class SqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.GetOrCreate( "C" ) );
 
-            action.Test(
-                    exc => exc.TestType()
-                        .Exact<SqlObjectBuilderException>(
-                            e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            action.Test( exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                        e.Dialect.TestEquals( SqlDialectMock.Instance ),
+                        e.Errors.Count.TestEquals( 1 ) ) ) )
                 .Go();
         }
 
@@ -180,10 +180,10 @@ public partial class SqlTableBuilderTests
 
             var action = Lambda.Of( () => sut.GetOrCreate( name ) );
 
-            action.Test(
-                    exc => exc.TestType()
-                        .Exact<SqlObjectBuilderException>(
-                            e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            action.Test( exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                        e.Dialect.TestEquals( SqlDialectMock.Instance ),
+                        e.Errors.Count.TestEquals( 1 ) ) ) )
                 .Go();
         }
 
@@ -385,10 +385,10 @@ public partial class SqlTableBuilderTests
 
             var action = Lambda.Of( () => (( ISqlColumnBuilderCollection )sut).SetDefaultTypeDefinition( definition ) );
 
-            action.Test(
-                    exc => exc.TestType()
-                        .Exact<SqlObjectBuilderException>(
-                            e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            action.Test( exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                        e.Dialect.TestEquals( SqlDialectMock.Instance ),
+                        e.Errors.Count.TestEquals( 1 ) ) ) )
                 .Go();
         }
 
@@ -402,12 +402,10 @@ public partial class SqlTableBuilderTests
 
             var action = Lambda.Of( () => (( ISqlColumnBuilderCollection )sut).SetDefaultTypeDefinition( definition ) );
 
-            action.Test(
-                    exc => exc.TestType()
-                        .Exact<SqlObjectCastException>(
-                            e => Assertion.All(
-                                e.Dialect.TestEquals( SqlDialectMock.Instance ),
-                                e.Expected.TestEquals( typeof( SqlColumnTypeDefinition ) ) ) ) )
+            action.Test( exc => exc.TestType()
+                    .Exact<SqlObjectCastException>( e => Assertion.All(
+                        e.Dialect.TestEquals( SqlDialectMock.Instance ),
+                        e.Expected.TestEquals( typeof( SqlColumnTypeDefinition ) ) ) ) )
                 .Go();
         }
 

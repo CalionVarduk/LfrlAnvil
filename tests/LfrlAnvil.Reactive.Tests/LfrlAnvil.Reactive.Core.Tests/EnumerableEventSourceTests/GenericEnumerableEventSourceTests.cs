@@ -48,12 +48,11 @@ public abstract class GenericEnumerableEventSourceTests<TEvent> : TestsBase
         var values = Fixture.CreateManyDistinct<TEvent>( count: 3 ).ToList();
         var actualValues = new List<TEvent>();
         var sut = new EnumerableEventSource<TEvent>( values );
-        var listener = EventListener.Create<TEvent>(
-            e =>
-            {
-                actualValues.Add( e );
-                sut.Dispose();
-            } );
+        var listener = EventListener.Create<TEvent>( e =>
+        {
+            actualValues.Add( e );
+            sut.Dispose();
+        } );
 
         _ = sut.Listen( listener );
 

@@ -22,8 +22,7 @@ public class DecimalUnaryOperatorTests : UnaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             operandValue: 123,
             (_, result) => result.TestType()
-                .AssignableTo<ConstantExpression>(
-                    constantResult =>
-                        constantResult.Value.TestEquals( -123m ) ) );
+                .AssignableTo<ConstantExpression>( constantResult =>
+                    constantResult.Value.TestEquals( -123m ) ) );
     }
 }

@@ -896,21 +896,19 @@ public class ZonedMonthTests : TestsBase
         var result = sut.GetAllDays().ToList();
 
         Assertion.All(
-                result.Select(
-                        d => new
+                result.Select( d => new
+                    {
+                        d.Year,
+                        d.Month,
+                        d.TimeZone
+                    } )
+                    .TestAll( (e, _) => e.TestEquals(
+                        new
                         {
-                            d.Year,
-                            d.Month,
-                            d.TimeZone
-                        } )
-                    .TestAll(
-                        (e, _) => e.TestEquals(
-                            new
-                            {
-                                sut.Year,
-                                sut.Month,
-                                sut.TimeZone
-                            } ) ),
+                            sut.Year,
+                            sut.Month,
+                            sut.TimeZone
+                        } ) ),
                 result.Select( d => d.DayOfMonth ).TestSequence( Enumerable.Range( 1, expectedDayCount ) ) )
             .Go();
     }
@@ -950,21 +948,21 @@ public class ZonedMonthTests : TestsBase
 
         Assertion.All(
                 result.Count.TestEquals( expectedWeekCount ),
-                result.Select(
-                        w => new
+                result.Select( w => new
+                    {
+                        w.Start.DayOfWeek,
+                        w.TimeZone
+                    } )
+                    .TestAll( (e, _) => e.TestEquals(
+                        new
                         {
-                            w.Start.DayOfWeek,
-                            w.TimeZone
-                        } )
-                    .TestAll(
-                        (e, _) => e.TestEquals(
-                            new
-                            {
-                                DayOfWeek = weekStart,
-                                sut.TimeZone
-                            } ) ),
-                result.TestAll(
-                    (w, _) => Assertion.Any( "Month", w.Start.Month.TestEquals( sut.Month ), w.End.Month.TestEquals( sut.Month ) ) ),
+                            DayOfWeek = weekStart,
+                            sut.TimeZone
+                        } ) ),
+                result.TestAll( (w, _) => Assertion.Any(
+                    "Month",
+                    w.Start.Month.TestEquals( sut.Month ),
+                    w.End.Month.TestEquals( sut.Month ) ) ),
                 result.TestSequence( result.OrderBy( w => w.Start ) ) )
             .Go();
     }

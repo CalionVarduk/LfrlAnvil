@@ -360,10 +360,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( name ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -378,10 +378,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "bar" ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -395,10 +395,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "C1" ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -413,10 +413,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "C3" ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -431,10 +431,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "C3" ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -534,10 +534,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetType<int>() );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -552,10 +552,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetType<int>() );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -570,10 +570,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetType<int>() );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -588,10 +588,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetType( definition ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -606,12 +606,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => (( ISqlColumnBuilder )sut).SetType( definition ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectCastException>(
-                        e => Assertion.All(
-                            e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
-                            e.Expected.TestEquals( typeof( SqlColumnTypeDefinition ) ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectCastException>( e => Assertion.All(
+                    e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                    e.Expected.TestEquals( typeof( SqlColumnTypeDefinition ) ) ) ) )
             .Go();
     }
 
@@ -778,10 +776,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.MarkAsNullable( value ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -798,10 +796,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.MarkAsNullable( value ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -818,10 +816,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.MarkAsNullable( value ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1040,10 +1038,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetDefaultValue( 42 ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1057,10 +1055,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetDefaultValue( 42 ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1074,10 +1072,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetDefaultValue( table.ToRecordSet().GetField( "C1" ) ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1485,10 +1483,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetComputation( SqlColumnComputation.Virtual( SqlNode.Literal( 1 ) ) ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1503,10 +1501,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetComputation( SqlColumnComputation.Virtual( SqlNode.Literal( 1 ) ) ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1521,10 +1519,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetComputation( SqlColumnComputation.Virtual( SqlNode.Literal( 1 ) ) ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1538,10 +1536,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetComputation( SqlColumnComputation.Virtual( SqlNode.RawRecordSet( "bar" )["x"] ) ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1556,10 +1554,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetComputation( SqlColumnComputation.Virtual( SqlNode.Literal( 1 ) ) ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1573,10 +1571,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetComputation( SqlColumnComputation.Virtual( SqlNode.RawRecordSet( "bar" )["x"] ) ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1591,10 +1589,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetComputation( null ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1608,10 +1606,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetComputation( SqlColumnComputation.Virtual( sut.Node + SqlNode.Literal( 1 ) ) ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( PostgreSqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( PostgreSqlDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 

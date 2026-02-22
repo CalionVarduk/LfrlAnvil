@@ -184,13 +184,14 @@ public class ParsedExpressionDelegateExtensionsTests : TestsBase
         var expression = factory.Create<decimal, decimal>( input );
         var sut = expression.Compile();
 
-        var action = Lambda.Of(
-            () => sut.MapArguments( KeyValuePair.Create( "a", 0m ), KeyValuePair.Create( "e", 0m ), KeyValuePair.Create( "f", 0m ) ) );
+        var action = Lambda.Of( () => sut.MapArguments(
+            KeyValuePair.Create( "a", 0m ),
+            KeyValuePair.Create( "e", 0m ),
+            KeyValuePair.Create( "f", 0m ) ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<InvalidParsedExpressionArgumentsException>(
-                        e => e.ArgumentNames.Select( n => n.ToString() ).TestSequence( [ "e", "f" ] ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<InvalidParsedExpressionArgumentsException>( e =>
+                    e.ArgumentNames.Select( n => n.ToString() ).TestSequence( [ "e", "f" ] ) ) )
             .Go();
     }
 }

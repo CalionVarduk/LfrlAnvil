@@ -36,12 +36,11 @@ public class EventListenerDelayDecoratorTests : TestsBase
         var completion = new TaskCompletionSource();
         var expectedEvent = new WithInterval<int>( sourceEvent, Timestamp.Zero + delay, delay );
         var actualEvents = new List<WithInterval<int>>();
-        var next = EventListener.Create<WithInterval<int>>(
-            e =>
-            {
-                actualEvents.Add( e );
-                completion.SetResult();
-            } );
+        var next = EventListener.Create<WithInterval<int>>( e =>
+        {
+            actualEvents.Add( e );
+            completion.SetResult();
+        } );
 
         var subscriber = Substitute.For<IEventSubscriber>();
         var sut = new EventListenerDelayDecorator<int>(
@@ -115,12 +114,11 @@ public class EventListenerDelayDecoratorTests : TestsBase
         var completion = new TaskCompletionSource();
         var expectedEvent = new WithInterval<int>( sourceEvent, Timestamp.Zero + delay, delay );
         var actualEvents = new List<WithInterval<int>>();
-        var next = EventListener.Create<WithInterval<int>>(
-            e =>
-            {
-                actualEvents.Add( e );
-                completion.SetResult();
-            } );
+        var next = EventListener.Create<WithInterval<int>>( e =>
+        {
+            actualEvents.Add( e );
+            completion.SetResult();
+        } );
 
         var sut = new EventPublisher<int>();
         var decorated = sut.Delay( timestampProvider, delay );

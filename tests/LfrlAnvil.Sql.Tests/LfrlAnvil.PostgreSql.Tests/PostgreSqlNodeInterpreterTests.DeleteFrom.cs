@@ -702,10 +702,8 @@ public partial class PostgreSqlNodeInterpreterTests
             var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Test(
-                    exc => exc.TestType()
-                        .Exact<SqlNodeVisitorException>(
-                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+            action.Test( exc => exc.TestType()
+                    .Exact<SqlNodeVisitorException>( e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
                 .Go();
         }
 
@@ -717,10 +715,8 @@ public partial class PostgreSqlNodeInterpreterTests
             var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Test(
-                    exc => exc.TestType()
-                        .Exact<SqlNodeVisitorException>(
-                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+            action.Test( exc => exc.TestType()
+                    .Exact<SqlNodeVisitorException>( e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
                 .Go();
         }
 
@@ -732,10 +728,8 @@ public partial class PostgreSqlNodeInterpreterTests
             var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Test(
-                    exc => exc.TestType()
-                        .Exact<SqlNodeVisitorException>(
-                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+            action.Test( exc => exc.TestType()
+                    .Exact<SqlNodeVisitorException>( e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
                 .Go();
         }
 
@@ -748,10 +742,8 @@ public partial class PostgreSqlNodeInterpreterTests
             var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Test(
-                    exc => exc.TestType()
-                        .Exact<SqlNodeVisitorException>(
-                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+            action.Test( exc => exc.TestType()
+                    .Exact<SqlNodeVisitorException>( e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
                 .Go();
         }
 
@@ -771,10 +763,8 @@ public partial class PostgreSqlNodeInterpreterTests
             var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Test(
-                    exc => exc.TestType()
-                        .Exact<SqlNodeVisitorException>(
-                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+            action.Test( exc => exc.TestType()
+                    .Exact<SqlNodeVisitorException>( e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
                 .Go();
         }
 
@@ -794,10 +784,8 @@ public partial class PostgreSqlNodeInterpreterTests
             var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
-            action.Test(
-                    exc => exc.TestType()
-                        .Exact<SqlNodeVisitorException>(
-                            e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
+            action.Test( exc => exc.TestType()
+                    .Exact<SqlNodeVisitorException>( e => Assertion.All( e.Node.TestRefEquals( node ), e.Visitor.TestRefEquals( sut ) ) ) )
                 .Go();
         }
     }

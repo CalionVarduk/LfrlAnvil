@@ -321,10 +321,10 @@ public class DependencyScopeTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.BeginScope( name ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<NamedDependencyScopeCreationException>(
-                        e => Assertion.All( e.ParentScope.TestRefEquals( sut ), e.Name.TestEquals( name ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<NamedDependencyScopeCreationException>( e => Assertion.All(
+                    e.ParentScope.TestRefEquals( sut ),
+                    e.Name.TestEquals( name ) ) ) )
             .Go();
     }
 
@@ -484,12 +484,11 @@ public class DependencyScopeTests : DependencyTestsBase
         scope.Dispose();
         var action = Lambda.Of( () => container.RootScope.BeginScope( "foo" ) );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestNull(),
-                    scope.IsDisposed.TestTrue(),
-                    scope.TestNotRefEquals( container.TryGetScope( "foo" ) ),
-                    container.RootScope.GetChildren().TestSequence( [ container.GetScope( "foo" ) ] ) ) )
+        action.Test( exc => Assertion.All(
+                exc.TestNull(),
+                scope.IsDisposed.TestTrue(),
+                scope.TestNotRefEquals( container.TryGetScope( "foo" ) ),
+                container.RootScope.GetChildren().TestSequence( [ container.GetScope( "foo" ) ] ) ) )
             .Go();
     }
 
@@ -660,13 +659,12 @@ public class DependencyScopeTests : DependencyTestsBase
         var factory = Substitute.For<Func<IDependencyScope, IDisposableDependency>>();
         factory.WithAnyArgs( _ => Substitute.For<IDisposableDependency>() );
         var throwingFactory = Substitute.For<Func<IDependencyScope, IDisposable>>();
-        throwingFactory.WithAnyArgs(
-            _ =>
-            {
-                var result = Substitute.For<IDisposable>();
-                result.When( x => x.Dispose() ).Throw( exception );
-                return result;
-            } );
+        throwingFactory.WithAnyArgs( _ =>
+        {
+            var result = Substitute.For<IDisposable>();
+            result.When( x => x.Dispose() ).Throw( exception );
+            return result;
+        } );
 
         var builder = new DependencyContainerBuilder();
         builder.Add<IDisposableDependency>().FromFactory( factory );
@@ -684,29 +682,26 @@ public class DependencyScopeTests : DependencyTestsBase
 
         var action = Lambda.Of( () => container.Dispose() );
 
-        action.Test(
-                exc => Assertion.All(
-                    resolved1.TestReceivedCalls( x => x.Dispose(), count: 1 ),
-                    resolved2.TestReceivedCalls( x => x.Dispose(), count: 1 ),
-                    resolved3.TestReceivedCalls( x => x.Dispose(), count: 1 ),
-                    resolved4.TestReceivedCalls( x => x.Dispose(), count: 1 ),
-                    resolved5.TestReceivedCalls( x => x.Dispose(), count: 1 ),
-                    resolved6.TestReceivedCalls( x => x.Dispose(), count: 1 ),
-                    container.RootScope.IsDisposed.TestTrue(),
-                    childScope.IsDisposed.TestTrue(),
-                    grandchildScope.IsDisposed.TestTrue(),
-                    exc.TestType()
-                        .Exact<OwnedDependenciesDisposalAggregateException>(
-                            aggregateException => Assertion.All(
-                                aggregateException.InnerExceptions.Count.TestEquals( 3 ),
-                                aggregateException.InnerExceptions.OfType<OwnedDependencyDisposalException>()
-                                    .TestAll(
-                                        (e, _) => Assertion.All(
-                                            e.InnerException.TestRefEquals( exception ),
-                                            Assertion.Any(
-                                                e.Scope.TestRefEquals( container.RootScope ),
-                                                e.Scope.TestRefEquals( childScope ),
-                                                e.Scope.TestRefEquals( grandchildScope ) ) ) ) ) ) ) )
+        action.Test( exc => Assertion.All(
+                resolved1.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                resolved2.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                resolved3.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                resolved4.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                resolved5.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                resolved6.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                container.RootScope.IsDisposed.TestTrue(),
+                childScope.IsDisposed.TestTrue(),
+                grandchildScope.IsDisposed.TestTrue(),
+                exc.TestType()
+                    .Exact<OwnedDependenciesDisposalAggregateException>( aggregateException => Assertion.All(
+                        aggregateException.InnerExceptions.Count.TestEquals( 3 ),
+                        aggregateException.InnerExceptions.OfType<OwnedDependencyDisposalException>()
+                            .TestAll( (e, _) => Assertion.All(
+                                e.InnerException.TestRefEquals( exception ),
+                                Assertion.Any(
+                                    e.Scope.TestRefEquals( container.RootScope ),
+                                    e.Scope.TestRefEquals( childScope ),
+                                    e.Scope.TestRefEquals( grandchildScope ) ) ) ) ) ) ) )
             .Go();
     }
 
@@ -718,13 +713,12 @@ public class DependencyScopeTests : DependencyTestsBase
         var factory = Substitute.For<Func<IDependencyScope, IDisposableDependency>>();
         factory.WithAnyArgs( _ => Substitute.For<IDisposableDependency>() );
         var throwingFactory = Substitute.For<Func<IDependencyScope, IDisposable>>();
-        throwingFactory.WithAnyArgs(
-            _ =>
-            {
-                var result = Substitute.For<IDisposable>();
-                result.When( x => x.Dispose() ).Throw( exception );
-                return result;
-            } );
+        throwingFactory.WithAnyArgs( _ =>
+        {
+            var result = Substitute.For<IDisposable>();
+            result.When( x => x.Dispose() ).Throw( exception );
+            return result;
+        } );
 
         var builder = new DependencyContainerBuilder();
         builder.Add<IDisposableDependency>().FromFactory( factory );
@@ -743,29 +737,26 @@ public class DependencyScopeTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.Dispose() );
 
-        action.Test(
-                exc => Assertion.All(
-                    resolved1.TestReceivedCalls( x => x.Dispose(), count: 1 ),
-                    resolved2.TestReceivedCalls( x => x.Dispose(), count: 1 ),
-                    resolved3.TestReceivedCalls( x => x.Dispose(), count: 1 ),
-                    resolved4.TestReceivedCalls( x => x.Dispose(), count: 1 ),
-                    resolved5.TestReceivedCalls( x => x.Dispose(), count: 1 ),
-                    resolved6.TestReceivedCalls( x => x.Dispose(), count: 1 ),
-                    sut.IsDisposed.TestTrue(),
-                    childScope.IsDisposed.TestTrue(),
-                    grandchildScope.IsDisposed.TestTrue(),
-                    exc.TestType()
-                        .Exact<OwnedDependenciesDisposalAggregateException>(
-                            aggregateException => Assertion.All(
-                                aggregateException.InnerExceptions.Count.TestEquals( 3 ),
-                                aggregateException.InnerExceptions.OfType<OwnedDependencyDisposalException>()
-                                    .TestAll(
-                                        (e, _) => Assertion.All(
-                                            e.InnerException.TestRefEquals( exception ),
-                                            Assertion.Any(
-                                                e.Scope.TestRefEquals( sut ),
-                                                e.Scope.TestRefEquals( childScope ),
-                                                e.Scope.TestRefEquals( grandchildScope ) ) ) ) ) ) ) )
+        action.Test( exc => Assertion.All(
+                resolved1.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                resolved2.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                resolved3.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                resolved4.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                resolved5.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                resolved6.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                sut.IsDisposed.TestTrue(),
+                childScope.IsDisposed.TestTrue(),
+                grandchildScope.IsDisposed.TestTrue(),
+                exc.TestType()
+                    .Exact<OwnedDependenciesDisposalAggregateException>( aggregateException => Assertion.All(
+                        aggregateException.InnerExceptions.Count.TestEquals( 3 ),
+                        aggregateException.InnerExceptions.OfType<OwnedDependencyDisposalException>()
+                            .TestAll( (e, _) => Assertion.All(
+                                e.InnerException.TestRefEquals( exception ),
+                                Assertion.Any(
+                                    e.Scope.TestRefEquals( sut ),
+                                    e.Scope.TestRefEquals( childScope ),
+                                    e.Scope.TestRefEquals( grandchildScope ) ) ) ) ) ) ) )
             .Go();
     }
 

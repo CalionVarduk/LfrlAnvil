@@ -117,15 +117,14 @@ public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
                 sut.HasSubscribers.TestFalse(),
                 subscriber.IsDisposed.TestTrue(),
                 actualValues.Count.TestEquals( 1 ),
-                actualValues.TestAll(
-                    (task, _) => Assertion.All(
-                        "task",
-                        task.Status.TestEquals( TaskStatus.RanToCompletion ),
-                        task.Result.TestEquals( value ),
-                        task.Exception.TestNull(),
-                        task.IsCanceled.TestFalse(),
-                        task.IsFaulted.TestFalse(),
-                        task.IsCompletedSuccessfully.TestTrue() ) ) )
+                actualValues.TestAll( (task, _) => Assertion.All(
+                    "task",
+                    task.Status.TestEquals( TaskStatus.RanToCompletion ),
+                    task.Result.TestEquals( value ),
+                    task.Exception.TestNull(),
+                    task.IsCanceled.TestFalse(),
+                    task.IsFaulted.TestFalse(),
+                    task.IsCompletedSuccessfully.TestTrue() ) ) )
             .Go();
     }
 
@@ -152,15 +151,14 @@ public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
                 sut.HasSubscribers.TestFalse(),
                 subscriber.IsDisposed.TestTrue(),
                 actualValues.Count.TestEquals( 1 ),
-                actualValues.TestAll(
-                    (task, _) => Assertion.All(
-                        "task",
-                        task.Status.TestEquals( TaskStatus.Faulted ),
-                        task.Result.TestEquals( default ),
-                        task.Exception.TestType().AssignableTo<AggregateException>( e => e.InnerExceptions.TestSequence( [ exception ] ) ),
-                        task.IsCanceled.TestFalse(),
-                        task.IsFaulted.TestTrue(),
-                        task.IsCompletedSuccessfully.TestFalse() ) ) )
+                actualValues.TestAll( (task, _) => Assertion.All(
+                    "task",
+                    task.Status.TestEquals( TaskStatus.Faulted ),
+                    task.Result.TestEquals( default ),
+                    task.Exception.TestType().AssignableTo<AggregateException>( e => e.InnerExceptions.TestSequence( [ exception ] ) ),
+                    task.IsCanceled.TestFalse(),
+                    task.IsFaulted.TestTrue(),
+                    task.IsCompletedSuccessfully.TestFalse() ) ) )
             .Go();
     }
 
@@ -170,12 +168,11 @@ public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
         var eventReceivedTaskSource = new TaskCompletionSource();
         var actualValues = new List<FromTask<TEvent>>();
 
-        var listener = EventListener.Create<FromTask<TEvent>>(
-            e =>
-            {
-                actualValues.Add( e );
-                eventReceivedTaskSource.SetResult();
-            } );
+        var listener = EventListener.Create<FromTask<TEvent>>( e =>
+        {
+            actualValues.Add( e );
+            eventReceivedTaskSource.SetResult();
+        } );
 
         var sut = new TaskEventSource<TEvent>(
             async ct =>
@@ -193,15 +190,14 @@ public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
                 sut.HasSubscribers.TestFalse(),
                 subscriber.IsDisposed.TestTrue(),
                 actualValues.Count.TestEquals( 1 ),
-                actualValues.TestAll(
-                    (task, _) => Assertion.All(
-                        "task",
-                        task.Status.TestEquals( TaskStatus.Canceled ),
-                        task.Result.TestEquals( default ),
-                        task.Exception.TestNull(),
-                        task.IsCanceled.TestTrue(),
-                        task.IsFaulted.TestFalse(),
-                        task.IsCompletedSuccessfully.TestFalse() ) ) )
+                actualValues.TestAll( (task, _) => Assertion.All(
+                    "task",
+                    task.Status.TestEquals( TaskStatus.Canceled ),
+                    task.Result.TestEquals( default ),
+                    task.Exception.TestNull(),
+                    task.IsCanceled.TestTrue(),
+                    task.IsFaulted.TestFalse(),
+                    task.IsCompletedSuccessfully.TestFalse() ) ) )
             .Go();
     }
 
@@ -211,12 +207,11 @@ public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
         var eventReceivedTaskSource = new TaskCompletionSource();
         var actualValues = new List<FromTask<TEvent>>();
 
-        var listener = EventListener.Create<FromTask<TEvent>>(
-            e =>
-            {
-                actualValues.Add( e );
-                eventReceivedTaskSource.SetResult();
-            } );
+        var listener = EventListener.Create<FromTask<TEvent>>( e =>
+        {
+            actualValues.Add( e );
+            eventReceivedTaskSource.SetResult();
+        } );
 
         var sut = new TaskEventSource<TEvent>(
             async ct =>
@@ -234,15 +229,14 @@ public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
                 sut.HasSubscribers.TestFalse(),
                 subscriber.IsDisposed.TestTrue(),
                 actualValues.Count.TestEquals( 1 ),
-                actualValues.TestAll(
-                    (task, _) => Assertion.All(
-                        "task",
-                        task.Status.TestEquals( TaskStatus.Canceled ),
-                        task.Result.TestEquals( default ),
-                        task.Exception.TestNull(),
-                        task.IsCanceled.TestTrue(),
-                        task.IsFaulted.TestFalse(),
-                        task.IsCompletedSuccessfully.TestFalse() ) ) )
+                actualValues.TestAll( (task, _) => Assertion.All(
+                    "task",
+                    task.Status.TestEquals( TaskStatus.Canceled ),
+                    task.Result.TestEquals( default ),
+                    task.Exception.TestNull(),
+                    task.IsCanceled.TestTrue(),
+                    task.IsFaulted.TestFalse(),
+                    task.IsCompletedSuccessfully.TestFalse() ) ) )
             .Go();
     }
 
@@ -285,15 +279,14 @@ public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
                 sut.HasSubscribers.TestFalse(),
                 subscriber.IsDisposed.TestTrue(),
                 actualValues.Count.TestEquals( 1 ),
-                actualValues.TestAll(
-                    (task, _) => Assertion.All(
-                        "task",
-                        task.Status.TestEquals( TaskStatus.RanToCompletion ),
-                        task.Result.TestEquals( value ),
-                        task.Exception.TestNull(),
-                        task.IsCanceled.TestFalse(),
-                        task.IsFaulted.TestFalse(),
-                        task.IsCompletedSuccessfully.TestTrue() ) ) )
+                actualValues.TestAll( (task, _) => Assertion.All(
+                    "task",
+                    task.Status.TestEquals( TaskStatus.RanToCompletion ),
+                    task.Result.TestEquals( value ),
+                    task.Exception.TestNull(),
+                    task.IsCanceled.TestFalse(),
+                    task.IsFaulted.TestFalse(),
+                    task.IsCompletedSuccessfully.TestTrue() ) ) )
             .Go();
     }
 

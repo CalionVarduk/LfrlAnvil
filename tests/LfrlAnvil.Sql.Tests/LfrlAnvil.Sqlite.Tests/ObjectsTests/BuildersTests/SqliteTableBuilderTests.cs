@@ -89,10 +89,10 @@ public partial class SqliteTableBuilderTests : TestsBase
 
         var action = Lambda.Of( () => schema.Database.Changes.CompletePendingChanges() );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( SqliteDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( SqliteDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -548,10 +548,10 @@ public partial class SqliteTableBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( name ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( SqliteDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( SqliteDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -564,10 +564,10 @@ public partial class SqliteTableBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "bar" ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( SqliteDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( SqliteDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -580,10 +580,10 @@ public partial class SqliteTableBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "PK_T" ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( SqliteDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( SqliteDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -710,10 +710,10 @@ public partial class SqliteTableBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( SqliteDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( SqliteDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -727,10 +727,10 @@ public partial class SqliteTableBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( SqliteDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( SqliteDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 

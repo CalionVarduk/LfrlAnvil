@@ -64,11 +64,10 @@ public class ReactiveSchedulerTests : TestsBase
         var defaultInterval = Duration.FromTicks( defaultIntervalTicks );
         var spinWaitDurationHint = Duration.FromTicks( spinWaitDurationHintTicks );
 
-        var action = Lambda.Of(
-            () => new ReactiveScheduler<string>(
-                timestamps,
-                defaultInterval: defaultInterval,
-                spinWaitDurationHint: spinWaitDurationHint ) );
+        var action = Lambda.Of( () => new ReactiveScheduler<string>(
+            timestamps,
+            defaultInterval: defaultInterval,
+            spinWaitDurationHint: spinWaitDurationHint ) );
 
         action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
@@ -886,18 +885,16 @@ public class ReactiveSchedulerTests : TestsBase
 
         var action = Lambda.Of( () => sut.Clear() );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<AggregateException>(
-                        e => Assertion.All(
-                            e.InnerExceptions.Count.TestEquals( 2 ),
-                            e.InnerExceptions.ElementAtOrDefault( 0 )
-                                .TestType()
-                                .AssignableTo<AggregateException>( inner => inner.InnerExceptions.TestSequence( [ fooException ] ) ),
-                            e.InnerExceptions.ElementAtOrDefault( 1 )
-                                .TestType()
-                                .AssignableTo<AggregateException>( inner => inner.InnerExceptions.TestSequence( [ barException ] ) ),
-                            sut.TaskKeys.TestEmpty() ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<AggregateException>( e => Assertion.All(
+                    e.InnerExceptions.Count.TestEquals( 2 ),
+                    e.InnerExceptions.ElementAtOrDefault( 0 )
+                        .TestType()
+                        .AssignableTo<AggregateException>( inner => inner.InnerExceptions.TestSequence( [ fooException ] ) ),
+                    e.InnerExceptions.ElementAtOrDefault( 1 )
+                        .TestType()
+                        .AssignableTo<AggregateException>( inner => inner.InnerExceptions.TestSequence( [ barException ] ) ),
+                    sut.TaskKeys.TestEmpty() ) ) )
             .Go();
     }
 
@@ -908,13 +905,12 @@ public class ReactiveSchedulerTests : TestsBase
         var sut = new ReactiveScheduler<string>( timestamps );
         var state = sut.State;
 
-        var disposer = Task.Run(
-            async () =>
-            {
-                await Task.Delay( 15 );
-                state = sut.State;
-                sut.Dispose();
-            } );
+        var disposer = Task.Run( async () =>
+        {
+            await Task.Delay( 15 );
+            state = sut.State;
+            sut.Dispose();
+        } );
 
         sut.Start();
         await disposer;
@@ -1068,19 +1064,17 @@ public class ReactiveSchedulerTests : TestsBase
 
         var action = Lambda.Of( () => sut.Dispose() );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<AggregateException>(
-                        e => Assertion.All(
-                            e.InnerExceptions.Count.TestEquals( 2 ),
-                            e.InnerExceptions.ElementAtOrDefault( 0 )
-                                .TestType()
-                                .AssignableTo<AggregateException>( inner => inner.InnerExceptions.TestSequence( [ fooException ] ) ),
-                            e.InnerExceptions.ElementAtOrDefault( 1 )
-                                .TestType()
-                                .AssignableTo<AggregateException>( inner => inner.InnerExceptions.TestSequence( [ barException ] ) ),
-                            sut.State.TestEquals( ReactiveSchedulerState.Disposed ),
-                            sut.TaskKeys.TestEmpty() ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<AggregateException>( e => Assertion.All(
+                    e.InnerExceptions.Count.TestEquals( 2 ),
+                    e.InnerExceptions.ElementAtOrDefault( 0 )
+                        .TestType()
+                        .AssignableTo<AggregateException>( inner => inner.InnerExceptions.TestSequence( [ fooException ] ) ),
+                    e.InnerExceptions.ElementAtOrDefault( 1 )
+                        .TestType()
+                        .AssignableTo<AggregateException>( inner => inner.InnerExceptions.TestSequence( [ barException ] ) ),
+                    sut.State.TestEquals( ReactiveSchedulerState.Disposed ),
+                    sut.TaskKeys.TestEmpty() ) ) )
             .Go();
     }
 
@@ -1479,11 +1473,10 @@ public class ReactiveSchedulerTests : TestsBase
                     .Invocation.TestEquals( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) ),
                 fooTask.Completions.ElementAtOrDefault( 0 )
                     .Exception.TestType()
-                    .AssignableTo<AggregateException>(
-                        inner => Assertion.All(
-                            "inner",
-                            inner.InnerExceptions.Count.TestEquals( 1 ),
-                            inner.InnerExceptions.TestAll( (e, _) => e.TestRefEquals( exception ) ) ) ),
+                    .AssignableTo<AggregateException>( inner => Assertion.All(
+                        "inner",
+                        inner.InnerExceptions.Count.TestEquals( 1 ),
+                        inner.InnerExceptions.TestAll( (e, _) => e.TestRefEquals( exception ) ) ) ),
                 fooTask.Completions.ElementAtOrDefault( 0 ).CancellationReason.TestNull(),
                 AssertTaskState(
                     lastState,
@@ -1745,14 +1738,11 @@ public class ReactiveSchedulerTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove( "foo" ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<AggregateException>(
-                        e => e.InnerExceptions.ElementAtOrDefault( 0 )
-                            .TestType()
-                            .AssignableTo<AggregateException>(
-                                inner =>
-                                    inner.InnerExceptions.TestSequence( [ exception ] ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<AggregateException>( e => e.InnerExceptions.ElementAtOrDefault( 0 )
+                    .TestType()
+                    .AssignableTo<AggregateException>( inner =>
+                        inner.InnerExceptions.TestSequence( [ exception ] ) ) ) )
             .Go();
     }
 
@@ -2218,49 +2208,48 @@ public class ReactiveSchedulerTests : TestsBase
         long activeTasks = 0,
         long maxActiveTasks = 0)
     {
-        return state.TestNotNull(
-            s =>
+        return state.TestNotNull( s =>
+        {
+            var assertions = new List<Assertion>
             {
-                var assertions = new List<Assertion>
-                {
-                    s.NextTimestamp.TestEquals( nextTimestamp ),
-                    s.Interval.TestEquals( interval ),
-                    s.Repetitions.TestEquals( repetitions ),
-                    s.IsDisposed.TestEquals( isDisposed ),
-                    s.IsInfinite.TestEquals( isInfinite ),
-                    s.State.Task.TestRefEquals( task ),
-                    s.State.FirstInvocationTimestamp.TestEquals( firstInvocationTimestamp ),
-                    s.State.LastInvocationTimestamp.TestEquals( lastInvocationTimestamp ),
-                    s.State.TotalInvocations.TestEquals( totalInvocations ),
-                    s.State.ActiveInvocations.TestEquals( activeInvocations ),
-                    s.State.CompletedInvocations.TestEquals( completedInvocations ),
-                    s.State.SkippedInvocations.TestEquals( skippedInvocations ),
-                    s.State.DelayedInvocations.TestEquals( delayedInvocations ),
-                    s.State.FailedInvocations.TestEquals( failedInvocations ),
-                    s.State.CancelledInvocations.TestEquals( cancelledInvocations ),
-                    s.State.QueuedInvocations.TestEquals( queuedInvocations ),
-                    s.State.MaxQueuedInvocations.TestEquals( maxQueuedInvocations ),
-                    s.State.ActiveTasks.TestEquals( activeTasks ),
-                    s.State.MaxActiveTasks.TestEquals( maxActiveTasks )
-                };
+                s.NextTimestamp.TestEquals( nextTimestamp ),
+                s.Interval.TestEquals( interval ),
+                s.Repetitions.TestEquals( repetitions ),
+                s.IsDisposed.TestEquals( isDisposed ),
+                s.IsInfinite.TestEquals( isInfinite ),
+                s.State.Task.TestRefEquals( task ),
+                s.State.FirstInvocationTimestamp.TestEquals( firstInvocationTimestamp ),
+                s.State.LastInvocationTimestamp.TestEquals( lastInvocationTimestamp ),
+                s.State.TotalInvocations.TestEquals( totalInvocations ),
+                s.State.ActiveInvocations.TestEquals( activeInvocations ),
+                s.State.CompletedInvocations.TestEquals( completedInvocations ),
+                s.State.SkippedInvocations.TestEquals( skippedInvocations ),
+                s.State.DelayedInvocations.TestEquals( delayedInvocations ),
+                s.State.FailedInvocations.TestEquals( failedInvocations ),
+                s.State.CancelledInvocations.TestEquals( cancelledInvocations ),
+                s.State.QueuedInvocations.TestEquals( queuedInvocations ),
+                s.State.MaxQueuedInvocations.TestEquals( maxQueuedInvocations ),
+                s.State.ActiveTasks.TestEquals( activeTasks ),
+                s.State.MaxActiveTasks.TestEquals( maxActiveTasks )
+            };
 
-                if ( completedInvocations > 0 )
-                {
-                    assertions.Add( s.State.MinElapsedTime.Ticks.TestGreaterThanOrEqualTo( 0 ) );
-                    assertions.Add( s.State.MinElapsedTime.Ticks.TestLessThanOrEqualTo( s.State.MaxElapsedTime.Ticks ) );
-                    assertions.Add( s.State.MaxElapsedTime.Ticks.TestGreaterThanOrEqualTo( s.State.MinElapsedTime.Ticks ) );
-                    assertions.Add( s.State.AverageElapsedTime.Ticks.TestGreaterThanOrEqualTo( s.State.MinElapsedTime.Ticks ) );
-                    assertions.Add( s.State.AverageElapsedTime.Ticks.TestLessThanOrEqualTo( s.State.MaxElapsedTime.Ticks ) );
-                }
-                else
-                {
-                    assertions.Add( s.State.MinElapsedTime.TestEquals( Duration.MaxValue ) );
-                    assertions.Add( s.State.MaxElapsedTime.TestEquals( Duration.MinValue ) );
-                    assertions.Add( s.State.AverageElapsedTime.TestEquals( FloatingDuration.Zero ) );
-                }
+            if ( completedInvocations > 0 )
+            {
+                assertions.Add( s.State.MinElapsedTime.Ticks.TestGreaterThanOrEqualTo( 0 ) );
+                assertions.Add( s.State.MinElapsedTime.Ticks.TestLessThanOrEqualTo( s.State.MaxElapsedTime.Ticks ) );
+                assertions.Add( s.State.MaxElapsedTime.Ticks.TestGreaterThanOrEqualTo( s.State.MinElapsedTime.Ticks ) );
+                assertions.Add( s.State.AverageElapsedTime.Ticks.TestGreaterThanOrEqualTo( s.State.MinElapsedTime.Ticks ) );
+                assertions.Add( s.State.AverageElapsedTime.Ticks.TestLessThanOrEqualTo( s.State.MaxElapsedTime.Ticks ) );
+            }
+            else
+            {
+                assertions.Add( s.State.MinElapsedTime.TestEquals( Duration.MaxValue ) );
+                assertions.Add( s.State.MaxElapsedTime.TestEquals( Duration.MinValue ) );
+                assertions.Add( s.State.AverageElapsedTime.TestEquals( FloatingDuration.Zero ) );
+            }
 
-                return Assertion.All( "state", assertions );
-            } );
+            return Assertion.All( "state", assertions );
+        } );
     }
 
     private sealed class ScheduleTask : ScheduleTask<string>
@@ -2467,15 +2456,14 @@ public class ReactiveSchedulerTests : TestsBase
                 Start();
 
             var continuation = _continuations[invocationId];
-            return Task.Run(
-                () =>
-                {
-                    callback?.Invoke();
-                    if ( continuation.IsImmediate )
-                        ContinueCore( continuation.TargetId );
+            return Task.Run( () =>
+            {
+                callback?.Invoke();
+                if ( continuation.IsImmediate )
+                    ContinueCore( continuation.TargetId );
 
-                    WaitFor( invocationId );
-                } );
+                WaitFor( invocationId );
+            } );
         }
 
         public void OnCompleted(long invocationId)

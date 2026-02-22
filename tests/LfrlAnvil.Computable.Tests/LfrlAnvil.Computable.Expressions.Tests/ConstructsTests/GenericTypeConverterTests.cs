@@ -42,10 +42,8 @@ public class GenericTypeConverterTests : TypeConvertersTestsBase
             operandValue: Fixture.Create<string>(),
             (operand, result) =>
                 result.TestType()
-                    .AssignableTo<UnaryExpression>(
-                        unaryResult => unaryResult.Operand.TestType()
-                            .AssignableTo<UnaryExpression>(
-                                intermediateOperand => intermediateOperand.Operand.TestRefEquals( operand ) ) ) );
+                    .AssignableTo<UnaryExpression>( unaryResult => unaryResult.Operand.TestType()
+                        .AssignableTo<UnaryExpression>( intermediateOperand => intermediateOperand.Operand.TestRefEquals( operand ) ) ) );
     }
 
     [Fact]

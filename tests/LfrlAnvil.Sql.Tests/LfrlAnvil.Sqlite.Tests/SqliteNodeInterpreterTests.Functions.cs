@@ -439,10 +439,10 @@ public partial class SqliteNodeInterpreterTests
 
             var action = Lambda.Of( () => sut.Visit( function ) );
 
-            action.Test(
-                    exc => exc.TestType()
-                        .Exact<UnrecognizedSqlNodeException>(
-                            e => Assertion.All( e.Node.TestRefEquals( function ), e.Visitor.TestRefEquals( sut ) ) ) )
+            action.Test( exc => exc.TestType()
+                    .Exact<UnrecognizedSqlNodeException>( e => Assertion.All(
+                        e.Node.TestRefEquals( function ),
+                        e.Visitor.TestRefEquals( sut ) ) ) )
                 .Go();
         }
 
@@ -721,10 +721,10 @@ public partial class SqliteNodeInterpreterTests
 
             var action = Lambda.Of( () => sut.Visit( function ) );
 
-            action.Test(
-                    exc => exc.TestType()
-                        .Exact<UnrecognizedSqlNodeException>(
-                            e => Assertion.All( e.Node.TestRefEquals( function ), e.Visitor.TestRefEquals( sut ) ) ) )
+            action.Test( exc => exc.TestType()
+                    .Exact<UnrecognizedSqlNodeException>( e => Assertion.All(
+                        e.Node.TestRefEquals( function ),
+                        e.Visitor.TestRefEquals( sut ) ) ) )
                 .Go();
         }
     }

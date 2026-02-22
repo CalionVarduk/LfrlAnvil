@@ -216,8 +216,8 @@ public class NonGenericClassTests : TypeTestsBase
     public void FindMember_ShouldReturnCorrectMember_WhenMemberExistsInBaseType()
     {
         var sut = typeof( FindMemberSubClass );
-        var result = sut.FindMember(
-            t => t != typeof( FindMemberSubClass ) ? t.GetMethod( "GetEnumerator", BindingFlags.Public | BindingFlags.Instance ) : null );
+        var result = sut.FindMember( t =>
+            t != typeof( FindMemberSubClass ) ? t.GetMethod( "GetEnumerator", BindingFlags.Public | BindingFlags.Instance ) : null );
 
         Assertion.All(
                 result.TestNotNull(),
@@ -242,12 +242,11 @@ public class NonGenericClassTests : TypeTestsBase
     public void FindMember_ShouldReturnCorrectMember_WhenMemberIsImplementedExplicitlyFromNestedInterface()
     {
         var sut = typeof( FindMemberClass );
-        var result = sut.FindMember(
-            t =>
-            {
-                var m = t.GetMethod( "GetEnumerator", BindingFlags.Public | BindingFlags.Instance );
-                return m is not null && m.ReturnType == typeof( IEnumerator ) ? m : null;
-            } );
+        var result = sut.FindMember( t =>
+        {
+            var m = t.GetMethod( "GetEnumerator", BindingFlags.Public | BindingFlags.Instance );
+            return m is not null && m.ReturnType == typeof( IEnumerator ) ? m : null;
+        } );
 
         Assertion.All(
                 result.TestNotNull(),

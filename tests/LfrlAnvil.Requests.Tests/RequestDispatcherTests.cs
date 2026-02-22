@@ -33,8 +33,8 @@ public class RequestDispatcherTests : TestsBase
 
         var action = Lambda.Of( () => sut.Dispatch( new TestRequestClass() ) );
 
-        action.Test(
-                exc => exc.TestType().Exact<MissingRequestHandlerException>( e => e.RequestType.TestEquals( typeof( TestRequestClass ) ) ) )
+        action.Test( exc =>
+                exc.TestType().Exact<MissingRequestHandlerException>( e => e.RequestType.TestEquals( typeof( TestRequestClass ) ) ) )
             .Go();
     }
 
@@ -46,12 +46,10 @@ public class RequestDispatcherTests : TestsBase
 
         var action = Lambda.Of( () => sut.Dispatch( new InvalidTestRequestClass() ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<InvalidRequestTypeException>(
-                        e => Assertion.All(
-                            e.RequestType.TestEquals( typeof( InvalidTestRequestClass ) ),
-                            e.ExpectedType.TestEquals( typeof( TestRequestClass ) ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<InvalidRequestTypeException>( e => Assertion.All(
+                    e.RequestType.TestEquals( typeof( InvalidTestRequestClass ) ),
+                    e.ExpectedType.TestEquals( typeof( TestRequestClass ) ) ) ) )
             .Go();
     }
 
@@ -82,9 +80,8 @@ public class RequestDispatcherTests : TestsBase
 
         var action = Lambda.Of( () => sut.Dispatch<TestRequestStruct, int>( new TestRequestStruct() ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<MissingRequestHandlerException>( e => e.RequestType.TestEquals( typeof( TestRequestStruct ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<MissingRequestHandlerException>( e => e.RequestType.TestEquals( typeof( TestRequestStruct ) ) ) )
             .Go();
     }
 
@@ -132,12 +129,10 @@ public class RequestDispatcherTests : TestsBase
 
         var action = Lambda.Of( () => sut.TryDispatch( new InvalidTestRequestClass(), out _ ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<InvalidRequestTypeException>(
-                        e => Assertion.All(
-                            e.RequestType.TestEquals( typeof( InvalidTestRequestClass ) ),
-                            e.ExpectedType.TestEquals( typeof( TestRequestClass ) ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<InvalidRequestTypeException>( e => Assertion.All(
+                    e.RequestType.TestEquals( typeof( InvalidTestRequestClass ) ),
+                    e.ExpectedType.TestEquals( typeof( TestRequestClass ) ) ) ) )
             .Go();
     }
 

@@ -190,8 +190,9 @@ public class MathUtilsTests : TestsBase
     [InlineData( -1 )]
     public void ConvertToFractions_ShouldThrowArgumentOutOfRangeException_WhenAtLeastOnePercentIsNotPositive(long value)
     {
-        var action = Lambda.Of(
-            () => MathUtils.ConvertToFractions( new[] { Percent.One, Percent.One, Percent.Normalize( value ) }, new Fraction( 1 ) ) );
+        var action = Lambda.Of( () => MathUtils.ConvertToFractions(
+            new[] { Percent.One, Percent.One, Percent.Normalize( value ) },
+            new Fraction( 1 ) ) );
 
         action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }

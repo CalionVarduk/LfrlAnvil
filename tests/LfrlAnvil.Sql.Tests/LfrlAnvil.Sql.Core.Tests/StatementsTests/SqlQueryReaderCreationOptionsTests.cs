@@ -137,8 +137,9 @@ public class SqlQueryReaderCreationOptionsTests : TestsBase
 
         var result = sut.CreateMemberConfigurationByNameLookup( typeof( IDataReader ) );
 
-        result.TestNotNull(
-                r => Assertion.All( r.Keys.TestSetEqual( [ "foo", "bar", "qux" ] ), r.Values.TestSetEqual( [ cfg1, cfg2, cfg3 ] ) ) )
+        result.TestNotNull( r => Assertion.All(
+                r.Keys.TestSetEqual( [ "foo", "bar", "qux" ] ),
+                r.Values.TestSetEqual( [ cfg1, cfg2, cfg3 ] ) ) )
             .Go();
     }
 

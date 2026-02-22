@@ -40,10 +40,10 @@ public partial class MySqlDatabaseBuilderTests
 
             var action = Lambda.Of( () => sut.Create( sut.Database.Schemas.Default.Name ) );
 
-            action.Test(
-                    exc => exc.TestType()
-                        .Exact<SqlObjectBuilderException>(
-                            e => Assertion.All( e.Dialect.TestEquals( MySqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            action.Test( exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                        e.Dialect.TestEquals( MySqlDialect.Instance ),
+                        e.Errors.Count.TestEquals( 1 ) ) ) )
                 .Go();
         }
 
@@ -59,10 +59,10 @@ public partial class MySqlDatabaseBuilderTests
 
             var action = Lambda.Of( () => sut.Create( name ) );
 
-            action.Test(
-                    exc => exc.TestType()
-                        .Exact<SqlObjectBuilderException>(
-                            e => Assertion.All( e.Dialect.TestEquals( MySqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            action.Test( exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                        e.Dialect.TestEquals( MySqlDialect.Instance ),
+                        e.Errors.Count.TestEquals( 1 ) ) ) )
                 .Go();
         }
 
@@ -112,10 +112,10 @@ public partial class MySqlDatabaseBuilderTests
 
             var action = Lambda.Of( () => sut.Create( name ) );
 
-            action.Test(
-                    exc => exc.TestType()
-                        .Exact<SqlObjectBuilderException>(
-                            e => Assertion.All( e.Dialect.TestEquals( MySqlDialect.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+            action.Test( exc => exc.TestType()
+                    .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                        e.Dialect.TestEquals( MySqlDialect.Instance ),
+                        e.Errors.Count.TestEquals( 1 ) ) ) )
                 .Go();
         }
 

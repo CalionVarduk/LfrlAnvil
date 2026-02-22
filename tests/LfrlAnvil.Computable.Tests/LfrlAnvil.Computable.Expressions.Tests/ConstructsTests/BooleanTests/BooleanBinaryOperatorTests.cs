@@ -439,12 +439,11 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionCompareBooleanOperator(),
             expectedNodeType: ExpressionType.Call,
             (left, right, result) => result.TestType()
-                .AssignableTo<MethodCallExpression>(
-                    methodCallResult => Assertion.All(
-                        "methodCallResult",
-                        methodCallResult.Object.TestRefEquals( left ),
-                        methodCallResult.Arguments.TestSequence( [ right ] ),
-                        methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
+                .AssignableTo<MethodCallExpression>( methodCallResult => Assertion.All(
+                    "methodCallResult",
+                    methodCallResult.Object.TestRefEquals( left ),
+                    methodCallResult.Arguments.TestSequence( [ right ] ),
+                    methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
     }
 
     [Theory]
@@ -474,12 +473,11 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Call,
             leftValue: Fixture.Create<bool>(),
             (left, right, result) => result.TestType()
-                .AssignableTo<MethodCallExpression>(
-                    methodCallResult => Assertion.All(
-                        "methodCallResult",
-                        methodCallResult.Object.TestRefEquals( left ),
-                        methodCallResult.Arguments.TestSequence( [ right ] ),
-                        methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
+                .AssignableTo<MethodCallExpression>( methodCallResult => Assertion.All(
+                    "methodCallResult",
+                    methodCallResult.Object.TestRefEquals( left ),
+                    methodCallResult.Arguments.TestSequence( [ right ] ),
+                    methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
     }
 
     [Fact]
@@ -490,11 +488,10 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Call,
             rightValue: Fixture.Create<bool>(),
             (left, right, result) => result.TestType()
-                .AssignableTo<MethodCallExpression>(
-                    methodCallResult => Assertion.All(
-                        "methodCallResult",
-                        methodCallResult.Object.TestRefEquals( left ),
-                        methodCallResult.Arguments.TestSequence( [ right ] ),
-                        methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
+                .AssignableTo<MethodCallExpression>( methodCallResult => Assertion.All(
+                    "methodCallResult",
+                    methodCallResult.Object.TestRefEquals( left ),
+                    methodCallResult.Arguments.TestSequence( [ right ] ),
+                    methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
     }
 }

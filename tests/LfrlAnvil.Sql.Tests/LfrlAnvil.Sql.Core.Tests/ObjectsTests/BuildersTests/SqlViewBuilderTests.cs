@@ -128,10 +128,10 @@ public class SqlViewBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( name ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( SqlDialectMock.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -144,10 +144,10 @@ public class SqlViewBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "bar" ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( SqlDialectMock.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -161,10 +161,10 @@ public class SqlViewBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetName( "T" ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( SqlDialectMock.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -216,10 +216,10 @@ public class SqlViewBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlObjectBuilderException>(
-                        e => Assertion.All( e.Dialect.TestEquals( SqlDialectMock.Instance ), e.Errors.Count.TestEquals( 1 ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( SqlDialectMock.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 

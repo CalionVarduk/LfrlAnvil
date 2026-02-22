@@ -298,11 +298,10 @@ public class ParsedExpressionTests : TestsBase
         var factory = builder.Build();
         var sut = factory.Create<decimal, decimal>( input );
 
-        var action = Lambda.Of(
-            () => sut
-                .BindArguments( KeyValuePair.Create( "b", bValue ) )
-                .BindArguments( KeyValuePair.Create( "c", cValue ) )
-                .BindArguments( KeyValuePair.Create( "f", fValue ) ) );
+        var action = Lambda.Of( () => sut
+            .BindArguments( KeyValuePair.Create( "b", bValue ) )
+            .BindArguments( KeyValuePair.Create( "c", cValue ) )
+            .BindArguments( KeyValuePair.Create( "f", fValue ) ) );
 
         action.Test( exc => exc.TestType().Exact<ParsedExpressionArgumentBindingException>() ).Go();
     }

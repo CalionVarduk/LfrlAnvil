@@ -9,8 +9,8 @@ public class ElementCountInRangeValidatorTests : ValidatorTestsBase
     [Fact]
     public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenMinCountIsLessThanZero()
     {
-        var action = Lambda.Of(
-            () => new IsElementCountInRangeValidator<int, string>( minCount: -1, maxCount: 0, failureResult: Fixture.Create<string>() ) );
+        var action = Lambda.Of( () =>
+            new IsElementCountInRangeValidator<int, string>( minCount: -1, maxCount: 0, failureResult: Fixture.Create<string>() ) );
 
         action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
@@ -18,8 +18,8 @@ public class ElementCountInRangeValidatorTests : ValidatorTestsBase
     [Fact]
     public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenMinCountIsGreaterThanMaxCount()
     {
-        var action = Lambda.Of(
-            () => new IsElementCountInRangeValidator<int, string>( minCount: 2, maxCount: 1, failureResult: Fixture.Create<string>() ) );
+        var action = Lambda.Of( () =>
+            new IsElementCountInRangeValidator<int, string>( minCount: 2, maxCount: 1, failureResult: Fixture.Create<string>() ) );
 
         action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }

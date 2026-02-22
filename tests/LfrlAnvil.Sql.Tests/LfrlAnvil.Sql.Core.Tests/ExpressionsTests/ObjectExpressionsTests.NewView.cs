@@ -130,10 +130,9 @@ public partial class ObjectExpressionsTests
                     result.Name.TestEquals( "a" ),
                     result.RecordSet.TestRefEquals( sut ),
                     result.TestType()
-                        .AssignableTo<SqlQueryDataFieldNode>(
-                            dataField => Assertion.All(
-                                dataField.Selection.TestRefEquals( selection ),
-                                dataField.Expression.TestRefEquals( dataSource["common.t"]["a"] ) ) ),
+                        .AssignableTo<SqlQueryDataFieldNode>( dataField => Assertion.All(
+                            dataField.Selection.TestRefEquals( selection ),
+                            dataField.Expression.TestRefEquals( dataSource["common.t"]["a"] ) ) ),
                     text.TestEquals( expectedText ) )
                 .Go();
         }

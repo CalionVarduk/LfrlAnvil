@@ -47,8 +47,8 @@ public class EventListenerConcurrentAllDecoratorTests : TestsBase
 
         Assertion.All(
                 actualEvents.TestSequence( expectedSourceEvents ),
-                sourceEvents.TestAll(
-                    (e, _) => e.CallAt( 0 ).Arguments.FirstOrDefault().TestType().AssignableTo<EventListenerConcurrentDecorator<int>>() ) )
+                sourceEvents.TestAll( (e, _) =>
+                    e.CallAt( 0 ).Arguments.FirstOrDefault().TestType().AssignableTo<EventListenerConcurrentDecorator<int>>() ) )
             .Go();
     }
 

@@ -21,10 +21,9 @@ public partial class ObjectExpressionsTests : TestsBase
                 sut.NodeType.TestEquals( SqlNodeType.Literal ),
                 text.TestEquals( "\"foo\" : System.String" ),
                 sut.TestType()
-                    .AssignableTo<SqlLiteralNode<string>>(
-                        literalNode => Assertion.All(
-                            literalNode.Value.TestEquals( "foo" ),
-                            literalNode.Type.TestEquals( TypeNullability.Create<string>() ) ) ) )
+                    .AssignableTo<SqlLiteralNode<string>>( literalNode => Assertion.All(
+                        literalNode.Value.TestEquals( "foo" ),
+                        literalNode.Type.TestEquals( TypeNullability.Create<string>() ) ) ) )
             .Go();
     }
 
@@ -50,10 +49,9 @@ public partial class ObjectExpressionsTests : TestsBase
                 sut.NodeType.TestEquals( SqlNodeType.Literal ),
                 text.TestEquals( "\"42\" : System.Int32" ),
                 sut.TestType()
-                    .AssignableTo<SqlLiteralNode<int>>(
-                        literalNode => Assertion.All(
-                            literalNode.Value.TestEquals( 42 ),
-                            literalNode.Type.TestEquals( TypeNullability.Create<int>() ) ) ) )
+                    .AssignableTo<SqlLiteralNode<int>>( literalNode => Assertion.All(
+                        literalNode.Value.TestEquals( 42 ),
+                        literalNode.Type.TestEquals( TypeNullability.Create<int>() ) ) ) )
             .Go();
     }
 
@@ -67,10 +65,9 @@ public partial class ObjectExpressionsTests : TestsBase
                 sut.NodeType.TestEquals( SqlNodeType.Literal ),
                 text.TestEquals( "\"42\" : System.Int32" ),
                 sut.TestType()
-                    .AssignableTo<SqlLiteralNode<int>>(
-                        literalNode => Assertion.All(
-                            literalNode.Value.TestEquals( 42 ),
-                            literalNode.Type.TestEquals( TypeNullability.Create<int>() ) ) ) )
+                    .AssignableTo<SqlLiteralNode<int>>( literalNode => Assertion.All(
+                        literalNode.Value.TestEquals( 42 ),
+                        literalNode.Type.TestEquals( TypeNullability.Create<int>() ) ) ) )
             .Go();
     }
 
@@ -189,29 +186,25 @@ public partial class ObjectExpressionsTests : TestsBase
         var result = SqlNode.ParameterRange<int>( "foo", count: 3 );
 
         result.TestCount( count => count.TestEquals( 3 ) )
-            .Then(
-                r => Assertion.All(
-                    r[0]
-                        .TestType()
-                        .AssignableTo<SqlParameterNode>(
-                            n => Assertion.All(
-                                n.Name.TestEquals( "foo1" ),
-                                n.Type.TestEquals( TypeNullability.Create<int>() ),
-                                n.Index.TestNull() ) ),
-                    r[1]
-                        .TestType()
-                        .AssignableTo<SqlParameterNode>(
-                            n => Assertion.All(
-                                n.Name.TestEquals( "foo2" ),
-                                n.Type.TestEquals( TypeNullability.Create<int>() ),
-                                n.Index.TestNull() ) ),
-                    r[2]
-                        .TestType()
-                        .AssignableTo<SqlParameterNode>(
-                            n => Assertion.All(
-                                n.Name.TestEquals( "foo3" ),
-                                n.Type.TestEquals( TypeNullability.Create<int>() ),
-                                n.Index.TestNull() ) ) ) )
+            .Then( r => Assertion.All(
+                r[0]
+                    .TestType()
+                    .AssignableTo<SqlParameterNode>( n => Assertion.All(
+                        n.Name.TestEquals( "foo1" ),
+                        n.Type.TestEquals( TypeNullability.Create<int>() ),
+                        n.Index.TestNull() ) ),
+                r[1]
+                    .TestType()
+                    .AssignableTo<SqlParameterNode>( n => Assertion.All(
+                        n.Name.TestEquals( "foo2" ),
+                        n.Type.TestEquals( TypeNullability.Create<int>() ),
+                        n.Index.TestNull() ) ),
+                r[2]
+                    .TestType()
+                    .AssignableTo<SqlParameterNode>( n => Assertion.All(
+                        n.Name.TestEquals( "foo3" ),
+                        n.Type.TestEquals( TypeNullability.Create<int>() ),
+                        n.Index.TestNull() ) ) ) )
             .Go();
     }
 
@@ -221,29 +214,25 @@ public partial class ObjectExpressionsTests : TestsBase
         var result = SqlNode.ParameterRange<int>( "foo", count: 3, firstIndex: 5 );
 
         result.TestCount( count => count.TestEquals( 3 ) )
-            .Then(
-                r => Assertion.All(
-                    r[0]
-                        .TestType()
-                        .AssignableTo<SqlParameterNode>(
-                            n => Assertion.All(
-                                n.Name.TestEquals( "foo1" ),
-                                n.Type.TestEquals( TypeNullability.Create<int>() ),
-                                n.Index.TestEquals( 5 ) ) ),
-                    r[1]
-                        .TestType()
-                        .AssignableTo<SqlParameterNode>(
-                            n => Assertion.All(
-                                n.Name.TestEquals( "foo2" ),
-                                n.Type.TestEquals( TypeNullability.Create<int>() ),
-                                n.Index.TestEquals( 6 ) ) ),
-                    r[2]
-                        .TestType()
-                        .AssignableTo<SqlParameterNode>(
-                            n => Assertion.All(
-                                n.Name.TestEquals( "foo3" ),
-                                n.Type.TestEquals( TypeNullability.Create<int>() ),
-                                n.Index.TestEquals( 7 ) ) ) ) )
+            .Then( r => Assertion.All(
+                r[0]
+                    .TestType()
+                    .AssignableTo<SqlParameterNode>( n => Assertion.All(
+                        n.Name.TestEquals( "foo1" ),
+                        n.Type.TestEquals( TypeNullability.Create<int>() ),
+                        n.Index.TestEquals( 5 ) ) ),
+                r[1]
+                    .TestType()
+                    .AssignableTo<SqlParameterNode>( n => Assertion.All(
+                        n.Name.TestEquals( "foo2" ),
+                        n.Type.TestEquals( TypeNullability.Create<int>() ),
+                        n.Index.TestEquals( 6 ) ) ),
+                r[2]
+                    .TestType()
+                    .AssignableTo<SqlParameterNode>( n => Assertion.All(
+                        n.Name.TestEquals( "foo3" ),
+                        n.Type.TestEquals( TypeNullability.Create<int>() ),
+                        n.Index.TestEquals( 7 ) ) ) ) )
             .Go();
     }
 
@@ -796,7 +785,7 @@ public partial class ObjectExpressionsTests : TestsBase
                       SELECT a, b
                       FROM foo
                       WHERE value > 10
-                    
+
                       UNION
                       
                       SELECT a, c AS b
@@ -840,7 +829,7 @@ public partial class ObjectExpressionsTests : TestsBase
                       FROM [T1]
                       SELECT
                         ([T1].[a] : ?)
-                    
+
                       UNION
                       
                       FROM [T2]
@@ -1005,11 +994,10 @@ public partial class ObjectExpressionsTests : TestsBase
                 sut.RecordSets.Count.TestEquals( 2 ),
                 sut.RecordSets.TestSetEqual( [ recordSet, inner ] ),
                 sut.Joins.Count.TestEquals( 1 ),
-                sut.Joins.TestAll(
-                    (n, _) => Assertion.All(
-                        n.JoinType.TestEquals( SqlJoinType.Inner ),
-                        n.InnerRecordSet.TestRefEquals( inner ),
-                        n.OnExpression.TestType().Exact<SqlTrueNode>() ) ),
+                sut.Joins.TestAll( (n, _) => Assertion.All(
+                    n.JoinType.TestEquals( SqlJoinType.Inner ),
+                    n.InnerRecordSet.TestRefEquals( inner ),
+                    n.OnExpression.TestType().Exact<SqlTrueNode>() ) ),
                 text.TestEquals(
                     """
                     FROM [foo]
@@ -1098,11 +1086,10 @@ public partial class ObjectExpressionsTests : TestsBase
                 sut.RecordSets.Count.TestEquals( 2 ),
                 sut.RecordSets.TestSetEqual( [ dataSource.From, inner ] ),
                 sut.Joins.Count.TestEquals( 1 ),
-                sut.Joins.TestAll(
-                    (n, _) => Assertion.All(
-                        n.JoinType.TestEquals( SqlJoinType.Inner ),
-                        n.InnerRecordSet.TestRefEquals( inner ),
-                        n.OnExpression.TestType().Exact<SqlTrueNode>() ) ),
+                sut.Joins.TestAll( (n, _) => Assertion.All(
+                    n.JoinType.TestEquals( SqlJoinType.Inner ),
+                    n.InnerRecordSet.TestRefEquals( inner ),
+                    n.OnExpression.TestType().Exact<SqlTrueNode>() ) ),
                 text.TestEquals(
                     """
                     FROM [foo]
@@ -1128,12 +1115,11 @@ public partial class ObjectExpressionsTests : TestsBase
                 sut.RecordSets.Count.TestEquals( 3 ),
                 sut.RecordSets.TestSetEqual( [ from, firstJointed, inner ] ),
                 sut.Joins.TestCount( count => count.TestEquals( 2 ) )
-                    .Then(
-                        joins => Assertion.All(
-                            joins[0].TestRefEquals( firstJoinOn ),
-                            joins[1].JoinType.TestEquals( SqlJoinType.Inner ),
-                            joins[1].InnerRecordSet.TestRefEquals( inner ),
-                            joins[1].OnExpression.TestType().Exact<SqlFalseNode>() ) ),
+                    .Then( joins => Assertion.All(
+                        joins[0].TestRefEquals( firstJoinOn ),
+                        joins[1].JoinType.TestEquals( SqlJoinType.Inner ),
+                        joins[1].InnerRecordSet.TestRefEquals( inner ),
+                        joins[1].OnExpression.TestType().Exact<SqlFalseNode>() ) ),
                 text.TestEquals(
                     """
                     FROM [foo]
@@ -1218,7 +1204,7 @@ public partial class ObjectExpressionsTests : TestsBase
                     RECURSIVE [A] (
                       
                       SELECT * FROM foo
-                    
+
                       UNION
                       
                       FROM [A]

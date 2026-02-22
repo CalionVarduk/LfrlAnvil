@@ -83,12 +83,11 @@ public class IfTests : TestsBase
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Conditional ),
                 result.TestType()
-                    .AssignableTo<ConditionalExpression>(
-                        conditional => Assertion.All(
-                            "Conditional",
-                            conditional.Test.TestRefEquals( parameters[0] ),
-                            conditional.IfTrue.TestRefEquals( parameters[1] ),
-                            conditional.IfFalse.TestRefEquals( parameters[2] ) ) ) )
+                    .AssignableTo<ConditionalExpression>( conditional => Assertion.All(
+                        "Conditional",
+                        conditional.Test.TestRefEquals( parameters[0] ),
+                        conditional.IfTrue.TestRefEquals( parameters[1] ),
+                        conditional.IfFalse.TestRefEquals( parameters[2] ) ) ) )
             .Go();
     }
 
@@ -139,18 +138,16 @@ public class IfTests : TestsBase
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Conditional ),
                 result.TestType()
-                    .AssignableTo<ConditionalExpression>(
-                        conditional => Assertion.All(
-                            "conditional",
-                            conditional.Test.TestRefEquals( parameters[0] ),
-                            conditional.IfTrue.NodeType.TestEquals( ExpressionType.Throw ),
-                            conditional.IfFalse.TestRefEquals( parameters[2] ),
-                            conditional.IfTrue.TestType()
-                                .AssignableTo<UnaryExpression>(
-                                    @throw => Assertion.All(
-                                        "@throw",
-                                        @throw.Type.TestEquals( parameters[2].Type ),
-                                        @throw.Operand.TestRefEquals( exception ) ) ) ) ) )
+                    .AssignableTo<ConditionalExpression>( conditional => Assertion.All(
+                        "conditional",
+                        conditional.Test.TestRefEquals( parameters[0] ),
+                        conditional.IfTrue.NodeType.TestEquals( ExpressionType.Throw ),
+                        conditional.IfFalse.TestRefEquals( parameters[2] ),
+                        conditional.IfTrue.TestType()
+                            .AssignableTo<UnaryExpression>( @throw => Assertion.All(
+                                "@throw",
+                                @throw.Type.TestEquals( parameters[2].Type ),
+                                @throw.Operand.TestRefEquals( exception ) ) ) ) ) )
             .Go();
     }
 
@@ -170,18 +167,16 @@ public class IfTests : TestsBase
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Conditional ),
                 result.TestType()
-                    .AssignableTo<ConditionalExpression>(
-                        conditional => Assertion.All(
-                            "conditional",
-                            conditional.Test.TestRefEquals( parameters[0] ),
-                            conditional.IfTrue.TestRefEquals( parameters[1] ),
-                            conditional.IfFalse.NodeType.TestEquals( ExpressionType.Throw ),
-                            conditional.IfFalse.TestType()
-                                .AssignableTo<UnaryExpression>(
-                                    @throw => Assertion.All(
-                                        "@throw",
-                                        @throw.Type.TestEquals( parameters[1].Type ),
-                                        @throw.Operand.TestRefEquals( exception ) ) ) ) ) )
+                    .AssignableTo<ConditionalExpression>( conditional => Assertion.All(
+                        "conditional",
+                        conditional.Test.TestRefEquals( parameters[0] ),
+                        conditional.IfTrue.TestRefEquals( parameters[1] ),
+                        conditional.IfFalse.NodeType.TestEquals( ExpressionType.Throw ),
+                        conditional.IfFalse.TestType()
+                            .AssignableTo<UnaryExpression>( @throw => Assertion.All(
+                                "@throw",
+                                @throw.Type.TestEquals( parameters[1].Type ),
+                                @throw.Operand.TestRefEquals( exception ) ) ) ) ) )
             .Go();
     }
 
@@ -198,11 +193,10 @@ public class IfTests : TestsBase
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Throw ),
                 result.TestType()
-                    .AssignableTo<UnaryExpression>(
-                        @throw => Assertion.All(
-                            "@throw",
-                            @throw.Type.TestEquals( typeof( string ) ),
-                            @throw.Operand.TestRefEquals( exception ) ) ) )
+                    .AssignableTo<UnaryExpression>( @throw => Assertion.All(
+                        "@throw",
+                        @throw.Type.TestEquals( typeof( string ) ),
+                        @throw.Operand.TestRefEquals( exception ) ) ) )
             .Go();
     }
 
@@ -219,11 +213,10 @@ public class IfTests : TestsBase
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Throw ),
                 result.TestType()
-                    .AssignableTo<UnaryExpression>(
-                        @throw => Assertion.All(
-                            "@throw",
-                            @throw.Type.TestEquals( typeof( string ) ),
-                            @throw.Operand.TestRefEquals( exception ) ) ) )
+                    .AssignableTo<UnaryExpression>( @throw => Assertion.All(
+                        "@throw",
+                        @throw.Type.TestEquals( typeof( string ) ),
+                        @throw.Operand.TestRefEquals( exception ) ) ) )
             .Go();
     }
 }

@@ -10,12 +10,11 @@ public class MeasureTests : TestsBase
     public void Call_WithAction_ShouldReturnElapsedTime()
     {
         var callCount = 0;
-        var action = Lambda.Of(
-            () =>
-            {
-                ++callCount;
-                Thread.Sleep( 1 );
-            } );
+        var action = Lambda.Of( () =>
+        {
+            ++callCount;
+            Thread.Sleep( 1 );
+        } );
 
         var result = Measure.Call( action );
 
@@ -29,13 +28,12 @@ public class MeasureTests : TestsBase
     public void Call_WithFunc_ShouldReturnElapsedTime()
     {
         var callCount = 0;
-        var action = Lambda.Of(
-            () =>
-            {
-                ++callCount;
-                Thread.Sleep( 1 );
-                return "foo";
-            } );
+        var action = Lambda.Of( () =>
+        {
+            ++callCount;
+            Thread.Sleep( 1 );
+            return "foo";
+        } );
 
         var result = Measure.Call( action );
 

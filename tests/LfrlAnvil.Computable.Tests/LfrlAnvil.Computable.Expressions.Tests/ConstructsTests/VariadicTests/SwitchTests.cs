@@ -97,17 +97,16 @@ public class SwitchTests : TestsBase
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Switch ),
                 result.TestType()
-                    .AssignableTo<SwitchExpression>(
-                        @switch => Assertion.All(
-                            "@switch",
-                            @switch.SwitchValue.TestRefEquals( parameters[0] ),
-                            @switch.DefaultBody.TestRefEquals( parameters[^1] ),
-                            @switch.Cases.TestSequence(
-                            [
-                                ( SwitchCase )(( ConstantExpression )parameters[1]).Value!,
-                                ( SwitchCase )(( ConstantExpression )parameters[2]).Value!,
-                                ( SwitchCase )(( ConstantExpression )parameters[3]).Value!
-                            ] ) ) ) )
+                    .AssignableTo<SwitchExpression>( @switch => Assertion.All(
+                        "@switch",
+                        @switch.SwitchValue.TestRefEquals( parameters[0] ),
+                        @switch.DefaultBody.TestRefEquals( parameters[^1] ),
+                        @switch.Cases.TestSequence(
+                        [
+                            ( SwitchCase )(( ConstantExpression )parameters[1]).Value!,
+                            ( SwitchCase )(( ConstantExpression )parameters[2]).Value!,
+                            ( SwitchCase )(( ConstantExpression )parameters[3]).Value!
+                        ] ) ) ) )
             .Go();
     }
 
@@ -139,52 +138,43 @@ public class SwitchTests : TestsBase
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Switch ),
                 result.TestType()
-                    .AssignableTo<SwitchExpression>(
-                        @switch => Assertion.All(
-                            "@switch",
-                            @switch.SwitchValue.TestRefEquals( parameters[0] ),
-                            @switch.Cases.TestSequence( [ ( SwitchCase )(( ConstantExpression )parameters[1]).Value! ] ),
-                            (@switch.DefaultBody?.NodeType).TestEquals( ExpressionType.Throw ),
-                            @switch.DefaultBody.TestType()
-                                .AssignableTo<UnaryExpression>(
-                                    defaultThrow => Assertion.All(
-                                        "defaultThrow",
-                                        defaultThrow.Type.TestEquals( typeof( string ) ),
-                                        defaultThrow.Operand.NodeType.TestEquals( ExpressionType.New ),
-                                        defaultThrow.Operand.TestType()
-                                            .AssignableTo<NewExpression>(
-                                                exception => Assertion.All(
-                                                    "exception",
-                                                    exception.Type.TestEquals( typeof( ParsedExpressionInvocationException ) ),
-                                                    exception.Arguments.TestCount( count => count.TestEquals( 2 ) )
-                                                        .Then(
-                                                            args =>
-                                                            {
-                                                                var first = args[0];
-                                                                var second = args[1];
-                                                                return Assertion.All(
-                                                                    "args",
-                                                                    first.NodeType.TestEquals( ExpressionType.Constant ),
-                                                                    second.NodeType.TestEquals( ExpressionType.NewArrayInit ),
-                                                                    first.TestType()
-                                                                        .AssignableTo<ConstantExpression>(
-                                                                            constantArg =>
-                                                                                constantArg.Value.TestEquals(
-                                                                                    Resources.SwitchValueWasNotHandledByAnyCaseFormat ) ),
-                                                                    second.TestType()
-                                                                        .AssignableTo<NewArrayExpression>(
-                                                                            arrayArg => Assertion.All(
-                                                                                "arrayArg",
-                                                                                arrayArg.Expressions.Count.TestEquals( 1 ),
-                                                                                arrayArg.Expressions.TestAll(
-                                                                                    (expr, _) => Assertion.All(
-                                                                                        expr.NodeType.TestEquals( ExpressionType.Convert ),
-                                                                                        expr.TestType()
-                                                                                            .AssignableTo<UnaryExpression>(
-                                                                                                argConvert =>
-                                                                                                    argConvert.Operand.TestRefEquals(
-                                                                                                        parameters[0] ) ) ) ) ) ) );
-                                                            } ) ) ) ) ) ) ) )
+                    .AssignableTo<SwitchExpression>( @switch => Assertion.All(
+                        "@switch",
+                        @switch.SwitchValue.TestRefEquals( parameters[0] ),
+                        @switch.Cases.TestSequence( [ ( SwitchCase )(( ConstantExpression )parameters[1]).Value! ] ),
+                        (@switch.DefaultBody?.NodeType).TestEquals( ExpressionType.Throw ),
+                        @switch.DefaultBody.TestType()
+                            .AssignableTo<UnaryExpression>( defaultThrow => Assertion.All(
+                                "defaultThrow",
+                                defaultThrow.Type.TestEquals( typeof( string ) ),
+                                defaultThrow.Operand.NodeType.TestEquals( ExpressionType.New ),
+                                defaultThrow.Operand.TestType()
+                                    .AssignableTo<NewExpression>( exception => Assertion.All(
+                                        "exception",
+                                        exception.Type.TestEquals( typeof( ParsedExpressionInvocationException ) ),
+                                        exception.Arguments.TestCount( count => count.TestEquals( 2 ) )
+                                            .Then( args =>
+                                            {
+                                                var first = args[0];
+                                                var second = args[1];
+                                                return Assertion.All(
+                                                    "args",
+                                                    first.NodeType.TestEquals( ExpressionType.Constant ),
+                                                    second.NodeType.TestEquals( ExpressionType.NewArrayInit ),
+                                                    first.TestType()
+                                                        .AssignableTo<ConstantExpression>( constantArg =>
+                                                            constantArg.Value.TestEquals(
+                                                                Resources.SwitchValueWasNotHandledByAnyCaseFormat ) ),
+                                                    second.TestType()
+                                                        .AssignableTo<NewArrayExpression>( arrayArg => Assertion.All(
+                                                            "arrayArg",
+                                                            arrayArg.Expressions.Count.TestEquals( 1 ),
+                                                            arrayArg.Expressions.TestAll( (expr, _) => Assertion.All(
+                                                                expr.NodeType.TestEquals( ExpressionType.Convert ),
+                                                                expr.TestType()
+                                                                    .AssignableTo<UnaryExpression>( argConvert =>
+                                                                        argConvert.Operand.TestRefEquals( parameters[0] ) ) ) ) ) ) );
+                                            } ) ) ) ) ) ) ) )
             .Go();
     }
 
@@ -264,17 +254,16 @@ public class SwitchTests : TestsBase
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Switch ),
                 result.TestType()
-                    .AssignableTo<SwitchExpression>(
-                        @switch => Assertion.All(
-                            "@switch",
-                            @switch.SwitchValue.TestRefEquals( parameters[0] ),
-                            @switch.DefaultBody.TestRefEquals( parameters[^1] ),
-                            @switch.Cases.TestSequence(
-                            [
-                                ( SwitchCase )(( ConstantExpression )parameters[1]).Value!,
-                                ( SwitchCase )(( ConstantExpression )parameters[2]).Value!,
-                                ( SwitchCase )(( ConstantExpression )parameters[3]).Value!
-                            ] ) ) ) )
+                    .AssignableTo<SwitchExpression>( @switch => Assertion.All(
+                        "@switch",
+                        @switch.SwitchValue.TestRefEquals( parameters[0] ),
+                        @switch.DefaultBody.TestRefEquals( parameters[^1] ),
+                        @switch.Cases.TestSequence(
+                        [
+                            ( SwitchCase )(( ConstantExpression )parameters[1]).Value!,
+                            ( SwitchCase )(( ConstantExpression )parameters[2]).Value!,
+                            ( SwitchCase )(( ConstantExpression )parameters[3]).Value!
+                        ] ) ) ) )
             .Go();
     }
 
@@ -297,12 +286,11 @@ public class SwitchTests : TestsBase
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Switch ),
                 result.TestType()
-                    .AssignableTo<SwitchExpression>(
-                        @switch => Assertion.All(
-                            "@switch",
-                            @switch.SwitchValue.TestRefEquals( parameters[0] ),
-                            @switch.DefaultBody.TestRefEquals( parameters[^1] ),
-                            @switch.Cases.TestSequence( [ ( SwitchCase )(( ConstantExpression )parameters[3]).Value! ] ) ) ) )
+                    .AssignableTo<SwitchExpression>( @switch => Assertion.All(
+                        "@switch",
+                        @switch.SwitchValue.TestRefEquals( parameters[0] ),
+                        @switch.DefaultBody.TestRefEquals( parameters[^1] ),
+                        @switch.Cases.TestSequence( [ ( SwitchCase )(( ConstantExpression )parameters[3]).Value! ] ) ) ) )
             .Go();
     }
 
@@ -329,17 +317,15 @@ public class SwitchTests : TestsBase
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Switch ),
                 result.TestType()
-                    .AssignableTo<SwitchExpression>(
-                        @switch => Assertion.All(
-                            "@switch",
-                            @switch.SwitchValue.TestRefEquals( parameters[0] ),
-                            @switch.DefaultBody.TestRefEquals( parameters[^1] ),
-                            @switch.Cases.Count.TestEquals( 1 ),
-                            @switch.Cases.TestAll(
-                                (@case, _) => Assertion.All(
-                                    "@case",
-                                    @case.Body.TestRefEquals( caseBody ),
-                                    @case.TestValues.TestSequence( [ caseParameter ] ) ) ) ) ) )
+                    .AssignableTo<SwitchExpression>( @switch => Assertion.All(
+                        "@switch",
+                        @switch.SwitchValue.TestRefEquals( parameters[0] ),
+                        @switch.DefaultBody.TestRefEquals( parameters[^1] ),
+                        @switch.Cases.Count.TestEquals( 1 ),
+                        @switch.Cases.TestAll( (@case, _) => Assertion.All(
+                            "@case",
+                            @case.Body.TestRefEquals( caseBody ),
+                            @case.TestValues.TestSequence( [ caseParameter ] ) ) ) ) ) )
             .Go();
     }
 
@@ -383,38 +369,34 @@ public class SwitchTests : TestsBase
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Switch ),
                 result.TestType()
-                    .AssignableTo<SwitchExpression>(
-                        @switch => Assertion.All(
-                            "@switch",
-                            @switch.SwitchValue.TestRefEquals( parameters[0] ),
-                            (@switch.DefaultBody?.NodeType).TestEquals( ExpressionType.Throw ),
-                            @switch.DefaultBody.TestType()
-                                .AssignableTo<UnaryExpression>(
-                                    defaultThrow => Assertion.All(
-                                        "defaultThrow",
-                                        defaultThrow.Type.TestEquals( typeof( string ) ),
-                                        defaultThrow.Operand.TestRefEquals( exception ) ) ),
-                            @switch.Cases.TestCount( count => count.TestEquals( 3 ) )
-                                .Then(
-                                    cases =>
-                                    {
-                                        var first = cases[0];
-                                        var second = cases[1];
-                                        var third = cases[2];
-                                        return Assertion.All(
-                                            "cases",
-                                            first.TestRefEquals( ( SwitchCase )(( ConstantExpression )parameters[1]).Value! ),
-                                            second.Body.NodeType.TestEquals( ExpressionType.Throw ),
-                                            second.TestValues.TestSequence(
-                                                (( SwitchCase )(( ConstantExpression )parameters[2]).Value!).TestValues ),
-                                            third.TestRefEquals( ( SwitchCase )(( ConstantExpression )parameters[3]).Value! ),
-                                            second.Body.TestType()
-                                                .AssignableTo<UnaryExpression>(
-                                                    caseThrow => Assertion.All(
-                                                        "caseThrow",
-                                                        caseThrow.Type.TestEquals( typeof( string ) ),
-                                                        caseThrow.Operand.TestRefEquals( exception ) ) ) );
-                                    } ) ) ) )
+                    .AssignableTo<SwitchExpression>( @switch => Assertion.All(
+                        "@switch",
+                        @switch.SwitchValue.TestRefEquals( parameters[0] ),
+                        (@switch.DefaultBody?.NodeType).TestEquals( ExpressionType.Throw ),
+                        @switch.DefaultBody.TestType()
+                            .AssignableTo<UnaryExpression>( defaultThrow => Assertion.All(
+                                "defaultThrow",
+                                defaultThrow.Type.TestEquals( typeof( string ) ),
+                                defaultThrow.Operand.TestRefEquals( exception ) ) ),
+                        @switch.Cases.TestCount( count => count.TestEquals( 3 ) )
+                            .Then( cases =>
+                            {
+                                var first = cases[0];
+                                var second = cases[1];
+                                var third = cases[2];
+                                return Assertion.All(
+                                    "cases",
+                                    first.TestRefEquals( ( SwitchCase )(( ConstantExpression )parameters[1]).Value! ),
+                                    second.Body.NodeType.TestEquals( ExpressionType.Throw ),
+                                    second.TestValues.TestSequence(
+                                        (( SwitchCase )(( ConstantExpression )parameters[2]).Value!).TestValues ),
+                                    third.TestRefEquals( ( SwitchCase )(( ConstantExpression )parameters[3]).Value! ),
+                                    second.Body.TestType()
+                                        .AssignableTo<UnaryExpression>( caseThrow => Assertion.All(
+                                            "caseThrow",
+                                            caseThrow.Type.TestEquals( typeof( string ) ),
+                                            caseThrow.Operand.TestRefEquals( exception ) ) ) );
+                            } ) ) ) )
             .Go();
     }
 
@@ -438,11 +420,10 @@ public class SwitchTests : TestsBase
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Throw ),
                 result.TestType()
-                    .AssignableTo<UnaryExpression>(
-                        @throw => Assertion.All(
-                            "@throw",
-                            @throw.Type.TestEquals( typeof( string ) ),
-                            @throw.Operand.TestRefEquals( exception ) ) ) )
+                    .AssignableTo<UnaryExpression>( @throw => Assertion.All(
+                        "@throw",
+                        @throw.Type.TestEquals( typeof( string ) ),
+                        @throw.Operand.TestRefEquals( exception ) ) ) )
             .Go();
     }
 
@@ -466,11 +447,10 @@ public class SwitchTests : TestsBase
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Throw ),
                 result.TestType()
-                    .AssignableTo<UnaryExpression>(
-                        @throw => Assertion.All(
-                            "@throw",
-                            @throw.Type.TestEquals( typeof( string ) ),
-                            @throw.Operand.TestRefEquals( exception ) ) ) )
+                    .AssignableTo<UnaryExpression>( @throw => Assertion.All(
+                        "@throw",
+                        @throw.Type.TestEquals( typeof( string ) ),
+                        @throw.Operand.TestRefEquals( exception ) ) ) )
             .Go();
     }
 }

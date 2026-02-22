@@ -1530,8 +1530,8 @@ public class SqlParameterBinderFactoryTests : TestsBase
     public void CreateExpression_ShouldThrowSqlCompilerException_WhenNoValidMemberForSourceTypeIsFound()
     {
         var sut = SqlParameterBinderFactoryMock.CreateInstance();
-        var action = Lambda.Of(
-            () => sut.CreateExpression<Source>( SqlParameterBinderCreationOptions.Default.SetSourceTypeMemberPredicate( _ => false ) ) );
+        var action = Lambda.Of( () =>
+            sut.CreateExpression<Source>( SqlParameterBinderCreationOptions.Default.SetSourceTypeMemberPredicate( _ => false ) ) );
 
         action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
@@ -1540,9 +1540,8 @@ public class SqlParameterBinderFactoryTests : TestsBase
     public void CreateExpression_ShouldThrowSqlCompilerException_WhenParameterAppearsMoreThanOnce()
     {
         var sut = SqlParameterBinderFactoryMock.CreateInstance();
-        var action = Lambda.Of(
-            () => sut.CreateExpression<Source>(
-                SqlParameterBinderCreationOptions.Default.With( SqlParameterConfiguration.From( "B", "C" ) ) ) );
+        var action = Lambda.Of( () =>
+            sut.CreateExpression<Source>( SqlParameterBinderCreationOptions.Default.With( SqlParameterConfiguration.From( "B", "C" ) ) ) );
 
         action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
@@ -1555,14 +1554,13 @@ public class SqlParameterBinderFactoryTests : TestsBase
         interpreter.Visit( SqlNode.Parameter<int>( "A", isNullable: true ) );
         interpreter.Visit( SqlNode.Parameter( "X" ) );
 
-        var action = Lambda.Of(
-            () => sut.CreateExpression<Source>(
-                SqlParameterBinderCreationOptions.Default
-                    .SetContext( interpreter.Context )
-                    .With( SqlParameterConfiguration.IgnoreMemberWhenNull( "A", false ) )
-                    .With( SqlParameterConfiguration.IgnoreMember( "B" ) )
-                    .With( SqlParameterConfiguration.IgnoreMember( "C" ) )
-                    .With( SqlParameterConfiguration.IgnoreMember( "D" ) ) ) );
+        var action = Lambda.Of( () => sut.CreateExpression<Source>(
+            SqlParameterBinderCreationOptions.Default
+                .SetContext( interpreter.Context )
+                .With( SqlParameterConfiguration.IgnoreMemberWhenNull( "A", false ) )
+                .With( SqlParameterConfiguration.IgnoreMember( "B" ) )
+                .With( SqlParameterConfiguration.IgnoreMember( "C" ) )
+                .With( SqlParameterConfiguration.IgnoreMember( "D" ) ) ) );
 
         action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
@@ -1574,13 +1572,12 @@ public class SqlParameterBinderFactoryTests : TestsBase
         var interpreter = new SqlNodeDebugInterpreter();
         interpreter.Visit( SqlNode.Parameter<int>( "A", isNullable: true ) );
 
-        var action = Lambda.Of(
-            () => sut.CreateExpression<Source>(
-                SqlParameterBinderCreationOptions.Default
-                    .SetContext( interpreter.Context )
-                    .With( SqlParameterConfiguration.IgnoreMemberWhenNull( "A", false ) )
-                    .With( SqlParameterConfiguration.IgnoreMember( "C" ) )
-                    .With( SqlParameterConfiguration.IgnoreMember( "D" ) ) ) );
+        var action = Lambda.Of( () => sut.CreateExpression<Source>(
+            SqlParameterBinderCreationOptions.Default
+                .SetContext( interpreter.Context )
+                .With( SqlParameterConfiguration.IgnoreMemberWhenNull( "A", false ) )
+                .With( SqlParameterConfiguration.IgnoreMember( "C" ) )
+                .With( SqlParameterConfiguration.IgnoreMember( "D" ) ) ) );
 
         action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
@@ -1592,14 +1589,13 @@ public class SqlParameterBinderFactoryTests : TestsBase
         var interpreter = new SqlNodeDebugInterpreter();
         interpreter.Visit( SqlNode.Parameter<string>( "A", isNullable: true ) );
 
-        var action = Lambda.Of(
-            () => sut.CreateExpression<Source>(
-                SqlParameterBinderCreationOptions.Default
-                    .SetContext( interpreter.Context )
-                    .With( SqlParameterConfiguration.IgnoreMemberWhenNull( "A", false ) )
-                    .With( SqlParameterConfiguration.IgnoreMember( "B" ) )
-                    .With( SqlParameterConfiguration.IgnoreMember( "C" ) )
-                    .With( SqlParameterConfiguration.IgnoreMember( "D" ) ) ) );
+        var action = Lambda.Of( () => sut.CreateExpression<Source>(
+            SqlParameterBinderCreationOptions.Default
+                .SetContext( interpreter.Context )
+                .With( SqlParameterConfiguration.IgnoreMemberWhenNull( "A", false ) )
+                .With( SqlParameterConfiguration.IgnoreMember( "B" ) )
+                .With( SqlParameterConfiguration.IgnoreMember( "C" ) )
+                .With( SqlParameterConfiguration.IgnoreMember( "D" ) ) ) );
 
         action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
@@ -1611,14 +1607,13 @@ public class SqlParameterBinderFactoryTests : TestsBase
         var interpreter = new SqlNodeDebugInterpreter();
         interpreter.Visit( SqlNode.Parameter<string>( "B", isNullable: false ) );
 
-        var action = Lambda.Of(
-            () => sut.CreateExpression<Source>(
-                SqlParameterBinderCreationOptions.Default
-                    .SetContext( interpreter.Context )
-                    .With( SqlParameterConfiguration.IgnoreMember( "A" ) )
-                    .With( SqlParameterConfiguration.IgnoreMemberWhenNull( "B", false ) )
-                    .With( SqlParameterConfiguration.IgnoreMember( "C" ) )
-                    .With( SqlParameterConfiguration.IgnoreMember( "D" ) ) ) );
+        var action = Lambda.Of( () => sut.CreateExpression<Source>(
+            SqlParameterBinderCreationOptions.Default
+                .SetContext( interpreter.Context )
+                .With( SqlParameterConfiguration.IgnoreMember( "A" ) )
+                .With( SqlParameterConfiguration.IgnoreMemberWhenNull( "B", false ) )
+                .With( SqlParameterConfiguration.IgnoreMember( "C" ) )
+                .With( SqlParameterConfiguration.IgnoreMember( "D" ) ) ) );
 
         action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
@@ -1630,13 +1625,12 @@ public class SqlParameterBinderFactoryTests : TestsBase
         var interpreter = new SqlNodeDebugInterpreter();
         interpreter.Visit( SqlNode.Parameter<int>( "A", isNullable: true ) );
 
-        var action = Lambda.Of(
-            () => sut.CreateExpression<Source>(
-                SqlParameterBinderCreationOptions.Default
-                    .SetContext( interpreter.Context )
-                    .With( SqlParameterConfiguration.IgnoreMember( "B" ) )
-                    .With( SqlParameterConfiguration.IgnoreMember( "C" ) )
-                    .With( SqlParameterConfiguration.IgnoreMember( "D" ) ) ) );
+        var action = Lambda.Of( () => sut.CreateExpression<Source>(
+            SqlParameterBinderCreationOptions.Default
+                .SetContext( interpreter.Context )
+                .With( SqlParameterConfiguration.IgnoreMember( "B" ) )
+                .With( SqlParameterConfiguration.IgnoreMember( "C" ) )
+                .With( SqlParameterConfiguration.IgnoreMember( "D" ) ) ) );
 
         action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
@@ -1646,11 +1640,10 @@ public class SqlParameterBinderFactoryTests : TestsBase
     {
         var sut = SqlParameterBinderFactoryMock.CreateInstance();
 
-        var action = Lambda.Of(
-            () => sut.CreateExpression<GenericSource<int[]>>(
-                SqlParameterBinderCreationOptions.Default
-                    .EnableCollectionReduction()
-                    .With( SqlParameterConfiguration.Positional( "A", 0 ) ) ) );
+        var action = Lambda.Of( () => sut.CreateExpression<GenericSource<int[]>>(
+            SqlParameterBinderCreationOptions.Default
+                .EnableCollectionReduction()
+                .With( SqlParameterConfiguration.Positional( "A", 0 ) ) ) );
 
         action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
@@ -1660,10 +1653,8 @@ public class SqlParameterBinderFactoryTests : TestsBase
     {
         var sut = SqlParameterBinderFactoryMock.CreateInstance();
 
-        var action = Lambda.Of(
-            () => sut.CreateExpression<GenericSource<string>>(
-                SqlParameterBinderCreationOptions.Default.With(
-                    SqlParameterConfiguration.IgnoreMemberWhenNull( "A", parameterIndex: 0 ) ) ) );
+        var action = Lambda.Of( () => sut.CreateExpression<GenericSource<string>>(
+            SqlParameterBinderCreationOptions.Default.With( SqlParameterConfiguration.IgnoreMemberWhenNull( "A", parameterIndex: 0 ) ) ) );
 
         action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
@@ -1673,13 +1664,12 @@ public class SqlParameterBinderFactoryTests : TestsBase
     {
         var sut = SqlParameterBinderFactoryMock.CreateInstance();
 
-        var action = Lambda.Of(
-            () => sut.CreateExpression<Source>(
-                SqlParameterBinderCreationOptions.Default
-                    .With( SqlParameterConfiguration.Positional( "A", 2 ) )
-                    .With( SqlParameterConfiguration.Positional( "B", 5 ) )
-                    .With( SqlParameterConfiguration.Positional( "C", 2 ) )
-                    .With( SqlParameterConfiguration.Positional( "D", 0 ) ) ) );
+        var action = Lambda.Of( () => sut.CreateExpression<Source>(
+            SqlParameterBinderCreationOptions.Default
+                .With( SqlParameterConfiguration.Positional( "A", 2 ) )
+                .With( SqlParameterConfiguration.Positional( "B", 5 ) )
+                .With( SqlParameterConfiguration.Positional( "C", 2 ) )
+                .With( SqlParameterConfiguration.Positional( "D", 0 ) ) ) );
 
         action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }

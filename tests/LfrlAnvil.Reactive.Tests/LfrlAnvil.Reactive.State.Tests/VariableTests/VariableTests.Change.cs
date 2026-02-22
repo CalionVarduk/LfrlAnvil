@@ -27,27 +27,25 @@ public partial class VariableTests
                 sut.Errors.TestEmpty(),
                 sut.Warnings.TestEmpty(),
                 onChangeEvents.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e => Assertion.All(
-                            "changeEvent",
-                            e[0].Variable.TestRefEquals( sut ),
-                            e[0].PreviousState.TestEquals( VariableState.Default ),
-                            e[0].NewState.TestEquals( sut.State ),
-                            e[0].PreviousValue.TestEquals( value ),
-                            e[0].NewValue.TestEquals( changeValue ),
-                            e[0].Source.TestEquals( VariableChangeSource.Change ) ) ),
+                    .Then( e => Assertion.All(
+                        "changeEvent",
+                        e[0].Variable.TestRefEquals( sut ),
+                        e[0].PreviousState.TestEquals( VariableState.Default ),
+                        e[0].NewState.TestEquals( sut.State ),
+                        e[0].PreviousValue.TestEquals( value ),
+                        e[0].NewValue.TestEquals( changeValue ),
+                        e[0].Source.TestEquals( VariableChangeSource.Change ) ) ),
                 onValidateEvents.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e => Assertion.All(
-                            "validateEvent",
-                            e[0].Variable.TestRefEquals( sut ),
-                            e[0].AssociatedChange.TestRefEquals( onChangeEvents.FirstOrDefault() ),
-                            e[0].PreviousState.TestEquals( VariableState.Default ),
-                            e[0].NewState.TestEquals( sut.State ),
-                            e[0].PreviousWarnings.TestEmpty(),
-                            e[0].NewWarnings.TestSequence( sut.Warnings ),
-                            e[0].PreviousErrors.TestEmpty(),
-                            e[0].NewErrors.TestSequence( sut.Errors ) ) ) )
+                    .Then( e => Assertion.All(
+                        "validateEvent",
+                        e[0].Variable.TestRefEquals( sut ),
+                        e[0].AssociatedChange.TestRefEquals( onChangeEvents.FirstOrDefault() ),
+                        e[0].PreviousState.TestEquals( VariableState.Default ),
+                        e[0].NewState.TestEquals( sut.State ),
+                        e[0].PreviousWarnings.TestEmpty(),
+                        e[0].NewWarnings.TestSequence( sut.Warnings ),
+                        e[0].PreviousErrors.TestEmpty(),
+                        e[0].NewErrors.TestSequence( sut.Errors ) ) ) )
             .Go();
     }
 
@@ -78,27 +76,25 @@ public partial class VariableTests
                 sut.Errors.TestSequence( [ error ] ),
                 sut.Warnings.TestEmpty(),
                 onChangeEvents.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e => Assertion.All(
-                            "changeEvent",
-                            e[0].Variable.TestRefEquals( sut ),
-                            e[0].PreviousState.TestEquals( VariableState.Default ),
-                            e[0].NewState.TestEquals( sut.State ),
-                            e[0].PreviousValue.TestEquals( value ),
-                            e[0].NewValue.TestEquals( changeValue ),
-                            e[0].Source.TestEquals( VariableChangeSource.Change ) ) ),
+                    .Then( e => Assertion.All(
+                        "changeEvent",
+                        e[0].Variable.TestRefEquals( sut ),
+                        e[0].PreviousState.TestEquals( VariableState.Default ),
+                        e[0].NewState.TestEquals( sut.State ),
+                        e[0].PreviousValue.TestEquals( value ),
+                        e[0].NewValue.TestEquals( changeValue ),
+                        e[0].Source.TestEquals( VariableChangeSource.Change ) ) ),
                 onValidateEvents.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e => Assertion.All(
-                            "validateEvent",
-                            e[0].Variable.TestRefEquals( sut ),
-                            e[0].AssociatedChange.TestRefEquals( onChangeEvents.FirstOrDefault() ),
-                            e[0].PreviousState.TestEquals( VariableState.Default ),
-                            e[0].NewState.TestEquals( sut.State ),
-                            e[0].PreviousWarnings.TestEmpty(),
-                            e[0].NewWarnings.TestSequence( sut.Warnings ),
-                            e[0].PreviousErrors.TestEmpty(),
-                            e[0].NewErrors.TestSequence( sut.Errors ) ) ) )
+                    .Then( e => Assertion.All(
+                        "validateEvent",
+                        e[0].Variable.TestRefEquals( sut ),
+                        e[0].AssociatedChange.TestRefEquals( onChangeEvents.FirstOrDefault() ),
+                        e[0].PreviousState.TestEquals( VariableState.Default ),
+                        e[0].NewState.TestEquals( sut.State ),
+                        e[0].PreviousWarnings.TestEmpty(),
+                        e[0].NewWarnings.TestSequence( sut.Warnings ),
+                        e[0].PreviousErrors.TestEmpty(),
+                        e[0].NewErrors.TestSequence( sut.Errors ) ) ) )
             .Go();
     }
 
@@ -132,27 +128,25 @@ public partial class VariableTests
                 onChangeEvents.Count.TestEquals( 1 ),
                 onValidateEvents.Count.TestEquals( 1 ),
                 onChangeEvents.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e => Assertion.All(
-                            "changeEvent",
-                            e[0].Variable.TestRefEquals( sut ),
-                            e[0].PreviousState.TestEquals( VariableState.Default ),
-                            e[0].NewState.TestEquals( sut.State ),
-                            e[0].PreviousValue.TestEquals( value ),
-                            e[0].NewValue.TestEquals( changeValue ),
-                            e[0].Source.TestEquals( VariableChangeSource.Change ) ) ),
+                    .Then( e => Assertion.All(
+                        "changeEvent",
+                        e[0].Variable.TestRefEquals( sut ),
+                        e[0].PreviousState.TestEquals( VariableState.Default ),
+                        e[0].NewState.TestEquals( sut.State ),
+                        e[0].PreviousValue.TestEquals( value ),
+                        e[0].NewValue.TestEquals( changeValue ),
+                        e[0].Source.TestEquals( VariableChangeSource.Change ) ) ),
                 onValidateEvents.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e => Assertion.All(
-                            "validateEvent",
-                            e[0].Variable.TestRefEquals( sut ),
-                            e[0].AssociatedChange.TestRefEquals( onChangeEvents.FirstOrDefault() ),
-                            e[0].PreviousState.TestEquals( VariableState.Default ),
-                            e[0].NewState.TestEquals( sut.State ),
-                            e[0].PreviousWarnings.TestEmpty(),
-                            e[0].NewWarnings.TestSequence( sut.Warnings ),
-                            e[0].PreviousErrors.TestEmpty(),
-                            e[0].NewErrors.TestSequence( sut.Errors ) ) ) )
+                    .Then( e => Assertion.All(
+                        "validateEvent",
+                        e[0].Variable.TestRefEquals( sut ),
+                        e[0].AssociatedChange.TestRefEquals( onChangeEvents.FirstOrDefault() ),
+                        e[0].PreviousState.TestEquals( VariableState.Default ),
+                        e[0].NewState.TestEquals( sut.State ),
+                        e[0].PreviousWarnings.TestEmpty(),
+                        e[0].NewWarnings.TestSequence( sut.Warnings ),
+                        e[0].PreviousErrors.TestEmpty(),
+                        e[0].NewErrors.TestSequence( sut.Errors ) ) ) )
             .Go();
     }
 

@@ -17,10 +17,10 @@ public partial class VariableRootTests
 
         var action = Lambda.Of( () => sut.ExposedRegisterNode( Fixture.Create<string>(), variable ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<VariableNodeRegistrationException>(
-                        e => Assertion.All( e.Parent.TestRefEquals( sut ), e.Child.TestRefEquals( variable ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<VariableNodeRegistrationException>( e => Assertion.All(
+                    e.Parent.TestRefEquals( sut ),
+                    e.Child.TestRefEquals( variable ) ) ) )
             .Go();
     }
 
@@ -35,10 +35,10 @@ public partial class VariableRootTests
 
         var action = Lambda.Of( () => sut.ExposedRegisterNode( Fixture.Create<string>(), variable ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<VariableNodeRegistrationException>(
-                        e => Assertion.All( e.Parent.TestRefEquals( sut ), e.Child.TestRefEquals( variable ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<VariableNodeRegistrationException>( e => Assertion.All(
+                    e.Parent.TestRefEquals( sut ),
+                    e.Child.TestRefEquals( variable ) ) ) )
             .Go();
     }
 
@@ -54,10 +54,10 @@ public partial class VariableRootTests
 
         var action = Lambda.Of( () => sut.ExposedRegisterNode( Fixture.Create<string>(), variable ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<VariableNodeRegistrationException>(
-                        e => Assertion.All( e.Parent.TestRefEquals( sut ), e.Child.TestRefEquals( variable ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<VariableNodeRegistrationException>( e => Assertion.All(
+                    e.Parent.TestRefEquals( sut ),
+                    e.Child.TestRefEquals( variable ) ) ) )
             .Go();
     }
 
@@ -73,10 +73,10 @@ public partial class VariableRootTests
 
         var action = Lambda.Of( () => sut.ExposedRegisterNode( Fixture.Create<string>(), variable ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<VariableNodeRegistrationException>(
-                        e => Assertion.All( e.Parent.TestRefEquals( sut ), e.Child.TestRefEquals( variable ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<VariableNodeRegistrationException>( e => Assertion.All(
+                    e.Parent.TestRefEquals( sut ),
+                    e.Child.TestRefEquals( variable ) ) ) )
             .Go();
     }
 
@@ -85,10 +85,10 @@ public partial class VariableRootTests
     {
         var sut = new VariableRootMock();
         var action = Lambda.Of( () => sut.ExposedRegisterNode( Fixture.Create<string>(), sut ) );
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<VariableNodeRegistrationException>(
-                        e => Assertion.All( e.Parent.TestRefEquals( sut ), e.Child.TestRefEquals( sut ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<VariableNodeRegistrationException>( e => Assertion.All(
+                    e.Parent.TestRefEquals( sut ),
+                    e.Child.TestRefEquals( sut ) ) ) )
             .Go();
     }
 

@@ -47,14 +47,13 @@ public partial class SqlQueryResultTests : TestsBase
     [Fact]
     public void Ctor_TypeErased_ShouldThrowArgumentOutOfRangeException_WhenNonEmptyWithEmptyFields()
     {
-        var action = Lambda.Of(
-            () => new SqlQueryResult(
-                Array.Empty<SqlResultSetField>(),
-                new List<object?>
-                {
-                    "foo",
-                    3
-                } ) );
+        var action = Lambda.Of( () => new SqlQueryResult(
+            Array.Empty<SqlResultSetField>(),
+            new List<object?>
+            {
+                "foo",
+                3
+            } ) );
 
         action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
@@ -64,15 +63,14 @@ public partial class SqlQueryResultTests : TestsBase
     {
         var resultSetFields = new[] { new SqlResultSetField( 0, "a" ), new SqlResultSetField( 1, "b" ) };
 
-        var action = Lambda.Of(
-            () => new SqlQueryResult(
-                resultSetFields,
-                new List<object?>
-                {
-                    "foo",
-                    3,
-                    true
-                } ) );
+        var action = Lambda.Of( () => new SqlQueryResult(
+            resultSetFields,
+            new List<object?>
+            {
+                "foo",
+                3,
+                true
+            } ) );
 
         action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
@@ -107,10 +105,9 @@ public partial class SqlQueryResultTests : TestsBase
         var sut = new SqlQueryResult( resultSetFields, cells );
 
         Assertion.All(
-                sut.Rows.TestNotNull(
-                    rows => Assertion.All(
-                        rows.Count.TestEquals( 3 ),
-                        rows.Fields.TestSequence( resultSetFields ) ) ),
+                sut.Rows.TestNotNull( rows => Assertion.All(
+                    rows.Count.TestEquals( 3 ),
+                    rows.Fields.TestSequence( resultSetFields ) ) ),
                 sut.ResultSetFields.TestSequence( resultSetFields ),
                 sut.IsEmpty.TestFalse() )
             .Go();

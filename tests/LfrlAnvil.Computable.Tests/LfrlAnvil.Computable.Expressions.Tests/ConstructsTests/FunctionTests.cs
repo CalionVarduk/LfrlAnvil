@@ -39,19 +39,17 @@ public class FunctionTests : TestsBase
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Add ),
                 result.TestType()
-                    .AssignableTo<BinaryExpression>(
-                        binaryResult => Assertion.All(
-                            "binaryResult",
-                            binaryResult.Left.NodeType.TestEquals( ExpressionType.Add ),
-                            binaryResult.Right.NodeType.TestEquals( ExpressionType.Constant ),
-                            binaryResult.Left.TestType()
-                                .AssignableTo<BinaryExpression>(
-                                    parametersAdd => Assertion.All(
-                                        "parametersAdd",
-                                        parametersAdd.Left.TestRefEquals( v1 ),
-                                        parametersAdd.Right.TestRefEquals( v2 ) ) ),
-                            binaryResult.Right.TestType()
-                                .AssignableTo<ConstantExpression>( constant => constant.Value.TestEquals( 10 ) ) ) ) )
+                    .AssignableTo<BinaryExpression>( binaryResult => Assertion.All(
+                        "binaryResult",
+                        binaryResult.Left.NodeType.TestEquals( ExpressionType.Add ),
+                        binaryResult.Right.NodeType.TestEquals( ExpressionType.Constant ),
+                        binaryResult.Left.TestType()
+                            .AssignableTo<BinaryExpression>( parametersAdd => Assertion.All(
+                                "parametersAdd",
+                                parametersAdd.Left.TestRefEquals( v1 ),
+                                parametersAdd.Right.TestRefEquals( v2 ) ) ),
+                        binaryResult.Right.TestType()
+                            .AssignableTo<ConstantExpression>( constant => constant.Value.TestEquals( 10 ) ) ) ) )
             .Go();
     }
 
@@ -74,11 +72,10 @@ public class FunctionTests : TestsBase
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Invoke ),
                 result.TestType()
-                    .AssignableTo<InvocationExpression>(
-                        invocation => Assertion.All(
-                            "invocation",
-                            invocation.Expression.TestRefEquals( expression ),
-                            invocation.Arguments.TestSequence( [ v1, v2, v3 ] ) ) ) )
+                    .AssignableTo<InvocationExpression>( invocation => Assertion.All(
+                        "invocation",
+                        invocation.Expression.TestRefEquals( expression ),
+                        invocation.Arguments.TestSequence( [ v1, v2, v3 ] ) ) ) )
             .Go();
     }
 

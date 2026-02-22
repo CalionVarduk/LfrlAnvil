@@ -42,13 +42,12 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void SetRoot_WithNode_ShouldAddNewRootNodeCorrectly_WhenDictionaryIsEmpty()
     {
-        SetRoot_ShouldAddNewRootNodeCorrectly_WhenDictionaryIsEmpty_Impl(
-            (sut, k, v) =>
-            {
-                var node = new TreeDictionaryNode<TKey, TValue>( k, v );
-                sut.SetRoot( node );
-                return node;
-            } );
+        SetRoot_ShouldAddNewRootNodeCorrectly_WhenDictionaryIsEmpty_Impl( (sut, k, v) =>
+        {
+            var node = new TreeDictionaryNode<TKey, TValue>( k, v );
+            sut.SetRoot( node );
+            return node;
+        } );
     }
 
     private void SetRoot_ShouldAddNewRootNodeCorrectly_WhenDictionaryIsEmpty_Impl(
@@ -81,13 +80,12 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void SetRoot_WithNode_ShouldAddNewNodeAsRootCorrectly_WhenDictionaryHasRoot()
     {
-        SetRoot_ShouldAddNewNodeAsRootCorrectly_WhenDictionaryHasRoot_Impl(
-            (sut, k, v) =>
-            {
-                var node = new TreeDictionaryNode<TKey, TValue>( k, v );
-                sut.SetRoot( node );
-                return node;
-            } );
+        SetRoot_ShouldAddNewNodeAsRootCorrectly_WhenDictionaryHasRoot_Impl( (sut, k, v) =>
+        {
+            var node = new TreeDictionaryNode<TKey, TValue>( k, v );
+            sut.SetRoot( node );
+            return node;
+        } );
     }
 
     private void SetRoot_ShouldAddNewNodeAsRootCorrectly_WhenDictionaryHasRoot_Impl(
@@ -121,12 +119,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void SetRoot_WithNode_ShouldThrowArgumentException_WhenKeyAlreadyExists()
     {
-        SetRoot_ShouldThrowArgumentException_WhenKeyAlreadyExists_Impl(
-            (sut, k, v, i) =>
-            {
-                i.Node = new TreeDictionaryNode<TKey, TValue>( k, v );
-                sut.SetRoot( i.Node );
-            } );
+        SetRoot_ShouldThrowArgumentException_WhenKeyAlreadyExists_Impl( (sut, k, v, i) =>
+        {
+            i.Node = new TreeDictionaryNode<TKey, TValue>( k, v );
+            sut.SetRoot( i.Node );
+        } );
     }
 
     private void SetRoot_ShouldThrowArgumentException_WhenKeyAlreadyExists_Impl(
@@ -140,14 +137,13 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => setRoot( sut, key, values[1], intercept ) );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<ArgumentException>(),
-                    sut.Count.TestEquals( 1 ),
-                    sut.Root.TestEquals( root ),
-                    root.Value.TestEquals( values[0] ),
-                    AssertNodeRelationship( root ),
-                    intercept.Node is null ? Assertion.All() : AssertLackOfLinkedTree( intercept.Node ) ) )
+        action.Test( exc => Assertion.All(
+                exc.TestType().Exact<ArgumentException>(),
+                sut.Count.TestEquals( 1 ),
+                sut.Root.TestEquals( root ),
+                root.Value.TestEquals( values[0] ),
+                AssertNodeRelationship( root ),
+                intercept.Node is null ? Assertion.All() : AssertLackOfLinkedTree( intercept.Node ) ) )
             .Go();
     }
 
@@ -173,13 +169,12 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void Add_WithNode_ShouldAddNewRootNodeCorrectly_WhenDictionaryIsEmpty()
     {
-        Add_ShouldAddNewRootNodeCorrectly_WhenDictionaryIsEmpty_Impl(
-            (sut, k, v) =>
-            {
-                var node = new TreeDictionaryNode<TKey, TValue>( k, v );
-                sut.Add( node );
-                return node;
-            } );
+        Add_ShouldAddNewRootNodeCorrectly_WhenDictionaryIsEmpty_Impl( (sut, k, v) =>
+        {
+            var node = new TreeDictionaryNode<TKey, TValue>( k, v );
+            sut.Add( node );
+            return node;
+        } );
     }
 
     private void Add_ShouldAddNewRootNodeCorrectly_WhenDictionaryIsEmpty_Impl(
@@ -212,13 +207,12 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void Add_WithNode_ShouldAddNewNodeAsRootChildCorrectly_WhenDictionaryHasRoot()
     {
-        Add_ShouldAddNewNodeAsRootChildCorrectly_WhenDictionaryHasRoot_Impl(
-            (sut, k, v) =>
-            {
-                var node = new TreeDictionaryNode<TKey, TValue>( k, v );
-                sut.Add( node );
-                return node;
-            } );
+        Add_ShouldAddNewNodeAsRootChildCorrectly_WhenDictionaryHasRoot_Impl( (sut, k, v) =>
+        {
+            var node = new TreeDictionaryNode<TKey, TValue>( k, v );
+            sut.Add( node );
+            return node;
+        } );
     }
 
     private void Add_ShouldAddNewNodeAsRootChildCorrectly_WhenDictionaryHasRoot_Impl(
@@ -251,12 +245,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void Add_WithNode_ShouldThrowArgumentException_WhenKeyAlreadyExists()
     {
-        Add_ShouldThrowArgumentException_WhenKeyAlreadyExists_Impl(
-            (sut, k, v, i) =>
-            {
-                i.Node = new TreeDictionaryNode<TKey, TValue>( k, v );
-                sut.Add( i.Node );
-            } );
+        Add_ShouldThrowArgumentException_WhenKeyAlreadyExists_Impl( (sut, k, v, i) =>
+        {
+            i.Node = new TreeDictionaryNode<TKey, TValue>( k, v );
+            sut.Add( i.Node );
+        } );
     }
 
     private void Add_ShouldThrowArgumentException_WhenKeyAlreadyExists_Impl(
@@ -270,14 +263,13 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => add( sut, key, values[1], intercept ) );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<ArgumentException>(),
-                    sut.Count.TestEquals( 1 ),
-                    sut.Root.TestEquals( root ),
-                    root.Value.TestEquals( values[0] ),
-                    AssertNodeRelationship( root ),
-                    intercept.Node is null ? Assertion.All() : AssertLackOfLinkedTree( intercept.Node ) ) )
+        action.Test( exc => Assertion.All(
+                exc.TestType().Exact<ArgumentException>(),
+                sut.Count.TestEquals( 1 ),
+                sut.Root.TestEquals( root ),
+                root.Value.TestEquals( values[0] ),
+                AssertNodeRelationship( root ),
+                intercept.Node is null ? Assertion.All() : AssertLackOfLinkedTree( intercept.Node ) ) )
             .Go();
     }
 
@@ -303,13 +295,12 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void AddTo_WithNode_ShouldAddNewNodeCorrectly_WhenParentDoesNotHaveAnyChildren()
     {
-        AddTo_ShouldAddNewNodeCorrectly_WhenParentDoesNotHaveAnyChildren_Impl(
-            (sut, p, k, v) =>
-            {
-                var node = new TreeDictionaryNode<TKey, TValue>( k, v );
-                sut.AddTo( p.Key, node );
-                return node;
-            } );
+        AddTo_ShouldAddNewNodeCorrectly_WhenParentDoesNotHaveAnyChildren_Impl( (sut, p, k, v) =>
+        {
+            var node = new TreeDictionaryNode<TKey, TValue>( k, v );
+            sut.AddTo( p.Key, node );
+            return node;
+        } );
     }
 
     [Fact]
@@ -321,13 +312,12 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void AddTo_WithParentNodeAndNewNode_ShouldAddNewNodeCorrectly_WhenParentDoesNotHaveAnyChildren()
     {
-        AddTo_ShouldAddNewNodeCorrectly_WhenParentDoesNotHaveAnyChildren_Impl(
-            (sut, p, k, v) =>
-            {
-                var node = new TreeDictionaryNode<TKey, TValue>( k, v );
-                sut.AddTo( p, node );
-                return node;
-            } );
+        AddTo_ShouldAddNewNodeCorrectly_WhenParentDoesNotHaveAnyChildren_Impl( (sut, p, k, v) =>
+        {
+            var node = new TreeDictionaryNode<TKey, TValue>( k, v );
+            sut.AddTo( p, node );
+            return node;
+        } );
     }
 
     private void AddTo_ShouldAddNewNodeCorrectly_WhenParentDoesNotHaveAnyChildren_Impl(
@@ -362,13 +352,12 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void AddTo_WithNode_ShouldAddNewNodeCorrectly_WhenParentHasOtherChild()
     {
-        AddTo_ShouldAddNewNodeCorrectly_WhenParentHasOtherChild_Impl(
-            (sut, p, k, v) =>
-            {
-                var node = new TreeDictionaryNode<TKey, TValue>( k, v );
-                sut.AddTo( p.Key, node );
-                return node;
-            } );
+        AddTo_ShouldAddNewNodeCorrectly_WhenParentHasOtherChild_Impl( (sut, p, k, v) =>
+        {
+            var node = new TreeDictionaryNode<TKey, TValue>( k, v );
+            sut.AddTo( p.Key, node );
+            return node;
+        } );
     }
 
     [Fact]
@@ -380,13 +369,12 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void AddTo_WithParentNodeAndNewNode_ShouldAddNewNodeCorrectly_WhenParentHasOtherChild()
     {
-        AddTo_ShouldAddNewNodeCorrectly_WhenParentHasOtherChild_Impl(
-            (sut, p, k, v) =>
-            {
-                var node = new TreeDictionaryNode<TKey, TValue>( k, v );
-                sut.AddTo( p, node );
-                return node;
-            } );
+        AddTo_ShouldAddNewNodeCorrectly_WhenParentHasOtherChild_Impl( (sut, p, k, v) =>
+        {
+            var node = new TreeDictionaryNode<TKey, TValue>( k, v );
+            sut.AddTo( p, node );
+            return node;
+        } );
     }
 
     private void AddTo_ShouldAddNewNodeCorrectly_WhenParentHasOtherChild_Impl(
@@ -423,12 +411,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void AddTo_WithNode_ShouldThrowArgumentException_WhenKeyAlreadyExists()
     {
-        AddTo_ShouldThrowArgumentException_WhenKeyAlreadyExists_Impl(
-            (sut, p, k, v, i) =>
-            {
-                i.Node = new TreeDictionaryNode<TKey, TValue>( k, v );
-                sut.AddTo( p.Key, i.Node );
-            } );
+        AddTo_ShouldThrowArgumentException_WhenKeyAlreadyExists_Impl( (sut, p, k, v, i) =>
+        {
+            i.Node = new TreeDictionaryNode<TKey, TValue>( k, v );
+            sut.AddTo( p.Key, i.Node );
+        } );
     }
 
     [Fact]
@@ -440,12 +427,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void AddTo_WithParentNodeAndNewNode_ShouldThrowArgumentException_WhenKeyAlreadyExists()
     {
-        AddTo_ShouldThrowArgumentException_WhenKeyAlreadyExists_Impl(
-            (sut, p, k, v, i) =>
-            {
-                i.Node = new TreeDictionaryNode<TKey, TValue>( k, v );
-                sut.AddTo( p, i.Node );
-            } );
+        AddTo_ShouldThrowArgumentException_WhenKeyAlreadyExists_Impl( (sut, p, k, v, i) =>
+        {
+            i.Node = new TreeDictionaryNode<TKey, TValue>( k, v );
+            sut.AddTo( p, i.Node );
+        } );
     }
 
     private void AddTo_ShouldThrowArgumentException_WhenKeyAlreadyExists_Impl(
@@ -459,14 +445,13 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => addTo( sut, root, key, values[1], intercept ) );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<ArgumentException>(),
-                    sut.Count.TestEquals( 1 ),
-                    sut.Root.TestEquals( root ),
-                    root.Value.TestEquals( values[0] ),
-                    AssertNodeRelationship( root ),
-                    intercept.Node is null ? Assertion.All() : AssertLackOfLinkedTree( intercept.Node ) ) )
+        action.Test( exc => Assertion.All(
+                exc.TestType().Exact<ArgumentException>(),
+                sut.Count.TestEquals( 1 ),
+                sut.Root.TestEquals( root ),
+                root.Value.TestEquals( values[0] ),
+                AssertNodeRelationship( root ),
+                intercept.Node is null ? Assertion.All() : AssertLackOfLinkedTree( intercept.Node ) ) )
             .Go();
     }
 
@@ -666,15 +651,15 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void AddSubtreeTo_ShouldAddNodesCorrectly_WhenSubtreeKeysAreNotUniqueDueToDifferentComparers()
     {
-        AddSubtree_ShouldAddNodesCorrectly_WhenSubtreeKeysAreNotUniqueDueToDifferentComparers_Impl(
-            (sut, n) => sut.AddSubtreeTo( sut.Root!.Key, n ) );
+        AddSubtree_ShouldAddNodesCorrectly_WhenSubtreeKeysAreNotUniqueDueToDifferentComparers_Impl( (sut, n) =>
+            sut.AddSubtreeTo( sut.Root!.Key, n ) );
     }
 
     [Fact]
     public void AddSubtreeTo_WithParentNode_ShouldAddNodesCorrectly_WhenSubtreeKeysAreNotUniqueDueToDifferentComparers()
     {
-        AddSubtree_ShouldAddNodesCorrectly_WhenSubtreeKeysAreNotUniqueDueToDifferentComparers_Impl(
-            (sut, n) => sut.AddSubtreeTo( sut.Root!, n ) );
+        AddSubtree_ShouldAddNodesCorrectly_WhenSubtreeKeysAreNotUniqueDueToDifferentComparers_Impl( (sut, n) =>
+            sut.AddSubtreeTo( sut.Root!, n ) );
     }
 
     private void AddSubtree_ShouldAddNodesCorrectly_WhenSubtreeKeysAreNotUniqueDueToDifferentComparers_Impl(
@@ -897,12 +882,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void Remove_WithRemoved_ShouldReturnFalseAndDoNothing_WhenKeyDoesntExist()
     {
-        Remove_ShouldReturnFalseAndDoNothing_WhenKeyDoesntExist_Impl(
-            (sut, k) =>
-            {
-                var result = sut.Remove( k, out var v );
-                return (result, v);
-            } );
+        Remove_ShouldReturnFalseAndDoNothing_WhenKeyDoesntExist_Impl( (sut, k) =>
+        {
+            var result = sut.Remove( k, out var v );
+            return (result, v);
+        } );
     }
 
     private void Remove_ShouldReturnFalseAndDoNothing_WhenKeyDoesntExist_Impl(
@@ -928,23 +912,21 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void Remove_WithNode_ShouldReturnTrueAndRemoveRoot_WhenDictionaryHasOneItem()
     {
-        Remove_ShouldReturnTrueAndRemoveRoot_WhenDictionaryHasOneItem_Impl(
-            (sut, n) =>
-            {
-                sut.Remove( n );
-                return (true, n.Value);
-            } );
+        Remove_ShouldReturnTrueAndRemoveRoot_WhenDictionaryHasOneItem_Impl( (sut, n) =>
+        {
+            sut.Remove( n );
+            return (true, n.Value);
+        } );
     }
 
     [Fact]
     public void Remove_WithRemoved_ShouldRemoveRoot_WhenDictionaryHasOneItem()
     {
-        Remove_ShouldReturnTrueAndRemoveRoot_WhenDictionaryHasOneItem_Impl(
-            (sut, n) =>
-            {
-                var result = sut.Remove( n.Key, out var v );
-                return (result, v);
-            } );
+        Remove_ShouldReturnTrueAndRemoveRoot_WhenDictionaryHasOneItem_Impl( (sut, n) =>
+        {
+            var result = sut.Remove( n.Key, out var v );
+            return (result, v);
+        } );
     }
 
     private void Remove_ShouldReturnTrueAndRemoveRoot_WhenDictionaryHasOneItem_Impl(
@@ -975,23 +957,21 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void Remove_WithNode_ShouldRemoveCorrectExistingItem_WhenRemovingRoot()
     {
-        Remove_ShouldReturnTrueAndRemoveCorrectExistingItem_WhenRemovingRoot_Impl(
-            (sut, n) =>
-            {
-                sut.Remove( n );
-                return (true, n.Value);
-            } );
+        Remove_ShouldReturnTrueAndRemoveCorrectExistingItem_WhenRemovingRoot_Impl( (sut, n) =>
+        {
+            sut.Remove( n );
+            return (true, n.Value);
+        } );
     }
 
     [Fact]
     public void Remove_WithRemoved_ShouldReturnTrueAndRemoveCorrectExistingItem_WhenRemovingRoot()
     {
-        Remove_ShouldReturnTrueAndRemoveCorrectExistingItem_WhenRemovingRoot_Impl(
-            (sut, n) =>
-            {
-                var result = sut.Remove( n.Key, out var v );
-                return (result, v);
-            } );
+        Remove_ShouldReturnTrueAndRemoveCorrectExistingItem_WhenRemovingRoot_Impl( (sut, n) =>
+        {
+            var result = sut.Remove( n.Key, out var v );
+            return (result, v);
+        } );
     }
 
     private void Remove_ShouldReturnTrueAndRemoveCorrectExistingItem_WhenRemovingRoot_Impl(
@@ -1027,23 +1007,21 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void Remove_WithNode_ShouldRemoveCorrectExistingItem_WhenRemovingNonRootNode()
     {
-        Remove_ShouldReturnTrueAndRemoveCorrectExistingItem_WhenRemovingNonRootNode_Impl(
-            (sut, n) =>
-            {
-                sut.Remove( n );
-                return (true, n.Value);
-            } );
+        Remove_ShouldReturnTrueAndRemoveCorrectExistingItem_WhenRemovingNonRootNode_Impl( (sut, n) =>
+        {
+            sut.Remove( n );
+            return (true, n.Value);
+        } );
     }
 
     [Fact]
     public void Remove_WithRemoved_ShouldReturnTrueAndRemoveCorrectExistingItem_WhenRemovingNonRootNode()
     {
-        Remove_ShouldReturnTrueAndRemoveCorrectExistingItem_WhenRemovingNonRootNode_Impl(
-            (sut, n) =>
-            {
-                var result = sut.Remove( n.Key, out var v );
-                return (result, v);
-            } );
+        Remove_ShouldReturnTrueAndRemoveCorrectExistingItem_WhenRemovingNonRootNode_Impl( (sut, n) =>
+        {
+            var result = sut.Remove( n.Key, out var v );
+            return (result, v);
+        } );
     }
 
     private void Remove_ShouldReturnTrueAndRemoveCorrectExistingItem_WhenRemovingNonRootNode_Impl(
@@ -1366,8 +1344,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void Swap_ShouldSwapNodesCorrectly_WhenFirstNodeIsRootAndSecondNodeIsIndirectRootDescendant()
     {
-        Swap_ShouldSwapNodesCorrectly_WhenFirstNodeIsRootAndSecondNodeIsIndirectRootDescendant_Impl(
-            (sut, f, s) => sut.Swap( f.Key, s.Key ) );
+        Swap_ShouldSwapNodesCorrectly_WhenFirstNodeIsRootAndSecondNodeIsIndirectRootDescendant_Impl( (sut, f, s) =>
+            sut.Swap( f.Key, s.Key ) );
     }
 
     [Fact]
@@ -1406,8 +1384,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void Swap_ShouldSwapNodesCorrectly_WhenFirstNodeIsIndirectRootDescendantAndSecondNodeIsRoot()
     {
-        Swap_ShouldSwapNodesCorrectly_WhenFirstNodeIsIndirectRootDescendantAndSecondNodeIsRoot_Impl(
-            (sut, f, s) => sut.Swap( f.Key, s.Key ) );
+        Swap_ShouldSwapNodesCorrectly_WhenFirstNodeIsIndirectRootDescendantAndSecondNodeIsRoot_Impl( (sut, f, s) =>
+            sut.Swap( f.Key, s.Key ) );
     }
 
     [Fact]
@@ -1735,12 +1713,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveTo_WithNode_ShouldDoNothing_WhenParentIsTheCurrentParentOfTheNode()
     {
-        MoveTo_ShouldDoNothing_WhenParentIsTheCurrentParentOfTheNode_Impl(
-            (sut, a, b) =>
-            {
-                sut.MoveTo( a.Key, b );
-                return b;
-            } );
+        MoveTo_ShouldDoNothing_WhenParentIsTheCurrentParentOfTheNode_Impl( (sut, a, b) =>
+        {
+            sut.MoveTo( a.Key, b );
+            return b;
+        } );
     }
 
     [Fact]
@@ -1752,12 +1729,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveTo_WithParentAndTargetNode_ShouldDoNothing_WhenParentIsTheCurrentParentOfTheNode()
     {
-        MoveTo_ShouldDoNothing_WhenParentIsTheCurrentParentOfTheNode_Impl(
-            (sut, a, b) =>
-            {
-                sut.MoveTo( a, b );
-                return b;
-            } );
+        MoveTo_ShouldDoNothing_WhenParentIsTheCurrentParentOfTheNode_Impl( (sut, a, b) =>
+        {
+            sut.MoveTo( a, b );
+            return b;
+        } );
     }
 
     private void MoveTo_ShouldDoNothing_WhenParentIsTheCurrentParentOfTheNode_Impl(
@@ -1788,12 +1764,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveTo_WithNode_ShouldChangeParentCorrectly_WhenNodeIsRootAndParentIsFirstRootChild()
     {
-        MoveTo_ShouldChangeParentCorrectly_WhenNodeIsRootAndParentIsFirstRootChild_Impl(
-            (sut, a, b) =>
-            {
-                sut.MoveTo( a.Key, b );
-                return b;
-            } );
+        MoveTo_ShouldChangeParentCorrectly_WhenNodeIsRootAndParentIsFirstRootChild_Impl( (sut, a, b) =>
+        {
+            sut.MoveTo( a.Key, b );
+            return b;
+        } );
     }
 
     [Fact]
@@ -1805,12 +1780,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveTo_WithParentAndTargetNode_ShouldChangeParentCorrectly_WhenNodeIsRootAndParentIsFirstRootChild()
     {
-        MoveTo_ShouldChangeParentCorrectly_WhenNodeIsRootAndParentIsFirstRootChild_Impl(
-            (sut, a, b) =>
-            {
-                sut.MoveTo( a, b );
-                return b;
-            } );
+        MoveTo_ShouldChangeParentCorrectly_WhenNodeIsRootAndParentIsFirstRootChild_Impl( (sut, a, b) =>
+        {
+            sut.MoveTo( a, b );
+            return b;
+        } );
     }
 
     private void MoveTo_ShouldChangeParentCorrectly_WhenNodeIsRootAndParentIsFirstRootChild_Impl(
@@ -1850,12 +1824,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveTo_WithNode_ShouldChangeParentCorrectly_WhenNodeIsRootAndParentIsNonFirstRootChild()
     {
-        MoveTo_ShouldChangeParentCorrectly_WhenNodeIsRootAndParentIsNonFirstRootChild_Impl(
-            (sut, a, b) =>
-            {
-                sut.MoveTo( a.Key, b );
-                return b;
-            } );
+        MoveTo_ShouldChangeParentCorrectly_WhenNodeIsRootAndParentIsNonFirstRootChild_Impl( (sut, a, b) =>
+        {
+            sut.MoveTo( a.Key, b );
+            return b;
+        } );
     }
 
     [Fact]
@@ -1867,12 +1840,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveTo_WithParentAndTargetNode_ShouldChangeParentCorrectly_WhenNodeIsRootAndParentIsNonFirstRootChild()
     {
-        MoveTo_ShouldChangeParentCorrectly_WhenNodeIsRootAndParentIsNonFirstRootChild_Impl(
-            (sut, a, b) =>
-            {
-                sut.MoveTo( a, b );
-                return b;
-            } );
+        MoveTo_ShouldChangeParentCorrectly_WhenNodeIsRootAndParentIsNonFirstRootChild_Impl( (sut, a, b) =>
+        {
+            sut.MoveTo( a, b );
+            return b;
+        } );
     }
 
     private void MoveTo_ShouldChangeParentCorrectly_WhenNodeIsRootAndParentIsNonFirstRootChild_Impl(
@@ -1912,12 +1884,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveTo_WithNode_ShouldChangeParentCorrectly_WhenNodeIsRootAndParentIsIndirectDescendant()
     {
-        MoveTo_ShouldChangeParentCorrectly_WhenNodeIsRootAndParentIsIndirectDescendant_Impl(
-            (sut, a, b) =>
-            {
-                sut.MoveTo( a.Key, b );
-                return b;
-            } );
+        MoveTo_ShouldChangeParentCorrectly_WhenNodeIsRootAndParentIsIndirectDescendant_Impl( (sut, a, b) =>
+        {
+            sut.MoveTo( a.Key, b );
+            return b;
+        } );
     }
 
     [Fact]
@@ -1929,12 +1900,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveTo_WithParentAndTargetNode_ShouldChangeParentCorrectly_WhenNodeIsRootAndParentIsIndirectDescendant()
     {
-        MoveTo_ShouldChangeParentCorrectly_WhenNodeIsRootAndParentIsIndirectDescendant_Impl(
-            (sut, a, b) =>
-            {
-                sut.MoveTo( a, b );
-                return b;
-            } );
+        MoveTo_ShouldChangeParentCorrectly_WhenNodeIsRootAndParentIsIndirectDescendant_Impl( (sut, a, b) =>
+        {
+            sut.MoveTo( a, b );
+            return b;
+        } );
     }
 
     private void MoveTo_ShouldChangeParentCorrectly_WhenNodeIsRootAndParentIsIndirectDescendant_Impl(
@@ -1974,12 +1944,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveTo_WithNode_ShouldChangeParentCorrectly_WhenParentIsNodesFirstChild()
     {
-        MoveTo_ShouldChangeParentCorrectly_WhenParentIsNodesFirstChild_Impl(
-            (sut, a, b) =>
-            {
-                sut.MoveTo( a.Key, b );
-                return b;
-            } );
+        MoveTo_ShouldChangeParentCorrectly_WhenParentIsNodesFirstChild_Impl( (sut, a, b) =>
+        {
+            sut.MoveTo( a.Key, b );
+            return b;
+        } );
     }
 
     [Fact]
@@ -1991,12 +1960,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveTo_WithParentAndTargetNode_ShouldChangeParentCorrectly_WhenParentIsNodesFirstChild()
     {
-        MoveTo_ShouldChangeParentCorrectly_WhenParentIsNodesFirstChild_Impl(
-            (sut, a, b) =>
-            {
-                sut.MoveTo( a, b );
-                return b;
-            } );
+        MoveTo_ShouldChangeParentCorrectly_WhenParentIsNodesFirstChild_Impl( (sut, a, b) =>
+        {
+            sut.MoveTo( a, b );
+            return b;
+        } );
     }
 
     private void MoveTo_ShouldChangeParentCorrectly_WhenParentIsNodesFirstChild_Impl(
@@ -2038,12 +2006,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveTo_WithNode_ShouldChangeParentCorrectly_WhenParentIsNodesNonFirstChild()
     {
-        MoveTo_ShouldChangeParentCorrectly_WhenParentIsNodesNonFirstChild_Impl(
-            (sut, a, b) =>
-            {
-                sut.MoveTo( a.Key, b );
-                return b;
-            } );
+        MoveTo_ShouldChangeParentCorrectly_WhenParentIsNodesNonFirstChild_Impl( (sut, a, b) =>
+        {
+            sut.MoveTo( a.Key, b );
+            return b;
+        } );
     }
 
     [Fact]
@@ -2055,12 +2022,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveTo_WithParentAndTargetNode_ShouldChangeParentCorrectly_WhenParentIsNodesNonFirstChild()
     {
-        MoveTo_ShouldChangeParentCorrectly_WhenParentIsNodesNonFirstChild_Impl(
-            (sut, a, b) =>
-            {
-                sut.MoveTo( a, b );
-                return b;
-            } );
+        MoveTo_ShouldChangeParentCorrectly_WhenParentIsNodesNonFirstChild_Impl( (sut, a, b) =>
+        {
+            sut.MoveTo( a, b );
+            return b;
+        } );
     }
 
     private void MoveTo_ShouldChangeParentCorrectly_WhenParentIsNodesNonFirstChild_Impl(
@@ -2102,12 +2068,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveTo_WithNode_ShouldChangeParentCorrectly_WhenParentIsNodesIndirectDescendant()
     {
-        MoveTo_ShouldChangeParentCorrectly_WhenParentIsNodesIndirectDescendant_Impl(
-            (sut, a, b) =>
-            {
-                sut.MoveTo( a.Key, b );
-                return b;
-            } );
+        MoveTo_ShouldChangeParentCorrectly_WhenParentIsNodesIndirectDescendant_Impl( (sut, a, b) =>
+        {
+            sut.MoveTo( a.Key, b );
+            return b;
+        } );
     }
 
     [Fact]
@@ -2119,12 +2084,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveTo_WithParentAndTargetNode_ShouldChangeParentCorrectly_WhenParentIsNodesIndirectDescendant()
     {
-        MoveTo_ShouldChangeParentCorrectly_WhenParentIsNodesIndirectDescendant_Impl(
-            (sut, a, b) =>
-            {
-                sut.MoveTo( a, b );
-                return b;
-            } );
+        MoveTo_ShouldChangeParentCorrectly_WhenParentIsNodesIndirectDescendant_Impl( (sut, a, b) =>
+        {
+            sut.MoveTo( a, b );
+            return b;
+        } );
     }
 
     private void MoveTo_ShouldChangeParentCorrectly_WhenParentIsNodesIndirectDescendant_Impl(
@@ -2168,12 +2132,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveTo_WithNode_ShouldChangeParentCorrectly_WhenNodeIsParentsIndirectDescendant()
     {
-        MoveTo_ShouldChangeParentCorrectly_WhenNodeIsParentsIndirectDescendant_Impl(
-            (sut, a, b) =>
-            {
-                sut.MoveTo( a.Key, b );
-                return b;
-            } );
+        MoveTo_ShouldChangeParentCorrectly_WhenNodeIsParentsIndirectDescendant_Impl( (sut, a, b) =>
+        {
+            sut.MoveTo( a.Key, b );
+            return b;
+        } );
     }
 
     [Fact]
@@ -2185,12 +2148,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveTo_WithParentAndTargetNode_ShouldChangeParentCorrectly_WhenNodeIsParentsIndirectDescendant()
     {
-        MoveTo_ShouldChangeParentCorrectly_WhenNodeIsParentsIndirectDescendant_Impl(
-            (sut, a, b) =>
-            {
-                sut.MoveTo( a, b );
-                return b;
-            } );
+        MoveTo_ShouldChangeParentCorrectly_WhenNodeIsParentsIndirectDescendant_Impl( (sut, a, b) =>
+        {
+            sut.MoveTo( a, b );
+            return b;
+        } );
     }
 
     private void MoveTo_ShouldChangeParentCorrectly_WhenNodeIsParentsIndirectDescendant_Impl(
@@ -2234,12 +2196,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveTo_WithNode_ShouldChangeParentCorrectly_WhenParentAndNodeAreNotDirectlyRelated()
     {
-        MoveTo_ShouldChangeParentCorrectly_WhenParentAndNodeAreNotDirectlyRelated_Impl(
-            (sut, a, b) =>
-            {
-                sut.MoveTo( a.Key, b );
-                return b;
-            } );
+        MoveTo_ShouldChangeParentCorrectly_WhenParentAndNodeAreNotDirectlyRelated_Impl( (sut, a, b) =>
+        {
+            sut.MoveTo( a.Key, b );
+            return b;
+        } );
     }
 
     [Fact]
@@ -2251,12 +2212,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveTo_WithParentAndTargetNode_ShouldChangeParentCorrectly_WhenParentAndNodeAreNotDirectlyRelated()
     {
-        MoveTo_ShouldChangeParentCorrectly_WhenParentAndNodeAreNotDirectlyRelated_Impl(
-            (sut, a, b) =>
-            {
-                sut.MoveTo( a, b );
-                return b;
-            } );
+        MoveTo_ShouldChangeParentCorrectly_WhenParentAndNodeAreNotDirectlyRelated_Impl( (sut, a, b) =>
+        {
+            sut.MoveTo( a, b );
+            return b;
+        } );
     }
 
     private void MoveTo_ShouldChangeParentCorrectly_WhenParentAndNodeAreNotDirectlyRelated_Impl(
@@ -2494,12 +2454,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveSubtreeTo_WithNode_ShouldDoNothing_WhenParentIsTheCurrentParentOfTheNode()
     {
-        MoveSubtreeTo_ShouldDoNothing_WhenParentIsTheCurrentParentOfTheNode_Impl(
-            (sut, a, b) =>
-            {
-                sut.MoveSubtreeTo( a.Key, b );
-                return b;
-            } );
+        MoveSubtreeTo_ShouldDoNothing_WhenParentIsTheCurrentParentOfTheNode_Impl( (sut, a, b) =>
+        {
+            sut.MoveSubtreeTo( a.Key, b );
+            return b;
+        } );
     }
 
     [Fact]
@@ -2511,12 +2470,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveSubtreeTo_WithParentAndTargetNode_ShouldDoNothing_WhenParentIsTheCurrentParentOfTheNode()
     {
-        MoveSubtreeTo_ShouldDoNothing_WhenParentIsTheCurrentParentOfTheNode_Impl(
-            (sut, a, b) =>
-            {
-                sut.MoveSubtreeTo( a, b );
-                return b;
-            } );
+        MoveSubtreeTo_ShouldDoNothing_WhenParentIsTheCurrentParentOfTheNode_Impl( (sut, a, b) =>
+        {
+            sut.MoveSubtreeTo( a, b );
+            return b;
+        } );
     }
 
     private void MoveSubtreeTo_ShouldDoNothing_WhenParentIsTheCurrentParentOfTheNode_Impl(
@@ -2543,19 +2501,18 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveSubtreeTo_ShouldChangeParentCorrectly_WhenNodeIsParentsIndirectDescendant()
     {
-        MoveSubtreeTo_ShouldChangeParentCorrectly_WhenNodeIsParentsIndirectDescendant_Impl(
-            (sut, a, b) => sut.MoveSubtreeTo( a.Key, b.Key ) );
+        MoveSubtreeTo_ShouldChangeParentCorrectly_WhenNodeIsParentsIndirectDescendant_Impl( (sut, a, b) =>
+            sut.MoveSubtreeTo( a.Key, b.Key ) );
     }
 
     [Fact]
     public void MoveSubtreeTo_WithNode_ShouldChangeParentCorrectly_WhenNodeIsParentsIndirectDescendant()
     {
-        MoveSubtreeTo_ShouldChangeParentCorrectly_WhenNodeIsParentsIndirectDescendant_Impl(
-            (sut, a, b) =>
-            {
-                sut.MoveSubtreeTo( a.Key, b );
-                return b;
-            } );
+        MoveSubtreeTo_ShouldChangeParentCorrectly_WhenNodeIsParentsIndirectDescendant_Impl( (sut, a, b) =>
+        {
+            sut.MoveSubtreeTo( a.Key, b );
+            return b;
+        } );
     }
 
     [Fact]
@@ -2567,12 +2524,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveSubtreeTo_WithParentAndTargetNode_ShouldChangeParentCorrectly_WhenNodeIsParentsIndirectDescendant()
     {
-        MoveSubtreeTo_ShouldChangeParentCorrectly_WhenNodeIsParentsIndirectDescendant_Impl(
-            (sut, a, b) =>
-            {
-                sut.MoveSubtreeTo( a, b );
-                return b;
-            } );
+        MoveSubtreeTo_ShouldChangeParentCorrectly_WhenNodeIsParentsIndirectDescendant_Impl( (sut, a, b) =>
+        {
+            sut.MoveSubtreeTo( a, b );
+            return b;
+        } );
     }
 
     private void MoveSubtreeTo_ShouldChangeParentCorrectly_WhenNodeIsParentsIndirectDescendant_Impl(
@@ -2612,37 +2568,35 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveSubtreeTo_ShouldChangeParentCorrectly_WhenParentAndNodeAreNotDirectlyRelated()
     {
-        MoveSubtreeTo_ShouldChangeParentCorrectly_WhenParentAndNodeAreNotDirectlyRelated_Impl(
-            (sut, a, b) => sut.MoveSubtreeTo( a.Key, b.Key ) );
+        MoveSubtreeTo_ShouldChangeParentCorrectly_WhenParentAndNodeAreNotDirectlyRelated_Impl( (sut, a, b) =>
+            sut.MoveSubtreeTo( a.Key, b.Key ) );
     }
 
     [Fact]
     public void MoveSubtreeTo_WithNode_ShouldChangeParentCorrectly_WhenParentAndNodeAreNotDirectlyRelated()
     {
-        MoveSubtreeTo_ShouldChangeParentCorrectly_WhenParentAndNodeAreNotDirectlyRelated_Impl(
-            (sut, a, b) =>
-            {
-                sut.MoveSubtreeTo( a.Key, b );
-                return b;
-            } );
+        MoveSubtreeTo_ShouldChangeParentCorrectly_WhenParentAndNodeAreNotDirectlyRelated_Impl( (sut, a, b) =>
+        {
+            sut.MoveSubtreeTo( a.Key, b );
+            return b;
+        } );
     }
 
     [Fact]
     public void MoveSubtreeTo_WithParentNode_ShouldChangeParentCorrectly_WhenParentAndNodeAreNotDirectlyRelated()
     {
-        MoveSubtreeTo_ShouldChangeParentCorrectly_WhenParentAndNodeAreNotDirectlyRelated_Impl(
-            (sut, a, b) => sut.MoveSubtreeTo( a, b.Key ) );
+        MoveSubtreeTo_ShouldChangeParentCorrectly_WhenParentAndNodeAreNotDirectlyRelated_Impl( (sut, a, b) =>
+            sut.MoveSubtreeTo( a, b.Key ) );
     }
 
     [Fact]
     public void MoveSubtreeTo_WithParentAndTargetNode_ShouldChangeParentCorrectly_WhenParentAndNodeAreNotDirectlyRelated()
     {
-        MoveSubtreeTo_ShouldChangeParentCorrectly_WhenParentAndNodeAreNotDirectlyRelated_Impl(
-            (sut, a, b) =>
-            {
-                sut.MoveSubtreeTo( a, b );
-                return b;
-            } );
+        MoveSubtreeTo_ShouldChangeParentCorrectly_WhenParentAndNodeAreNotDirectlyRelated_Impl( (sut, a, b) =>
+        {
+            sut.MoveSubtreeTo( a, b );
+            return b;
+        } );
     }
 
     private void MoveSubtreeTo_ShouldChangeParentCorrectly_WhenParentAndNodeAreNotDirectlyRelated_Impl(
@@ -2682,29 +2636,29 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentNodeAndTargetNodeAreEqual()
     {
-        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentNodeAndTargetNodeAreEqual_Impl(
-            (sut, a, b) => sut.MoveSubtreeTo( a.Key, b.Key ) );
+        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentNodeAndTargetNodeAreEqual_Impl( (sut, a, b) =>
+            sut.MoveSubtreeTo( a.Key, b.Key ) );
     }
 
     [Fact]
     public void MoveSubtreeTo_WithNode_ShouldThrowInvalidOperationException_WhenParentNodeAndTargetNodeAreEqual()
     {
-        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentNodeAndTargetNodeAreEqual_Impl(
-            (sut, a, b) => sut.MoveSubtreeTo( a.Key, b ) );
+        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentNodeAndTargetNodeAreEqual_Impl( (sut, a, b) =>
+            sut.MoveSubtreeTo( a.Key, b ) );
     }
 
     [Fact]
     public void MoveSubtreeTo_WithParentNode_ShouldThrowInvalidOperationException_WhenParentNodeAndTargetNodeAreEqual()
     {
-        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentNodeAndTargetNodeAreEqual_Impl(
-            (sut, a, b) => sut.MoveSubtreeTo( a, b.Key ) );
+        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentNodeAndTargetNodeAreEqual_Impl( (sut, a, b) =>
+            sut.MoveSubtreeTo( a, b.Key ) );
     }
 
     [Fact]
     public void MoveSubtreeTo_WithParentNodeAndTargetNode_ShouldThrowInvalidOperationException_WhenParentNodeAndTargetNodeAreEqual()
     {
-        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentNodeAndTargetNodeAreEqual_Impl(
-            (sut, a, b) => sut.MoveSubtreeTo( a, b ) );
+        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentNodeAndTargetNodeAreEqual_Impl( (sut, a, b) =>
+            sut.MoveSubtreeTo( a, b ) );
     }
 
     private void MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentNodeAndTargetNodeAreEqual_Impl(
@@ -2722,29 +2676,29 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsRootChild()
     {
-        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsRootChild_Impl(
-            (sut, a, b) => sut.MoveSubtreeTo( a.Key, b.Key ) );
+        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsRootChild_Impl( (sut, a, b) =>
+            sut.MoveSubtreeTo( a.Key, b.Key ) );
     }
 
     [Fact]
     public void MoveSubtreeTo_WithNode_ShouldChangeParentCorrectly_WhenNodeIsRootAndParentIsRootChild()
     {
-        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsRootChild_Impl(
-            (sut, a, b) => sut.MoveSubtreeTo( a.Key, b ) );
+        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsRootChild_Impl( (sut, a, b) =>
+            sut.MoveSubtreeTo( a.Key, b ) );
     }
 
     [Fact]
     public void MoveSubtreeTo_WithParentNode_ShouldChangeParentCorrectly_WhenNodeIsRootAndParentIsRootChild()
     {
-        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsRootChild_Impl(
-            (sut, a, b) => sut.MoveSubtreeTo( a, b.Key ) );
+        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsRootChild_Impl( (sut, a, b) =>
+            sut.MoveSubtreeTo( a, b.Key ) );
     }
 
     [Fact]
     public void MoveSubtreeTo_WithParentAndTargetNode_ShouldChangeParentCorrectly_WhenNodeIsRootAndParentIsRootChild()
     {
-        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsRootChild_Impl(
-            (sut, a, b) => sut.MoveSubtreeTo( a, b ) );
+        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsRootChild_Impl( (sut, a, b) =>
+            sut.MoveSubtreeTo( a, b ) );
     }
 
     private void MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsRootChild_Impl(
@@ -2764,29 +2718,29 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsIndirectDescendant()
     {
-        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsIndirectDescendant_Impl(
-            (sut, a, b) => sut.MoveSubtreeTo( a.Key, b.Key ) );
+        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsIndirectDescendant_Impl( (sut, a, b) =>
+            sut.MoveSubtreeTo( a.Key, b.Key ) );
     }
 
     [Fact]
     public void MoveSubtreeTo_WithNode_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsIndirectDescendant()
     {
-        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsIndirectDescendant_Impl(
-            (sut, a, b) => sut.MoveSubtreeTo( a.Key, b ) );
+        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsIndirectDescendant_Impl( (sut, a, b) =>
+            sut.MoveSubtreeTo( a.Key, b ) );
     }
 
     [Fact]
     public void MoveSubtreeTo_WithParentNode_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsIndirectDescendant()
     {
-        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsIndirectDescendant_Impl(
-            (sut, a, b) => sut.MoveSubtreeTo( a, b.Key ) );
+        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsIndirectDescendant_Impl( (sut, a, b) =>
+            sut.MoveSubtreeTo( a, b.Key ) );
     }
 
     [Fact]
     public void MoveSubtreeTo_WithParentAndTargetNode_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsIndirectDescendant()
     {
-        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsIndirectDescendant_Impl(
-            (sut, a, b) => sut.MoveSubtreeTo( a, b ) );
+        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsIndirectDescendant_Impl( (sut, a, b) =>
+            sut.MoveSubtreeTo( a, b ) );
     }
 
     private void MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsIndirectDescendant_Impl(
@@ -2846,29 +2800,29 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentIsNodesIndirectDescendant()
     {
-        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentIsNodesIndirectDescendant_Impl(
-            (sut, a, b) => sut.MoveSubtreeTo( a.Key, b.Key ) );
+        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentIsNodesIndirectDescendant_Impl( (sut, a, b) =>
+            sut.MoveSubtreeTo( a.Key, b.Key ) );
     }
 
     [Fact]
     public void MoveSubtreeTo_WithNode_ShouldThrowInvalidOperationException_WhenParentIsNodesIndirectDescendant()
     {
-        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentIsNodesIndirectDescendant_Impl(
-            (sut, a, b) => sut.MoveSubtreeTo( a.Key, b ) );
+        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentIsNodesIndirectDescendant_Impl( (sut, a, b) =>
+            sut.MoveSubtreeTo( a.Key, b ) );
     }
 
     [Fact]
     public void MoveSubtreeTo_WithParentNode_ShouldThrowInvalidOperationException_WhenParentIsNodesIndirectDescendant()
     {
-        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentIsNodesIndirectDescendant_Impl(
-            (sut, a, b) => sut.MoveSubtreeTo( a, b.Key ) );
+        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentIsNodesIndirectDescendant_Impl( (sut, a, b) =>
+            sut.MoveSubtreeTo( a, b.Key ) );
     }
 
     [Fact]
     public void MoveSubtreeTo_WithParentAndTargetNode_ShouldThrowInvalidOperationException_WhenParentIsNodesIndirectDescendant()
     {
-        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentIsNodesIndirectDescendant_Impl(
-            (sut, a, b) => sut.MoveSubtreeTo( a, b ) );
+        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentIsNodesIndirectDescendant_Impl( (sut, a, b) =>
+            sut.MoveSubtreeTo( a, b ) );
     }
 
     private void MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentIsNodesIndirectDescendant_Impl(

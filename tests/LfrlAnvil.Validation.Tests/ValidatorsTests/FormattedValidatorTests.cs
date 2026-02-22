@@ -42,10 +42,9 @@ public class FormattedValidatorTests : ValidatorTestsBase
 
         Assertion.All(
                 result.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        failures => Assertion.All(
-                            failures[0].Result.TestEquals( formatterResult.ToString() ),
-                            AssertValidationResult( failures[0].Messages, ValidationMessage.Create( failure ) ) ) ),
+                    .Then( failures => Assertion.All(
+                        failures[0].Result.TestEquals( formatterResult.ToString() ),
+                        AssertValidationResult( failures[0].Messages, ValidationMessage.Create( failure ) ) ) ),
                 formatter.TestReceivedCalls( f => f.Format( null, Arg.Any<Chain<ValidationMessage<string>>>() ), count: 1 ) )
             .Go();
     }

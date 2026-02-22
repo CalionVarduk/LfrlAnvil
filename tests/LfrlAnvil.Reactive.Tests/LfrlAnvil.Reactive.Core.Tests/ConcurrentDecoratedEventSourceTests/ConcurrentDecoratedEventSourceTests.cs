@@ -50,12 +50,11 @@ public class ConcurrentDecoratedEventSourceTests : TestsBase
         var hasLock = false;
 
         decorator.Decorate( listener, Arg.Any<IEventSubscriber>() )
-            .Returns(
-                _ =>
-                {
-                    hasLock = Monitor.IsEntered( sync );
-                    return Substitute.For<IEventListener<int>>();
-                } );
+            .Returns( _ =>
+            {
+                hasLock = Monitor.IsEntered( sync );
+                return Substitute.For<IEventListener<int>>();
+            } );
 
         result.Listen( listener );
 
@@ -111,12 +110,11 @@ public class ConcurrentDecoratedEventSourceTests : TestsBase
         var hasLock = false;
 
         decorator.Decorate( Arg.Any<IEventListener<string>>(), Arg.Any<IEventSubscriber>() )
-            .Returns(
-                _ =>
-                {
-                    hasLock = Monitor.IsEntered( sync );
-                    return Substitute.For<IEventListener<int>>();
-                } );
+            .Returns( _ =>
+            {
+                hasLock = Monitor.IsEntered( sync );
+                return Substitute.For<IEventListener<int>>();
+            } );
 
         nestedDecorator.Decorate( listener, Arg.Any<IEventSubscriber>() ).Returns( _ => Substitute.For<IEventListener<string>>() );
 
@@ -171,12 +169,10 @@ public class ConcurrentDecoratedEventSourceTests : TestsBase
 
         var action = Lambda.Of( () => sut.Listen( listener ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<InvalidArgumentTypeException>(
-                        e => Assertion.All(
-                            e.Argument.TestRefEquals( listener ),
-                            e.ExpectedType.TestEquals( typeof( IEventListener<string> ) ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<InvalidArgumentTypeException>( e => Assertion.All(
+                    e.Argument.TestRefEquals( listener ),
+                    e.ExpectedType.TestEquals( typeof( IEventListener<string> ) ) ) ) )
             .Go();
     }
 }

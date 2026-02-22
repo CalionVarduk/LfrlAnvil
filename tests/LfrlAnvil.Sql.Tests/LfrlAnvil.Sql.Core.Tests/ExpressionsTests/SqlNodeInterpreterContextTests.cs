@@ -365,17 +365,16 @@ public class SqlNodeInterpreterContextTests : TestsBase
         Assertion.All(
                 result.Sql.TestEquals( "SELECT * FROM bar" ),
                 result.Parameters.TestCount( count => count.TestEquals( 3 ) )
-                    .Then(
-                        p => Assertion.All(
-                            p[0].Name.TestEquals( "a" ),
-                            p[0].Type.TestEquals( TypeNullability.Create<int>() ),
-                            p[0].Index.TestNull(),
-                            p[1].Name.TestEquals( "b" ),
-                            p[1].Type.TestEquals( TypeNullability.Create<string>( isNullable: true ) ),
-                            p[1].Index.TestEquals( 1 ),
-                            p[2].Name.TestEquals( "c" ),
-                            p[2].Type.TestNull(),
-                            p[2].Index.TestEquals( 2 ) ) ),
+                    .Then( p => Assertion.All(
+                        p[0].Name.TestEquals( "a" ),
+                        p[0].Type.TestEquals( TypeNullability.Create<int>() ),
+                        p[0].Index.TestNull(),
+                        p[1].Name.TestEquals( "b" ),
+                        p[1].Type.TestEquals( TypeNullability.Create<string>( isNullable: true ) ),
+                        p[1].Index.TestEquals( 1 ),
+                        p[2].Name.TestEquals( "c" ),
+                        p[2].Type.TestNull(),
+                        p[2].Index.TestEquals( 2 ) ) ),
                 result.ToString().TestEquals( result.Sql ),
                 sut.Sql.ToString().TestEquals( result.Sql ),
                 sut.Parameters.Count.TestEquals( 3 ) )

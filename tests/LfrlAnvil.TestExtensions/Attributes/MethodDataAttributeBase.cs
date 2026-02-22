@@ -58,20 +58,19 @@ public abstract class MethodDataAttributeBase : MemberDataAttributeBase
 
         var method = testMethodDeclaringType
             .GetRuntimeMethods()
-            .Where(
-                m =>
-                {
-                    if ( m.Name != MemberName || ! m.IsStatic )
-                        return false;
+            .Where( m =>
+            {
+                if ( m.Name != MemberName || ! m.IsStatic )
+                    return false;
 
-                    var parameters = m.GetParameters();
-                    if ( parameters.Length != parameterTypes.Length )
-                        return false;
+                var parameters = m.GetParameters();
+                if ( parameters.Length != parameterTypes.Length )
+                    return false;
 
-                    var zippedParams = parameters.Zip( parameterTypes, (a, b) => (First: a, Second: b) );
-                    return zippedParams
-                        .All( x => x.First.ParameterType.IsAssignableFrom( x.Second ) );
-                } )
+                var zippedParams = parameters.Zip( parameterTypes, (a, b) => (First: a, Second: b) );
+                return zippedParams
+                    .All( x => x.First.ParameterType.IsAssignableFrom( x.Second ) );
+            } )
             .FirstOrDefault();
 
         return method is null ? null : () => method.Invoke( null, Parameters );

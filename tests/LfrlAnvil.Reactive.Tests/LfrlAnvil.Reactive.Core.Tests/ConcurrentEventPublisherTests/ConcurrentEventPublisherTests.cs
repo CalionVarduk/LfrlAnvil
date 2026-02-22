@@ -64,10 +64,10 @@ public class ConcurrentEventPublisherTests : TestsBase
 
         var action = Lambda.Of( () => sut.Publish( @event ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<InvalidArgumentTypeException>(
-                        e => Assertion.All( e.Argument.TestRefEquals( @event ), e.ExpectedType.TestEquals( typeof( int ) ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<InvalidArgumentTypeException>( e => Assertion.All(
+                    e.Argument.TestRefEquals( @event ),
+                    e.ExpectedType.TestEquals( typeof( int ) ) ) ) )
             .Go();
     }
 

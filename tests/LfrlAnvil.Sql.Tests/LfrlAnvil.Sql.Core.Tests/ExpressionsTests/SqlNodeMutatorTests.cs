@@ -207,14 +207,12 @@ public class SqlNodeMutatorTests : TestsBase
 
         var action = Lambda.Of( () => sut.Visit( parent ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<SqlNodeMutatorException>(
-                        e => Assertion.All(
-                            e.Parent.TestRefEquals( parent ),
-                            e.Node.TestRefEquals( node ),
-                            e.Result.TestRefEquals( replacement ),
-                            e.ExpectedType.TestEquals( typeof( SqlExpressionNode ) ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<SqlNodeMutatorException>( e => Assertion.All(
+                    e.Parent.TestRefEquals( parent ),
+                    e.Node.TestRefEquals( node ),
+                    e.Result.TestRefEquals( replacement ),
+                    e.ExpectedType.TestEquals( typeof( SqlExpressionNode ) ) ) ) )
             .Go();
     }
 
@@ -250,18 +248,17 @@ public class SqlNodeMutatorTests : TestsBase
         _ = sut.Visit( abcdefghij );
 
         sut.AncestorsByParameterName.Keys.TestSetEqual( [ "a", "b", "c", "d", "e", "f", "g", "h", "i", "j" ] )
-            .Then(
-                _ => Assertion.All(
-                    sut.AncestorsByParameterName["a"].TestSequence( [ ab, abc, abcdef, abcdefghij ] ),
-                    sut.AncestorsByParameterName["b"].TestSequence( [ ab, abc, abcdef, abcdefghij ] ),
-                    sut.AncestorsByParameterName["c"].TestSequence( [ abc, abcdef, abcdefghij ] ),
-                    sut.AncestorsByParameterName["d"].TestSequence( [ de, def, abcdef, abcdefghij ] ),
-                    sut.AncestorsByParameterName["e"].TestSequence( [ de, def, abcdef, abcdefghij ] ),
-                    sut.AncestorsByParameterName["f"].TestSequence( [ def, abcdef, abcdefghij ] ),
-                    sut.AncestorsByParameterName["g"].TestSequence( [ ghij, abcdefghij ] ),
-                    sut.AncestorsByParameterName["h"].TestSequence( [ hij, ghij, abcdefghij ] ),
-                    sut.AncestorsByParameterName["i"].TestSequence( [ ij, hij, ghij, abcdefghij ] ),
-                    sut.AncestorsByParameterName["j"].TestSequence( [ ij, hij, ghij, abcdefghij ] ) ) )
+            .Then( _ => Assertion.All(
+                sut.AncestorsByParameterName["a"].TestSequence( [ ab, abc, abcdef, abcdefghij ] ),
+                sut.AncestorsByParameterName["b"].TestSequence( [ ab, abc, abcdef, abcdefghij ] ),
+                sut.AncestorsByParameterName["c"].TestSequence( [ abc, abcdef, abcdefghij ] ),
+                sut.AncestorsByParameterName["d"].TestSequence( [ de, def, abcdef, abcdefghij ] ),
+                sut.AncestorsByParameterName["e"].TestSequence( [ de, def, abcdef, abcdefghij ] ),
+                sut.AncestorsByParameterName["f"].TestSequence( [ def, abcdef, abcdefghij ] ),
+                sut.AncestorsByParameterName["g"].TestSequence( [ ghij, abcdefghij ] ),
+                sut.AncestorsByParameterName["h"].TestSequence( [ hij, ghij, abcdefghij ] ),
+                sut.AncestorsByParameterName["i"].TestSequence( [ ij, hij, ghij, abcdefghij ] ),
+                sut.AncestorsByParameterName["j"].TestSequence( [ ij, hij, ghij, abcdefghij ] ) ) )
             .Go();
     }
 

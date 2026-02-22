@@ -55,13 +55,12 @@ public class ConnectionTests : TestsBase, IClassFixture<SharedResourceFixture>
         await endSource.Task;
         var remoteClient = server.Clients.TryGetById( 1 );
 
-        remoteClient.TestNotNull(
-                r => Assertion.All(
-                    "client",
-                    client.Id.TestEquals( r.Id ),
-                    client.Name.TestEquals( r.Name ),
-                    client.MessageTimeout.TestEquals( r.MessageTimeout ),
-                    client.PingInterval.TestEquals( r.PingInterval ) ) )
+        remoteClient.TestNotNull( r => Assertion.All(
+                "client",
+                client.Id.TestEquals( r.Id ),
+                client.Name.TestEquals( r.Name ),
+                client.MessageTimeout.TestEquals( r.MessageTimeout ),
+                client.PingInterval.TestEquals( r.PingInterval ) ) )
             .Go();
     }
 
@@ -113,13 +112,12 @@ public class ConnectionTests : TestsBase, IClassFixture<SharedResourceFixture>
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => MessageBrokerRemoteClientLogger.Create(
-                        traceEnd: e =>
-                        {
-                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.Deactivate )
-                                endSource.Complete();
-                        } ) ) );
+                .SetClientLoggerFactory( _ => MessageBrokerRemoteClientLogger.Create(
+                    traceEnd: e =>
+                    {
+                        if ( e.Type == MessageBrokerRemoteClientTraceEventType.Deactivate )
+                            endSource.Complete();
+                    } ) ) );
 
         await server.StartAsync();
 

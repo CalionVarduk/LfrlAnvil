@@ -313,12 +313,11 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
         var expected = Fixture.Create<TReturn>();
         var func = Substitute.For<OutFunc<TReturn>>();
         func.Invoke( out Arg.Any<TReturn>() )
-            .Returns(
-                c =>
-                {
-                    c[0] = expected;
-                    return true;
-                } );
+            .Returns( c =>
+            {
+                c[0] = expected;
+                return true;
+            } );
 
         var sut = func.Purify();
 
@@ -355,12 +354,11 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
         var expected = Fixture.Create<TReturn>();
         var func = Substitute.For<OutFunc<T1, TReturn>>();
         func.Invoke( Arg.Any<T1>(), out Arg.Any<TReturn>() )
-            .Returns(
-                c =>
-                {
-                    c[1] = expected;
-                    return true;
-                } );
+            .Returns( c =>
+            {
+                c[1] = expected;
+                return true;
+            } );
 
         var sut = func.Purify();
 
@@ -400,12 +398,11 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
         var expected = Fixture.Create<TReturn>();
         var func = Substitute.For<OutFunc<T1, T2, TReturn>>();
         func.Invoke( Arg.Any<T1>(), Arg.Any<T2>(), out Arg.Any<TReturn>() )
-            .Returns(
-                c =>
-                {
-                    c[2] = expected;
-                    return true;
-                } );
+            .Returns( c =>
+            {
+                c[2] = expected;
+                return true;
+            } );
 
         var sut = func.Purify();
 
@@ -447,12 +444,11 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
         var expected = Fixture.Create<TReturn>();
         var func = Substitute.For<OutFunc<T1, T2, T3, TReturn>>();
         func.Invoke( Arg.Any<T1>(), Arg.Any<T2>(), Arg.Any<T3>(), out Arg.Any<TReturn>() )
-            .Returns(
-                c =>
-                {
-                    c[3] = expected;
-                    return true;
-                } );
+            .Returns( c =>
+            {
+                c[3] = expected;
+                return true;
+            } );
 
         var sut = func.Purify();
 

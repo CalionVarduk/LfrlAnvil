@@ -46,19 +46,18 @@ public class MeasurableTests : TestsBase
 
         var action = Lambda.Of( () => sut.Invoke() );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestNotNull(),
-                    sut.State.TestEquals( MeasurableState.Done ),
-                    sut.Measurement.TestNotEquals( TimeMeasurement.Zero ),
-                    sut.Actions.TestSequence(
-                    [
-                        ("Prepare", MeasurableState.Preparing, TimeMeasurement.Zero),
-                        ("Run", MeasurableState.Running, new TimeMeasurement( sut.Measurement.Preparation, TimeSpan.Zero, TimeSpan.Zero )),
-                        ("Teardown", MeasurableState.TearingDown,
-                            new TimeMeasurement( sut.Measurement.Preparation, sut.Measurement.Invocation, TimeSpan.Zero )),
-                        ("Done", MeasurableState.Done, sut.Measurement)
-                    ] ) ) )
+        action.Test( exc => Assertion.All(
+                exc.TestNotNull(),
+                sut.State.TestEquals( MeasurableState.Done ),
+                sut.Measurement.TestNotEquals( TimeMeasurement.Zero ),
+                sut.Actions.TestSequence(
+                [
+                    ("Prepare", MeasurableState.Preparing, TimeMeasurement.Zero),
+                    ("Run", MeasurableState.Running, new TimeMeasurement( sut.Measurement.Preparation, TimeSpan.Zero, TimeSpan.Zero )),
+                    ("Teardown", MeasurableState.TearingDown,
+                        new TimeMeasurement( sut.Measurement.Preparation, sut.Measurement.Invocation, TimeSpan.Zero )),
+                    ("Done", MeasurableState.Done, sut.Measurement)
+                ] ) ) )
             .Go();
     }
 

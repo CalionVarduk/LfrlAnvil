@@ -50,12 +50,11 @@ public class EventListenerContinueWithDecoratorTests : TestsBase
 
         var next = EventListener.Create<string>( actualEvents.Add, _ => isNextDisposed = true );
         var subscriber = Substitute.For<IEventSubscriber>();
-        var sut = new EventListenerContinueWithDecorator<int, string>(
-            e =>
-            {
-                continuation.Publish( e.ToString() );
-                return continuation;
-            } );
+        var sut = new EventListenerContinueWithDecorator<int, string>( e =>
+        {
+            continuation.Publish( e.ToString() );
+            return continuation;
+        } );
 
         var listener = sut.Decorate( next, subscriber );
 

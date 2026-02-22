@@ -158,12 +158,10 @@ public class ConcurrentEventSourceTests : TestsBase
 
         var action = Lambda.Of( () => sut.Listen( listener ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<InvalidArgumentTypeException>(
-                        e => Assertion.All(
-                            e.Argument.TestRefEquals( listener ),
-                            e.ExpectedType.TestEquals( typeof( IEventListener<int> ) ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<InvalidArgumentTypeException>( e => Assertion.All(
+                    e.Argument.TestRefEquals( listener ),
+                    e.ExpectedType.TestEquals( typeof( IEventListener<int> ) ) ) ) )
             .Go();
     }
 

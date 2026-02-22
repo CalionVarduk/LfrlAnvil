@@ -101,25 +101,19 @@ public partial class CollectionVariableRootTests : TestsBase
                 allElements[1].State.TestEquals( VariableState.Default ),
                 allElements[2].State.TestEquals( VariableState.Dirty ),
                 onChangeEvents.TestCount( count => count.TestEquals( 3 ) )
-                    .Then(
-                        e =>
-                            Assertion.All(
-                                e.TestAny(
-                                    (el, _) => el.SourceEvent.TestNotNull( source => source.Variable.TestEquals( allElements[0] ) ) ),
-                                e.TestAny(
-                                    (el, _) => el.SourceEvent.TestNotNull( source => source.Variable.TestEquals( allElements[2] ) ) ),
-                                e[2].SourceEvent.TestNull(),
-                                e[2].Source.TestEquals( VariableChangeSource.Refresh ) ) ),
+                    .Then( e =>
+                        Assertion.All(
+                            e.TestAny( (el, _) => el.SourceEvent.TestNotNull( source => source.Variable.TestEquals( allElements[0] ) ) ),
+                            e.TestAny( (el, _) => el.SourceEvent.TestNotNull( source => source.Variable.TestEquals( allElements[2] ) ) ),
+                            e[2].SourceEvent.TestNull(),
+                            e[2].Source.TestEquals( VariableChangeSource.Refresh ) ) ),
                 onValidateEvents.TestCount( count => count.TestEquals( 3 ) )
-                    .Then(
-                        e =>
-                            Assertion.All(
-                                e.TestAny(
-                                    (el, _) => el.SourceEvent.TestNotNull( source => source.Variable.TestEquals( allElements[0] ) ) ),
-                                e.TestAny(
-                                    (el, _) => el.SourceEvent.TestNotNull( source => source.Variable.TestEquals( allElements[2] ) ) ),
-                                e[2].SourceEvent.TestNull(),
-                                e[2].AssociatedChange.TestRefEquals( onChangeEvents[2] ) ) ) )
+                    .Then( e =>
+                        Assertion.All(
+                            e.TestAny( (el, _) => el.SourceEvent.TestNotNull( source => source.Variable.TestEquals( allElements[0] ) ) ),
+                            e.TestAny( (el, _) => el.SourceEvent.TestNotNull( source => source.Variable.TestEquals( allElements[2] ) ) ),
+                            e[2].SourceEvent.TestNull(),
+                            e[2].AssociatedChange.TestRefEquals( onChangeEvents[2] ) ) ) )
             .Go();
     }
 
@@ -175,15 +169,12 @@ public partial class CollectionVariableRootTests : TestsBase
                 allElements[1].State.TestEquals( VariableState.Default ),
                 allElements[2].State.TestEquals( VariableState.Invalid | VariableState.Warning ),
                 onValidateEvents.TestCount( count => count.TestEquals( 3 ) )
-                    .Then(
-                        e =>
-                            Assertion.All(
-                                e.TestAny(
-                                    (el, _) => el.SourceEvent.TestNotNull( source => source.Variable.TestEquals( allElements[0] ) ) ),
-                                e.TestAny(
-                                    (el, _) => el.SourceEvent.TestNotNull( source => source.Variable.TestEquals( allElements[2] ) ) ),
-                                e[2].SourceEvent.TestNull(),
-                                e[2].AssociatedChange.TestNull() ) ) )
+                    .Then( e =>
+                        Assertion.All(
+                            e.TestAny( (el, _) => el.SourceEvent.TestNotNull( source => source.Variable.TestEquals( allElements[0] ) ) ),
+                            e.TestAny( (el, _) => el.SourceEvent.TestNotNull( source => source.Variable.TestEquals( allElements[2] ) ) ),
+                            e[2].SourceEvent.TestNull(),
+                            e[2].AssociatedChange.TestNull() ) ) )
             .Go();
     }
 
@@ -242,15 +233,12 @@ public partial class CollectionVariableRootTests : TestsBase
                 allElements[1].State.TestEquals( VariableState.Default ),
                 allElements[2].State.TestEquals( VariableState.Default ),
                 onValidateEvents.TestCount( count => count.TestEquals( 3 ) )
-                    .Then(
-                        e =>
-                            Assertion.All(
-                                e.TestAny(
-                                    (el, _) => el.SourceEvent.TestNotNull( source => source.Variable.TestEquals( allElements[0] ) ) ),
-                                e.TestAny(
-                                    (el, _) => el.SourceEvent.TestNotNull( source => source.Variable.TestEquals( allElements[2] ) ) ),
-                                e[2].SourceEvent.TestNull(),
-                                e[2].AssociatedChange.TestNull() ) ) )
+                    .Then( e =>
+                        Assertion.All(
+                            e.TestAny( (el, _) => el.SourceEvent.TestNotNull( source => source.Variable.TestEquals( allElements[0] ) ) ),
+                            e.TestAny( (el, _) => el.SourceEvent.TestNotNull( source => source.Variable.TestEquals( allElements[2] ) ) ),
+                            e[2].SourceEvent.TestNull(),
+                            e[2].AssociatedChange.TestNull() ) ) )
             .Go();
     }
 
@@ -292,13 +280,11 @@ public partial class CollectionVariableRootTests : TestsBase
                 allElements[1].State.TestEquals( VariableState.Default ),
                 allElements[2].State.TestEquals( VariableState.Default ),
                 onValidateEvents.TestCount( count => count.TestEquals( 2 ) )
-                    .Then(
-                        e =>
-                            Assertion.All(
-                                e.TestAny(
-                                    (el, _) => el.SourceEvent.TestNotNull( source => source.Variable.TestEquals( allElements[0] ) ) ),
-                                e.TestAny(
-                                    (el, _) => el.SourceEvent.TestNotNull( source => source.Variable.TestEquals( allElements[2] ) ) ) ) ) )
+                    .Then( e =>
+                        Assertion.All(
+                            e.TestAny( (el, _) => el.SourceEvent.TestNotNull( source => source.Variable.TestEquals( allElements[0] ) ) ),
+                            e.TestAny( (el, _) =>
+                                el.SourceEvent.TestNotNull( source => source.Variable.TestEquals( allElements[2] ) ) ) ) ) )
             .Go();
     }
 
@@ -331,18 +317,17 @@ public partial class CollectionVariableRootTests : TestsBase
         Assertion.All(
                 sut.State.TestEquals( VariableState.ReadOnly ),
                 onChangeEvents.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e =>
-                            Assertion.All(
-                                "changeEvent",
-                                e[0].Variable.TestRefEquals( sut ),
-                                e[0].PreviousState.TestEquals( VariableState.Default ),
-                                e[0].NewState.TestEquals( sut.State ),
-                                e[0].Source.TestEquals( VariableChangeSource.SetReadOnly ),
-                                e[0].AddedElements.TestEmpty(),
-                                e[0].RemovedElements.TestEmpty(),
-                                e[0].RestoredElements.TestEmpty(),
-                                e[0].SourceEvent.TestNull() ) ) )
+                    .Then( e =>
+                        Assertion.All(
+                            "changeEvent",
+                            e[0].Variable.TestRefEquals( sut ),
+                            e[0].PreviousState.TestEquals( VariableState.Default ),
+                            e[0].NewState.TestEquals( sut.State ),
+                            e[0].Source.TestEquals( VariableChangeSource.SetReadOnly ),
+                            e[0].AddedElements.TestEmpty(),
+                            e[0].RemovedElements.TestEmpty(),
+                            e[0].RestoredElements.TestEmpty(),
+                            e[0].SourceEvent.TestNull() ) ) )
             .Go();
     }
 
@@ -361,18 +346,17 @@ public partial class CollectionVariableRootTests : TestsBase
         Assertion.All(
                 sut.State.TestEquals( VariableState.Default ),
                 onChangeEvents.TestCount( count => count.TestEquals( 1 ) )
-                    .Then(
-                        e =>
-                            Assertion.All(
-                                "changeEvent",
-                                e[0].Variable.TestRefEquals( sut ),
-                                e[0].PreviousState.TestEquals( VariableState.ReadOnly ),
-                                e[0].NewState.TestEquals( sut.State ),
-                                e[0].Source.TestEquals( VariableChangeSource.SetReadOnly ),
-                                e[0].AddedElements.TestEmpty(),
-                                e[0].RemovedElements.TestEmpty(),
-                                e[0].RestoredElements.TestEmpty(),
-                                e[0].SourceEvent.TestNull() ) ) )
+                    .Then( e =>
+                        Assertion.All(
+                            "changeEvent",
+                            e[0].Variable.TestRefEquals( sut ),
+                            e[0].PreviousState.TestEquals( VariableState.ReadOnly ),
+                            e[0].NewState.TestEquals( sut.State ),
+                            e[0].Source.TestEquals( VariableChangeSource.SetReadOnly ),
+                            e[0].AddedElements.TestEmpty(),
+                            e[0].RemovedElements.TestEmpty(),
+                            e[0].RestoredElements.TestEmpty(),
+                            e[0].SourceEvent.TestNull() ) ) )
             .Go();
     }
 

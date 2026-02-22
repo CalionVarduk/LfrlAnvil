@@ -118,10 +118,9 @@ public class ParsedExpressionBufferedDelegateTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetArgumentValue( "c", value ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<InvalidParsedExpressionArgumentsException>(
-                        e => e.ArgumentNames.Select( n => n.ToString() ).TestSequence( [ "c" ] ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<InvalidParsedExpressionArgumentsException>( e =>
+                    e.ArgumentNames.Select( n => n.ToString() ).TestSequence( [ "c" ] ) ) )
             .Go();
     }
 
@@ -160,10 +159,9 @@ public class ParsedExpressionBufferedDelegateTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetArgumentValue( "c" ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<InvalidParsedExpressionArgumentsException>(
-                        e => e.ArgumentNames.Select( n => n.ToString() ).TestSequence( [ "c" ] ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<InvalidParsedExpressionArgumentsException>( e =>
+                    e.ArgumentNames.Select( n => n.ToString() ).TestSequence( [ "c" ] ) ) )
             .Go();
     }
 

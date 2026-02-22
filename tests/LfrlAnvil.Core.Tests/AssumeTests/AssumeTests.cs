@@ -901,8 +901,10 @@ public class AssumeTests : TestsBase
 #endif
     public void Conditional_WithTwoParameters_ShouldPass_WhenConditionIsFalseAndIfFalseAssumptionPasses()
     {
-        var action = Lambda.Of(
-            () => Assume.Conditional( false, () => Assume.True( false, string.Empty ), () => Assume.True( true, string.Empty ) ) );
+        var action = Lambda.Of( () => Assume.Conditional(
+            false,
+            () => Assume.True( false, string.Empty ),
+            () => Assume.True( true, string.Empty ) ) );
 
         action.Test( exc => exc.TestNull() ).Go();
     }
@@ -915,8 +917,10 @@ public class AssumeTests : TestsBase
 #endif
     public void Conditional_WithTwoParameters_ShouldFail_WhenConditionIsFalseAndIfFalseAssumptionFails()
     {
-        var action = Lambda.Of(
-            () => Assume.Conditional( false, () => Assume.True( true, string.Empty ), () => Assume.True( false, string.Empty ) ) );
+        var action = Lambda.Of( () => Assume.Conditional(
+            false,
+            () => Assume.True( true, string.Empty ),
+            () => Assume.True( false, string.Empty ) ) );
 
         action.Test( exc => exc.TestNotNull() ).Go();
     }
@@ -929,8 +933,10 @@ public class AssumeTests : TestsBase
 #endif
     public void Conditional_WithTwoParameters_ShouldPass_WhenConditionIsTrueAndIfTrueAssumptionPasses()
     {
-        var action = Lambda.Of(
-            () => Assume.Conditional( true, () => Assume.True( true, string.Empty ), () => Assume.True( false, string.Empty ) ) );
+        var action = Lambda.Of( () => Assume.Conditional(
+            true,
+            () => Assume.True( true, string.Empty ),
+            () => Assume.True( false, string.Empty ) ) );
 
         action.Test( exc => exc.TestNull() ).Go();
     }
@@ -943,8 +949,10 @@ public class AssumeTests : TestsBase
 #endif
     public void Conditional_WithTwoParameters_ShouldFail_WhenConditionIsTrueAndIfTrueAssumptionFails()
     {
-        var action = Lambda.Of(
-            () => Assume.Conditional( true, () => Assume.True( false, string.Empty ), () => Assume.True( true, string.Empty ) ) );
+        var action = Lambda.Of( () => Assume.Conditional(
+            true,
+            () => Assume.True( false, string.Empty ),
+            () => Assume.True( true, string.Empty ) ) );
 
         action.Test( exc => exc.TestNotNull() ).Go();
     }

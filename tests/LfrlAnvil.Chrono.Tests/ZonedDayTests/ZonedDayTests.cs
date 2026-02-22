@@ -685,12 +685,10 @@ public class ZonedDayTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetDateTime( timeOfDay ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<InvalidZonedDateTimeException>(
-                        e => Assertion.All(
-                            e.DateTime.TestEquals( day + ( TimeSpan )timeOfDay ),
-                            e.TimeZone.TestRefEquals( timeZone ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<InvalidZonedDateTimeException>( e => Assertion.All(
+                    e.DateTime.TestEquals( day + ( TimeSpan )timeOfDay ),
+                    e.TimeZone.TestRefEquals( timeZone ) ) ) )
             .Go();
     }
 

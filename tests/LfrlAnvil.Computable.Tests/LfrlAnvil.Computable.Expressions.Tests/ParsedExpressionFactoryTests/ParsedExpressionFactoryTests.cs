@@ -18,8 +18,8 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     public void Create_ShouldProvideCorrectParamsToNumberParserProvider()
     {
         var provider = Substitute.For<Func<ParsedExpressionNumberParserParams, IParsedExpressionNumberParser>>();
-        provider.WithAnyArgs(
-            c => ParsedExpressionNumberParser.CreateDefaultDecimal( c.ArgAt<ParsedExpressionNumberParserParams>( 0 ).Configuration ) );
+        provider.WithAnyArgs( c =>
+            ParsedExpressionNumberParser.CreateDefaultDecimal( c.ArgAt<ParsedExpressionNumberParserParams>( 0 ).Configuration ) );
 
         var builder = new ParsedExpressionFactoryBuilder()
             .AddPrefixTypeConverter( "[string]", new MockPrefixTypeConverter() )
@@ -33,16 +33,15 @@ public partial class ParsedExpressionFactoryTests : TestsBase
         Assertion.All(
                 provider.CallAt( 0 ).Exists.TestTrue(),
                 provider.CallAt( 0 )
-                    .Arguments.TestAll(
-                        (arg, _) =>
-                        {
-                            var @params = ( ParsedExpressionNumberParserParams )arg!;
-                            return Assertion.All(
-                                "@params",
-                                @params.Configuration.TestRefEquals( sut.Configuration ),
-                                @params.ArgumentType.TestEquals( typeof( decimal ) ),
-                                @params.ResultType.TestEquals( typeof( string ) ) );
-                        } ) )
+                    .Arguments.TestAll( (arg, _) =>
+                    {
+                        var @params = ( ParsedExpressionNumberParserParams )arg!;
+                        return Assertion.All(
+                            "@params",
+                            @params.Configuration.TestRefEquals( sut.Configuration ),
+                            @params.ArgumentType.TestEquals( typeof( decimal ) ),
+                            @params.ResultType.TestEquals( typeof( string ) ) );
+                    } ) )
             .Go();
     }
 
@@ -82,10 +81,8 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<decimal, decimal>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.Error ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.Error ) ) )
             .Go();
     }
 
@@ -98,10 +95,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.StringConstantParsingFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.StringConstantParsingFailure ) ) )
             .Go();
     }
 
@@ -114,10 +112,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<decimal, decimal>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NumberConstantParsingFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NumberConstantParsingFailure ) ) )
             .Go();
     }
 
@@ -130,10 +129,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<decimal, decimal>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.InvalidArgumentName ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.InvalidArgumentName ) ) )
             .Go();
     }
 
@@ -150,10 +150,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedOperand ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.UnexpectedOperand ) ) )
             .Go();
     }
 
@@ -170,10 +171,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedFunctionCall ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.UnexpectedFunctionCall ) ) )
             .Go();
     }
 
@@ -192,10 +194,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ExpectedPostfixUnaryOrBinaryConstruct ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ExpectedPostfixUnaryOrBinaryConstruct ) ) )
             .Go();
     }
 
@@ -214,10 +217,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ExpectedPostfixUnaryOrBinaryConstruct ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ExpectedPostfixUnaryOrBinaryConstruct ) ) )
             .Go();
     }
 
@@ -234,10 +238,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<decimal, decimal>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedOpenedParenthesis ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.UnexpectedOpenedParenthesis ) ) )
             .Go();
     }
 
@@ -254,10 +259,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedTypeDeclaration ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.UnexpectedTypeDeclaration ) ) )
             .Go();
     }
 
@@ -273,10 +279,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedOpenedParenthesis ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.UnexpectedOpenedParenthesis ) ) )
             .Go();
     }
 
@@ -292,10 +299,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<decimal, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedOpenedParenthesis ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.UnexpectedOpenedParenthesis ) ) )
             .Go();
     }
 
@@ -308,10 +316,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<decimal, decimal>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedOpenedParenthesis ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.UnexpectedOpenedParenthesis ) ) )
             .Go();
     }
 
@@ -324,10 +333,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<decimal, decimal>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedClosedParenthesis ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.UnexpectedClosedParenthesis ) ) )
             .Go();
     }
 
@@ -400,10 +410,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedOpenedSquareBracket ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.UnexpectedOpenedSquareBracket ) ) )
             .Go();
     }
 
@@ -419,10 +430,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<decimal, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedOpenedSquareBracket ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.UnexpectedOpenedSquareBracket ) ) )
             .Go();
     }
 
@@ -435,10 +447,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedClosedSquareBracket ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.UnexpectedClosedSquareBracket ) ) )
             .Go();
     }
 
@@ -454,10 +467,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedClosedSquareBracket ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.UnexpectedClosedSquareBracket ) ) )
             .Go();
     }
 
@@ -473,10 +487,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedClosedSquareBracket ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.UnexpectedClosedSquareBracket ) ) )
             .Go();
     }
 
@@ -492,10 +507,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedClosedSquareBracket ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.UnexpectedClosedSquareBracket ) ) )
             .Go();
     }
 
@@ -511,10 +527,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedClosedSquareBracket ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.UnexpectedClosedSquareBracket ) ) )
             .Go();
     }
 
@@ -530,10 +547,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<decimal, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedClosedSquareBracket ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.UnexpectedClosedSquareBracket ) ) )
             .Go();
     }
 
@@ -552,10 +570,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -576,10 +595,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -607,10 +627,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedClosedParenthesis ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.UnexpectedClosedParenthesis ) ) )
             .Go();
     }
 
@@ -626,10 +647,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedClosedParenthesis ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.UnexpectedClosedParenthesis ) ) )
             .Go();
     }
 
@@ -645,10 +667,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedClosedParenthesis ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.UnexpectedClosedParenthesis ) ) )
             .Go();
     }
 
@@ -664,10 +687,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedClosedParenthesis ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.UnexpectedClosedParenthesis ) ) )
             .Go();
     }
 
@@ -686,10 +710,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -710,13 +735,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations(
-                            e,
-                            input,
-                            ParsedExpressionBuilderErrorType.AmbiguousPostfixUnaryConstructResolutionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.AmbiguousPostfixUnaryConstructResolutionFailure ) ) )
             .Go();
     }
 
@@ -733,10 +756,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -753,10 +777,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<decimal, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -772,10 +797,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -798,10 +824,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -822,10 +849,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -850,10 +878,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<decimal, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -874,10 +903,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<decimal, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -897,10 +927,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<decimal, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ExpectedBinaryOrPrefixUnaryConstruct ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ExpectedBinaryOrPrefixUnaryConstruct ) ) )
             .Go();
     }
 
@@ -920,10 +951,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<decimal, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ExpectedBinaryOrPrefixUnaryConstruct ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ExpectedBinaryOrPrefixUnaryConstruct ) ) )
             .Go();
     }
 
@@ -947,10 +979,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<decimal, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedConstruct ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.UnexpectedConstruct ) ) )
             .Go();
     }
 
@@ -971,10 +1004,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -992,10 +1026,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -1013,10 +1048,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<decimal, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -1032,10 +1068,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<decimal, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -1051,10 +1088,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -1070,10 +1108,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<decimal, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -1097,10 +1136,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<decimal, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -1124,10 +1164,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<decimal, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -1146,10 +1187,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<decimal, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -1173,10 +1215,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<decimal, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -1199,10 +1242,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<decimal, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -1225,10 +1269,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<decimal, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -1247,10 +1292,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ExpectedBinaryOperator ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ExpectedBinaryOperator ) ) )
             .Go();
     }
 
@@ -1268,10 +1314,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ExpectedBinaryOperator ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ExpectedBinaryOperator ) ) )
             .Go();
     }
 
@@ -1294,10 +1341,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -1313,10 +1361,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ExpectedPrefixUnaryConstruct ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ExpectedPrefixUnaryConstruct ) ) )
             .Go();
     }
 
@@ -1334,10 +1383,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ExpectedPrefixUnaryConstruct ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ExpectedPrefixUnaryConstruct ) ) )
             .Go();
     }
 
@@ -1355,10 +1405,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<decimal, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ExpectedPrefixUnaryConstruct ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ExpectedPrefixUnaryConstruct ) ) )
             .Go();
     }
 
@@ -1376,10 +1427,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<decimal, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ExpectedPrefixUnaryConstruct ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ExpectedPrefixUnaryConstruct ) ) )
             .Go();
     }
 
@@ -1395,10 +1447,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.BinaryOperatorCouldNotBeResolved ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.BinaryOperatorCouldNotBeResolved ) ) )
             .Go();
     }
 
@@ -1414,10 +1467,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.PrefixUnaryOperatorCouldNotBeResolved ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.PrefixUnaryOperatorCouldNotBeResolved ) ) )
             .Go();
     }
 
@@ -1433,10 +1487,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.PrefixTypeConverterCouldNotBeResolved ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.PrefixTypeConverterCouldNotBeResolved ) ) )
             .Go();
     }
 
@@ -1452,13 +1507,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations(
-                            e,
-                            input,
-                            ParsedExpressionBuilderErrorType.PostfixUnaryOperatorCouldNotBeResolved ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.PostfixUnaryOperatorCouldNotBeResolved ) ) )
             .Go();
     }
 
@@ -1474,13 +1527,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations(
-                            e,
-                            input,
-                            ParsedExpressionBuilderErrorType.PostfixTypeConverterCouldNotBeResolved ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.PostfixTypeConverterCouldNotBeResolved ) ) )
             .Go();
     }
 
@@ -1494,14 +1545,12 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations(
-                            e,
-                            input,
-                            ParsedExpressionBuilderErrorType.ExpressionMustContainAtLeastOneOperand,
-                            ParsedExpressionBuilderErrorType.ExpressionContainsInvalidOperandToOperatorRatio ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ExpressionMustContainAtLeastOneOperand,
+                    ParsedExpressionBuilderErrorType.ExpressionContainsInvalidOperandToOperatorRatio ) ) )
             .Go();
     }
 
@@ -1517,13 +1566,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations(
-                            e,
-                            input,
-                            ParsedExpressionBuilderErrorType.ExpressionContainsInvalidOperandToOperatorRatio ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ExpressionContainsInvalidOperandToOperatorRatio ) ) )
             .Go();
     }
 
@@ -1536,10 +1583,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ExpressionContainsUnclosedParentheses ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ExpressionContainsUnclosedParentheses ) ) )
             .Go();
     }
 
@@ -1559,10 +1607,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -1579,10 +1628,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -1599,10 +1649,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<decimal, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -1618,10 +1669,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedElementSeparator ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.UnexpectedElementSeparator ) ) )
             .Go();
     }
 
@@ -1641,10 +1693,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -1685,10 +1738,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -1718,14 +1772,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => e.Errors.Select( er => er.Type )
-                            .TestAny(
-                                (t, _) => Assertion.Any(
-                                    t.TestEquals( ParsedExpressionBuilderErrorType.NestedExpressionFailure ),
-                                    t.TestEquals( ParsedExpressionBuilderErrorType.MissingSubExpressionClosingSymbol ) ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => e.Errors.Select( er => er.Type )
+                    .TestAny( (t, _) => Assertion.Any(
+                        t.TestEquals( ParsedExpressionBuilderErrorType.NestedExpressionFailure ),
+                        t.TestEquals( ParsedExpressionBuilderErrorType.MissingSubExpressionClosingSymbol ) ) ) ) )
             .Go();
     }
 
@@ -1747,10 +1798,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.FunctionCouldNotBeResolved ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.FunctionCouldNotBeResolved ) ) )
             .Go();
     }
 
@@ -1777,10 +1829,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -1796,30 +1849,26 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        exception => Assertion.All(
-                            "exception",
-                            exception.Errors.Select( e => e.Type )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( exception => Assertion.All(
+                    "exception",
+                    exception.Errors.Select( e => e.Type )
+                        .TestSequence( [ ParsedExpressionBuilderErrorType.NestedExpressionFailure ] ),
+                    exception.Errors.FirstOrDefault()
+                        .TestType()
+                        .AssignableTo<ParsedExpressionBuilderAggregateError>( fooAggregateError => Assertion.All(
+                            "fooAggregateError",
+                            fooAggregateError.Token.ToString().TestEquals( "foo" ),
+                            fooAggregateError.Inner.Select( e => e.Type )
                                 .TestSequence( [ ParsedExpressionBuilderErrorType.NestedExpressionFailure ] ),
-                            exception.Errors.FirstOrDefault()
+                            fooAggregateError.Inner.FirstOrDefault()
                                 .TestType()
-                                .AssignableTo<ParsedExpressionBuilderAggregateError>(
-                                    fooAggregateError => Assertion.All(
-                                        "fooAggregateError",
-                                        fooAggregateError.Token.ToString().TestEquals( "foo" ),
-                                        fooAggregateError.Inner.Select( e => e.Type )
-                                            .TestSequence( [ ParsedExpressionBuilderErrorType.NestedExpressionFailure ] ),
-                                        fooAggregateError.Inner.FirstOrDefault()
-                                            .TestType()
-                                            .AssignableTo<ParsedExpressionBuilderAggregateError>(
-                                                barAggregateError => Assertion.All(
-                                                    "barAggregateError",
-                                                    barAggregateError.Token.ToString().TestEquals( "bar" ),
-                                                    barAggregateError.Inner.Select( e => e.Token.ToString() )
-                                                        .Distinct()
-                                                        .TestSequence( [ "+" ] ) ) ) ) ) ) ) )
+                                .AssignableTo<ParsedExpressionBuilderAggregateError>( barAggregateError => Assertion.All(
+                                    "barAggregateError",
+                                    barAggregateError.Token.ToString().TestEquals( "bar" ),
+                                    barAggregateError.Inner.Select( e => e.Token.ToString() )
+                                        .Distinct()
+                                        .TestSequence( [ "+" ] ) ) ) ) ) ) ) )
             .Go();
     }
 
@@ -1861,10 +1910,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -1884,10 +1934,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<int, int[]>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -1928,10 +1979,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -1947,10 +1999,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<Func<string, string, string>, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -1966,10 +2019,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<Func<string, string, string>, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedOpenedParenthesis ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.UnexpectedOpenedParenthesis ) ) )
             .Go();
     }
 
@@ -1999,14 +2053,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<int, int[]>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => e.Errors.Select( er => er.Type )
-                            .TestAny(
-                                (t, _) => Assertion.Any(
-                                    t.TestEquals( ParsedExpressionBuilderErrorType.NestedExpressionFailure ),
-                                    t.TestEquals( ParsedExpressionBuilderErrorType.MissingSubExpressionClosingSymbol ) ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => e.Errors.Select( er => er.Type )
+                    .TestAny( (t, _) => Assertion.Any(
+                        t.TestEquals( ParsedExpressionBuilderErrorType.NestedExpressionFailure ),
+                        t.TestEquals( ParsedExpressionBuilderErrorType.MissingSubExpressionClosingSymbol ) ) ) ) )
             .Go();
     }
 
@@ -2033,10 +2084,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<int, int[]>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -2052,30 +2104,26 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<int, int[][]>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        exception => Assertion.All(
-                            "exception",
-                            exception.Errors.Select( e => e.Type )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( exception => Assertion.All(
+                    "exception",
+                    exception.Errors.Select( e => e.Type )
+                        .TestSequence( [ ParsedExpressionBuilderErrorType.NestedExpressionFailure ] ),
+                    exception.Errors.FirstOrDefault()
+                        .TestType()
+                        .AssignableTo<ParsedExpressionBuilderAggregateError>( fooAggregateError => Assertion.All(
+                            "fooAggregateError",
+                            fooAggregateError.Token.ToString().TestEquals( "int[]" ),
+                            fooAggregateError.Inner.Select( e => e.Type )
                                 .TestSequence( [ ParsedExpressionBuilderErrorType.NestedExpressionFailure ] ),
-                            exception.Errors.FirstOrDefault()
+                            fooAggregateError.Inner.FirstOrDefault()
                                 .TestType()
-                                .AssignableTo<ParsedExpressionBuilderAggregateError>(
-                                    fooAggregateError => Assertion.All(
-                                        "fooAggregateError",
-                                        fooAggregateError.Token.ToString().TestEquals( "int[]" ),
-                                        fooAggregateError.Inner.Select( e => e.Type )
-                                            .TestSequence( [ ParsedExpressionBuilderErrorType.NestedExpressionFailure ] ),
-                                        fooAggregateError.Inner.FirstOrDefault()
-                                            .TestType()
-                                            .AssignableTo<ParsedExpressionBuilderAggregateError>(
-                                                barAggregateError => Assertion.All(
-                                                    "barAggregateError",
-                                                    barAggregateError.Token.ToString().TestEquals( "int" ),
-                                                    barAggregateError.Inner.Select( e => e.Token.ToString() )
-                                                        .Distinct()
-                                                        .TestSequence( [ "+" ] ) ) ) ) ) ) ) )
+                                .AssignableTo<ParsedExpressionBuilderAggregateError>( barAggregateError => Assertion.All(
+                                    "barAggregateError",
+                                    barAggregateError.Token.ToString().TestEquals( "int" ),
+                                    barAggregateError.Inner.Select( e => e.Token.ToString() )
+                                        .Distinct()
+                                        .TestSequence( [ "+" ] ) ) ) ) ) ) ) )
             .Go();
     }
 
@@ -2090,10 +2138,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string[]>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -2108,10 +2157,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<decimal, string[]>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -2130,10 +2180,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -2152,10 +2203,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -2170,10 +2222,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -2188,10 +2241,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -2205,10 +2259,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -2221,10 +2276,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -2251,10 +2307,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedClosedParenthesis ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.UnexpectedClosedParenthesis ) ) )
             .Go();
     }
 
@@ -2268,10 +2325,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedClosedSquareBracket ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.UnexpectedClosedSquareBracket ) ) )
             .Go();
     }
 
@@ -2284,10 +2342,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedElementSeparator ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.UnexpectedElementSeparator ) ) )
             .Go();
     }
 
@@ -2303,10 +2362,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -2323,10 +2383,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -2343,10 +2404,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -2386,10 +2448,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<int, Func<int>>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -2419,10 +2482,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<decimal, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedMemberAccess ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.UnexpectedMemberAccess ) ) )
             .Go();
     }
 
@@ -2478,10 +2542,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -2494,10 +2559,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -2510,10 +2576,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -2527,10 +2594,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -2543,10 +2611,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -2559,10 +2628,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -2576,10 +2646,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -2592,10 +2663,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -2611,10 +2683,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -2629,10 +2702,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<int, TestParameter>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -2647,10 +2721,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<int, DateTime>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -2668,10 +2743,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -2684,10 +2760,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -2700,10 +2777,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -2716,10 +2794,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -2744,10 +2823,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -2770,10 +2850,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -2797,10 +2878,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -2824,10 +2906,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -2850,10 +2933,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -2868,10 +2952,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -2886,10 +2971,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -2902,10 +2988,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<TestParameter, int>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -2926,10 +3013,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<int, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -2953,14 +3041,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<int, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => e.Errors.Select( er => er.Type )
-                            .TestAny(
-                                (t, _) => Assertion.Any(
-                                    t.TestEquals( ParsedExpressionBuilderErrorType.NestedExpressionFailure ),
-                                    t.TestEquals( ParsedExpressionBuilderErrorType.MissingSubExpressionClosingSymbol ) ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => e.Errors.Select( er => er.Type )
+                    .TestAny( (t, _) => Assertion.Any(
+                        t.TestEquals( ParsedExpressionBuilderErrorType.NestedExpressionFailure ),
+                        t.TestEquals( ParsedExpressionBuilderErrorType.MissingSubExpressionClosingSymbol ) ) ) ) )
             .Go();
     }
 
@@ -2996,10 +3081,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<int, int[]>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -3012,10 +3098,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -3028,10 +3115,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -3044,10 +3132,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -3062,10 +3151,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -3082,10 +3172,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -3098,10 +3189,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -3114,10 +3206,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -3130,10 +3223,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -3149,10 +3243,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -3168,10 +3263,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -3184,10 +3280,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -3200,10 +3297,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -3216,10 +3314,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -3233,10 +3332,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -3249,10 +3349,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<Type, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -3265,10 +3366,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -3281,10 +3383,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -3298,10 +3401,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string[]>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -3314,10 +3418,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<Type, string[]>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -3330,10 +3435,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string[]>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -3346,10 +3452,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string[]>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -3363,10 +3470,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -3380,10 +3488,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -3397,10 +3506,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ConstructHasThrownException ) ) )
             .Go();
     }
 
@@ -3432,10 +3542,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -3560,10 +3671,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -3576,10 +3688,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -3592,10 +3705,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -3608,10 +3722,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -3624,10 +3739,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -3643,10 +3759,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -3663,10 +3780,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.LocalTermError ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.LocalTermError ) ) )
             .Go();
     }
 
@@ -3769,10 +3887,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -3785,10 +3904,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -3801,10 +3921,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -3817,10 +3938,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -3833,10 +3955,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MacroMustContainAtLeastOneToken ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.MacroMustContainAtLeastOneToken ) ) )
             .Go();
     }
 
@@ -3852,10 +3975,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -3871,10 +3995,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MacroResolutionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.MacroResolutionFailure ) ) )
             .Go();
     }
 
@@ -3890,10 +4015,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -3909,10 +4035,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -3928,10 +4055,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -3947,10 +4075,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -3966,10 +4095,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -3985,10 +4115,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.NestedExpressionFailure ) ) )
             .Go();
     }
 
@@ -4008,10 +4139,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.InvalidMacroParameterCount ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.InvalidMacroParameterCount ) ) )
             .Go();
     }
 
@@ -4027,10 +4159,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MacroResolutionFailure ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.MacroResolutionFailure ) ) )
             .Go();
     }
 
@@ -4098,10 +4231,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.OutputTypeConverterHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.OutputTypeConverterHasThrownException ) ) )
             .Go();
     }
 
@@ -4146,10 +4280,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.OutputTypeConverterHasThrownException ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.OutputTypeConverterHasThrownException ) ) )
             .Go();
     }
 
@@ -4195,13 +4330,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<decimal, int>( input ) );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<ParsedExpressionCreationException>(
-                        e => MatchExpectations(
-                            e,
-                            input,
-                            ParsedExpressionBuilderErrorType.ExpressionResultTypeIsNotCompatibleWithExpectedOutputType ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<ParsedExpressionCreationException>( e => MatchExpectations(
+                    e,
+                    input,
+                    ParsedExpressionBuilderErrorType.ExpressionResultTypeIsNotCompatibleWithExpectedOutputType ) ) )
             .Go();
     }
 

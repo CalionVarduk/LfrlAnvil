@@ -39,11 +39,10 @@ public class AsyncKeyedMutexTests : TestsBase
         var sut = new AsyncKeyedMutex<string>();
         var action = Lambda.Of( async () => await sut.EnterAsync( "foo", new CancellationToken( canceled: true ) ) );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestType().AssignableTo<OperationCanceledException>(),
-                    sut.ActiveKeys.TestEmpty(),
-                    sut.Participants( "foo" ).TestEquals( 0 ) ) )
+        action.Test( exc => Assertion.All(
+                exc.TestType().AssignableTo<OperationCanceledException>(),
+                sut.ActiveKeys.TestEmpty(),
+                sut.Participants( "foo" ).TestEquals( 0 ) ) )
             .Go();
     }
 
@@ -72,22 +71,20 @@ public class AsyncKeyedMutexTests : TestsBase
         var sut = new AsyncKeyedMutex<string>();
         var token = await sut.EnterAsync( "foo" );
 
-        var action = Lambda.Of(
-            async () =>
-            {
-                source.CancelAfter( TimeSpan.FromMilliseconds( 15 ) );
-                var result = sut.EnterAsync( "foo", source.Token );
-                _ = sut.EnterAsync( "foo" );
-                await result;
-            } );
+        var action = Lambda.Of( async () =>
+        {
+            source.CancelAfter( TimeSpan.FromMilliseconds( 15 ) );
+            var result = sut.EnterAsync( "foo", source.Token );
+            _ = sut.EnterAsync( "foo" );
+            await result;
+        } );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestType().AssignableTo<OperationCanceledException>(),
-                    token.Mutex.TestRefEquals( sut ),
-                    token.Key.TestEquals( "foo" ),
-                    sut.ActiveKeys.TestSequence( [ "foo" ] ),
-                    sut.Participants( "foo" ).TestEquals( 2 ) ) )
+        action.Test( exc => Assertion.All(
+                exc.TestType().AssignableTo<OperationCanceledException>(),
+                token.Mutex.TestRefEquals( sut ),
+                token.Key.TestEquals( "foo" ),
+                sut.ActiveKeys.TestSequence( [ "foo" ] ),
+                sut.Participants( "foo" ).TestEquals( 2 ) ) )
             .Go();
     }
 
@@ -107,12 +104,11 @@ public class AsyncKeyedMutexTests : TestsBase
     {
         var sut = new AsyncKeyedMutex<string>();
         var first = await sut.EnterAsync( "foo" );
-        _ = Task.Run(
-            async () =>
-            {
-                await Task.Delay( 15 );
-                first.Dispose();
-            } );
+        _ = Task.Run( async () =>
+        {
+            await Task.Delay( 15 );
+            first.Dispose();
+        } );
 
         var token = await sut.EnterAsync( "foo" );
         _ = sut.EnterAsync( "foo" );
@@ -138,21 +134,19 @@ public class AsyncKeyedMutexTests : TestsBase
     {
         var sut = new AsyncKeyedMutex<string>();
         var first = await sut.EnterAsync( "foo" );
-        _ = Task.Run(
-            async () =>
-            {
-                await Task.Delay( 15 );
-                first.Dispose();
-            } );
+        _ = Task.Run( async () =>
+        {
+            await Task.Delay( 15 );
+            first.Dispose();
+        } );
 
         _ = await sut.EnterAsync( "foo" );
         var action = Lambda.Of( () => first.Dispose() );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestNull(),
-                    sut.ActiveKeys.TestSequence( [ "foo" ] ),
-                    sut.Participants( "foo" ).TestEquals( 1 ) ) )
+        action.Test( exc => Assertion.All(
+                exc.TestNull(),
+                sut.ActiveKeys.TestSequence( [ "foo" ] ),
+                sut.Participants( "foo" ).TestEquals( 1 ) ) )
             .Go();
     }
 

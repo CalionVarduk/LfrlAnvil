@@ -23,10 +23,9 @@ public partial class ObjectExpressionsTests
 
             Assertion.All(
                     result.Count.TestEquals( 2 ),
-                    result.TestAll(
-                        (f, _) => Assertion.All(
-                            f.RecordSet.TestRefEquals( sut ),
-                            Assertion.Any( f.Name.TestEquals( "Col0" ), f.Name.TestEquals( "Col1" ) ) ) ) )
+                    result.TestAll( (f, _) => Assertion.All(
+                        f.RecordSet.TestRefEquals( sut ),
+                        Assertion.Any( f.Name.TestEquals( "Col0" ), f.Name.TestEquals( "Col1" ) ) ) ) )
                 .Go();
         }
 

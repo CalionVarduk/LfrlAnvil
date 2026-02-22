@@ -112,8 +112,8 @@ public class StateMachineInstanceTests : TestsBase
         var (_0, _1, _2) = (0, 1, 2);
         var defaultResult = Fixture.Create<string>();
 
-        var handler = StateTransitionHandler.Create<string, int, string>(
-            args => $"{args.Source.Value}({args.Input}) => {args.Destination.Value}" );
+        var handler = StateTransitionHandler.Create<string, int, string>( args =>
+            $"{args.Source.Value}({args.Input}) => {args.Destination.Value}" );
 
         var builder = new StateMachineBuilder<string, int, string>( defaultResult ).AddTransition( a, b, _0, handler )
             .AddTransition( a, c, _1, handler )
@@ -144,8 +144,8 @@ public class StateMachineInstanceTests : TestsBase
         var (_0, _1, _2) = (0, 1, 2);
         var defaultResult = Fixture.Create<string>();
 
-        var handler = StateTransitionHandler.Create<string, int, string>(
-            args => $"{args.Source.Value}({args.Input}) => {args.Destination.Value}" );
+        var handler = StateTransitionHandler.Create<string, int, string>( args =>
+            $"{args.Source.Value}({args.Input}) => {args.Destination.Value}" );
 
         var builder = new StateMachineBuilder<string, int, string>( defaultResult ).AddTransition( b, b, _0, handler )
             .AddTransition( b, c, _1, handler )

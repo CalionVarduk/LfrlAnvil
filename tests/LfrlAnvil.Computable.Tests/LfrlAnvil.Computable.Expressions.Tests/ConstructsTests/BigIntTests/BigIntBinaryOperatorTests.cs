@@ -432,9 +432,8 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             rightValue: 0,
             (_, _, result) => result.TestType()
-                .AssignableTo<ConstantExpression>(
-                    constantExpression =>
-                        constantExpression.Value.TestEquals( BigInteger.Zero ) ) );
+                .AssignableTo<ConstantExpression>( constantExpression =>
+                    constantExpression.Value.TestEquals( BigInteger.Zero ) ) );
     }
 
     [Fact]
@@ -577,8 +576,8 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: 456,
             rightValue: 12,
             (_, _, result) => result.TestType()
-                .AssignableTo<ConstantExpression>(
-                    constantExpression => constantExpression.Value.TestEquals( new BigInteger( 1867776 ) ) ) );
+                .AssignableTo<ConstantExpression>( constantExpression =>
+                    constantExpression.Value.TestEquals( new BigInteger( 1867776 ) ) ) );
     }
 
     [Fact]
@@ -985,12 +984,11 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionCompareBigIntOperator(),
             expectedNodeType: ExpressionType.Call,
             (left, right, result) => result.TestType()
-                .AssignableTo<MethodCallExpression>(
-                    methodCallResult => Assertion.All(
-                        "methodCallResult",
-                        methodCallResult.Object.TestRefEquals( left ),
-                        methodCallResult.Arguments.TestSequence( [ right ] ),
-                        methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
+                .AssignableTo<MethodCallExpression>( methodCallResult => Assertion.All(
+                    "methodCallResult",
+                    methodCallResult.Object.TestRefEquals( left ),
+                    methodCallResult.Arguments.TestSequence( [ right ] ),
+                    methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
     }
 
     [Theory]
@@ -1019,12 +1017,11 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Call,
             leftValue: Fixture.Create<BigInteger>(),
             (left, right, result) => result.TestType()
-                .AssignableTo<MethodCallExpression>(
-                    methodCallResult => Assertion.All(
-                        "methodCallResult",
-                        methodCallResult.Object.TestRefEquals( left ),
-                        methodCallResult.Arguments.TestSequence( [ right ] ),
-                        methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
+                .AssignableTo<MethodCallExpression>( methodCallResult => Assertion.All(
+                    "methodCallResult",
+                    methodCallResult.Object.TestRefEquals( left ),
+                    methodCallResult.Arguments.TestSequence( [ right ] ),
+                    methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
     }
 
     [Fact]
@@ -1035,11 +1032,10 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Call,
             rightValue: Fixture.Create<BigInteger>(),
             (left, right, result) => result.TestType()
-                .AssignableTo<MethodCallExpression>(
-                    methodCallResult => Assertion.All(
-                        "methodCallResult",
-                        methodCallResult.Object.TestRefEquals( left ),
-                        methodCallResult.Arguments.TestSequence( [ right ] ),
-                        methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
+                .AssignableTo<MethodCallExpression>( methodCallResult => Assertion.All(
+                    "methodCallResult",
+                    methodCallResult.Object.TestRefEquals( left ),
+                    methodCallResult.Arguments.TestSequence( [ right ] ),
+                    methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
     }
 }

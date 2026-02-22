@@ -45,10 +45,9 @@ public partial class ObjectExpressionsTests
 
             Assertion.All(
                     sut.From.TestType()
-                        .AssignableTo<SqlRawRecordSetNode>(
-                            s => Assertion.All(
-                                s.IsOptional.TestTrue(),
-                                s.Info.TestEquals( SqlRecordSetInfo.Create( "a" ) ) ) ),
+                        .AssignableTo<SqlRawRecordSetNode>( s => Assertion.All(
+                            s.IsOptional.TestTrue(),
+                            s.Info.TestEquals( SqlRecordSetInfo.Create( "a" ) ) ) ),
                     sut.Joins.Select( j => j.JoinType )
                         .TestSequence(
                         [
@@ -63,129 +62,111 @@ public partial class ObjectExpressionsTests
                     sut.Joins.Select( j => j.InnerRecordSet ).TestSequence( [ b, c, d, e, f, g, h ] ),
                     sut.GetRecordSet( "a" )
                         .TestType()
-                        .AssignableTo<SqlRawRecordSetNode>(
-                            s => Assertion.All(
-                                s.IsOptional.TestTrue(),
-                                s.Info.TestEquals( SqlRecordSetInfo.Create( "a" ) ) ) ),
+                        .AssignableTo<SqlRawRecordSetNode>( s => Assertion.All(
+                            s.IsOptional.TestTrue(),
+                            s.Info.TestEquals( SqlRecordSetInfo.Create( "a" ) ) ) ),
                     sut.GetRecordSet( "b" )
                         .TestType()
-                        .AssignableTo<SqlRawRecordSetNode>(
-                            s => Assertion.All(
-                                s.IsOptional.TestTrue(),
-                                s.Info.TestEquals( SqlRecordSetInfo.Create( "b" ) ) ) ),
+                        .AssignableTo<SqlRawRecordSetNode>( s => Assertion.All(
+                            s.IsOptional.TestTrue(),
+                            s.Info.TestEquals( SqlRecordSetInfo.Create( "b" ) ) ) ),
                     sut.GetRecordSet( "c" )
                         .TestType()
-                        .AssignableTo<SqlRawRecordSetNode>(
-                            s => Assertion.All(
-                                s.IsOptional.TestTrue(),
-                                s.Info.TestEquals( SqlRecordSetInfo.Create( "c" ) ) ) ),
+                        .AssignableTo<SqlRawRecordSetNode>( s => Assertion.All(
+                            s.IsOptional.TestTrue(),
+                            s.Info.TestEquals( SqlRecordSetInfo.Create( "c" ) ) ) ),
                     sut.GetRecordSet( "d" )
                         .TestType()
-                        .AssignableTo<SqlRawRecordSetNode>(
-                            s => Assertion.All(
-                                s.IsOptional.TestTrue(),
-                                s.Info.TestEquals( SqlRecordSetInfo.Create( "d" ) ) ) ),
+                        .AssignableTo<SqlRawRecordSetNode>( s => Assertion.All(
+                            s.IsOptional.TestTrue(),
+                            s.Info.TestEquals( SqlRecordSetInfo.Create( "d" ) ) ) ),
                     sut.GetRecordSet( "e" )
                         .TestType()
-                        .AssignableTo<SqlRawRecordSetNode>(
-                            s => Assertion.All(
-                                s.IsOptional.TestTrue(),
-                                s.Info.TestEquals( SqlRecordSetInfo.Create( "e" ) ) ) ),
+                        .AssignableTo<SqlRawRecordSetNode>( s => Assertion.All(
+                            s.IsOptional.TestTrue(),
+                            s.Info.TestEquals( SqlRecordSetInfo.Create( "e" ) ) ) ),
                     sut.GetRecordSet( "f" )
                         .TestType()
-                        .AssignableTo<SqlRawRecordSetNode>(
-                            s => Assertion.All(
-                                s.IsOptional.TestTrue(),
-                                s.Info.TestEquals( SqlRecordSetInfo.Create( "f" ) ) ) ),
+                        .AssignableTo<SqlRawRecordSetNode>( s => Assertion.All(
+                            s.IsOptional.TestTrue(),
+                            s.Info.TestEquals( SqlRecordSetInfo.Create( "f" ) ) ) ),
                     sut.GetRecordSet( "g" )
                         .TestType()
-                        .AssignableTo<SqlRawRecordSetNode>(
-                            s => Assertion.All(
-                                s.IsOptional.TestTrue(),
-                                s.Info.TestEquals( SqlRecordSetInfo.Create( "g" ) ) ) ),
+                        .AssignableTo<SqlRawRecordSetNode>( s => Assertion.All(
+                            s.IsOptional.TestTrue(),
+                            s.Info.TestEquals( SqlRecordSetInfo.Create( "g" ) ) ) ),
                     sut.GetRecordSet( "h" ).TestRefEquals( h ),
                     ongoingInners.TestSequence( [ b, c, d, e, f, g ] ),
                     ongoingSets.TestCount( count => count.TestEquals( 6 ) )
-                        .Then(
-                            sets =>
-                                Assertion.All(
-                                    "ongoingSets",
-                                    sets[0].TestSequence( [ a ] ),
-                                    sets[1].TestSequence( [ a, b ] ),
-                                    sets[2]
-                                        .TestSequence(
-                                        [
-                                            (s, _) => s.TestRefEquals( a ),
-                                            (s, _) => s.TestRefEquals( b ),
-                                            (s, _) => s.TestType()
-                                                .AssignableTo<SqlRawRecordSetNode>(
-                                                    rs => Assertion.All(
-                                                        rs.IsOptional.TestTrue(),
-                                                        rs.Info.TestEquals( SqlRecordSetInfo.Create( "c" ) ) ) )
-                                        ] ),
-                                    sets[3]
-                                        .TestSequence(
-                                        [
-                                            (s, _) => s.TestRefEquals( a ),
-                                            (s, _) => s.TestRefEquals( b ),
-                                            (s, _) => s.TestType()
-                                                .AssignableTo<SqlRawRecordSetNode>(
-                                                    rs => Assertion.All(
-                                                        rs.IsOptional.TestTrue(),
-                                                        rs.Info.TestEquals( SqlRecordSetInfo.Create( "c" ) ) ) ),
-                                            (s, _) => s.TestRefEquals( d )
-                                        ] ),
-                                    sets[4]
-                                        .TestSequence(
-                                        [
-                                            (s, _) => s.TestType()
-                                                .AssignableTo<SqlRawRecordSetNode>(
-                                                    rs => Assertion.All(
-                                                        rs.IsOptional.TestTrue(),
-                                                        rs.Info.TestEquals( SqlRecordSetInfo.Create( "a" ) ) ) ),
-                                            (s, _) => s.TestType()
-                                                .AssignableTo<SqlRawRecordSetNode>(
-                                                    rs => Assertion.All(
-                                                        rs.IsOptional.TestTrue(),
-                                                        rs.Info.TestEquals( SqlRecordSetInfo.Create( "b" ) ) ) ),
-                                            (s, _) => s.TestType()
-                                                .AssignableTo<SqlRawRecordSetNode>(
-                                                    rs => Assertion.All(
-                                                        rs.IsOptional.TestTrue(),
-                                                        rs.Info.TestEquals( SqlRecordSetInfo.Create( "c" ) ) ) ),
-                                            (s, _) => s.TestType()
-                                                .AssignableTo<SqlRawRecordSetNode>(
-                                                    rs => Assertion.All(
-                                                        rs.IsOptional.TestTrue(),
-                                                        rs.Info.TestEquals( SqlRecordSetInfo.Create( "d" ) ) ) ),
-                                            (s, _) => s.TestRefEquals( e )
-                                        ] ),
-                                    sets[5]
-                                        .TestSequence(
-                                        [
-                                            (s, _) => s.TestType()
-                                                .AssignableTo<SqlRawRecordSetNode>(
-                                                    rs => Assertion.All(
-                                                        rs.IsOptional.TestTrue(),
-                                                        rs.Info.TestEquals( SqlRecordSetInfo.Create( "a" ) ) ) ),
-                                            (s, _) => s.TestType()
-                                                .AssignableTo<SqlRawRecordSetNode>(
-                                                    rs => Assertion.All(
-                                                        rs.IsOptional.TestTrue(),
-                                                        rs.Info.TestEquals( SqlRecordSetInfo.Create( "b" ) ) ) ),
-                                            (s, _) => s.TestType()
-                                                .AssignableTo<SqlRawRecordSetNode>(
-                                                    rs => Assertion.All(
-                                                        rs.IsOptional.TestTrue(),
-                                                        rs.Info.TestEquals( SqlRecordSetInfo.Create( "c" ) ) ) ),
-                                            (s, _) => s.TestType()
-                                                .AssignableTo<SqlRawRecordSetNode>(
-                                                    rs => Assertion.All(
-                                                        rs.IsOptional.TestTrue(),
-                                                        rs.Info.TestEquals( SqlRecordSetInfo.Create( "d" ) ) ) ),
-                                            (s, _) => s.TestRefEquals( e ),
-                                            (s, _) => s.TestRefEquals( f )
-                                        ] ) ) ) )
+                        .Then( sets =>
+                            Assertion.All(
+                                "ongoingSets",
+                                sets[0].TestSequence( [ a ] ),
+                                sets[1].TestSequence( [ a, b ] ),
+                                sets[2]
+                                    .TestSequence(
+                                    [
+                                        (s, _) => s.TestRefEquals( a ),
+                                        (s, _) => s.TestRefEquals( b ),
+                                        (s, _) => s.TestType()
+                                            .AssignableTo<SqlRawRecordSetNode>( rs => Assertion.All(
+                                                rs.IsOptional.TestTrue(),
+                                                rs.Info.TestEquals( SqlRecordSetInfo.Create( "c" ) ) ) )
+                                    ] ),
+                                sets[3]
+                                    .TestSequence(
+                                    [
+                                        (s, _) => s.TestRefEquals( a ),
+                                        (s, _) => s.TestRefEquals( b ),
+                                        (s, _) => s.TestType()
+                                            .AssignableTo<SqlRawRecordSetNode>( rs => Assertion.All(
+                                                rs.IsOptional.TestTrue(),
+                                                rs.Info.TestEquals( SqlRecordSetInfo.Create( "c" ) ) ) ),
+                                        (s, _) => s.TestRefEquals( d )
+                                    ] ),
+                                sets[4]
+                                    .TestSequence(
+                                    [
+                                        (s, _) => s.TestType()
+                                            .AssignableTo<SqlRawRecordSetNode>( rs => Assertion.All(
+                                                rs.IsOptional.TestTrue(),
+                                                rs.Info.TestEquals( SqlRecordSetInfo.Create( "a" ) ) ) ),
+                                        (s, _) => s.TestType()
+                                            .AssignableTo<SqlRawRecordSetNode>( rs => Assertion.All(
+                                                rs.IsOptional.TestTrue(),
+                                                rs.Info.TestEquals( SqlRecordSetInfo.Create( "b" ) ) ) ),
+                                        (s, _) => s.TestType()
+                                            .AssignableTo<SqlRawRecordSetNode>( rs => Assertion.All(
+                                                rs.IsOptional.TestTrue(),
+                                                rs.Info.TestEquals( SqlRecordSetInfo.Create( "c" ) ) ) ),
+                                        (s, _) => s.TestType()
+                                            .AssignableTo<SqlRawRecordSetNode>( rs => Assertion.All(
+                                                rs.IsOptional.TestTrue(),
+                                                rs.Info.TestEquals( SqlRecordSetInfo.Create( "d" ) ) ) ),
+                                        (s, _) => s.TestRefEquals( e )
+                                    ] ),
+                                sets[5]
+                                    .TestSequence(
+                                    [
+                                        (s, _) => s.TestType()
+                                            .AssignableTo<SqlRawRecordSetNode>( rs => Assertion.All(
+                                                rs.IsOptional.TestTrue(),
+                                                rs.Info.TestEquals( SqlRecordSetInfo.Create( "a" ) ) ) ),
+                                        (s, _) => s.TestType()
+                                            .AssignableTo<SqlRawRecordSetNode>( rs => Assertion.All(
+                                                rs.IsOptional.TestTrue(),
+                                                rs.Info.TestEquals( SqlRecordSetInfo.Create( "b" ) ) ) ),
+                                        (s, _) => s.TestType()
+                                            .AssignableTo<SqlRawRecordSetNode>( rs => Assertion.All(
+                                                rs.IsOptional.TestTrue(),
+                                                rs.Info.TestEquals( SqlRecordSetInfo.Create( "c" ) ) ) ),
+                                        (s, _) => s.TestType()
+                                            .AssignableTo<SqlRawRecordSetNode>( rs => Assertion.All(
+                                                rs.IsOptional.TestTrue(),
+                                                rs.Info.TestEquals( SqlRecordSetInfo.Create( "d" ) ) ) ),
+                                        (s, _) => s.TestRefEquals( e ),
+                                        (s, _) => s.TestRefEquals( f )
+                                    ] ) ) ) )
                 .Go();
 
             SqlConditionNode AddOngoing(SqlJoinDefinition.ExpressionParams @params, params string[] outerSetNames)
