@@ -186,14 +186,12 @@ public static class ExpressionExtensions
             }
         }
 
-        var getEnumeratorMethod = enumerable.Type.FindMember(
-            static t =>
-                t.GetMethods( BindingFlags.Public | BindingFlags.Instance )
-                    .FirstOrDefault(
-                        static m => ! m.IsGenericMethod
-                            && m.ReturnType != typeof( void )
-                            && m.Name == nameof( IEnumerable.GetEnumerator )
-                            && m.GetParameters().Length == 0 ) );
+        var getEnumeratorMethod = enumerable.Type.FindMember( static t =>
+            t.GetMethods( BindingFlags.Public | BindingFlags.Instance )
+                .FirstOrDefault( static m => ! m.IsGenericMethod
+                    && m.ReturnType != typeof( void )
+                    && m.Name == nameof( IEnumerable.GetEnumerator )
+                    && m.GetParameters().Length == 0 ) );
 
         Ensure.IsNotNull( getEnumeratorMethod );
         Assume.IsNotNull( getEnumeratorMethod.DeclaringType );
@@ -203,31 +201,26 @@ public static class ExpressionExtensions
             enumerator,
             Expression.Call( enumerable.GetOrConvert( getEnumeratorMethod.DeclaringType ), getEnumeratorMethod ) );
 
-        var currentProperty = enumerator.Type.FindMember(
-            static t => t.GetProperties( BindingFlags.Public | BindingFlags.Instance )
-                .FirstOrDefault(
-                    static p => p.GetGetMethod() is not null
-                        && p.Name == nameof( IEnumerator.Current )
-                        && p.GetIndexParameters().Length == 0 ) );
+        var currentProperty = enumerator.Type.FindMember( static t => t.GetProperties( BindingFlags.Public | BindingFlags.Instance )
+            .FirstOrDefault( static p => p.GetGetMethod() is not null
+                && p.Name == nameof( IEnumerator.Current )
+                && p.GetIndexParameters().Length == 0 ) );
 
         Ensure.IsNotNull( currentProperty );
         Assume.IsNotNull( currentProperty.DeclaringType );
 
-        var moveNextMethod = enumerator.Type.FindMember(
-            static t => t.GetMethods( BindingFlags.Public | BindingFlags.Instance )
-                .FirstOrDefault(
-                    static m => ! m.IsGenericMethod
-                        && m.ReturnType == typeof( bool )
-                        && m.Name == nameof( IEnumerator.MoveNext )
-                        && m.GetParameters().Length == 0 ) );
+        var moveNextMethod = enumerator.Type.FindMember( static t => t.GetMethods( BindingFlags.Public | BindingFlags.Instance )
+            .FirstOrDefault( static m => ! m.IsGenericMethod
+                && m.ReturnType == typeof( bool )
+                && m.Name == nameof( IEnumerator.MoveNext )
+                && m.GetParameters().Length == 0 ) );
 
         Ensure.IsNotNull( moveNextMethod );
         Assume.IsNotNull( moveNextMethod.DeclaringType );
 
-        var disposeMethod = enumerator.Type.FindMember(
-            static t => t.GetMethods( BindingFlags.Public | BindingFlags.Instance )
-                .FirstOrDefault(
-                    static m => ! m.IsGenericMethod && m.Name == nameof( IDisposable.Dispose ) && m.GetParameters().Length == 0 ) );
+        var disposeMethod = enumerator.Type.FindMember( static t => t.GetMethods( BindingFlags.Public | BindingFlags.Instance )
+            .FirstOrDefault( static m =>
+                ! m.IsGenericMethod && m.Name == nameof( IDisposable.Dispose ) && m.GetParameters().Length == 0 ) );
 
         var current = Expression.Variable( currentProperty.PropertyType, currentVariableName );
         var currentMemberAccess = Expression.MakeMemberAccess( enumerator.GetOrConvert( currentProperty.DeclaringType ), currentProperty );

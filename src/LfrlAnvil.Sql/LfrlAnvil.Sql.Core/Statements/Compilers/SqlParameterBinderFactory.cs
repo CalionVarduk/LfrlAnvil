@@ -349,13 +349,12 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
         if ( positionalParameterCount > 0 )
         {
             sources.Slice( 0, positionalParameterCount )
-                .Sort(
-                    static (a, b) =>
-                    {
-                        Assume.IsNotNull( a.Index );
-                        Assume.IsNotNull( b.Index );
-                        return a.Index.Value.CompareTo( b.Index.Value );
-                    } );
+                .Sort( static (a, b) =>
+                {
+                    Assume.IsNotNull( a.Index );
+                    Assume.IsNotNull( b.Index );
+                    return a.Index.Value.CompareTo( b.Index.Value );
+                } );
 
             for ( var i = 0; i < positionalParameterCount; ++i )
             {

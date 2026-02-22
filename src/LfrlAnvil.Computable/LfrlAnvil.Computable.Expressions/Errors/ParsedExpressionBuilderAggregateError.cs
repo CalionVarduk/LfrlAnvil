@@ -46,8 +46,8 @@ public sealed class ParsedExpressionBuilderAggregateError : ParsedExpressionBuil
     public override string ToString()
     {
         var headerText = $"{base.ToString()}, with {Inner.Count} inner error(s):";
-        var innerTexts = Inner.Select(
-            static (e, i) => $"  {i + 1}. {e.ToString().Replace( Environment.NewLine, $"{Environment.NewLine}  " )}" );
+        var innerTexts = Inner.Select( static (e, i) =>
+            $"  {i + 1}. {e.ToString().Replace( Environment.NewLine, $"{Environment.NewLine}  " )}" );
 
         var fullInnerText = string.Join( Environment.NewLine, innerTexts );
         return $"{headerText}{Environment.NewLine}{fullInnerText}";

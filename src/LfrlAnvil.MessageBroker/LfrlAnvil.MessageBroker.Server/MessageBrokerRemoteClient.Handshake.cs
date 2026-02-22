@@ -27,69 +27,68 @@ public sealed partial class MessageBrokerRemoteClient
 {
     private Task StartHandshakeTask(ulong traceId)
     {
-        return Task.Run(
-            async () =>
+        return Task.Run( async () =>
+        {
+            var failed = true;
+            try
             {
-                var failed = true;
-                try
+                var result = await SendHandshakeAcceptedResponseAsync( traceId ).ConfigureAwait( false );
+                if ( result.Exception is not null )
+                    return;
+
+                result = await ReadConfirmHandshakeResponseAsync( traceId ).ConfigureAwait( false );
+                if ( result.Exception is not null )
+                    return;
+
+                Stream stream;
+                using ( AcquireActiveLock( traceId, out var exc ) )
                 {
-                    var result = await SendHandshakeAcceptedResponseAsync( traceId ).ConfigureAwait( false );
-                    if ( result.Exception is not null )
+                    if ( exc is not null )
                         return;
 
-                    result = await ReadConfirmHandshakeResponseAsync( traceId ).ConfigureAwait( false );
-                    if ( result.Exception is not null )
+                    Assume.IsNotNull( _stream );
+                    stream = _stream;
+                    PacketListener.SetUnderlyingTask( null );
+                    _state = MessageBrokerRemoteClientState.Running;
+                }
+
+                var packetListenerTask = PacketListener.StartUnderlyingTask( this, stream );
+                var requestHandlerTask = RequestHandler.StartUnderlyingTask( this );
+                var responseSenderTask = ResponseSender.StartUnderlyingTask( this );
+                var notificationSenderTask = NotificationSender.StartUnderlyingTask( this );
+                using ( AcquireActiveLock( traceId, out var exc ) )
+                {
+                    if ( exc is not null )
                         return;
 
-                    Stream stream;
-                    using ( AcquireActiveLock( traceId, out var exc ) )
-                    {
-                        if ( exc is not null )
-                            return;
+                    PacketListener.SetUnderlyingTask( packetListenerTask );
+                    RequestHandler.SetUnderlyingTask( requestHandlerTask );
+                    ResponseSender.SetUnderlyingTask( responseSenderTask );
+                    NotificationSender.SetUnderlyingTask( notificationSenderTask );
+                }
 
-                        Assume.IsNotNull( _stream );
-                        stream = _stream;
+                failed = false;
+            }
+            catch ( Exception exc )
+            {
+                if ( Logger.Error is { } error )
+                    error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
+            }
+            finally
+            {
+                if ( failed )
+                {
+                    using ( AcquireLock() )
                         PacketListener.SetUnderlyingTask( null );
-                        _state = MessageBrokerRemoteClientState.Running;
-                    }
 
-                    var packetListenerTask = PacketListener.StartUnderlyingTask( this, stream );
-                    var requestHandlerTask = RequestHandler.StartUnderlyingTask( this );
-                    var responseSenderTask = ResponseSender.StartUnderlyingTask( this );
-                    var notificationSenderTask = NotificationSender.StartUnderlyingTask( this );
-                    using ( AcquireActiveLock( traceId, out var exc ) )
-                    {
-                        if ( exc is not null )
-                            return;
-
-                        PacketListener.SetUnderlyingTask( packetListenerTask );
-                        RequestHandler.SetUnderlyingTask( requestHandlerTask );
-                        ResponseSender.SetUnderlyingTask( responseSenderTask );
-                        NotificationSender.SetUnderlyingTask( notificationSenderTask );
-                    }
-
-                    failed = false;
+                    await DeactivateAsync( traceId ).ConfigureAwait( false );
                 }
-                catch ( Exception exc )
-                {
-                    if ( Logger.Error is { } error )
-                        error.Emit( MessageBrokerRemoteClientErrorEvent.Create( this, traceId, exc ) );
-                }
-                finally
-                {
-                    if ( failed )
-                    {
-                        using ( AcquireLock() )
-                            PacketListener.SetUnderlyingTask( null );
 
-                        await DeactivateAsync( traceId ).ConfigureAwait( false );
-                    }
-
-                    if ( Logger.TraceEnd is { } traceEnd )
-                        traceEnd.Emit(
-                            MessageBrokerRemoteClientTraceEvent.Create( this, traceId, MessageBrokerRemoteClientTraceEventType.Start ) );
-                }
-            } );
+                if ( Logger.TraceEnd is { } traceEnd )
+                    traceEnd.Emit(
+                        MessageBrokerRemoteClientTraceEvent.Create( this, traceId, MessageBrokerRemoteClientTraceEventType.Start ) );
+            }
+        } );
     }
 
     private async ValueTask<Result> SendHandshakeAcceptedResponseAsync(ulong traceId)

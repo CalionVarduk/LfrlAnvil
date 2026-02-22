@@ -440,19 +440,18 @@ internal static class Resources
         var headerText = $"Found {members.Count} ambiguous '{memberName}' members in {targetType.GetDebugString()} type:";
         var membersText = string.Join(
             Environment.NewLine,
-            members.Select(
-                static (member, i) =>
+            members.Select( static (member, i) =>
+            {
+                var memberText = member switch
                 {
-                    var memberText = member switch
-                    {
-                        FieldInfo f => f.GetDebugString(),
-                        PropertyInfo p => p.GetDebugString(),
-                        MethodInfo m => m.GetDebugString(),
-                        _ => member.ToString() ?? string.Empty
-                    };
+                    FieldInfo f => f.GetDebugString(),
+                    PropertyInfo p => p.GetDebugString(),
+                    MethodInfo m => m.GetDebugString(),
+                    _ => member.ToString() ?? string.Empty
+                };
 
-                    return $"{i + 1}. {memberText}";
-                } ) );
+                return $"{i + 1}. {memberText}";
+            } ) );
 
         return $"{headerText}{Environment.NewLine}{membersText}";
     }

@@ -43,36 +43,35 @@ internal struct PacketListener
 
     internal static Task StartUnderlyingTask(MessageBrokerRemoteClient client, Stream stream)
     {
-        return Task.Run(
-            async () =>
+        return Task.Run( async () =>
+        {
+            try
             {
-                try
+                await RunCore( client, stream ).ConfigureAwait( false );
+            }
+            catch ( Exception exc )
+            {
+                ulong traceId;
+                using ( client.AcquireLock() )
                 {
-                    await RunCore( client, stream ).ConfigureAwait( false );
-                }
-                catch ( Exception exc )
-                {
-                    ulong traceId;
-                    using ( client.AcquireLock() )
-                    {
-                        client.PacketListener._task = null;
-                        traceId = client.GetTraceId();
-                    }
-
-                    using ( MessageBrokerRemoteClientTraceEvent.CreateScope(
-                        client,
-                        traceId,
-                        MessageBrokerRemoteClientTraceEventType.Unexpected ) )
-                    {
-                        if ( client.Logger.Error is { } error )
-                            error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
-
-                        await client.DeactivateAsync( traceId ).ConfigureAwait( false );
-                    }
+                    client.PacketListener._task = null;
+                    traceId = client.GetTraceId();
                 }
 
-                Assume.IsGreaterThanOrEqualTo( client.State, MessageBrokerRemoteClientState.Disposing );
-            } );
+                using ( MessageBrokerRemoteClientTraceEvent.CreateScope(
+                    client,
+                    traceId,
+                    MessageBrokerRemoteClientTraceEventType.Unexpected ) )
+                {
+                    if ( client.Logger.Error is { } error )
+                        error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
+
+                    await client.DeactivateAsync( traceId ).ConfigureAwait( false );
+                }
+            }
+
+            Assume.IsGreaterThanOrEqualTo( client.State, MessageBrokerRemoteClientState.Disposing );
+        } );
     }
 
     internal void SetUnderlyingTask(Task? task)

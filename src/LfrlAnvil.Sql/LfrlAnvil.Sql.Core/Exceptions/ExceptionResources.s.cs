@@ -378,9 +378,8 @@ public static class ExceptionResources
         var parameters = context.Parameters;
         var parametersText = string.Join(
             Environment.NewLine,
-            parameters.Select(
-                (p, i) =>
-                    $"{i + 1}. @{p.Name}{(p.Index is not null ? $" (#{p.Index.Value})" : string.Empty)} : {p.Type?.ToString() ?? "?"}" ) );
+            parameters.Select( (p, i) =>
+                $"{i + 1}. @{p.Name}{(p.Index is not null ? $" (#{p.Index.Value})" : string.Empty)} : {p.Type?.ToString() ?? "?"}" ) );
 
         return $@"Statement
 {statement.Node}

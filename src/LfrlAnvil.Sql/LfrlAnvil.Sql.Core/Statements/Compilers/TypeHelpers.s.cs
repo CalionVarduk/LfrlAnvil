@@ -182,36 +182,35 @@ internal static class TypeHelpers
     [Pure]
     internal static MethodInfo GetColumnTypeDefinitionToParameterValueMethod(Type type, Type valueType)
     {
-        var result = type.FindMember(
-            t =>
+        var result = type.FindMember( t =>
+        {
+            var methods = t.GetMethods( PublicDeclaredMember );
+            foreach ( var m in methods )
             {
-                var methods = t.GetMethods( PublicDeclaredMember );
-                foreach ( var m in methods )
-                {
-                    if ( m.IsGenericMethod
-                        || m.ReturnType != typeof( object )
-                        || m.Name != nameof( ISqlColumnTypeDefinition<int>.ToParameterValue ) )
-                        continue;
+                if ( m.IsGenericMethod
+                    || m.ReturnType != typeof( object )
+                    || m.Name != nameof( ISqlColumnTypeDefinition<int>.ToParameterValue ) )
+                    continue;
 
-                    var parameters = m.GetParameters();
-                    if ( parameters.Length == 1 && valueType.IsAssignableTo( parameters[0].ParameterType ) )
-                        return m;
-                }
+                var parameters = m.GetParameters();
+                if ( parameters.Length == 1 && valueType.IsAssignableTo( parameters[0].ParameterType ) )
+                    return m;
+            }
 
-                foreach ( var m in methods )
-                {
-                    if ( m.IsGenericMethod
-                        || m.ReturnType != typeof( object )
-                        || m.Name != nameof( ISqlColumnTypeDefinition.TryToParameterValue ) )
-                        continue;
+            foreach ( var m in methods )
+            {
+                if ( m.IsGenericMethod
+                    || m.ReturnType != typeof( object )
+                    || m.Name != nameof( ISqlColumnTypeDefinition.TryToParameterValue ) )
+                    continue;
 
-                    var parameters = m.GetParameters();
-                    if ( parameters.Length == 1 && parameters[0].ParameterType == typeof( object ) )
-                        return m;
-                }
+                var parameters = m.GetParameters();
+                if ( parameters.Length == 1 && parameters[0].ParameterType == typeof( object ) )
+                    return m;
+            }
 
-                return null;
-            } );
+            return null;
+        } );
 
         Assume.IsNotNull( result?.DeclaringType );
         return result;
@@ -220,42 +219,41 @@ internal static class TypeHelpers
     [Pure]
     internal static MethodInfo GetColumnTypeDefinitionSetParameterInfoMethod(Type type, Type parameterType)
     {
-        var result = type.FindMember(
-            t =>
+        var result = type.FindMember( t =>
+        {
+            var methods = t.GetMethods( PublicDeclaredMember );
+            foreach ( var m in methods )
             {
-                var methods = t.GetMethods( PublicDeclaredMember );
-                foreach ( var m in methods )
-                {
-                    if ( m.IsGenericMethod
-                        || m.ReturnType != typeof( void )
-                        || m.Name != nameof( ISqlColumnTypeDefinition.SetParameterInfo ) )
-                        continue;
+                if ( m.IsGenericMethod
+                    || m.ReturnType != typeof( void )
+                    || m.Name != nameof( ISqlColumnTypeDefinition.SetParameterInfo ) )
+                    continue;
 
-                    var parameters = m.GetParameters();
-                    if ( parameters.Length != 2 || parameters[1].ParameterType != typeof( bool ) )
-                        continue;
+                var parameters = m.GetParameters();
+                if ( parameters.Length != 2 || parameters[1].ParameterType != typeof( bool ) )
+                    continue;
 
-                    var p1 = parameters[0].ParameterType;
-                    if ( p1 != typeof( IDbDataParameter ) && parameterType.IsAssignableTo( p1 ) )
-                        return m;
-                }
+                var p1 = parameters[0].ParameterType;
+                if ( p1 != typeof( IDbDataParameter ) && parameterType.IsAssignableTo( p1 ) )
+                    return m;
+            }
 
-                foreach ( var m in methods )
-                {
-                    if ( m.IsGenericMethod
-                        || m.ReturnType != typeof( void )
-                        || m.Name != nameof( ISqlColumnTypeDefinition.SetParameterInfo ) )
-                        continue;
+            foreach ( var m in methods )
+            {
+                if ( m.IsGenericMethod
+                    || m.ReturnType != typeof( void )
+                    || m.Name != nameof( ISqlColumnTypeDefinition.SetParameterInfo ) )
+                    continue;
 
-                    var parameters = m.GetParameters();
-                    if ( parameters.Length == 2
-                        && parameters[0].ParameterType == typeof( IDbDataParameter )
-                        && parameters[1].ParameterType == typeof( bool ) )
-                        return m;
-                }
+                var parameters = m.GetParameters();
+                if ( parameters.Length == 2
+                    && parameters[0].ParameterType == typeof( IDbDataParameter )
+                    && parameters[1].ParameterType == typeof( bool ) )
+                    return m;
+            }
 
-                return null;
-            } );
+            return null;
+        } );
 
         Assume.IsNotNull( result?.DeclaringType );
         return result;
@@ -264,22 +262,21 @@ internal static class TypeHelpers
     [Pure]
     internal static MethodInfo GetDataRecordGetNameMethod(Type type)
     {
-        var result = type.FindMember(
-            static t =>
+        var result = type.FindMember( static t =>
+        {
+            var methods = t.GetMethods( PublicDeclaredMember );
+            foreach ( var m in methods )
             {
-                var methods = t.GetMethods( PublicDeclaredMember );
-                foreach ( var m in methods )
-                {
-                    if ( m.IsGenericMethod || m.ReturnType != typeof( string ) || m.Name != nameof( IDataRecord.GetName ) )
-                        continue;
+                if ( m.IsGenericMethod || m.ReturnType != typeof( string ) || m.Name != nameof( IDataRecord.GetName ) )
+                    continue;
 
-                    var parameters = m.GetParameters();
-                    if ( parameters.Length == 1 && parameters[0].ParameterType == typeof( int ) )
-                        return m;
-                }
+                var parameters = m.GetParameters();
+                if ( parameters.Length == 1 && parameters[0].ParameterType == typeof( int ) )
+                    return m;
+            }
 
-                return null;
-            } );
+            return null;
+        } );
 
         Assume.IsNotNull( result?.DeclaringType );
         return result;
@@ -288,21 +285,20 @@ internal static class TypeHelpers
     [Pure]
     internal static PropertyInfo GetDataRecordFieldCountProperty(Type type)
     {
-        var result = type.FindMember(
-            static t =>
+        var result = type.FindMember( static t =>
+        {
+            var properties = t.GetProperties( PublicDeclaredMember );
+            foreach ( var p in properties )
             {
-                var properties = t.GetProperties( PublicDeclaredMember );
-                foreach ( var p in properties )
-                {
-                    if ( p.PropertyType == typeof( int )
-                        && p.GetGetMethod() is not null
-                        && p.Name == nameof( IDataRecord.FieldCount )
-                        && p.GetIndexParameters().Length == 0 )
-                        return p;
-                }
+                if ( p.PropertyType == typeof( int )
+                    && p.GetGetMethod() is not null
+                    && p.Name == nameof( IDataRecord.FieldCount )
+                    && p.GetIndexParameters().Length == 0 )
+                    return p;
+            }
 
-                return null;
-            } );
+            return null;
+        } );
 
         Assume.IsNotNull( result?.DeclaringType );
         return result;
@@ -311,22 +307,21 @@ internal static class TypeHelpers
     [Pure]
     internal static MethodInfo GetDataRecordGetDataTypeNameMethod(Type type)
     {
-        var result = type.FindMember(
-            static t =>
+        var result = type.FindMember( static t =>
+        {
+            var methods = t.GetMethods( PublicDeclaredMember );
+            foreach ( var m in methods )
             {
-                var methods = t.GetMethods( PublicDeclaredMember );
-                foreach ( var m in methods )
-                {
-                    if ( m.IsGenericMethod || m.ReturnType != typeof( string ) || m.Name != nameof( IDataRecord.GetDataTypeName ) )
-                        continue;
+                if ( m.IsGenericMethod || m.ReturnType != typeof( string ) || m.Name != nameof( IDataRecord.GetDataTypeName ) )
+                    continue;
 
-                    var parameters = m.GetParameters();
-                    if ( parameters.Length == 1 && parameters[0].ParameterType == typeof( int ) )
-                        return m;
-                }
+                var parameters = m.GetParameters();
+                if ( parameters.Length == 1 && parameters[0].ParameterType == typeof( int ) )
+                    return m;
+            }
 
-                return null;
-            } );
+            return null;
+        } );
 
         Assume.IsNotNull( result?.DeclaringType );
         return result;
@@ -335,22 +330,21 @@ internal static class TypeHelpers
     [Pure]
     internal static MethodInfo GetDataRecordGetOrdinalMethod(Type type)
     {
-        var result = type.FindMember(
-            static t =>
+        var result = type.FindMember( static t =>
+        {
+            var methods = t.GetMethods( PublicDeclaredMember );
+            foreach ( var m in methods )
             {
-                var methods = t.GetMethods( PublicDeclaredMember );
-                foreach ( var m in methods )
-                {
-                    if ( m.IsGenericMethod || m.ReturnType != typeof( int ) || m.Name != nameof( IDataRecord.GetOrdinal ) )
-                        continue;
+                if ( m.IsGenericMethod || m.ReturnType != typeof( int ) || m.Name != nameof( IDataRecord.GetOrdinal ) )
+                    continue;
 
-                    var parameters = m.GetParameters();
-                    if ( parameters.Length == 1 && parameters[0].ParameterType == typeof( string ) )
-                        return m;
-                }
+                var parameters = m.GetParameters();
+                if ( parameters.Length == 1 && parameters[0].ParameterType == typeof( string ) )
+                    return m;
+            }
 
-                return null;
-            } );
+            return null;
+        } );
 
         Assume.IsNotNull( result?.DeclaringType );
         return result;
@@ -359,22 +353,21 @@ internal static class TypeHelpers
     [Pure]
     internal static MethodInfo GetDataRecordIsDbNullMethod(Type type)
     {
-        var result = type.FindMember(
-            static t =>
+        var result = type.FindMember( static t =>
+        {
+            var methods = t.GetMethods( PublicDeclaredMember );
+            foreach ( var m in methods )
             {
-                var methods = t.GetMethods( PublicDeclaredMember );
-                foreach ( var m in methods )
-                {
-                    if ( m.IsGenericMethod || m.ReturnType != typeof( bool ) || m.Name != nameof( IDataRecord.IsDBNull ) )
-                        continue;
+                if ( m.IsGenericMethod || m.ReturnType != typeof( bool ) || m.Name != nameof( IDataRecord.IsDBNull ) )
+                    continue;
 
-                    var parameters = m.GetParameters();
-                    if ( parameters.Length == 1 && parameters[0].ParameterType == typeof( int ) )
-                        return m;
-                }
+                var parameters = m.GetParameters();
+                if ( parameters.Length == 1 && parameters[0].ParameterType == typeof( int ) )
+                    return m;
+            }
 
-                return null;
-            } );
+            return null;
+        } );
 
         Assume.IsNotNull( result?.DeclaringType );
         return result;
@@ -383,21 +376,20 @@ internal static class TypeHelpers
     [Pure]
     internal static MethodInfo GetDataReaderReadMethod(Type type)
     {
-        var result = type.FindMember(
-            static t =>
+        var result = type.FindMember( static t =>
+        {
+            var methods = t.GetMethods( PublicDeclaredMember );
+            foreach ( var m in methods )
             {
-                var methods = t.GetMethods( PublicDeclaredMember );
-                foreach ( var m in methods )
-                {
-                    if ( ! m.IsGenericMethod
-                        && m.ReturnType == typeof( bool )
-                        && m.Name == nameof( IDataReader.Read )
-                        && m.GetParameters().Length == 0 )
-                        return m;
-                }
+                if ( ! m.IsGenericMethod
+                    && m.ReturnType == typeof( bool )
+                    && m.Name == nameof( IDataReader.Read )
+                    && m.GetParameters().Length == 0 )
+                    return m;
+            }
 
-                return null;
-            } );
+            return null;
+        } );
 
         Assume.IsNotNull( result?.DeclaringType );
         return result;
@@ -406,21 +398,20 @@ internal static class TypeHelpers
     [Pure]
     internal static PropertyInfo GetDbCommandParametersProperty(Type type)
     {
-        var result = type.FindMember(
-            static t =>
+        var result = type.FindMember( static t =>
+        {
+            var properties = t.GetProperties( PublicDeclaredMember );
+            foreach ( var p in properties )
             {
-                var properties = t.GetProperties( PublicDeclaredMember );
-                foreach ( var p in properties )
-                {
-                    if ( p.GetGetMethod() is not null
-                        && p.Name == nameof( IDbCommand.Parameters )
-                        && p.PropertyType.IsAssignableTo( typeof( IDataParameterCollection ) )
-                        && p.GetIndexParameters().Length == 0 )
-                        return p;
-                }
+                if ( p.GetGetMethod() is not null
+                    && p.Name == nameof( IDbCommand.Parameters )
+                    && p.PropertyType.IsAssignableTo( typeof( IDataParameterCollection ) )
+                    && p.GetIndexParameters().Length == 0 )
+                    return p;
+            }
 
-                return null;
-            } );
+            return null;
+        } );
 
         Assume.IsNotNull( result?.DeclaringType );
         return result;
@@ -429,21 +420,20 @@ internal static class TypeHelpers
     [Pure]
     internal static MethodInfo GetDbCommandCreateParameterMethod(Type type)
     {
-        var result = type.FindMember(
-            static t =>
+        var result = type.FindMember( static t =>
+        {
+            var methods = t.GetMethods( PublicDeclaredMember );
+            foreach ( var m in methods )
             {
-                var methods = t.GetMethods( PublicDeclaredMember );
-                foreach ( var m in methods )
-                {
-                    if ( ! m.IsGenericMethod
-                        && m.Name == nameof( IDbCommand.CreateParameter )
-                        && m.ReturnType.IsAssignableTo( typeof( IDbDataParameter ) )
-                        && m.GetParameters().Length == 0 )
-                        return m;
-                }
+                if ( ! m.IsGenericMethod
+                    && m.Name == nameof( IDbCommand.CreateParameter )
+                    && m.ReturnType.IsAssignableTo( typeof( IDbDataParameter ) )
+                    && m.GetParameters().Length == 0 )
+                    return m;
+            }
 
-                return null;
-            } );
+            return null;
+        } );
 
         Assume.IsNotNull( result?.DeclaringType );
         return result;
@@ -452,21 +442,20 @@ internal static class TypeHelpers
     [Pure]
     internal static PropertyInfo GetDataParameterCollectionCountProperty(Type type)
     {
-        var result = type.FindMember(
-            static t =>
+        var result = type.FindMember( static t =>
+        {
+            var properties = t.GetProperties( PublicDeclaredMember );
+            foreach ( var p in properties )
             {
-                var properties = t.GetProperties( PublicDeclaredMember );
-                foreach ( var p in properties )
-                {
-                    if ( p.PropertyType == typeof( int )
-                        && p.GetGetMethod() is not null
-                        && p.Name == nameof( IDataParameterCollection.Count )
-                        && p.GetIndexParameters().Length == 0 )
-                        return p;
-                }
+                if ( p.PropertyType == typeof( int )
+                    && p.GetGetMethod() is not null
+                    && p.Name == nameof( IDataParameterCollection.Count )
+                    && p.GetIndexParameters().Length == 0 )
+                    return p;
+            }
 
-                return null;
-            } );
+            return null;
+        } );
 
         Assume.IsNotNull( result?.DeclaringType );
         return result;
@@ -475,23 +464,22 @@ internal static class TypeHelpers
     [Pure]
     internal static PropertyInfo GetDataParameterCollectionIndexer(Type type, Type parameterType)
     {
-        var result = type.FindMember(
-            t =>
+        var result = type.FindMember( t =>
+        {
+            var properties = t.GetProperties( PublicDeclaredMember );
+            foreach ( var p in properties )
             {
-                var properties = t.GetProperties( PublicDeclaredMember );
-                foreach ( var p in properties )
-                {
-                    if ( p.GetGetMethod() is null
-                        || (t.IsInterface ? p.PropertyType != typeof( object ) : ! p.PropertyType.IsAssignableTo( parameterType )) )
-                        continue;
+                if ( p.GetGetMethod() is null
+                    || (t.IsInterface ? p.PropertyType != typeof( object ) : ! p.PropertyType.IsAssignableTo( parameterType )) )
+                    continue;
 
-                    var indexParameters = p.GetIndexParameters();
-                    if ( indexParameters.Length == 1 && indexParameters[0].ParameterType == typeof( int ) )
-                        return p;
-                }
+                var indexParameters = p.GetIndexParameters();
+                if ( indexParameters.Length == 1 && indexParameters[0].ParameterType == typeof( int ) )
+                    return p;
+            }
 
-                return null;
-            } );
+            return null;
+        } );
 
         Assume.IsNotNull( result?.DeclaringType );
         return result;
@@ -500,26 +488,25 @@ internal static class TypeHelpers
     [Pure]
     internal static MethodInfo GetDataParameterCollectionAddMethod(Type type, Type parameterType)
     {
-        var result = type.FindMember(
-            t =>
+        var result = type.FindMember( t =>
+        {
+            var methods = t.GetMethods( PublicDeclaredMember );
+            foreach ( var m in methods )
             {
-                var methods = t.GetMethods( PublicDeclaredMember );
-                foreach ( var m in methods )
-                {
-                    if ( m.IsGenericMethod || m.Name != nameof( IDataParameterCollection.Add ) )
-                        continue;
+                if ( m.IsGenericMethod || m.Name != nameof( IDataParameterCollection.Add ) )
+                    continue;
 
-                    var parameters = m.GetParameters();
-                    if ( parameters.Length != 1 )
-                        continue;
+                var parameters = m.GetParameters();
+                if ( parameters.Length != 1 )
+                    continue;
 
-                    var p = parameters[0].ParameterType;
-                    if ( t.IsInterface ? p == typeof( object ) : p != typeof( object ) && parameterType.IsAssignableTo( p ) )
-                        return m;
-                }
+                var p = parameters[0].ParameterType;
+                if ( t.IsInterface ? p == typeof( object ) : p != typeof( object ) && parameterType.IsAssignableTo( p ) )
+                    return m;
+            }
 
-                return null;
-            } );
+            return null;
+        } );
 
         Assume.IsNotNull( result?.DeclaringType );
         return result;
@@ -528,18 +515,17 @@ internal static class TypeHelpers
     [Pure]
     internal static MethodInfo GetDataParameterCollectionClearMethod(Type type)
     {
-        var result = type.FindMember(
-            static t =>
+        var result = type.FindMember( static t =>
+        {
+            var methods = t.GetMethods( PublicDeclaredMember );
+            foreach ( var m in methods )
             {
-                var methods = t.GetMethods( PublicDeclaredMember );
-                foreach ( var m in methods )
-                {
-                    if ( ! m.IsGenericMethod && m.Name == nameof( IDataParameterCollection.Clear ) && m.GetParameters().Length == 0 )
-                        return m;
-                }
+                if ( ! m.IsGenericMethod && m.Name == nameof( IDataParameterCollection.Clear ) && m.GetParameters().Length == 0 )
+                    return m;
+            }
 
-                return null;
-            } );
+            return null;
+        } );
 
         Assume.IsNotNull( result?.DeclaringType );
         return result;
@@ -548,22 +534,21 @@ internal static class TypeHelpers
     [Pure]
     internal static MethodInfo GetDataParameterCollectionRemoveAtMethod(Type type)
     {
-        var result = type.FindMember(
-            static t =>
+        var result = type.FindMember( static t =>
+        {
+            var methods = t.GetMethods( PublicDeclaredMember );
+            foreach ( var m in methods )
             {
-                var methods = t.GetMethods( PublicDeclaredMember );
-                foreach ( var m in methods )
-                {
-                    if ( m.IsGenericMethod || m.Name != nameof( IDataParameterCollection.RemoveAt ) )
-                        continue;
+                if ( m.IsGenericMethod || m.Name != nameof( IDataParameterCollection.RemoveAt ) )
+                    continue;
 
-                    var parameters = m.GetParameters();
-                    if ( parameters.Length == 1 && parameters[0].ParameterType == typeof( int ) )
-                        return m;
-                }
+                var parameters = m.GetParameters();
+                if ( parameters.Length == 1 && parameters[0].ParameterType == typeof( int ) )
+                    return m;
+            }
 
-                return null;
-            } );
+            return null;
+        } );
 
         Assume.IsNotNull( result?.DeclaringType );
         return result;
@@ -572,21 +557,20 @@ internal static class TypeHelpers
     [Pure]
     internal static PropertyInfo GetDataParameterDirectionProperty(Type type)
     {
-        var result = type.FindMember(
-            static t =>
+        var result = type.FindMember( static t =>
+        {
+            var properties = t.GetProperties( PublicDeclaredMember );
+            foreach ( var p in properties )
             {
-                var properties = t.GetProperties( PublicDeclaredMember );
-                foreach ( var p in properties )
-                {
-                    if ( p.PropertyType == typeof( ParameterDirection )
-                        && p.GetSetMethod() is not null
-                        && p.Name == nameof( IDataParameter.Direction )
-                        && p.GetIndexParameters().Length == 0 )
-                        return p;
-                }
+                if ( p.PropertyType == typeof( ParameterDirection )
+                    && p.GetSetMethod() is not null
+                    && p.Name == nameof( IDataParameter.Direction )
+                    && p.GetIndexParameters().Length == 0 )
+                    return p;
+            }
 
-                return null;
-            } );
+            return null;
+        } );
 
         Assume.IsNotNull( result?.DeclaringType );
         return result;
@@ -595,21 +579,20 @@ internal static class TypeHelpers
     [Pure]
     internal static PropertyInfo GetDataParameterNameProperty(Type type)
     {
-        var result = type.FindMember(
-            static t =>
+        var result = type.FindMember( static t =>
+        {
+            var properties = t.GetProperties( PublicDeclaredMember );
+            foreach ( var p in properties )
             {
-                var properties = t.GetProperties( PublicDeclaredMember );
-                foreach ( var p in properties )
-                {
-                    if ( p.PropertyType == typeof( string )
-                        && p.GetSetMethod() is not null
-                        && p.Name == nameof( IDataParameter.ParameterName )
-                        && p.GetIndexParameters().Length == 0 )
-                        return p;
-                }
+                if ( p.PropertyType == typeof( string )
+                    && p.GetSetMethod() is not null
+                    && p.Name == nameof( IDataParameter.ParameterName )
+                    && p.GetIndexParameters().Length == 0 )
+                    return p;
+            }
 
-                return null;
-            } );
+            return null;
+        } );
 
         Assume.IsNotNull( result?.DeclaringType );
         return result;
@@ -618,21 +601,20 @@ internal static class TypeHelpers
     [Pure]
     internal static PropertyInfo GetDataParameterValueProperty(Type type)
     {
-        var result = type.FindMember(
-            static t =>
+        var result = type.FindMember( static t =>
+        {
+            var properties = t.GetProperties( PublicDeclaredMember );
+            foreach ( var p in properties )
             {
-                var properties = t.GetProperties( PublicDeclaredMember );
-                foreach ( var p in properties )
-                {
-                    if ( p.PropertyType == typeof( object )
-                        && p.GetSetMethod() is not null
-                        && p.Name == nameof( IDataParameter.Value )
-                        && p.GetIndexParameters().Length == 0 )
-                        return p;
-                }
+                if ( p.PropertyType == typeof( object )
+                    && p.GetSetMethod() is not null
+                    && p.Name == nameof( IDataParameter.Value )
+                    && p.GetIndexParameters().Length == 0 )
+                    return p;
+            }
 
-                return null;
-            } );
+            return null;
+        } );
 
         Assume.IsNotNull( result?.DeclaringType );
         return result;

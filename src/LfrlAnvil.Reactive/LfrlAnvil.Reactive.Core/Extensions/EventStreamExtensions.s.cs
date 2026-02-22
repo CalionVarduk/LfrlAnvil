@@ -1230,12 +1230,11 @@ public static class EventStreamExtensions
 
         if ( ! subscriber.IsDisposed )
         {
-            var actualCancellationTokenRegistration = cancellationToken.Register(
-                () =>
-                {
-                    listener.MarkAsCancelled();
-                    subscriber.Dispose();
-                } );
+            var actualCancellationTokenRegistration = cancellationToken.Register( () =>
+            {
+                listener.MarkAsCancelled();
+                subscriber.Dispose();
+            } );
 
             cancellationTokenRegistration.Assign( actualCancellationTokenRegistration );
         }

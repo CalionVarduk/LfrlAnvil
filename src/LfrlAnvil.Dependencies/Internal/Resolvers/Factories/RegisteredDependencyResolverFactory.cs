@@ -309,12 +309,11 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
             }
 
             var memberCtor = memberType.GetConstructors( BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic )
-                .First(
-                    c =>
-                    {
-                        var parameters = c.GetParameters();
-                        return parameters.Length == 1 && parameters[0].ParameterType == instanceType;
-                    } );
+                .First( c =>
+                {
+                    var parameters = c.GetParameters();
+                    return parameters.Length == 1 && parameters[0].ParameterType == instanceType;
+                } );
 
             memberBindings[i] = expressionBuilder.CreateMemberBindingForLastVariable( member, memberCtor );
         }

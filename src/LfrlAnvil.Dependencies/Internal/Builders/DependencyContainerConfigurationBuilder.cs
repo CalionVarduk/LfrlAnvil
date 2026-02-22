@@ -78,12 +78,11 @@ internal sealed class DependencyContainerConfigurationBuilder : IDependencyConta
 
         var instanceType = genericArgs[0];
         var ctor = type.GetConstructors( BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic )
-            .FirstOrDefault(
-                c =>
-                {
-                    var parameters = c.GetParameters();
-                    return parameters.Length == 1 && parameters[0].ParameterType == instanceType;
-                } );
+            .FirstOrDefault( c =>
+            {
+                var parameters = c.GetParameters();
+                return parameters.Length == 1 && parameters[0].ParameterType == instanceType;
+            } );
 
         return ctor is not null;
     }
