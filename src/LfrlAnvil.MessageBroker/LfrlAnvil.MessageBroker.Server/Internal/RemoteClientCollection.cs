@@ -177,8 +177,6 @@ internal struct RemoteClientCollection
                 if ( exc is not null )
                     return exc;
 
-                // TODO: tests
-                // - client duplicate (by id or name) (by id may not be possible due to file name constraints)
                 client = MessageBrokerRemoteClient.CreateInactive( info.Key, server, info.Value.Name.Value.ToString(), info.Value.TraceId );
                 if ( ! server.RemoteClientCollection._store.TryAdd( client.Id, client.Name, client ) )
                     ExceptionThrower.Throw( server.Exception( Resources.RecreatedClientDuplicate( client.Id, client.Name ) ) );
@@ -229,11 +227,9 @@ internal struct RemoteClientCollection
             MessageBrokerQueue queue;
             using ( client.AcquireLock() )
             {
-                if ( client.IsInactive )
+                if ( client.IsDisposed )
                     break;
 
-                // TODO: tests
-                // - queue duplicate (by id or name)
                 queue = MessageBrokerQueue.CreateInactive( client, info.Key, info.Value.Name.Value.ToString(), info.Value.TraceId );
                 if ( ! client.QueueStore.TryAdd( queue.Id, queue.Name, queue ) )
                     ExceptionThrower.Throw( client.Exception( Resources.RecreatedQueueDuplicate( client, queue.Id, queue.Name ) ) );
@@ -274,10 +270,6 @@ internal struct RemoteClientCollection
                 stream = client.Server.StreamCollection.TryGetByIdUnsafe( info.Value.StreamId );
             }
 
-            // TODO: tests
-            // - channel doesn't exist
-            // - stream doesn't exist
-            // - publisher duplicate by channel id
             if ( channel is null )
                 ExceptionThrower.Throw( client.Exception( Resources.PublisherChannelDoesNotExist( client, info.Key ) ) );
 
@@ -288,12 +280,11 @@ internal struct RemoteClientCollection
             MessageBrokerChannelPublisherBinding publisher;
             using ( client.AcquireLock() )
             {
-                if ( client.IsInactive )
+                if ( client.IsDisposed )
                     break;
 
                 publisher = MessageBrokerChannelPublisherBinding.CreateInactive( client, channel, stream );
-                if ( ! client.PublishersByChannelId.TryAdd( channel.Id, publisher ) )
-                    ExceptionThrower.Throw( client.Exception( Resources.RecreatedPublisherDuplicate( client, channel ) ) );
+                client.PublishersByChannelId.Add( channel.Id, publisher );
             }
 
             ulong channelTraceId;
@@ -362,11 +353,6 @@ internal struct RemoteClientCollection
             .WithCancellation( cancellationToken )
             .ConfigureAwait( false ) )
         {
-            // TODO: tests
-            // - sanitization + filter expression warnings
-            // - channel doesn't exist
-            // - queue doesn't exist
-            // - listener duplicate by channel id
             var metadata = info.Value.Sanitize( out var warnings );
 
             string? filterExpression = null;
@@ -428,7 +414,7 @@ internal struct RemoteClientCollection
             MessageBrokerChannelListenerBinding listener;
             using ( client.AcquireLock() )
             {
-                if ( client.IsInactive )
+                if ( client.IsDisposed )
                     break;
 
                 queue = client.QueueStore.TryGetById( metadata.QueueId );
@@ -443,8 +429,7 @@ internal struct RemoteClientCollection
                     filterExpression,
                     filterExpressionDelegate );
 
-                if ( ! client.ListenersByChannelId.TryAdd( channel.Id, listener ) )
-                    ExceptionThrower.Throw( client.Exception( Resources.RecreatedListenerDuplicate( client, channel ) ) );
+                client.ListenersByChannelId.Add( channel.Id, listener );
             }
 
             ulong channelTraceId;

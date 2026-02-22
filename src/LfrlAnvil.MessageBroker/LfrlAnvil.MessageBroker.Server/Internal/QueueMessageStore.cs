@@ -263,6 +263,9 @@ internal struct QueueMessageStore
 
     internal int AddUnacked(QueueMessage message, ulong messageId, int retry, int redelivery, out Timestamp expiresAt)
     {
+        Assume.IsGreaterThanOrEqualTo( retry, 0 );
+        Assume.IsGreaterThanOrEqualTo( redelivery, 0 );
+
         expiresAt = message.Listener.Client.GetTimestamp() + message.Listener.MinAckTimeout;
         var last = Unacked.Last;
         if ( last is not null )

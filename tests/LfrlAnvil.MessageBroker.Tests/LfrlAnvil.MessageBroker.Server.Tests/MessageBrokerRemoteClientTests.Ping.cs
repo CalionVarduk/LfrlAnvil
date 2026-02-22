@@ -33,29 +33,27 @@ public partial class MessageBrokerRemoteClientTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => logs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.Ping )
-                                        endSource.Complete();
-                                } ) ) ) );
+                    .SetClientLoggerFactory( _ => logs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.Ping )
+                                    endSource.Complete();
+                            } ) ) ) );
 
             await server.StartAsync();
 
             using var client = new ClientMock();
             await client.EstablishHandshake( server, pingInterval: Duration.FromSeconds( 0.2 ) );
-            await client.GetTask(
-                c =>
-                {
-                    Thread.Sleep( 150 );
-                    c.SendPing();
-                    c.ReadPong();
-                    Thread.Sleep( 150 );
-                    c.SendPing();
-                    c.ReadPong();
-                } );
+            await client.GetTask( c =>
+            {
+                Thread.Sleep( 150 );
+                c.SendPing();
+                c.ReadPong();
+                Thread.Sleep( 150 );
+                c.SendPing();
+                c.ReadPong();
+            } );
 
             var remoteClient = server.Clients.TryGetByName( "test" );
             await endSource.Task;
@@ -108,14 +106,13 @@ public partial class MessageBrokerRemoteClientTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => logs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.Unexpected )
-                                        endSource.Complete();
-                                } ) ) ) );
+                    .SetClientLoggerFactory( _ => logs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.Unexpected )
+                                    endSource.Complete();
+                            } ) ) ) );
 
             await server.StartAsync();
 
@@ -166,14 +163,13 @@ public partial class MessageBrokerRemoteClientTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => logs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.Ping )
-                                        endSource.Complete();
-                                } ) ) ) );
+                    .SetClientLoggerFactory( _ => logs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.Ping )
+                                    endSource.Complete();
+                            } ) ) ) );
 
             await server.StartAsync();
 
@@ -224,15 +220,14 @@ public partial class MessageBrokerRemoteClientTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => logs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.Deactivate )
-                                        endSource.Complete();
-                                },
-                                error: e => exception = e.Exception ) ) ) );
+                    .SetClientLoggerFactory( _ => logs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.Deactivate )
+                                    endSource.Complete();
+                            },
+                            error: e => exception = e.Exception ) ) ) );
 
             await server.StartAsync();
 

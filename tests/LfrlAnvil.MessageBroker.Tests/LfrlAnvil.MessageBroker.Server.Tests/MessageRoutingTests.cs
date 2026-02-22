@@ -30,16 +30,15 @@ public class MessageRoutingTests : TestsBase, IClassFixture<SharedResourceFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    c => c.Id == 1
-                        ? clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessageRouting )
-                                        endSource.Complete();
-                                } ) )
-                        : null ) );
+                .SetClientLoggerFactory( c => c.Id == 1
+                    ? clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessageRouting )
+                                    endSource.Complete();
+                            } ) )
+                    : null ) );
 
         await server.StartAsync();
 
@@ -52,13 +51,12 @@ public class MessageRoutingTests : TestsBase, IClassFixture<SharedResourceFixtur
         await endSource.Task;
 
         Assertion.All(
-                remoteClient.TestNotNull(
-                    c => Assertion.All(
-                        "remoteClient",
-                        c.State.TestEquals( MessageBrokerRemoteClientState.Running ),
-                        c.MessageRouting.IsActive.TestTrue(),
-                        MessageRouting.Contains( c.MessageRouting.Data.Span, 1 ).TestTrue(),
-                        MessageRouting.Contains( c.MessageRouting.Data.Span, 2 ).TestTrue() ) ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "remoteClient",
+                    c.State.TestEquals( MessageBrokerRemoteClientState.Running ),
+                    c.MessageRouting.IsActive.TestTrue(),
+                    MessageRouting.Contains( c.MessageRouting.Data.Span, 1 ).TestTrue(),
+                    MessageRouting.Contains( c.MessageRouting.Data.Span, 2 ).TestTrue() ) ),
                 clientLogs.GetAll()
                     .TakeLast( 1 )
                     .TestSequence(
@@ -87,19 +85,18 @@ public class MessageRoutingTests : TestsBase, IClassFixture<SharedResourceFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessageRouting )
-                                    endSource.Complete();
-                            },
-                            error: e =>
-                            {
-                                lock ( exceptions )
-                                    exceptions.Add( e.Exception );
-                            } ) ) ) );
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessageRouting )
+                                endSource.Complete();
+                        },
+                        error: e =>
+                        {
+                            lock ( exceptions )
+                                exceptions.Add( e.Exception );
+                        } ) ) ) );
 
         await server.StartAsync();
 
@@ -111,15 +108,12 @@ public class MessageRoutingTests : TestsBase, IClassFixture<SharedResourceFixtur
 
         Assertion.All(
                 exceptions.TestCount( count => count.TestEquals( 2 ) )
-                    .Then(
-                        exc => exc.TestAll(
-                            (x, _) => x.TestType()
-                                .Exact<MessageBrokerRemoteClientException>( e => e.Client.TestRefEquals( remoteClient ) ) ) ),
-                remoteClient.TestNotNull(
-                    c => Assertion.All(
-                        "remoteClient",
-                        c.State.TestEquals( MessageBrokerRemoteClientState.Running ),
-                        c.MessageRouting.IsActive.TestTrue() ) ),
+                    .Then( exc => exc.TestAll( (x, _) => x.TestType()
+                        .Exact<MessageBrokerRemoteClientException>( e => e.Client.TestRefEquals( remoteClient ) ) ) ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "remoteClient",
+                    c.State.TestEquals( MessageBrokerRemoteClientState.Running ),
+                    c.MessageRouting.IsActive.TestTrue() ) ),
                 clientLogs.GetAll()
                     .TakeLast( 1 )
                     .TestSequence(
@@ -155,14 +149,13 @@ public class MessageRoutingTests : TestsBase, IClassFixture<SharedResourceFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessageRouting )
-                                    endSource.Complete();
-                            } ) ) ) );
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessageRouting )
+                                endSource.Complete();
+                        } ) ) ) );
 
         await server.StartAsync();
 
@@ -205,14 +198,13 @@ public class MessageRoutingTests : TestsBase, IClassFixture<SharedResourceFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessageRouting )
-                                    endSource.Complete();
-                            } ) ) ) );
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessageRouting )
+                                endSource.Complete();
+                        } ) ) ) );
 
         await server.StartAsync();
 
@@ -255,26 +247,24 @@ public class MessageRoutingTests : TestsBase, IClassFixture<SharedResourceFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessageRouting )
-                                    endSource.Complete();
-                            } ) ) ) );
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessageRouting )
+                                endSource.Complete();
+                        } ) ) ) );
 
         await server.StartAsync();
 
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
         var remoteClient = server.Clients.TryGetById( 1 );
-        await client.GetTask(
-            c =>
-            {
-                c.SendPushMessageRouting( [ Routing.FromId( 1 ) ] );
-                c.SendPushMessageRouting( [ Routing.FromName( "foo" ) ] );
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendPushMessageRouting( [ Routing.FromId( 1 ) ] );
+            c.SendPushMessageRouting( [ Routing.FromName( "foo" ) ] );
+        } );
 
         await endSource.Task;
 
@@ -311,14 +301,13 @@ public class MessageRoutingTests : TestsBase, IClassFixture<SharedResourceFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessageRouting )
-                                    endSource.Complete();
-                            } ) ) ) );
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessageRouting )
+                                endSource.Complete();
+                        } ) ) ) );
 
         await server.StartAsync();
 
@@ -362,14 +351,13 @@ public class MessageRoutingTests : TestsBase, IClassFixture<SharedResourceFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessageRouting )
-                                    endSource.Complete();
-                            } ) ) ) );
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessageRouting )
+                                endSource.Complete();
+                        } ) ) ) );
 
         await server.StartAsync();
 
@@ -413,14 +401,13 @@ public class MessageRoutingTests : TestsBase, IClassFixture<SharedResourceFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessageRouting )
-                                    endSource.Complete();
-                            } ) ) ) );
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessageRouting )
+                                endSource.Complete();
+                        } ) ) ) );
 
         await server.StartAsync();
 
@@ -464,14 +451,13 @@ public class MessageRoutingTests : TestsBase, IClassFixture<SharedResourceFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessageRouting )
-                                    endSource.Complete();
-                            } ) ) ) );
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessageRouting )
+                                endSource.Complete();
+                        } ) ) ) );
 
         await server.StartAsync();
 
@@ -515,14 +501,13 @@ public class MessageRoutingTests : TestsBase, IClassFixture<SharedResourceFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessageRouting )
-                                    endSource.Complete();
-                            } ) ) ) );
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessageRouting )
+                                endSource.Complete();
+                        } ) ) ) );
 
         await server.StartAsync();
 
@@ -566,14 +551,13 @@ public class MessageRoutingTests : TestsBase, IClassFixture<SharedResourceFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessageRouting )
-                                    endSource.Complete();
-                            } ) ) ) );
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessageRouting )
+                                endSource.Complete();
+                        } ) ) ) );
 
         await server.StartAsync();
 
@@ -621,14 +605,13 @@ public class MessageRoutingTests : TestsBase, IClassFixture<SharedResourceFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessageRouting )
-                                    endSource.Complete();
-                            } ) ) ) );
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessageRouting )
+                                endSource.Complete();
+                        } ) ) ) );
 
         await server.StartAsync();
 
@@ -674,29 +657,27 @@ public class MessageRoutingTests : TestsBase, IClassFixture<SharedResourceFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    c => c.Id == 1
-                        ? clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessage )
-                                        endSource.Complete();
-                                } ) )
-                        : MessageBrokerRemoteClientLogger.Create(
+                .SetClientLoggerFactory( c => c.Id == 1
+                    ? clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
                             traceEnd: e =>
                             {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.MessageNotification )
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessage )
                                     endSource.Complete();
                             } ) )
-                .SetStreamLoggerFactory(
-                    _ => streamLogs.GetLogger(
-                        MessageBrokerStreamLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerStreamTraceEventType.ProcessMessage )
-                                    endSource.Complete();
-                            } ) ) )
+                    : MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.MessageNotification )
+                                endSource.Complete();
+                        } ) )
+                .SetStreamLoggerFactory( _ => streamLogs.GetLogger(
+                    MessageBrokerStreamLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerStreamTraceEventType.ProcessMessage )
+                                endSource.Complete();
+                        } ) ) )
                 .SetQueueLoggerFactory( q => q.Client.Id == 1 ? queueLogs.GetLogger() : null ) );
 
         await server.StartAsync();
@@ -706,33 +687,30 @@ public class MessageRoutingTests : TestsBase, IClassFixture<SharedResourceFixtur
         using var client2 = new ClientMock();
         await client2.EstablishHandshake( server, "test2" );
         var remoteClient = server.Clients.TryGetById( 1 );
-        await client2.GetTask(
-            c =>
-            {
-                c.SendBindListenerRequest( "c", true );
-                c.ReadListenerBoundResponse();
-            } );
+        await client2.GetTask( c =>
+        {
+            c.SendBindListenerRequest( "c", true );
+            c.ReadListenerBoundResponse();
+        } );
 
-        await client1.GetTask(
-            c =>
-            {
-                c.SendBindPublisherRequest( "c" );
-                c.ReadPublisherBoundResponse();
-                c.SendBindListenerRequest( "c", true );
-                c.ReadListenerBoundResponse();
-                c.SendPushMessageRouting( [ Routing.FromId( 2 ) ] );
-                c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
-            } );
+        await client1.GetTask( c =>
+        {
+            c.SendBindPublisherRequest( "c" );
+            c.ReadPublisherBoundResponse();
+            c.SendBindListenerRequest( "c", true );
+            c.ReadListenerBoundResponse();
+            c.SendPushMessageRouting( [ Routing.FromId( 2 ) ] );
+            c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
+        } );
 
         await client2.GetTask( c => c.ReadMessageNotification( 3 ) );
         await endSource.Task;
 
         Assertion.All(
-                remoteClient.TestNotNull(
-                    c => Assertion.All(
-                        "remoteClient",
-                        c.State.TestEquals( MessageBrokerRemoteClientState.Running ),
-                        c.MessageRouting.IsActive.TestFalse() ) ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "remoteClient",
+                    c.State.TestEquals( MessageBrokerRemoteClientState.Running ),
+                    c.MessageRouting.IsActive.TestFalse() ) ),
                 clientLogs.GetAll()
                     .TakeLast( 2 )
                     .TestSequence(

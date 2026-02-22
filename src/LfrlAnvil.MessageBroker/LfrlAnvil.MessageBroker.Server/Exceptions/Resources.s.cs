@@ -695,20 +695,6 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string RecreatedPublisherDuplicate(MessageBrokerRemoteClient client, MessageBrokerChannel channel)
-    {
-        return $"Recreated publisher for client [{client.Id}] '{client.Name}' and channel [{channel.Id}] '{channel.Name}' is a duplicate.";
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string RecreatedListenerDuplicate(MessageBrokerRemoteClient client, MessageBrokerChannel channel)
-    {
-        return $"Recreated listener for client [{client.Id}] '{client.Name}' and channel [{channel.Id}] '{channel.Name}' is a duplicate.";
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string PublisherChannelDoesNotExist(MessageBrokerRemoteClient client, int channelId)
     {
         return

@@ -49,60 +49,56 @@ public partial class MessageBrokerClientTests
 
             var channelName = "foo";
             var queueName = "bar";
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( channelName, queueName: queueName ) );
-                    s.SendListenerBoundResponse( channelCreated, queueCreated, 1, 2 );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( channelName, queueName: queueName ) );
+                s.SendListenerBoundResponse( channelCreated, queueCreated, 1, 2 );
+            } );
 
             var result = await client.Listeners.BindAsync( channelName, callback, queueName: queueName );
             await serverTask;
 
             Assertion.All(
                     result.Exception.TestNull(),
-                    result.Value.TestNotNull(
-                        r => Assertion.All(
-                            "result.Value",
-                            r.AlreadyBound.TestFalse(),
-                            r.ChannelCreated.TestEquals( channelCreated ),
-                            r.QueueCreated.TestEquals( queueCreated ),
-                            r.Listener.TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ),
-                            r.ToString()
-                                .TestEquals(
-                                    channelCreated
-                                        ? queueCreated
-                                            ? $"[1] 'test' => [1] '{channelName}' listener (using [2] '{queueName}' queue) (Bound) (channel created) (queue created)"
-                                            : $"[1] 'test' => [1] '{channelName}' listener (using [2] '{queueName}' queue) (Bound) (channel created)"
-                                        : queueCreated
-                                            ? $"[1] 'test' => [1] '{channelName}' listener (using [2] '{queueName}' queue) (Bound) (queue created)"
-                                            : $"[1] 'test' => [1] '{channelName}' listener (using [2] '{queueName}' queue) (Bound)" ) ) ),
+                    result.Value.TestNotNull( r => Assertion.All(
+                        "result.Value",
+                        r.AlreadyBound.TestFalse(),
+                        r.ChannelCreated.TestEquals( channelCreated ),
+                        r.QueueCreated.TestEquals( queueCreated ),
+                        r.Listener.TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ),
+                        r.ToString()
+                            .TestEquals(
+                                channelCreated
+                                    ? queueCreated
+                                        ? $"[1] 'test' => [1] '{channelName}' listener (using [2] '{queueName}' queue) (Bound) (channel created) (queue created)"
+                                        : $"[1] 'test' => [1] '{channelName}' listener (using [2] '{queueName}' queue) (Bound) (channel created)"
+                                    : queueCreated
+                                        ? $"[1] 'test' => [1] '{channelName}' listener (using [2] '{queueName}' queue) (Bound) (queue created)"
+                                        : $"[1] 'test' => [1] '{channelName}' listener (using [2] '{queueName}' queue) (Bound)" ) ) ),
                     client.Listeners.Count.TestEquals( 1 ),
                     client.Listeners.GetAll().TestSequence( [ (c, _) => c.TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ) ] ),
                     client.Listeners.TryGetByChannelName( channelName ).TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ),
                     client.Listeners.TryGetByChannelId( 1 )
-                        .TestNotNull(
-                            listener => Assertion.All(
-                                "listener",
-                                listener.Client.TestRefEquals( client ),
-                                listener.ChannelId.TestEquals( 1 ),
-                                listener.ChannelName.TestEquals( channelName ),
-                                listener.QueueId.TestEquals( 2 ),
-                                listener.QueueName.TestEquals( queueName ),
-                                listener.PrefetchHint.TestEquals( ( short )1 ),
-                                listener.MaxRetries.TestEquals( 0 ),
-                                listener.RetryDelay.TestEquals( Duration.Zero ),
-                                listener.MaxRedeliveries.TestEquals( 0 ),
-                                listener.MinAckTimeout.TestEquals( MessageBrokerListenerOptions.DefaultMinAckTimeout ),
-                                listener.AreAcksEnabled.TestTrue(),
-                                listener.DeadLetterCapacityHint.TestEquals( 0 ),
-                                listener.MinDeadLetterRetention.TestEquals( Duration.Zero ),
-                                listener.FilterExpression.TestNull(),
-                                listener.Callback.TestRefEquals( callback ),
-                                listener.State.TestEquals( MessageBrokerListenerState.Bound ),
-                                listener.ToString()
-                                    .TestEquals(
-                                        $"[1] 'test' => [1] '{channelName}' listener (using [2] '{queueName}' queue) (Bound)" ) ) ),
+                        .TestNotNull( listener => Assertion.All(
+                            "listener",
+                            listener.Client.TestRefEquals( client ),
+                            listener.ChannelId.TestEquals( 1 ),
+                            listener.ChannelName.TestEquals( channelName ),
+                            listener.QueueId.TestEquals( 2 ),
+                            listener.QueueName.TestEquals( queueName ),
+                            listener.PrefetchHint.TestEquals( ( short )1 ),
+                            listener.MaxRetries.TestEquals( 0 ),
+                            listener.RetryDelay.TestEquals( Duration.Zero ),
+                            listener.MaxRedeliveries.TestEquals( 0 ),
+                            listener.MinAckTimeout.TestEquals( MessageBrokerListenerOptions.DefaultMinAckTimeout ),
+                            listener.AreAcksEnabled.TestTrue(),
+                            listener.DeadLetterCapacityHint.TestEquals( 0 ),
+                            listener.MinDeadLetterRetention.TestEquals( Duration.Zero ),
+                            listener.FilterExpression.TestNull(),
+                            listener.Callback.TestRefEquals( callback ),
+                            listener.State.TestEquals( MessageBrokerListenerState.Bound ),
+                            listener.ToString()
+                                .TestEquals( $"[1] 'test' => [1] '{channelName}' listener (using [2] '{queueName}' queue) (Bound)" ) ) ),
                     logs.GetAll()
                         .Skip( 1 )
                         .TestSequence(
@@ -116,6 +112,139 @@ public partial class MessageBrokerClientTests
                                 "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (ListenerBoundResponse, Length = 14)",
                                 "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (ListenerBoundResponse, Length = 14)",
                                 $"[ListenerBound] Client = [1] 'test', TraceId = 1, Channel = [1] '{channelName}'{(channelCreated ? " (created)" : string.Empty)}, Queue = [2] '{queueName}'{(queueCreated ? " (created)" : string.Empty)}",
+                                "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (end)"
+                            ] )
+                        ] ),
+                    logs.GetAllAwaitPacket()
+                        .TestContainsContiguousSequence(
+                        [
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (ListenerBoundResponse, Length = 14)"
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task BindAsync_ShouldCreateNonEphemeralListenerCorrectly()
+        {
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+            MessageBrokerListenerCallback callback = (_, _) => ValueTask.CompletedTask;
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetEphemeral( false )
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger( logs.GetLogger() ) );
+
+            await server.EstablishHandshake( client );
+
+            var channelName = "foo";
+            var queueName = "bar";
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( channelName, queueName: queueName, isEphemeral: false ) );
+                s.SendListenerBoundResponse( false, false, 1, 2 );
+            } );
+
+            var result = await client.Listeners.BindAsync( channelName, callback, queueName: queueName );
+            await serverTask;
+
+            Assertion.All(
+                    result.Exception.TestNull(),
+                    result.Value.TestNotNull( r => Assertion.All(
+                        "result.Value",
+                        r.AlreadyBound.TestFalse(),
+                        r.ChannelCreated.TestFalse(),
+                        r.QueueCreated.TestFalse(),
+                        r.Listener.TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ),
+                        r.Listener.IsEphemeral.TestFalse(),
+                        r.ToString()
+                            .TestEquals( $"[1] 'test' => [1] '{channelName}' listener (using [2] '{queueName}' queue) (Bound)" ) ) ),
+                    logs.GetAll()
+                        .Skip( 1 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
+                                $"[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = '{channelName}', QueueName = '{queueName}', PrefetchHint = 1, MaxRetries = 0, MaxRedeliveries = 0, MinAckTimeout = 600 second(s), DeadLetter = <disabled>, IsEphemeral = False, CreateChannelIfNotExists = True",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 46)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 46)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (ListenerBoundResponse, Length = 14)",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (ListenerBoundResponse, Length = 14)",
+                                $"[ListenerBound] Client = [1] 'test', TraceId = 1, Channel = [1] '{channelName}', Queue = [2] '{queueName}'",
+                                "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (end)"
+                            ] )
+                        ] ),
+                    logs.GetAllAwaitPacket()
+                        .TestContainsContiguousSequence(
+                        [
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (ListenerBoundResponse, Length = 14)"
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task BindAsync_ShouldBindListenerCorrectly_WhenClientIsEphemeralAndListenerRequestIsNot()
+        {
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+            MessageBrokerListenerCallback callback = (_, _) => ValueTask.CompletedTask;
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger( logs.GetLogger() ) );
+
+            await server.EstablishHandshake( client );
+
+            var channelName = "foo";
+            var queueName = "bar";
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( channelName, queueName: queueName, isEphemeral: false ) );
+                s.SendListenerBoundResponse( false, false, 1, 2 );
+            } );
+
+            var result = await client.Listeners.BindAsync( channelName, callback, queueName: queueName );
+            await serverTask;
+
+            Assertion.All(
+                    result.Exception.TestNull(),
+                    result.Value.TestNotNull( r => Assertion.All(
+                        "result.Value",
+                        r.AlreadyBound.TestFalse(),
+                        r.ChannelCreated.TestFalse(),
+                        r.QueueCreated.TestFalse(),
+                        r.Listener.TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ),
+                        r.Listener.IsEphemeral.TestTrue(),
+                        r.ToString()
+                            .TestEquals( $"[1] 'test' => [1] '{channelName}' listener (using [2] '{queueName}' queue) (Bound)" ) ) ),
+                    logs.GetAll()
+                        .Skip( 1 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
+                                $"[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = '{channelName}', QueueName = '{queueName}', PrefetchHint = 1, MaxRetries = 0, MaxRedeliveries = 0, MinAckTimeout = 600 second(s), DeadLetter = <disabled>, IsEphemeral = True, CreateChannelIfNotExists = True",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 46)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 46)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (ListenerBoundResponse, Length = 14)",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (ListenerBoundResponse, Length = 14)",
+                                $"[ListenerBound] Client = [1] 'test', TraceId = 1, Channel = [1] '{channelName}', Queue = [2] '{queueName}'",
                                 "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (end)"
                             ] )
                         ] ),
@@ -148,12 +277,11 @@ public partial class MessageBrokerClientTests
             await server.EstablishHandshake( client );
 
             var channelName = "foo";
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( channelName, filterExpression: "expression" ) );
-                    s.SendListenerBoundResponse( false, false, 1, 2 );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( channelName, filterExpression: "expression" ) );
+                s.SendListenerBoundResponse( false, false, 1, 2 );
+            } );
 
             var result = await client.Listeners.BindAsync(
                 channelName,
@@ -169,42 +297,39 @@ public partial class MessageBrokerClientTests
 
             Assertion.All(
                     result.Exception.TestNull(),
-                    result.Value.TestNotNull(
-                        r => Assertion.All(
-                            "result.Value",
-                            r.AlreadyBound.TestFalse(),
-                            r.ChannelCreated.TestFalse(),
-                            r.QueueCreated.TestFalse(),
-                            r.Listener.TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ),
-                            r.ToString()
-                                .TestEquals( $"[1] 'test' => [1] '{channelName}' listener (using [2] '{channelName}' queue) (Bound)" ) ) ),
+                    result.Value.TestNotNull( r => Assertion.All(
+                        "result.Value",
+                        r.AlreadyBound.TestFalse(),
+                        r.ChannelCreated.TestFalse(),
+                        r.QueueCreated.TestFalse(),
+                        r.Listener.TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ),
+                        r.ToString()
+                            .TestEquals( $"[1] 'test' => [1] '{channelName}' listener (using [2] '{channelName}' queue) (Bound)" ) ) ),
                     client.Listeners.Count.TestEquals( 1 ),
                     client.Listeners.GetAll().TestSequence( [ (c, _) => c.TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ) ] ),
                     client.Listeners.TryGetByChannelName( channelName ).TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ),
                     client.Listeners.TryGetByChannelId( 1 )
-                        .TestNotNull(
-                            listener => Assertion.All(
-                                "listener",
-                                listener.Client.TestRefEquals( client ),
-                                listener.ChannelId.TestEquals( 1 ),
-                                listener.ChannelName.TestEquals( channelName ),
-                                listener.QueueId.TestEquals( 2 ),
-                                listener.QueueName.TestEquals( channelName ),
-                                listener.PrefetchHint.TestEquals( ( short )5 ),
-                                listener.MaxRetries.TestEquals( 3 ),
-                                listener.RetryDelay.TestEquals( MessageBrokerListenerOptions.DefaultRetryDelay ),
-                                listener.MaxRedeliveries.TestEquals( 4 ),
-                                listener.MinAckTimeout.TestEquals( MessageBrokerListenerOptions.DefaultMinAckTimeout ),
-                                listener.AreAcksEnabled.TestTrue(),
-                                listener.DeadLetterCapacityHint.TestEquals( 100 ),
-                                listener.MinDeadLetterRetention.TestEquals( Duration.FromHours( 1 ) ),
-                                listener.FilterExpression.TestEquals( "expression" ),
-                                listener.Callback.TestRefEquals( callback ),
-                                listener.IsEphemeral.TestTrue(),
-                                listener.State.TestEquals( MessageBrokerListenerState.Bound ),
-                                listener.ToString()
-                                    .TestEquals(
-                                        $"[1] 'test' => [1] '{channelName}' listener (using [2] '{channelName}' queue) (Bound)" ) ) ),
+                        .TestNotNull( listener => Assertion.All(
+                            "listener",
+                            listener.Client.TestRefEquals( client ),
+                            listener.ChannelId.TestEquals( 1 ),
+                            listener.ChannelName.TestEquals( channelName ),
+                            listener.QueueId.TestEquals( 2 ),
+                            listener.QueueName.TestEquals( channelName ),
+                            listener.PrefetchHint.TestEquals( ( short )5 ),
+                            listener.MaxRetries.TestEquals( 3 ),
+                            listener.RetryDelay.TestEquals( MessageBrokerListenerOptions.DefaultRetryDelay ),
+                            listener.MaxRedeliveries.TestEquals( 4 ),
+                            listener.MinAckTimeout.TestEquals( MessageBrokerListenerOptions.DefaultMinAckTimeout ),
+                            listener.AreAcksEnabled.TestTrue(),
+                            listener.DeadLetterCapacityHint.TestEquals( 100 ),
+                            listener.MinDeadLetterRetention.TestEquals( Duration.FromHours( 1 ) ),
+                            listener.FilterExpression.TestEquals( "expression" ),
+                            listener.Callback.TestRefEquals( callback ),
+                            listener.IsEphemeral.TestTrue(),
+                            listener.State.TestEquals( MessageBrokerListenerState.Bound ),
+                            listener.ToString()
+                                .TestEquals( $"[1] 'test' => [1] '{channelName}' listener (using [2] '{channelName}' queue) (Bound)" ) ) ),
                     logs.GetAll()
                         .Skip( 1 )
                         .TestSequence(
@@ -253,12 +378,11 @@ public partial class MessageBrokerClientTests
             await server.EstablishHandshake( client );
 
             var channelName = "foo";
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( channelName ) );
-                    s.SendListenerBoundResponse( false, false, 1, 2 );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( channelName ) );
+                s.SendListenerBoundResponse( false, false, 1, 2 );
+            } );
 
             var result = await client.Listeners.BindAsync(
                 channelName,
@@ -269,41 +393,38 @@ public partial class MessageBrokerClientTests
 
             Assertion.All(
                     result.Exception.TestNull(),
-                    result.Value.TestNotNull(
-                        r => Assertion.All(
-                            "result.Value",
-                            r.AlreadyBound.TestFalse(),
-                            r.ChannelCreated.TestFalse(),
-                            r.QueueCreated.TestFalse(),
-                            r.Listener.TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ),
-                            r.ToString()
-                                .TestEquals( $"[1] 'test' => [1] '{channelName}' listener (using [2] '{channelName}' queue) (Bound)" ) ) ),
+                    result.Value.TestNotNull( r => Assertion.All(
+                        "result.Value",
+                        r.AlreadyBound.TestFalse(),
+                        r.ChannelCreated.TestFalse(),
+                        r.QueueCreated.TestFalse(),
+                        r.Listener.TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ),
+                        r.ToString()
+                            .TestEquals( $"[1] 'test' => [1] '{channelName}' listener (using [2] '{channelName}' queue) (Bound)" ) ) ),
                     client.Listeners.Count.TestEquals( 1 ),
                     client.Listeners.GetAll().TestSequence( [ (c, _) => c.TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ) ] ),
                     client.Listeners.TryGetByChannelName( channelName ).TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ),
                     client.Listeners.TryGetByChannelId( 1 )
-                        .TestNotNull(
-                            listener => Assertion.All(
-                                "listener",
-                                listener.Client.TestRefEquals( client ),
-                                listener.ChannelId.TestEquals( 1 ),
-                                listener.ChannelName.TestEquals( channelName ),
-                                listener.QueueId.TestEquals( 2 ),
-                                listener.QueueName.TestEquals( channelName ),
-                                listener.PrefetchHint.TestEquals( ( short )1 ),
-                                listener.MaxRetries.TestEquals( 0 ),
-                                listener.RetryDelay.TestEquals( Duration.Zero ),
-                                listener.MaxRedeliveries.TestEquals( 0 ),
-                                listener.MinAckTimeout.TestEquals( Duration.Zero ),
-                                listener.AreAcksEnabled.TestFalse(),
-                                listener.DeadLetterCapacityHint.TestEquals( 0 ),
-                                listener.MinDeadLetterRetention.TestEquals( Duration.Zero ),
-                                listener.FilterExpression.TestNull(),
-                                listener.Callback.TestRefEquals( callback ),
-                                listener.State.TestEquals( MessageBrokerListenerState.Bound ),
-                                listener.ToString()
-                                    .TestEquals(
-                                        $"[1] 'test' => [1] '{channelName}' listener (using [2] '{channelName}' queue) (Bound)" ) ) ),
+                        .TestNotNull( listener => Assertion.All(
+                            "listener",
+                            listener.Client.TestRefEquals( client ),
+                            listener.ChannelId.TestEquals( 1 ),
+                            listener.ChannelName.TestEquals( channelName ),
+                            listener.QueueId.TestEquals( 2 ),
+                            listener.QueueName.TestEquals( channelName ),
+                            listener.PrefetchHint.TestEquals( ( short )1 ),
+                            listener.MaxRetries.TestEquals( 0 ),
+                            listener.RetryDelay.TestEquals( Duration.Zero ),
+                            listener.MaxRedeliveries.TestEquals( 0 ),
+                            listener.MinAckTimeout.TestEquals( Duration.Zero ),
+                            listener.AreAcksEnabled.TestFalse(),
+                            listener.DeadLetterCapacityHint.TestEquals( 0 ),
+                            listener.MinDeadLetterRetention.TestEquals( Duration.Zero ),
+                            listener.FilterExpression.TestNull(),
+                            listener.Callback.TestRefEquals( callback ),
+                            listener.State.TestEquals( MessageBrokerListenerState.Bound ),
+                            listener.ToString()
+                                .TestEquals( $"[1] 'test' => [1] '{channelName}' listener (using [2] '{channelName}' queue) (Bound)" ) ) ),
                     logs.GetAll()
                         .Skip( 1 )
                         .TestSequence(
@@ -346,12 +467,11 @@ public partial class MessageBrokerClientTests
             await server.EstablishHandshake( client );
 
             var channelName = "foo";
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( channelName ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( channelName ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+            } );
 
             await client.Listeners.BindAsync( channelName, (_, _) => ValueTask.CompletedTask );
             await serverTask;
@@ -363,16 +483,15 @@ public partial class MessageBrokerClientTests
 
             Assertion.All(
                     result.Exception.TestNull(),
-                    result.Value.TestNotNull(
-                        r => Assertion.All(
-                            "result.Value",
-                            r.AlreadyBound.TestTrue(),
-                            r.ChannelCreated.TestFalse(),
-                            r.QueueCreated.TestFalse(),
-                            r.Listener.TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ),
-                            r.ToString()
-                                .TestEquals(
-                                    $"[1] 'test' => [1] '{channelName}' listener (using [1] '{channelName}' queue) (Bound) (already bound)" ) ) ),
+                    result.Value.TestNotNull( r => Assertion.All(
+                        "result.Value",
+                        r.AlreadyBound.TestTrue(),
+                        r.ChannelCreated.TestFalse(),
+                        r.QueueCreated.TestFalse(),
+                        r.Listener.TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ),
+                        r.ToString()
+                            .TestEquals(
+                                $"[1] 'test' => [1] '{channelName}' listener (using [1] '{channelName}' queue) (Bound) (already bound)" ) ) ),
                     client.Listeners.Count.TestEquals( 1 ) )
                 .Go();
         }
@@ -394,12 +513,11 @@ public partial class MessageBrokerClientTests
             await server.EstablishHandshake( client );
 
             var channelName = "foo";
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( channelName ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( channelName ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+            } );
 
             var result = await client.Listeners.BindAsync( channelName, (_, _) => ValueTask.CompletedTask );
             await serverTask;
@@ -452,13 +570,11 @@ public partial class MessageBrokerClientTests
         {
             using var client = new MessageBrokerClient( new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
             var action = Lambda.Of( () => client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask ) );
-            action.Test(
-                    exc => exc.TestType()
-                        .Exact<MessageBrokerClientStateException>(
-                            e => Assertion.All(
-                                e.Client.TestRefEquals( client ),
-                                e.Expected.TestEquals( MessageBrokerClientState.Running ),
-                                e.Actual.TestEquals( MessageBrokerClientState.Created ) ) ) )
+            action.Test( exc => exc.TestType()
+                    .Exact<MessageBrokerClientStateException>( e => Assertion.All(
+                        e.Client.TestRefEquals( client ),
+                        e.Expected.TestEquals( MessageBrokerClientState.Running ),
+                        e.Actual.TestEquals( MessageBrokerClientState.Created ) ) ) )
                 .Go();
         }
 
@@ -505,10 +621,9 @@ public partial class MessageBrokerClientTests
                     client.State.TestEquals( MessageBrokerClientState.Disposed ),
                     result.Value.TestNull(),
                     result.Exception.TestType()
-                        .Exact<MessageBrokerClientResponseTimeoutException>(
-                            exc => Assertion.All(
-                                exc.Client.TestRefEquals( client ),
-                                exc.RequestEndpoint.TestEquals( MessageBrokerServerEndpoint.BindListenerRequest ) ) ),
+                        .Exact<MessageBrokerClientResponseTimeoutException>( exc => Assertion.All(
+                            exc.Client.TestRefEquals( client ),
+                            exc.RequestEndpoint.TestEquals( MessageBrokerServerEndpoint.BindListenerRequest ) ) ),
                     logs.GetAll()
                         .Skip( 1 )
                         .TestSequence(
@@ -582,12 +697,11 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, channelId: 0, queueId: -1 );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, channelId: 0, queueId: -1 );
+            } );
 
             var result = await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             await serverTask;
@@ -596,10 +710,9 @@ public partial class MessageBrokerClientTests
                     client.State.TestEquals( MessageBrokerClientState.Disposed ),
                     result.Value.TestNull(),
                     result.Exception.TestType()
-                        .Exact<MessageBrokerClientProtocolException>(
-                            exc => Assertion.All(
-                                exc.Client.TestRefEquals( client ),
-                                exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.ListenerBoundResponse ) ) ),
+                        .Exact<MessageBrokerClientProtocolException>( exc => Assertion.All(
+                            exc.Client.TestRefEquals( client ),
+                            exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.ListenerBoundResponse ) ) ),
                     logs.GetAll()
                         .Skip( 1 )
                         .TestSequence(
@@ -648,12 +761,11 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1, payload: 8 );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1, payload: 8 );
+            } );
 
             var result = await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             await serverTask;
@@ -662,10 +774,9 @@ public partial class MessageBrokerClientTests
                     client.State.TestEquals( MessageBrokerClientState.Disposed ),
                     result.Value.TestNull(),
                     result.Exception.TestType()
-                        .Exact<MessageBrokerClientProtocolException>(
-                            exc => Assertion.All(
-                                exc.Client.TestRefEquals( client ),
-                                exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.ListenerBoundResponse ) ) ),
+                        .Exact<MessageBrokerClientProtocolException>( exc => Assertion.All(
+                            exc.Client.TestRefEquals( client ),
+                            exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.ListenerBoundResponse ) ) ),
                     logs.GetAll()
                         .Skip( 1 )
                         .TestSequence(
@@ -713,12 +824,11 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendBindListenerFailureResponse( true, true, true, true, true );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendBindListenerFailureResponse( true, true, true, true, true );
+            } );
 
             var result = await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             await serverTask;
@@ -727,10 +837,9 @@ public partial class MessageBrokerClientTests
                     client.State.TestEquals( MessageBrokerClientState.Running ),
                     result.Value.TestNull(),
                     result.Exception.TestType()
-                        .Exact<MessageBrokerClientRequestException>(
-                            exc => Assertion.All(
-                                exc.Client.TestRefEquals( client ),
-                                exc.Endpoint.TestEquals( MessageBrokerServerEndpoint.BindListenerRequest ) ) ),
+                        .Exact<MessageBrokerClientRequestException>( exc => Assertion.All(
+                            exc.Client.TestRefEquals( client ),
+                            exc.Endpoint.TestEquals( MessageBrokerServerEndpoint.BindListenerRequest ) ) ),
                     logs.GetAll()
                         .Skip( 1 )
                         .TestSequence(
@@ -781,12 +890,11 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendBindListenerFailureResponse( true, true, true, true, true, payload: 0 );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendBindListenerFailureResponse( true, true, true, true, true, payload: 0 );
+            } );
 
             var result = await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             await serverTask;
@@ -795,10 +903,9 @@ public partial class MessageBrokerClientTests
                     client.State.TestEquals( MessageBrokerClientState.Disposed ),
                     result.Value.TestNull(),
                     result.Exception.TestType()
-                        .Exact<MessageBrokerClientProtocolException>(
-                            exc => Assertion.All(
-                                exc.Client.TestRefEquals( client ),
-                                exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.BindListenerFailureResponse ) ) ),
+                        .Exact<MessageBrokerClientProtocolException>( exc => Assertion.All(
+                            exc.Client.TestRefEquals( client ),
+                            exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.BindListenerFailureResponse ) ) ),
                     logs.GetAll()
                         .Skip( 1 )
                         .TestSequence(
@@ -846,12 +953,11 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.Send( [ 0, 0, 0, 0, 0 ] );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.Send( [ 0, 0, 0, 0, 0 ] );
+            } );
 
             var result = await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             await serverTask;
@@ -860,10 +966,9 @@ public partial class MessageBrokerClientTests
                     client.State.TestEquals( MessageBrokerClientState.Disposed ),
                     result.Value.TestNull(),
                     result.Exception.TestType()
-                        .Exact<MessageBrokerClientProtocolException>(
-                            exc => Assertion.All(
-                                exc.Client.TestRefEquals( client ),
-                                exc.Endpoint.TestEquals( ( MessageBrokerClientEndpoint )0 ) ) ),
+                        .Exact<MessageBrokerClientProtocolException>( exc => Assertion.All(
+                            exc.Client.TestRefEquals( client ),
+                            exc.Endpoint.TestEquals( ( MessageBrokerClientEndpoint )0 ) ) ),
                     logs.GetAll()
                         .Skip( 1 )
                         .TestSequence(
@@ -916,14 +1021,13 @@ public partial class MessageBrokerClientTests
             var channelId = 1;
             var channelName = "foo";
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( channelName ) );
-                    s.SendListenerBoundResponse( true, true, channelId, 2 );
-                    s.ReadUnbindListenerRequest();
-                    s.SendListenerUnboundResponse( channelRemoved, queueRemoved );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( channelName ) );
+                s.SendListenerBoundResponse( true, true, channelId, 2 );
+                s.ReadUnbindListenerRequest();
+                s.SendListenerUnboundResponse( channelRemoved, queueRemoved );
+            } );
 
             var result = Result.Create( default( MessageBrokerUnbindListenerResult ) );
             await client.Listeners.BindAsync( channelName, (_, _) => ValueTask.CompletedTask );
@@ -991,14 +1095,13 @@ public partial class MessageBrokerClientTests
 
             var channelName = "foo";
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( channelName ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.ReadUnbindListenerRequest();
-                    s.SendListenerUnboundResponse( true, true );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( channelName ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+                s.ReadUnbindListenerRequest();
+                s.SendListenerUnboundResponse( true, true );
+            } );
 
             var result = Result.Create( default( MessageBrokerUnbindListenerResult ) );
             await client.Listeners.BindAsync( channelName, (_, _) => ValueTask.CompletedTask );
@@ -1072,12 +1175,11 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+            } );
 
             await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             await serverTask;
@@ -1090,10 +1192,9 @@ public partial class MessageBrokerClientTests
             Assertion.All(
                     client.State.TestEquals( MessageBrokerClientState.Disposed ),
                     result.Exception.TestType()
-                        .Exact<MessageBrokerClientResponseTimeoutException>(
-                            exc => Assertion.All(
-                                exc.Client.TestRefEquals( client ),
-                                exc.RequestEndpoint.TestEquals( MessageBrokerServerEndpoint.UnbindListenerRequest ) ) ),
+                        .Exact<MessageBrokerClientResponseTimeoutException>( exc => Assertion.All(
+                            exc.Client.TestRefEquals( client ),
+                            exc.RequestEndpoint.TestEquals( MessageBrokerServerEndpoint.UnbindListenerRequest ) ) ),
                     logs.GetAll()
                         .Skip( 2 )
                         .TestSequence(
@@ -1142,12 +1243,11 @@ public partial class MessageBrokerClientTests
                             } ) ) );
 
             await server.EstablishHandshake( client, pingInterval: Duration.FromSeconds( 0.2 ) );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+            } );
 
             await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             await serverTask;
@@ -1180,14 +1280,13 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.ReadUnbindListenerRequest();
-                    s.SendListenerUnboundResponse( true, true, payload: 0 );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+                s.ReadUnbindListenerRequest();
+                s.SendListenerUnboundResponse( true, true, payload: 0 );
+            } );
 
             await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             var listener = client.Listeners.TryGetByChannelId( 1 );
@@ -1201,10 +1300,9 @@ public partial class MessageBrokerClientTests
             Assertion.All(
                     client.State.TestEquals( MessageBrokerClientState.Disposed ),
                     result.Exception.TestType()
-                        .Exact<MessageBrokerClientProtocolException>(
-                            exc => Assertion.All(
-                                exc.Client.TestRefEquals( client ),
-                                exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.ListenerUnboundResponse ) ) ),
+                        .Exact<MessageBrokerClientProtocolException>( exc => Assertion.All(
+                            exc.Client.TestRefEquals( client ),
+                            exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.ListenerUnboundResponse ) ) ),
                     logs.GetAll()
                         .Skip( 2 )
                         .TestSequence(
@@ -1252,14 +1350,13 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.ReadUnbindListenerRequest();
-                    s.SendUnbindListenerFailureResponse( true );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+                s.ReadUnbindListenerRequest();
+                s.SendUnbindListenerFailureResponse( true );
+            } );
 
             await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             var listener = client.Listeners.TryGetByChannelId( 1 );
@@ -1273,10 +1370,9 @@ public partial class MessageBrokerClientTests
             Assertion.All(
                     client.State.TestEquals( MessageBrokerClientState.Running ),
                     result.Exception.TestType()
-                        .Exact<MessageBrokerClientRequestException>(
-                            exc => Assertion.All(
-                                exc.Client.TestRefEquals( client ),
-                                exc.Endpoint.TestEquals( MessageBrokerServerEndpoint.UnbindListenerRequest ) ) ),
+                        .Exact<MessageBrokerClientRequestException>( exc => Assertion.All(
+                            exc.Client.TestRefEquals( client ),
+                            exc.Endpoint.TestEquals( MessageBrokerServerEndpoint.UnbindListenerRequest ) ) ),
                     logs.GetAll()
                         .Skip( 2 )
                         .TestSequence(
@@ -1324,14 +1420,13 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.ReadUnbindListenerRequest();
-                    s.SendUnbindListenerFailureResponse( true, payload: 0 );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+                s.ReadUnbindListenerRequest();
+                s.SendUnbindListenerFailureResponse( true, payload: 0 );
+            } );
 
             await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             var listener = client.Listeners.TryGetByChannelId( 1 );
@@ -1345,10 +1440,9 @@ public partial class MessageBrokerClientTests
             Assertion.All(
                     client.State.TestEquals( MessageBrokerClientState.Disposed ),
                     result.Exception.TestType()
-                        .Exact<MessageBrokerClientProtocolException>(
-                            exc => Assertion.All(
-                                exc.Client.TestRefEquals( client ),
-                                exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.UnbindListenerFailureResponse ) ) ),
+                        .Exact<MessageBrokerClientProtocolException>( exc => Assertion.All(
+                            exc.Client.TestRefEquals( client ),
+                            exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.UnbindListenerFailureResponse ) ) ),
                     logs.GetAll()
                         .Skip( 2 )
                         .TestSequence(
@@ -1396,14 +1490,13 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.ReadUnbindListenerRequest();
-                    s.Send( [ 0, 0, 0, 0, 0 ] );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+                s.ReadUnbindListenerRequest();
+                s.Send( [ 0, 0, 0, 0, 0 ] );
+            } );
 
             await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             var listener = client.Listeners.TryGetByChannelId( 1 );
@@ -1417,10 +1510,9 @@ public partial class MessageBrokerClientTests
             Assertion.All(
                     client.State.TestEquals( MessageBrokerClientState.Disposed ),
                     result.Exception.TestType()
-                        .Exact<MessageBrokerClientProtocolException>(
-                            exc => Assertion.All(
-                                exc.Client.TestRefEquals( client ),
-                                exc.Endpoint.TestEquals( ( MessageBrokerClientEndpoint )0 ) ) ),
+                        .Exact<MessageBrokerClientProtocolException>( exc => Assertion.All(
+                            exc.Client.TestRefEquals( client ),
+                            exc.Endpoint.TestEquals( ( MessageBrokerClientEndpoint )0 ) ) ),
                     logs.GetAll()
                         .Skip( 2 )
                         .TestSequence(
@@ -1471,15 +1563,14 @@ public partial class MessageBrokerClientTests
             var message = new byte[] { 1, 2, 3, 4 };
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.SendObjectNameNotification( MessageBrokerSystemNotificationType.SenderName, 2, "sender2" );
-                    s.SendObjectNameNotification( MessageBrokerSystemNotificationType.StreamName, 3, "stream3" );
-                    s.SendMessageNotification( 1, 1, 2, 1, 3, message, pushedAt, true, 4, false, 5 );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+                s.SendObjectNameNotification( MessageBrokerSystemNotificationType.SenderName, 2, "sender2" );
+                s.SendObjectNameNotification( MessageBrokerSystemNotificationType.StreamName, 3, "stream3" );
+                s.SendMessageNotification( 1, 1, 2, 1, 3, message, pushedAt, true, 4, false, 5 );
+            } );
 
             await client.Listeners.BindAsync(
                 "foo",
@@ -1566,15 +1657,14 @@ public partial class MessageBrokerClientTests
             var message = new byte[] { 1, 2, 3, 4 };
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.SendObjectNameNotification( MessageBrokerSystemNotificationType.SenderName, 2, "sender2" );
-                    s.SendObjectNameNotification( MessageBrokerSystemNotificationType.StreamName, 3, "stream3" );
-                    s.SendMessageNotification( -1, 1, 2, 1, 3, message, pushedAt, false, 4, false, 5 );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+                s.SendObjectNameNotification( MessageBrokerSystemNotificationType.SenderName, 2, "sender2" );
+                s.SendObjectNameNotification( MessageBrokerSystemNotificationType.StreamName, 3, "stream3" );
+                s.SendMessageNotification( -1, 1, 2, 1, 3, message, pushedAt, false, 4, false, 5 );
+            } );
 
             await client.Listeners.BindAsync(
                 "foo",
@@ -1675,18 +1765,17 @@ public partial class MessageBrokerClientTests
             var message2 = new byte[] { 5, 6, 7, 8, 9 };
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.SendObjectNameNotification( MessageBrokerSystemNotificationType.SenderName, 2, "sender2" );
-                    s.SendObjectNameNotification( MessageBrokerSystemNotificationType.StreamName, 1, "stream1" );
-                    s.SendMessageNotification( 1, 1, 2, 1, 1, message1 );
-                    s.SendObjectNameNotification( MessageBrokerSystemNotificationType.SenderName, 3, "sender3" );
-                    s.SendObjectNameNotification( MessageBrokerSystemNotificationType.StreamName, 2, "stream2" );
-                    s.SendMessageNotification( 2, 2, 3, 1, 2, message2 );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+                s.SendObjectNameNotification( MessageBrokerSystemNotificationType.SenderName, 2, "sender2" );
+                s.SendObjectNameNotification( MessageBrokerSystemNotificationType.StreamName, 1, "stream1" );
+                s.SendMessageNotification( 1, 1, 2, 1, 1, message1 );
+                s.SendObjectNameNotification( MessageBrokerSystemNotificationType.SenderName, 3, "sender3" );
+                s.SendObjectNameNotification( MessageBrokerSystemNotificationType.StreamName, 2, "stream2" );
+                s.SendMessageNotification( 2, 2, 3, 1, 2, message2 );
+            } );
 
             await client.Listeners.BindAsync(
                 "foo",
@@ -1794,14 +1883,13 @@ public partial class MessageBrokerClientTests
                                 } ) ) ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.SendMessageNotification( 1, 1, 2, 1, 1, [ ] );
-                    s.ReadMessageNotificationNegativeAck();
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+                s.SendMessageNotification( 1, 1, 2, 1, 1, [ ] );
+                s.ReadMessageNotificationNegativeAck();
+            } );
 
             await client.Listeners.BindAsync( "foo", (_, _) => throw exception );
             await serverTask;
@@ -1878,13 +1966,12 @@ public partial class MessageBrokerClientTests
                                 } ) ) ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.SendMessageNotification( -1, 1, 2, 1, 1, [ ] );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+                s.SendMessageNotification( -1, 1, 2, 1, 1, [ ] );
+            } );
 
             await client.Listeners.BindAsync( "foo", (_, _) => throw exception );
             await serverTask;
@@ -1952,13 +2039,12 @@ public partial class MessageBrokerClientTests
                                 } ) ) ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.SendMessageNotification( 0, 1, 2, 1, 1, [ ] );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+                s.SendMessageNotification( 0, 1, 2, 1, 1, [ ] );
+            } );
 
             await client.Listeners.BindAsync( "foo", (_, _) => throw exception, MessageBrokerListenerOptions.Default.EnableAcks( false ) );
             await serverTask;
@@ -2025,13 +2111,12 @@ public partial class MessageBrokerClientTests
                                 } ) ) ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.SendMessageNotification( 1, 1, 2, 1, 1, [ 1 ], payload: 39 );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+                s.SendMessageNotification( 1, 1, 2, 1, 1, [ 1 ], payload: 39 );
+            } );
 
             await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             await serverTask;
@@ -2185,23 +2270,22 @@ public partial class MessageBrokerClientTests
                                 } ) ) ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.SendMessageNotification(
-                        ackId,
-                        0,
-                        -2,
-                        0,
-                        -3,
-                        [ 1 ],
-                        isRetry: isRetry,
-                        retry: retryAttempt,
-                        isRedelivery: isRedelivery,
-                        redelivery: redeliveryAttempt );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+                s.SendMessageNotification(
+                    ackId,
+                    0,
+                    -2,
+                    0,
+                    -3,
+                    [ 1 ],
+                    isRetry: isRetry,
+                    retry: retryAttempt,
+                    isRedelivery: isRedelivery,
+                    redelivery: redeliveryAttempt );
+            } );
 
             await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             await serverTask;
@@ -2281,23 +2365,22 @@ public partial class MessageBrokerClientTests
                                 } ) ) ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.SendMessageNotification(
-                        ackId,
-                        0,
-                        2,
-                        1,
-                        1,
-                        [ 1 ],
-                        isRetry: retry > 0,
-                        retry: retry,
-                        isRedelivery: false,
-                        redelivery: redelivery );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+                s.SendMessageNotification(
+                    ackId,
+                    0,
+                    2,
+                    1,
+                    1,
+                    [ 1 ],
+                    isRetry: retry > 0,
+                    retry: retry,
+                    isRedelivery: false,
+                    redelivery: redelivery );
+            } );
 
             await client.Listeners.BindAsync(
                 "foo",
@@ -2359,13 +2442,12 @@ public partial class MessageBrokerClientTests
                                 } ) ) ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.SendMessageNotification( 1, 0, 2, 1, 1, [ 1 ] );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+                s.SendMessageNotification( 1, 0, 2, 1, 1, [ 1 ] );
+            } );
 
             await client.Listeners.BindAsync(
                 "foo",
@@ -2515,15 +2597,14 @@ public partial class MessageBrokerClientTests
                                 } ) ) ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.SendMessageNotification( 1, 1, 2, 1, 1, [ 1, 2 ] );
-                    s.SendMessageNotification( 2, 2, 2, 1, 1, [ 3, 4, 5 ] );
-                    s.SendMessageNotification( 3, 3, 2, 1, 1, [ 6, 7, 8, 9 ] );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+                s.SendMessageNotification( 1, 1, 2, 1, 1, [ 1, 2 ] );
+                s.SendMessageNotification( 2, 2, 2, 1, 1, [ 3, 4, 5 ] );
+                s.SendMessageNotification( 3, 3, 2, 1, 1, [ 6, 7, 8, 9 ] );
+            } );
 
             var bindResult = await client.Listeners.BindAsync(
                 "foo",
@@ -2537,19 +2618,19 @@ public partial class MessageBrokerClientTests
             var listener = bindResult.Value?.Listener;
 
             await serverTask;
-            await server.GetTask(
-                s =>
-                {
-                    s.ReadUnbindListenerRequest();
-                    s.SendListenerUnboundResponse( true, true );
-                } );
+            await server.GetTask( s =>
+            {
+                s.ReadUnbindListenerRequest();
+                s.SendListenerUnboundResponse( true, true );
+            } );
 
             await endSource.Task;
 
             Assertion.All(
                     unbindException.TestType()
-                        .Exact<MessageBrokerClientMessageException>(
-                            exc => Assertion.All( exc.Client.TestRefEquals( client ), exc.Listener.TestRefEquals( listener ) ) ),
+                        .Exact<MessageBrokerClientMessageException>( exc => Assertion.All(
+                            exc.Client.TestRefEquals( client ),
+                            exc.Listener.TestRefEquals( listener ) ) ),
                     client.State.TestEquals( MessageBrokerClientState.Running ),
                     logs.GetAll()
                         .Skip( 2 )
@@ -2677,19 +2758,19 @@ public partial class MessageBrokerClientTests
                                 } ) ) ) );
 
             await server.EstablishHandshake( client );
-            await server.GetTask(
-                s =>
-                {
-                    s.SendMessageNotification( 1, 1, 2, 1, 1, [ 1, 2 ] );
-                    s.SendMessageNotification( 1, 2, 2, 1, 1, [ 3, 4, 5 ] );
-                } );
+            await server.GetTask( s =>
+            {
+                s.SendMessageNotification( 1, 1, 2, 1, 1, [ 1, 2 ] );
+                s.SendMessageNotification( 1, 2, 2, 1, 1, [ 3, 4, 5 ] );
+            } );
 
             await endSource.Task;
 
             Assertion.All(
                     disposeException.TestType()
-                        .Exact<MessageBrokerClientMessageException>(
-                            exc => Assertion.All( exc.Client.TestRefEquals( client ), exc.Listener.TestNull() ) ),
+                        .Exact<MessageBrokerClientMessageException>( exc => Assertion.All(
+                            exc.Client.TestRefEquals( client ),
+                            exc.Listener.TestNull() ) ),
                     client.State.TestEquals( MessageBrokerClientState.Disposed ),
                     logs.GetAll()
                         .Skip( 1 )
@@ -2746,13 +2827,12 @@ public partial class MessageBrokerClientTests
                     .SetDelaySource( _sharedDelaySource ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.SendMessageNotification( 1, 1, 2, 1, 1, [ 1, 2, 3, 4 ] );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+                s.SendMessageNotification( 1, 1, 2, 1, 1, [ 1, 2, 3, 4 ] );
+            } );
 
             await client.Listeners.BindAsync(
                 "foo",
@@ -2766,12 +2846,11 @@ public partial class MessageBrokerClientTests
 
             await serverTask;
             var listener = await unbindContinuation.Task;
-            serverTask = server.GetTask(
-                s =>
-                {
-                    s.ReadUnbindListenerRequest();
-                    s.SendListenerUnboundResponse( true, true );
-                } );
+            serverTask = server.GetTask( s =>
+            {
+                s.ReadUnbindListenerRequest();
+                s.SendListenerUnboundResponse( true, true );
+            } );
 
             await listener.UnbindAsync();
             await serverTask;
@@ -2799,13 +2878,12 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.SendMessageNotification( 1, 1, 2, 1, 1, [ 1, 2, 3, 4 ] );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+                s.SendMessageNotification( 1, 1, 2, 1, 1, [ 1, 2, 3, 4 ] );
+            } );
 
             await client.Listeners.BindAsync(
                 "foo",
@@ -2818,12 +2896,11 @@ public partial class MessageBrokerClientTests
 
             await serverTask;
             var listener = await unbindContinuation.Task;
-            serverTask = server.GetTask(
-                s =>
-                {
-                    s.ReadUnbindListenerRequest();
-                    s.SendListenerUnboundResponse( true, true );
-                } );
+            serverTask = server.GetTask( s =>
+            {
+                s.ReadUnbindListenerRequest();
+                s.SendListenerUnboundResponse( true, true );
+            } );
 
             await listener.UnbindAsync();
             await serverTask;
@@ -2894,13 +2971,12 @@ public partial class MessageBrokerClientTests
                                 } ) ) ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.SendMessageNotification( 1, 1, 2, 1, 1, [ 1, 2, 3, 4 ] );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+                s.SendMessageNotification( 1, 1, 2, 1, 1, [ 1, 2, 3, 4 ] );
+            } );
 
             await client.Listeners.BindAsync(
                 "foo",
@@ -2912,12 +2988,11 @@ public partial class MessageBrokerClientTests
 
             await serverTask;
             var listener = await unbindContinuation.Task;
-            serverTask = server.GetTask(
-                s =>
-                {
-                    s.ReadUnbindListenerRequest();
-                    s.SendListenerUnboundResponse( true, true );
-                } );
+            serverTask = server.GetTask( s =>
+            {
+                s.ReadUnbindListenerRequest();
+                s.SendListenerUnboundResponse( true, true );
+            } );
 
             await listener.UnbindAsync();
             await serverTask;

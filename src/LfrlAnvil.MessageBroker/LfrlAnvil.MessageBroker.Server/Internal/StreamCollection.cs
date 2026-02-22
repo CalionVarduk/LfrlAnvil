@@ -141,8 +141,6 @@ internal struct StreamCollection
                 if ( exc is not null )
                     return exc;
 
-                // TODO: tests
-                // - stream duplicate (either by id or name)
                 stream = new MessageBrokerStream( server, info.Key, info.Value.Name.Value.ToString(), info.Value.TraceId );
                 if ( ! server.StreamCollection._store.TryAdd( stream.Id, stream.Name, stream ) )
                     ExceptionThrower.Throw( server.Exception( Resources.RecreatedStreamDuplicate( stream.Id, stream.Name ) ) );

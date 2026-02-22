@@ -30,14 +30,13 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
-                                    endSource.Complete();
-                            } ) ) )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
+                                endSource.Complete();
+                        } ) ) )
                 .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
                 .SetStreamLoggerFactory( _ => streamLogs.GetLogger() ) );
 
@@ -45,12 +44,11 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
 
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
-        await client.GetTask(
-            c =>
-            {
-                c.SendBindPublisherRequest( "c" );
-                c.ReadPublisherBoundResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendBindPublisherRequest( "c" );
+            c.ReadPublisherBoundResponse();
+        } );
 
         await endSource.Task;
 
@@ -60,47 +58,43 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
         var binding = channel?.Publishers.TryGetByClientId( 1 );
 
         Assertion.All(
-                channel.TestNotNull(
-                    c => Assertion.All(
-                        "channel",
-                        c.Server.TestRefEquals( server ),
-                        c.Id.TestEquals( 1 ),
-                        c.Name.TestEquals( "c" ),
-                        c.State.TestEquals( MessageBrokerChannelState.Running ),
-                        c.ToString().TestEquals( "[1] 'c' channel (Running)" ),
-                        c.Publishers.Count.TestEquals( 1 ),
-                        c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding ) ] ),
-                        c.Publishers.TryGetByClientId( 1 ).TestRefEquals( binding ),
-                        c.Listeners.Count.TestEquals( 0 ),
-                        c.Listeners.GetAll().TestEmpty() ) ),
-                stream.TestNotNull(
-                    s => Assertion.All(
-                        "stream",
-                        s.Server.TestRefEquals( server ),
-                        s.Id.TestEquals( 1 ),
-                        s.Name.TestEquals( "c" ),
-                        s.State.TestEquals( MessageBrokerStreamState.Running ),
-                        s.ToString().TestEquals( "[1] 'c' stream (Running)" ),
-                        s.Publishers.Count.TestEquals( 1 ),
-                        s.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding ) ] ),
-                        s.Publishers.TryGetByKey( 1, 1 ).TestRefEquals( binding ),
-                        s.Messages.Count.TestEquals( 0 ),
-                        s.Messages.TryGetByKey( 0 ).TestNull() ) ),
-                remoteClient.TestNotNull(
-                    c => Assertion.All(
-                        "client",
-                        c.Publishers.Count.TestEquals( 1 ),
-                        c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding ) ] ),
-                        c.Publishers.TryGetByChannelId( 1 ).TestRefEquals( binding ) ) ),
-                binding.TestNotNull(
-                    b => Assertion.All(
-                        "binding",
-                        b.Channel.TestRefEquals( channel ),
-                        b.Stream.TestRefEquals( stream ),
-                        b.Client.TestRefEquals( remoteClient ),
-                        b.IsEphemeral.TestTrue(),
-                        b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Running ),
-                        b.ToString().TestEquals( "[1] 'test' => [1] 'c' publisher binding (using [1] 'c' stream) (Running)" ) ) ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.Server.TestRefEquals( server ),
+                    c.Id.TestEquals( 1 ),
+                    c.Name.TestEquals( "c" ),
+                    c.State.TestEquals( MessageBrokerChannelState.Running ),
+                    c.ToString().TestEquals( "[1] 'c' channel (Running)" ),
+                    c.Publishers.Count.TestEquals( 1 ),
+                    c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding ) ] ),
+                    c.Publishers.TryGetByClientId( 1 ).TestRefEquals( binding ),
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Listeners.GetAll().TestEmpty() ) ),
+                stream.TestNotNull( s => Assertion.All(
+                    "stream",
+                    s.Server.TestRefEquals( server ),
+                    s.Id.TestEquals( 1 ),
+                    s.Name.TestEquals( "c" ),
+                    s.State.TestEquals( MessageBrokerStreamState.Running ),
+                    s.ToString().TestEquals( "[1] 'c' stream (Running)" ),
+                    s.Publishers.Count.TestEquals( 1 ),
+                    s.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding ) ] ),
+                    s.Publishers.TryGetByKey( 1, 1 ).TestRefEquals( binding ),
+                    s.Messages.Count.TestEquals( 0 ),
+                    s.Messages.TryGetByKey( 0 ).TestNull() ) ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Publishers.Count.TestEquals( 1 ),
+                    c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding ) ] ),
+                    c.Publishers.TryGetByChannelId( 1 ).TestRefEquals( binding ) ) ),
+                binding.TestNotNull( b => Assertion.All(
+                    "binding",
+                    b.Channel.TestRefEquals( channel ),
+                    b.Stream.TestRefEquals( stream ),
+                    b.Client.TestRefEquals( remoteClient ),
+                    b.IsEphemeral.TestTrue(),
+                    b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Running ),
+                    b.ToString().TestEquals( "[1] 'test' => [1] 'c' publisher binding (using [1] 'c' stream) (Running)" ) ) ),
                 server.Channels.Count.TestEquals( 1 ),
                 server.Channels.GetAll().TestSequence( [ (ch, _) => ch.TestRefEquals( channel ) ] ),
                 server.Channels.TryGetById( 1 ).TestRefEquals( channel ),
@@ -168,16 +162,15 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    c => c.Id == 2
-                        ? clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
-                                        endSource.Complete();
-                                } ) )
-                        : null )
+                .SetClientLoggerFactory( c => c.Id == 2
+                    ? clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
+                                    endSource.Complete();
+                            } ) )
+                    : null )
                 .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
                 .SetStreamLoggerFactory( _ => streamLogs.GetLogger() ) );
 
@@ -185,21 +178,19 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
 
         using var client1 = new ClientMock();
         await client1.EstablishHandshake( server );
-        await client1.GetTask(
-            c =>
-            {
-                c.SendBindPublisherRequest( "c" );
-                c.ReadPublisherBoundResponse();
-            } );
+        await client1.GetTask( c =>
+        {
+            c.SendBindPublisherRequest( "c" );
+            c.ReadPublisherBoundResponse();
+        } );
 
         using var client2 = new ClientMock();
         await client2.EstablishHandshake( server, "test2" );
-        await client2.GetTask(
-            c =>
-            {
-                c.SendBindPublisherRequest( "c" );
-                c.ReadPublisherBoundResponse();
-            } );
+        await client2.GetTask( c =>
+        {
+            c.SendBindPublisherRequest( "c" );
+            c.ReadPublisherBoundResponse();
+        } );
 
         var remoteClient1 = server.Clients.TryGetById( 1 );
         var remoteClient2 = server.Clients.TryGetById( 2 );
@@ -210,57 +201,51 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
         await endSource.Task;
 
         Assertion.All(
-                channel.TestNotNull(
-                    c => Assertion.All(
-                        "channel",
-                        c.Server.TestRefEquals( server ),
-                        c.Id.TestEquals( 1 ),
-                        c.Name.TestEquals( "c" ),
-                        c.State.TestEquals( MessageBrokerChannelState.Running ),
-                        c.Publishers.Count.TestEquals( 2 ),
-                        c.Publishers.GetAll().TestSetEqual( [ binding1, binding2 ] ),
-                        c.Publishers.TryGetByClientId( 1 ).TestRefEquals( binding1 ),
-                        c.Publishers.TryGetByClientId( 2 ).TestRefEquals( binding2 ),
-                        c.Listeners.Count.TestEquals( 0 ),
-                        c.Listeners.GetAll().TestEmpty() ) ),
-                stream.TestNotNull(
-                    s => Assertion.All(
-                        "stream",
-                        s.Server.TestRefEquals( server ),
-                        s.Id.TestEquals( 1 ),
-                        s.Name.TestEquals( "c" ),
-                        s.State.TestEquals( MessageBrokerStreamState.Running ),
-                        s.ToString().TestEquals( "[1] 'c' stream (Running)" ),
-                        s.Publishers.Count.TestEquals( 2 ),
-                        s.Publishers.GetAll().TestSetEqual( [ binding1, binding2 ] ),
-                        s.Publishers.TryGetByKey( 1, 1 ).TestRefEquals( binding1 ),
-                        s.Publishers.TryGetByKey( 2, 1 ).TestRefEquals( binding2 ) ) ),
-                remoteClient1.TestNotNull(
-                    c => Assertion.All(
-                        "client1",
-                        c.Publishers.Count.TestEquals( 1 ),
-                        c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding1 ) ] ),
-                        c.Publishers.TryGetByChannelId( 1 ).TestRefEquals( binding1 ) ) ),
-                remoteClient2.TestNotNull(
-                    c => Assertion.All(
-                        "client2",
-                        c.Publishers.Count.TestEquals( 1 ),
-                        c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding2 ) ] ),
-                        c.Publishers.TryGetByChannelId( 1 ).TestRefEquals( binding2 ) ) ),
-                binding1.TestNotNull(
-                    b => Assertion.All(
-                        "binding1",
-                        b.Channel.TestRefEquals( channel ),
-                        b.Stream.TestRefEquals( stream ),
-                        b.Client.TestRefEquals( remoteClient1 ),
-                        b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Running ) ) ),
-                binding2.TestNotNull(
-                    b => Assertion.All(
-                        "binding2",
-                        b.Channel.TestRefEquals( channel ),
-                        b.Stream.TestRefEquals( stream ),
-                        b.Client.TestRefEquals( remoteClient2 ),
-                        b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Running ) ) ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.Server.TestRefEquals( server ),
+                    c.Id.TestEquals( 1 ),
+                    c.Name.TestEquals( "c" ),
+                    c.State.TestEquals( MessageBrokerChannelState.Running ),
+                    c.Publishers.Count.TestEquals( 2 ),
+                    c.Publishers.GetAll().TestSetEqual( [ binding1, binding2 ] ),
+                    c.Publishers.TryGetByClientId( 1 ).TestRefEquals( binding1 ),
+                    c.Publishers.TryGetByClientId( 2 ).TestRefEquals( binding2 ),
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Listeners.GetAll().TestEmpty() ) ),
+                stream.TestNotNull( s => Assertion.All(
+                    "stream",
+                    s.Server.TestRefEquals( server ),
+                    s.Id.TestEquals( 1 ),
+                    s.Name.TestEquals( "c" ),
+                    s.State.TestEquals( MessageBrokerStreamState.Running ),
+                    s.ToString().TestEquals( "[1] 'c' stream (Running)" ),
+                    s.Publishers.Count.TestEquals( 2 ),
+                    s.Publishers.GetAll().TestSetEqual( [ binding1, binding2 ] ),
+                    s.Publishers.TryGetByKey( 1, 1 ).TestRefEquals( binding1 ),
+                    s.Publishers.TryGetByKey( 2, 1 ).TestRefEquals( binding2 ) ) ),
+                remoteClient1.TestNotNull( c => Assertion.All(
+                    "client1",
+                    c.Publishers.Count.TestEquals( 1 ),
+                    c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding1 ) ] ),
+                    c.Publishers.TryGetByChannelId( 1 ).TestRefEquals( binding1 ) ) ),
+                remoteClient2.TestNotNull( c => Assertion.All(
+                    "client2",
+                    c.Publishers.Count.TestEquals( 1 ),
+                    c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding2 ) ] ),
+                    c.Publishers.TryGetByChannelId( 1 ).TestRefEquals( binding2 ) ) ),
+                binding1.TestNotNull( b => Assertion.All(
+                    "binding1",
+                    b.Channel.TestRefEquals( channel ),
+                    b.Stream.TestRefEquals( stream ),
+                    b.Client.TestRefEquals( remoteClient1 ),
+                    b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Running ) ) ),
+                binding2.TestNotNull( b => Assertion.All(
+                    "binding2",
+                    b.Channel.TestRefEquals( channel ),
+                    b.Stream.TestRefEquals( stream ),
+                    b.Client.TestRefEquals( remoteClient2 ),
+                    b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Running ) ) ),
                 server.Channels.Count.TestEquals( 1 ),
                 server.Channels.GetAll().TestSequence( [ (ch, _) => ch.TestRefEquals( channel ) ] ),
                 server.Channels.TryGetById( 1 ).TestRefEquals( channel ),
@@ -328,14 +313,13 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
-                                    endSource.Complete();
-                            } ) ) )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
+                                endSource.Complete();
+                        } ) ) )
                 .SetChannelLoggerFactory( c => c.Id == 2 ? channelLogs.GetLogger() : null )
                 .SetStreamLoggerFactory( _ => streamLogs.GetLogger() ) );
 
@@ -343,19 +327,17 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
 
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
-        await client.GetTask(
-            c =>
-            {
-                c.SendBindPublisherRequest( "c" );
-                c.ReadPublisherBoundResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendBindPublisherRequest( "c" );
+            c.ReadPublisherBoundResponse();
+        } );
 
-        await client.GetTask(
-            c =>
-            {
-                c.SendBindPublisherRequest( "d", true, "c" );
-                c.ReadPublisherBoundResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendBindPublisherRequest( "d", true, "c" );
+            c.ReadPublisherBoundResponse();
+        } );
 
         await endSource.Task;
 
@@ -367,67 +349,61 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
         var binding2 = channel2?.Publishers.TryGetByClientId( 1 );
 
         Assertion.All(
-                channel1.TestNotNull(
-                    c => Assertion.All(
-                        "channel1",
-                        c.Server.TestRefEquals( server ),
-                        c.Id.TestEquals( 1 ),
-                        c.Name.TestEquals( "c" ),
-                        c.State.TestEquals( MessageBrokerChannelState.Running ),
-                        c.ToString().TestEquals( "[1] 'c' channel (Running)" ),
-                        c.Publishers.Count.TestEquals( 1 ),
-                        c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding1 ) ] ),
-                        c.Publishers.TryGetByClientId( 1 ).TestRefEquals( binding1 ),
-                        c.Listeners.Count.TestEquals( 0 ),
-                        c.Listeners.GetAll().TestEmpty() ) ),
-                channel2.TestNotNull(
-                    c => Assertion.All(
-                        "channel2",
-                        c.Server.TestRefEquals( server ),
-                        c.Id.TestEquals( 2 ),
-                        c.Name.TestEquals( "d" ),
-                        c.State.TestEquals( MessageBrokerChannelState.Running ),
-                        c.ToString().TestEquals( "[2] 'd' channel (Running)" ),
-                        c.Publishers.Count.TestEquals( 1 ),
-                        c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding2 ) ] ),
-                        c.Publishers.TryGetByClientId( 1 ).TestRefEquals( binding2 ),
-                        c.Listeners.Count.TestEquals( 0 ),
-                        c.Listeners.GetAll().TestEmpty() ) ),
-                stream.TestNotNull(
-                    s => Assertion.All(
-                        "stream",
-                        s.Server.TestRefEquals( server ),
-                        s.Id.TestEquals( 1 ),
-                        s.Name.TestEquals( "c" ),
-                        s.State.TestEquals( MessageBrokerStreamState.Running ),
-                        s.ToString().TestEquals( "[1] 'c' stream (Running)" ),
-                        s.Publishers.Count.TestEquals( 2 ),
-                        s.Publishers.GetAll().TestSetEqual( [ binding1, binding2 ] ),
-                        s.Publishers.TryGetByKey( 1, 1 ).TestRefEquals( binding1 ),
-                        s.Publishers.TryGetByKey( 1, 2 ).TestRefEquals( binding2 ) ) ),
-                remoteClient.TestNotNull(
-                    c => Assertion.All(
-                        "client",
-                        c.Publishers.Count.TestEquals( 2 ),
-                        c.Publishers.GetAll().TestSetEqual( [ binding1, binding2 ] ),
-                        c.Publishers.TryGetByChannelId( 1 ).TestRefEquals( binding1 ),
-                        c.Publishers.TryGetByChannelId( 2 ).TestRefEquals( binding2 ) ) ),
-                binding1.TestNotNull(
-                    b => Assertion.All(
-                        "binding1",
-                        b.Channel.TestRefEquals( channel1 ),
-                        b.Stream.TestRefEquals( stream ),
-                        b.Client.TestRefEquals( remoteClient ),
-                        b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Running ),
-                        b.ToString().TestEquals( "[1] 'test' => [1] 'c' publisher binding (using [1] 'c' stream) (Running)" ) ) ),
-                binding2.TestNotNull(
-                    b => Assertion.All(
-                        "binding2",
-                        b.Channel.TestRefEquals( channel2 ),
-                        b.Stream.TestRefEquals( stream ),
-                        b.Client.TestRefEquals( remoteClient ),
-                        b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Running ),
-                        b.ToString().TestEquals( "[1] 'test' => [2] 'd' publisher binding (using [1] 'c' stream) (Running)" ) ) ),
+                channel1.TestNotNull( c => Assertion.All(
+                    "channel1",
+                    c.Server.TestRefEquals( server ),
+                    c.Id.TestEquals( 1 ),
+                    c.Name.TestEquals( "c" ),
+                    c.State.TestEquals( MessageBrokerChannelState.Running ),
+                    c.ToString().TestEquals( "[1] 'c' channel (Running)" ),
+                    c.Publishers.Count.TestEquals( 1 ),
+                    c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding1 ) ] ),
+                    c.Publishers.TryGetByClientId( 1 ).TestRefEquals( binding1 ),
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Listeners.GetAll().TestEmpty() ) ),
+                channel2.TestNotNull( c => Assertion.All(
+                    "channel2",
+                    c.Server.TestRefEquals( server ),
+                    c.Id.TestEquals( 2 ),
+                    c.Name.TestEquals( "d" ),
+                    c.State.TestEquals( MessageBrokerChannelState.Running ),
+                    c.ToString().TestEquals( "[2] 'd' channel (Running)" ),
+                    c.Publishers.Count.TestEquals( 1 ),
+                    c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding2 ) ] ),
+                    c.Publishers.TryGetByClientId( 1 ).TestRefEquals( binding2 ),
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Listeners.GetAll().TestEmpty() ) ),
+                stream.TestNotNull( s => Assertion.All(
+                    "stream",
+                    s.Server.TestRefEquals( server ),
+                    s.Id.TestEquals( 1 ),
+                    s.Name.TestEquals( "c" ),
+                    s.State.TestEquals( MessageBrokerStreamState.Running ),
+                    s.ToString().TestEquals( "[1] 'c' stream (Running)" ),
+                    s.Publishers.Count.TestEquals( 2 ),
+                    s.Publishers.GetAll().TestSetEqual( [ binding1, binding2 ] ),
+                    s.Publishers.TryGetByKey( 1, 1 ).TestRefEquals( binding1 ),
+                    s.Publishers.TryGetByKey( 1, 2 ).TestRefEquals( binding2 ) ) ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Publishers.Count.TestEquals( 2 ),
+                    c.Publishers.GetAll().TestSetEqual( [ binding1, binding2 ] ),
+                    c.Publishers.TryGetByChannelId( 1 ).TestRefEquals( binding1 ),
+                    c.Publishers.TryGetByChannelId( 2 ).TestRefEquals( binding2 ) ) ),
+                binding1.TestNotNull( b => Assertion.All(
+                    "binding1",
+                    b.Channel.TestRefEquals( channel1 ),
+                    b.Stream.TestRefEquals( stream ),
+                    b.Client.TestRefEquals( remoteClient ),
+                    b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Running ),
+                    b.ToString().TestEquals( "[1] 'test' => [1] 'c' publisher binding (using [1] 'c' stream) (Running)" ) ) ),
+                binding2.TestNotNull( b => Assertion.All(
+                    "binding2",
+                    b.Channel.TestRefEquals( channel2 ),
+                    b.Stream.TestRefEquals( stream ),
+                    b.Client.TestRefEquals( remoteClient ),
+                    b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Running ),
+                    b.ToString().TestEquals( "[1] 'test' => [2] 'd' publisher binding (using [1] 'c' stream) (Running)" ) ) ),
                 server.Channels.Count.TestEquals( 2 ),
                 server.Channels.GetAll().TestSetEqual( [ channel1, channel2 ] ),
                 server.Channels.TryGetById( 1 ).TestRefEquals( channel1 ),
@@ -496,15 +472,14 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type is MessageBrokerRemoteClientTraceEventType.BindPublisher
-                                    or MessageBrokerRemoteClientTraceEventType.Unexpected )
-                                    endSource.Complete();
-                            } ) ) )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type is MessageBrokerRemoteClientTraceEventType.BindPublisher
+                                or MessageBrokerRemoteClientTraceEventType.Unexpected )
+                                endSource.Complete();
+                        } ) ) )
                 .SetChannelLoggerFactory( _ => throw exception ) );
 
         await server.StartAsync();
@@ -565,15 +540,14 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type is MessageBrokerRemoteClientTraceEventType.BindPublisher
-                                    or MessageBrokerRemoteClientTraceEventType.Unexpected )
-                                    endSource.Complete();
-                            } ) ) )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type is MessageBrokerRemoteClientTraceEventType.BindPublisher
+                                or MessageBrokerRemoteClientTraceEventType.Unexpected )
+                                endSource.Complete();
+                        } ) ) )
                 .SetStreamLoggerFactory( _ => throw exception ) );
 
         await server.StartAsync();
@@ -633,14 +607,13 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
-                                    endSource.Complete();
-                            } ) ) ) );
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
+                                endSource.Complete();
+                        } ) ) ) );
 
         await server.StartAsync();
 
@@ -692,14 +665,13 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
-                                    endSource.Complete();
-                            } ) ) ) );
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
+                                endSource.Complete();
+                        } ) ) ) );
 
         await server.StartAsync();
 
@@ -751,14 +723,13 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
-                                    endSource.Complete();
-                            } ) ) ) );
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
+                                endSource.Complete();
+                        } ) ) ) );
 
         await server.StartAsync();
 
@@ -811,14 +782,13 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
-                                    endSource.Complete();
-                            } ) ) ) );
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
+                                endSource.Complete();
+                        } ) ) ) );
 
         await server.StartAsync();
 
@@ -870,14 +840,13 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
-                                    endSource.Complete();
-                            } ) ) ) );
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
+                                endSource.Complete();
+                        } ) ) ) );
 
         await server.StartAsync();
 
@@ -929,29 +898,27 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
-                                    endSource.Complete();
-                            },
-                            error: e => exception = e.Exception ) ) ) );
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
+                                endSource.Complete();
+                        },
+                        error: e => exception = e.Exception ) ) ) );
 
         await server.StartAsync();
 
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
         var remoteClient = server.Clients.TryGetById( 1 );
-        await client.GetTask(
-            c =>
-            {
-                c.SendBindPublisherRequest( "c" );
-                c.ReadPublisherBoundResponse();
-                c.SendBindPublisherRequest( "c", true, "d" );
-                c.ReadBindPublisherFailureResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendBindPublisherRequest( "c" );
+            c.ReadPublisherBoundResponse();
+            c.SendBindPublisherRequest( "c", true, "d" );
+            c.ReadBindPublisherFailureResponse();
+        } );
 
         await endSource.Task;
 
@@ -960,22 +927,21 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
 
         Assertion.All(
                 exception.TestType()
-                    .Exact<MessageBrokerChannelPublisherBindingException>(
-                        exc => Assertion.All( exc.Client.TestRefEquals( remoteClient ), exc.Publisher.TestRefEquals( binding ) ) ),
-                remoteClient.TestNotNull(
-                    c => Assertion.All(
-                        "client",
-                        c.State.TestEquals( MessageBrokerRemoteClientState.Running ),
-                        c.Publishers.Count.TestEquals( 1 ),
-                        c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding ) ] ) ) ),
+                    .Exact<MessageBrokerChannelPublisherBindingException>( exc => Assertion.All(
+                        exc.Client.TestRefEquals( remoteClient ),
+                        exc.Publisher.TestRefEquals( binding ) ) ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.State.TestEquals( MessageBrokerRemoteClientState.Running ),
+                    c.Publishers.Count.TestEquals( 1 ),
+                    c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding ) ] ) ) ),
                 server.Clients.Count.TestEquals( 1 ),
                 server.Channels.Count.TestEquals( 1 ),
                 server.Streams.Count.TestEquals( 1 ),
-                channel.TestNotNull(
-                    c => Assertion.All(
-                        "channel",
-                        c.Publishers.Count.TestEquals( 1 ),
-                        c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding ) ] ) ) ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.Publishers.Count.TestEquals( 1 ),
+                    c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding ) ] ) ) ),
                 clientLogs.GetAll()
                     .Skip( 2 )
                     .TestSequence(
@@ -1024,12 +990,11 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
 
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
-        await client.GetTask(
-            c =>
-            {
-                c.SendBindPublisherRequest( "c" );
-                c.ReadPublisherBoundResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendBindPublisherRequest( "c" );
+            c.ReadPublisherBoundResponse();
+        } );
 
         var remoteClient = server.Clients.TryGetById( 1 );
         var channel = server.Channels.TryGetById( 1 );
@@ -1040,20 +1005,20 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
         Assertion.All(
                 server.Channels.Count.TestEquals( 0 ),
                 server.Streams.Count.TestEquals( 0 ),
-                remoteClient.TestNotNull(
-                    c => Assertion.All( "client", c.Publishers.Count.TestEquals( 0 ), c.Publishers.GetAll().TestEmpty() ) ),
-                channel.TestNotNull(
-                    c => Assertion.All(
-                        "channel",
-                        c.State.TestEquals( MessageBrokerChannelState.Disposed ),
-                        c.Publishers.Count.TestEquals( 0 ),
-                        c.Publishers.GetAll().TestEmpty() ) ),
-                stream.TestNotNull(
-                    s => Assertion.All(
-                        "stream",
-                        s.State.TestEquals( MessageBrokerStreamState.Disposed ),
-                        s.Publishers.Count.TestEquals( 0 ),
-                        s.Publishers.GetAll().TestEmpty() ) ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Publishers.Count.TestEquals( 0 ),
+                    c.Publishers.GetAll().TestEmpty() ) ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.State.TestEquals( MessageBrokerChannelState.Disposed ),
+                    c.Publishers.Count.TestEquals( 0 ),
+                    c.Publishers.GetAll().TestEmpty() ) ),
+                stream.TestNotNull( s => Assertion.All(
+                    "stream",
+                    s.State.TestEquals( MessageBrokerStreamState.Disposed ),
+                    s.Publishers.Count.TestEquals( 0 ),
+                    s.Publishers.GetAll().TestEmpty() ) ),
                 binding.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Disposed ) ),
                 channelLogs.GetAll()
                     .Skip( 1 )
@@ -1116,12 +1081,11 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
 
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
-        await client.GetTask(
-            c =>
-            {
-                c.SendBindPublisherRequest( "c" );
-                c.ReadPublisherBoundResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendBindPublisherRequest( "c" );
+            c.ReadPublisherBoundResponse();
+        } );
 
         var remoteClient = server.Clients.TryGetById( 1 );
         var channel = server.Channels.TryGetById( 1 );
@@ -1133,20 +1097,20 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
         Assertion.All(
                 server.Channels.Count.TestEquals( 0 ),
                 server.Streams.Count.TestEquals( 0 ),
-                remoteClient.TestNotNull(
-                    c => Assertion.All( "client", c.Publishers.Count.TestEquals( 0 ), c.Publishers.GetAll().TestEmpty() ) ),
-                channel.TestNotNull(
-                    c => Assertion.All(
-                        "channel",
-                        c.State.TestEquals( MessageBrokerChannelState.Disposed ),
-                        c.Publishers.Count.TestEquals( 0 ),
-                        c.Publishers.GetAll().TestEmpty() ) ),
-                stream.TestNotNull(
-                    s => Assertion.All(
-                        "stream",
-                        s.State.TestEquals( MessageBrokerStreamState.Disposed ),
-                        s.Publishers.Count.TestEquals( 0 ),
-                        s.Publishers.GetAll().TestEmpty() ) ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Publishers.Count.TestEquals( 0 ),
+                    c.Publishers.GetAll().TestEmpty() ) ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.State.TestEquals( MessageBrokerChannelState.Disposed ),
+                    c.Publishers.Count.TestEquals( 0 ),
+                    c.Publishers.GetAll().TestEmpty() ) ),
+                stream.TestNotNull( s => Assertion.All(
+                    "stream",
+                    s.State.TestEquals( MessageBrokerStreamState.Disposed ),
+                    s.Publishers.Count.TestEquals( 0 ),
+                    s.Publishers.GetAll().TestEmpty() ) ),
                 binding.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Disposed ) ),
                 channelLogs.GetAll()
                     .Skip( 1 )
@@ -1210,21 +1174,19 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
 
         using var client1 = new ClientMock();
         await client1.EstablishHandshake( server );
-        await client1.GetTask(
-            c =>
-            {
-                c.SendBindPublisherRequest( "c" );
-                c.ReadPublisherBoundResponse();
-            } );
+        await client1.GetTask( c =>
+        {
+            c.SendBindPublisherRequest( "c" );
+            c.ReadPublisherBoundResponse();
+        } );
 
         using var client2 = new ClientMock();
         await client2.EstablishHandshake( server, "test2" );
-        await client2.GetTask(
-            c =>
-            {
-                c.SendBindPublisherRequest( "c" );
-                c.ReadPublisherBoundResponse();
-            } );
+        await client2.GetTask( c =>
+        {
+            c.SendBindPublisherRequest( "c" );
+            c.ReadPublisherBoundResponse();
+        } );
 
         var remoteClient1 = server.Clients.TryGetById( 1 );
         var remoteClient2 = server.Clients.TryGetById( 2 );
@@ -1238,26 +1200,25 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
         Assertion.All(
                 server.Channels.Count.TestEquals( 1 ),
                 server.Streams.Count.TestEquals( 1 ),
-                remoteClient1.TestNotNull(
-                    c => Assertion.All( "client1", c.Publishers.Count.TestEquals( 0 ), c.Publishers.GetAll().TestEmpty() ) ),
-                remoteClient2.TestNotNull(
-                    c => Assertion.All(
-                        "client2",
-                        c.State.TestEquals( MessageBrokerRemoteClientState.Running ),
-                        c.Publishers.Count.TestEquals( 1 ),
-                        c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding2 ) ] ) ) ),
-                channel.TestNotNull(
-                    c => Assertion.All(
-                        "channel",
-                        c.State.TestEquals( MessageBrokerChannelState.Running ),
-                        c.Publishers.Count.TestEquals( 1 ),
-                        c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding2 ) ] ) ) ),
-                stream.TestNotNull(
-                    s => Assertion.All(
-                        "stream",
-                        s.State.TestEquals( MessageBrokerStreamState.Running ),
-                        s.Publishers.Count.TestEquals( 1 ),
-                        s.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding2 ) ] ) ) ),
+                remoteClient1.TestNotNull( c => Assertion.All(
+                    "client1",
+                    c.Publishers.Count.TestEquals( 0 ),
+                    c.Publishers.GetAll().TestEmpty() ) ),
+                remoteClient2.TestNotNull( c => Assertion.All(
+                    "client2",
+                    c.State.TestEquals( MessageBrokerRemoteClientState.Running ),
+                    c.Publishers.Count.TestEquals( 1 ),
+                    c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding2 ) ] ) ) ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.State.TestEquals( MessageBrokerChannelState.Running ),
+                    c.Publishers.Count.TestEquals( 1 ),
+                    c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding2 ) ] ) ) ),
+                stream.TestNotNull( s => Assertion.All(
+                    "stream",
+                    s.State.TestEquals( MessageBrokerStreamState.Running ),
+                    s.Publishers.Count.TestEquals( 1 ),
+                    s.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding2 ) ] ) ) ),
                 binding1.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Disposed ) ),
                 channelLogs.GetAll()
                     .Skip( 2 )
@@ -1310,14 +1271,13 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindPublisher )
-                                    endSource.Complete();
-                            } ) ) )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindPublisher )
+                                endSource.Complete();
+                        } ) ) )
                 .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
                 .SetStreamLoggerFactory( _ => streamLogs.GetLogger() ) );
 
@@ -1325,44 +1285,39 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
 
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
-        await client.GetTask(
-            c =>
-            {
-                c.SendBindPublisherRequest( "c" );
-                c.ReadPublisherBoundResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendBindPublisherRequest( "c" );
+            c.ReadPublisherBoundResponse();
+        } );
 
         var remoteClient = server.Clients.TryGetById( 1 );
         var channel = server.Channels.TryGetByName( "c" );
         var stream = server.Streams.TryGetByName( "c" );
         var binding = channel?.Publishers.TryGetByClientId( 1 );
-        await client.GetTask(
-            c =>
-            {
-                c.SendUnbindPublisherRequest( 1 );
-                c.ReadPublisherUnboundResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendUnbindPublisherRequest( 1 );
+            c.ReadPublisherUnboundResponse();
+        } );
 
         await endSource.Task;
 
         Assertion.All(
-                channel.TestNotNull(
-                    c => Assertion.All(
-                        "channel",
-                        c.State.TestEquals( MessageBrokerChannelState.Disposed ),
-                        c.Publishers.Count.TestEquals( 0 ),
-                        c.Publishers.GetAll().TestEmpty() ) ),
-                stream.TestNotNull(
-                    s => Assertion.All(
-                        "stream",
-                        s.State.TestEquals( MessageBrokerStreamState.Disposed ),
-                        s.Publishers.Count.TestEquals( 0 ),
-                        s.Publishers.GetAll().TestEmpty() ) ),
-                remoteClient.TestNotNull(
-                    c => Assertion.All(
-                        "client",
-                        c.Publishers.Count.TestEquals( 0 ),
-                        c.Publishers.GetAll().TestEmpty() ) ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.State.TestEquals( MessageBrokerChannelState.Disposed ),
+                    c.Publishers.Count.TestEquals( 0 ),
+                    c.Publishers.GetAll().TestEmpty() ) ),
+                stream.TestNotNull( s => Assertion.All(
+                    "stream",
+                    s.State.TestEquals( MessageBrokerStreamState.Disposed ),
+                    s.Publishers.Count.TestEquals( 0 ),
+                    s.Publishers.GetAll().TestEmpty() ) ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Publishers.Count.TestEquals( 0 ),
+                    c.Publishers.GetAll().TestEmpty() ) ),
                 binding.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Disposed ) ),
                 server.Channels.Count.TestEquals( 0 ),
                 server.Channels.GetAll().TestEmpty(),
@@ -1433,16 +1388,15 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    c => c.Id == 2
-                        ? clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindPublisher )
-                                        endSource.Complete();
-                                } ) )
-                        : null )
+                .SetClientLoggerFactory( c => c.Id == 2
+                    ? clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindPublisher )
+                                    endSource.Complete();
+                            } ) )
+                    : null )
                 .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
                 .SetStreamLoggerFactory( _ => streamLogs.GetLogger() ) );
 
@@ -1450,21 +1404,19 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
 
         using var client1 = new ClientMock();
         await client1.EstablishHandshake( server );
-        await client1.GetTask(
-            c =>
-            {
-                c.SendBindPublisherRequest( "c" );
-                c.ReadPublisherBoundResponse();
-            } );
+        await client1.GetTask( c =>
+        {
+            c.SendBindPublisherRequest( "c" );
+            c.ReadPublisherBoundResponse();
+        } );
 
         using var client2 = new ClientMock();
         await client2.EstablishHandshake( server, "test2" );
-        await client2.GetTask(
-            c =>
-            {
-                c.SendBindPublisherRequest( "c" );
-                c.ReadPublisherBoundResponse();
-            } );
+        await client2.GetTask( c =>
+        {
+            c.SendBindPublisherRequest( "c" );
+            c.ReadPublisherBoundResponse();
+        } );
 
         var remoteClient1 = server.Clients.TryGetById( 1 );
         var remoteClient2 = server.Clients.TryGetById( 2 );
@@ -1473,49 +1425,44 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
         var binding1 = channel?.Publishers.TryGetByClientId( 1 );
         var binding2 = channel?.Publishers.TryGetByClientId( 2 );
 
-        await client2.GetTask(
-            c =>
-            {
-                c.SendUnbindPublisherRequest( 1 );
-                c.ReadPublisherUnboundResponse();
-            } );
+        await client2.GetTask( c =>
+        {
+            c.SendUnbindPublisherRequest( 1 );
+            c.ReadPublisherUnboundResponse();
+        } );
 
         await endSource.Task;
 
         Assertion.All(
-                channel.TestNotNull(
-                    c => Assertion.All(
-                        "channel",
-                        c.Server.TestRefEquals( server ),
-                        c.Id.TestEquals( 1 ),
-                        c.Name.TestEquals( "c" ),
-                        c.State.TestEquals( MessageBrokerChannelState.Running ),
-                        c.Publishers.Count.TestEquals( 1 ),
-                        c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding1 ) ] ),
-                        c.Publishers.TryGetByClientId( 1 ).TestRefEquals( binding1 ),
-                        c.Publishers.TryGetByClientId( 2 ).TestNull() ) ),
-                stream.TestNotNull(
-                    s => Assertion.All(
-                        "stream",
-                        s.Server.TestRefEquals( server ),
-                        s.Id.TestEquals( 1 ),
-                        s.Name.TestEquals( "c" ),
-                        s.State.TestEquals( MessageBrokerStreamState.Running ),
-                        s.Publishers.Count.TestEquals( 1 ),
-                        s.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding1 ) ] ),
-                        s.Publishers.TryGetByKey( 1, 1 ).TestRefEquals( binding1 ),
-                        s.Publishers.TryGetByKey( 2, 1 ).TestNull() ) ),
-                remoteClient1.TestNotNull(
-                    c => Assertion.All(
-                        "client1",
-                        c.Publishers.Count.TestEquals( 1 ),
-                        c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding1 ) ] ),
-                        c.Publishers.TryGetByChannelId( 1 ).TestRefEquals( binding1 ) ) ),
-                remoteClient2.TestNotNull(
-                    c => Assertion.All(
-                        "client2",
-                        c.Publishers.Count.TestEquals( 0 ),
-                        c.Publishers.GetAll().TestEmpty() ) ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.Server.TestRefEquals( server ),
+                    c.Id.TestEquals( 1 ),
+                    c.Name.TestEquals( "c" ),
+                    c.State.TestEquals( MessageBrokerChannelState.Running ),
+                    c.Publishers.Count.TestEquals( 1 ),
+                    c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding1 ) ] ),
+                    c.Publishers.TryGetByClientId( 1 ).TestRefEquals( binding1 ),
+                    c.Publishers.TryGetByClientId( 2 ).TestNull() ) ),
+                stream.TestNotNull( s => Assertion.All(
+                    "stream",
+                    s.Server.TestRefEquals( server ),
+                    s.Id.TestEquals( 1 ),
+                    s.Name.TestEquals( "c" ),
+                    s.State.TestEquals( MessageBrokerStreamState.Running ),
+                    s.Publishers.Count.TestEquals( 1 ),
+                    s.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding1 ) ] ),
+                    s.Publishers.TryGetByKey( 1, 1 ).TestRefEquals( binding1 ),
+                    s.Publishers.TryGetByKey( 2, 1 ).TestNull() ) ),
+                remoteClient1.TestNotNull( c => Assertion.All(
+                    "client1",
+                    c.Publishers.Count.TestEquals( 1 ),
+                    c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( binding1 ) ] ),
+                    c.Publishers.TryGetByChannelId( 1 ).TestRefEquals( binding1 ) ) ),
+                remoteClient2.TestNotNull( c => Assertion.All(
+                    "client2",
+                    c.Publishers.Count.TestEquals( 0 ),
+                    c.Publishers.GetAll().TestEmpty() ) ),
                 binding1.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Running ) ),
                 binding2.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Disposed ) ),
                 server.Channels.Count.TestEquals( 1 ),
@@ -1584,58 +1531,53 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindPublisher )
-                                    endSource.Complete();
-                            } ) ) )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindPublisher )
+                                endSource.Complete();
+                        } ) ) )
                 .SetChannelLoggerFactory( _ => channelLogs.GetLogger() ) );
 
         await server.StartAsync();
 
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
-        await client.GetTask(
-            c =>
-            {
-                c.SendBindPublisherRequest( "c" );
-                c.ReadPublisherBoundResponse();
-                c.SendBindListenerRequest( "c", createChannelIfNotExists: false );
-                c.ReadListenerBoundResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendBindPublisherRequest( "c" );
+            c.ReadPublisherBoundResponse();
+            c.SendBindListenerRequest( "c", createChannelIfNotExists: false );
+            c.ReadListenerBoundResponse();
+        } );
 
         var remoteClient = server.Clients.TryGetById( 1 );
         var channel = server.Channels.TryGetByName( "c" );
         var subscription = channel?.Listeners.TryGetByClientId( 1 );
         var binding = channel?.Publishers.TryGetByClientId( 1 );
-        await client.GetTask(
-            c =>
-            {
-                c.SendUnbindPublisherRequest( 1 );
-                c.ReadPublisherUnboundResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendUnbindPublisherRequest( 1 );
+            c.ReadPublisherUnboundResponse();
+        } );
 
         await endSource.Task;
 
         Assertion.All(
-                channel.TestNotNull(
-                    c => Assertion.All(
-                        "channel",
-                        c.State.TestEquals( MessageBrokerChannelState.Running ),
-                        c.Publishers.Count.TestEquals( 0 ),
-                        c.Publishers.GetAll().TestEmpty(),
-                        c.Listeners.Count.TestEquals( 1 ),
-                        c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( subscription ) ] ) ) ),
-                remoteClient.TestNotNull(
-                    c => Assertion.All(
-                        "client",
-                        c.Publishers.Count.TestEquals( 0 ),
-                        c.Publishers.GetAll().TestEmpty(),
-                        c.Listeners.Count.TestEquals( 1 ),
-                        c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( subscription ) ] ) ) ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.State.TestEquals( MessageBrokerChannelState.Running ),
+                    c.Publishers.Count.TestEquals( 0 ),
+                    c.Publishers.GetAll().TestEmpty(),
+                    c.Listeners.Count.TestEquals( 1 ),
+                    c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( subscription ) ] ) ) ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Publishers.Count.TestEquals( 0 ),
+                    c.Publishers.GetAll().TestEmpty(),
+                    c.Listeners.Count.TestEquals( 1 ),
+                    c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( subscription ) ] ) ) ),
                 binding.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Disposed ) ),
                 subscription.TestNotNull( s => s.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ) ),
                 server.Channels.Count.TestEquals( 1 ),
@@ -1687,26 +1629,24 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindPublisher )
-                                    endSource.Complete();
-                            } ) ) )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindPublisher )
+                                endSource.Complete();
+                        } ) ) )
                 .SetChannelLoggerFactory( _ => channelLogs.GetLogger() ) );
 
         await server.StartAsync();
 
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
-        await client.GetTask(
-            c =>
-            {
-                c.SendBindPublisherRequest( "c" );
-                c.ReadPublisherBoundResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendBindPublisherRequest( "c" );
+            c.ReadPublisherBoundResponse();
+        } );
 
         var remoteClient = server.Clients.TryGetById( 1 );
         var channel = server.Channels.TryGetByName( "c" );
@@ -1774,27 +1714,25 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindPublisher )
-                                    endSource.Complete();
-                            } ) ) ) );
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindPublisher )
+                                endSource.Complete();
+                        } ) ) ) );
 
         await server.StartAsync();
 
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
         var remoteClient = server.Clients.TryGetById( 1 );
-        await client.GetTask(
-            c =>
-            {
-                c.SendBindPublisherRequest( "c" );
-                c.ReadPublisherBoundResponse();
-                c.SendUnbindPublisherRequest( 0 );
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendBindPublisherRequest( "c" );
+            c.ReadPublisherBoundResponse();
+            c.SendUnbindPublisherRequest( 0 );
+        } );
 
         await endSource.Task;
 
@@ -1840,15 +1778,14 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindPublisher )
-                                    endSource.Complete();
-                            },
-                            error: e => exception = e.Exception ) ) ) );
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindPublisher )
+                                endSource.Complete();
+                        },
+                        error: e => exception = e.Exception ) ) ) );
 
         await server.StartAsync();
 
@@ -1856,19 +1793,19 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
         await client.EstablishHandshake( server );
 
         var remoteClient = server.Clients.TryGetById( 1 );
-        await client.GetTask(
-            c =>
-            {
-                c.SendUnbindPublisherRequest( 1 );
-                c.ReadUnbindPublisherFailureResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendUnbindPublisherRequest( 1 );
+            c.ReadUnbindPublisherFailureResponse();
+        } );
 
         await endSource.Task;
 
         Assertion.All(
                 exception.TestType()
-                    .Exact<MessageBrokerChannelPublisherBindingException>(
-                        exc => Assertion.All( exc.Client.TestRefEquals( remoteClient ), exc.Publisher.TestNull() ) ),
+                    .Exact<MessageBrokerChannelPublisherBindingException>( exc => Assertion.All(
+                        exc.Client.TestRefEquals( remoteClient ),
+                        exc.Publisher.TestNull() ) ),
                 remoteClient.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Running ) ),
                 server.Clients.Count.TestEquals( 1 ),
                 server.Clients.GetAll().TestSequence( [ (c, _) => c.TestRefEquals( remoteClient ) ] ),
@@ -1910,37 +1847,34 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    c => c.Id == 2
-                        ? clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindPublisher )
-                                        endSource.Complete();
-                                },
-                                error: e => exception = e.Exception ) )
-                        : null ) );
+                .SetClientLoggerFactory( c => c.Id == 2
+                    ? clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindPublisher )
+                                    endSource.Complete();
+                            },
+                            error: e => exception = e.Exception ) )
+                    : null ) );
 
         await server.StartAsync();
 
         using var client1 = new ClientMock();
         await client1.EstablishHandshake( server );
-        await client1.GetTask(
-            c =>
-            {
-                c.SendBindPublisherRequest( "c" );
-                c.ReadPublisherBoundResponse();
-            } );
+        await client1.GetTask( c =>
+        {
+            c.SendBindPublisherRequest( "c" );
+            c.ReadPublisherBoundResponse();
+        } );
 
         using var client2 = new ClientMock();
         await client2.EstablishHandshake( server, "test2" );
-        await client2.GetTask(
-            c =>
-            {
-                c.SendUnbindPublisherRequest( 1 );
-                c.ReadUnbindPublisherFailureResponse();
-            } );
+        await client2.GetTask( c =>
+        {
+            c.SendUnbindPublisherRequest( 1 );
+            c.ReadUnbindPublisherFailureResponse();
+        } );
 
         await endSource.Task;
 
@@ -1950,15 +1884,15 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
 
         Assertion.All(
                 exception.TestType()
-                    .Exact<MessageBrokerChannelPublisherBindingException>(
-                        exc => Assertion.All( exc.Client.TestRefEquals( remoteClient2 ), exc.Publisher.TestNull() ) ),
+                    .Exact<MessageBrokerChannelPublisherBindingException>( exc => Assertion.All(
+                        exc.Client.TestRefEquals( remoteClient2 ),
+                        exc.Publisher.TestNull() ) ),
                 remoteClient1.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Running ) ),
                 remoteClient2.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Running ) ),
-                channel.TestNotNull(
-                    c => Assertion.All(
-                        "channel",
-                        c.State.TestEquals( MessageBrokerChannelState.Running ),
-                        c.Publishers.Count.TestEquals( 1 ) ) ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.State.TestEquals( MessageBrokerChannelState.Running ),
+                    c.Publishers.Count.TestEquals( 1 ) ) ),
                 server.Clients.Count.TestEquals( 2 ),
                 server.Clients.GetAll().TestSetEqual( [ remoteClient1, remoteClient2 ] ),
                 server.Channels.Count.TestEquals( 1 ),
@@ -1987,6 +1921,57 @@ public class MessageBrokerChannelPublisherBindingTests : TestsBase, IClassFixtur
                         "[AwaitPacket] Client = [2] 'test2'",
                         "[AwaitPacket] Client = [2] 'test2', Packet = (UnbindPublisherRequest, Length = 9)"
                     ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task Unbind_ShouldUnbindNonEphemeralPublisher()
+    {
+        using var storage = StorageScope.Create();
+
+        var endSource = new SafeTaskCompletionSource();
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetRootStoragePath( storage.Path )
+                .SetClientLoggerFactory( _ => MessageBrokerRemoteClientLogger.Create(
+                    traceEnd: e =>
+                    {
+                        if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindPublisher )
+                            endSource.Complete();
+                    } ) ) );
+
+        await server.StartAsync();
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server, isEphemeral: false );
+        await client.GetTask( c =>
+        {
+            c.SendBindPublisherRequest( "c", isEphemeral: false );
+            c.ReadPublisherBoundResponse();
+        } );
+
+        var remoteClient = server.Clients.TryGetById( 1 );
+        var binding = remoteClient?.Publishers.TryGetByChannelId( 1 );
+        await client.GetTask( c =>
+        {
+            c.SendUnbindPublisherRequest( 1 );
+            c.ReadPublisherUnboundResponse();
+        } );
+
+        await endSource.Task;
+
+        Assertion.All(
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Publishers.Count.TestEquals( 0 ),
+                    c.Publishers.GetAll().TestEmpty() ) ),
+                binding.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Disposed ) ),
+                storage.FileExists( StorageScope.GetPublisherMetadataSubpath( clientId: 1, channelId: 1 ) ).TestFalse(),
+                storage.FileExists( StorageScope.GetStreamMetadataSubpath( streamId: 1 ) ).TestFalse(),
+                storage.FileExists( StorageScope.GetChannelMetadataSubpath( channelId: 1 ) ).TestFalse() )
             .Go();
     }
 }

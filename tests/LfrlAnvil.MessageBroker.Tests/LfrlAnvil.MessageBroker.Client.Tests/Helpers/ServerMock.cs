@@ -575,22 +575,21 @@ internal sealed class ServerMock : IDisposable
         MemorySize? maxNetworkBatchPacketLength = null)
     {
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = Task.Factory.StartNew(
-            () =>
-            {
-                WaitForClient();
-                Read( handshakeRequest );
-                SendHandshakeAccepted(
-                    id ?? 1,
-                    messageTimeout ?? Duration.FromSeconds( 1 ),
-                    pingInterval ?? Duration.FromSeconds( 10 ),
-                    maxNetworkPacketLength,
-                    maxNetworkMessagePacketLength,
-                    maxBatchPacketCount,
-                    maxNetworkBatchPacketLength );
+        var serverTask = Task.Factory.StartNew( () =>
+        {
+            WaitForClient();
+            Read( handshakeRequest );
+            SendHandshakeAccepted(
+                id ?? 1,
+                messageTimeout ?? Duration.FromSeconds( 1 ),
+                pingInterval ?? Duration.FromSeconds( 10 ),
+                maxNetworkPacketLength,
+                maxNetworkMessagePacketLength,
+                maxBatchPacketCount,
+                maxNetworkBatchPacketLength );
 
-                ReadConfirmHandshakeResponse();
-            } );
+            ReadConfirmHandshakeResponse();
+        } );
 
         await client.StartAsync();
         await serverTask;

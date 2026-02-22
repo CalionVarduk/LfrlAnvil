@@ -68,7 +68,6 @@ public partial class MessageBrokerServerTests : TestsBase
         var sut = new MessageBrokerServer(
             localEndPoint,
             MessageBrokerServerOptions.Default
-                .SetRootStoragePath( "./server" )
                 .SetHandshakeTimeout( Duration.FromTicks( handshakeTimeoutTicks ) )
                 .SetAcceptableMessageTimeout(
                     Bounds.Create( Duration.FromTicks( minMessageTimeoutTicks ), Duration.FromTicks( maxMessageTimeoutTicks ) ) )
@@ -83,11 +82,7 @@ public partial class MessageBrokerServerTests : TestsBase
                 .SetExpressionFactory( expressionFactory ) );
 
         Assertion.All(
-                sut.RootStorageDirectoryPath.TestNotNull(
-                    d => Assertion.All(
-                        "RootStorageDirectory",
-                        Directory.Exists( d ).TestFalse(),
-                        d.TestEquals( Path.Combine( Environment.CurrentDirectory, "server" ) ) ) ),
+                sut.RootStorageDirectoryPath.TestNull(),
                 sut.LocalEndPoint.TestRefEquals( localEndPoint ),
                 sut.HandshakeTimeout.TestEquals( Duration.FromMilliseconds( expectedHandshakeTimeoutMs ) ),
                 sut.MaxNetworkPacketLength.TestEquals( MemorySize.FromKilobytes( 30 ) ),
@@ -135,11 +130,10 @@ public partial class MessageBrokerServerTests : TestsBase
         Assertion.All(
                 result.Exception.TestNull(),
                 server.LocalEndPoint.TestType()
-                    .AssignableTo<IPEndPoint>(
-                        e => Assertion.All(
-                            "LocalEndPoint",
-                            e.Address.TestEquals( IPAddress.Loopback ),
-                            e.Port.TestNotEquals( 0 ) ) ),
+                    .AssignableTo<IPEndPoint>( e => Assertion.All(
+                        "LocalEndPoint",
+                        e.Address.TestEquals( IPAddress.Loopback ),
+                        e.Port.TestNotEquals( 0 ) ) ),
                 server.State.TestEquals( MessageBrokerServerState.Running ),
                 server.ToString().TestEquals( $"{localEndPoint} server (Running)" ),
                 logs.GetAll()
@@ -178,11 +172,10 @@ public partial class MessageBrokerServerTests : TestsBase
         Assertion.All(
                 result.Exception.TestNull(),
                 server.LocalEndPoint.TestType()
-                    .AssignableTo<IPEndPoint>(
-                        e => Assertion.All(
-                            "LocalEndPoint",
-                            e.Address.TestEquals( IPAddress.Loopback ),
-                            e.Port.TestNotEquals( 0 ) ) ),
+                    .AssignableTo<IPEndPoint>( e => Assertion.All(
+                        "LocalEndPoint",
+                        e.Address.TestEquals( IPAddress.Loopback ),
+                        e.Port.TestNotEquals( 0 ) ) ),
                 server.State.TestEquals( MessageBrokerServerState.Running ),
                 logs.GetAll()
                     .TestSequence(
@@ -206,62 +199,55 @@ public partial class MessageBrokerServerTests : TestsBase
     [Fact]
     public async Task StartAsync_ShouldStartServer_WithRootStorageDirectory()
     {
+        using var storage = StorageScope.Create();
+
         var logs = new ServerEventLogger();
         var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
+        string? directory = null;
 
-        string? storageRoot = null;
-        try
-        {
-            await using var server = new MessageBrokerServer(
-                originalEndPoint,
-                MessageBrokerServerOptions.Default
-                    .SetRootStoragePath( "server" )
-                    .SetLogger( logs.GetLogger() ) );
+        await using var server = new MessageBrokerServer(
+            originalEndPoint,
+            MessageBrokerServerOptions.Default
+                .SetRootStoragePath( storage.Path )
+                .SetLogger( logs.GetLogger( MessageBrokerServerLogger.Create( storageLoading: e => directory = e.Directory ) ) ) );
 
-            storageRoot = server.RootStorageDirectoryPath;
-            var result = await server.StartAsync();
+        var result = await server.StartAsync();
 
-            var localEndPoint = server.LocalEndPoint;
+        var localEndPoint = server.LocalEndPoint;
 
-            Assertion.All(
-                    server.RootStorageDirectoryPath.TestNotNull(
-                        d => Assertion.All(
-                            "RootStorageDirectory",
-                            Directory.Exists( d ).TestTrue(),
-                            new DirectoryInfo( d ).GetDirectories()
-                                .Select( s => s.Name )
-                                .TestSetEqual( [ "clients", "channels", "streams" ] ) ) ),
-                    result.Exception.TestNull(),
-                    server.LocalEndPoint.TestType()
-                        .AssignableTo<IPEndPoint>(
-                            e => Assertion.All(
-                                "LocalEndPoint",
-                                e.Address.TestEquals( IPAddress.Loopback ),
-                                e.Port.TestNotEquals( 0 ) ) ),
-                    server.State.TestEquals( MessageBrokerServerState.Running ),
-                    logs.GetAll()
-                        .TestSequence(
+        Assertion.All(
+                server.RootStorageDirectoryPath.TestNotNull( d => Assertion.All(
+                    "RootStorageDirectory",
+                    Directory.Exists( d ).TestTrue(),
+                    new DirectoryInfo( d ).GetDirectories()
+                        .Select( s => s.Name )
+                        .TestSetEqual( [ "clients", "channels", "streams" ] ) ) ),
+                result.Exception.TestNull(),
+                server.LocalEndPoint.TestType()
+                    .AssignableTo<IPEndPoint>( e => Assertion.All(
+                        "LocalEndPoint",
+                        e.Address.TestEquals( IPAddress.Loopback ),
+                        e.Port.TestNotEquals( 0 ) ) ),
+                server.State.TestEquals( MessageBrokerServerState.Running ),
+                logs.GetAll()
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
                         [
-                            (t, _) => t.Logs.TestSequence(
-                            [
-                                $"[Trace:Start] Server = {originalEndPoint}, TraceId = 0 (start)",
-                                $"[ListenerStarting] Server = {originalEndPoint}, TraceId = 0, HandshakeTimeout = 15 second(s), AcceptableMessageTimeout = [0.001 second(s), 2147483.647 second(s)], AcceptablePingInterval = [0.001 second(s), 86400 second(s)]",
-                                $"[ListenerStarted] Server = {localEndPoint}, TraceId = 0",
-                                $"[Trace:Start] Server = {localEndPoint}, TraceId = 0 (end)"
-                            ] )
-                        ] ),
-                    logs.GetAllAwaitClient()
-                        .TestSequence(
-                        [
-                            $"[AwaitClient] Server = {localEndPoint}"
-                        ] ) )
-                .Go();
-        }
-        finally
-        {
-            if ( storageRoot is not null && Directory.Exists( storageRoot ) )
-                Directory.Delete( storageRoot, recursive: true );
-        }
+                            $"[Trace:Start] Server = {originalEndPoint}, TraceId = 0 (start)",
+                            $"[StorageLoading] Server = {originalEndPoint}, TraceId = 0, Directory = '{directory}'",
+                            $"[StorageLoaded] Server = {originalEndPoint}, TraceId = 0, Directory = '{directory}', ChannelCount = 0, StreamCount = 0, ClientCount = 0, QueueCount = 0, PublisherCount = 0, ListenerCount = 0",
+                            $"[ListenerStarting] Server = {originalEndPoint}, TraceId = 0, HandshakeTimeout = 15 second(s), AcceptableMessageTimeout = [0.001 second(s), 2147483.647 second(s)], AcceptablePingInterval = [0.001 second(s), 86400 second(s)]",
+                            $"[ListenerStarted] Server = {localEndPoint}, TraceId = 0",
+                            $"[Trace:Start] Server = {localEndPoint}, TraceId = 0 (end)"
+                        ] )
+                    ] ),
+                logs.GetAllAwaitClient()
+                    .TestSequence(
+                    [
+                        $"[AwaitClient] Server = {localEndPoint}"
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -297,13 +283,11 @@ public partial class MessageBrokerServerTests : TestsBase
 
         var action = Lambda.Of( async () => await server.StartAsync() );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<MessageBrokerServerStateException>(
-                        e => Assertion.All(
-                            e.Server.TestRefEquals( server ),
-                            e.Actual.TestEquals( MessageBrokerServerState.Running ),
-                            e.Expected.TestEquals( MessageBrokerServerState.Created ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<MessageBrokerServerStateException>( e => Assertion.All(
+                    e.Server.TestRefEquals( server ),
+                    e.Actual.TestEquals( MessageBrokerServerState.Running ),
+                    e.Expected.TestEquals( MessageBrokerServerState.Created ) ) ) )
             .Go();
     }
 
@@ -444,53 +428,28 @@ public partial class MessageBrokerServerTests : TestsBase
 
         var action = Lambda.Of( async () => await sut.StartAsync( token ) );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestType().AssignableTo<OperationCanceledException>(),
-                    sut.State.TestEquals( MessageBrokerServerState.Created ) ) )
+        action.Test( exc => Assertion.All(
+                exc.TestType().AssignableTo<OperationCanceledException>(),
+                sut.State.TestEquals( MessageBrokerServerState.Created ) ) )
             .Go();
     }
 
-    [Fact( Skip = "test" )]
-    public async Task StorageManualTest()
+    [Fact]
+    public async Task StartAsync_ShouldThrowIOException_WhenStorageIsAlreadyInUse()
     {
-        var c1Logs = new ClientEventLogger();
-        var c2Logs = new ClientEventLogger();
+        using var storage = StorageScope.Create();
+        await using var other = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default.SetRootStoragePath( storage.Path ) );
 
-        try
-        {
-            await using var server = new MessageBrokerServer(
-                new IPEndPoint( IPAddress.Loopback, 0 ),
-                MessageBrokerServerOptions.Default.SetRootStoragePath( "_test" )
-                    .SetAcceptablePingInterval( Bounds.Create( Duration.FromHours( 1 ), Duration.FromHours( 2 ) ) )
-                    .SetClientLoggerFactory( c => c.Id == 1 ? c1Logs.GetLogger() : c2Logs.GetLogger() ) );
+        await other.StartAsync();
 
-            await server.StartAsync();
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default.SetRootStoragePath( storage.Path ) );
 
-            using var c1 = new ClientMock();
-            using var c2 = new ClientMock();
+        var action = Lambda.Of( () => server.StartAsync() );
 
-            await c1.EstablishHandshake( server, "c1", isEphemeral: false );
-            await c2.EstablishHandshake( server, "c2", isEphemeral: false );
-
-            await c1.GetTask(
-                c =>
-                {
-                    c.SendBindPublisherRequest( "foo" );
-                    c.ReadPublisherBoundResponse();
-                } );
-
-            await c2.GetTask(
-                c =>
-                {
-                    c.SendBindListenerRequest( "foo", false );
-                    c.ReadListenerBoundResponse();
-                    c.SendBindPublisherRequest( "bar" );
-                    c.ReadPublisherBoundResponse();
-                } );
-
-            var x = 5;
-        }
-        finally { }
+        action.Test( exc => exc.TestType().AssignableTo<IOException>() ).Go();
     }
 }

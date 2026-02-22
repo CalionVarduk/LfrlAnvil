@@ -533,9 +533,6 @@ public sealed class MessageBrokerQueue
                 using ( AcquireLock() )
                     hasListeners = ListenersByChannelId.Count > 0;
 
-                // TODO: tests
-                // - persistent queue is no longer referenced during server disposal
-
                 if ( ! hasListeners
                     && pendingMessages.IsEmpty
                     && unackedEntries.IsEmpty
@@ -637,7 +634,6 @@ public sealed class MessageBrokerQueue
                 // so the swap might have to happen inside storage async mutex lock?
 
                 // TODO: tests
-                // - persistent queue is no longer referenced during client disconnect
                 // - persistent queue forces unacked messages to be sent first on reconnect (without server disposal)
 
                 if ( dispose )
@@ -708,6 +704,9 @@ public sealed class MessageBrokerQueue
 
     internal async ValueTask DisposeDueToLackOfReferencesAsync(bool ignoreProcessorTask, ulong traceId)
     {
+        // TODO: tests
+        // - unreferenced queue on client reconnect should be disposed via started processor
+
         TaskCompletionSource? deactivatedSource = null;
         try
         {

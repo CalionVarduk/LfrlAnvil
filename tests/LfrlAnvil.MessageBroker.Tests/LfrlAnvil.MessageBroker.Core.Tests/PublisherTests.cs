@@ -48,47 +48,42 @@ public class PublisherTests : TestsBase, IClassFixture<SharedResourceFixture>
         Assertion.All(
                 client.Publishers.Count.TestEquals( 1 ),
                 result.Exception.TestNull(),
-                result.Value.TestNotNull(
-                    v => Assertion.All(
-                        "result.Value",
-                        v.AlreadyBound.TestFalse(),
-                        v.ChannelCreated.TestTrue(),
-                        v.StreamCreated.TestTrue(),
-                        v.Publisher.ChannelId.TestEquals( 1 ),
-                        v.Publisher.ChannelName.TestEquals( "foo" ),
-                        v.Publisher.StreamId.TestEquals( 1 ),
-                        v.Publisher.StreamName.TestEquals( "foo" ),
-                        v.Publisher.TestRefEquals( client.Publishers.TryGetByChannelId( 1 ) ),
-                        v.Publisher.State.TestEquals( MessageBrokerPublisherState.Bound ) ) ),
-                remoteClient.TestNotNull(
-                    c => Assertion.All(
-                        "remoteClient",
-                        c.Publishers.Count.TestEquals( 1 ),
-                        c.Publishers.TryGetByChannelId( 1 ).TestRefEquals( binding ) ) ),
-                channel.TestNotNull(
-                    c => Assertion.All(
-                        "channel",
-                        c.Id.TestEquals( 1 ),
-                        c.Name.TestEquals( "foo" ),
-                        c.Listeners.Count.TestEquals( 0 ),
-                        c.Publishers.Count.TestEquals( 1 ),
-                        c.Publishers.TryGetByClientId( 1 ).TestRefEquals( binding ),
-                        c.State.TestEquals( MessageBrokerChannelState.Running ) ) ),
-                stream.TestNotNull(
-                    q => Assertion.All(
-                        "stream",
-                        q.Id.TestEquals( 1 ),
-                        q.Name.TestEquals( "foo" ),
-                        q.Publishers.Count.TestEquals( 1 ),
-                        q.Publishers.TryGetByKey( 1, 1 ).TestRefEquals( binding ),
-                        q.State.TestEquals( MessageBrokerStreamState.Running ) ) ),
-                binding.TestNotNull(
-                    b => Assertion.All(
-                        "binding",
-                        b.Channel.TestRefEquals( channel ),
-                        b.Stream.TestRefEquals( stream ),
-                        b.Client.TestRefEquals( remoteClient ),
-                        b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Running ) ) ) )
+                result.Value.TestNotNull( v => Assertion.All(
+                    "result.Value",
+                    v.AlreadyBound.TestFalse(),
+                    v.ChannelCreated.TestTrue(),
+                    v.StreamCreated.TestTrue(),
+                    v.Publisher.ChannelId.TestEquals( 1 ),
+                    v.Publisher.ChannelName.TestEquals( "foo" ),
+                    v.Publisher.StreamId.TestEquals( 1 ),
+                    v.Publisher.StreamName.TestEquals( "foo" ),
+                    v.Publisher.TestRefEquals( client.Publishers.TryGetByChannelId( 1 ) ),
+                    v.Publisher.State.TestEquals( MessageBrokerPublisherState.Bound ) ) ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "remoteClient",
+                    c.Publishers.Count.TestEquals( 1 ),
+                    c.Publishers.TryGetByChannelId( 1 ).TestRefEquals( binding ) ) ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.Id.TestEquals( 1 ),
+                    c.Name.TestEquals( "foo" ),
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Publishers.Count.TestEquals( 1 ),
+                    c.Publishers.TryGetByClientId( 1 ).TestRefEquals( binding ),
+                    c.State.TestEquals( MessageBrokerChannelState.Running ) ) ),
+                stream.TestNotNull( q => Assertion.All(
+                    "stream",
+                    q.Id.TestEquals( 1 ),
+                    q.Name.TestEquals( "foo" ),
+                    q.Publishers.Count.TestEquals( 1 ),
+                    q.Publishers.TryGetByKey( 1, 1 ).TestRefEquals( binding ),
+                    q.State.TestEquals( MessageBrokerStreamState.Running ) ) ),
+                binding.TestNotNull( b => Assertion.All(
+                    "binding",
+                    b.Channel.TestRefEquals( channel ),
+                    b.Stream.TestRefEquals( stream ),
+                    b.Client.TestRefEquals( remoteClient ),
+                    b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Running ) ) ) )
             .Go();
     }
 
@@ -137,46 +132,41 @@ public class PublisherTests : TestsBase, IClassFixture<SharedResourceFixture>
         Assertion.All(
                 client1.Publishers.Count.TestEquals( 1 ),
                 result.Exception.TestNull(),
-                result.Value.TestNotNull(
-                    v => Assertion.All(
-                        "result.Value",
-                        v.AlreadyBound.TestFalse(),
-                        v.ChannelCreated.TestFalse(),
-                        v.StreamCreated.TestFalse(),
-                        v.Publisher.ChannelId.TestEquals( 1 ),
-                        v.Publisher.ChannelName.TestEquals( "foo" ),
-                        v.Publisher.StreamId.TestEquals( 1 ),
-                        v.Publisher.StreamName.TestEquals( "foo" ),
-                        v.Publisher.TestRefEquals( client2.Publishers.TryGetByChannelId( 1 ) ),
-                        v.Publisher.State.TestEquals( MessageBrokerPublisherState.Bound ) ) ),
-                remoteClient1.TestNotNull(
-                    c => Assertion.All(
-                        "remoteClient1",
-                        c.Publishers.Count.TestEquals( 1 ),
-                        c.Publishers.TryGetByChannelId( 1 ).TestRefEquals( binding1 ) ) ),
-                remoteClient2.TestNotNull(
-                    c => Assertion.All(
-                        "remoteClient2",
-                        c.Publishers.Count.TestEquals( 1 ),
-                        c.Publishers.TryGetByChannelId( 1 ).TestRefEquals( binding2 ) ) ),
-                channel.TestNotNull(
-                    c => Assertion.All(
-                        "channel",
-                        c.Id.TestEquals( 1 ),
-                        c.Name.TestEquals( "foo" ),
-                        c.Publishers.Count.TestEquals( 2 ),
-                        c.Publishers.TryGetByClientId( 1 ).TestRefEquals( binding1 ),
-                        c.Publishers.TryGetByClientId( 2 ).TestRefEquals( binding2 ),
-                        c.State.TestEquals( MessageBrokerChannelState.Running ) ) ),
-                stream.TestNotNull(
-                    q => Assertion.All(
-                        "stream",
-                        q.Id.TestEquals( 1 ),
-                        q.Name.TestEquals( "foo" ),
-                        q.Publishers.Count.TestEquals( 2 ),
-                        q.Publishers.TryGetByKey( 1, 1 ).TestRefEquals( binding1 ),
-                        q.Publishers.TryGetByKey( 2, 1 ).TestRefEquals( binding2 ),
-                        q.State.TestEquals( MessageBrokerStreamState.Running ) ) ) )
+                result.Value.TestNotNull( v => Assertion.All(
+                    "result.Value",
+                    v.AlreadyBound.TestFalse(),
+                    v.ChannelCreated.TestFalse(),
+                    v.StreamCreated.TestFalse(),
+                    v.Publisher.ChannelId.TestEquals( 1 ),
+                    v.Publisher.ChannelName.TestEquals( "foo" ),
+                    v.Publisher.StreamId.TestEquals( 1 ),
+                    v.Publisher.StreamName.TestEquals( "foo" ),
+                    v.Publisher.TestRefEquals( client2.Publishers.TryGetByChannelId( 1 ) ),
+                    v.Publisher.State.TestEquals( MessageBrokerPublisherState.Bound ) ) ),
+                remoteClient1.TestNotNull( c => Assertion.All(
+                    "remoteClient1",
+                    c.Publishers.Count.TestEquals( 1 ),
+                    c.Publishers.TryGetByChannelId( 1 ).TestRefEquals( binding1 ) ) ),
+                remoteClient2.TestNotNull( c => Assertion.All(
+                    "remoteClient2",
+                    c.Publishers.Count.TestEquals( 1 ),
+                    c.Publishers.TryGetByChannelId( 1 ).TestRefEquals( binding2 ) ) ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.Id.TestEquals( 1 ),
+                    c.Name.TestEquals( "foo" ),
+                    c.Publishers.Count.TestEquals( 2 ),
+                    c.Publishers.TryGetByClientId( 1 ).TestRefEquals( binding1 ),
+                    c.Publishers.TryGetByClientId( 2 ).TestRefEquals( binding2 ),
+                    c.State.TestEquals( MessageBrokerChannelState.Running ) ) ),
+                stream.TestNotNull( q => Assertion.All(
+                    "stream",
+                    q.Id.TestEquals( 1 ),
+                    q.Name.TestEquals( "foo" ),
+                    q.Publishers.Count.TestEquals( 2 ),
+                    q.Publishers.TryGetByKey( 1, 1 ).TestRefEquals( binding1 ),
+                    q.Publishers.TryGetByKey( 2, 1 ).TestRefEquals( binding2 ),
+                    q.State.TestEquals( MessageBrokerStreamState.Running ) ) ) )
             .Go();
     }
 
@@ -284,24 +274,21 @@ public class PublisherTests : TestsBase, IClassFixture<SharedResourceFixture>
                 result.Value.NotBound.TestFalse(),
                 result.Value.ChannelRemoved.TestFalse(),
                 result.Value.StreamRemoved.TestFalse(),
-                remoteClient1.TestNotNull(
-                    c => Assertion.All(
-                        "remoteClient1",
-                        c.Publishers.Count.TestEquals( 1 ),
-                        c.Publishers.TryGetByChannelId( 1 ).TestRefEquals( binding1 ) ) ),
+                remoteClient1.TestNotNull( c => Assertion.All(
+                    "remoteClient1",
+                    c.Publishers.Count.TestEquals( 1 ),
+                    c.Publishers.TryGetByChannelId( 1 ).TestRefEquals( binding1 ) ) ),
                 remoteClient2.TestNotNull( c => c.Publishers.Count.TestEquals( 0 ) ),
-                channel.TestNotNull(
-                    c => Assertion.All(
-                        "channel",
-                        c.State.TestEquals( MessageBrokerChannelState.Running ),
-                        c.Publishers.Count.TestEquals( 1 ),
-                        c.Publishers.TryGetByClientId( 1 ).TestRefEquals( binding1 ) ) ),
-                stream.TestNotNull(
-                    q => Assertion.All(
-                        "stream",
-                        q.State.TestEquals( MessageBrokerStreamState.Running ),
-                        q.Publishers.Count.TestEquals( 1 ),
-                        q.Publishers.TryGetByKey( 1, 1 ).TestRefEquals( binding1 ) ) ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.State.TestEquals( MessageBrokerChannelState.Running ),
+                    c.Publishers.Count.TestEquals( 1 ),
+                    c.Publishers.TryGetByClientId( 1 ).TestRefEquals( binding1 ) ) ),
+                stream.TestNotNull( q => Assertion.All(
+                    "stream",
+                    q.State.TestEquals( MessageBrokerStreamState.Running ),
+                    q.Publishers.Count.TestEquals( 1 ),
+                    q.Publishers.TryGetByKey( 1, 1 ).TestRefEquals( binding1 ) ) ),
                 binding1.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Running ) ),
                 binding2.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Disposed ) ) )
             .Go();
@@ -350,19 +337,17 @@ public class PublisherTests : TestsBase, IClassFixture<SharedResourceFixture>
                 result.Value.ChannelRemoved.TestFalse(),
                 result.Value.StreamRemoved.TestTrue(),
                 result.Value.NotBound.TestFalse(),
-                remoteClient.TestNotNull(
-                    c => Assertion.All(
-                        "remoteClient",
-                        c.Publishers.Count.TestEquals( 0 ),
-                        c.Listeners.Count.TestEquals( 1 ),
-                        c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( listener ) ] ) ) ),
-                channel.TestNotNull(
-                    c => Assertion.All(
-                        "channel",
-                        c.State.TestEquals( MessageBrokerChannelState.Running ),
-                        c.Publishers.Count.TestEquals( 0 ),
-                        c.Listeners.Count.TestEquals( 1 ),
-                        c.Listeners.TryGetByClientId( 1 ).TestRefEquals( listener ) ) ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "remoteClient",
+                    c.Publishers.Count.TestEquals( 0 ),
+                    c.Listeners.Count.TestEquals( 1 ),
+                    c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( listener ) ] ) ) ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.State.TestEquals( MessageBrokerChannelState.Running ),
+                    c.Publishers.Count.TestEquals( 0 ),
+                    c.Listeners.Count.TestEquals( 1 ),
+                    c.Listeners.TryGetByClientId( 1 ).TestRefEquals( listener ) ) ),
                 stream.TestNotNull( q => q.State.TestEquals( MessageBrokerStreamState.Disposed ) ),
                 binding.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Disposed ) ),
                 listener.TestNotNull( s => s.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ) ) )

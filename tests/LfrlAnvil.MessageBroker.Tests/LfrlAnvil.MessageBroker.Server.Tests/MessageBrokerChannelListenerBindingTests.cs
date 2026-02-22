@@ -33,14 +33,13 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
-                                    endSource.Complete();
-                            } ) ) )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
+                                endSource.Complete();
+                        } ) ) )
                 .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
                 .SetQueueLoggerFactory( _ => queueLogs.GetLogger() ) );
 
@@ -48,12 +47,11 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
 
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
-        await client.GetTask(
-            c =>
-            {
-                c.SendBindListenerRequest( "c", createChannelIfNotExists: true, minAckTimeout: Duration.FromMinutes( 10 ) );
-                c.ReadListenerBoundResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendBindListenerRequest( "c", createChannelIfNotExists: true, minAckTimeout: Duration.FromMinutes( 10 ) );
+            c.ReadListenerBoundResponse();
+        } );
 
         await endSource.Task;
 
@@ -63,66 +61,62 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
         var binding = channel?.Listeners.TryGetByClientId( 1 );
 
         Assertion.All(
-                channel.TestNotNull(
-                    c => Assertion.All(
-                        "channel",
-                        c.Server.TestRefEquals( server ),
-                        c.Id.TestEquals( 1 ),
-                        c.Name.TestEquals( "c" ),
-                        c.State.TestEquals( MessageBrokerChannelState.Running ),
-                        c.Publishers.Count.TestEquals( 0 ),
-                        c.Publishers.GetAll().TestEmpty(),
-                        c.Listeners.Count.TestEquals( 1 ),
-                        c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding ) ] ) ) ),
-                queue.TestNotNull(
-                    q => Assertion.All(
-                        "queue",
-                        q.Client.TestRefEquals( remoteClient ),
-                        q.Id.TestEquals( 1 ),
-                        q.Name.TestEquals( "c" ),
-                        q.State.TestEquals( MessageBrokerQueueState.Running ),
-                        q.ToString().TestEquals( "[1] 'c' queue (Running)" ),
-                        q.Listeners.Count.TestEquals( 1 ),
-                        q.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding ) ] ),
-                        q.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding ),
-                        q.Messages.Pending.Count.TestEquals( 0 ),
-                        q.Messages.Pending.TryPeekAt( 0 ).TestNull(),
-                        q.Messages.Retries.Count.TestEquals( 0 ),
-                        q.Messages.Retries.TryGetNext().TestNull(),
-                        q.Messages.Unacked.Count.TestEquals( 0 ),
-                        q.Messages.Unacked.TryGetFirst().TestNull(),
-                        q.Messages.Unacked.TryGetLast().TestNull(),
-                        q.Messages.Unacked.TryGetByAckId( 0 ).TestNull(),
-                        q.Messages.DeadLetter.Count.TestEquals( 0 ),
-                        q.Messages.DeadLetter.TryPeekAt( 0 ).TestNull() ) ),
-                remoteClient.TestNotNull(
-                    c => Assertion.All(
-                        "client",
-                        c.Publishers.Count.TestEquals( 0 ),
-                        c.Publishers.GetAll().TestEmpty(),
-                        c.Listeners.Count.TestEquals( 1 ),
-                        c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding ) ] ),
-                        c.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding ),
-                        c.Queues.Count.TestEquals( 1 ),
-                        c.Queues.GetAll().TestSequence( [ (q, _) => q.TestRefEquals( queue ) ] ),
-                        c.Queues.TryGetById( 1 ).TestRefEquals( queue ) ) ),
-                binding.TestNotNull(
-                    s => Assertion.All(
-                        "binding",
-                        s.Channel.TestRefEquals( channel ),
-                        s.Client.TestRefEquals( remoteClient ),
-                        s.Queue.TestRefEquals( queue ),
-                        s.PrefetchHint.TestEquals( 1 ),
-                        s.MaxRetries.TestEquals( 0 ),
-                        s.RetryDelay.TestEquals( Duration.Zero ),
-                        s.MaxRedeliveries.TestEquals( 0 ),
-                        s.MinAckTimeout.TestEquals( Duration.FromMinutes( 10 ) ),
-                        s.DeadLetterCapacityHint.TestEquals( 0 ),
-                        s.MinDeadLetterRetention.TestEquals( Duration.Zero ),
-                        s.FilterExpression.TestNull(),
-                        s.IsEphemeral.TestTrue(),
-                        s.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ),
-                        s.ToString().TestEquals( "[1] 'test' => [1] 'c' listener binding (using [1] 'c' queue) (Running)" ) ) ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.Server.TestRefEquals( server ),
+                    c.Id.TestEquals( 1 ),
+                    c.Name.TestEquals( "c" ),
+                    c.State.TestEquals( MessageBrokerChannelState.Running ),
+                    c.Publishers.Count.TestEquals( 0 ),
+                    c.Publishers.GetAll().TestEmpty(),
+                    c.Listeners.Count.TestEquals( 1 ),
+                    c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding ) ] ) ) ),
+                queue.TestNotNull( q => Assertion.All(
+                    "queue",
+                    q.Client.TestRefEquals( remoteClient ),
+                    q.Id.TestEquals( 1 ),
+                    q.Name.TestEquals( "c" ),
+                    q.State.TestEquals( MessageBrokerQueueState.Running ),
+                    q.ToString().TestEquals( "[1] 'c' queue (Running)" ),
+                    q.Listeners.Count.TestEquals( 1 ),
+                    q.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding ) ] ),
+                    q.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding ),
+                    q.Messages.Pending.Count.TestEquals( 0 ),
+                    q.Messages.Pending.TryPeekAt( 0 ).TestNull(),
+                    q.Messages.Retries.Count.TestEquals( 0 ),
+                    q.Messages.Retries.TryGetNext().TestNull(),
+                    q.Messages.Unacked.Count.TestEquals( 0 ),
+                    q.Messages.Unacked.TryGetFirst().TestNull(),
+                    q.Messages.Unacked.TryGetLast().TestNull(),
+                    q.Messages.Unacked.TryGetByAckId( 0 ).TestNull(),
+                    q.Messages.DeadLetter.Count.TestEquals( 0 ),
+                    q.Messages.DeadLetter.TryPeekAt( 0 ).TestNull() ) ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Publishers.Count.TestEquals( 0 ),
+                    c.Publishers.GetAll().TestEmpty(),
+                    c.Listeners.Count.TestEquals( 1 ),
+                    c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding ) ] ),
+                    c.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding ),
+                    c.Queues.Count.TestEquals( 1 ),
+                    c.Queues.GetAll().TestSequence( [ (q, _) => q.TestRefEquals( queue ) ] ),
+                    c.Queues.TryGetById( 1 ).TestRefEquals( queue ) ) ),
+                binding.TestNotNull( s => Assertion.All(
+                    "binding",
+                    s.Channel.TestRefEquals( channel ),
+                    s.Client.TestRefEquals( remoteClient ),
+                    s.Queue.TestRefEquals( queue ),
+                    s.PrefetchHint.TestEquals( 1 ),
+                    s.MaxRetries.TestEquals( 0 ),
+                    s.RetryDelay.TestEquals( Duration.Zero ),
+                    s.MaxRedeliveries.TestEquals( 0 ),
+                    s.MinAckTimeout.TestEquals( Duration.FromMinutes( 10 ) ),
+                    s.DeadLetterCapacityHint.TestEquals( 0 ),
+                    s.MinDeadLetterRetention.TestEquals( Duration.Zero ),
+                    s.FilterExpression.TestNull(),
+                    s.IsEphemeral.TestTrue(),
+                    s.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ),
+                    s.ToString().TestEquals( "[1] 'test' => [1] 'c' listener binding (using [1] 'c' queue) (Running)" ) ) ),
                 server.Channels.Count.TestEquals( 1 ),
                 server.Channels.GetAll().TestSequence( [ (ch, _) => ch.TestRefEquals( channel ) ] ),
                 server.Channels.TryGetById( 1 ).TestRefEquals( channel ),
@@ -187,14 +181,13 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
-                                    endSource.Complete();
-                            } ) ) )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
+                                endSource.Complete();
+                        } ) ) )
                 .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
                 .SetQueueLoggerFactory( _ => queueLogs.GetLogger() )
                 .SetExpressionFactory(
@@ -209,25 +202,24 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
 
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
-        await client.GetTask(
-            c =>
-            {
-                c.SendBindPublisherRequest( "c" );
-                c.ReadPublisherBoundResponse();
-                c.SendBindListenerRequest(
-                    "c",
-                    createChannelIfNotExists: false,
-                    filterExpression: "c.Data.Length > 10i",
-                    prefetchHint: 10,
-                    maxRetries: 2,
-                    maxRedeliveries: 3,
-                    retryDelay: Duration.FromSeconds( 10 ),
-                    minAckTimeout: Duration.FromMinutes( 10 ),
-                    deadLetterCapacityHint: 100,
-                    minDeadLetterRetention: Duration.FromHours( 1 ) );
+        await client.GetTask( c =>
+        {
+            c.SendBindPublisherRequest( "c" );
+            c.ReadPublisherBoundResponse();
+            c.SendBindListenerRequest(
+                "c",
+                createChannelIfNotExists: false,
+                filterExpression: "c.Data.Length > 10i",
+                prefetchHint: 10,
+                maxRetries: 2,
+                maxRedeliveries: 3,
+                retryDelay: Duration.FromSeconds( 10 ),
+                minAckTimeout: Duration.FromMinutes( 10 ),
+                deadLetterCapacityHint: 100,
+                minDeadLetterRetention: Duration.FromHours( 1 ) );
 
-                c.ReadListenerBoundResponse();
-            } );
+            c.ReadListenerBoundResponse();
+        } );
 
         await endSource.Task;
 
@@ -237,51 +229,47 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
         var binding = channel?.Listeners.TryGetByClientId( 1 );
 
         Assertion.All(
-                channel.TestNotNull(
-                    c => Assertion.All(
-                        "channel",
-                        c.Server.TestRefEquals( server ),
-                        c.Id.TestEquals( 1 ),
-                        c.Name.TestEquals( "c" ),
-                        c.State.TestEquals( MessageBrokerChannelState.Running ),
-                        c.Listeners.Count.TestEquals( 1 ),
-                        c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding ) ] ) ) ),
-                queue.TestNotNull(
-                    q => Assertion.All(
-                        "queue",
-                        q.Client.TestRefEquals( remoteClient ),
-                        q.Id.TestEquals( 1 ),
-                        q.Name.TestEquals( "c" ),
-                        q.State.TestEquals( MessageBrokerQueueState.Running ),
-                        q.ToString().TestEquals( "[1] 'c' queue (Running)" ),
-                        q.Listeners.Count.TestEquals( 1 ),
-                        q.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding ) ] ),
-                        q.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding ) ) ),
-                remoteClient.TestNotNull(
-                    c => Assertion.All(
-                        "client",
-                        c.Listeners.Count.TestEquals( 1 ),
-                        c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding ) ] ),
-                        c.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding ),
-                        c.Queues.Count.TestEquals( 1 ),
-                        c.Queues.GetAll().TestSequence( [ (q, _) => q.TestRefEquals( queue ) ] ),
-                        c.Queues.TryGetById( 1 ).TestRefEquals( queue ) ) ),
-                binding.TestNotNull(
-                    s => Assertion.All(
-                        "binding",
-                        s.Channel.TestRefEquals( channel ),
-                        s.Client.TestRefEquals( remoteClient ),
-                        s.Queue.TestRefEquals( queue ),
-                        s.PrefetchHint.TestEquals( 10 ),
-                        s.MaxRetries.TestEquals( 2 ),
-                        s.RetryDelay.TestEquals( Duration.FromSeconds( 10 ) ),
-                        s.MaxRedeliveries.TestEquals( 3 ),
-                        s.MinAckTimeout.TestEquals( Duration.FromMinutes( 10 ) ),
-                        s.DeadLetterCapacityHint.TestEquals( 100 ),
-                        s.MinDeadLetterRetention.TestEquals( Duration.FromHours( 1 ) ),
-                        s.FilterExpression.TestEquals( "c.Data.Length > 10i" ),
-                        s.IsEphemeral.TestTrue(),
-                        s.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ) ) ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.Server.TestRefEquals( server ),
+                    c.Id.TestEquals( 1 ),
+                    c.Name.TestEquals( "c" ),
+                    c.State.TestEquals( MessageBrokerChannelState.Running ),
+                    c.Listeners.Count.TestEquals( 1 ),
+                    c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding ) ] ) ) ),
+                queue.TestNotNull( q => Assertion.All(
+                    "queue",
+                    q.Client.TestRefEquals( remoteClient ),
+                    q.Id.TestEquals( 1 ),
+                    q.Name.TestEquals( "c" ),
+                    q.State.TestEquals( MessageBrokerQueueState.Running ),
+                    q.ToString().TestEquals( "[1] 'c' queue (Running)" ),
+                    q.Listeners.Count.TestEquals( 1 ),
+                    q.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding ) ] ),
+                    q.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding ) ) ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Listeners.Count.TestEquals( 1 ),
+                    c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding ) ] ),
+                    c.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding ),
+                    c.Queues.Count.TestEquals( 1 ),
+                    c.Queues.GetAll().TestSequence( [ (q, _) => q.TestRefEquals( queue ) ] ),
+                    c.Queues.TryGetById( 1 ).TestRefEquals( queue ) ) ),
+                binding.TestNotNull( s => Assertion.All(
+                    "binding",
+                    s.Channel.TestRefEquals( channel ),
+                    s.Client.TestRefEquals( remoteClient ),
+                    s.Queue.TestRefEquals( queue ),
+                    s.PrefetchHint.TestEquals( 10 ),
+                    s.MaxRetries.TestEquals( 2 ),
+                    s.RetryDelay.TestEquals( Duration.FromSeconds( 10 ) ),
+                    s.MaxRedeliveries.TestEquals( 3 ),
+                    s.MinAckTimeout.TestEquals( Duration.FromMinutes( 10 ) ),
+                    s.DeadLetterCapacityHint.TestEquals( 100 ),
+                    s.MinDeadLetterRetention.TestEquals( Duration.FromHours( 1 ) ),
+                    s.FilterExpression.TestEquals( "c.Data.Length > 10i" ),
+                    s.IsEphemeral.TestTrue(),
+                    s.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ) ) ),
                 server.Channels.Count.TestEquals( 1 ),
                 server.Channels.GetAll().TestSequence( [ (ch, _) => ch.TestRefEquals( channel ) ] ),
                 server.Channels.TryGetById( 1 ).TestRefEquals( channel ),
@@ -349,14 +337,13 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
-                                    endSource.Complete();
-                            } ) ) )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
+                                endSource.Complete();
+                        } ) ) )
                 .SetChannelLoggerFactory( c => c.Id == 2 ? channelLogs.GetLogger() : null )
                 .SetQueueLoggerFactory( _ => queueLogs.GetLogger() ) );
 
@@ -364,19 +351,17 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
 
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
-        await client.GetTask(
-            c =>
-            {
-                c.SendBindListenerRequest( "c", true, minAckTimeout: Duration.FromMinutes( 10 ) );
-                c.ReadListenerBoundResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendBindListenerRequest( "c", true, minAckTimeout: Duration.FromMinutes( 10 ) );
+            c.ReadListenerBoundResponse();
+        } );
 
-        await client.GetTask(
-            c =>
-            {
-                c.SendBindListenerRequest( "d", true, queueName: "c", minAckTimeout: Duration.FromMinutes( 10 ) );
-                c.ReadListenerBoundResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendBindListenerRequest( "d", true, queueName: "c", minAckTimeout: Duration.FromMinutes( 10 ) );
+            c.ReadListenerBoundResponse();
+        } );
 
         await endSource.Task;
 
@@ -388,63 +373,57 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
         var binding2 = channel2?.Listeners.TryGetByClientId( 1 );
 
         Assertion.All(
-                channel1.TestNotNull(
-                    c => Assertion.All(
-                        "channel1",
-                        c.Server.TestRefEquals( server ),
-                        c.Id.TestEquals( 1 ),
-                        c.Name.TestEquals( "c" ),
-                        c.State.TestEquals( MessageBrokerChannelState.Running ),
-                        c.ToString().TestEquals( "[1] 'c' channel (Running)" ),
-                        c.Listeners.Count.TestEquals( 1 ),
-                        c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding1 ) ] ),
-                        c.Listeners.TryGetByClientId( 1 ).TestRefEquals( binding1 ) ) ),
-                channel2.TestNotNull(
-                    c => Assertion.All(
-                        "channel2",
-                        c.Server.TestRefEquals( server ),
-                        c.Id.TestEquals( 2 ),
-                        c.Name.TestEquals( "d" ),
-                        c.State.TestEquals( MessageBrokerChannelState.Running ),
-                        c.ToString().TestEquals( "[2] 'd' channel (Running)" ),
-                        c.Listeners.Count.TestEquals( 1 ),
-                        c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding2 ) ] ),
-                        c.Listeners.TryGetByClientId( 1 ).TestRefEquals( binding2 ) ) ),
-                queue.TestNotNull(
-                    q => Assertion.All(
-                        "queue",
-                        q.Client.TestRefEquals( remoteClient ),
-                        q.Id.TestEquals( 1 ),
-                        q.Name.TestEquals( "c" ),
-                        q.State.TestEquals( MessageBrokerQueueState.Running ),
-                        q.ToString().TestEquals( "[1] 'c' queue (Running)" ),
-                        q.Listeners.Count.TestEquals( 2 ),
-                        q.Listeners.GetAll().TestSetEqual( [ binding1, binding2 ] ),
-                        q.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding1 ),
-                        q.Listeners.TryGetByChannelId( 2 ).TestRefEquals( binding2 ) ) ),
-                remoteClient.TestNotNull(
-                    c => Assertion.All(
-                        "client",
-                        c.Listeners.Count.TestEquals( 2 ),
-                        c.Listeners.GetAll().TestSetEqual( [ binding1, binding2 ] ),
-                        c.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding1 ),
-                        c.Listeners.TryGetByChannelId( 2 ).TestRefEquals( binding2 ) ) ),
-                binding1.TestNotNull(
-                    s => Assertion.All(
-                        "binding1",
-                        s.Channel.TestRefEquals( channel1 ),
-                        s.Client.TestRefEquals( remoteClient ),
-                        s.Queue.TestRefEquals( queue ),
-                        s.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ),
-                        s.ToString().TestEquals( "[1] 'test' => [1] 'c' listener binding (using [1] 'c' queue) (Running)" ) ) ),
-                binding2.TestNotNull(
-                    s => Assertion.All(
-                        "binding2",
-                        s.Channel.TestRefEquals( channel2 ),
-                        s.Client.TestRefEquals( remoteClient ),
-                        s.Queue.TestRefEquals( queue ),
-                        s.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ),
-                        s.ToString().TestEquals( "[1] 'test' => [2] 'd' listener binding (using [1] 'c' queue) (Running)" ) ) ),
+                channel1.TestNotNull( c => Assertion.All(
+                    "channel1",
+                    c.Server.TestRefEquals( server ),
+                    c.Id.TestEquals( 1 ),
+                    c.Name.TestEquals( "c" ),
+                    c.State.TestEquals( MessageBrokerChannelState.Running ),
+                    c.ToString().TestEquals( "[1] 'c' channel (Running)" ),
+                    c.Listeners.Count.TestEquals( 1 ),
+                    c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding1 ) ] ),
+                    c.Listeners.TryGetByClientId( 1 ).TestRefEquals( binding1 ) ) ),
+                channel2.TestNotNull( c => Assertion.All(
+                    "channel2",
+                    c.Server.TestRefEquals( server ),
+                    c.Id.TestEquals( 2 ),
+                    c.Name.TestEquals( "d" ),
+                    c.State.TestEquals( MessageBrokerChannelState.Running ),
+                    c.ToString().TestEquals( "[2] 'd' channel (Running)" ),
+                    c.Listeners.Count.TestEquals( 1 ),
+                    c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding2 ) ] ),
+                    c.Listeners.TryGetByClientId( 1 ).TestRefEquals( binding2 ) ) ),
+                queue.TestNotNull( q => Assertion.All(
+                    "queue",
+                    q.Client.TestRefEquals( remoteClient ),
+                    q.Id.TestEquals( 1 ),
+                    q.Name.TestEquals( "c" ),
+                    q.State.TestEquals( MessageBrokerQueueState.Running ),
+                    q.ToString().TestEquals( "[1] 'c' queue (Running)" ),
+                    q.Listeners.Count.TestEquals( 2 ),
+                    q.Listeners.GetAll().TestSetEqual( [ binding1, binding2 ] ),
+                    q.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding1 ),
+                    q.Listeners.TryGetByChannelId( 2 ).TestRefEquals( binding2 ) ) ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Listeners.Count.TestEquals( 2 ),
+                    c.Listeners.GetAll().TestSetEqual( [ binding1, binding2 ] ),
+                    c.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding1 ),
+                    c.Listeners.TryGetByChannelId( 2 ).TestRefEquals( binding2 ) ) ),
+                binding1.TestNotNull( s => Assertion.All(
+                    "binding1",
+                    s.Channel.TestRefEquals( channel1 ),
+                    s.Client.TestRefEquals( remoteClient ),
+                    s.Queue.TestRefEquals( queue ),
+                    s.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ),
+                    s.ToString().TestEquals( "[1] 'test' => [1] 'c' listener binding (using [1] 'c' queue) (Running)" ) ) ),
+                binding2.TestNotNull( s => Assertion.All(
+                    "binding2",
+                    s.Channel.TestRefEquals( channel2 ),
+                    s.Client.TestRefEquals( remoteClient ),
+                    s.Queue.TestRefEquals( queue ),
+                    s.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ),
+                    s.ToString().TestEquals( "[1] 'test' => [2] 'd' listener binding (using [1] 'c' queue) (Running)" ) ) ),
                 server.Channels.Count.TestEquals( 2 ),
                 server.Channels.GetAll().TestSetEqual( [ channel1, channel2 ] ),
                 server.Channels.TryGetById( 1 ).TestRefEquals( channel1 ),
@@ -512,15 +491,14 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type is MessageBrokerRemoteClientTraceEventType.BindListener
-                                    or MessageBrokerRemoteClientTraceEventType.Unexpected )
-                                    endSource.Complete();
-                            } ) ) )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type is MessageBrokerRemoteClientTraceEventType.BindListener
+                                or MessageBrokerRemoteClientTraceEventType.Unexpected )
+                                endSource.Complete();
+                        } ) ) )
                 .SetChannelLoggerFactory( _ => throw exception ) );
 
         await server.StartAsync();
@@ -528,8 +506,10 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
         var remoteClient = server.Clients.TryGetById( 1 );
-        await client.GetTask(
-            c => c.SendBindListenerRequest( "c", createChannelIfNotExists: true, minAckTimeout: Duration.FromMinutes( 10 ) ) );
+        await client.GetTask( c => c.SendBindListenerRequest(
+            "c",
+            createChannelIfNotExists: true,
+            minAckTimeout: Duration.FromMinutes( 10 ) ) );
 
         await endSource.Task;
 
@@ -581,15 +561,14 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type is MessageBrokerRemoteClientTraceEventType.BindListener
-                                    or MessageBrokerRemoteClientTraceEventType.Unexpected )
-                                    endSource.Complete();
-                            } ) ) )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type is MessageBrokerRemoteClientTraceEventType.BindListener
+                                or MessageBrokerRemoteClientTraceEventType.Unexpected )
+                                endSource.Complete();
+                        } ) ) )
                 .SetQueueLoggerFactory( _ => throw exception ) );
 
         await server.StartAsync();
@@ -597,8 +576,10 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
         var remoteClient = server.Clients.TryGetById( 1 );
-        await client.GetTask(
-            c => c.SendBindListenerRequest( "c", createChannelIfNotExists: true, minAckTimeout: Duration.FromMinutes( 10 ) ) );
+        await client.GetTask( c => c.SendBindListenerRequest(
+            "c",
+            createChannelIfNotExists: true,
+            minAckTimeout: Duration.FromMinutes( 10 ) ) );
 
         await endSource.Task;
 
@@ -649,14 +630,13 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
-                                    endSource.Complete();
-                            } ) ) ) );
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
+                                endSource.Complete();
+                        } ) ) ) );
 
         await server.StartAsync();
 
@@ -707,14 +687,13 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
-                                    endSource.Complete();
-                            } ) ) ) );
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
+                                endSource.Complete();
+                        } ) ) ) );
 
         await server.StartAsync();
 
@@ -766,14 +745,13 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
-                                    endSource.Complete();
-                            } ) ) ) );
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
+                                endSource.Complete();
+                        } ) ) ) );
 
         await server.StartAsync();
 
@@ -826,14 +804,13 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
-                                    endSource.Complete();
-                            } ) ) ) );
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
+                                endSource.Complete();
+                        } ) ) ) );
 
         await server.StartAsync();
 
@@ -885,14 +862,13 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
-                                    endSource.Complete();
-                            } ) ) ) );
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
+                                endSource.Complete();
+                        } ) ) ) );
 
         await server.StartAsync();
 
@@ -996,31 +972,29 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
-                                    endSource.Complete();
-                            } ) ) ) );
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
+                                endSource.Complete();
+                        } ) ) ) );
 
         await server.StartAsync();
 
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
         var remoteClient = server.Clients.TryGetById( 1 );
-        await client.GetTask(
-            c => c.SendBindListenerRequest(
-                "c",
-                createChannelIfNotExists: true,
-                prefetchHint: prefetchHint,
-                maxRetries: maxRetries,
-                retryDelay: Duration.FromMilliseconds( retryDelayMs ),
-                maxRedeliveries: maxRedeliveries,
-                minAckTimeout: Duration.FromMilliseconds( minAckTimeoutMs ),
-                deadLetterCapacityHint: deadLetterCapacity,
-                minDeadLetterRetention: Duration.FromMilliseconds( deadLetterRetentionMs ) ) );
+        await client.GetTask( c => c.SendBindListenerRequest(
+            "c",
+            createChannelIfNotExists: true,
+            prefetchHint: prefetchHint,
+            maxRetries: maxRetries,
+            retryDelay: Duration.FromMilliseconds( retryDelayMs ),
+            maxRedeliveries: maxRedeliveries,
+            minAckTimeout: Duration.FromMilliseconds( minAckTimeoutMs ),
+            deadLetterCapacityHint: deadLetterCapacity,
+            minDeadLetterRetention: Duration.FromMilliseconds( deadLetterRetentionMs ) ) );
 
         await endSource.Task;
 
@@ -1065,29 +1039,27 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
-                                    endSource.Complete();
-                            },
-                            error: e => exception = e.Exception ) ) ) );
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
+                                endSource.Complete();
+                        },
+                        error: e => exception = e.Exception ) ) ) );
 
         await server.StartAsync();
 
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
         var remoteClient = server.Clients.TryGetById( 1 );
-        await client.GetTask(
-            c =>
-            {
-                c.SendBindListenerRequest( "c", createChannelIfNotExists: true, minAckTimeout: Duration.FromMinutes( 10 ) );
-                c.ReadListenerBoundResponse();
-                c.SendBindListenerRequest( "c", createChannelIfNotExists: false, minAckTimeout: Duration.FromMinutes( 10 ) );
-                c.ReadBindListenerFailureResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendBindListenerRequest( "c", createChannelIfNotExists: true, minAckTimeout: Duration.FromMinutes( 10 ) );
+            c.ReadListenerBoundResponse();
+            c.SendBindListenerRequest( "c", createChannelIfNotExists: false, minAckTimeout: Duration.FromMinutes( 10 ) );
+            c.ReadBindListenerFailureResponse();
+        } );
 
         await endSource.Task;
 
@@ -1096,21 +1068,20 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
 
         Assertion.All(
                 exception.TestType()
-                    .Exact<MessageBrokerChannelListenerBindingException>(
-                        exc => Assertion.All( exc.Client.TestRefEquals( remoteClient ), exc.Listener.TestRefEquals( binding ) ) ),
-                remoteClient.TestNotNull(
-                    c => Assertion.All(
-                        "client",
-                        c.State.TestEquals( MessageBrokerRemoteClientState.Running ),
-                        c.Listeners.Count.TestEquals( 1 ),
-                        c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding ) ] ) ) ),
+                    .Exact<MessageBrokerChannelListenerBindingException>( exc => Assertion.All(
+                        exc.Client.TestRefEquals( remoteClient ),
+                        exc.Listener.TestRefEquals( binding ) ) ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.State.TestEquals( MessageBrokerRemoteClientState.Running ),
+                    c.Listeners.Count.TestEquals( 1 ),
+                    c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding ) ] ) ) ),
                 server.Clients.Count.TestEquals( 1 ),
                 server.Channels.Count.TestEquals( 1 ),
-                channel.TestNotNull(
-                    c => Assertion.All(
-                        "channel",
-                        c.Listeners.Count.TestEquals( 1 ),
-                        c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding ) ] ) ) ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.Listeners.Count.TestEquals( 1 ),
+                    c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding ) ] ) ) ),
                 clientLogs.GetAll()
                     .Skip( 2 )
                     .TestSequence(
@@ -1151,40 +1122,38 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
-                                    endSource.Complete();
-                            },
-                            error: e => exception = e.Exception ) ) ) );
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
+                                endSource.Complete();
+                        },
+                        error: e => exception = e.Exception ) ) ) );
 
         await server.StartAsync();
 
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
         var remoteClient = server.Clients.TryGetById( 1 );
-        await client.GetTask(
-            c =>
-            {
-                c.SendBindListenerRequest( "c", createChannelIfNotExists: false, minAckTimeout: Duration.FromMinutes( 10 ) );
-                c.ReadBindListenerFailureResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendBindListenerRequest( "c", createChannelIfNotExists: false, minAckTimeout: Duration.FromMinutes( 10 ) );
+            c.ReadBindListenerFailureResponse();
+        } );
 
         await endSource.Task;
 
         Assertion.All(
                 exception.TestType()
-                    .Exact<MessageBrokerChannelListenerBindingException>(
-                        exc => Assertion.All( exc.Client.TestRefEquals( remoteClient ), exc.Listener.TestNull() ) ),
-                remoteClient.TestNotNull(
-                    c => Assertion.All(
-                        "client",
-                        c.State.TestEquals( MessageBrokerRemoteClientState.Running ),
-                        c.Listeners.Count.TestEquals( 0 ),
-                        c.Listeners.GetAll().TestEmpty() ) ),
+                    .Exact<MessageBrokerChannelListenerBindingException>( exc => Assertion.All(
+                        exc.Client.TestRefEquals( remoteClient ),
+                        exc.Listener.TestNull() ) ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.State.TestEquals( MessageBrokerRemoteClientState.Running ),
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Listeners.GetAll().TestEmpty() ) ),
                 server.Clients.Count.TestEquals( 1 ),
                 server.Channels.Count.TestEquals( 0 ),
                 clientLogs.GetAll()
@@ -1225,38 +1194,35 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
-                                    endSource.Complete();
-                            },
-                            error: e => exception = e.Exception ) ) ) );
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
+                                endSource.Complete();
+                        },
+                        error: e => exception = e.Exception ) ) ) );
 
         await server.StartAsync();
 
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
         var remoteClient = server.Clients.TryGetById( 1 );
-        await client.GetTask(
-            c =>
-            {
-                c.SendBindListenerRequest( "c", false, filterExpression: "expression" );
-                c.ReadBindListenerFailureResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendBindListenerRequest( "c", false, filterExpression: "expression" );
+            c.ReadBindListenerFailureResponse();
+        } );
 
         await endSource.Task;
 
         Assertion.All(
                 exception.TestType().Exact<MessageBrokerRemoteClientException>( exc => exc.Client.TestRefEquals( remoteClient ) ),
-                remoteClient.TestNotNull(
-                    c => Assertion.All(
-                        "client",
-                        c.State.TestEquals( MessageBrokerRemoteClientState.Running ),
-                        c.Listeners.Count.TestEquals( 0 ),
-                        c.Listeners.GetAll().TestEmpty() ) ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.State.TestEquals( MessageBrokerRemoteClientState.Running ),
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Listeners.GetAll().TestEmpty() ) ),
                 server.Clients.Count.TestEquals( 1 ),
                 server.Channels.Count.TestEquals( 0 ),
                 clientLogs.GetAll()
@@ -1302,19 +1268,18 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
-                                    endSource.Complete();
-                            },
-                            error: e =>
-                            {
-                                var target = exception1.Value is null ? exception1 : exception2;
-                                target.Value = e.Exception;
-                            } ) ) )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
+                                endSource.Complete();
+                        },
+                        error: e =>
+                        {
+                            var target = exception1.Value is null ? exception1 : exception2;
+                            target.Value = e.Exception;
+                        } ) ) )
                 .SetExpressionFactory(
                     new ParsedExpressionFactoryBuilder()
                         .AddGenericArithmeticOperators()
@@ -1327,24 +1292,22 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
         var remoteClient = server.Clients.TryGetById( 1 );
-        await client.GetTask(
-            c =>
-            {
-                c.SendBindListenerRequest( "c", false, filterExpression: "expression" );
-                c.ReadBindListenerFailureResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendBindListenerRequest( "c", false, filterExpression: "expression" );
+            c.ReadBindListenerFailureResponse();
+        } );
 
         await endSource.Task;
 
         Assertion.All(
                 exception1.Value.TestType().Exact<ParsedExpressionCreationException>(),
                 exception2.Value.TestType().Exact<MessageBrokerRemoteClientException>( exc => exc.Client.TestRefEquals( remoteClient ) ),
-                remoteClient.TestNotNull(
-                    c => Assertion.All(
-                        "client",
-                        c.State.TestEquals( MessageBrokerRemoteClientState.Running ),
-                        c.Listeners.Count.TestEquals( 0 ),
-                        c.Listeners.GetAll().TestEmpty() ) ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.State.TestEquals( MessageBrokerRemoteClientState.Running ),
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Listeners.GetAll().TestEmpty() ) ),
                 server.Clients.Count.TestEquals( 1 ),
                 server.Channels.Count.TestEquals( 0 ),
                 clientLogs.GetAll()
@@ -1404,15 +1367,14 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
-                                    endSource.Complete();
-                            },
-                            error: e => exception = e.Exception ) ) )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
+                                endSource.Complete();
+                        },
+                        error: e => exception = e.Exception ) ) )
                 .SetExpressionFactory(
                     new ParsedExpressionFactoryBuilder()
                         .AddGenericArithmeticOperators()
@@ -1426,23 +1388,21 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
         var remoteClient = server.Clients.TryGetById( 1 );
-        await client.GetTask(
-            c =>
-            {
-                c.SendBindListenerRequest( "c", false, filterExpression: "a.Data.Length + b.Data.Length < 10i" );
-                c.ReadBindListenerFailureResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendBindListenerRequest( "c", false, filterExpression: "a.Data.Length + b.Data.Length < 10i" );
+            c.ReadBindListenerFailureResponse();
+        } );
 
         await endSource.Task;
 
         Assertion.All(
                 exception.TestType().Exact<MessageBrokerRemoteClientException>( exc => exc.Client.TestRefEquals( remoteClient ) ),
-                remoteClient.TestNotNull(
-                    c => Assertion.All(
-                        "client",
-                        c.State.TestEquals( MessageBrokerRemoteClientState.Running ),
-                        c.Listeners.Count.TestEquals( 0 ),
-                        c.Listeners.GetAll().TestEmpty() ) ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.State.TestEquals( MessageBrokerRemoteClientState.Running ),
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Listeners.GetAll().TestEmpty() ) ),
                 server.Clients.Count.TestEquals( 1 ),
                 server.Channels.Count.TestEquals( 0 ),
                 clientLogs.GetAll()
@@ -1500,12 +1460,11 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
 
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
-        await client.GetTask(
-            c =>
-            {
-                c.SendBindListenerRequest( "c", createChannelIfNotExists: true );
-                c.ReadListenerBoundResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendBindListenerRequest( "c", createChannelIfNotExists: true );
+            c.ReadListenerBoundResponse();
+        } );
 
         var remoteClient = server.Clients.TryGetById( 1 );
         var channel = server.Channels.TryGetById( 1 );
@@ -1515,25 +1474,22 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
 
         Assertion.All(
                 server.Channels.Count.TestEquals( 0 ),
-                remoteClient.TestNotNull(
-                    c => Assertion.All(
-                        "client",
-                        c.Listeners.Count.TestEquals( 0 ),
-                        c.Listeners.GetAll().TestEmpty(),
-                        c.Queues.Count.TestEquals( 0 ),
-                        c.Queues.GetAll().TestEmpty() ) ),
-                channel.TestNotNull(
-                    c => Assertion.All(
-                        "channel",
-                        c.State.TestEquals( MessageBrokerChannelState.Disposed ),
-                        c.Listeners.Count.TestEquals( 0 ),
-                        c.Listeners.GetAll().TestEmpty() ) ),
-                queue.TestNotNull(
-                    q => Assertion.All(
-                        "queue",
-                        q.State.TestEquals( MessageBrokerQueueState.Disposed ),
-                        q.Listeners.Count.TestEquals( 0 ),
-                        q.Listeners.GetAll().TestEmpty() ) ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Listeners.GetAll().TestEmpty(),
+                    c.Queues.Count.TestEquals( 0 ),
+                    c.Queues.GetAll().TestEmpty() ) ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.State.TestEquals( MessageBrokerChannelState.Disposed ),
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Listeners.GetAll().TestEmpty() ) ),
+                queue.TestNotNull( q => Assertion.All(
+                    "queue",
+                    q.State.TestEquals( MessageBrokerQueueState.Disposed ),
+                    q.Listeners.Count.TestEquals( 0 ),
+                    q.Listeners.GetAll().TestEmpty() ) ),
                 binding.TestNotNull( s => s.State.TestEquals( MessageBrokerChannelListenerBindingState.Disposed ) ),
                 channelLogs.GetAll()
                     .Skip( 1 )
@@ -1596,14 +1552,13 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
 
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
-        await client.GetTask(
-            c =>
-            {
-                c.SendBindPublisherRequest( "c" );
-                c.ReadPublisherBoundResponse();
-                c.SendBindListenerRequest( "c", createChannelIfNotExists: false );
-                c.ReadListenerBoundResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendBindPublisherRequest( "c" );
+            c.ReadPublisherBoundResponse();
+            c.SendBindListenerRequest( "c", createChannelIfNotExists: false );
+            c.ReadListenerBoundResponse();
+        } );
 
         var remoteClient = server.Clients.TryGetById( 1 );
         var channel = server.Channels.TryGetById( 1 );
@@ -1615,29 +1570,26 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
 
         Assertion.All(
                 server.Channels.Count.TestEquals( 0 ),
-                remoteClient.TestNotNull(
-                    c => Assertion.All(
-                        "client",
-                        c.Publishers.Count.TestEquals( 0 ),
-                        c.Publishers.GetAll().TestEmpty(),
-                        c.Listeners.Count.TestEquals( 0 ),
-                        c.Listeners.GetAll().TestEmpty(),
-                        c.Queues.Count.TestEquals( 0 ),
-                        c.Queues.GetAll().TestEmpty() ) ),
-                channel.TestNotNull(
-                    c => Assertion.All(
-                        "channel",
-                        c.State.TestEquals( MessageBrokerChannelState.Disposed ),
-                        c.Publishers.Count.TestEquals( 0 ),
-                        c.Publishers.GetAll().TestEmpty(),
-                        c.Listeners.Count.TestEquals( 0 ),
-                        c.Listeners.GetAll().TestEmpty() ) ),
-                queue.TestNotNull(
-                    q => Assertion.All(
-                        "queue",
-                        q.State.TestEquals( MessageBrokerQueueState.Disposed ),
-                        q.Listeners.Count.TestEquals( 0 ),
-                        q.Listeners.GetAll().TestEmpty() ) ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Publishers.Count.TestEquals( 0 ),
+                    c.Publishers.GetAll().TestEmpty(),
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Listeners.GetAll().TestEmpty(),
+                    c.Queues.Count.TestEquals( 0 ),
+                    c.Queues.GetAll().TestEmpty() ) ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.State.TestEquals( MessageBrokerChannelState.Disposed ),
+                    c.Publishers.Count.TestEquals( 0 ),
+                    c.Publishers.GetAll().TestEmpty(),
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Listeners.GetAll().TestEmpty() ) ),
+                queue.TestNotNull( q => Assertion.All(
+                    "queue",
+                    q.State.TestEquals( MessageBrokerQueueState.Disposed ),
+                    q.Listeners.Count.TestEquals( 0 ),
+                    q.Listeners.GetAll().TestEmpty() ) ),
                 listenerBinding.TestNotNull( s => s.State.TestEquals( MessageBrokerChannelListenerBindingState.Disposed ) ),
                 publisherBinding.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Disposed ) ),
                 channelLogs.GetAll()
@@ -1709,21 +1661,19 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
 
         using var client1 = new ClientMock();
         await client1.EstablishHandshake( server );
-        await client1.GetTask(
-            c =>
-            {
-                c.SendBindPublisherRequest( "c" );
-                c.ReadPublisherBoundResponse();
-            } );
+        await client1.GetTask( c =>
+        {
+            c.SendBindPublisherRequest( "c" );
+            c.ReadPublisherBoundResponse();
+        } );
 
         using var client2 = new ClientMock();
         await client2.EstablishHandshake( server, "test2" );
-        await client2.GetTask(
-            c =>
-            {
-                c.SendBindListenerRequest( "c", createChannelIfNotExists: false );
-                c.ReadListenerBoundResponse();
-            } );
+        await client2.GetTask( c =>
+        {
+            c.SendBindListenerRequest( "c", createChannelIfNotExists: false );
+            c.ReadListenerBoundResponse();
+        } );
 
         var remoteClient1 = server.Clients.TryGetById( 1 );
         var remoteClient2 = server.Clients.TryGetById( 2 );
@@ -1736,32 +1686,28 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
 
         Assertion.All(
                 server.Channels.Count.TestEquals( 1 ),
-                remoteClient1.TestNotNull(
-                    c => Assertion.All(
-                        "client1",
-                        c.Publishers.Count.TestEquals( 1 ),
-                        c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( publisherBinding ) ] ) ) ),
-                remoteClient2.TestNotNull(
-                    c => Assertion.All(
-                        "client2",
-                        c.Listeners.Count.TestEquals( 0 ),
-                        c.Listeners.GetAll().TestEmpty(),
-                        c.Queues.Count.TestEquals( 0 ),
-                        c.Queues.GetAll().TestEmpty() ) ),
-                channel.TestNotNull(
-                    c => Assertion.All(
-                        "channel",
-                        c.State.TestEquals( MessageBrokerChannelState.Running ),
-                        c.Publishers.Count.TestEquals( 1 ),
-                        c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( publisherBinding ) ] ),
-                        c.Listeners.Count.TestEquals( 0 ),
-                        c.Listeners.GetAll().TestEmpty() ) ),
-                queue.TestNotNull(
-                    q => Assertion.All(
-                        "queue",
-                        q.State.TestEquals( MessageBrokerQueueState.Disposed ),
-                        q.Listeners.Count.TestEquals( 0 ),
-                        q.Listeners.GetAll().TestEmpty() ) ),
+                remoteClient1.TestNotNull( c => Assertion.All(
+                    "client1",
+                    c.Publishers.Count.TestEquals( 1 ),
+                    c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( publisherBinding ) ] ) ) ),
+                remoteClient2.TestNotNull( c => Assertion.All(
+                    "client2",
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Listeners.GetAll().TestEmpty(),
+                    c.Queues.Count.TestEquals( 0 ),
+                    c.Queues.GetAll().TestEmpty() ) ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.State.TestEquals( MessageBrokerChannelState.Running ),
+                    c.Publishers.Count.TestEquals( 1 ),
+                    c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( publisherBinding ) ] ),
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Listeners.GetAll().TestEmpty() ) ),
+                queue.TestNotNull( q => Assertion.All(
+                    "queue",
+                    q.State.TestEquals( MessageBrokerQueueState.Disposed ),
+                    q.Listeners.Count.TestEquals( 0 ),
+                    q.Listeners.GetAll().TestEmpty() ) ),
                 listenerBinding.TestNotNull( s => s.State.TestEquals( MessageBrokerChannelListenerBindingState.Disposed ) ),
                 channelLogs.GetAll()
                     .Skip( 2 )
@@ -1823,12 +1769,11 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
 
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
-        await client.GetTask(
-            c =>
-            {
-                c.SendBindListenerRequest( "c", createChannelIfNotExists: true );
-                c.ReadListenerBoundResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendBindListenerRequest( "c", createChannelIfNotExists: true );
+            c.ReadListenerBoundResponse();
+        } );
 
         var remoteClient = server.Clients.TryGetById( 1 );
         var channel = server.Channels.TryGetById( 1 );
@@ -1839,29 +1784,26 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
 
         Assertion.All(
                 server.Channels.Count.TestEquals( 0 ),
-                remoteClient.TestNotNull(
-                    c => Assertion.All(
-                        "client",
-                        c.Publishers.Count.TestEquals( 0 ),
-                        c.Publishers.GetAll().TestEmpty(),
-                        c.Listeners.Count.TestEquals( 0 ),
-                        c.Listeners.GetAll().TestEmpty(),
-                        c.Queues.Count.TestEquals( 0 ),
-                        c.Queues.GetAll().TestEmpty() ) ),
-                channel.TestNotNull(
-                    c => Assertion.All(
-                        "channel",
-                        c.State.TestEquals( MessageBrokerChannelState.Disposed ),
-                        c.Publishers.Count.TestEquals( 0 ),
-                        c.Publishers.GetAll().TestEmpty(),
-                        c.Listeners.Count.TestEquals( 0 ),
-                        c.Listeners.GetAll().TestEmpty() ) ),
-                queue.TestNotNull(
-                    q => Assertion.All(
-                        "queue",
-                        q.State.TestEquals( MessageBrokerQueueState.Disposed ),
-                        q.Listeners.Count.TestEquals( 0 ),
-                        q.Listeners.GetAll().TestEmpty() ) ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Publishers.Count.TestEquals( 0 ),
+                    c.Publishers.GetAll().TestEmpty(),
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Listeners.GetAll().TestEmpty(),
+                    c.Queues.Count.TestEquals( 0 ),
+                    c.Queues.GetAll().TestEmpty() ) ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.State.TestEquals( MessageBrokerChannelState.Disposed ),
+                    c.Publishers.Count.TestEquals( 0 ),
+                    c.Publishers.GetAll().TestEmpty(),
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Listeners.GetAll().TestEmpty() ) ),
+                queue.TestNotNull( q => Assertion.All(
+                    "queue",
+                    q.State.TestEquals( MessageBrokerQueueState.Disposed ),
+                    q.Listeners.Count.TestEquals( 0 ),
+                    q.Listeners.GetAll().TestEmpty() ) ),
                 binding.TestNotNull( s => s.State.TestEquals( MessageBrokerChannelListenerBindingState.Disposed ) ),
                 channelLogs.GetAll()
                     .Skip( 1 )
@@ -1924,21 +1866,19 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
 
         using var client1 = new ClientMock();
         await client1.EstablishHandshake( server );
-        await client1.GetTask(
-            c =>
-            {
-                c.SendBindListenerRequest( "c", createChannelIfNotExists: true );
-                c.ReadListenerBoundResponse();
-            } );
+        await client1.GetTask( c =>
+        {
+            c.SendBindListenerRequest( "c", createChannelIfNotExists: true );
+            c.ReadListenerBoundResponse();
+        } );
 
         using var client2 = new ClientMock();
         await client2.EstablishHandshake( server, "test2" );
-        await client2.GetTask(
-            c =>
-            {
-                c.SendBindListenerRequest( "c", createChannelIfNotExists: false );
-                c.ReadListenerBoundResponse();
-            } );
+        await client2.GetTask( c =>
+        {
+            c.SendBindListenerRequest( "c", createChannelIfNotExists: false );
+            c.ReadListenerBoundResponse();
+        } );
 
         var remoteClient1 = server.Clients.TryGetById( 1 );
         var remoteClient2 = server.Clients.TryGetById( 2 );
@@ -1952,40 +1892,35 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
 
         Assertion.All(
                 server.Channels.Count.TestEquals( 1 ),
-                remoteClient1.TestNotNull(
-                    c => Assertion.All(
-                        "client1",
-                        c.Listeners.Count.TestEquals( 1 ),
-                        c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding1 ) ] ),
-                        c.Queues.Count.TestEquals( 1 ),
-                        c.Queues.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( queue1 ) ] ) ) ),
-                remoteClient2.TestNotNull(
-                    c => Assertion.All(
-                        "client2",
-                        c.Listeners.Count.TestEquals( 0 ),
-                        c.Listeners.GetAll().TestEmpty(),
-                        c.Queues.Count.TestEquals( 0 ),
-                        c.Queues.GetAll().TestEmpty() ) ),
-                channel.TestNotNull(
-                    c => Assertion.All(
-                        "channel",
-                        c.State.TestEquals( MessageBrokerChannelState.Running ),
-                        c.Listeners.Count.TestEquals( 1 ),
-                        c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding1 ) ] ),
-                        c.Listeners.TryGetByClientId( 1 ).TestRefEquals( binding1 ),
-                        c.Listeners.TryGetByClientId( 2 ).TestNull() ) ),
-                queue1.TestNotNull(
-                    q => Assertion.All(
-                        "queue1",
-                        q.State.TestEquals( MessageBrokerQueueState.Running ),
-                        q.Listeners.Count.TestEquals( 1 ),
-                        q.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding1 ) ] ) ) ),
-                queue2.TestNotNull(
-                    q => Assertion.All(
-                        "queue2",
-                        q.State.TestEquals( MessageBrokerQueueState.Disposed ),
-                        q.Listeners.Count.TestEquals( 0 ),
-                        q.Listeners.GetAll().TestEmpty() ) ),
+                remoteClient1.TestNotNull( c => Assertion.All(
+                    "client1",
+                    c.Listeners.Count.TestEquals( 1 ),
+                    c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding1 ) ] ),
+                    c.Queues.Count.TestEquals( 1 ),
+                    c.Queues.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( queue1 ) ] ) ) ),
+                remoteClient2.TestNotNull( c => Assertion.All(
+                    "client2",
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Listeners.GetAll().TestEmpty(),
+                    c.Queues.Count.TestEquals( 0 ),
+                    c.Queues.GetAll().TestEmpty() ) ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.State.TestEquals( MessageBrokerChannelState.Running ),
+                    c.Listeners.Count.TestEquals( 1 ),
+                    c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding1 ) ] ),
+                    c.Listeners.TryGetByClientId( 1 ).TestRefEquals( binding1 ),
+                    c.Listeners.TryGetByClientId( 2 ).TestNull() ) ),
+                queue1.TestNotNull( q => Assertion.All(
+                    "queue1",
+                    q.State.TestEquals( MessageBrokerQueueState.Running ),
+                    q.Listeners.Count.TestEquals( 1 ),
+                    q.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding1 ) ] ) ) ),
+                queue2.TestNotNull( q => Assertion.All(
+                    "queue2",
+                    q.State.TestEquals( MessageBrokerQueueState.Disposed ),
+                    q.Listeners.Count.TestEquals( 0 ),
+                    q.Listeners.GetAll().TestEmpty() ) ),
                 binding1.TestNotNull( s => s.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ) ),
                 binding2.TestNotNull( s => s.State.TestEquals( MessageBrokerChannelListenerBindingState.Disposed ) ),
                 channelLogs.GetAll()
@@ -2040,14 +1975,13 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindListener )
-                                    endSource.Complete();
-                            } ) ) )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindListener )
+                                endSource.Complete();
+                        } ) ) )
                 .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
                 .SetQueueLoggerFactory( _ => queueLogs.GetLogger() ) );
 
@@ -2055,47 +1989,42 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
 
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
-        await client.GetTask(
-            c =>
-            {
-                c.SendBindListenerRequest( "c", createChannelIfNotExists: true );
-                c.ReadListenerBoundResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendBindListenerRequest( "c", createChannelIfNotExists: true );
+            c.ReadListenerBoundResponse();
+        } );
 
         var remoteClient = server.Clients.TryGetById( 1 );
         var channel = server.Channels.TryGetByName( "c" );
         var binding = channel?.Listeners.TryGetByClientId( 1 );
         var queue = binding?.Queue;
-        await client.GetTask(
-            c =>
-            {
-                c.SendUnbindListenerRequest( 1 );
-                c.ReadListenerUnboundResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendUnbindListenerRequest( 1 );
+            c.ReadListenerUnboundResponse();
+        } );
 
         await endSource.Task;
 
         Assertion.All(
-                channel.TestNotNull(
-                    c => Assertion.All(
-                        "channel",
-                        c.State.TestEquals( MessageBrokerChannelState.Disposed ),
-                        c.Listeners.Count.TestEquals( 0 ),
-                        c.Listeners.GetAll().TestEmpty() ) ),
-                remoteClient.TestNotNull(
-                    c => Assertion.All(
-                        "client",
-                        c.Listeners.Count.TestEquals( 0 ),
-                        c.Listeners.GetAll().TestEmpty(),
-                        c.Queues.Count.TestEquals( 0 ),
-                        c.Queues.GetAll().TestEmpty() ) ),
-                queue.TestNotNull(
-                    q =>
-                        Assertion.All(
-                            "queue",
-                            q.State.TestEquals( MessageBrokerQueueState.Disposed ),
-                            q.Listeners.Count.TestEquals( 0 ),
-                            q.Listeners.GetAll().TestEmpty() ) ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.State.TestEquals( MessageBrokerChannelState.Disposed ),
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Listeners.GetAll().TestEmpty() ) ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Listeners.GetAll().TestEmpty(),
+                    c.Queues.Count.TestEquals( 0 ),
+                    c.Queues.GetAll().TestEmpty() ) ),
+                queue.TestNotNull( q =>
+                    Assertion.All(
+                        "queue",
+                        q.State.TestEquals( MessageBrokerQueueState.Disposed ),
+                        q.Listeners.Count.TestEquals( 0 ),
+                        q.Listeners.GetAll().TestEmpty() ) ),
                 binding.TestNotNull( s => s.State.TestEquals( MessageBrokerChannelListenerBindingState.Disposed ) ),
                 server.Channels.Count.TestEquals( 0 ),
                 server.Channels.GetAll().TestEmpty(),
@@ -2164,16 +2093,15 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    c => c.Id == 2
-                        ? clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindListener )
-                                        endSource.Complete();
-                                } ) )
-                        : null )
+                .SetClientLoggerFactory( c => c.Id == 2
+                    ? clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindListener )
+                                    endSource.Complete();
+                            } ) )
+                    : null )
                 .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
                 .SetQueueLoggerFactory( q => q.Client.Id == 2 ? queueLogs.GetLogger() : null ) );
 
@@ -2181,21 +2109,19 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
 
         using var client1 = new ClientMock();
         await client1.EstablishHandshake( server );
-        await client1.GetTask(
-            c =>
-            {
-                c.SendBindListenerRequest( "c", createChannelIfNotExists: true );
-                c.ReadListenerBoundResponse();
-            } );
+        await client1.GetTask( c =>
+        {
+            c.SendBindListenerRequest( "c", createChannelIfNotExists: true );
+            c.ReadListenerBoundResponse();
+        } );
 
         using var client2 = new ClientMock();
         await client2.EstablishHandshake( server, "test2" );
-        await client2.GetTask(
-            c =>
-            {
-                c.SendBindListenerRequest( "c", createChannelIfNotExists: false );
-                c.ReadListenerBoundResponse();
-            } );
+        await client2.GetTask( c =>
+        {
+            c.SendBindListenerRequest( "c", createChannelIfNotExists: false );
+            c.ReadListenerBoundResponse();
+        } );
 
         var remoteClient1 = server.Clients.TryGetById( 1 );
         var remoteClient2 = server.Clients.TryGetById( 2 );
@@ -2205,42 +2131,38 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
         var queue1 = binding1?.Queue;
         var queue2 = binding2?.Queue;
 
-        await client2.GetTask(
-            c =>
-            {
-                c.SendUnbindListenerRequest( 1 );
-                c.ReadListenerUnboundResponse();
-            } );
+        await client2.GetTask( c =>
+        {
+            c.SendUnbindListenerRequest( 1 );
+            c.ReadListenerUnboundResponse();
+        } );
 
         await endSource.Task;
 
         Assertion.All(
-                channel.TestNotNull(
-                    c => Assertion.All(
-                        "channel",
-                        c.Server.TestRefEquals( server ),
-                        c.Id.TestEquals( 1 ),
-                        c.Name.TestEquals( "c" ),
-                        c.State.TestEquals( MessageBrokerChannelState.Running ),
-                        c.Listeners.Count.TestEquals( 1 ),
-                        c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding1 ) ] ),
-                        c.Listeners.TryGetByClientId( 1 ).TestRefEquals( binding1 ),
-                        c.Listeners.TryGetByClientId( 2 ).TestNull() ) ),
-                remoteClient1.TestNotNull(
-                    c => Assertion.All(
-                        "client1",
-                        c.Listeners.Count.TestEquals( 1 ),
-                        c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding1 ) ] ),
-                        c.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding1 ),
-                        c.Queues.Count.TestEquals( 1 ),
-                        c.Queues.GetAll().TestSequence( [ (q, _) => q.TestRefEquals( queue1 ) ] ) ) ),
-                remoteClient2.TestNotNull(
-                    c => Assertion.All(
-                        "client2",
-                        c.Listeners.Count.TestEquals( 0 ),
-                        c.Listeners.GetAll().TestEmpty(),
-                        c.Queues.Count.TestEquals( 0 ),
-                        c.Queues.GetAll().TestEmpty() ) ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.Server.TestRefEquals( server ),
+                    c.Id.TestEquals( 1 ),
+                    c.Name.TestEquals( "c" ),
+                    c.State.TestEquals( MessageBrokerChannelState.Running ),
+                    c.Listeners.Count.TestEquals( 1 ),
+                    c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding1 ) ] ),
+                    c.Listeners.TryGetByClientId( 1 ).TestRefEquals( binding1 ),
+                    c.Listeners.TryGetByClientId( 2 ).TestNull() ) ),
+                remoteClient1.TestNotNull( c => Assertion.All(
+                    "client1",
+                    c.Listeners.Count.TestEquals( 1 ),
+                    c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding1 ) ] ),
+                    c.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding1 ),
+                    c.Queues.Count.TestEquals( 1 ),
+                    c.Queues.GetAll().TestSequence( [ (q, _) => q.TestRefEquals( queue1 ) ] ) ) ),
+                remoteClient2.TestNotNull( c => Assertion.All(
+                    "client2",
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Listeners.GetAll().TestEmpty(),
+                    c.Queues.Count.TestEquals( 0 ),
+                    c.Queues.GetAll().TestEmpty() ) ),
                 queue1.TestNotNull( q => q.State.TestEquals( MessageBrokerQueueState.Running ) ),
                 queue2.TestNotNull( q => q.State.TestEquals( MessageBrokerQueueState.Disposed ) ),
                 binding1.TestNotNull( s => s.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ) ),
@@ -2311,14 +2233,13 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindListener )
-                                    endSource.Complete();
-                            } ) ) )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindListener )
+                                endSource.Complete();
+                        } ) ) )
                 .SetChannelLoggerFactory( c => c.Id == 1 ? channelLogs.GetLogger() : null )
                 .SetQueueLoggerFactory( _ => queueLogs.GetLogger() ) );
 
@@ -2326,44 +2247,40 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
 
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
-        await client.GetTask(
-            c =>
-            {
-                c.SendBindListenerRequest( "c", createChannelIfNotExists: true );
-                c.ReadListenerBoundResponse();
-                c.SendBindListenerRequest( "d", createChannelIfNotExists: true, queueName: "c" );
-                c.ReadListenerBoundResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendBindListenerRequest( "c", createChannelIfNotExists: true );
+            c.ReadListenerBoundResponse();
+            c.SendBindListenerRequest( "d", createChannelIfNotExists: true, queueName: "c" );
+            c.ReadListenerBoundResponse();
+        } );
 
         var remoteClient = server.Clients.TryGetById( 1 );
         var binding1 = remoteClient?.Listeners.TryGetByChannelId( 1 );
         var binding2 = remoteClient?.Listeners.TryGetByChannelId( 2 );
         var queue1 = binding1?.Queue;
         var queue2 = binding2?.Queue;
-        await client.GetTask(
-            c =>
-            {
-                c.SendUnbindListenerRequest( 1 );
-                c.ReadListenerUnboundResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendUnbindListenerRequest( 1 );
+            c.ReadListenerUnboundResponse();
+        } );
 
         await endSource.Task;
 
         Assertion.All(
                 queue1.TestRefEquals( queue2 ),
-                remoteClient.TestNotNull(
-                    c => Assertion.All(
-                        "client",
-                        c.Listeners.Count.TestEquals( 1 ),
-                        c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding2 ) ] ),
-                        c.Queues.Count.TestEquals( 1 ),
-                        c.Queues.GetAll().TestSequence( [ (q, _) => q.TestRefEquals( queue1 ) ] ) ) ),
-                queue1.TestNotNull(
-                    q => Assertion.All(
-                        "queue",
-                        q.State.TestEquals( MessageBrokerQueueState.Running ),
-                        q.Listeners.Count.TestEquals( 1 ),
-                        q.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding2 ) ] ) ) ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Listeners.Count.TestEquals( 1 ),
+                    c.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding2 ) ] ),
+                    c.Queues.Count.TestEquals( 1 ),
+                    c.Queues.GetAll().TestSequence( [ (q, _) => q.TestRefEquals( queue1 ) ] ) ) ),
+                queue1.TestNotNull( q => Assertion.All(
+                    "queue",
+                    q.State.TestEquals( MessageBrokerQueueState.Running ),
+                    q.Listeners.Count.TestEquals( 1 ),
+                    q.Listeners.GetAll().TestSequence( [ (s, _) => s.TestRefEquals( binding2 ) ] ) ) ),
                 binding1.TestNotNull( s => s.State.TestEquals( MessageBrokerChannelListenerBindingState.Disposed ) ),
                 binding2.TestNotNull( s => s.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ) ),
                 server.Channels.Count.TestEquals( 1 ),
@@ -2430,14 +2347,13 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindListener )
-                                    endSource.Complete();
-                            } ) ) )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindListener )
+                                endSource.Complete();
+                        } ) ) )
                 .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
                 .SetQueueLoggerFactory( _ => queueLogs.GetLogger() ) );
 
@@ -2445,53 +2361,48 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
 
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
-        await client.GetTask(
-            c =>
-            {
-                c.SendBindPublisherRequest( "c" );
-                c.ReadPublisherBoundResponse();
-                c.SendBindListenerRequest( "c", createChannelIfNotExists: false );
-                c.ReadListenerBoundResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendBindPublisherRequest( "c" );
+            c.ReadPublisherBoundResponse();
+            c.SendBindListenerRequest( "c", createChannelIfNotExists: false );
+            c.ReadListenerBoundResponse();
+        } );
 
         var remoteClient = server.Clients.TryGetById( 1 );
         var channel = server.Channels.TryGetByName( "c" );
         var publisherBinding = channel?.Publishers.TryGetByClientId( 1 );
         var listenerBinding = channel?.Listeners.TryGetByClientId( 1 );
         var queue = listenerBinding?.Queue;
-        await client.GetTask(
-            c =>
-            {
-                c.SendUnbindListenerRequest( 1 );
-                c.ReadListenerUnboundResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendUnbindListenerRequest( 1 );
+            c.ReadListenerUnboundResponse();
+        } );
 
         await endSource.Task;
 
         Assertion.All(
-                channel.TestNotNull(
-                    c => Assertion.All(
-                        "channel",
-                        c.State.TestEquals( MessageBrokerChannelState.Running ),
-                        c.Publishers.Count.TestEquals( 1 ),
-                        c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( publisherBinding ) ] ),
-                        c.Listeners.Count.TestEquals( 0 ),
-                        c.Listeners.GetAll().TestEmpty() ) ),
-                remoteClient.TestNotNull(
-                    c => Assertion.All(
-                        "client",
-                        c.Publishers.Count.TestEquals( 1 ),
-                        c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( publisherBinding ) ] ),
-                        c.Listeners.Count.TestEquals( 0 ),
-                        c.Listeners.GetAll().TestEmpty(),
-                        c.Queues.Count.TestEquals( 0 ),
-                        c.Queues.GetAll().TestEmpty() ) ),
-                queue.TestNotNull(
-                    q => Assertion.All(
-                        "queue",
-                        q.State.TestEquals( MessageBrokerQueueState.Disposed ),
-                        q.Listeners.Count.TestEquals( 0 ),
-                        q.Listeners.GetAll().TestEmpty() ) ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.State.TestEquals( MessageBrokerChannelState.Running ),
+                    c.Publishers.Count.TestEquals( 1 ),
+                    c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( publisherBinding ) ] ),
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Listeners.GetAll().TestEmpty() ) ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Publishers.Count.TestEquals( 1 ),
+                    c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( publisherBinding ) ] ),
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Listeners.GetAll().TestEmpty(),
+                    c.Queues.Count.TestEquals( 0 ),
+                    c.Queues.GetAll().TestEmpty() ) ),
+                queue.TestNotNull( q => Assertion.All(
+                    "queue",
+                    q.State.TestEquals( MessageBrokerQueueState.Disposed ),
+                    q.Listeners.Count.TestEquals( 0 ),
+                    q.Listeners.GetAll().TestEmpty() ) ),
                 listenerBinding.TestNotNull( s => s.State.TestEquals( MessageBrokerChannelListenerBindingState.Disposed ) ),
                 publisherBinding.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Running ) ),
                 server.Channels.Count.TestEquals( 1 ),
@@ -2557,26 +2468,24 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindListener )
-                                    endSource.Complete();
-                            } ) ) )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindListener )
+                                endSource.Complete();
+                        } ) ) )
                 .SetChannelLoggerFactory( _ => channelLogs.GetLogger() ) );
 
         await server.StartAsync();
 
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
-        await client.GetTask(
-            c =>
-            {
-                c.SendBindListenerRequest( "c", createChannelIfNotExists: true );
-                c.ReadListenerBoundResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendBindListenerRequest( "c", createChannelIfNotExists: true );
+            c.ReadListenerBoundResponse();
+        } );
 
         var remoteClient = server.Clients.TryGetById( 1 );
         var channel = server.Channels.TryGetByName( "c" );
@@ -2644,27 +2553,25 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindListener )
-                                    endSource.Complete();
-                            } ) ) ) );
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindListener )
+                                endSource.Complete();
+                        } ) ) ) );
 
         await server.StartAsync();
 
         using var client = new ClientMock();
         await client.EstablishHandshake( server );
         var remoteClient = server.Clients.TryGetById( 1 );
-        await client.GetTask(
-            c =>
-            {
-                c.SendBindListenerRequest( "c", createChannelIfNotExists: true );
-                c.ReadListenerBoundResponse();
-                c.SendUnbindListenerRequest( 0 );
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendBindListenerRequest( "c", createChannelIfNotExists: true );
+            c.ReadListenerBoundResponse();
+            c.SendUnbindListenerRequest( 0 );
+        } );
 
         await endSource.Task;
 
@@ -2712,15 +2619,14 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    _ => clientLogs.GetLogger(
-                        MessageBrokerRemoteClientLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindListener )
-                                    endSource.Complete();
-                            },
-                            error: e => exception = e.Exception ) ) ) );
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindListener )
+                                endSource.Complete();
+                        },
+                        error: e => exception = e.Exception ) ) ) );
 
         await server.StartAsync();
 
@@ -2728,19 +2634,19 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
         await client.EstablishHandshake( server );
 
         var remoteClient = server.Clients.TryGetById( 1 );
-        await client.GetTask(
-            c =>
-            {
-                c.SendUnbindListenerRequest( 1 );
-                c.ReadUnbindListenerFailureResponse();
-            } );
+        await client.GetTask( c =>
+        {
+            c.SendUnbindListenerRequest( 1 );
+            c.ReadUnbindListenerFailureResponse();
+        } );
 
         await endSource.Task;
 
         Assertion.All(
                 exception.TestType()
-                    .Exact<MessageBrokerChannelListenerBindingException>(
-                        exc => Assertion.All( exc.Client.TestRefEquals( remoteClient ), exc.Listener.TestNull() ) ),
+                    .Exact<MessageBrokerChannelListenerBindingException>( exc => Assertion.All(
+                        exc.Client.TestRefEquals( remoteClient ),
+                        exc.Listener.TestNull() ) ),
                 remoteClient.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Running ) ),
                 server.Clients.Count.TestEquals( 1 ),
                 server.Clients.GetAll().TestSequence( [ (c, _) => c.TestRefEquals( remoteClient ) ] ),
@@ -2782,37 +2688,34 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
             MessageBrokerServerOptions.Default
                 .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
-                .SetClientLoggerFactory(
-                    c => c.Id == 2
-                        ? clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindListener )
-                                        endSource.Complete();
-                                },
-                                error: e => exception = e.Exception ) )
-                        : null ) );
+                .SetClientLoggerFactory( c => c.Id == 2
+                    ? clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindListener )
+                                    endSource.Complete();
+                            },
+                            error: e => exception = e.Exception ) )
+                    : null ) );
 
         await server.StartAsync();
 
         using var client1 = new ClientMock();
         await client1.EstablishHandshake( server );
-        await client1.GetTask(
-            c =>
-            {
-                c.SendBindListenerRequest( "c", createChannelIfNotExists: true );
-                c.ReadListenerBoundResponse();
-            } );
+        await client1.GetTask( c =>
+        {
+            c.SendBindListenerRequest( "c", createChannelIfNotExists: true );
+            c.ReadListenerBoundResponse();
+        } );
 
         using var client2 = new ClientMock();
         await client2.EstablishHandshake( server, "test2" );
-        await client2.GetTask(
-            c =>
-            {
-                c.SendUnbindListenerRequest( 1 );
-                c.ReadUnbindListenerFailureResponse();
-            } );
+        await client2.GetTask( c =>
+        {
+            c.SendUnbindListenerRequest( 1 );
+            c.ReadUnbindListenerFailureResponse();
+        } );
 
         await endSource.Task;
 
@@ -2822,15 +2725,15 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
 
         Assertion.All(
                 exception.TestType()
-                    .Exact<MessageBrokerChannelListenerBindingException>(
-                        exc => Assertion.All( exc.Client.TestRefEquals( remoteClient2 ), exc.Listener.TestNull() ) ),
+                    .Exact<MessageBrokerChannelListenerBindingException>( exc => Assertion.All(
+                        exc.Client.TestRefEquals( remoteClient2 ),
+                        exc.Listener.TestNull() ) ),
                 remoteClient1.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Running ) ),
                 remoteClient2.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Running ) ),
-                channel.TestNotNull(
-                    c => Assertion.All(
-                        "channel",
-                        c.State.TestEquals( MessageBrokerChannelState.Running ),
-                        c.Listeners.Count.TestEquals( 1 ) ) ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.State.TestEquals( MessageBrokerChannelState.Running ),
+                    c.Listeners.Count.TestEquals( 1 ) ) ),
                 server.Clients.Count.TestEquals( 2 ),
                 server.Clients.GetAll().TestSetEqual( [ remoteClient1, remoteClient2 ] ),
                 server.Channels.Count.TestEquals( 1 ),
@@ -2859,6 +2762,57 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                         "[AwaitPacket] Client = [2] 'test2'",
                         "[AwaitPacket] Client = [2] 'test2', Packet = (UnbindListenerRequest, Length = 9)"
                     ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task Unbind_ShouldUnbindNonEphemeralListener()
+    {
+        using var storage = StorageScope.Create();
+
+        var endSource = new SafeTaskCompletionSource();
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetRootStoragePath( storage.Path )
+                .SetClientLoggerFactory( _ => MessageBrokerRemoteClientLogger.Create(
+                    traceEnd: e =>
+                    {
+                        if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindListener )
+                            endSource.Complete();
+                    } ) ) );
+
+        await server.StartAsync();
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server, isEphemeral: false );
+        await client.GetTask( c =>
+        {
+            c.SendBindListenerRequest( "c", true, isEphemeral: false );
+            c.ReadListenerBoundResponse();
+        } );
+
+        var remoteClient = server.Clients.TryGetById( 1 );
+        var binding = remoteClient?.Listeners.TryGetByChannelId( 1 );
+        await client.GetTask( c =>
+        {
+            c.SendUnbindListenerRequest( 1 );
+            c.ReadListenerUnboundResponse();
+        } );
+
+        await endSource.Task;
+
+        Assertion.All(
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Listeners.GetAll().TestEmpty() ) ),
+                binding.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelListenerBindingState.Disposed ) ),
+                storage.FileExists( StorageScope.GetListenerMetadataSubpath( clientId: 1, channelId: 1 ) ).TestFalse(),
+                storage.FileExists( StorageScope.GetQueueMetadataSubpath( clientId: 1, queueId: 1 ) ).TestFalse(),
+                storage.FileExists( StorageScope.GetChannelMetadataSubpath( channelId: 1 ) ).TestFalse() )
             .Go();
     }
 }

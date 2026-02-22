@@ -37,7 +37,7 @@ namespace LfrlAnvil.MessageBroker.Server;
 
 // TODO: NEXT
 // x add to do comments to define what tests to add...
-// - then, write tests
+// x then, write tests
 // - then, add client reconnect
 // - then, add tests for that
 // - then, add client delete method
@@ -314,6 +314,10 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
 
             @continue = true;
         }
+        catch ( MessageBrokerServerStorageException exc )
+        {
+            return exc;
+        }
         finally
         {
             if ( ! @continue && storageLock is not null )
@@ -348,8 +352,8 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
                 if ( Storage.ServerRootDir is not null )
                 {
                     // TODO: tests
-                    // - non-ephemeral, save and load a bunch of correct data (one test, happy path)
-                    // - also, do the same in core tests
+                    // - happy path core test
+                    //   might wait for client reconnect to be implemented to test immediate unacked messages redelivery in one go
 
                     if ( Logger.StorageLoading is { } storageLoading )
                         storageLoading.Emit( MessageBrokerServerStorageLoadingEvent.Create( this, traceId, Storage.ServerRootDir ) );

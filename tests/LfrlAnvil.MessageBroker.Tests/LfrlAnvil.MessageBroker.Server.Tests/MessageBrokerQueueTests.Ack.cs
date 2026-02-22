@@ -35,33 +35,30 @@ public partial class MessageBrokerQueueTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.Ack )
-                                        endSource.Complete();
-                                } ) ) )
-                    .SetQueueLoggerFactory(
-                        _ => queueLogs.GetLogger(
-                            MessageBrokerQueueLogger.Create( ackProcessed: e => messageRemoved.Value = e.MessageRemoved ) ) ) );
+                    .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.Ack )
+                                    endSource.Complete();
+                            } ) ) )
+                    .SetQueueLoggerFactory( _ => queueLogs.GetLogger(
+                        MessageBrokerQueueLogger.Create( ackProcessed: e => messageRemoved.Value = e.MessageRemoved ) ) ) );
 
             await server.StartAsync();
 
             var minPushedAt = TimestampProvider.Shared.GetNow();
             using var client = new ClientMock();
             await client.EstablishHandshake( server );
-            await client.GetTask(
-                c =>
-                {
-                    c.SendBindPublisherRequest( "c" );
-                    c.ReadPublisherBoundResponse();
-                    c.SendBindListenerRequest( "c", false, minAckTimeout: Duration.FromMinutes( 10 ) );
-                    c.ReadListenerBoundResponse();
-                    c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
-                    c.ReadMessageNotification( 3 );
-                } );
+            await client.GetTask( c =>
+            {
+                c.SendBindPublisherRequest( "c" );
+                c.ReadPublisherBoundResponse();
+                c.SendBindListenerRequest( "c", false, minAckTimeout: Duration.FromMinutes( 10 ) );
+                c.ReadListenerBoundResponse();
+                c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
+                c.ReadMessageNotification( 3 );
+            } );
 
             var remoteClient = server.Clients.TryGetById( 1 );
             var stream = server.Streams.TryGetById( 1 );
@@ -79,41 +76,38 @@ public partial class MessageBrokerQueueTests
 
             Assertion.All(
                     stream.TestNotNull( s => s.Messages.Count.TestEquals( 0 ) ),
-                    queue.TestNotNull(
-                        q => Assertion.All(
-                            "queue",
-                            q.Messages.Unacked.Count.TestEquals( 0 ),
-                            q.Messages.Retries.Count.TestEquals( 0 ),
-                            q.Messages.DeadLetter.Count.TestEquals( 0 ) ) ),
+                    queue.TestNotNull( q => Assertion.All(
+                        "queue",
+                        q.Messages.Unacked.Count.TestEquals( 0 ),
+                        q.Messages.Retries.Count.TestEquals( 0 ),
+                        q.Messages.DeadLetter.Count.TestEquals( 0 ) ) ),
                     messageCount.TestEquals( 1 ),
                     pendingCount.TestEquals( 0 ),
                     unackedCount.TestEquals( 1 ),
-                    message.TestNotNull(
-                        m => Assertion.All(
-                            "message",
+                    message.TestNotNull( m => Assertion.All(
+                        "message",
+                        m.Publisher.TestRefEquals( publisher ),
+                        m.Length.TestEquals( MemorySize.FromBytes( 3 ) ),
+                        m.Id.TestEquals( 0UL ),
+                        m.PushedAt.TestGreaterThanOrEqualTo( minPushedAt ),
+                        m.StoreKey.TestEquals( 0 ),
+                        m.RefCount.TestInRange( 1, 2 ),
+                        m.ToString()
+                            .TestEquals(
+                                $"Publisher = ([1] 'test' => [1] 'c' publisher binding (using [1] 'c' stream) (Running)), Length = 3 B, Id = 0, PushedAt = {m.PushedAt}, StoreKey = 0, RefCount = {m.RefCount}" ) ) ),
+                    unackedMessage.TestNotNull( m =>
+                        Assertion.All(
+                            "unackedMessage",
                             m.Publisher.TestRefEquals( publisher ),
-                            m.Length.TestEquals( MemorySize.FromBytes( 3 ) ),
-                            m.Id.TestEquals( 0UL ),
-                            m.PushedAt.TestGreaterThanOrEqualTo( minPushedAt ),
+                            m.Listener.TestRefEquals( listener ),
                             m.StoreKey.TestEquals( 0 ),
-                            m.RefCount.TestInRange( 1, 2 ),
+                            m.MessageId.TestEquals( 0UL ),
+                            m.Retry.TestEquals( 0 ),
+                            m.Redelivery.TestEquals( 0 ),
+                            m.ExpiresAt.TestGreaterThanOrEqualTo( minPushedAt + listener?.MinAckTimeout ?? Timestamp.Zero ),
                             m.ToString()
                                 .TestEquals(
-                                    $"Publisher = ([1] 'test' => [1] 'c' publisher binding (using [1] 'c' stream) (Running)), Length = 3 B, Id = 0, PushedAt = {m.PushedAt}, StoreKey = 0, RefCount = {m.RefCount}" ) ) ),
-                    unackedMessage.TestNotNull(
-                        m =>
-                            Assertion.All(
-                                "unackedMessage",
-                                m.Publisher.TestRefEquals( publisher ),
-                                m.Listener.TestRefEquals( listener ),
-                                m.StoreKey.TestEquals( 0 ),
-                                m.MessageId.TestEquals( 0UL ),
-                                m.Retry.TestEquals( 0 ),
-                                m.Redelivery.TestEquals( 0 ),
-                                m.ExpiresAt.TestGreaterThanOrEqualTo( minPushedAt + listener?.MinAckTimeout ?? Timestamp.Zero ),
-                                m.ToString()
-                                    .TestEquals(
-                                        $"Publisher = ([1] 'test' => [1] 'c' publisher binding (using [1] 'c' stream) (Running)), Listener = ([1] 'test' => [1] 'c' listener binding (using [1] 'c' queue) (Running)), StoreKey = 0, MessageId = 0, Retry = 0, Redelivery = 0, ExpiresAt = {m.ExpiresAt}" ) ) ),
+                                    $"Publisher = ([1] 'test' => [1] 'c' publisher binding (using [1] 'c' stream) (Running)), Listener = ([1] 'test' => [1] 'c' listener binding (using [1] 'c' queue) (Running)), StoreKey = 0, MessageId = 0, Retry = 0, Redelivery = 0, ExpiresAt = {m.ExpiresAt}" ) ) ),
                     clientLogs.GetAll()
                         .Skip( 5 )
                         .TestSequence(
@@ -157,47 +151,44 @@ public partial class MessageBrokerQueueTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.Ack )
-                                        endSource.Complete();
-                                } ) ) )
-                    .SetQueueLoggerFactory(
-                        _ => queueLogs.GetLogger(
-                            MessageBrokerQueueLogger.Create(
-                                traceStart: e =>
-                                {
-                                    if ( e.Type == MessageBrokerQueueTraceEventType.Ack )
-                                        firstAckTraceStarted.Value = true;
-                                },
-                                clientTrace: e =>
-                                {
-                                    if ( firstAckTraceStarted.Value )
-                                        clientTraceIdsByQueueTraceId[e.Source.TraceId] = e.ClientTraceId;
-                                },
-                                ackProcessed: e => messageRemovedByQueueTraceId[e.Source.TraceId] = e.MessageRemoved ) ) ) );
+                    .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.Ack )
+                                    endSource.Complete();
+                            } ) ) )
+                    .SetQueueLoggerFactory( _ => queueLogs.GetLogger(
+                        MessageBrokerQueueLogger.Create(
+                            traceStart: e =>
+                            {
+                                if ( e.Type == MessageBrokerQueueTraceEventType.Ack )
+                                    firstAckTraceStarted.Value = true;
+                            },
+                            clientTrace: e =>
+                            {
+                                if ( firstAckTraceStarted.Value )
+                                    clientTraceIdsByQueueTraceId[e.Source.TraceId] = e.ClientTraceId;
+                            },
+                            ackProcessed: e => messageRemovedByQueueTraceId[e.Source.TraceId] = e.MessageRemoved ) ) ) );
 
             await server.StartAsync();
 
             using var client = new ClientMock();
             await client.EstablishHandshake( server );
-            await client.GetTask(
-                c =>
-                {
-                    c.SendBindPublisherRequest( "c" );
-                    c.ReadPublisherBoundResponse();
-                    c.SendBindListenerRequest( "c", false, minAckTimeout: Duration.FromMinutes( 10 ) );
-                    c.ReadListenerBoundResponse();
-                    c.SendPushMessage( 1, [ 1, 2 ], confirm: false );
-                    c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
-                    c.ReadMessageNotification( 2 );
-                    c.SendMessageNotificationAck( 1, 1, 1, 0 );
-                    c.ReadMessageNotification( 3 );
-                    c.SendMessageNotificationAck( 1, 1, 1, 1 );
-                } );
+            await client.GetTask( c =>
+            {
+                c.SendBindPublisherRequest( "c" );
+                c.ReadPublisherBoundResponse();
+                c.SendBindListenerRequest( "c", false, minAckTimeout: Duration.FromMinutes( 10 ) );
+                c.ReadListenerBoundResponse();
+                c.SendPushMessage( 1, [ 1, 2 ], confirm: false );
+                c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
+                c.ReadMessageNotification( 2 );
+                c.SendMessageNotificationAck( 1, 1, 1, 0 );
+                c.ReadMessageNotification( 3 );
+                c.SendMessageNotificationAck( 1, 1, 1, 1 );
+            } );
 
             await endSource.Task;
 
@@ -260,52 +251,48 @@ public partial class MessageBrokerQueueTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => MessageBrokerRemoteClientLogger.Create(
-                            traceStart: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.Ack )
-                                    ackContinuation.Task.Wait();
-                            },
+                    .SetClientLoggerFactory( _ => MessageBrokerRemoteClientLogger.Create(
+                        traceStart: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.Ack )
+                                ackContinuation.Task.Wait();
+                        },
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.Ack )
+                                endSource.Complete();
+                            else if ( e.Type is MessageBrokerRemoteClientTraceEventType.UnbindListener
+                                or MessageBrokerRemoteClientTraceEventType.UnbindPublisher )
+                                ackContinuation.Complete();
+                        } ) )
+                    .SetQueueLoggerFactory( _ => queueLogs.GetLogger(
+                        MessageBrokerQueueLogger.Create( ackProcessed: e => messageRemoved.Value = e.MessageRemoved ) ) )
+                    .SetStreamLoggerFactory( _ => streamLogs.GetLogger(
+                        MessageBrokerStreamLogger.Create(
                             traceEnd: e =>
                             {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.Ack )
+                                if ( e.Type == MessageBrokerStreamTraceEventType.Dispose )
                                     endSource.Complete();
-                                else if ( e.Type is MessageBrokerRemoteClientTraceEventType.UnbindListener
-                                    or MessageBrokerRemoteClientTraceEventType.UnbindPublisher )
-                                    ackContinuation.Complete();
-                            } ) )
-                    .SetQueueLoggerFactory(
-                        _ => queueLogs.GetLogger(
-                            MessageBrokerQueueLogger.Create( ackProcessed: e => messageRemoved.Value = e.MessageRemoved ) ) )
-                    .SetStreamLoggerFactory(
-                        _ => streamLogs.GetLogger(
-                            MessageBrokerStreamLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerStreamTraceEventType.Dispose )
-                                        endSource.Complete();
-                                } ) ) ) );
+                            } ) ) ) );
 
             await server.StartAsync();
 
             using var client = new ClientMock();
             await client.EstablishHandshake( server );
-            await client.GetTask(
-                c =>
-                {
-                    c.SendBindPublisherRequest( "c" );
-                    c.ReadPublisherBoundResponse();
-                    c.SendBindListenerRequest( "c", false, minAckTimeout: Duration.FromMinutes( 10 ) );
-                    c.ReadListenerBoundResponse();
-                    c.SendPushMessage( 1, [ ], confirm: false );
-                    c.ReadMessageNotification( 0 );
-                    c.SendUnbindPublisherRequest( 1 );
-                    c.ReadPublisherUnboundResponse();
-                    c.SendUnbindListenerRequest( 1 );
-                    c.ReadListenerUnboundResponse();
-                    c.SendMessageNotificationAck( 1, 1, 1, 0 );
-                } );
+            await client.GetTask( c =>
+            {
+                c.SendBindPublisherRequest( "c" );
+                c.ReadPublisherBoundResponse();
+                c.SendBindListenerRequest( "c", false, minAckTimeout: Duration.FromMinutes( 10 ) );
+                c.ReadListenerBoundResponse();
+                c.SendPushMessage( 1, [ ], confirm: false );
+                c.ReadMessageNotification( 0 );
+                c.SendUnbindPublisherRequest( 1 );
+                c.ReadPublisherUnboundResponse();
+                c.SendUnbindListenerRequest( 1 );
+                c.ReadListenerUnboundResponse();
+                c.SendMessageNotificationAck( 1, 1, 1, 0 );
+            } );
 
             await endSource.Task;
 
@@ -352,61 +339,56 @@ public partial class MessageBrokerQueueTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => MessageBrokerRemoteClientLogger.Create(
+                    .SetClientLoggerFactory( _ => MessageBrokerRemoteClientLogger.Create(
+                        traceStart: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.Ack )
+                                streamEndSource.Task.Wait();
+                        },
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.Ack )
+                                endSource.Complete();
+                        } ) )
+                    .SetQueueLoggerFactory( _ => queueLogs.GetLogger(
+                        MessageBrokerQueueLogger.Create(
                             traceStart: e =>
                             {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.Ack )
-                                    streamEndSource.Task.Wait();
-                            },
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.Ack )
-                                    endSource.Complete();
-                            } ) )
-                    .SetQueueLoggerFactory(
-                        _ => queueLogs.GetLogger(
-                            MessageBrokerQueueLogger.Create(
-                                traceStart: e =>
+                                if ( e.Type == MessageBrokerQueueTraceEventType.Ack && stream is not null )
                                 {
-                                    if ( e.Type == MessageBrokerQueueTraceEventType.Ack && stream is not null )
-                                    {
-                                        using ( stream.AcquireLock() )
-                                            stream.MessageStore.DecrementRefCount( 0, out var _ );
-                                    }
-                                },
-                                error: e => exception = e.Exception ) ) )
-                    .SetStreamLoggerFactory(
-                        _ => MessageBrokerStreamLogger.Create(
-                            traceEnd: e =>
-                            {
-                                if ( e.Type == MessageBrokerStreamTraceEventType.ProcessMessage )
-                                    streamEndSource.Complete();
-                            } ) ) );
+                                    using ( stream.AcquireLock() )
+                                        stream.MessageStore.DecrementRefCount( 0, out var _ );
+                                }
+                            },
+                            error: e => exception = e.Exception ) ) )
+                    .SetStreamLoggerFactory( _ => MessageBrokerStreamLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerStreamTraceEventType.ProcessMessage )
+                                streamEndSource.Complete();
+                        } ) ) );
 
             await server.StartAsync();
 
             using var client = new ClientMock();
             await client.EstablishHandshake( server );
-            await client.GetTask(
-                c =>
-                {
-                    c.SendBindPublisherRequest( "c" );
-                    c.ReadPublisherBoundResponse();
-                    c.SendBindListenerRequest( "c", false, minAckTimeout: Duration.FromMinutes( 10 ) );
-                    c.ReadListenerBoundResponse();
-                } );
+            await client.GetTask( c =>
+            {
+                c.SendBindPublisherRequest( "c" );
+                c.ReadPublisherBoundResponse();
+                c.SendBindListenerRequest( "c", false, minAckTimeout: Duration.FromMinutes( 10 ) );
+                c.ReadListenerBoundResponse();
+            } );
 
             var queue = server.Clients.TryGetById( 1 )?.Queues.TryGetById( 1 );
             stream = server.Streams.TryGetById( 1 );
 
-            await client.GetTask(
-                c =>
-                {
-                    c.SendPushMessage( 1, [ ], confirm: false );
-                    c.ReadMessageNotification( 0 );
-                    c.SendMessageNotificationAck( 1, 1, 1, 0 );
-                } );
+            await client.GetTask( c =>
+            {
+                c.SendPushMessage( 1, [ ], confirm: false );
+                c.ReadMessageNotification( 0 );
+                c.SendMessageNotificationAck( 1, 1, 1, 0 );
+            } );
 
             await endSource.Task;
 
@@ -442,15 +424,14 @@ public partial class MessageBrokerQueueTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.Ack )
-                                        endSource.Complete();
-                                },
-                                error: e => exception = e.Exception ) ) ) );
+                    .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.Ack )
+                                    endSource.Complete();
+                            },
+                            error: e => exception = e.Exception ) ) ) );
 
             await server.StartAsync();
 
@@ -493,26 +474,24 @@ public partial class MessageBrokerQueueTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.Ack )
-                                        endSource.Complete();
-                                },
-                                error: e => exception = e.Exception ) ) ) );
+                    .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.Ack )
+                                    endSource.Complete();
+                            },
+                            error: e => exception = e.Exception ) ) ) );
 
             await server.StartAsync();
 
             using var client = new ClientMock();
             await client.EstablishHandshake( server );
-            await client.GetTask(
-                c =>
-                {
-                    c.SendBindListenerRequest( "c", true, minAckTimeout: Duration.FromMinutes( 10 ) );
-                    c.ReadListenerBoundResponse();
-                } );
+            await client.GetTask( c =>
+            {
+                c.SendBindListenerRequest( "c", true, minAckTimeout: Duration.FromMinutes( 10 ) );
+                c.ReadListenerBoundResponse();
+            } );
 
             var queue = server.Clients.TryGetById( 1 )?.Queues.TryGetById( 1 );
 
@@ -552,30 +531,28 @@ public partial class MessageBrokerQueueTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.Ack )
-                                        endSource.Complete();
-                                },
-                                error: e => exception = e.Exception ) ) ) );
+                    .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.Ack )
+                                    endSource.Complete();
+                            },
+                            error: e => exception = e.Exception ) ) ) );
 
             await server.StartAsync();
 
             using var client = new ClientMock();
             await client.EstablishHandshake( server );
-            await client.GetTask(
-                c =>
-                {
-                    c.SendBindPublisherRequest( "c" );
-                    c.ReadPublisherBoundResponse();
-                    c.SendBindListenerRequest( "c", false, minAckTimeout: Duration.FromMinutes( 10 ) );
-                    c.ReadListenerBoundResponse();
-                    c.SendPushMessage( 1, [ ], confirm: false );
-                    c.ReadMessageNotification( 0 );
-                } );
+            await client.GetTask( c =>
+            {
+                c.SendBindPublisherRequest( "c" );
+                c.ReadPublisherBoundResponse();
+                c.SendBindListenerRequest( "c", false, minAckTimeout: Duration.FromMinutes( 10 ) );
+                c.ReadListenerBoundResponse();
+                c.SendPushMessage( 1, [ ], confirm: false );
+                c.ReadMessageNotification( 0 );
+            } );
 
             var queue = server.Clients.TryGetById( 1 )?.Queues.TryGetById( 1 );
 
@@ -614,14 +591,13 @@ public partial class MessageBrokerQueueTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.Ack )
-                                        endSource.Complete();
-                                } ) ) ) );
+                    .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.Ack )
+                                    endSource.Complete();
+                            } ) ) ) );
 
             await server.StartAsync();
 
@@ -664,14 +640,13 @@ public partial class MessageBrokerQueueTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.Ack )
-                                        endSource.Complete();
-                                } ) ) ) );
+                    .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.Ack )
+                                    endSource.Complete();
+                            } ) ) ) );
 
             await server.StartAsync();
 
@@ -719,14 +694,13 @@ public partial class MessageBrokerQueueTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.NegativeAck )
-                                        endSource.Complete();
-                                } ) ) )
+                    .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.NegativeAck )
+                                    endSource.Complete();
+                            } ) ) )
                     .SetQueueLoggerFactory( _ => queueLogs.GetLogger() ) );
 
             await server.StartAsync();
@@ -734,22 +708,21 @@ public partial class MessageBrokerQueueTests
             var minPushedAt = TimestampProvider.Shared.GetNow();
             using var client = new ClientMock();
             await client.EstablishHandshake( server );
-            await client.GetTask(
-                c =>
-                {
-                    c.SendBindPublisherRequest( "c" );
-                    c.ReadPublisherBoundResponse();
-                    c.SendBindListenerRequest(
-                        "c",
-                        false,
-                        maxRetries: 1,
-                        retryDelay: Duration.FromSeconds( 10 ),
-                        minAckTimeout: Duration.FromMinutes( 10 ) );
+            await client.GetTask( c =>
+            {
+                c.SendBindPublisherRequest( "c" );
+                c.ReadPublisherBoundResponse();
+                c.SendBindListenerRequest(
+                    "c",
+                    false,
+                    maxRetries: 1,
+                    retryDelay: Duration.FromSeconds( 10 ),
+                    minAckTimeout: Duration.FromMinutes( 10 ) );
 
-                    c.ReadListenerBoundResponse();
-                    c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
-                    c.ReadMessageNotification( 3 );
-                } );
+                c.ReadListenerBoundResponse();
+                c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
+                c.ReadMessageNotification( 3 );
+            } );
 
             var remoteClient = server.Clients.TryGetById( 1 );
             var stream = server.Streams.TryGetById( 1 );
@@ -762,27 +735,25 @@ public partial class MessageBrokerQueueTests
 
             Assertion.All(
                     stream.TestNotNull( s => s.Messages.Count.TestEquals( 1 ) ),
-                    queue.TestNotNull(
-                        q => Assertion.All(
-                            "queue",
-                            q.Messages.Pending.Count.TestEquals( 0 ),
-                            q.Messages.Unacked.Count.TestEquals( 0 ),
-                            q.Messages.DeadLetter.Count.TestEquals( 0 ),
-                            q.Messages.Retries.Count.TestEquals( 1 ),
-                            q.Messages.Retries.TryGetNext()
-                                .TestNotNull(
-                                    r => Assertion.All(
-                                        "retryMessage",
-                                        r.Publisher.TestRefEquals( publisher ),
-                                        r.Listener.TestRefEquals( listener ),
-                                        r.StoreKey.TestEquals( 0 ),
-                                        r.Retry.TestEquals( 1 ),
-                                        r.Redelivery.TestEquals( 0 ),
-                                        r.SendAt.TestGreaterThanOrEqualTo( minPushedAt + listener?.RetryDelay ?? Timestamp.Zero ),
-                                        r.ToString()
-                                            .TestEquals(
-                                                $"Publisher = ([1] 'test' => [1] 'c' publisher binding (using [1] 'c' stream) (Running)), Listener = ([1] 'test' => [1] 'c' listener binding (using [1] 'c' queue) (Running)), StoreKey = 0, Retry = 1, Redelivery = 0, SendAt = {r.SendAt}" ),
-                                        r.TryGetMessage().TestNotNull( m => m.StoreKey.TestEquals( r.StoreKey ) ) ) ) ) ),
+                    queue.TestNotNull( q => Assertion.All(
+                        "queue",
+                        q.Messages.Pending.Count.TestEquals( 0 ),
+                        q.Messages.Unacked.Count.TestEquals( 0 ),
+                        q.Messages.DeadLetter.Count.TestEquals( 0 ),
+                        q.Messages.Retries.Count.TestEquals( 1 ),
+                        q.Messages.Retries.TryGetNext()
+                            .TestNotNull( r => Assertion.All(
+                                "retryMessage",
+                                r.Publisher.TestRefEquals( publisher ),
+                                r.Listener.TestRefEquals( listener ),
+                                r.StoreKey.TestEquals( 0 ),
+                                r.Retry.TestEquals( 1 ),
+                                r.Redelivery.TestEquals( 0 ),
+                                r.SendAt.TestGreaterThanOrEqualTo( minPushedAt + listener?.RetryDelay ?? Timestamp.Zero ),
+                                r.ToString()
+                                    .TestEquals(
+                                        $"Publisher = ([1] 'test' => [1] 'c' publisher binding (using [1] 'c' stream) (Running)), Listener = ([1] 'test' => [1] 'c' listener binding (using [1] 'c' queue) (Running)), StoreKey = 0, Retry = 1, Redelivery = 0, SendAt = {r.SendAt}" ),
+                                r.TryGetMessage().TestNotNull( m => m.StoreKey.TestEquals( r.StoreKey ) ) ) ) ) ),
                     clientLogs.GetAll()
                         .Skip( 5 )
                         .TestSequence(
@@ -825,52 +796,49 @@ public partial class MessageBrokerQueueTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.NegativeAck )
-                                        endSource.Complete();
-                                } ) ) )
-                    .SetQueueLoggerFactory(
-                        _ => queueLogs.GetLogger(
-                            MessageBrokerQueueLogger.Create(
-                                traceStart: e =>
-                                {
-                                    if ( e.Type == MessageBrokerQueueTraceEventType.NegativeAck )
-                                        firstNackTraceStarted.Value = true;
-                                },
-                                clientTrace: e =>
-                                {
-                                    if ( firstNackTraceStarted.Value )
-                                        clientTraceIdsByQueueTraceId[e.Source.TraceId] = e.ClientTraceId;
-                                } ) ) ) );
+                    .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.NegativeAck )
+                                    endSource.Complete();
+                            } ) ) )
+                    .SetQueueLoggerFactory( _ => queueLogs.GetLogger(
+                        MessageBrokerQueueLogger.Create(
+                            traceStart: e =>
+                            {
+                                if ( e.Type == MessageBrokerQueueTraceEventType.NegativeAck )
+                                    firstNackTraceStarted.Value = true;
+                            },
+                            clientTrace: e =>
+                            {
+                                if ( firstNackTraceStarted.Value )
+                                    clientTraceIdsByQueueTraceId[e.Source.TraceId] = e.ClientTraceId;
+                            } ) ) ) );
 
             await server.StartAsync();
 
             using var client = new ClientMock();
             await client.EstablishHandshake( server );
-            await client.GetTask(
-                c =>
-                {
-                    c.SendBindPublisherRequest( "c" );
-                    c.ReadPublisherBoundResponse();
-                    c.SendBindListenerRequest(
-                        "c",
-                        false,
-                        maxRetries: 1,
-                        retryDelay: Duration.FromSeconds( 10 ),
-                        minAckTimeout: Duration.FromMinutes( 10 ) );
+            await client.GetTask( c =>
+            {
+                c.SendBindPublisherRequest( "c" );
+                c.ReadPublisherBoundResponse();
+                c.SendBindListenerRequest(
+                    "c",
+                    false,
+                    maxRetries: 1,
+                    retryDelay: Duration.FromSeconds( 10 ),
+                    minAckTimeout: Duration.FromMinutes( 10 ) );
 
-                    c.ReadListenerBoundResponse();
-                    c.SendPushMessage( 1, [ 1, 2 ], confirm: false );
-                    c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
-                    c.ReadMessageNotification( 2 );
-                    c.SendMessageNotificationNegativeAck( 1, 1, 1, 0 );
-                    c.ReadMessageNotification( 3 );
-                    c.SendMessageNotificationNegativeAck( 1, 1, 1, 1 );
-                } );
+                c.ReadListenerBoundResponse();
+                c.SendPushMessage( 1, [ 1, 2 ], confirm: false );
+                c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
+                c.ReadMessageNotification( 2 );
+                c.SendMessageNotificationNegativeAck( 1, 1, 1, 0 );
+                c.ReadMessageNotification( 3 );
+                c.SendMessageNotificationNegativeAck( 1, 1, 1, 1 );
+            } );
 
             await endSource.Task;
 
@@ -934,53 +902,50 @@ public partial class MessageBrokerQueueTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.NegativeAck )
-                                        endSource.Complete();
-                                } ) ) )
-                    .SetQueueLoggerFactory(
-                        _ => queueLogs.GetLogger(
-                            MessageBrokerQueueLogger.Create(
-                                traceStart: e =>
-                                {
-                                    if ( e.Type == MessageBrokerQueueTraceEventType.NegativeAck )
-                                        firstNackTraceStarted.Value = true;
-                                },
-                                clientTrace: e =>
-                                {
-                                    if ( firstNackTraceStarted.Value )
-                                        clientTraceIdsByQueueTraceId[e.Source.TraceId] = e.ClientTraceId;
-                                },
-                                messageDiscarded: e => messageRemoved.Value = e.MessageRemoved ) ) ) );
+                    .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.NegativeAck )
+                                    endSource.Complete();
+                            } ) ) )
+                    .SetQueueLoggerFactory( _ => queueLogs.GetLogger(
+                        MessageBrokerQueueLogger.Create(
+                            traceStart: e =>
+                            {
+                                if ( e.Type == MessageBrokerQueueTraceEventType.NegativeAck )
+                                    firstNackTraceStarted.Value = true;
+                            },
+                            clientTrace: e =>
+                            {
+                                if ( firstNackTraceStarted.Value )
+                                    clientTraceIdsByQueueTraceId[e.Source.TraceId] = e.ClientTraceId;
+                            },
+                            messageDiscarded: e => messageRemoved.Value = e.MessageRemoved ) ) ) );
 
             await server.StartAsync();
 
             using var client = new ClientMock();
             await client.EstablishHandshake( server );
-            await client.GetTask(
-                c =>
-                {
-                    c.SendBindPublisherRequest( "c" );
-                    c.ReadPublisherBoundResponse();
-                    c.SendBindListenerRequest(
-                        "c",
-                        false,
-                        maxRetries: 1,
-                        retryDelay: Duration.FromSeconds( 10 ),
-                        minAckTimeout: Duration.FromMinutes( 10 ) );
+            await client.GetTask( c =>
+            {
+                c.SendBindPublisherRequest( "c" );
+                c.ReadPublisherBoundResponse();
+                c.SendBindListenerRequest(
+                    "c",
+                    false,
+                    maxRetries: 1,
+                    retryDelay: Duration.FromSeconds( 10 ),
+                    minAckTimeout: Duration.FromMinutes( 10 ) );
 
-                    c.ReadListenerBoundResponse();
-                    c.SendPushMessage( 1, [ 1, 2 ], confirm: false );
-                    c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
-                    c.ReadMessageNotification( 2 );
-                    c.SendMessageNotificationNegativeAck( 1, 1, 1, 0, noRetry: true );
-                    c.ReadMessageNotification( 3 );
-                    c.SendMessageNotificationNegativeAck( 1, 1, 1, 1 );
-                } );
+                c.ReadListenerBoundResponse();
+                c.SendPushMessage( 1, [ 1, 2 ], confirm: false );
+                c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
+                c.ReadMessageNotification( 2 );
+                c.SendMessageNotificationNegativeAck( 1, 1, 1, 0, noRetry: true );
+                c.ReadMessageNotification( 3 );
+                c.SendMessageNotificationNegativeAck( 1, 1, 1, 1 );
+            } );
 
             await endSource.Task;
 
@@ -1043,39 +1008,36 @@ public partial class MessageBrokerQueueTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.NegativeAck )
-                                        endSource.Complete();
-                                } ) ) )
-                    .SetQueueLoggerFactory(
-                        _ => queueLogs.GetLogger(
-                            MessageBrokerQueueLogger.Create( messageDiscarded: e => messageRemoved.Value = e.MessageRemoved ) ) ) );
+                    .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.NegativeAck )
+                                    endSource.Complete();
+                            } ) ) )
+                    .SetQueueLoggerFactory( _ => queueLogs.GetLogger(
+                        MessageBrokerQueueLogger.Create( messageDiscarded: e => messageRemoved.Value = e.MessageRemoved ) ) ) );
 
             await server.StartAsync();
 
             using var client = new ClientMock();
             await client.EstablishHandshake( server );
-            await client.GetTask(
-                c =>
-                {
-                    c.SendBindPublisherRequest( "c" );
-                    c.ReadPublisherBoundResponse();
-                    c.SendBindListenerRequest(
-                        "c",
-                        false,
-                        deadLetterCapacityHint: 1,
-                        minDeadLetterRetention: Duration.FromHours( 1 ),
-                        minAckTimeout: Duration.FromMinutes( 10 ) );
+            await client.GetTask( c =>
+            {
+                c.SendBindPublisherRequest( "c" );
+                c.ReadPublisherBoundResponse();
+                c.SendBindListenerRequest(
+                    "c",
+                    false,
+                    deadLetterCapacityHint: 1,
+                    minDeadLetterRetention: Duration.FromHours( 1 ),
+                    minAckTimeout: Duration.FromMinutes( 10 ) );
 
-                    c.ReadListenerBoundResponse();
-                    c.SendPushMessage( 1, [ 1 ], confirm: false );
-                    c.ReadMessageNotification( 1 );
-                    c.SendMessageNotificationNegativeAck( 1, 1, 1, 0, noDeadLetter: true );
-                } );
+                c.ReadListenerBoundResponse();
+                c.SendPushMessage( 1, [ 1 ], confirm: false );
+                c.ReadMessageNotification( 1 );
+                c.SendMessageNotificationNegativeAck( 1, 1, 1, 0, noDeadLetter: true );
+            } );
 
             var queue = server.Clients.TryGetById( 1 )?.Queues.TryGetById( 1 );
             await endSource.Task;
@@ -1125,52 +1087,48 @@ public partial class MessageBrokerQueueTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => MessageBrokerRemoteClientLogger.Create(
-                            traceStart: e =>
-                            {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.NegativeAck )
-                                    ackContinuation.Task.Wait();
-                            },
+                    .SetClientLoggerFactory( _ => MessageBrokerRemoteClientLogger.Create(
+                        traceStart: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.NegativeAck )
+                                ackContinuation.Task.Wait();
+                        },
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.NegativeAck )
+                                endSource.Complete();
+                            else if ( e.Type is MessageBrokerRemoteClientTraceEventType.UnbindListener
+                                or MessageBrokerRemoteClientTraceEventType.UnbindPublisher )
+                                ackContinuation.Complete();
+                        } ) )
+                    .SetQueueLoggerFactory( _ => queueLogs.GetLogger(
+                        MessageBrokerQueueLogger.Create( messageDiscarded: e => messageRemoved.Value = e.MessageRemoved ) ) )
+                    .SetStreamLoggerFactory( _ => streamLogs.GetLogger(
+                        MessageBrokerStreamLogger.Create(
                             traceEnd: e =>
                             {
-                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.NegativeAck )
+                                if ( e.Type == MessageBrokerStreamTraceEventType.Dispose )
                                     endSource.Complete();
-                                else if ( e.Type is MessageBrokerRemoteClientTraceEventType.UnbindListener
-                                    or MessageBrokerRemoteClientTraceEventType.UnbindPublisher )
-                                    ackContinuation.Complete();
-                            } ) )
-                    .SetQueueLoggerFactory(
-                        _ => queueLogs.GetLogger(
-                            MessageBrokerQueueLogger.Create( messageDiscarded: e => messageRemoved.Value = e.MessageRemoved ) ) )
-                    .SetStreamLoggerFactory(
-                        _ => streamLogs.GetLogger(
-                            MessageBrokerStreamLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerStreamTraceEventType.Dispose )
-                                        endSource.Complete();
-                                } ) ) ) );
+                            } ) ) ) );
 
             await server.StartAsync();
 
             using var client = new ClientMock();
             await client.EstablishHandshake( server );
-            await client.GetTask(
-                c =>
-                {
-                    c.SendBindPublisherRequest( "c" );
-                    c.ReadPublisherBoundResponse();
-                    c.SendBindListenerRequest( "c", false, minAckTimeout: Duration.FromMinutes( 10 ) );
-                    c.ReadListenerBoundResponse();
-                    c.SendPushMessage( 1, [ ], confirm: false );
-                    c.ReadMessageNotification( 0 );
-                    c.SendUnbindPublisherRequest( 1 );
-                    c.ReadPublisherUnboundResponse();
-                    c.SendUnbindListenerRequest( 1 );
-                    c.ReadListenerUnboundResponse();
-                    c.SendMessageNotificationNegativeAck( 1, 1, 1, 0 );
-                } );
+            await client.GetTask( c =>
+            {
+                c.SendBindPublisherRequest( "c" );
+                c.ReadPublisherBoundResponse();
+                c.SendBindListenerRequest( "c", false, minAckTimeout: Duration.FromMinutes( 10 ) );
+                c.ReadListenerBoundResponse();
+                c.SendPushMessage( 1, [ ], confirm: false );
+                c.ReadMessageNotification( 0 );
+                c.SendUnbindPublisherRequest( 1 );
+                c.ReadPublisherUnboundResponse();
+                c.SendUnbindListenerRequest( 1 );
+                c.ReadListenerUnboundResponse();
+                c.SendMessageNotificationNegativeAck( 1, 1, 1, 0 );
+            } );
 
             await endSource.Task;
 
@@ -1216,15 +1174,14 @@ public partial class MessageBrokerQueueTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.NegativeAck )
-                                        endSource.Complete();
-                                },
-                                error: e => exception = e.Exception ) ) ) );
+                    .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.NegativeAck )
+                                    endSource.Complete();
+                            },
+                            error: e => exception = e.Exception ) ) ) );
 
             await server.StartAsync();
 
@@ -1267,26 +1224,24 @@ public partial class MessageBrokerQueueTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.NegativeAck )
-                                        endSource.Complete();
-                                },
-                                error: e => exception = e.Exception ) ) ) );
+                    .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.NegativeAck )
+                                    endSource.Complete();
+                            },
+                            error: e => exception = e.Exception ) ) ) );
 
             await server.StartAsync();
 
             using var client = new ClientMock();
             await client.EstablishHandshake( server );
-            await client.GetTask(
-                c =>
-                {
-                    c.SendBindListenerRequest( "c", true, minAckTimeout: Duration.FromMinutes( 10 ) );
-                    c.ReadListenerBoundResponse();
-                } );
+            await client.GetTask( c =>
+            {
+                c.SendBindListenerRequest( "c", true, minAckTimeout: Duration.FromMinutes( 10 ) );
+                c.ReadListenerBoundResponse();
+            } );
 
             var queue = server.Clients.TryGetById( 1 )?.Queues.TryGetById( 1 );
 
@@ -1326,30 +1281,28 @@ public partial class MessageBrokerQueueTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.NegativeAck )
-                                        endSource.Complete();
-                                },
-                                error: e => exception = e.Exception ) ) ) );
+                    .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.NegativeAck )
+                                    endSource.Complete();
+                            },
+                            error: e => exception = e.Exception ) ) ) );
 
             await server.StartAsync();
 
             using var client = new ClientMock();
             await client.EstablishHandshake( server );
-            await client.GetTask(
-                c =>
-                {
-                    c.SendBindPublisherRequest( "c" );
-                    c.ReadPublisherBoundResponse();
-                    c.SendBindListenerRequest( "c", false, minAckTimeout: Duration.FromMinutes( 10 ) );
-                    c.ReadListenerBoundResponse();
-                    c.SendPushMessage( 1, [ ], confirm: false );
-                    c.ReadMessageNotification( 0 );
-                } );
+            await client.GetTask( c =>
+            {
+                c.SendBindPublisherRequest( "c" );
+                c.ReadPublisherBoundResponse();
+                c.SendBindListenerRequest( "c", false, minAckTimeout: Duration.FromMinutes( 10 ) );
+                c.ReadListenerBoundResponse();
+                c.SendPushMessage( 1, [ ], confirm: false );
+                c.ReadMessageNotification( 0 );
+            } );
 
             var queue = server.Clients.TryGetById( 1 )?.Queues.TryGetById( 1 );
 
@@ -1388,14 +1341,13 @@ public partial class MessageBrokerQueueTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.NegativeAck )
-                                        endSource.Complete();
-                                } ) ) ) );
+                    .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.NegativeAck )
+                                    endSource.Complete();
+                            } ) ) ) );
 
             await server.StartAsync();
 
@@ -1438,30 +1390,28 @@ public partial class MessageBrokerQueueTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.NegativeAck )
-                                        endSource.Complete();
-                                } ) ) ) );
+                    .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.NegativeAck )
+                                    endSource.Complete();
+                            } ) ) ) );
 
             await server.StartAsync();
 
             using var client = new ClientMock();
             await client.EstablishHandshake( server );
             var remoteClient = server.Clients.TryGetById( 1 );
-            await client.GetTask(
-                c => c.SendMessageNotificationNegativeAck(
-                    0,
-                    -1,
-                    -2,
-                    0,
-                    -3,
-                    -4,
-                    hasExplicitDelay: true,
-                    explicitDelay: Duration.FromMilliseconds( -1 ) ) );
+            await client.GetTask( c => c.SendMessageNotificationNegativeAck(
+                0,
+                -1,
+                -2,
+                0,
+                -3,
+                -4,
+                hasExplicitDelay: true,
+                explicitDelay: Duration.FromMilliseconds( -1 ) ) );
 
             await endSource.Task;
 
@@ -1503,22 +1453,26 @@ public partial class MessageBrokerQueueTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.NegativeAck )
-                                        endSource.Complete();
-                                } ) ) ) );
+                    .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.NegativeAck )
+                                    endSource.Complete();
+                            } ) ) ) );
 
             await server.StartAsync();
 
             using var client = new ClientMock();
             await client.EstablishHandshake( server );
             var remoteClient = server.Clients.TryGetById( 1 );
-            await client.GetTask(
-                c => c.SendMessageNotificationNegativeAck( 1, 1, 1, 0, noRetry: true, explicitDelay: Duration.FromMilliseconds( 1 ) ) );
+            await client.GetTask( c => c.SendMessageNotificationNegativeAck(
+                1,
+                1,
+                1,
+                0,
+                noRetry: true,
+                explicitDelay: Duration.FromMilliseconds( 1 ) ) );
 
             await endSource.Task;
 
@@ -1558,46 +1512,43 @@ public partial class MessageBrokerQueueTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.MessageNotification )
-                                        endSource.Complete();
-                                } ) ) )
-                    .SetQueueLoggerFactory(
-                        _ => queueLogs.GetLogger(
-                            MessageBrokerQueueLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
-                                        endSource.Complete();
-                                },
-                                messageProcessed: e => ackExpireDatesByQueueTraceId[e.Source.TraceId] = e.AckExpiresAt,
-                                messageDiscarded: e => messageRemoved.Value = e.MessageRemoved ) ) ) );
+                    .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.MessageNotification )
+                                    endSource.Complete();
+                            } ) ) )
+                    .SetQueueLoggerFactory( _ => queueLogs.GetLogger(
+                        MessageBrokerQueueLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
+                                    endSource.Complete();
+                            },
+                            messageProcessed: e => ackExpireDatesByQueueTraceId[e.Source.TraceId] = e.AckExpiresAt,
+                            messageDiscarded: e => messageRemoved.Value = e.MessageRemoved ) ) ) );
 
             await server.StartAsync();
 
             using var client = new ClientMock();
             await client.EstablishHandshake( server );
-            await client.GetTask(
-                c =>
-                {
-                    c.SendBindPublisherRequest( "c" );
-                    c.ReadPublisherBoundResponse();
-                    c.SendBindListenerRequest(
-                        "c",
-                        false,
-                        maxRedeliveries: 2,
-                        minAckTimeout: Duration.FromMilliseconds( 15 ) );
+            await client.GetTask( c =>
+            {
+                c.SendBindPublisherRequest( "c" );
+                c.ReadPublisherBoundResponse();
+                c.SendBindListenerRequest(
+                    "c",
+                    false,
+                    maxRedeliveries: 2,
+                    minAckTimeout: Duration.FromMilliseconds( 15 ) );
 
-                    c.ReadListenerBoundResponse();
-                    c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
-                    c.ReadMessageNotification( 3 );
-                    c.ReadMessageNotification( 3 );
-                    c.ReadMessageNotification( 3 );
-                } );
+                c.ReadListenerBoundResponse();
+                c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
+                c.ReadMessageNotification( 3 );
+                c.ReadMessageNotification( 3 );
+                c.ReadMessageNotification( 3 );
+            } );
 
             var stream = server.Streams.TryGetById( 1 );
             var queue = server.Clients.TryGetById( 1 )?.Queues.TryGetById( 1 );
@@ -1605,13 +1556,12 @@ public partial class MessageBrokerQueueTests
 
             Assertion.All(
                     stream.TestNotNull( s => s.Messages.Count.TestEquals( 0 ) ),
-                    queue.TestNotNull(
-                        q => Assertion.All(
-                            "queue",
-                            q.Messages.Pending.Count.TestEquals( 0 ),
-                            q.Messages.Unacked.Count.TestEquals( 0 ),
-                            q.Messages.Retries.Count.TestEquals( 0 ),
-                            q.Messages.DeadLetter.Count.TestEquals( 0 ) ) ),
+                    queue.TestNotNull( q => Assertion.All(
+                        "queue",
+                        q.Messages.Pending.Count.TestEquals( 0 ),
+                        q.Messages.Unacked.Count.TestEquals( 0 ),
+                        q.Messages.Retries.Count.TestEquals( 0 ),
+                        q.Messages.DeadLetter.Count.TestEquals( 0 ) ) ),
                     clientLogs.GetAll()
                         .Skip( 4 )
                         .TestSequence(
@@ -1691,47 +1641,44 @@ public partial class MessageBrokerQueueTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.MessageNotification )
-                                        endSource.Complete();
-                                } ) ) )
-                    .SetQueueLoggerFactory(
-                        _ => queueLogs.GetLogger(
-                            MessageBrokerQueueLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
-                                        endSource.Complete();
-                                },
-                                messageProcessed: e => ackExpireDatesByQueueTraceId[e.Source.TraceId] = e.AckExpiresAt ) ) ) );
+                    .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.MessageNotification )
+                                    endSource.Complete();
+                            } ) ) )
+                    .SetQueueLoggerFactory( _ => queueLogs.GetLogger(
+                        MessageBrokerQueueLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
+                                    endSource.Complete();
+                            },
+                            messageProcessed: e => ackExpireDatesByQueueTraceId[e.Source.TraceId] = e.AckExpiresAt ) ) ) );
 
             await server.StartAsync();
 
             using var client = new ClientMock();
             await client.EstablishHandshake( server );
             var minPushedAt = TimestampProvider.Shared.GetNow();
-            await client.GetTask(
-                c =>
-                {
-                    c.SendBindPublisherRequest( "c" );
-                    c.ReadPublisherBoundResponse();
-                    c.SendBindListenerRequest(
-                        "c",
-                        false,
-                        maxRedeliveries: 1,
-                        deadLetterCapacityHint: 1,
-                        minDeadLetterRetention: Duration.FromMinutes( 1 ),
-                        minAckTimeout: Duration.FromMilliseconds( 15 ) );
+            await client.GetTask( c =>
+            {
+                c.SendBindPublisherRequest( "c" );
+                c.ReadPublisherBoundResponse();
+                c.SendBindListenerRequest(
+                    "c",
+                    false,
+                    maxRedeliveries: 1,
+                    deadLetterCapacityHint: 1,
+                    minDeadLetterRetention: Duration.FromMinutes( 1 ),
+                    minAckTimeout: Duration.FromMilliseconds( 15 ) );
 
-                    c.ReadListenerBoundResponse();
-                    c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
-                    c.ReadMessageNotification( 3 );
-                    c.ReadMessageNotification( 3 );
-                } );
+                c.ReadListenerBoundResponse();
+                c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
+                c.ReadMessageNotification( 3 );
+                c.ReadMessageNotification( 3 );
+            } );
 
             var stream = server.Streams.TryGetById( 1 );
             var queue = server.Clients.TryGetById( 1 )?.Queues.TryGetById( 1 );
@@ -1741,28 +1688,25 @@ public partial class MessageBrokerQueueTests
 
             Assertion.All(
                     stream.TestNotNull( s => s.Messages.Count.TestEquals( 1 ) ),
-                    queue.TestNotNull(
-                        q => Assertion.All(
-                            "queue",
-                            q.Messages.Pending.Count.TestEquals( 0 ),
-                            q.Messages.Unacked.Count.TestEquals( 0 ),
-                            q.Messages.Retries.Count.TestEquals( 0 ),
-                            q.Messages.DeadLetter.Count.TestEquals( 1 ),
-                            q.Messages.DeadLetter.TryPeekAt( 0 )
-                                .TestNotNull(
-                                    d => Assertion.All(
-                                        "deadLetterMessage",
-                                        d.Listener.TestRefEquals( listener ),
-                                        d.Publisher.TestRefEquals( publisher ),
-                                        d.StoreKey.TestEquals( 0 ),
-                                        d.Retry.TestEquals( 0 ),
-                                        d.Redelivery.TestEquals( 1 ),
-                                        d.ExpiresAt.TestGreaterThanOrEqualTo(
-                                            minPushedAt + listener?.MinDeadLetterRetention ?? Timestamp.Zero ),
-                                        d.ToString()
-                                            .TestEquals(
-                                                $"Publisher = ([1] 'test' => [1] 'c' publisher binding (using [1] 'c' stream) (Running)), Listener = ([1] 'test' => [1] 'c' listener binding (using [1] 'c' queue) (Running)), StoreKey = 0, Retry = 0, Redelivery = 1, ExpiresAt = {d.ExpiresAt}" ),
-                                        d.TryGetMessage().TestNotNull( m => m.StoreKey.TestEquals( d.StoreKey ) ) ) ) ) ),
+                    queue.TestNotNull( q => Assertion.All(
+                        "queue",
+                        q.Messages.Pending.Count.TestEquals( 0 ),
+                        q.Messages.Unacked.Count.TestEquals( 0 ),
+                        q.Messages.Retries.Count.TestEquals( 0 ),
+                        q.Messages.DeadLetter.Count.TestEquals( 1 ),
+                        q.Messages.DeadLetter.TryPeekAt( 0 )
+                            .TestNotNull( d => Assertion.All(
+                                "deadLetterMessage",
+                                d.Listener.TestRefEquals( listener ),
+                                d.Publisher.TestRefEquals( publisher ),
+                                d.StoreKey.TestEquals( 0 ),
+                                d.Retry.TestEquals( 0 ),
+                                d.Redelivery.TestEquals( 1 ),
+                                d.ExpiresAt.TestGreaterThanOrEqualTo( minPushedAt + listener?.MinDeadLetterRetention ?? Timestamp.Zero ),
+                                d.ToString()
+                                    .TestEquals(
+                                        $"Publisher = ([1] 'test' => [1] 'c' publisher binding (using [1] 'c' stream) (Running)), Listener = ([1] 'test' => [1] 'c' listener binding (using [1] 'c' queue) (Running)), StoreKey = 0, Retry = 0, Redelivery = 1, ExpiresAt = {d.ExpiresAt}" ),
+                                d.TryGetMessage().TestNotNull( m => m.StoreKey.TestEquals( d.StoreKey ) ) ) ) ) ),
                     clientLogs.GetAll()
                         .Skip( 4 )
                         .TestSequence(
@@ -1830,82 +1774,77 @@ public partial class MessageBrokerQueueTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
+                    .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindListener )
                                 {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindListener )
+                                    listenerUnbound.Complete();
+                                    endSource.Complete();
+                                }
+                                else if ( e.Type == MessageBrokerRemoteClientTraceEventType.MessageNotification )
+                                    endSource.Complete();
+                            } ) ) )
+                    .SetQueueLoggerFactory( _ => queueLogs.GetLogger(
+                        MessageBrokerQueueLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
+                                {
+                                    if ( ! firstProcessComplete.Value )
                                     {
-                                        listenerUnbound.Complete();
-                                        endSource.Complete();
+                                        firstProcessComplete.Value = true;
+                                        firstProcess.Complete();
                                     }
-                                    else if ( e.Type == MessageBrokerRemoteClientTraceEventType.MessageNotification )
-                                        endSource.Complete();
-                                } ) ) )
-                    .SetQueueLoggerFactory(
-                        _ => queueLogs.GetLogger(
-                            MessageBrokerQueueLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
-                                    {
-                                        if ( ! firstProcessComplete.Value )
-                                        {
-                                            firstProcessComplete.Value = true;
-                                            firstProcess.Complete();
-                                        }
 
-                                        endSource.Complete();
-                                        listenerUnbound.Task.Wait();
-                                    }
-                                    else if ( e.Type == MessageBrokerQueueTraceEventType.UnbindListener )
-                                        endSource.Complete();
-                                },
-                                messageProcessed: e => ackExpireDatesByQueueTraceId[e.Source.TraceId] = e.AckExpiresAt,
-                                messageDiscarded: e => messageRemoved.Value = e.MessageRemoved ) ) ) );
+                                    endSource.Complete();
+                                    listenerUnbound.Task.Wait();
+                                }
+                                else if ( e.Type == MessageBrokerQueueTraceEventType.UnbindListener )
+                                    endSource.Complete();
+                            },
+                            messageProcessed: e => ackExpireDatesByQueueTraceId[e.Source.TraceId] = e.AckExpiresAt,
+                            messageDiscarded: e => messageRemoved.Value = e.MessageRemoved ) ) ) );
 
             await server.StartAsync();
 
             using var client = new ClientMock();
             await client.EstablishHandshake( server );
-            await client.GetTask(
-                c =>
-                {
-                    c.SendBindPublisherRequest( "c" );
-                    c.ReadPublisherBoundResponse();
-                    c.SendBindListenerRequest(
-                        "c",
-                        false,
-                        maxRedeliveries: 2,
-                        minAckTimeout: Duration.FromMilliseconds( 15 ) );
+            await client.GetTask( c =>
+            {
+                c.SendBindPublisherRequest( "c" );
+                c.ReadPublisherBoundResponse();
+                c.SendBindListenerRequest(
+                    "c",
+                    false,
+                    maxRedeliveries: 2,
+                    minAckTimeout: Duration.FromMilliseconds( 15 ) );
 
-                    c.ReadListenerBoundResponse();
-                    c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
-                    c.ReadMessageNotification( 3 );
-                } );
+                c.ReadListenerBoundResponse();
+                c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
+                c.ReadMessageNotification( 3 );
+            } );
 
             await firstProcess.Task;
             var stream = server.Streams.TryGetById( 1 );
             var queue = server.Clients.TryGetById( 1 )?.Queues.TryGetById( 1 );
-            await client.GetTask(
-                c =>
-                {
-                    c.SendUnbindListenerRequest( 1 );
-                    c.ReadListenerUnboundResponse();
-                } );
+            await client.GetTask( c =>
+            {
+                c.SendUnbindListenerRequest( 1 );
+                c.ReadListenerUnboundResponse();
+            } );
 
             await endSource.Task;
 
             Assertion.All(
                     stream.TestNotNull( s => s.Messages.Count.TestEquals( 0 ) ),
-                    queue.TestNotNull(
-                        q => Assertion.All(
-                            "queue",
-                            q.Messages.Pending.Count.TestEquals( 0 ),
-                            q.Messages.Unacked.Count.TestEquals( 0 ),
-                            q.Messages.Retries.Count.TestEquals( 0 ),
-                            q.Messages.DeadLetter.Count.TestEquals( 0 ) ) ),
+                    queue.TestNotNull( q => Assertion.All(
+                        "queue",
+                        q.Messages.Pending.Count.TestEquals( 0 ),
+                        q.Messages.Unacked.Count.TestEquals( 0 ),
+                        q.Messages.Retries.Count.TestEquals( 0 ),
+                        q.Messages.DeadLetter.Count.TestEquals( 0 ) ) ),
                     clientLogs.GetAll()
                         .Skip( 4 )
                         .Take( 1 )
@@ -1963,51 +1902,48 @@ public partial class MessageBrokerQueueTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type is MessageBrokerRemoteClientTraceEventType.NegativeAck
-                                        or MessageBrokerRemoteClientTraceEventType.MessageNotification )
-                                        endSource.Complete();
-                                } ) ) )
-                    .SetQueueLoggerFactory(
-                        _ => queueLogs.GetLogger(
-                            MessageBrokerQueueLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
-                                        endSource.Complete();
-                                },
-                                messageProcessed: e => ackExpireDatesByQueueTraceId[e.Source.TraceId] = e.AckExpiresAt,
-                                messageDiscarded: e => messageRemoved.Value = e.MessageRemoved ) ) ) );
+                    .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type is MessageBrokerRemoteClientTraceEventType.NegativeAck
+                                    or MessageBrokerRemoteClientTraceEventType.MessageNotification )
+                                    endSource.Complete();
+                            } ) ) )
+                    .SetQueueLoggerFactory( _ => queueLogs.GetLogger(
+                        MessageBrokerQueueLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
+                                    endSource.Complete();
+                            },
+                            messageProcessed: e => ackExpireDatesByQueueTraceId[e.Source.TraceId] = e.AckExpiresAt,
+                            messageDiscarded: e => messageRemoved.Value = e.MessageRemoved ) ) ) );
 
             await server.StartAsync();
 
             using var client = new ClientMock();
             await client.EstablishHandshake( server );
-            await client.GetTask(
-                c =>
-                {
-                    c.SendBindPublisherRequest( "c" );
-                    c.ReadPublisherBoundResponse();
-                    c.SendBindListenerRequest(
-                        "c",
-                        false,
-                        maxRetries: 2,
-                        retryDelay: Duration.FromMilliseconds( 15 ),
-                        minAckTimeout: Duration.FromMinutes( 10 ) );
+            await client.GetTask( c =>
+            {
+                c.SendBindPublisherRequest( "c" );
+                c.ReadPublisherBoundResponse();
+                c.SendBindListenerRequest(
+                    "c",
+                    false,
+                    maxRetries: 2,
+                    retryDelay: Duration.FromMilliseconds( 15 ),
+                    minAckTimeout: Duration.FromMinutes( 10 ) );
 
-                    c.ReadListenerBoundResponse();
-                    c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
-                    c.ReadMessageNotification( 3 );
-                    c.SendMessageNotificationNegativeAck( 1, 1, 1, 0 );
-                    c.ReadMessageNotification( 3 );
-                    c.SendMessageNotificationNegativeAck( 1, 1, 1, 0, 1 );
-                    c.ReadMessageNotification( 3 );
-                    c.SendMessageNotificationNegativeAck( 1, 1, 1, 0, 2 );
-                } );
+                c.ReadListenerBoundResponse();
+                c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
+                c.ReadMessageNotification( 3 );
+                c.SendMessageNotificationNegativeAck( 1, 1, 1, 0 );
+                c.ReadMessageNotification( 3 );
+                c.SendMessageNotificationNegativeAck( 1, 1, 1, 0, 1 );
+                c.ReadMessageNotification( 3 );
+                c.SendMessageNotificationNegativeAck( 1, 1, 1, 0, 2 );
+            } );
 
             var stream = server.Streams.TryGetById( 1 );
             var queue = server.Clients.TryGetById( 1 )?.Queues.TryGetById( 1 );
@@ -2015,13 +1951,12 @@ public partial class MessageBrokerQueueTests
 
             Assertion.All(
                     stream.TestNotNull( s => s.Messages.Count.TestEquals( 0 ) ),
-                    queue.TestNotNull(
-                        q => Assertion.All(
-                            "queue",
-                            q.Messages.Pending.Count.TestEquals( 0 ),
-                            q.Messages.Unacked.Count.TestEquals( 0 ),
-                            q.Messages.Retries.Count.TestEquals( 0 ),
-                            q.Messages.DeadLetter.Count.TestEquals( 0 ) ) ),
+                    queue.TestNotNull( q => Assertion.All(
+                        "queue",
+                        q.Messages.Pending.Count.TestEquals( 0 ),
+                        q.Messages.Unacked.Count.TestEquals( 0 ),
+                        q.Messages.Retries.Count.TestEquals( 0 ),
+                        q.Messages.DeadLetter.Count.TestEquals( 0 ) ) ),
                     clientLogs.GetAll()
                         .Where( t => t.Logs.Any( l => l.Contains( "[Trace:MessageNotification]" ) ) )
                         .TestSequence(
@@ -2110,52 +2045,49 @@ public partial class MessageBrokerQueueTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type is MessageBrokerRemoteClientTraceEventType.NegativeAck
-                                        or MessageBrokerRemoteClientTraceEventType.MessageNotification )
-                                        endSource.Complete();
-                                } ) ) )
-                    .SetQueueLoggerFactory(
-                        _ => queueLogs.GetLogger(
-                            MessageBrokerQueueLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
-                                        endSource.Complete();
-                                },
-                                messageProcessed: e => ackExpireDatesByQueueTraceId[e.Source.TraceId] = e.AckExpiresAt,
-                                messageDiscarded: e => messageRemoved.Value = e.MessageRemoved ) ) ) );
+                    .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type is MessageBrokerRemoteClientTraceEventType.NegativeAck
+                                    or MessageBrokerRemoteClientTraceEventType.MessageNotification )
+                                    endSource.Complete();
+                            } ) ) )
+                    .SetQueueLoggerFactory( _ => queueLogs.GetLogger(
+                        MessageBrokerQueueLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
+                                    endSource.Complete();
+                            },
+                            messageProcessed: e => ackExpireDatesByQueueTraceId[e.Source.TraceId] = e.AckExpiresAt,
+                            messageDiscarded: e => messageRemoved.Value = e.MessageRemoved ) ) ) );
 
             await server.StartAsync();
 
             using var client = new ClientMock();
             await client.EstablishHandshake( server );
-            await client.GetTask(
-                c =>
-                {
-                    c.SendBindPublisherRequest( "c" );
-                    c.ReadPublisherBoundResponse();
-                    c.SendBindListenerRequest(
-                        "c",
-                        false,
-                        maxRetries: 2,
-                        retryDelay: Duration.FromSeconds( 10 ),
-                        minAckTimeout: Duration.FromMinutes( 10 ) );
+            await client.GetTask( c =>
+            {
+                c.SendBindPublisherRequest( "c" );
+                c.ReadPublisherBoundResponse();
+                c.SendBindListenerRequest(
+                    "c",
+                    false,
+                    maxRetries: 2,
+                    retryDelay: Duration.FromSeconds( 10 ),
+                    minAckTimeout: Duration.FromMinutes( 10 ) );
 
-                    var delay = Duration.Zero;
-                    c.ReadListenerBoundResponse();
-                    c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
-                    c.ReadMessageNotification( 3 );
-                    c.SendMessageNotificationNegativeAck( 1, 1, 1, 0, hasExplicitDelay: true, explicitDelay: delay );
-                    c.ReadMessageNotification( 3 );
-                    c.SendMessageNotificationNegativeAck( 1, 1, 1, 0, 1, hasExplicitDelay: true, explicitDelay: delay );
-                    c.ReadMessageNotification( 3 );
-                    c.SendMessageNotificationNegativeAck( 1, 1, 1, 0, 2, hasExplicitDelay: true, explicitDelay: delay );
-                } );
+                var delay = Duration.Zero;
+                c.ReadListenerBoundResponse();
+                c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
+                c.ReadMessageNotification( 3 );
+                c.SendMessageNotificationNegativeAck( 1, 1, 1, 0, hasExplicitDelay: true, explicitDelay: delay );
+                c.ReadMessageNotification( 3 );
+                c.SendMessageNotificationNegativeAck( 1, 1, 1, 0, 1, hasExplicitDelay: true, explicitDelay: delay );
+                c.ReadMessageNotification( 3 );
+                c.SendMessageNotificationNegativeAck( 1, 1, 1, 0, 2, hasExplicitDelay: true, explicitDelay: delay );
+            } );
 
             var stream = server.Streams.TryGetById( 1 );
             var queue = server.Clients.TryGetById( 1 )?.Queues.TryGetById( 1 );
@@ -2163,13 +2095,12 @@ public partial class MessageBrokerQueueTests
 
             Assertion.All(
                     stream.TestNotNull( s => s.Messages.Count.TestEquals( 0 ) ),
-                    queue.TestNotNull(
-                        q => Assertion.All(
-                            "queue",
-                            q.Messages.Pending.Count.TestEquals( 0 ),
-                            q.Messages.Unacked.Count.TestEquals( 0 ),
-                            q.Messages.Retries.Count.TestEquals( 0 ),
-                            q.Messages.DeadLetter.Count.TestEquals( 0 ) ) ),
+                    queue.TestNotNull( q => Assertion.All(
+                        "queue",
+                        q.Messages.Pending.Count.TestEquals( 0 ),
+                        q.Messages.Unacked.Count.TestEquals( 0 ),
+                        q.Messages.Retries.Count.TestEquals( 0 ),
+                        q.Messages.DeadLetter.Count.TestEquals( 0 ) ) ),
                     clientLogs.GetAll()
                         .Where( t => t.Logs.Any( l => l.Contains( "[Trace:MessageNotification]" ) ) )
                         .TestSequence(
@@ -2257,50 +2188,47 @@ public partial class MessageBrokerQueueTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type is MessageBrokerRemoteClientTraceEventType.NegativeAck
-                                        or MessageBrokerRemoteClientTraceEventType.MessageNotification )
-                                        endSource.Complete();
-                                } ) ) )
-                    .SetQueueLoggerFactory(
-                        _ => queueLogs.GetLogger(
-                            MessageBrokerQueueLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
-                                        endSource.Complete();
-                                },
-                                messageProcessed: e => ackExpireDatesByQueueTraceId[e.Source.TraceId] = e.AckExpiresAt ) ) ) );
+                    .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type is MessageBrokerRemoteClientTraceEventType.NegativeAck
+                                    or MessageBrokerRemoteClientTraceEventType.MessageNotification )
+                                    endSource.Complete();
+                            } ) ) )
+                    .SetQueueLoggerFactory( _ => queueLogs.GetLogger(
+                        MessageBrokerQueueLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
+                                    endSource.Complete();
+                            },
+                            messageProcessed: e => ackExpireDatesByQueueTraceId[e.Source.TraceId] = e.AckExpiresAt ) ) ) );
 
             await server.StartAsync();
 
             using var client = new ClientMock();
             await client.EstablishHandshake( server );
-            await client.GetTask(
-                c =>
-                {
-                    c.SendBindPublisherRequest( "c" );
-                    c.ReadPublisherBoundResponse();
-                    c.SendBindListenerRequest(
-                        "c",
-                        false,
-                        maxRetries: 1,
-                        retryDelay: Duration.FromMilliseconds( 15 ),
-                        deadLetterCapacityHint: 1,
-                        minDeadLetterRetention: Duration.FromMinutes( 1 ),
-                        minAckTimeout: Duration.FromMinutes( 10 ) );
+            await client.GetTask( c =>
+            {
+                c.SendBindPublisherRequest( "c" );
+                c.ReadPublisherBoundResponse();
+                c.SendBindListenerRequest(
+                    "c",
+                    false,
+                    maxRetries: 1,
+                    retryDelay: Duration.FromMilliseconds( 15 ),
+                    deadLetterCapacityHint: 1,
+                    minDeadLetterRetention: Duration.FromMinutes( 1 ),
+                    minAckTimeout: Duration.FromMinutes( 10 ) );
 
-                    c.ReadListenerBoundResponse();
-                    c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
-                    c.ReadMessageNotification( 3 );
-                    c.SendMessageNotificationNegativeAck( 1, 1, 1, 0 );
-                    c.ReadMessageNotification( 3 );
-                    c.SendMessageNotificationNegativeAck( 1, 1, 1, 0, 1 );
-                } );
+                c.ReadListenerBoundResponse();
+                c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
+                c.ReadMessageNotification( 3 );
+                c.SendMessageNotificationNegativeAck( 1, 1, 1, 0 );
+                c.ReadMessageNotification( 3 );
+                c.SendMessageNotificationNegativeAck( 1, 1, 1, 0, 1 );
+            } );
 
             var stream = server.Streams.TryGetById( 1 );
             var queue = server.Clients.TryGetById( 1 )?.Queues.TryGetById( 1 );
@@ -2308,13 +2236,12 @@ public partial class MessageBrokerQueueTests
 
             Assertion.All(
                     stream.TestNotNull( s => s.Messages.Count.TestEquals( 1 ) ),
-                    queue.TestNotNull(
-                        q => Assertion.All(
-                            "queue",
-                            q.Messages.Pending.Count.TestEquals( 0 ),
-                            q.Messages.Unacked.Count.TestEquals( 0 ),
-                            q.Messages.Retries.Count.TestEquals( 0 ),
-                            q.Messages.DeadLetter.Count.TestEquals( 1 ) ) ),
+                    queue.TestNotNull( q => Assertion.All(
+                        "queue",
+                        q.Messages.Pending.Count.TestEquals( 0 ),
+                        q.Messages.Unacked.Count.TestEquals( 0 ),
+                        q.Messages.Retries.Count.TestEquals( 0 ),
+                        q.Messages.DeadLetter.Count.TestEquals( 1 ) ) ),
                     clientLogs.GetAll()
                         .Where( t => t.Logs.Any( l => l.Contains( "[Trace:MessageNotification]" ) ) )
                         .TestSequence(
@@ -2387,47 +2314,44 @@ public partial class MessageBrokerQueueTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type is MessageBrokerRemoteClientTraceEventType.NegativeAck
-                                        or MessageBrokerRemoteClientTraceEventType.MessageNotification )
-                                        endSource.Complete();
-                                } ) ) )
-                    .SetQueueLoggerFactory(
-                        _ => queueLogs.GetLogger(
-                            MessageBrokerQueueLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
-                                        endSource.Complete();
-                                },
-                                messageProcessed: e => ackExpireDatesByQueueTraceId[e.Source.TraceId] = e.AckExpiresAt,
-                                messageDiscarded: e => messageRemoved.Value = e.MessageRemoved ) ) ) );
+                    .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type is MessageBrokerRemoteClientTraceEventType.NegativeAck
+                                    or MessageBrokerRemoteClientTraceEventType.MessageNotification )
+                                    endSource.Complete();
+                            } ) ) )
+                    .SetQueueLoggerFactory( _ => queueLogs.GetLogger(
+                        MessageBrokerQueueLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
+                                    endSource.Complete();
+                            },
+                            messageProcessed: e => ackExpireDatesByQueueTraceId[e.Source.TraceId] = e.AckExpiresAt,
+                            messageDiscarded: e => messageRemoved.Value = e.MessageRemoved ) ) ) );
 
             await server.StartAsync();
 
             using var client = new ClientMock();
             await client.EstablishHandshake( server );
-            await client.GetTask(
-                c =>
-                {
-                    c.SendBindPublisherRequest( "c" );
-                    c.ReadPublisherBoundResponse();
-                    c.SendBindListenerRequest(
-                        "c",
-                        false,
-                        maxRetries: 2,
-                        retryDelay: Duration.FromMilliseconds( 15 ),
-                        minAckTimeout: Duration.FromMinutes( 10 ) );
+            await client.GetTask( c =>
+            {
+                c.SendBindPublisherRequest( "c" );
+                c.ReadPublisherBoundResponse();
+                c.SendBindListenerRequest(
+                    "c",
+                    false,
+                    maxRetries: 2,
+                    retryDelay: Duration.FromMilliseconds( 15 ),
+                    minAckTimeout: Duration.FromMinutes( 10 ) );
 
-                    c.ReadListenerBoundResponse();
-                    c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
-                    c.ReadMessageNotification( 3 );
-                    c.SendMessageNotificationNegativeAck( 1, 1, 1, 0, noRetry: true );
-                } );
+                c.ReadListenerBoundResponse();
+                c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
+                c.ReadMessageNotification( 3 );
+                c.SendMessageNotificationNegativeAck( 1, 1, 1, 0, noRetry: true );
+            } );
 
             var stream = server.Streams.TryGetById( 1 );
             var queue = server.Clients.TryGetById( 1 )?.Queues.TryGetById( 1 );
@@ -2435,13 +2359,12 @@ public partial class MessageBrokerQueueTests
 
             Assertion.All(
                     stream.TestNotNull( s => s.Messages.Count.TestInRange( 0, 1 ) ),
-                    queue.TestNotNull(
-                        q => Assertion.All(
-                            "queue",
-                            q.Messages.Pending.Count.TestEquals( 0 ),
-                            q.Messages.Unacked.Count.TestEquals( 0 ),
-                            q.Messages.Retries.Count.TestEquals( 0 ),
-                            q.Messages.DeadLetter.Count.TestEquals( 0 ) ) ),
+                    queue.TestNotNull( q => Assertion.All(
+                        "queue",
+                        q.Messages.Pending.Count.TestEquals( 0 ),
+                        q.Messages.Unacked.Count.TestEquals( 0 ),
+                        q.Messages.Retries.Count.TestEquals( 0 ),
+                        q.Messages.DeadLetter.Count.TestEquals( 0 ) ) ),
                     clientLogs.GetAll()
                         .Where( t => t.Logs.Any( l => l.Contains( "[Trace:MessageNotification]" ) ) )
                         .TestSequence(
@@ -2491,48 +2414,45 @@ public partial class MessageBrokerQueueTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type is MessageBrokerRemoteClientTraceEventType.NegativeAck
-                                        or MessageBrokerRemoteClientTraceEventType.MessageNotification )
-                                        endSource.Complete();
-                                } ) ) )
-                    .SetQueueLoggerFactory(
-                        _ => queueLogs.GetLogger(
-                            MessageBrokerQueueLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
-                                        endSource.Complete();
-                                },
-                                messageProcessed: e => ackExpireDatesByQueueTraceId[e.Source.TraceId] = e.AckExpiresAt ) ) ) );
+                    .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type is MessageBrokerRemoteClientTraceEventType.NegativeAck
+                                    or MessageBrokerRemoteClientTraceEventType.MessageNotification )
+                                    endSource.Complete();
+                            } ) ) )
+                    .SetQueueLoggerFactory( _ => queueLogs.GetLogger(
+                        MessageBrokerQueueLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
+                                    endSource.Complete();
+                            },
+                            messageProcessed: e => ackExpireDatesByQueueTraceId[e.Source.TraceId] = e.AckExpiresAt ) ) ) );
 
             await server.StartAsync();
 
             using var client = new ClientMock();
             await client.EstablishHandshake( server );
-            await client.GetTask(
-                c =>
-                {
-                    c.SendBindPublisherRequest( "c" );
-                    c.ReadPublisherBoundResponse();
-                    c.SendBindListenerRequest(
-                        "c",
-                        false,
-                        maxRetries: 2,
-                        retryDelay: Duration.FromMilliseconds( 15 ),
-                        deadLetterCapacityHint: 1,
-                        minDeadLetterRetention: Duration.FromMinutes( 1 ),
-                        minAckTimeout: Duration.FromMinutes( 10 ) );
+            await client.GetTask( c =>
+            {
+                c.SendBindPublisherRequest( "c" );
+                c.ReadPublisherBoundResponse();
+                c.SendBindListenerRequest(
+                    "c",
+                    false,
+                    maxRetries: 2,
+                    retryDelay: Duration.FromMilliseconds( 15 ),
+                    deadLetterCapacityHint: 1,
+                    minDeadLetterRetention: Duration.FromMinutes( 1 ),
+                    minAckTimeout: Duration.FromMinutes( 10 ) );
 
-                    c.ReadListenerBoundResponse();
-                    c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
-                    c.ReadMessageNotification( 3 );
-                    c.SendMessageNotificationNegativeAck( 1, 1, 1, 0, noRetry: true );
-                } );
+                c.ReadListenerBoundResponse();
+                c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
+                c.ReadMessageNotification( 3 );
+                c.SendMessageNotificationNegativeAck( 1, 1, 1, 0, noRetry: true );
+            } );
 
             var stream = server.Streams.TryGetById( 1 );
             var queue = server.Clients.TryGetById( 1 )?.Queues.TryGetById( 1 );
@@ -2540,13 +2460,12 @@ public partial class MessageBrokerQueueTests
 
             Assertion.All(
                     stream.TestNotNull( s => s.Messages.Count.TestEquals( 1 ) ),
-                    queue.TestNotNull(
-                        q => Assertion.All(
-                            "queue",
-                            q.Messages.Pending.Count.TestEquals( 0 ),
-                            q.Messages.Unacked.Count.TestEquals( 0 ),
-                            q.Messages.Retries.Count.TestEquals( 0 ),
-                            q.Messages.DeadLetter.Count.TestEquals( 1 ) ) ),
+                    queue.TestNotNull( q => Assertion.All(
+                        "queue",
+                        q.Messages.Pending.Count.TestEquals( 0 ),
+                        q.Messages.Unacked.Count.TestEquals( 0 ),
+                        q.Messages.Retries.Count.TestEquals( 0 ),
+                        q.Messages.DeadLetter.Count.TestEquals( 1 ) ) ),
                     clientLogs.GetAll()
                         .Where( t => t.Logs.Any( l => l.Contains( "[Trace:MessageNotification]" ) ) )
                         .TestSequence(
@@ -2597,73 +2516,68 @@ public partial class MessageBrokerQueueTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type is MessageBrokerRemoteClientTraceEventType.Ack
-                                        or MessageBrokerRemoteClientTraceEventType.MessageNotification )
-                                        endSource.Complete();
-                                } ) ) )
-                    .SetQueueLoggerFactory(
-                        _ => queueLogs.GetLogger(
-                            MessageBrokerQueueLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
-                                        endSource.Complete();
-                                },
-                                messageProcessed: e => ackExpireDatesByQueueTraceId[e.Source.TraceId] = e.AckExpiresAt,
-                                clientTrace: e => clientTraceIdsByQueueTraceId[e.Source.TraceId] = e.ClientTraceId ) ) ) );
+                    .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type is MessageBrokerRemoteClientTraceEventType.Ack
+                                    or MessageBrokerRemoteClientTraceEventType.MessageNotification )
+                                    endSource.Complete();
+                            } ) ) )
+                    .SetQueueLoggerFactory( _ => queueLogs.GetLogger(
+                        MessageBrokerQueueLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
+                                    endSource.Complete();
+                            },
+                            messageProcessed: e => ackExpireDatesByQueueTraceId[e.Source.TraceId] = e.AckExpiresAt,
+                            clientTrace: e => clientTraceIdsByQueueTraceId[e.Source.TraceId] = e.ClientTraceId ) ) ) );
 
             await server.StartAsync();
 
             using var client = new ClientMock();
             await client.EstablishHandshake( server );
-            await client.GetTask(
-                c =>
-                {
-                    c.SendBindPublisherRequest( "c" );
-                    c.ReadPublisherBoundResponse();
-                    c.SendBindListenerRequest(
-                        "c",
-                        false,
-                        maxRetries: 2,
-                        retryDelay: Duration.FromMilliseconds( 50 ),
-                        minAckTimeout: Duration.FromMinutes( 10 ) );
+            await client.GetTask( c =>
+            {
+                c.SendBindPublisherRequest( "c" );
+                c.ReadPublisherBoundResponse();
+                c.SendBindListenerRequest(
+                    "c",
+                    false,
+                    maxRetries: 2,
+                    retryDelay: Duration.FromMilliseconds( 50 ),
+                    minAckTimeout: Duration.FromMinutes( 10 ) );
 
-                    c.ReadListenerBoundResponse();
-                    c.SendPushMessage( 1, [ 1 ], confirm: false );
-                    c.ReadMessageNotification( 1 );
-                    c.SendMessageNotificationNegativeAck( 1, 1, 1, 0 );
-                    c.SendPushMessage( 1, [ 2, 3 ], confirm: false );
-                    c.ReadMessageNotification( 2 );
-                } );
+                c.ReadListenerBoundResponse();
+                c.SendPushMessage( 1, [ 1 ], confirm: false );
+                c.ReadMessageNotification( 1 );
+                c.SendMessageNotificationNegativeAck( 1, 1, 1, 0 );
+                c.SendPushMessage( 1, [ 2, 3 ], confirm: false );
+                c.ReadMessageNotification( 2 );
+            } );
 
             var stream = server.Streams.TryGetById( 1 );
             var queue = server.Clients.TryGetById( 1 )?.Queues.TryGetById( 1 );
 
             await Task.Delay( 100 );
-            await client.GetTask(
-                c =>
-                {
-                    c.SendMessageNotificationAck( 1, 1, 1, 1 );
-                    c.ReadMessageNotification( 1 );
-                    c.SendMessageNotificationAck( 1, 1, 1, 0, 1 );
-                } );
+            await client.GetTask( c =>
+            {
+                c.SendMessageNotificationAck( 1, 1, 1, 1 );
+                c.ReadMessageNotification( 1 );
+                c.SendMessageNotificationAck( 1, 1, 1, 0, 1 );
+            } );
 
             await endSource.Task;
 
             Assertion.All(
                     stream.TestNotNull( s => s.Messages.Count.TestEquals( 0 ) ),
-                    queue.TestNotNull(
-                        q => Assertion.All(
-                            "queue",
-                            q.Messages.Pending.Count.TestEquals( 0 ),
-                            q.Messages.Unacked.Count.TestEquals( 0 ),
-                            q.Messages.Retries.Count.TestEquals( 0 ),
-                            q.Messages.DeadLetter.Count.TestEquals( 0 ) ) ),
+                    queue.TestNotNull( q => Assertion.All(
+                        "queue",
+                        q.Messages.Pending.Count.TestEquals( 0 ),
+                        q.Messages.Unacked.Count.TestEquals( 0 ),
+                        q.Messages.Retries.Count.TestEquals( 0 ),
+                        q.Messages.DeadLetter.Count.TestEquals( 0 ) ) ),
                     clientLogs.GetAll()
                         .Where( t => t.Logs.Any( l => l.Contains( "[Trace:MessageNotification]" ) ) )
                         .TestSequence(
@@ -2748,82 +2662,77 @@ public partial class MessageBrokerQueueTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetDelaySourceFactory( _ => _sharedDelaySource )
-                    .SetClientLoggerFactory(
-                        _ => clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
+                    .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type is MessageBrokerRemoteClientTraceEventType.UnbindListener )
                                 {
-                                    if ( e.Type is MessageBrokerRemoteClientTraceEventType.UnbindListener )
+                                    listenerUnbound.Complete();
+                                    endSource.Complete();
+                                }
+                                else if ( e.Type == MessageBrokerRemoteClientTraceEventType.MessageNotification )
+                                    endSource.Complete();
+                            } ) ) )
+                    .SetQueueLoggerFactory( _ => queueLogs.GetLogger(
+                        MessageBrokerQueueLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
+                                {
+                                    if ( ! firstProcessComplete.Value )
                                     {
-                                        listenerUnbound.Complete();
-                                        endSource.Complete();
+                                        firstProcessComplete.Value = true;
+                                        firstProcess.Complete();
                                     }
-                                    else if ( e.Type == MessageBrokerRemoteClientTraceEventType.MessageNotification )
-                                        endSource.Complete();
-                                } ) ) )
-                    .SetQueueLoggerFactory(
-                        _ => queueLogs.GetLogger(
-                            MessageBrokerQueueLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerQueueTraceEventType.ProcessMessage )
-                                    {
-                                        if ( ! firstProcessComplete.Value )
-                                        {
-                                            firstProcessComplete.Value = true;
-                                            firstProcess.Complete();
-                                        }
 
-                                        endSource.Complete();
-                                        listenerUnbound.Task.Wait();
-                                    }
-                                },
-                                messageProcessed: e => ackExpireDatesByQueueTraceId[e.Source.TraceId] = e.AckExpiresAt,
-                                messageDiscarded: e => messageRemoved.Value = e.MessageRemoved ) ) ) );
+                                    endSource.Complete();
+                                    listenerUnbound.Task.Wait();
+                                }
+                            },
+                            messageProcessed: e => ackExpireDatesByQueueTraceId[e.Source.TraceId] = e.AckExpiresAt,
+                            messageDiscarded: e => messageRemoved.Value = e.MessageRemoved ) ) ) );
 
             await server.StartAsync();
 
             using var client = new ClientMock();
             await client.EstablishHandshake( server );
-            await client.GetTask(
-                c =>
-                {
-                    c.SendBindPublisherRequest( "c" );
-                    c.ReadPublisherBoundResponse();
-                    c.SendBindListenerRequest(
-                        "c",
-                        false,
-                        maxRetries: 2,
-                        retryDelay: Duration.FromMilliseconds( 15 ),
-                        minAckTimeout: Duration.FromSeconds( 10 ) );
+            await client.GetTask( c =>
+            {
+                c.SendBindPublisherRequest( "c" );
+                c.ReadPublisherBoundResponse();
+                c.SendBindListenerRequest(
+                    "c",
+                    false,
+                    maxRetries: 2,
+                    retryDelay: Duration.FromMilliseconds( 15 ),
+                    minAckTimeout: Duration.FromSeconds( 10 ) );
 
-                    c.ReadListenerBoundResponse();
-                    c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
-                    c.ReadMessageNotification( 3 );
-                    c.SendMessageNotificationNegativeAck( 1, 1, 1, 0 );
-                } );
+                c.ReadListenerBoundResponse();
+                c.SendPushMessage( 1, [ 1, 2, 3 ], confirm: false );
+                c.ReadMessageNotification( 3 );
+                c.SendMessageNotificationNegativeAck( 1, 1, 1, 0 );
+            } );
 
             await firstProcess.Task;
             var stream = server.Streams.TryGetById( 1 );
             var queue = server.Clients.TryGetById( 1 )?.Queues.TryGetById( 1 );
-            await client.GetTask(
-                c =>
-                {
-                    c.SendUnbindListenerRequest( 1 );
-                    c.ReadListenerUnboundResponse();
-                } );
+            await client.GetTask( c =>
+            {
+                c.SendUnbindListenerRequest( 1 );
+                c.ReadListenerUnboundResponse();
+            } );
 
             await endSource.Task;
 
             Assertion.All(
                     stream.TestNotNull( s => s.Messages.Count.TestEquals( 0 ) ),
-                    queue.TestNotNull(
-                        q => Assertion.All(
-                            "queue",
-                            q.Messages.Pending.Count.TestEquals( 0 ),
-                            q.Messages.Unacked.Count.TestEquals( 0 ),
-                            q.Messages.Retries.Count.TestEquals( 0 ),
-                            q.Messages.DeadLetter.Count.TestEquals( 0 ) ) ),
+                    queue.TestNotNull( q => Assertion.All(
+                        "queue",
+                        q.Messages.Pending.Count.TestEquals( 0 ),
+                        q.Messages.Unacked.Count.TestEquals( 0 ),
+                        q.Messages.Retries.Count.TestEquals( 0 ),
+                        q.Messages.DeadLetter.Count.TestEquals( 0 ) ) ),
                     clientLogs.GetAll()
                         .Skip( 4 )
                         .Take( 1 )

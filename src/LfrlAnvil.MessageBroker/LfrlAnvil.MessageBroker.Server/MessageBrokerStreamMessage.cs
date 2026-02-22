@@ -46,9 +46,6 @@ public readonly struct MessageBrokerStreamMessage
     /// </summary>
     public IMessageBrokerMessagePublisher Publisher { get; }
 
-    // TODO: tests
-    // - Data access
-
     /// <summary>
     /// Binary data of this message.
     /// </summary>

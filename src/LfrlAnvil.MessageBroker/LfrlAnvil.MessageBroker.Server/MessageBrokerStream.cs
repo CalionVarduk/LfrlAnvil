@@ -114,9 +114,6 @@ public sealed class MessageBrokerStream
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void FinalizeMessageReferences(ulong serverTraceId)
     {
-        // TODO: tests
-        // - on server reload, non-pending unreferenced messages should be dropped
-
         Chain<Exception> exceptions;
         using ( AcquireLock() )
         {
@@ -326,9 +323,6 @@ public sealed class MessageBrokerStream
         try
         {
             var exceptions = Chain<Exception>.Empty;
-
-            // TODO: tests
-            // - persistent stream is no longer referenced during server disposal
 
             if ( Server.RootStorageDirectoryPath is not null )
             {

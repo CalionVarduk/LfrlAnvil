@@ -456,6 +456,7 @@ internal static class Storage
 
             var writer = new BinaryContractWriter( target.Span );
             StreamMetadata.Header.CopyTo( writer.GetSpan( StreamMetadata.Header.Length ) );
+            writer.Move( StreamMetadata.Header.Length );
             writer.MoveWrite( nextMessageId );
             writer.MoveWrite( nextPendingNodeId );
             writer.MoveWrite( messageCount );
@@ -1015,6 +1016,7 @@ internal static class Storage
             {
                 warnings = warnings.Extend( Resources.DeadLetterCapacityIsNegative( deadLetterCapacityHint ) );
                 deadLetterCapacityHint = 0;
+                minDeadLetterRetention = Duration.Zero;
             }
             else if ( deadLetterCapacityHint == 0 )
             {

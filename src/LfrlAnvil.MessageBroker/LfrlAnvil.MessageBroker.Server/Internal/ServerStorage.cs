@@ -90,8 +90,6 @@ internal readonly struct ServerStorage
 
             root.Create();
 
-            // TODO: tests
-            // - attempt to create second server which uses the same directory (fails)
             return new FileStream(
                 filePath,
                 FileMode.OpenOrCreate,
@@ -113,7 +111,7 @@ internal readonly struct ServerStorage
 
         using ( await _mutex.EnterAsync().ConfigureAwait( false ) )
         {
-            if ( server.State >= MessageBrokerServerState.Disposing )
+            if ( server.State >= MessageBrokerServerState.Disposed )
                 return;
 
             root.Create();
@@ -161,12 +159,6 @@ internal readonly struct ServerStorage
             var poolToken = MemoryPoolToken<byte>.Empty;
             try
             {
-                // TODO: tests
-                // - first storage
-                // - existing storage reload (check trace id persistence)
-                // - existing storage reload with invalid file length
-                // - existing storage reload with invalid file header
-
                 Storage.ServerMetadata metadata;
                 poolToken = server.MemoryPool.Rent( Storage.ServerMetadata.Length, clear: true, out var data );
                 await using var file = OpenReadWrite( filePath );
@@ -215,11 +207,6 @@ internal readonly struct ServerStorage
 
             foreach ( var filePath in filePaths )
             {
-                // TODO: tests
-                // - id parse failure
-                // - invalid file length
-                // - invalid file header
-                // - name with 0 length
                 var context = new Storage.Context( server, filePath );
                 var id = context.ParseId( prefixLength: Storage.ChannelMetadata.FilePrefix.Length );
 
@@ -263,12 +250,6 @@ internal readonly struct ServerStorage
             var directories = Directory.EnumerateDirectories( dir, $"{Storage.StreamMetadata.DirPrefix}*", SearchOption.TopDirectoryOnly );
             foreach ( var directory in directories )
             {
-                // TODO: tests
-                // - id parse failure
-                // - lack of meta file
-                // - invalid file length
-                // - invalid file header
-                // - name with 0 length
                 var context = new Storage.Context( server, directory );
                 var id = context.ParseId( prefixLength: Storage.StreamMetadata.DirPrefix.Length );
 
@@ -315,12 +296,6 @@ internal readonly struct ServerStorage
             var directories = Directory.EnumerateDirectories( dir, $"{Storage.ClientMetadata.DirPrefix}*", SearchOption.TopDirectoryOnly );
             foreach ( var directory in directories )
             {
-                // TODO: tests
-                // - id parse failure
-                // - lack of meta file
-                // - invalid file length
-                // - invalid file header
-                // - name with 0 length
                 var context = new Storage.Context( server, directory );
                 var id = context.ParseId( prefixLength: Storage.ClientMetadata.DirPrefix.Length );
 
@@ -509,9 +484,6 @@ internal readonly struct ServerStorage
 
         internal async ValueTask DeleteAsync(MessageBrokerChannelPublisherBinding publisher)
         {
-            // TODO: tests
-            // - unbind non-ephemeral publisher
-
             if ( ClientRootDir is null )
                 return;
 
@@ -567,9 +539,6 @@ internal readonly struct ServerStorage
 
         internal async ValueTask DeleteAsync(MessageBrokerChannelListenerBinding listener)
         {
-            // TODO: tests
-            // - unbind non-ephemeral listener
-
             if ( ClientRootDir is null )
                 return;
 
@@ -594,7 +563,7 @@ internal readonly struct ServerStorage
 
             using ( await _mutex.EnterAsync().ConfigureAwait( false ) )
             {
-                if ( client.State >= MessageBrokerRemoteClientState.Deactivating )
+                if ( client.State >= MessageBrokerRemoteClientState.Disposing || ! Directory.Exists( dir ) )
                     yield break;
 
                 var directories = Directory.EnumerateDirectories(
@@ -604,12 +573,6 @@ internal readonly struct ServerStorage
 
                 foreach ( var directory in directories )
                 {
-                    // TODO: tests
-                    // - id parse failure
-                    // - lack of meta file
-                    // - invalid file length
-                    // - invalid file header
-                    // - name with 0 length
                     var context = new Storage.Context( client.Server, directory );
                     var id = context.ParseId( prefixLength: Storage.QueueMetadata.DirPrefix.Length );
 
@@ -650,7 +613,7 @@ internal readonly struct ServerStorage
 
             using ( await _mutex.EnterAsync().ConfigureAwait( false ) )
             {
-                if ( client.State >= MessageBrokerRemoteClientState.Deactivating )
+                if ( client.State >= MessageBrokerRemoteClientState.Disposing || ! Directory.Exists( dir ) )
                     yield break;
 
                 var filePaths = Directory.EnumerateFiles(
@@ -660,10 +623,6 @@ internal readonly struct ServerStorage
 
                 foreach ( var filePath in filePaths )
                 {
-                    // TODO: tests
-                    // - id parse failure
-                    // - invalid file length
-                    // - invalid file header
                     var context = new Storage.Context( client.Server, filePath );
                     var channelId = context.ParseId( prefixLength: Storage.PublisherMetadata.MetaFilePrefix.Length );
 
@@ -701,7 +660,7 @@ internal readonly struct ServerStorage
 
             using ( await _mutex.EnterAsync().ConfigureAwait( false ) )
             {
-                if ( client.State >= MessageBrokerRemoteClientState.Deactivating )
+                if ( client.State >= MessageBrokerRemoteClientState.Disposing || ! Directory.Exists( dir ) )
                     yield break;
 
                 var filePaths = Directory.EnumerateFiles(
@@ -711,10 +670,6 @@ internal readonly struct ServerStorage
 
                 foreach ( var filePath in filePaths )
                 {
-                    // TODO: tests
-                    // - id parse failure
-                    // - invalid file length
-                    // - invalid file header
                     var context = new Storage.Context( client.Server, filePath );
                     var channelId = context.ParseId( prefixLength: Storage.ListenerMetadata.MetaFilePrefix.Length );
 
@@ -742,9 +697,6 @@ internal readonly struct ServerStorage
                 }
             }
         }
-
-        // TODO: change from non-transient to transient will have to delete all files, but only after the initial load
-        // so that all stored data is recovered one last time
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -815,7 +767,7 @@ internal readonly struct ServerStorage
 
             internal async ValueTask SaveAsync(MessageBrokerQueue queue, ListSlim<QueueMessage> messages, ulong traceId)
             {
-                if ( _mutex is null || messages.IsEmpty )
+                if ( _mutex is null )
                     return;
 
                 var rootDir = queue.Client.Storage.GetQueueRootDir( queue.Id );
@@ -856,7 +808,7 @@ internal readonly struct ServerStorage
 
             internal async ValueTask SaveAsync(MessageBrokerQueue queue, ListSlim<QueueMessageStore.UnackedEntry> entries, ulong traceId)
             {
-                if ( _mutex is null || entries.IsEmpty )
+                if ( _mutex is null )
                     return;
 
                 var rootDir = queue.Client.Storage.GetQueueRootDir( queue.Id );
@@ -897,7 +849,7 @@ internal readonly struct ServerStorage
 
             internal async ValueTask SaveAsync(MessageBrokerQueue queue, ListSlim<QueueRetryHeap.Entry> entries, ulong traceId)
             {
-                if ( _mutex is null || entries.IsEmpty )
+                if ( _mutex is null )
                     return;
 
                 var rootDir = queue.Client.Storage.GetQueueRootDir( queue.Id );
@@ -938,7 +890,7 @@ internal readonly struct ServerStorage
 
             internal async ValueTask SaveAsync(MessageBrokerQueue queue, ListSlim<QueueMessageStore.DeadLetterEntry> entries, ulong traceId)
             {
-                if ( _mutex is null || entries.IsEmpty )
+                if ( _mutex is null )
                     return;
 
                 var rootDir = queue.Client.Storage.GetQueueRootDir( queue.Id );
@@ -987,7 +939,7 @@ internal readonly struct ServerStorage
 
                 using ( await _mutex.EnterAsync().ConfigureAwait( false ) )
                 {
-                    if ( queue.State >= MessageBrokerQueueState.Deactivating )
+                    if ( queue.State >= MessageBrokerQueueState.Disposing )
                         return;
 
                     var poolToken = MemoryPoolToken<byte>.Empty;
@@ -998,14 +950,6 @@ internal readonly struct ServerStorage
                             clear: true,
                             out var data );
 
-                        // TODO: tests
-                        // - file doesn't exist
-                        // - invalid file length
-                        // - invalid file header
-                        // - stream doesn't exist
-                        // - stream message doesn't exist
-                        // - stream message is marked as pending
-                        // - listener for message's publisher's channel does not exist (not a failure, only emit)
                         var context = new Storage.Context( queue.Client.Server, filePath );
                         context.AssertFileExistence();
 
@@ -1051,7 +995,7 @@ internal readonly struct ServerStorage
                             error.Emit( MessageBrokerServerErrorEvent.Create( queue.Client.Server, serverTraceId, exc ) );
                     }
 
-                    if ( queue.State >= MessageBrokerQueueState.Deactivating )
+                    if ( queue.State >= MessageBrokerQueueState.Disposing )
                         return;
 
                     filePath = Path.Combine( rootDir, Storage.QueueUnackedMessage.FileName );
@@ -1063,16 +1007,6 @@ internal readonly struct ServerStorage
                             clear: true,
                             out var data );
 
-                        // TODO: tests
-                        // - file doesn't exist
-                        // - invalid file length
-                        // - invalid file header
-                        // - retry & redelivery are negative
-                        // - stream doesn't exist
-                        // - stream message doesn't exist
-                        // - stream message is marked as pending
-                        // - listener for message's publisher's channel does not exist (not a failure, only emit)
-                        //   this could be a single shared test for all message types
                         var context = new Storage.Context( queue.Client.Server, filePath );
                         context.AssertFileExistence();
 
@@ -1127,7 +1061,7 @@ internal readonly struct ServerStorage
                             error.Emit( MessageBrokerServerErrorEvent.Create( queue.Client.Server, serverTraceId, exc ) );
                     }
 
-                    if ( queue.State >= MessageBrokerQueueState.Deactivating )
+                    if ( queue.State >= MessageBrokerQueueState.Disposing )
                         return;
 
                     filePath = Path.Combine( rootDir, Storage.QueueMessageRetry.FileName );
@@ -1139,15 +1073,6 @@ internal readonly struct ServerStorage
                             clear: true,
                             out var data );
 
-                        // TODO: tests
-                        // - file doesn't exist
-                        // - invalid file length
-                        // - invalid file header
-                        // - retry & redelivery are negative
-                        // - stream doesn't exist
-                        // - stream message doesn't exist
-                        // - stream message is marked as pending
-                        // - listener for message's publisher's channel does not exist (not a failure, only emit)
                         var context = new Storage.Context( queue.Client.Server, filePath );
                         context.AssertFileExistence();
 
@@ -1199,7 +1124,7 @@ internal readonly struct ServerStorage
                             error.Emit( MessageBrokerServerErrorEvent.Create( queue.Client.Server, serverTraceId, exc ) );
                     }
 
-                    if ( queue.State >= MessageBrokerQueueState.Deactivating )
+                    if ( queue.State >= MessageBrokerQueueState.Disposing )
                         return;
 
                     filePath = Path.Combine( rootDir, Storage.QueueDeadLetterMessage.FileName );
@@ -1211,15 +1136,6 @@ internal readonly struct ServerStorage
                             clear: true,
                             out var data );
 
-                        // TODO: tests
-                        // - file doesn't exist
-                        // - invalid file length
-                        // - invalid file header
-                        // - retry & redelivery are negative
-                        // - stream doesn't exist
-                        // - stream message doesn't exist
-                        // - stream message is marked as pending
-                        // - listener for message's publisher's channel does not exist (not a failure, only emit)
                         var context = new Storage.Context( queue.Client.Server, filePath );
                         context.AssertFileExistence();
 
@@ -1278,9 +1194,6 @@ internal readonly struct ServerStorage
                 if ( _mutex is null )
                     return;
 
-                // TODO: tests
-                // unbind last non-ephemeral listener from the queue
-
                 var rootDir = queue.Client.Storage.GetQueueRootDir( queue.Id );
                 using ( await _mutex.EnterAsync().ConfigureAwait( false ) )
                 {
@@ -1334,9 +1247,6 @@ internal readonly struct ServerStorage
         {
             if ( _mutex is null )
                 return;
-
-            // TODO: tests
-            // - unbind last non-ephemeral publisher from the channel
 
             Assume.IsNotNull( _mutex );
             var filePath = channel.Server.Storage.GetChannelMetafilePath( channel.Id );
@@ -1427,10 +1337,6 @@ internal readonly struct ServerStorage
 
                     for ( var i = 0; i < messages.Count; ++i )
                     {
-                        // TODO: tests
-                        // - channel no longer has any listeners => message discarded, also test with discarded routing (one test)
-                        // - message's publisher's client is ephemeral
-
                         var message = messages[i];
                         var messageHeader = Storage.StreamMessageHeader.Create( message.Key, message.Value, ephemeralClients );
                         messageHeader.Serialize( data );
@@ -1505,25 +1411,6 @@ internal readonly struct ServerStorage
                         clear: true,
                         out var data );
 
-                    // TODO: tests
-                    // - file doesn't exist
-                    // - invalid file length
-                    // - invalid file header
-                    // - message & routing count are negative
-                    // - message store key & data length are negative
-                    // - message is discarded (channel id = 0) and data length is positive
-                    // - message is discarded and data length is 0 => success, skip (single test with discarded routing as well)
-                    // - message is related to ephemeral publisher from an existing client => success, create discarded publisher
-                    // - message is related to publisher from ephemeral client (virtual id) => success, create ephemeral publisher
-                    // - message channel & stream don't exist (single test)
-                    // - message routing data length is negative
-                    // - message for routing doesn't exist
-                    // - ephemeral (virtual) publisher virtual id & sender id & name length are negative
-                    // - ephemeral publisher name is empty
-                    // - ephemeral publisher does not exist for related message
-                    // - message store key is duplicated
-                    // - next pending message key does not exist
-                    // - next pending message is null => success
                     var context = new Storage.Context( stream.Server, filePath );
                     context.AssertFileExistence();
 
@@ -1582,7 +1469,7 @@ internal readonly struct ServerStorage
                         {
                             using ( client.AcquireLock() )
                             {
-                                if ( client.IsInactive )
+                                if ( client.IsDisposed )
                                     return;
 
                                 publisher = client.PublishersByChannelId.TryGet( channel.Id, out var p ) ? p : null;
@@ -1716,9 +1603,6 @@ internal readonly struct ServerStorage
         {
             if ( _mutex is null )
                 return;
-
-            // TODO: tests
-            // - unbind last non-ephemeral publisher from the stream
 
             var rootDir = stream.Server.Storage.GetStreamRootDir( stream.Id );
             using ( await _mutex.EnterAsync().ConfigureAwait( false ) )

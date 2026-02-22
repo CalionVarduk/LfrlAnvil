@@ -156,8 +156,6 @@ internal struct ChannelCollection
                 if ( exc is not null )
                     return exc;
 
-                // TODO: tests
-                // - channel duplicate (by id or name)
                 channel = new MessageBrokerChannel( server, info.Key, info.Value.Name.Value.ToString(), info.Value.TraceId );
                 if ( ! server.ChannelCollection._store.TryAdd( channel.Id, channel.Name, channel ) )
                     ExceptionThrower.Throw( server.Exception( Resources.RecreatedChannelDuplicate( channel.Id, channel.Name ) ) );

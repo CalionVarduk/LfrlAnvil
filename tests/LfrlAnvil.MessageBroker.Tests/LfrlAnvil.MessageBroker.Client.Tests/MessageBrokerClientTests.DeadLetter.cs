@@ -41,12 +41,11 @@ public partial class MessageBrokerClientTests
 
             var nextExpirationAt = TimestampProvider.Shared.GetNow();
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.ReadDeadLetterQuery();
-                    s.SendDeadLetterQueryResponse( 100, readCount, nextExpirationAt );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.ReadDeadLetterQuery();
+                s.SendDeadLetterQueryResponse( 100, readCount, nextExpirationAt );
+            } );
 
             var result = await client.QueryDeadLetterAsync( 1, readCount );
             await serverTask;
@@ -100,12 +99,11 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.ReadDeadLetterQuery();
-                    s.SendDeadLetterQueryResponse( 0, 0, Timestamp.Zero );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.ReadDeadLetterQuery();
+                s.SendDeadLetterQueryResponse( 0, 0, Timestamp.Zero );
+            } );
 
             var result = await client.QueryDeadLetterAsync( 1, 100 );
             await serverTask;
@@ -181,13 +179,11 @@ public partial class MessageBrokerClientTests
         {
             using var client = new MessageBrokerClient( new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
             var action = Lambda.Of( () => client.QueryDeadLetterAsync( 1, 0 ) );
-            action.Test(
-                    exc => exc.TestType()
-                        .Exact<MessageBrokerClientStateException>(
-                            e => Assertion.All(
-                                e.Client.TestRefEquals( client ),
-                                e.Expected.TestEquals( MessageBrokerClientState.Running ),
-                                e.Actual.TestEquals( MessageBrokerClientState.Created ) ) ) )
+            action.Test( exc => exc.TestType()
+                    .Exact<MessageBrokerClientStateException>( e => Assertion.All(
+                        e.Client.TestRefEquals( client ),
+                        e.Expected.TestEquals( MessageBrokerClientState.Running ),
+                        e.Actual.TestEquals( MessageBrokerClientState.Created ) ) ) )
                 .Go();
         }
 
@@ -213,10 +209,9 @@ public partial class MessageBrokerClientTests
             Assertion.All(
                     client.State.TestEquals( MessageBrokerClientState.Disposed ),
                     result.Exception.TestType()
-                        .Exact<MessageBrokerClientResponseTimeoutException>(
-                            exc => Assertion.All(
-                                exc.Client.TestRefEquals( client ),
-                                exc.RequestEndpoint.TestEquals( MessageBrokerServerEndpoint.DeadLetterQuery ) ) ),
+                        .Exact<MessageBrokerClientResponseTimeoutException>( exc => Assertion.All(
+                            exc.Client.TestRefEquals( client ),
+                            exc.RequestEndpoint.TestEquals( MessageBrokerServerEndpoint.DeadLetterQuery ) ) ),
                     logs.GetAll()
                         .TakeLast( 1 )
                         .TestSequence(
@@ -288,12 +283,11 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.ReadDeadLetterQuery();
-                    s.SendDeadLetterQueryResponse( 0, 0, Timestamp.Zero, payload: 15 );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.ReadDeadLetterQuery();
+                s.SendDeadLetterQueryResponse( 0, 0, Timestamp.Zero, payload: 15 );
+            } );
 
             var result = await client.QueryDeadLetterAsync( 1, 0 );
             await serverTask;
@@ -301,10 +295,9 @@ public partial class MessageBrokerClientTests
             Assertion.All(
                     client.State.TestEquals( MessageBrokerClientState.Disposed ),
                     result.Exception.TestType()
-                        .Exact<MessageBrokerClientProtocolException>(
-                            exc => Assertion.All(
-                                exc.Client.TestRefEquals( client ),
-                                exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.DeadLetterQueryResponse ) ) ),
+                        .Exact<MessageBrokerClientProtocolException>( exc => Assertion.All(
+                            exc.Client.TestRefEquals( client ),
+                            exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.DeadLetterQueryResponse ) ) ),
                     logs.GetAll()
                         .TakeLast( 1 )
                         .TestSequence(
@@ -391,12 +384,11 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.ReadDeadLetterQuery();
-                    s.SendDeadLetterQueryResponse( totalCount, maxReadCount, new Timestamp( nextExpirationAtTicks ) );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.ReadDeadLetterQuery();
+                s.SendDeadLetterQueryResponse( totalCount, maxReadCount, new Timestamp( nextExpirationAtTicks ) );
+            } );
 
             var result = await client.QueryDeadLetterAsync( 1, 0 );
             await serverTask;
@@ -404,10 +396,9 @@ public partial class MessageBrokerClientTests
             Assertion.All(
                     client.State.TestEquals( MessageBrokerClientState.Disposed ),
                     result.Exception.TestType()
-                        .Exact<MessageBrokerClientProtocolException>(
-                            exc => Assertion.All(
-                                exc.Client.TestRefEquals( client ),
-                                exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.DeadLetterQueryResponse ) ) ),
+                        .Exact<MessageBrokerClientProtocolException>( exc => Assertion.All(
+                            exc.Client.TestRefEquals( client ),
+                            exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.DeadLetterQueryResponse ) ) ),
                     logs.GetAll()
                         .TakeLast( 1 )
                         .TestSequence(
@@ -454,12 +445,11 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.ReadDeadLetterQuery();
-                    s.SendDeadLetterQueryResponse( -1, 0, Timestamp.Zero );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.ReadDeadLetterQuery();
+                s.SendDeadLetterQueryResponse( -1, 0, Timestamp.Zero );
+            } );
 
             var result = await client.QueryDeadLetterAsync( 1, 0 );
             await serverTask;
@@ -467,10 +457,9 @@ public partial class MessageBrokerClientTests
             Assertion.All(
                     client.State.TestEquals( MessageBrokerClientState.Running ),
                     result.Exception.TestType()
-                        .Exact<MessageBrokerClientRequestException>(
-                            exc => Assertion.All(
-                                exc.Client.TestRefEquals( client ),
-                                exc.Endpoint.TestEquals( MessageBrokerServerEndpoint.DeadLetterQuery ) ) ),
+                        .Exact<MessageBrokerClientRequestException>( exc => Assertion.All(
+                            exc.Client.TestRefEquals( client ),
+                            exc.Endpoint.TestEquals( MessageBrokerServerEndpoint.DeadLetterQuery ) ) ),
                     logs.GetAll()
                         .TakeLast( 1 )
                         .TestSequence(
@@ -517,12 +506,11 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.ReadDeadLetterQuery();
-                    s.Send( [ 0, 0, 0, 0, 0 ] );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.ReadDeadLetterQuery();
+                s.Send( [ 0, 0, 0, 0, 0 ] );
+            } );
 
             var result = await client.QueryDeadLetterAsync( 1, 0 );
             await serverTask;
@@ -530,10 +518,9 @@ public partial class MessageBrokerClientTests
             Assertion.All(
                     client.State.TestEquals( MessageBrokerClientState.Disposed ),
                     result.Exception.TestType()
-                        .Exact<MessageBrokerClientProtocolException>(
-                            exc => Assertion.All(
-                                exc.Client.TestRefEquals( client ),
-                                exc.Endpoint.TestEquals( ( MessageBrokerClientEndpoint )0 ) ) ),
+                        .Exact<MessageBrokerClientProtocolException>( exc => Assertion.All(
+                            exc.Client.TestRefEquals( client ),
+                            exc.Endpoint.TestEquals( ( MessageBrokerClientEndpoint )0 ) ) ),
                     logs.GetAll()
                         .TakeLast( 1 )
                         .TestSequence(

@@ -48,47 +48,42 @@ public class ListenerTests : TestsBase, IClassFixture<SharedResourceFixture>
         Assertion.All(
                 client.Listeners.Count.TestEquals( 1 ),
                 result.Exception.TestNull(),
-                result.Value.TestNotNull(
-                    v => Assertion.All(
-                        "result.Value",
-                        v.AlreadyBound.TestFalse(),
-                        v.ChannelCreated.TestTrue(),
-                        v.Listener.ChannelId.TestEquals( 1 ),
-                        v.Listener.ChannelName.TestEquals( "foo" ),
-                        v.Listener.TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ),
-                        v.Listener.State.TestEquals( MessageBrokerListenerState.Bound ) ) ),
-                remoteClient.TestNotNull(
-                    c => Assertion.All(
-                        "remoteClient",
-                        c.Listeners.Count.TestEquals( 1 ),
-                        c.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding ),
-                        c.Queues.Count.TestEquals( 1 ),
-                        c.Queues.TryGetByName( "foo" ).TestRefEquals( queue ) ) ),
-                channel.TestNotNull(
-                    c => Assertion.All(
-                        "channel",
-                        c.Id.TestEquals( 1 ),
-                        c.Name.TestEquals( "foo" ),
-                        c.Publishers.Count.TestEquals( 0 ),
-                        c.Listeners.Count.TestEquals( 1 ),
-                        c.Listeners.TryGetByClientId( 1 ).TestRefEquals( binding ),
-                        c.State.TestEquals( MessageBrokerChannelState.Running ) ) ),
-                queue.TestNotNull(
-                    q => Assertion.All(
-                        "queue",
-                        q.Id.TestEquals( 1 ),
-                        q.Name.TestEquals( "foo" ),
-                        q.Client.TestRefEquals( remoteClient ),
-                        q.Listeners.Count.TestEquals( 1 ),
-                        q.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding ),
-                        q.State.TestEquals( MessageBrokerQueueState.Running ) ) ),
-                binding.TestNotNull(
-                    s => Assertion.All(
-                        "binding",
-                        s.Channel.TestRefEquals( channel ),
-                        s.Client.TestRefEquals( remoteClient ),
-                        s.Queue.TestRefEquals( queue ),
-                        s.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ) ) ) )
+                result.Value.TestNotNull( v => Assertion.All(
+                    "result.Value",
+                    v.AlreadyBound.TestFalse(),
+                    v.ChannelCreated.TestTrue(),
+                    v.Listener.ChannelId.TestEquals( 1 ),
+                    v.Listener.ChannelName.TestEquals( "foo" ),
+                    v.Listener.TestRefEquals( client.Listeners.TryGetByChannelId( 1 ) ),
+                    v.Listener.State.TestEquals( MessageBrokerListenerState.Bound ) ) ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "remoteClient",
+                    c.Listeners.Count.TestEquals( 1 ),
+                    c.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding ),
+                    c.Queues.Count.TestEquals( 1 ),
+                    c.Queues.TryGetByName( "foo" ).TestRefEquals( queue ) ) ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.Id.TestEquals( 1 ),
+                    c.Name.TestEquals( "foo" ),
+                    c.Publishers.Count.TestEquals( 0 ),
+                    c.Listeners.Count.TestEquals( 1 ),
+                    c.Listeners.TryGetByClientId( 1 ).TestRefEquals( binding ),
+                    c.State.TestEquals( MessageBrokerChannelState.Running ) ) ),
+                queue.TestNotNull( q => Assertion.All(
+                    "queue",
+                    q.Id.TestEquals( 1 ),
+                    q.Name.TestEquals( "foo" ),
+                    q.Client.TestRefEquals( remoteClient ),
+                    q.Listeners.Count.TestEquals( 1 ),
+                    q.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding ),
+                    q.State.TestEquals( MessageBrokerQueueState.Running ) ) ),
+                binding.TestNotNull( s => Assertion.All(
+                    "binding",
+                    s.Channel.TestRefEquals( channel ),
+                    s.Client.TestRefEquals( remoteClient ),
+                    s.Queue.TestRefEquals( queue ),
+                    s.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ) ) ) )
             .Go();
     }
 
@@ -138,57 +133,51 @@ public class ListenerTests : TestsBase, IClassFixture<SharedResourceFixture>
         Assertion.All(
                 client1.Listeners.Count.TestEquals( 1 ),
                 result.Exception.TestNull(),
-                result.Value.TestNotNull(
-                    v => Assertion.All(
-                        "result.Value",
-                        v.AlreadyBound.TestFalse(),
-                        v.ChannelCreated.TestFalse(),
-                        v.QueueCreated.TestTrue(),
-                        v.Listener.ChannelId.TestEquals( 1 ),
-                        v.Listener.ChannelName.TestEquals( "foo" ),
-                        v.Listener.TestRefEquals( client2.Listeners.TryGetByChannelId( 1 ) ),
-                        v.Listener.State.TestEquals( MessageBrokerListenerState.Bound ) ) ),
-                remoteClient1.TestNotNull(
-                    c => Assertion.All(
-                        "remoteClient1",
-                        c.Listeners.Count.TestEquals( 1 ),
-                        c.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding1 ),
-                        c.Queues.Count.TestEquals( 1 ),
-                        c.Queues.TryGetByName( "foo" ).TestRefEquals( queue1 ) ) ),
-                remoteClient2.TestNotNull(
-                    c => Assertion.All(
-                        "remoteClient2",
-                        c.Listeners.Count.TestEquals( 1 ),
-                        c.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding2 ),
-                        c.Queues.Count.TestEquals( 1 ),
-                        c.Queues.TryGetByName( "foo" ).TestRefEquals( queue2 ) ) ),
-                channel.TestNotNull(
-                    c => Assertion.All(
-                        "channel",
-                        c.Id.TestEquals( 1 ),
-                        c.Name.TestEquals( "foo" ),
-                        c.Listeners.Count.TestEquals( 2 ),
-                        c.Listeners.TryGetByClientId( 1 ).TestRefEquals( binding1 ),
-                        c.Listeners.TryGetByClientId( 2 ).TestRefEquals( binding2 ),
-                        c.State.TestEquals( MessageBrokerChannelState.Running ) ) ),
-                queue1.TestNotNull(
-                    q => Assertion.All(
-                        "queue1",
-                        q.Id.TestEquals( 1 ),
-                        q.Name.TestEquals( "foo" ),
-                        q.Client.TestRefEquals( remoteClient1 ),
-                        q.Listeners.Count.TestEquals( 1 ),
-                        q.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding1 ),
-                        q.State.TestEquals( MessageBrokerQueueState.Running ) ) ),
-                queue2.TestNotNull(
-                    q => Assertion.All(
-                        "queue2",
-                        q.Id.TestEquals( 1 ),
-                        q.Name.TestEquals( "foo" ),
-                        q.Client.TestRefEquals( remoteClient2 ),
-                        q.Listeners.Count.TestEquals( 1 ),
-                        q.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding2 ),
-                        q.State.TestEquals( MessageBrokerQueueState.Running ) ) ) )
+                result.Value.TestNotNull( v => Assertion.All(
+                    "result.Value",
+                    v.AlreadyBound.TestFalse(),
+                    v.ChannelCreated.TestFalse(),
+                    v.QueueCreated.TestTrue(),
+                    v.Listener.ChannelId.TestEquals( 1 ),
+                    v.Listener.ChannelName.TestEquals( "foo" ),
+                    v.Listener.TestRefEquals( client2.Listeners.TryGetByChannelId( 1 ) ),
+                    v.Listener.State.TestEquals( MessageBrokerListenerState.Bound ) ) ),
+                remoteClient1.TestNotNull( c => Assertion.All(
+                    "remoteClient1",
+                    c.Listeners.Count.TestEquals( 1 ),
+                    c.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding1 ),
+                    c.Queues.Count.TestEquals( 1 ),
+                    c.Queues.TryGetByName( "foo" ).TestRefEquals( queue1 ) ) ),
+                remoteClient2.TestNotNull( c => Assertion.All(
+                    "remoteClient2",
+                    c.Listeners.Count.TestEquals( 1 ),
+                    c.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding2 ),
+                    c.Queues.Count.TestEquals( 1 ),
+                    c.Queues.TryGetByName( "foo" ).TestRefEquals( queue2 ) ) ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.Id.TestEquals( 1 ),
+                    c.Name.TestEquals( "foo" ),
+                    c.Listeners.Count.TestEquals( 2 ),
+                    c.Listeners.TryGetByClientId( 1 ).TestRefEquals( binding1 ),
+                    c.Listeners.TryGetByClientId( 2 ).TestRefEquals( binding2 ),
+                    c.State.TestEquals( MessageBrokerChannelState.Running ) ) ),
+                queue1.TestNotNull( q => Assertion.All(
+                    "queue1",
+                    q.Id.TestEquals( 1 ),
+                    q.Name.TestEquals( "foo" ),
+                    q.Client.TestRefEquals( remoteClient1 ),
+                    q.Listeners.Count.TestEquals( 1 ),
+                    q.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding1 ),
+                    q.State.TestEquals( MessageBrokerQueueState.Running ) ) ),
+                queue2.TestNotNull( q => Assertion.All(
+                    "queue2",
+                    q.Id.TestEquals( 1 ),
+                    q.Name.TestEquals( "foo" ),
+                    q.Client.TestRefEquals( remoteClient2 ),
+                    q.Listeners.Count.TestEquals( 1 ),
+                    q.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding2 ),
+                    q.State.TestEquals( MessageBrokerQueueState.Running ) ) ) )
             .Go();
     }
 
@@ -232,11 +221,10 @@ public class ListenerTests : TestsBase, IClassFixture<SharedResourceFixture>
                 result.Value.NotBound.TestFalse(),
                 result.Value.ChannelRemoved.TestTrue(),
                 result.Value.QueueRemoved.TestTrue(),
-                remoteClient.TestNotNull(
-                    c => Assertion.All(
-                        "remoteClient",
-                        c.Listeners.Count.TestEquals( 0 ),
-                        c.Queues.Count.TestEquals( 0 ) ) ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "remoteClient",
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Queues.Count.TestEquals( 0 ) ) ),
                 channel.TestNotNull( c => c.State.TestEquals( MessageBrokerChannelState.Disposed ) ),
                 binding.TestNotNull( s => s.State.TestEquals( MessageBrokerChannelListenerBindingState.Disposed ) ),
                 queue.TestNotNull( q => q.State.TestEquals( MessageBrokerQueueState.Disposed ) ) )
@@ -301,24 +289,21 @@ public class ListenerTests : TestsBase, IClassFixture<SharedResourceFixture>
                 result.Value.NotBound.TestFalse(),
                 result.Value.ChannelRemoved.TestFalse(),
                 result.Value.QueueRemoved.TestTrue(),
-                remoteClient1.TestNotNull(
-                    c => Assertion.All(
-                        "remoteClient1",
-                        c.Listeners.Count.TestEquals( 1 ),
-                        c.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding1 ),
-                        c.Queues.Count.TestEquals( 1 ),
-                        c.Queues.TryGetByName( "foo" ).TestRefEquals( queue1 ) ) ),
-                remoteClient2.TestNotNull(
-                    c => Assertion.All(
-                        "remoteClient2",
-                        c.Listeners.Count.TestEquals( 0 ),
-                        c.Queues.Count.TestEquals( 0 ) ) ),
-                channel.TestNotNull(
-                    c => Assertion.All(
-                        "channel",
-                        c.State.TestEquals( MessageBrokerChannelState.Running ),
-                        c.Listeners.Count.TestEquals( 1 ),
-                        c.Listeners.TryGetByClientId( 1 ).TestRefEquals( binding1 ) ) ),
+                remoteClient1.TestNotNull( c => Assertion.All(
+                    "remoteClient1",
+                    c.Listeners.Count.TestEquals( 1 ),
+                    c.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding1 ),
+                    c.Queues.Count.TestEquals( 1 ),
+                    c.Queues.TryGetByName( "foo" ).TestRefEquals( queue1 ) ) ),
+                remoteClient2.TestNotNull( c => Assertion.All(
+                    "remoteClient2",
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Queues.Count.TestEquals( 0 ) ) ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.State.TestEquals( MessageBrokerChannelState.Running ),
+                    c.Listeners.Count.TestEquals( 1 ),
+                    c.Listeners.TryGetByClientId( 1 ).TestRefEquals( binding1 ) ) ),
                 binding1.TestNotNull( s => s.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ) ),
                 binding2.TestNotNull( s => s.State.TestEquals( MessageBrokerChannelListenerBindingState.Disposed ) ),
                 queue1.TestNotNull( q => q.State.TestEquals( MessageBrokerQueueState.Running ) ),
@@ -368,20 +353,18 @@ public class ListenerTests : TestsBase, IClassFixture<SharedResourceFixture>
                 result.Exception.TestNull(),
                 result.Value.NotBound.TestFalse(),
                 result.Value.ChannelRemoved.TestFalse(),
-                remoteClient.TestNotNull(
-                    c => Assertion.All(
-                        "remoteClient",
-                        c.Listeners.Count.TestEquals( 0 ),
-                        c.Queues.Count.TestEquals( 0 ),
-                        c.Publishers.Count.TestEquals( 1 ),
-                        c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( publisherBinding ) ] ) ) ),
-                channel.TestNotNull(
-                    c => Assertion.All(
-                        "channel",
-                        c.State.TestEquals( MessageBrokerChannelState.Running ),
-                        c.Listeners.Count.TestEquals( 0 ),
-                        c.Publishers.Count.TestEquals( 1 ),
-                        c.Publishers.TryGetByClientId( 1 ).TestRefEquals( publisherBinding ) ) ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "remoteClient",
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Queues.Count.TestEquals( 0 ),
+                    c.Publishers.Count.TestEquals( 1 ),
+                    c.Publishers.GetAll().TestSequence( [ (b, _) => b.TestRefEquals( publisherBinding ) ] ) ) ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.State.TestEquals( MessageBrokerChannelState.Running ),
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Publishers.Count.TestEquals( 1 ),
+                    c.Publishers.TryGetByClientId( 1 ).TestRefEquals( publisherBinding ) ) ),
                 queue.TestNotNull( q => q.State.TestEquals( MessageBrokerQueueState.Disposed ) ),
                 listenerBinding.TestNotNull( s => s.State.TestEquals( MessageBrokerChannelListenerBindingState.Disposed ) ),
                 publisherBinding.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Running ) ) )

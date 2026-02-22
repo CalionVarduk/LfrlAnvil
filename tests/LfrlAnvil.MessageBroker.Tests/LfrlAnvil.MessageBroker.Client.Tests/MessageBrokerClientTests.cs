@@ -141,14 +141,13 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             } ) ) ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.WaitForClient();
-                s.Read( handshakeRequest );
-                s.SendHandshakeAccepted( 1, Duration.FromSeconds( 2 ), Duration.FromSeconds( 10 ) );
-                s.ReadConfirmHandshakeResponse();
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.WaitForClient();
+            s.Read( handshakeRequest );
+            s.SendHandshakeAccepted( 1, Duration.FromSeconds( 2 ), Duration.FromSeconds( 10 ) );
+            s.ReadConfirmHandshakeResponse();
+        } );
 
         var result = await client.StartAsync();
         await serverTask;
@@ -227,30 +226,28 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
 
                                 throw new Exception( "ignored" );
                             } ) ) )
-                .SetStreamDecorator(
-                    (_, ns, _) =>
-                    {
-                        stream = ns;
-                        return ValueTask.FromResult<Stream>( ns );
-                    } ) );
+                .SetStreamDecorator( (_, ns, _) =>
+                {
+                    stream = ns;
+                    return ValueTask.FromResult<Stream>( ns );
+                } ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.WaitForClient();
-                s.Read( handshakeRequest );
-                s.SendHandshakeAccepted(
-                    2,
-                    Duration.FromSeconds( 1.5 ),
-                    Duration.FromSeconds( 15 ),
-                    MemorySize.FromKilobytes( 32 ),
-                    MemorySize.FromMegabytes( 20 ),
-                    4,
-                    MemorySize.FromMegabytes( 40 ) );
+        var serverTask = server.GetTask( s =>
+        {
+            s.WaitForClient();
+            s.Read( handshakeRequest );
+            s.SendHandshakeAccepted(
+                2,
+                Duration.FromSeconds( 1.5 ),
+                Duration.FromSeconds( 15 ),
+                MemorySize.FromKilobytes( 32 ),
+                MemorySize.FromMegabytes( 20 ),
+                4,
+                MemorySize.FromMegabytes( 40 ) );
 
-                s.ReadConfirmHandshakeResponse();
-            } );
+            s.ReadConfirmHandshakeResponse();
+        } );
 
         var result = await client.StartAsync();
         await serverTask;
@@ -334,27 +331,24 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                 .SetDelaySource( _sharedDelaySource ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.WaitForClient();
-                s.Read( handshakeRequest );
-                s.SendHandshakeAccepted( 1, Duration.FromSeconds( 2 ), Duration.FromSeconds( 10 ) );
-                s.ReadConfirmHandshakeResponse();
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.WaitForClient();
+            s.Read( handshakeRequest );
+            s.SendHandshakeAccepted( 1, Duration.FromSeconds( 2 ), Duration.FromSeconds( 10 ) );
+            s.ReadConfirmHandshakeResponse();
+        } );
 
         await client.StartAsync();
         await serverTask;
 
         var action = Lambda.Of( async () => await client.StartAsync() );
 
-        action.Test(
-                exc => exc.TestType()
-                    .Exact<MessageBrokerClientStateException>(
-                        e => Assertion.All(
-                            e.Client.TestRefEquals( client ),
-                            e.Actual.TestEquals( MessageBrokerClientState.Running ),
-                            e.Expected.TestEquals( MessageBrokerClientState.Created ) ) ) )
+        action.Test( exc => exc.TestType()
+                .Exact<MessageBrokerClientStateException>( e => Assertion.All(
+                    e.Client.TestRefEquals( client ),
+                    e.Actual.TestEquals( MessageBrokerClientState.Running ),
+                    e.Expected.TestEquals( MessageBrokerClientState.Created ) ) ) )
             .Go();
     }
 
@@ -416,12 +410,11 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                 .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
                 .SetLogger( logs.GetLogger() )
                 .SetDelaySource( _sharedDelaySource )
-                .SetStreamDecorator(
-                    (c, ns, _) =>
-                    {
-                        c.Dispose();
-                        return ValueTask.FromResult<Stream>( ns );
-                    } ) );
+                .SetStreamDecorator( (c, ns, _) =>
+                {
+                    c.Dispose();
+                    return ValueTask.FromResult<Stream>( ns );
+                } ) );
 
         var serverTask = server.GetTask( s => s.WaitForClient() );
         var result = await client.StartAsync();
@@ -478,12 +471,11 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                                 localEndPoint = e.Source.Client.LocalEndPoint;
                                 stream?.Dispose();
                             } ) ) )
-                .SetStreamDecorator(
-                    (_, ns, _) =>
-                    {
-                        stream = ns;
-                        return ValueTask.FromResult<Stream>( ns );
-                    } ) );
+                .SetStreamDecorator( (_, ns, _) =>
+                {
+                    stream = ns;
+                    return ValueTask.FromResult<Stream>( ns );
+                } ) );
 
         var serverTask = server.GetTask( s => s.WaitForClient() );
         var result = await client.StartAsync();
@@ -537,13 +529,12 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                     logs.GetLogger( MessageBrokerClientLogger.Create( connected: e => localEndPoint = e.Source.Client.LocalEndPoint ) ) ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.WaitForClient();
-                s.Read( handshakeRequest );
-                s.Dispose();
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.WaitForClient();
+            s.Read( handshakeRequest );
+            s.Dispose();
+        } );
 
         var result = await client.StartAsync();
         await serverTask;
@@ -597,23 +588,21 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                     logs.GetLogger( MessageBrokerClientLogger.Create( connected: e => localEndPoint = e.Source.Client.LocalEndPoint ) ) ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.WaitForClient();
-                s.Read( handshakeRequest );
-                s.SendHandshakeRejected( true, true, true );
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.WaitForClient();
+            s.Read( handshakeRequest );
+            s.SendHandshakeRejected( true, true, true );
+        } );
 
         var result = await client.StartAsync();
         await serverTask;
 
         Assertion.All(
                 result.Exception.TestType()
-                    .Exact<MessageBrokerClientRequestException>(
-                        e => Assertion.All(
-                            e.Client.TestRefEquals( client ),
-                            e.Endpoint.TestEquals( handshakeRequest.Header.GetServerEndpoint() ) ) ),
+                    .Exact<MessageBrokerClientRequestException>( e => Assertion.All(
+                        e.Client.TestRefEquals( client ),
+                        e.Endpoint.TestEquals( handshakeRequest.Header.GetServerEndpoint() ) ) ),
                 logs.GetAll()
                     .TestSequence(
                     [
@@ -666,23 +655,21 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                     logs.GetLogger( MessageBrokerClientLogger.Create( connected: e => localEndPoint = e.Source.Client.LocalEndPoint ) ) ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.WaitForClient();
-                s.Read( handshakeRequest );
-                s.SendHandshakeRejected( true, true, true, payload: 2 );
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.WaitForClient();
+            s.Read( handshakeRequest );
+            s.SendHandshakeRejected( true, true, true, payload: 2 );
+        } );
 
         var result = await client.StartAsync();
         await serverTask;
 
         Assertion.All(
                 result.Exception.TestType()
-                    .Exact<MessageBrokerClientProtocolException>(
-                        e => Assertion.All(
-                            e.Client.TestRefEquals( client ),
-                            e.Endpoint.TestEquals( MessageBrokerClientEndpoint.HandshakeRejectedResponse ) ) ),
+                    .Exact<MessageBrokerClientProtocolException>( e => Assertion.All(
+                        e.Client.TestRefEquals( client ),
+                        e.Endpoint.TestEquals( MessageBrokerClientEndpoint.HandshakeRejectedResponse ) ) ),
                 logs.GetAll()
                     .TestSequence(
                     [
@@ -785,30 +772,28 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                     logs.GetLogger( MessageBrokerClientLogger.Create( connected: e => localEndPoint = e.Source.Client.LocalEndPoint ) ) ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.WaitForClient();
-                s.Read( handshakeRequest );
-                s.SendHandshakeAccepted(
-                    0,
-                    Duration.Zero,
-                    Duration.Zero,
-                    MemorySize.Zero,
-                    MemorySize.FromMegabytes( 1025 ),
-                    batchPacketCount,
-                    MemorySize.FromBytes( networkBatchPacketLength ) );
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.WaitForClient();
+            s.Read( handshakeRequest );
+            s.SendHandshakeAccepted(
+                0,
+                Duration.Zero,
+                Duration.Zero,
+                MemorySize.Zero,
+                MemorySize.FromMegabytes( 1025 ),
+                batchPacketCount,
+                MemorySize.FromBytes( networkBatchPacketLength ) );
+        } );
 
         var result = await client.StartAsync();
         await serverTask;
 
         Assertion.All(
                 result.Exception.TestType()
-                    .Exact<MessageBrokerClientProtocolException>(
-                        e => Assertion.All(
-                            e.Client.TestRefEquals( client ),
-                            e.Endpoint.TestEquals( MessageBrokerClientEndpoint.HandshakeAcceptedResponse ) ) ),
+                    .Exact<MessageBrokerClientProtocolException>( e => Assertion.All(
+                        e.Client.TestRefEquals( client ),
+                        e.Endpoint.TestEquals( MessageBrokerClientEndpoint.HandshakeAcceptedResponse ) ) ),
                 logs.GetAll()
                     .TestSequence(
                     [
@@ -858,23 +843,21 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                     logs.GetLogger( MessageBrokerClientLogger.Create( connected: e => localEndPoint = e.Source.Client.LocalEndPoint ) ) ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.WaitForClient();
-                s.Read( handshakeRequest );
-                s.SendHandshakeAccepted( 1, Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ), payload: 26 );
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.WaitForClient();
+            s.Read( handshakeRequest );
+            s.SendHandshakeAccepted( 1, Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ), payload: 26 );
+        } );
 
         var result = await client.StartAsync();
         await serverTask;
 
         Assertion.All(
                 result.Exception.TestType()
-                    .Exact<MessageBrokerClientProtocolException>(
-                        e => Assertion.All(
-                            e.Client.TestRefEquals( client ),
-                            e.Endpoint.TestEquals( MessageBrokerClientEndpoint.HandshakeAcceptedResponse ) ) ),
+                    .Exact<MessageBrokerClientProtocolException>( e => Assertion.All(
+                        e.Client.TestRefEquals( client ),
+                        e.Endpoint.TestEquals( MessageBrokerClientEndpoint.HandshakeAcceptedResponse ) ) ),
                 logs.GetAll()
                     .TestSequence(
                     [
@@ -925,23 +908,21 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                     logs.GetLogger( MessageBrokerClientLogger.Create( connected: e => localEndPoint = e.Source.Client.LocalEndPoint ) ) ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.WaitForClient();
-                s.Read( handshakeRequest );
-                s.Send( [ 0, 0, 0, 0, 0 ] );
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.WaitForClient();
+            s.Read( handshakeRequest );
+            s.Send( [ 0, 0, 0, 0, 0 ] );
+        } );
 
         var result = await client.StartAsync();
         await serverTask;
 
         Assertion.All(
                 result.Exception.TestType()
-                    .Exact<MessageBrokerClientProtocolException>(
-                        e => Assertion.All(
-                            e.Client.TestRefEquals( client ),
-                            e.Endpoint.TestEquals( ( MessageBrokerClientEndpoint )0 ) ) ),
+                    .Exact<MessageBrokerClientProtocolException>( e => Assertion.All(
+                        e.Client.TestRefEquals( client ),
+                        e.Endpoint.TestEquals( ( MessageBrokerClientEndpoint )0 ) ) ),
                 logs.GetAll()
                     .TestSequence(
                     [
@@ -1225,9 +1206,9 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             (e, _) => e.TestEquals( $"[Connecting] Client = 'test', TraceId = 0, Server = {remoteEndPoint}" ),
                             (e, _) => e.TestStartsWith(
                                 $"""
-                                [Error] Client = 'test', TraceId = 0
-                                {result.Exception?.GetType().FullName}
-                                """ ),
+                                 [Error] Client = 'test', TraceId = 0
+                                 {result.Exception?.GetType().FullName}
+                                 """ ),
                             (e, _) => e.TestEquals( "[Disposing] Client = 'test', TraceId = 0" ),
                             (e, _) => e.TestEquals( "[Disposed] Client = 'test', TraceId = 0" ),
                             (e, _) => e.TestEquals( "[Trace:Start] Client = 'test', TraceId = 0 (end)" )
@@ -1308,13 +1289,12 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                     logs.GetLogger( MessageBrokerClientLogger.Create( connected: e => localEndPoint = e.Source.Client.LocalEndPoint ) ) ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.WaitForClient();
-                s.Read( handshakeRequest );
-                s.SendHeader( MessageBrokerClientEndpoint.HandshakeAcceptedResponse, Protocol.HandshakeAcceptedResponse.Length );
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.WaitForClient();
+            s.Read( handshakeRequest );
+            s.SendHeader( MessageBrokerClientEndpoint.HandshakeAcceptedResponse, Protocol.HandshakeAcceptedResponse.Length );
+        } );
 
         var result = await client.StartAsync();
         await serverTask;
@@ -1370,13 +1350,12 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                     logs.GetLogger( MessageBrokerClientLogger.Create( connected: e => localEndPoint = e.Source.Client.LocalEndPoint ) ) ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.WaitForClient();
-                s.Read( handshakeRequest );
-                s.SendHeader( MessageBrokerClientEndpoint.HandshakeRejectedResponse, Protocol.HandshakeRejectedResponse.Length );
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.WaitForClient();
+            s.Read( handshakeRequest );
+            s.SendHeader( MessageBrokerClientEndpoint.HandshakeRejectedResponse, Protocol.HandshakeRejectedResponse.Length );
+        } );
 
         var result = await client.StartAsync();
         await serverTask;
@@ -1441,13 +1420,12 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             } ) ) ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.WaitForClient();
-                s.Read( handshakeRequest );
-                s.SendHandshakeAccepted( 1, Duration.FromSeconds( 2 ), Duration.FromSeconds( 10 ) );
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.WaitForClient();
+            s.Read( handshakeRequest );
+            s.SendHandshakeAccepted( 1, Duration.FromSeconds( 2 ), Duration.FromSeconds( 10 ) );
+        } );
 
         var result = await client.StartAsync();
         await serverTask;
@@ -1518,13 +1496,12 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             } ) ) ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.WaitForClient();
-                s.Read( handshakeRequest );
-                s.SendHandshakeRejected( true, true, true );
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.WaitForClient();
+            s.Read( handshakeRequest );
+            s.SendHandshakeRejected( true, true, true );
+        } );
 
         var result = await client.StartAsync();
         await serverTask;
@@ -1592,13 +1569,12 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             } ) ) ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.WaitForClient();
-                s.Read( handshakeRequest );
-                s.SendHandshakeAccepted( 1, Duration.FromSeconds( 2 ), Duration.FromSeconds( 10 ) );
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.WaitForClient();
+            s.Read( handshakeRequest );
+            s.SendHandshakeAccepted( 1, Duration.FromSeconds( 2 ), Duration.FromSeconds( 10 ) );
+        } );
 
         var result = await client.StartAsync();
         await serverTask;
@@ -1669,16 +1645,15 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             } ) ) ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.WaitForClient();
-                s.Read( handshakeRequest );
-                s.SendHandshakeAccepted( 1, Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ) );
-                s.ReadConfirmHandshakeResponse();
-                Thread.Sleep( 50 );
-                s.SendPong( endiannessPayload: 0 );
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.WaitForClient();
+            s.Read( handshakeRequest );
+            s.SendHandshakeAccepted( 1, Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ) );
+            s.ReadConfirmHandshakeResponse();
+            Thread.Sleep( 50 );
+            s.SendPong( endiannessPayload: 0 );
+        } );
 
         var result = await client.StartAsync();
         await serverTask;
@@ -1719,11 +1694,10 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
 
         var action = Lambda.Of( async () => await sut.StartAsync( token ) );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestType().AssignableTo<OperationCanceledException>(),
-                    sut.State.TestEquals( MessageBrokerClientState.Created ),
-                    sut.LocalEndPoint.TestNull() ) )
+        action.Test( exc => Assertion.All(
+                exc.TestType().AssignableTo<OperationCanceledException>(),
+                sut.State.TestEquals( MessageBrokerClientState.Created ),
+                sut.LocalEndPoint.TestNull() ) )
             .Go();
     }
 
@@ -1746,11 +1720,10 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
 
         var serverTask = server.GetTask( s => s.WaitForClient() );
         var action = Lambda.Of( async () => await client.StartAsync( cancellationSource.Token ) );
-        var assertion = action.Test(
-                exc => Assertion.All(
-                    exc.TestType().AssignableTo<OperationCanceledException>(),
-                    client.State.TestEquals( MessageBrokerClientState.Disposed ),
-                    client.LocalEndPoint.TestNull() ) )
+        var assertion = action.Test( exc => Assertion.All(
+                exc.TestType().AssignableTo<OperationCanceledException>(),
+                client.State.TestEquals( MessageBrokerClientState.Disposed ),
+                client.LocalEndPoint.TestNull() ) )
             .Invoke();
 
         await serverTask;
@@ -1783,11 +1756,10 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
 
         var serverTask = server.GetTask( s => s.WaitForClient() );
         var action = Lambda.Of( async () => await client.StartAsync( cancellationSource.Token ) );
-        var assertion = action.Test(
-                exc => Assertion.All(
-                    exc.TestType().AssignableTo<OperationCanceledException>(),
-                    client.State.TestEquals( MessageBrokerClientState.Disposed ),
-                    client.LocalEndPoint.TestNull() ) )
+        var assertion = action.Test( exc => Assertion.All(
+                exc.TestType().AssignableTo<OperationCanceledException>(),
+                client.State.TestEquals( MessageBrokerClientState.Disposed ),
+                client.LocalEndPoint.TestNull() ) )
             .Invoke();
 
         await serverTask;
@@ -1819,20 +1791,18 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                         } ) ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.WaitForClient();
-                s.Read( handshakeRequest );
-                s.SendHandshakeAccepted( 1, Duration.FromSeconds( 2 ), Duration.FromSeconds( 10 ) );
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.WaitForClient();
+            s.Read( handshakeRequest );
+            s.SendHandshakeAccepted( 1, Duration.FromSeconds( 2 ), Duration.FromSeconds( 10 ) );
+        } );
 
         var action = Lambda.Of( async () => await client.StartAsync( cancellationSource.Token ) );
-        var assertion = action.Test(
-                exc => Assertion.All(
-                    exc.TestType().AssignableTo<OperationCanceledException>(),
-                    client.State.TestEquals( MessageBrokerClientState.Disposed ),
-                    client.LocalEndPoint.TestNull() ) )
+        var assertion = action.Test( exc => Assertion.All(
+                exc.TestType().AssignableTo<OperationCanceledException>(),
+                client.State.TestEquals( MessageBrokerClientState.Disposed ),
+                client.LocalEndPoint.TestNull() ) )
             .Invoke();
 
         await serverTask;
@@ -1865,20 +1835,18 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                         } ) ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.WaitForClient();
-                s.Read( handshakeRequest );
-                s.SendHandshakeAccepted( 1, Duration.FromSeconds( 2 ), Duration.FromSeconds( 10 ) );
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.WaitForClient();
+            s.Read( handshakeRequest );
+            s.SendHandshakeAccepted( 1, Duration.FromSeconds( 2 ), Duration.FromSeconds( 10 ) );
+        } );
 
         var action = Lambda.Of( async () => await client.StartAsync( cancellationSource.Token ) );
-        var assertion = action.Test(
-                exc => Assertion.All(
-                    exc.TestType().AssignableTo<OperationCanceledException>(),
-                    client.State.TestEquals( MessageBrokerClientState.Disposed ),
-                    client.LocalEndPoint.TestNull() ) )
+        var assertion = action.Test( exc => Assertion.All(
+                exc.TestType().AssignableTo<OperationCanceledException>(),
+                client.State.TestEquals( MessageBrokerClientState.Disposed ),
+                client.LocalEndPoint.TestNull() ) )
             .Invoke();
 
         await serverTask;
@@ -1902,13 +1870,12 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                 .SetDelaySource( delaySource ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.WaitForClient();
-                s.Read( handshakeRequest );
-                s.SendHandshakeAccepted( 1, Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ) );
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.WaitForClient();
+            s.Read( handshakeRequest );
+            s.SendHandshakeAccepted( 1, Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ) );
+        } );
 
         await client.StartAsync();
         await serverTask;
@@ -1945,13 +1912,12 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
                             } ) ) ) );
 
         var handshakeRequest = new Protocol.HandshakeRequest( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.WaitForClient();
-                s.Read( handshakeRequest );
-                s.SendHandshakeAccepted( 1, Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ) );
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.WaitForClient();
+            s.Read( handshakeRequest );
+            s.SendHandshakeAccepted( 1, Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ) );
+        } );
 
         await client.StartAsync();
         await serverTask;
@@ -2030,12 +1996,11 @@ public partial class MessageBrokerClientTests : TestsBase, IClassFixture<SharedR
             maxNetworkBatchPacketLength: MemorySize.FromKilobytes( 30 ) );
 
         var queryTask = client.QueryDeadLetterAsync( 1, 0 );
-        await server.GetTask(
-            s =>
-            {
-                s.ReadDeadLetterQuery();
-                s.SendHeader( endpoint, ( uint )payload );
-            } );
+        await server.GetTask( s =>
+        {
+            s.ReadDeadLetterQuery();
+            s.SendHeader( endpoint, ( uint )payload );
+        } );
 
         await endSource.Task;
         await queryTask;

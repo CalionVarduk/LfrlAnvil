@@ -37,23 +37,21 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
                 .SetLogger( logs.GetLogger() ) );
 
         await server.EstablishHandshake( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
-                s.SendPublisherBoundResponse( true, true, 1, 1 );
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
+            s.SendPublisherBoundResponse( true, true, 1, 1 );
+        } );
 
         await client.Publishers.BindAsync( "foo" );
         await serverTask;
 
         var data = new byte[] { 1, 2, 3, 4, 5 };
-        serverTask = server.GetTask(
-            s =>
-            {
-                s.Read( new Protocol.PushMessageHeader( 1, data.Length, true ) );
-                s.SendMessageAcceptedResponse( 1 );
-            } );
+        serverTask = server.GetTask( s =>
+        {
+            s.Read( new Protocol.PushMessageHeader( 1, data.Length, true ) );
+            s.SendMessageAcceptedResponse( 1 );
+        } );
 
         var remainingRoutingPacketLength = MemorySize.Zero;
         var remainingPacketLength = MemorySize.Zero;
@@ -120,23 +118,21 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
                 .SetLogger( logs.GetLogger() ) );
 
         await server.EstablishHandshake( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
-                s.SendPublisherBoundResponse( true, true, 1, 1 );
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
+            s.SendPublisherBoundResponse( true, true, 1, 1 );
+        } );
 
         await client.Publishers.BindAsync( "foo" );
         await serverTask;
 
         var data = new byte[] { 1, 2, 3, 4, 5 };
-        serverTask = server.GetTask(
-            s =>
-            {
-                s.Read( new Protocol.PushMessageHeader( 1, data.Length, true ) );
-                s.SendMessageAcceptedResponse( 2 );
-            } );
+        serverTask = server.GetTask( s =>
+        {
+            s.Read( new Protocol.PushMessageHeader( 1, data.Length, true ) );
+            s.SendMessageAcceptedResponse( 2 );
+        } );
 
         var remainingRoutingPacketLength = MemorySize.Zero;
         var remainingPacketLength = MemorySize.Zero;
@@ -207,23 +203,21 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
                 .SetLogger( logs.GetLogger() ) );
 
         await server.EstablishHandshake( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
-                s.SendPublisherBoundResponse( true, true, 1, 1 );
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
+            s.SendPublisherBoundResponse( true, true, 1, 1 );
+        } );
 
         await client.Publishers.BindAsync( "foo" );
         await serverTask;
 
         var data = new byte[2048];
-        serverTask = server.GetTask(
-            s =>
-            {
-                s.Read( new Protocol.PushMessageHeader( 1, data.Length, true ) );
-                s.SendMessageAcceptedResponse( 3 );
-            } );
+        serverTask = server.GetTask( s =>
+        {
+            s.Read( new Protocol.PushMessageHeader( 1, data.Length, true ) );
+            s.SendMessageAcceptedResponse( 3 );
+        } );
 
         var result = Result.Create( MessageBrokerPushResult.CreateNotBound( true ) );
         var publisher = client.Publishers.TryGetByChannelId( 1 );
@@ -282,12 +276,11 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
                 .SetLogger( logs.GetLogger() ) );
 
         await server.EstablishHandshake( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
-                s.SendPublisherBoundResponse( true, true, 1, 1 );
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
+            s.SendPublisherBoundResponse( true, true, 1, 1 );
+        } );
 
         await client.Publishers.BindAsync( "foo" );
         await serverTask;
@@ -342,12 +335,11 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
                 .SetDelaySource( _sharedDelaySource ) );
 
         await server.EstablishHandshake( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
-                s.SendPublisherBoundResponse( true, true, 1, 1 );
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
+            s.SendPublisherBoundResponse( true, true, 1, 1 );
+        } );
 
         await client.Publishers.BindAsync( "foo" );
         await serverTask;
@@ -412,12 +404,11 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
                 .SetDelaySource( _sharedDelaySource ) );
 
         await server.EstablishHandshake( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
-                s.SendPublisherBoundResponse( true, true, 1, 1 );
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
+            s.SendPublisherBoundResponse( true, true, 1, 1 );
+        } );
 
         await client.Publishers.BindAsync( "foo" );
         await serverTask;
@@ -446,24 +437,22 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
                 .SetLogger( logs.GetLogger() ) );
 
         await server.EstablishHandshake( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
-                s.SendPublisherBoundResponse( true, true, 1, 1 );
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
+            s.SendPublisherBoundResponse( true, true, 1, 1 );
+        } );
 
         await client.Publishers.BindAsync( "foo" );
         await serverTask;
 
         var data = new byte[] { 1, 2, 3, 4, 5 };
-        serverTask = server.GetTask(
-            s =>
-            {
-                s.ReadPushMessageRouting( 10 );
-                s.Read( new Protocol.PushMessageHeader( 1, data.Length, true ) );
-                s.SendMessageAcceptedResponse( 1 );
-            } );
+        serverTask = server.GetTask( s =>
+        {
+            s.ReadPushMessageRouting( 10 );
+            s.Read( new Protocol.PushMessageHeader( 1, data.Length, true ) );
+            s.SendMessageAcceptedResponse( 1 );
+        } );
 
         var result = Result.Create( MessageBrokerPushResult.CreateNotBound( true ) );
         var publisher = client.Publishers.TryGetByChannelId( 1 );
@@ -524,24 +513,22 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
                 .SetLogger( logs.GetLogger() ) );
 
         await server.EstablishHandshake( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
-                s.SendPublisherBoundResponse( true, true, 1, 1 );
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
+            s.SendPublisherBoundResponse( true, true, 1, 1 );
+        } );
 
         await client.Publishers.BindAsync( "foo" );
         await serverTask;
 
         var data = new byte[] { 1, 2, 3, 4, 5 };
-        serverTask = server.GetTask(
-            s =>
-            {
-                s.ReadPushMessageRouting( 76 );
-                s.Read( new Protocol.PushMessageHeader( 1, data.Length, true ) );
-                s.SendMessageAcceptedResponse( 1 );
-            } );
+        serverTask = server.GetTask( s =>
+        {
+            s.ReadPushMessageRouting( 76 );
+            s.Read( new Protocol.PushMessageHeader( 1, data.Length, true ) );
+            s.SendMessageAcceptedResponse( 1 );
+        } );
 
         var result = Result.Create( MessageBrokerPushResult.CreateNotBound( true ) );
         var publisher = client.Publishers.TryGetByChannelId( 1 );
@@ -606,24 +593,22 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
                 .SetLogger( logs.GetLogger() ) );
 
         await server.EstablishHandshake( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
-                s.SendPublisherBoundResponse( true, true, 1, 1 );
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
+            s.SendPublisherBoundResponse( true, true, 1, 1 );
+        } );
 
         await client.Publishers.BindAsync( "foo" );
         await serverTask;
 
         var data = new byte[] { 1, 2, 3, 4, 5 };
-        serverTask = server.GetTask(
-            s =>
-            {
-                s.ReadPushMessageRouting( 10 );
-                s.Read( new Protocol.PushMessageHeader( 1, data.Length, false ) );
-                s.SendMessageAcceptedResponse( 1 );
-            } );
+        serverTask = server.GetTask( s =>
+        {
+            s.ReadPushMessageRouting( 10 );
+            s.Read( new Protocol.PushMessageHeader( 1, data.Length, false ) );
+            s.SendMessageAcceptedResponse( 1 );
+        } );
 
         var result = Result.Create( MessageBrokerPushResult.CreateNotBound( true ) );
         var publisher = client.Publishers.TryGetByChannelId( 1 );
@@ -676,12 +661,11 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
                 .SetLogger( logs.GetLogger() ) );
 
         await server.EstablishHandshake( client, maxNetworkMessagePacketLength: MemorySize.FromKilobytes( 20 ) );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
-                s.SendPublisherBoundResponse( true, true, 1, 1 );
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
+            s.SendPublisherBoundResponse( true, true, 1, 1 );
+        } );
 
         await client.Publishers.BindAsync( "foo" );
         await serverTask;
@@ -754,12 +738,11 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
                 .SetLogger( logs.GetLogger() ) );
 
         await server.EstablishHandshake( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
-                s.SendPublisherBoundResponse( true, true, 1, 1 );
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
+            s.SendPublisherBoundResponse( true, true, 1, 1 );
+        } );
 
         await client.Publishers.BindAsync( "foo" );
         await serverTask;
@@ -793,12 +776,11 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
                 .SetLogger( logs.GetLogger() ) );
 
         await server.EstablishHandshake( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
-                s.SendPublisherBoundResponse( true, true, 1, 1 );
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
+            s.SendPublisherBoundResponse( true, true, 1, 1 );
+        } );
 
         await client.Publishers.BindAsync( "foo" );
         await serverTask;
@@ -831,12 +813,11 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
                 .SetLogger( logs.GetLogger() ) );
 
         await server.EstablishHandshake( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
-                s.SendPublisherBoundResponse( true, true, 1, 1 );
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
+            s.SendPublisherBoundResponse( true, true, 1, 1 );
+        } );
 
         await client.Publishers.BindAsync( "foo" );
         await serverTask;
@@ -871,12 +852,11 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
                 .SetLogger( logs.GetLogger() ) );
 
         await server.EstablishHandshake( client );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
-                s.SendPublisherBoundResponse( true, true, 1, 1 );
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
+            s.SendPublisherBoundResponse( true, true, 1, 1 );
+        } );
 
         await client.Publishers.BindAsync( "foo" );
         await serverTask;
@@ -911,32 +891,30 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
                 .SetLogger( logs.GetLogger() ) );
 
         await server.EstablishHandshake( client, maxBatchPacketCount: 10, maxNetworkBatchPacketLength: MemorySize.FromMegabytes( 1 ) );
-        var serverTask = server.GetTask(
-            s =>
-            {
-                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
-                s.SendPublisherBoundResponse( true, true, 1, 1 );
-            } );
+        var serverTask = server.GetTask( s =>
+        {
+            s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
+            s.SendPublisherBoundResponse( true, true, 1, 1 );
+        } );
 
         await client.Publishers.BindAsync( "foo" );
         await serverTask;
 
-        serverTask = server.GetTask(
-            s =>
-            {
-                s.ReadBatch(
-                [
-                    (MessageBrokerServerEndpoint.PushMessage, Protocol.PushMessageHeader.Length + 1),
-                    (MessageBrokerServerEndpoint.PushMessageRouting, Protocol.PushMessageRoutingHeader.Length + 5),
-                    (MessageBrokerServerEndpoint.PushMessage, Protocol.PushMessageHeader.Length + 2),
-                    (MessageBrokerServerEndpoint.PushMessage, Protocol.PushMessageHeader.Length + 3),
-                    (MessageBrokerServerEndpoint.PushMessageRouting, Protocol.PushMessageRoutingHeader.Length + 5),
-                    (MessageBrokerServerEndpoint.PushMessage, Protocol.PushMessageHeader.Length + 4)
-                ] );
+        serverTask = server.GetTask( s =>
+        {
+            s.ReadBatch(
+            [
+                (MessageBrokerServerEndpoint.PushMessage, Protocol.PushMessageHeader.Length + 1),
+                (MessageBrokerServerEndpoint.PushMessageRouting, Protocol.PushMessageRoutingHeader.Length + 5),
+                (MessageBrokerServerEndpoint.PushMessage, Protocol.PushMessageHeader.Length + 2),
+                (MessageBrokerServerEndpoint.PushMessage, Protocol.PushMessageHeader.Length + 3),
+                (MessageBrokerServerEndpoint.PushMessageRouting, Protocol.PushMessageRoutingHeader.Length + 5),
+                (MessageBrokerServerEndpoint.PushMessage, Protocol.PushMessageHeader.Length + 4)
+            ] );
 
-                s.SendMessageAcceptedResponse( 2 );
-                s.SendMessageAcceptedResponse( 3 );
-            } );
+            s.SendMessageAcceptedResponse( 2 );
+            s.SendMessageAcceptedResponse( 3 );
+        } );
 
         var publisher = client.Publishers.TryGetByChannelId( 1 )!;
         var contexts = Enumerable.Range( 0, 4 ).Select( _ => publisher.GetPushContext() ).ToArray();

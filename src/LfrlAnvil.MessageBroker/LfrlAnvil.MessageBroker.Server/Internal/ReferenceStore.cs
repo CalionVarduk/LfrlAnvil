@@ -78,19 +78,6 @@ internal struct ReferenceStore<TKey, T>
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool TryAdd(TKey key, T obj)
-    {
-        try
-        {
-            return _map.TryAdd( key, obj );
-        }
-        finally
-        {
-            _cache = null;
-        }
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal bool Remove(TKey key)
     {
         try

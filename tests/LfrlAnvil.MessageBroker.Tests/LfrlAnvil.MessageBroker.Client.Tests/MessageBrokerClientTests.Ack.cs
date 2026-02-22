@@ -48,14 +48,13 @@ public partial class MessageBrokerClientTests
                                 } ) ) ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.SendMessageNotification( 1, 1, 2, 1, 3, [ 1, 2, 3 ] );
-                    s.ReadMessageNotificationAck();
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+                s.SendMessageNotification( 1, 1, 2, 1, 3, [ 1, 2, 3 ] );
+                s.ReadMessageNotificationAck();
+            } );
 
             await client.Listeners.BindAsync( "foo", async (a, _) => ackResultSource.Complete( await a.AckAsync() ) );
             await serverTask;
@@ -115,13 +114,12 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.ReadMessageNotificationAck();
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+                s.ReadMessageNotificationAck();
+            } );
 
             await client.Listeners.BindAsync(
                 "foo",
@@ -181,13 +179,12 @@ public partial class MessageBrokerClientTests
                             error: e => exception = e.Exception ) ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.SendMessageNotification( -1, 1, 2, 1, 3, [ 1, 2, 3 ] );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+                s.SendMessageNotification( -1, 1, 2, 1, 3, [ 1, 2, 3 ] );
+            } );
 
             await client.Listeners.BindAsync( "foo", async (a, _) => await a.AckAsync() );
             await serverTask;
@@ -224,13 +221,12 @@ public partial class MessageBrokerClientTests
                             error: e => exception = e.Exception ) ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.SendMessageNotification( -1, 1, 2, 1, 3, [ 1, 2, 3 ] );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+                s.SendMessageNotification( -1, 1, 2, 1, 3, [ 1, 2, 3 ] );
+            } );
 
             await client.Listeners.BindAsync( "foo", async (a, _) => await a.NegativeAckAsync() );
             await serverTask;
@@ -259,12 +255,11 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+            } );
 
             await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             await serverTask;
@@ -302,23 +297,21 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+            } );
 
             await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             await serverTask;
 
             var listener = client.Listeners.TryGetByChannelId( 1 );
-            serverTask = server.GetTask(
-                s =>
-                {
-                    s.ReadUnbindListenerRequest();
-                    s.SendListenerUnboundResponse( false, false );
-                } );
+            serverTask = server.GetTask( s =>
+            {
+                s.ReadUnbindListenerRequest();
+                s.SendListenerUnboundResponse( false, false );
+            } );
 
             if ( listener is not null )
                 await listener.UnbindAsync();
@@ -349,12 +342,11 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+            } );
 
             await client.Listeners.BindAsync(
                 "foo",
@@ -366,10 +358,10 @@ public partial class MessageBrokerClientTests
 
             var action = Lambda.Of( () => listener?.SendMessageAckAsync( 1, 1, 0, 0, 0 ) ?? ValueTask.FromResult( Result.Create( true ) ) );
 
-            action.Test(
-                    exc => exc.TestType()
-                        .Exact<MessageBrokerClientMessageException>(
-                            e => Assertion.All( e.Client.TestRefEquals( client ), e.Listener.TestRefEquals( listener ) ) ) )
+            action.Test( exc => exc.TestType()
+                    .Exact<MessageBrokerClientMessageException>( e => Assertion.All(
+                        e.Client.TestRefEquals( client ),
+                        e.Listener.TestRefEquals( listener ) ) ) )
                 .Go();
         }
 
@@ -398,12 +390,11 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+            } );
 
             await client.Listeners.BindAsync(
                 "foo",
@@ -413,9 +404,8 @@ public partial class MessageBrokerClientTests
             var listener = client.Listeners.TryGetByChannelId( 1 );
             await serverTask;
 
-            var action = Lambda.Of(
-                () => listener?.SendMessageAckAsync( ackId, streamId, 0, retryAttempt, redeliveryAttempt )
-                    ?? ValueTask.FromResult( Result.Create( true ) ) );
+            var action = Lambda.Of( () => listener?.SendMessageAckAsync( ackId, streamId, 0, retryAttempt, redeliveryAttempt )
+                ?? ValueTask.FromResult( Result.Create( true ) ) );
 
             action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
         }
@@ -446,14 +436,13 @@ public partial class MessageBrokerClientTests
                                 } ) ) ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.SendMessageNotification( 1, 1, 2, 1, 3, [ 1, 2, 3 ] );
-                    s.ReadMessageNotificationNegativeAck();
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+                s.SendMessageNotification( 1, 1, 2, 1, 3, [ 1, 2, 3 ] );
+                s.ReadMessageNotificationNegativeAck();
+            } );
 
             await client.Listeners.BindAsync( "foo", async (a, _) => nackResultSource.Complete( await a.NegativeAckAsync() ) );
             await serverTask;
@@ -513,13 +502,12 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.ReadMessageNotificationNegativeAck();
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+                s.ReadMessageNotificationNegativeAck();
+            } );
 
             await client.Listeners.BindAsync(
                 "foo",
@@ -571,13 +559,12 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.ReadMessageNotificationNegativeAck();
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+                s.ReadMessageNotificationNegativeAck();
+            } );
 
             await client.Listeners.BindAsync(
                 "foo",
@@ -629,13 +616,12 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                    s.ReadMessageNotificationNegativeAck();
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+                s.ReadMessageNotificationNegativeAck();
+            } );
 
             await client.Listeners.BindAsync(
                 "foo",
@@ -693,12 +679,11 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+            } );
 
             await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             await serverTask;
@@ -736,23 +721,21 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+            } );
 
             await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
             await serverTask;
 
             var listener = client.Listeners.TryGetByChannelId( 1 );
-            serverTask = server.GetTask(
-                s =>
-                {
-                    s.ReadUnbindListenerRequest();
-                    s.SendListenerUnboundResponse( false, false );
-                } );
+            serverTask = server.GetTask( s =>
+            {
+                s.ReadUnbindListenerRequest();
+                s.SendListenerUnboundResponse( false, false );
+            } );
 
             if ( listener is not null )
                 await listener.UnbindAsync();
@@ -783,12 +766,11 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+            } );
 
             await client.Listeners.BindAsync(
                 "foo",
@@ -798,13 +780,13 @@ public partial class MessageBrokerClientTests
             var listener = client.Listeners.TryGetByChannelId( 1 );
             await serverTask;
 
-            var action = Lambda.Of(
-                () => listener?.SendNegativeMessageAckAsync( 1, 1, 0, 0, 0 ) ?? ValueTask.FromResult( Result.Create( true ) ) );
+            var action = Lambda.Of( () =>
+                listener?.SendNegativeMessageAckAsync( 1, 1, 0, 0, 0 ) ?? ValueTask.FromResult( Result.Create( true ) ) );
 
-            action.Test(
-                    exc => exc.TestType()
-                        .Exact<MessageBrokerClientMessageException>(
-                            e => Assertion.All( e.Client.TestRefEquals( client ), e.Listener.TestRefEquals( listener ) ) ) )
+            action.Test( exc => exc.TestType()
+                    .Exact<MessageBrokerClientMessageException>( e => Assertion.All(
+                        e.Client.TestRefEquals( client ),
+                        e.Listener.TestRefEquals( listener ) ) ) )
                 .Go();
         }
 
@@ -833,12 +815,11 @@ public partial class MessageBrokerClientTests
                     .SetLogger( logs.GetLogger() ) );
 
             await server.EstablishHandshake( client );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( GetBindListenerRequest( "foo" ) );
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+            } );
 
             await client.Listeners.BindAsync(
                 "foo",
@@ -848,9 +829,8 @@ public partial class MessageBrokerClientTests
             var listener = client.Listeners.TryGetByChannelId( 1 );
             await serverTask;
 
-            var action = Lambda.Of(
-                () => listener?.SendNegativeMessageAckAsync( ackId, streamId, 0, retryAttempt, redeliveryAttempt )
-                    ?? ValueTask.FromResult( Result.Create( true ) ) );
+            var action = Lambda.Of( () => listener?.SendNegativeMessageAckAsync( ackId, streamId, 0, retryAttempt, redeliveryAttempt )
+                ?? ValueTask.FromResult( Result.Create( true ) ) );
 
             action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
         }

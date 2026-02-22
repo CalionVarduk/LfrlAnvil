@@ -39,6 +39,8 @@ internal struct QueueRetryHeap
 
     internal void Add(QueueMessage message, int retry, int redelivery, Duration delay)
     {
+        Assume.IsGreaterThanOrEqualTo( retry, 0 );
+        Assume.IsGreaterThanOrEqualTo( redelivery, 0 );
         Assume.IsGreaterThanOrEqualTo( delay, Duration.Zero );
         Add( message, unchecked( retry + 1 ), redelivery, message.Listener.Client.GetTimestamp() + delay );
     }

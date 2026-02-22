@@ -45,12 +45,11 @@ public partial class MessageBrokerServerTests
             var endPoint = sut.LocalEndPoint;
 
             var client = new ClientMock();
-            var clientTask = client.GetTask(
-                c =>
-                {
-                    c.Connect( endPoint );
-                    c.SendHandshake( "foo", Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ) );
-                } );
+            var clientTask = client.GetTask( c =>
+            {
+                c.Connect( endPoint );
+                c.SendHandshake( "foo", Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ) );
+            } );
 
             await clientTask;
             await endSource.Task;
@@ -187,15 +186,14 @@ public partial class MessageBrokerServerTests
                     state.TestInRange(
                         MessageBrokerRemoteClientConnectorState.Created,
                         MessageBrokerRemoteClientConnectorState.Handshaking ),
-                    connector.TestNotNull(
-                        c => Assertion.All(
-                            "connector",
-                            c.Id.TestEquals( 1 ),
-                            c.Server.TestRefEquals( server ),
-                            c.State.TestEquals( MessageBrokerRemoteClientConnectorState.Failed ),
-                            c.LocalEndPoint.TestNull(),
-                            c.RemoteEndPoint.TestNull(),
-                            c.ToString().TestEquals( "[1] connector (Failed)" ) ) ),
+                    connector.TestNotNull( c => Assertion.All(
+                        "connector",
+                        c.Id.TestEquals( 1 ),
+                        c.Server.TestRefEquals( server ),
+                        c.State.TestEquals( MessageBrokerRemoteClientConnectorState.Failed ),
+                        c.LocalEndPoint.TestNull(),
+                        c.RemoteEndPoint.TestNull(),
+                        c.ToString().TestEquals( "[1] connector (Failed)" ) ) ),
                     server.Connectors.Count.TestEquals( 0 ),
                     server.Clients.Count.TestEquals( 0 ),
                     logs.GetAll()
@@ -242,15 +240,14 @@ public partial class MessageBrokerServerTests
             var endPoint = server.LocalEndPoint;
 
             using var client = new ClientMock();
-            await client.GetTask(
-                s =>
-                {
-                    s.Connect( endPoint );
-                    s.SendHeader(
-                        MessageBrokerServerEndpoint.HandshakeRequest,
-                        Protocol.HandshakeRequestHeader.Length,
-                        reverseEndianness: BitConverter.IsLittleEndian );
-                } );
+            await client.GetTask( s =>
+            {
+                s.Connect( endPoint );
+                s.SendHeader(
+                    MessageBrokerServerEndpoint.HandshakeRequest,
+                    Protocol.HandshakeRequestHeader.Length,
+                    reverseEndianness: BitConverter.IsLittleEndian );
+            } );
 
             await endSource.Task;
 
@@ -348,12 +345,11 @@ public partial class MessageBrokerServerTests
             var endPoint = server.LocalEndPoint;
 
             using var client = new ClientMock();
-            await client.GetTask(
-                s =>
-                {
-                    s.Connect( endPoint );
-                    s.SendConfirmHandshakeResponse();
-                } );
+            await client.GetTask( s =>
+            {
+                s.Connect( endPoint );
+                s.SendConfirmHandshakeResponse();
+            } );
 
             await endSource.Task;
 
@@ -404,12 +400,11 @@ public partial class MessageBrokerServerTests
             var endPoint = server.LocalEndPoint;
 
             using var client = new ClientMock();
-            await client.GetTask(
-                s =>
-                {
-                    s.Connect( endPoint );
-                    s.SendHandshake( "test", Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ), payload: 14 );
-                } );
+            await client.GetTask( s =>
+            {
+                s.Connect( endPoint );
+                s.SendHandshake( "test", Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ), payload: 14 );
+            } );
 
             await endSource.Task;
 
@@ -460,16 +455,15 @@ public partial class MessageBrokerServerTests
             var endPoint = server.LocalEndPoint;
 
             using var client = new ClientMock();
-            await client.GetTask(
-                s =>
-                {
-                    s.Connect( endPoint );
-                    s.SendHandshake(
-                        "test",
-                        Duration.FromSeconds( 1 ),
-                        Duration.FromSeconds( 10 ),
-                        payload: ( uint )MemorySize.BytesPerKilobyte * 16 - Protocol.PacketHeader.Length + 1 );
-                } );
+            await client.GetTask( s =>
+            {
+                s.Connect( endPoint );
+                s.SendHandshake(
+                    "test",
+                    Duration.FromSeconds( 1 ),
+                    Duration.FromSeconds( 10 ),
+                    payload: ( uint )MemorySize.BytesPerKilobyte * 16 - Protocol.PacketHeader.Length + 1 );
+            } );
 
             await endSource.Task;
 
@@ -520,13 +514,12 @@ public partial class MessageBrokerServerTests
             var endPoint = server.LocalEndPoint;
 
             using var client = new ClientMock();
-            await client.GetTask(
-                s =>
-                {
-                    s.Connect( endPoint );
-                    s.SendHandshake( new string( 'x', 513 ), Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ) );
-                    s.ReadHandshakeRejectedResponse();
-                } );
+            await client.GetTask( s =>
+            {
+                s.Connect( endPoint );
+                s.SendHandshake( new string( 'x', 513 ), Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ) );
+                s.ReadHandshakeRejectedResponse();
+            } );
 
             await endSource.Task;
 
@@ -579,13 +572,12 @@ public partial class MessageBrokerServerTests
             var endPoint = server.LocalEndPoint;
 
             using var client = new ClientMock();
-            await client.GetTask(
-                s =>
-                {
-                    s.Connect( endPoint );
-                    s.SendHandshake( string.Empty, Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ) );
-                    s.ReadHandshakeRejectedResponse();
-                } );
+            await client.GetTask( s =>
+            {
+                s.Connect( endPoint );
+                s.SendHandshake( string.Empty, Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ) );
+                s.ReadHandshakeRejectedResponse();
+            } );
 
             await endSource.Task;
 
@@ -636,36 +628,33 @@ public partial class MessageBrokerServerTests
                                         endSource.Complete();
                                 },
                                 error: e => exception = e.Exception ) ) )
-                    .SetClientLoggerFactory(
-                        _ => clientLogs.GetLogger(
-                            MessageBrokerRemoteClientLogger.Create(
-                                traceEnd: e =>
-                                {
-                                    if ( e.Type == MessageBrokerRemoteClientTraceEventType.Start )
-                                        endSource.Complete();
-                                } ) ) ) );
+                    .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                        MessageBrokerRemoteClientLogger.Create(
+                            traceEnd: e =>
+                            {
+                                if ( e.Type == MessageBrokerRemoteClientTraceEventType.Start )
+                                    endSource.Complete();
+                            } ) ) ) );
 
             await server.StartAsync();
             var endPoint = server.LocalEndPoint;
 
             using var client1 = new ClientMock();
-            await client1.GetTask(
-                s =>
-                {
-                    s.Connect( endPoint );
-                    s.SendHandshake( "test", Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ) );
-                    s.ReadHandshakeAcceptedResponse();
-                    s.SendConfirmHandshakeResponse();
-                } );
+            await client1.GetTask( s =>
+            {
+                s.Connect( endPoint );
+                s.SendHandshake( "test", Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ) );
+                s.ReadHandshakeAcceptedResponse();
+                s.SendConfirmHandshakeResponse();
+            } );
 
             using var client2 = new ClientMock();
-            await client2.GetTask(
-                s =>
-                {
-                    s.Connect( endPoint );
-                    s.SendHandshake( "test", Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ) );
-                    s.ReadHandshakeRejectedResponse();
-                } );
+            await client2.GetTask( s =>
+            {
+                s.Connect( endPoint );
+                s.SendHandshake( "test", Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ) );
+                s.ReadHandshakeRejectedResponse();
+            } );
 
             await endSource.Task;
 
@@ -700,6 +689,67 @@ public partial class MessageBrokerServerTests
         }
 
         [Fact]
+        public async Task Start_ShouldDisposeGracefully_WhenServerIsEphemeralAndClientIsNot()
+        {
+            Exception? exception = null;
+            var endSource = new SafeTaskCompletionSource();
+            var logs = new ServerEventLogger();
+            var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
+
+            await using var server = new MessageBrokerServer(
+                originalEndPoint,
+                MessageBrokerServerOptions.Default
+                    .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                    .SetLogger(
+                        logs.GetLogger(
+                            MessageBrokerServerLogger.Create(
+                                traceEnd: e =>
+                                {
+                                    if ( e.Type == MessageBrokerServerTraceEventType.AcceptClient )
+                                        endSource.Complete();
+                                },
+                                error: e => exception = e.Exception ) ) ) );
+
+            await server.StartAsync();
+            var endPoint = server.LocalEndPoint;
+
+            using var client = new ClientMock();
+            await client.GetTask( s =>
+            {
+                s.Connect( endPoint );
+                s.SendHandshake( "test", Duration.FromSeconds( 1 ), Duration.FromSeconds( 10 ), isEphemeral: false );
+                s.ReadHandshakeRejectedResponse();
+            } );
+
+            await endSource.Task;
+
+            Assertion.All(
+                    exception.TestType().Exact<MessageBrokerServerException>( e => e.Server.TestRefEquals( server ) ),
+                    server.Connectors.Count.TestEquals( 0 ),
+                    logs.GetAll()
+                        .Skip( 1 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                $"[Trace:AcceptClient] Server = {endPoint}, TraceId = 1 (start)",
+                                $"[ClientAccepted] Server = {endPoint}, TraceId = 1, ConnectorId = 1",
+                                $"[ConnectorStarted] Server = {endPoint}, TraceId = 1, ConnectorId = 1",
+                                $"[ReadPacket:Received] Server = {endPoint}, TraceId = 1, ConnectorId = 1, Packet = (HandshakeRequest, Length = 24)",
+                                $"[HandshakeReceived] Server = {endPoint}, TraceId = 1, ConnectorId = 1, ClientName = 'test', DesiredMessageTimeout = 1 second(s), DesiredPingInterval = 10 second(s), DesiredBatchPacket = <disabled>, SynchronizeExternalObjectNames = False, ClearBuffers = False, IsEphemeral = False, IsClientLittleEndian = True",
+                                $"""
+                                 [Error] Server = {endPoint}, TraceId = 1
+                                 LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerException: Non-ephemeral client with name 'test' cannot be connected because the server is ephemeral.
+                                 """,
+                                $"[SendPacket:Sending] Server = {endPoint}, TraceId = 1, ConnectorId = 1, Packet = (HandshakeRejectedResponse, Length = 6)",
+                                $"[SendPacket:Sent] Server = {endPoint}, TraceId = 1, ConnectorId = 1, Packet = (HandshakeRejectedResponse, Length = 6)",
+                                $"[Trace:AcceptClient] Server = {endPoint}, TraceId = 1 (end)"
+                            ] )
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
         public async Task CancelAsync_ShouldDisposeGracefully()
         {
             Exception? exception = null;
@@ -712,12 +762,11 @@ public partial class MessageBrokerServerTests
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetLogger( logs.GetLogger( MessageBrokerServerLogger.Create( error: e => exception = e.Exception ) ) )
-                    .SetStreamDecorator(
-                        (c, ns) =>
-                        {
-                            endSource.Complete( (c, c.CancelAsync().AsTask()) );
-                            return ValueTask.FromResult<Stream>( ns );
-                        } ) );
+                    .SetStreamDecorator( (c, ns) =>
+                    {
+                        endSource.Complete( (c, c.CancelAsync().AsTask()) );
+                        return ValueTask.FromResult<Stream>( ns );
+                    } ) );
 
             await server.StartAsync();
             var endPoint = server.LocalEndPoint;

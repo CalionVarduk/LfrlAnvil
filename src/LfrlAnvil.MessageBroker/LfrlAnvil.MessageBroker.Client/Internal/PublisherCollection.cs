@@ -82,9 +82,6 @@ internal struct PublisherCollection
         if ( streamName is not null )
             Ensure.IsInRange( streamName.Length, Defaults.NameLengthBounds.Min, Defaults.NameLengthBounds.Max );
 
-        // TODO: tests
-        // - isEphemeral: false
-        // - isEphemeral: false, with ephemeral client
         if ( client.IsEphemeral )
             isEphemeral = true;
 

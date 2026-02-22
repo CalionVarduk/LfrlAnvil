@@ -44,16 +44,15 @@ public partial class MessageBrokerClientTests
                                 } ) ) ) );
 
             await server.EstablishHandshake( client, pingInterval: Duration.FromSeconds( 0.2 ) );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    Thread.Sleep( 150 );
-                    s.ReadPing();
-                    s.SendPong();
-                    Thread.Sleep( 150 );
-                    s.ReadPing();
-                    s.SendPong();
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                Thread.Sleep( 150 );
+                s.ReadPing();
+                s.SendPong();
+                Thread.Sleep( 150 );
+                s.ReadPing();
+                s.SendPong();
+            } );
 
             await serverTask;
             await endSource.Task;
@@ -128,12 +127,11 @@ public partial class MessageBrokerClientTests
                 messageTimeout: Duration.FromSeconds( 0.2 ),
                 pingInterval: Duration.FromSeconds( 0.2 ) );
 
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    Thread.Sleep( 150 );
-                    s.ReadPing();
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                Thread.Sleep( 150 );
+                s.ReadPing();
+            } );
 
             await serverTask;
             await disposeSource.Task.Unwrap();
@@ -206,12 +204,11 @@ public partial class MessageBrokerClientTests
                 messageTimeout: Duration.FromSeconds( 0.2 ),
                 pingInterval: Duration.FromSeconds( 0.2 ) );
 
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    Thread.Sleep( 150 );
-                    s.ReadPing();
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                Thread.Sleep( 150 );
+                s.ReadPing();
+            } );
 
             await serverTask;
             await endSource.Task;
@@ -264,13 +261,12 @@ public partial class MessageBrokerClientTests
                                 } ) ) ) );
 
             await server.EstablishHandshake( client, pingInterval: Duration.FromSeconds( 0.2 ) );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    Thread.Sleep( 150 );
-                    s.ReadPing();
-                    s.Send( [ 0, 0, 0, 0, 0 ] );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                Thread.Sleep( 150 );
+                s.ReadPing();
+                s.Send( [ 0, 0, 0, 0, 0 ] );
+            } );
 
             await serverTask;
             await endSource.Task;
@@ -329,13 +325,12 @@ public partial class MessageBrokerClientTests
                                 } ) ) ) );
 
             await server.EstablishHandshake( client, pingInterval: Duration.FromSeconds( 0.2 ) );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    Thread.Sleep( 150 );
-                    s.ReadPing();
-                    s.SendPong( endiannessPayload: 1 );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                Thread.Sleep( 150 );
+                s.ReadPing();
+                s.SendPong( endiannessPayload: 1 );
+            } );
 
             await serverTask;
             await endSource.Task;

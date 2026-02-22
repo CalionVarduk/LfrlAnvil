@@ -109,10 +109,6 @@ public sealed class MessageBrokerChannelListenerBinding
     /// </summary>
     public int PrefetchHint { get; }
 
-    // TODO:
-    // verify MaxRetries and MaxRedeliveries debug assertions
-    // this should accept values exceeding max
-
     /// <summary>
     /// Specifies how many times the <see cref="Queue"/> will attempt to automatically send a message notification retry
     /// when the <see cref="Client"/> responds with a negative ACK, before giving up.
@@ -511,9 +507,6 @@ public sealed class MessageBrokerChannelListenerBinding
 
         try
         {
-            // TODO: tests
-            // - ephemeral publishers and listeners are deleted from non-ephemeral client during server disposal
-
             if ( isEphemeral )
             {
                 using ( Queue.AcquireLock() )
@@ -572,9 +565,6 @@ public sealed class MessageBrokerChannelListenerBinding
         {
             if ( dispose )
             {
-                // TODO: tests
-                // - ephemeral publishers and listeners are deleted from non-ephemeral client during client disconnect
-
                 if ( keepAlive )
                 {
                     using ( Client.AcquireLock() )

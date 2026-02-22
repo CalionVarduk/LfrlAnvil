@@ -243,59 +243,58 @@ public sealed class MessageBrokerRemoteClientConnector
 
     private Task StartHandshakeTask(ulong serverTraceId, Stream stream)
     {
-        return Task.Run(
-            async () =>
+        return Task.Run( async () =>
+        {
+            var failed = true;
+            try
             {
-                var failed = true;
-                try
+                if ( Server.StreamDecorator is not null )
                 {
-                    if ( Server.StreamDecorator is not null )
+                    stream = await Server.StreamDecorator( this, ReinterpretCast.To<NetworkStream>( stream ) ).ConfigureAwait( false );
+                    using ( AcquireActiveLock( serverTraceId, out var exc ) )
                     {
-                        stream = await Server.StreamDecorator( this, ReinterpretCast.To<NetworkStream>( stream ) ).ConfigureAwait( false );
-                        using ( AcquireActiveLock( serverTraceId, out var exc ) )
-                        {
-                            if ( exc is not null )
-                                return;
+                        if ( exc is not null )
+                            return;
 
-                            _stream = stream;
-                        }
+                        _stream = stream;
                     }
-
-                    var handshake = await ReadHandshakeRequestAsync( serverTraceId, stream ).ConfigureAwait( false );
-                    if ( handshake.Exception is not null )
-                    {
-                        if ( handshake.Value.RejectionReason != Protocol.HandshakeRejectedResponse.Reasons.None )
-                            await SendHandshakeRejectionAsync(
-                                    serverTraceId,
-                                    stream,
-                                    handshake.Value.RejectionReason,
-                                    handshake.Value.IsClientLittleEndian )
-                                .ConfigureAwait( false );
-
-                        return;
-                    }
-
-                    Assume.IsNotNull( handshake.Value.Client );
-                    failed = false;
-                    await handshake.Value.Client.StartAsync( serverTraceId ).ConfigureAwait( false );
                 }
-                catch ( Exception exc )
+
+                var handshake = await ReadHandshakeRequestAsync( serverTraceId, stream ).ConfigureAwait( false );
+                if ( handshake.Exception is not null )
                 {
-                    if ( Server.Logger.Error is { } error )
-                        error.Emit( MessageBrokerServerErrorEvent.Create( Server, serverTraceId, exc ) );
-                }
-                finally
-                {
-                    if ( failed )
-                        await FailAsync( serverTraceId, ignoreTask: true ).ConfigureAwait( false );
-                    else
-                        _completed.TrySetResult();
+                    if ( handshake.Value.RejectionReason != Protocol.HandshakeRejectedResponse.Reasons.None )
+                        await SendHandshakeRejectionAsync(
+                                serverTraceId,
+                                stream,
+                                handshake.Value.RejectionReason,
+                                handshake.Value.IsClientLittleEndian )
+                            .ConfigureAwait( false );
 
-                    if ( Server.Logger.TraceEnd is { } traceEnd )
-                        traceEnd.Emit(
-                            MessageBrokerServerTraceEvent.Create( Server, serverTraceId, MessageBrokerServerTraceEventType.AcceptClient ) );
+                    return;
                 }
-            } );
+
+                Assume.IsNotNull( handshake.Value.Client );
+                failed = false;
+                await handshake.Value.Client.StartAsync( serverTraceId ).ConfigureAwait( false );
+            }
+            catch ( Exception exc )
+            {
+                if ( Server.Logger.Error is { } error )
+                    error.Emit( MessageBrokerServerErrorEvent.Create( Server, serverTraceId, exc ) );
+            }
+            finally
+            {
+                if ( failed )
+                    await FailAsync( serverTraceId, ignoreTask: true ).ConfigureAwait( false );
+                else
+                    _completed.TrySetResult();
+
+                if ( Server.Logger.TraceEnd is { } traceEnd )
+                    traceEnd.Emit(
+                        MessageBrokerServerTraceEvent.Create( Server, serverTraceId, MessageBrokerServerTraceEventType.AcceptClient ) );
+            }
+        } );
     }
 
     private async ValueTask<Result<HandshakeResult>> ReadHandshakeRequestAsync(ulong serverTraceId, Stream stream)
@@ -398,9 +397,6 @@ public sealed class MessageBrokerRemoteClientConnector
 
             if ( ! handshakeHeader.IsEphemeral && Server.RootStorageDirectoryPath is null )
             {
-                // TODO: tests
-                // - ephemeral server, non-ephemeral client
-
                 var exc = Server.Exception( Resources.ServerIsEphemeral( name.Value ) );
                 if ( Server.Logger.Error is { } error )
                     error.Emit( MessageBrokerServerErrorEvent.Create( Server, serverTraceId, exc ) );

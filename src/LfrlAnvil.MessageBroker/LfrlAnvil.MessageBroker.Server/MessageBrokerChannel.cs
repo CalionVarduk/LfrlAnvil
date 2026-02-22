@@ -127,11 +127,6 @@ public sealed class MessageBrokerChannel
 
     internal async ValueTask TryDisposeDueToLackOfReferencesAsync(ulong serverTraceId)
     {
-        // TODO: tests
-        // - after server reload, channel is not referenced
-        // - FOR STREAMS, the same, but it will happen due to stream processor detection (implicit)
-        // - FOR QUEUES, their processors will be started on client reconnect, so only then will they have a chance to dispose themselves
-
         ulong traceId;
         using ( AcquireLock() )
         {
@@ -319,9 +314,6 @@ public sealed class MessageBrokerChannel
 
         try
         {
-            // TODO: tests
-            // - persistent channel is no longer referenced during server disposal
-
             if ( Server.RootStorageDirectoryPath is not null )
             {
                 bool isReferenced;

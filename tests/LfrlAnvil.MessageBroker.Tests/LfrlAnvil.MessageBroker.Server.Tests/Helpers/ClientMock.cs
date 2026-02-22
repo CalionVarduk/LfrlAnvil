@@ -633,22 +633,21 @@ internal sealed class ClientMock : IDisposable
         bool synchronizeExternalObjectNames = false,
         bool isEphemeral = true)
     {
-        return Task.Factory.StartNew(
-            () =>
-            {
-                Connect( server.LocalEndPoint );
-                SendHandshake(
-                    name ?? "test",
-                    messageTimeout ?? Duration.FromSeconds( 1 ),
-                    pingInterval ?? Duration.FromSeconds( 10 ),
-                    maxBatchPacketCount,
-                    maxNetworkBatchPacketLength,
-                    synchronizeExternalObjectNames,
-                    isEphemeral: isEphemeral );
+        return Task.Factory.StartNew( () =>
+        {
+            Connect( server.LocalEndPoint );
+            SendHandshake(
+                name ?? "test",
+                messageTimeout ?? Duration.FromSeconds( 1 ),
+                pingInterval ?? Duration.FromSeconds( 10 ),
+                maxBatchPacketCount,
+                maxNetworkBatchPacketLength,
+                synchronizeExternalObjectNames,
+                isEphemeral: isEphemeral );
 
-                ReadHandshakeAcceptedResponse();
-                SendConfirmHandshakeResponse();
-            } );
+            ReadHandshakeAcceptedResponse();
+            SendConfirmHandshakeResponse();
+        } );
     }
 
     internal Task GetTask(Action<ClientMock> action)

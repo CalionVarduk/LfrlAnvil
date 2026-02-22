@@ -93,12 +93,11 @@ public class SystemNotificationTests : TestsBase, IClassFixture<SharedResourceFi
                             } ) ) ) );
 
         await server.EstablishHandshake( client );
-        await server.GetTask(
-            s =>
-            {
-                s.SendObjectNameNotification( MessageBrokerSystemNotificationType.SenderName, 3, "foo" );
-                s.SendObjectNameNotification( MessageBrokerSystemNotificationType.SenderName, 3, "lorem" );
-            } );
+        await server.GetTask( s =>
+        {
+            s.SendObjectNameNotification( MessageBrokerSystemNotificationType.SenderName, 3, "foo" );
+            s.SendObjectNameNotification( MessageBrokerSystemNotificationType.SenderName, 3, "lorem" );
+        } );
 
         await endSource.Task;
 
@@ -512,8 +511,10 @@ public class SystemNotificationTests : TestsBase, IClassFixture<SharedResourceFi
                             } ) ) ) );
 
         await server.EstablishHandshake( client );
-        await server.GetTask(
-            s => s.SendObjectNameNotification( MessageBrokerSystemNotificationType.SenderName, 2, new string( 'x', 513 ) ) );
+        await server.GetTask( s => s.SendObjectNameNotification(
+            MessageBrokerSystemNotificationType.SenderName,
+            2,
+            new string( 'x', 513 ) ) );
 
         await endSource.Task;
 
@@ -624,12 +625,11 @@ public class SystemNotificationTests : TestsBase, IClassFixture<SharedResourceFi
                             } ) ) ) );
 
         await server.EstablishHandshake( client );
-        await server.GetTask(
-            s =>
-            {
-                s.SendObjectNameNotification( MessageBrokerSystemNotificationType.StreamName, 2, "foo" );
-                s.SendObjectNameNotification( MessageBrokerSystemNotificationType.StreamName, 2, "lorem" );
-            } );
+        await server.GetTask( s =>
+        {
+            s.SendObjectNameNotification( MessageBrokerSystemNotificationType.StreamName, 2, "foo" );
+            s.SendObjectNameNotification( MessageBrokerSystemNotificationType.StreamName, 2, "lorem" );
+        } );
 
         await endSource.Task;
 
@@ -990,8 +990,10 @@ public class SystemNotificationTests : TestsBase, IClassFixture<SharedResourceFi
                             } ) ) ) );
 
         await server.EstablishHandshake( client );
-        await server.GetTask(
-            s => s.SendObjectNameNotification( MessageBrokerSystemNotificationType.StreamName, 1, new string( 'x', 513 ) ) );
+        await server.GetTask( s => s.SendObjectNameNotification(
+            MessageBrokerSystemNotificationType.StreamName,
+            1,
+            new string( 'x', 513 ) ) );
 
         await endSource.Task;
 

@@ -53,26 +53,25 @@ public partial class MessageBrokerClientTests
                                 } ) ) ) );
 
             await server.EstablishHandshake( client, maxBatchPacketCount: 10, maxNetworkBatchPacketLength: MemorySize.FromMegabytes( 1 ) );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read(
-                        new Protocol.BindListenerRequest(
-                            "foo",
-                            null,
-                            1,
-                            0,
-                            Duration.Zero,
-                            0,
-                            Duration.Zero,
-                            0,
-                            Duration.Zero,
-                            null,
-                            true,
-                            true ) );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read(
+                    new Protocol.BindListenerRequest(
+                        "foo",
+                        null,
+                        1,
+                        0,
+                        Duration.Zero,
+                        0,
+                        Duration.Zero,
+                        0,
+                        Duration.Zero,
+                        null,
+                        true,
+                        true ) );
 
-                    s.SendListenerBoundResponse( true, true, 1, 1 );
-                } );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+            } );
 
             await client.Listeners.BindAsync(
                 "foo",
@@ -83,13 +82,12 @@ public partial class MessageBrokerClientTests
 
             var queryTask = client.QueryDeadLetterAsync( 1, 0 );
             await batchContinuation.Task;
-            await server.GetTask(
-                s => s.SendBatch(
-                [
-                    ServerMock.PrepareObjectNameNotification( MessageBrokerSystemNotificationType.SenderName, 2, "foo" ),
-                    ServerMock.PrepareMessageNotification( 0, 0, 2, 1, 1, [ 1, 2, 3 ] ),
-                    ServerMock.PrepareDeadLetterQueryResponse( 0, 0, Timestamp.Zero )
-                ] ) );
+            await server.GetTask( s => s.SendBatch(
+            [
+                ServerMock.PrepareObjectNameNotification( MessageBrokerSystemNotificationType.SenderName, 2, "foo" ),
+                ServerMock.PrepareMessageNotification( 0, 0, 2, 1, 1, [ 1, 2, 3 ] ),
+                ServerMock.PrepareDeadLetterQueryResponse( 0, 0, Timestamp.Zero )
+            ] ) );
 
             await endSource.Task;
             await queryTask;
@@ -180,12 +178,11 @@ public partial class MessageBrokerClientTests
                 maxNetworkBatchPacketLength: MemorySize.FromMegabytes( 1 ) );
 
             await start.Task;
-            await server.GetTask(
-                s => s.SendBatch(
-                [
-                    ServerMock.PrepareObjectNameNotification( MessageBrokerSystemNotificationType.StreamName, 1, "foo" ),
-                    ServerMock.PreparePong()
-                ] ) );
+            await server.GetTask( s => s.SendBatch(
+            [
+                ServerMock.PrepareObjectNameNotification( MessageBrokerSystemNotificationType.StreamName, 1, "foo" ),
+                ServerMock.PreparePong()
+            ] ) );
 
             await endSource.Task;
 
@@ -474,19 +471,18 @@ public partial class MessageBrokerClientTests
                 maxBatchPacketCount: 2,
                 maxNetworkBatchPacketLength: MemorySize.FromMegabytes( 1 ) );
 
-            await server.GetTask(
-                s => s.SendBatch(
-                    [
-                        ServerMock.PrepareMessageNotification(
-                            1,
-                            0,
-                            1,
-                            1,
-                            1,
-                            [ ],
-                            payload: ( uint )MemorySize.BytesPerKilobyte * 32 - Protocol.PacketHeader.Length + 1 )
-                    ],
-                    packetCount: 2 ) );
+            await server.GetTask( s => s.SendBatch(
+                [
+                    ServerMock.PrepareMessageNotification(
+                        1,
+                        0,
+                        1,
+                        1,
+                        1,
+                        [ ],
+                        payload: ( uint )MemorySize.BytesPerKilobyte * 32 - Protocol.PacketHeader.Length + 1 )
+                ],
+                packetCount: 2 ) );
 
             await endSource.Task;
 
@@ -547,19 +543,18 @@ public partial class MessageBrokerClientTests
                 maxBatchPacketCount: 2,
                 maxNetworkBatchPacketLength: MemorySize.FromMegabytes( 1 ) );
 
-            await server.GetTask(
-                s => s.SendBatch(
-                    [
-                        ServerMock.PrepareMessageNotification(
-                            1,
-                            0,
-                            1,
-                            1,
-                            1,
-                            [ ],
-                            payload: Protocol.MessageNotificationHeader.Length + 1 )
-                    ],
-                    packetCount: 2 ) );
+            await server.GetTask( s => s.SendBatch(
+                [
+                    ServerMock.PrepareMessageNotification(
+                        1,
+                        0,
+                        1,
+                        1,
+                        1,
+                        [ ],
+                        payload: Protocol.MessageNotificationHeader.Length + 1 )
+                ],
+                packetCount: 2 ) );
 
             await endSource.Task;
 
@@ -621,16 +616,15 @@ public partial class MessageBrokerClientTests
                 maxBatchPacketCount: 2,
                 maxNetworkBatchPacketLength: MemorySize.FromMegabytes( 1 ) );
 
-            await server.GetTask(
-                s => s.SendBatch(
-                    [
-                        ServerMock.PrepareObjectNameNotification(
-                            MessageBrokerSystemNotificationType.SenderName,
-                            1,
-                            string.Empty,
-                            payload: ( uint )MemorySize.BytesPerKilobyte * 16 - Protocol.PacketHeader.Length + 1 )
-                    ],
-                    packetCount: 2 ) );
+            await server.GetTask( s => s.SendBatch(
+                [
+                    ServerMock.PrepareObjectNameNotification(
+                        MessageBrokerSystemNotificationType.SenderName,
+                        1,
+                        string.Empty,
+                        payload: ( uint )MemorySize.BytesPerKilobyte * 16 - Protocol.PacketHeader.Length + 1 )
+                ],
+                packetCount: 2 ) );
 
             await endSource.Task;
 
@@ -691,16 +685,15 @@ public partial class MessageBrokerClientTests
                 maxBatchPacketCount: 2,
                 maxNetworkBatchPacketLength: MemorySize.FromMegabytes( 1 ) );
 
-            await server.GetTask(
-                s => s.SendBatch(
-                    [
-                        ServerMock.PrepareObjectNameNotification(
-                            MessageBrokerSystemNotificationType.SenderName,
-                            1,
-                            string.Empty,
-                            payload: Protocol.SystemNotificationHeader.Length + Protocol.ObjectNameNotificationHeader.Length + 1 )
-                    ],
-                    packetCount: 2 ) );
+            await server.GetTask( s => s.SendBatch(
+                [
+                    ServerMock.PrepareObjectNameNotification(
+                        MessageBrokerSystemNotificationType.SenderName,
+                        1,
+                        string.Empty,
+                        payload: Protocol.SystemNotificationHeader.Length + Protocol.ObjectNameNotificationHeader.Length + 1 )
+                ],
+                packetCount: 2 ) );
 
             await endSource.Task;
 
@@ -761,8 +754,9 @@ public partial class MessageBrokerClientTests
                 maxBatchPacketCount: 2,
                 maxNetworkBatchPacketLength: MemorySize.FromMegabytes( 1 ) );
 
-            await server.GetTask(
-                s => s.SendBatch( [ ServerMock.PrepareDeadLetterQueryResponse( 0, 0, Timestamp.Zero ) ], packetCount: 2 ) );
+            await server.GetTask( s => s.SendBatch(
+                [ ServerMock.PrepareDeadLetterQueryResponse( 0, 0, Timestamp.Zero ) ],
+                packetCount: 2 ) );
 
             await endSource.Task;
 
@@ -825,20 +819,19 @@ public partial class MessageBrokerClientTests
                 maxNetworkBatchPacketLength: MemorySize.FromMegabytes( 1 ) );
 
             var queryTask = client.QueryDeadLetterAsync( 1, 0 );
-            await server.GetTask(
-                s =>
-                {
-                    s.ReadDeadLetterQuery();
-                    s.SendBatch(
-                        [
-                            ServerMock.PrepareDeadLetterQueryResponse(
-                                0,
-                                0,
-                                Timestamp.Zero,
-                                payload: ( uint )MemorySize.BytesPerKilobyte * 16 - Protocol.PacketHeader.Length + 1 )
-                        ],
-                        packetCount: 2 );
-                } );
+            await server.GetTask( s =>
+            {
+                s.ReadDeadLetterQuery();
+                s.SendBatch(
+                    [
+                        ServerMock.PrepareDeadLetterQueryResponse(
+                            0,
+                            0,
+                            Timestamp.Zero,
+                            payload: ( uint )MemorySize.BytesPerKilobyte * 16 - Protocol.PacketHeader.Length + 1 )
+                    ],
+                    packetCount: 2 );
+            } );
 
             await endSource.Task;
             await queryTask;
@@ -901,20 +894,19 @@ public partial class MessageBrokerClientTests
                 maxNetworkBatchPacketLength: MemorySize.FromMegabytes( 1 ) );
 
             var queryTask = client.QueryDeadLetterAsync( 1, 0 );
-            await server.GetTask(
-                s =>
-                {
-                    s.ReadDeadLetterQuery();
-                    s.SendBatch(
-                        [
-                            ServerMock.PrepareDeadLetterQueryResponse(
-                                0,
-                                0,
-                                Timestamp.Zero,
-                                payload: Protocol.DeadLetterQueryResponse.Length + 1 )
-                        ],
-                        packetCount: 2 );
-                } );
+            await server.GetTask( s =>
+            {
+                s.ReadDeadLetterQuery();
+                s.SendBatch(
+                    [
+                        ServerMock.PrepareDeadLetterQueryResponse(
+                            0,
+                            0,
+                            Timestamp.Zero,
+                            payload: Protocol.DeadLetterQueryResponse.Length + 1 )
+                    ],
+                    packetCount: 2 );
+            } );
 
             await endSource.Task;
             await queryTask;
@@ -976,14 +968,13 @@ public partial class MessageBrokerClientTests
                 maxBatchPacketCount: 2,
                 maxNetworkBatchPacketLength: MemorySize.FromMegabytes( 1 ) );
 
-            await server.GetTask(
-                s => s.SendBatch(
-                    [
-                        ServerMock.PrepareObjectNameNotification( MessageBrokerSystemNotificationType.SenderName, 2, "foo" ),
-                        ServerMock.PrepareObjectNameNotification( MessageBrokerSystemNotificationType.StreamName, 1, "bar" ),
-                        [ 0 ]
-                    ],
-                    packetCount: 2 ) );
+            await server.GetTask( s => s.SendBatch(
+                [
+                    ServerMock.PrepareObjectNameNotification( MessageBrokerSystemNotificationType.SenderName, 2, "foo" ),
+                    ServerMock.PrepareObjectNameNotification( MessageBrokerSystemNotificationType.StreamName, 1, "bar" ),
+                    [ 0 ]
+                ],
+                packetCount: 2 ) );
 
             await endSource.Task;
 
@@ -1070,58 +1061,56 @@ public partial class MessageBrokerClientTests
                 maxNetworkBatchPacketLength: MemorySize.FromMegabytes( 1 ) );
 
             var nextExpirationAt = TimestampProvider.Shared.GetNow();
-            var batchTask = Task.Run(
-                async () =>
+            var batchTask = Task.Run( async () =>
+            {
+                await batchStart.Task;
+                var a = client.QueryDeadLetterAsync( 1, 0 );
+                var b = client.QueryDeadLetterAsync( 2, 1 );
+                var c = client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
+                var d = client.Publishers.BindAsync( "foo" );
+
+                using ( client.AcquireLock() )
+                    client.EventScheduler.SchedulePing( client );
+
+                await server.GetTask( s =>
                 {
-                    await batchStart.Task;
-                    var a = client.QueryDeadLetterAsync( 1, 0 );
-                    var b = client.QueryDeadLetterAsync( 2, 1 );
-                    var c = client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
-                    var d = client.Publishers.BindAsync( "foo" );
+                    s.ReadDeadLetterQuery();
+                    s.SendDeadLetterQueryResponse( 0, 0, Timestamp.Zero );
+                    s.ReadBatch(
+                    [
+                        (MessageBrokerServerEndpoint.DeadLetterQuery, Protocol.DeadLetterQuery.Length),
+                        (MessageBrokerServerEndpoint.DeadLetterQuery, Protocol.DeadLetterQuery.Length),
+                        (MessageBrokerServerEndpoint.BindListenerRequest, Protocol.PacketHeader.Length
+                            + ( int )new Protocol.BindListenerRequest(
+                                "foo",
+                                null,
+                                1,
+                                0,
+                                Duration.Zero,
+                                0,
+                                Duration.Zero,
+                                0,
+                                Duration.Zero,
+                                null,
+                                true,
+                                true ).Header.Payload),
+                        (MessageBrokerServerEndpoint.BindPublisherRequest, Protocol.PacketHeader.Length
+                            + ( int )new Protocol.BindPublisherRequest( "foo", null, true ).Header.Payload),
+                        (MessageBrokerServerEndpoint.Ping, Protocol.PacketHeader.Length)
+                    ] );
 
-                    using ( client.AcquireLock() )
-                        client.EventScheduler.SchedulePing( client );
-
-                    await server.GetTask(
-                        s =>
-                        {
-                            s.ReadDeadLetterQuery();
-                            s.SendDeadLetterQueryResponse( 0, 0, Timestamp.Zero );
-                            s.ReadBatch(
-                            [
-                                (MessageBrokerServerEndpoint.DeadLetterQuery, Protocol.DeadLetterQuery.Length),
-                                (MessageBrokerServerEndpoint.DeadLetterQuery, Protocol.DeadLetterQuery.Length),
-                                (MessageBrokerServerEndpoint.BindListenerRequest, Protocol.PacketHeader.Length
-                                    + ( int )new Protocol.BindListenerRequest(
-                                        "foo",
-                                        null,
-                                        1,
-                                        0,
-                                        Duration.Zero,
-                                        0,
-                                        Duration.Zero,
-                                        0,
-                                        Duration.Zero,
-                                        null,
-                                        true,
-                                        true ).Header.Payload),
-                                (MessageBrokerServerEndpoint.BindPublisherRequest, Protocol.PacketHeader.Length
-                                    + ( int )new Protocol.BindPublisherRequest( "foo", null, true ).Header.Payload),
-                                (MessageBrokerServerEndpoint.Ping, Protocol.PacketHeader.Length)
-                            ] );
-
-                            s.SendDeadLetterQueryResponse( 0, 0, Timestamp.Zero );
-                            s.SendDeadLetterQueryResponse( 5, 1, nextExpirationAt );
-                            s.SendListenerBoundResponse( true, true, 1, 1 );
-                            s.SendPublisherBoundResponse( false, true, 1, 1 );
-                            s.SendPong();
-                        } );
-
-                    await a;
-                    await b;
-                    await c;
-                    await d;
+                    s.SendDeadLetterQueryResponse( 0, 0, Timestamp.Zero );
+                    s.SendDeadLetterQueryResponse( 5, 1, nextExpirationAt );
+                    s.SendListenerBoundResponse( true, true, 1, 1 );
+                    s.SendPublisherBoundResponse( false, true, 1, 1 );
+                    s.SendPong();
                 } );
+
+                await a;
+                await b;
+                await c;
+                await d;
+            } );
 
             await client.QueryDeadLetterAsync( 1, 0 );
             await batchTask;
@@ -1246,28 +1235,27 @@ public partial class MessageBrokerClientTests
                                 } ) ) ) );
 
             await server.EstablishHandshake( client, maxBatchPacketCount: 15, maxNetworkBatchPacketLength: MemorySize.FromMegabytes( 1 ) );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
-                    s.SendPublisherBoundResponse( true, true, 1, 1 );
-                    s.Read(
-                        new Protocol.BindListenerRequest(
-                            "foo",
-                            null,
-                            1,
-                            0,
-                            Duration.Zero,
-                            0,
-                            Duration.Zero,
-                            0,
-                            Duration.Zero,
-                            null,
-                            true,
-                            true ) );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
+                s.SendPublisherBoundResponse( true, true, 1, 1 );
+                s.Read(
+                    new Protocol.BindListenerRequest(
+                        "foo",
+                        null,
+                        1,
+                        0,
+                        Duration.Zero,
+                        0,
+                        Duration.Zero,
+                        0,
+                        Duration.Zero,
+                        null,
+                        true,
+                        true ) );
 
-                    s.SendListenerBoundResponse( false, true, 1, 1 );
-                } );
+                s.SendListenerBoundResponse( false, true, 1, 1 );
+            } );
 
             await client.Publishers.BindAsync( "foo" );
             await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
@@ -1275,67 +1263,65 @@ public partial class MessageBrokerClientTests
             var listener = client.Listeners.TryGetByChannelId( 1 )!;
             await serverTask;
 
-            var batchTask = Task.Run(
-                async () =>
+            var batchTask = Task.Run( async () =>
+            {
+                await batchStart.Task;
+                var a = client.QueryDeadLetterAsync( 3, 2 );
+                var b = listener.SendMessageAckAsync( 1, 1, 0, 0, 0 );
+                var c = listener.SendNegativeMessageAckAsync( 2, 1, 1, 0, 0 );
+                var d = publisher.PushAsync( new byte[] { 1 } );
+                var e = publisher.PushAsync( new byte[] { 2, 3 }, [ MessageBrokerClientRoutingTarget.FromId( 2 ) ] );
+                var f = listener.UnbindAsync();
+                var g = publisher.PushAsync( new byte[] { 4, 5, 6 }, confirm: false );
+                var h = publisher.PushAsync(
+                    new byte[] { 7, 8, 9, 10 },
+                    [ MessageBrokerClientRoutingTarget.FromName( "bar" ) ],
+                    confirm: false );
+
+                var i = publisher.UnbindAsync();
+
+                await server.GetTask( s =>
                 {
-                    await batchStart.Task;
-                    var a = client.QueryDeadLetterAsync( 3, 2 );
-                    var b = listener.SendMessageAckAsync( 1, 1, 0, 0, 0 );
-                    var c = listener.SendNegativeMessageAckAsync( 2, 1, 1, 0, 0 );
-                    var d = publisher.PushAsync( new byte[] { 1 } );
-                    var e = publisher.PushAsync( new byte[] { 2, 3 }, [ MessageBrokerClientRoutingTarget.FromId( 2 ) ] );
-                    var f = listener.UnbindAsync();
-                    var g = publisher.PushAsync( new byte[] { 4, 5, 6 }, confirm: false );
-                    var h = publisher.PushAsync(
-                        new byte[] { 7, 8, 9, 10 },
-                        [ MessageBrokerClientRoutingTarget.FromName( "bar" ) ],
-                        confirm: false );
+                    s.ReadDeadLetterQuery();
+                    s.SendDeadLetterQueryResponse( 0, 0, Timestamp.Zero );
+                    s.ReadBatch(
+                    [
+                        (MessageBrokerServerEndpoint.DeadLetterQuery, Protocol.DeadLetterQuery.Length),
+                        (MessageBrokerServerEndpoint.MessageNotificationAck, Protocol.MessageNotificationAck.Length),
+                        (MessageBrokerServerEndpoint.MessageNotificationNack, Protocol.MessageNotificationNegativeAck.Length),
+                        (MessageBrokerServerEndpoint.PushMessage,
+                            Protocol.PacketHeader.Length + ( int )new Protocol.PushMessageHeader( 1, 1, true ).Header.Payload),
+                        (MessageBrokerServerEndpoint.PushMessageRouting,
+                            Protocol.PacketHeader.Length + ( int )new Protocol.PushMessageRoutingHeader( 1, 5 ).Header.Payload),
+                        (MessageBrokerServerEndpoint.PushMessage,
+                            Protocol.PacketHeader.Length + ( int )new Protocol.PushMessageHeader( 1, 2, true ).Header.Payload),
+                        (MessageBrokerServerEndpoint.UnbindListenerRequest, Protocol.UnbindListenerRequest.Length),
+                        (MessageBrokerServerEndpoint.PushMessage,
+                            Protocol.PacketHeader.Length + ( int )new Protocol.PushMessageHeader( 1, 3, false ).Header.Payload),
+                        (MessageBrokerServerEndpoint.PushMessageRouting,
+                            Protocol.PacketHeader.Length + ( int )new Protocol.PushMessageRoutingHeader( 1, 5 ).Header.Payload),
+                        (MessageBrokerServerEndpoint.PushMessage,
+                            Protocol.PacketHeader.Length + ( int )new Protocol.PushMessageHeader( 1, 4, false ).Header.Payload),
+                        (MessageBrokerServerEndpoint.UnbindPublisherRequest, Protocol.UnbindPublisherRequest.Length)
+                    ] );
 
-                    var i = publisher.UnbindAsync();
-
-                    await server.GetTask(
-                        s =>
-                        {
-                            s.ReadDeadLetterQuery();
-                            s.SendDeadLetterQueryResponse( 0, 0, Timestamp.Zero );
-                            s.ReadBatch(
-                            [
-                                (MessageBrokerServerEndpoint.DeadLetterQuery, Protocol.DeadLetterQuery.Length),
-                                (MessageBrokerServerEndpoint.MessageNotificationAck, Protocol.MessageNotificationAck.Length),
-                                (MessageBrokerServerEndpoint.MessageNotificationNack, Protocol.MessageNotificationNegativeAck.Length),
-                                (MessageBrokerServerEndpoint.PushMessage,
-                                    Protocol.PacketHeader.Length + ( int )new Protocol.PushMessageHeader( 1, 1, true ).Header.Payload),
-                                (MessageBrokerServerEndpoint.PushMessageRouting,
-                                    Protocol.PacketHeader.Length + ( int )new Protocol.PushMessageRoutingHeader( 1, 5 ).Header.Payload),
-                                (MessageBrokerServerEndpoint.PushMessage,
-                                    Protocol.PacketHeader.Length + ( int )new Protocol.PushMessageHeader( 1, 2, true ).Header.Payload),
-                                (MessageBrokerServerEndpoint.UnbindListenerRequest, Protocol.UnbindListenerRequest.Length),
-                                (MessageBrokerServerEndpoint.PushMessage,
-                                    Protocol.PacketHeader.Length + ( int )new Protocol.PushMessageHeader( 1, 3, false ).Header.Payload),
-                                (MessageBrokerServerEndpoint.PushMessageRouting,
-                                    Protocol.PacketHeader.Length + ( int )new Protocol.PushMessageRoutingHeader( 1, 5 ).Header.Payload),
-                                (MessageBrokerServerEndpoint.PushMessage,
-                                    Protocol.PacketHeader.Length + ( int )new Protocol.PushMessageHeader( 1, 4, false ).Header.Payload),
-                                (MessageBrokerServerEndpoint.UnbindPublisherRequest, Protocol.UnbindPublisherRequest.Length)
-                            ] );
-
-                            s.SendDeadLetterQueryResponse( 0, 0, Timestamp.Zero );
-                            s.SendMessageAcceptedResponse( 0 );
-                            s.SendMessageAcceptedResponse( 1 );
-                            s.SendListenerUnboundResponse( false, true );
-                            s.SendPublisherUnboundResponse( true, true );
-                        } );
-
-                    await a;
-                    await b;
-                    await c;
-                    await d;
-                    await e;
-                    await f;
-                    await g;
-                    await h;
-                    await i;
+                    s.SendDeadLetterQueryResponse( 0, 0, Timestamp.Zero );
+                    s.SendMessageAcceptedResponse( 0 );
+                    s.SendMessageAcceptedResponse( 1 );
+                    s.SendListenerUnboundResponse( false, true );
+                    s.SendPublisherUnboundResponse( true, true );
                 } );
+
+                await a;
+                await b;
+                await c;
+                await d;
+                await e;
+                await f;
+                await g;
+                await h;
+                await i;
+            } );
 
             await client.QueryDeadLetterAsync( 1, 0 );
             await batchTask;
@@ -1493,35 +1479,33 @@ public partial class MessageBrokerClientTests
 
             await server.EstablishHandshake( client, maxBatchPacketCount: 2, maxNetworkBatchPacketLength: MemorySize.FromMegabytes( 1 ) );
             var nextExpirationAt = TimestampProvider.Shared.GetNow();
-            var batchTask = Task.Run(
-                async () =>
+            var batchTask = Task.Run( async () =>
+            {
+                await batchStart.Task;
+                var a = client.QueryDeadLetterAsync( 1, 0 );
+                var b = client.QueryDeadLetterAsync( 2, 1 );
+                var c = client.Publishers.BindAsync( "foo" );
+
+                await server.GetTask( s =>
                 {
-                    await batchStart.Task;
-                    var a = client.QueryDeadLetterAsync( 1, 0 );
-                    var b = client.QueryDeadLetterAsync( 2, 1 );
-                    var c = client.Publishers.BindAsync( "foo" );
+                    s.ReadDeadLetterQuery();
+                    s.SendDeadLetterQueryResponse( 0, 0, Timestamp.Zero );
+                    s.ReadBatch(
+                    [
+                        (MessageBrokerServerEndpoint.DeadLetterQuery, Protocol.DeadLetterQuery.Length),
+                        (MessageBrokerServerEndpoint.DeadLetterQuery, Protocol.DeadLetterQuery.Length)
+                    ] );
 
-                    await server.GetTask(
-                        s =>
-                        {
-                            s.ReadDeadLetterQuery();
-                            s.SendDeadLetterQueryResponse( 0, 0, Timestamp.Zero );
-                            s.ReadBatch(
-                            [
-                                (MessageBrokerServerEndpoint.DeadLetterQuery, Protocol.DeadLetterQuery.Length),
-                                (MessageBrokerServerEndpoint.DeadLetterQuery, Protocol.DeadLetterQuery.Length)
-                            ] );
-
-                            s.SendDeadLetterQueryResponse( 0, 0, Timestamp.Zero );
-                            s.SendDeadLetterQueryResponse( 5, 1, nextExpirationAt );
-                            s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
-                            s.SendPublisherBoundResponse( true, true, 1, 1 );
-                        } );
-
-                    await a;
-                    await b;
-                    await c;
+                    s.SendDeadLetterQueryResponse( 0, 0, Timestamp.Zero );
+                    s.SendDeadLetterQueryResponse( 5, 1, nextExpirationAt );
+                    s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
+                    s.SendPublisherBoundResponse( true, true, 1, 1 );
                 } );
+
+                await a;
+                await b;
+                await c;
+            } );
 
             await client.QueryDeadLetterAsync( 1, 0 );
             await batchTask;
@@ -1626,64 +1610,61 @@ public partial class MessageBrokerClientTests
                                 } ) ) ) );
 
             await server.EstablishHandshake( client, maxBatchPacketCount: 10, maxNetworkBatchPacketLength: MemorySize.FromKilobytes( 16 ) );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
-                    s.SendPublisherBoundResponse( true, true, 1, 1 );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
+                s.SendPublisherBoundResponse( true, true, 1, 1 );
+            } );
 
             await client.Publishers.BindAsync( "foo" );
             var publisher = client.Publishers.TryGetByChannelId( 1 )!;
             await serverTask;
 
-            var batchTask = Task.Run(
-                async () =>
+            var batchTask = Task.Run( async () =>
+            {
+                var firstMessageLength = ( int )MemorySize.FromKilobytes( 12 ).Bytes;
+                var secondMessageLength = ( int )(client.MaxNetworkBatchPacketLength.Bytes
+                    - Protocol.PacketHeader.Length
+                    - Protocol.BatchHeader.Length
+                    - Protocol.DeadLetterQuery.Length
+                    - Protocol.PacketHeader.Length
+                    - new Protocol.PushMessageHeader( 1, firstMessageLength, false ).Header.Payload
+                    - Protocol.PushMessageHeader.Length);
+
+                await batchStart.Task;
+                var a = client.QueryDeadLetterAsync( 1, 0 );
+                var b = publisher.PushAsync(
+                    Enumerable.Range( 0, firstMessageLength ).Select( x => ( byte )x ).ToArray(),
+                    confirm: false );
+
+                var c = publisher.PushAsync(
+                    Enumerable.Range( 0, secondMessageLength ).Select( x => ( byte )x ).ToArray(),
+                    confirm: false );
+
+                var d = publisher.PushAsync( Array.Empty<byte>(), confirm: false );
+
+                await server.GetTask( s =>
                 {
-                    var firstMessageLength = ( int )MemorySize.FromKilobytes( 12 ).Bytes;
-                    var secondMessageLength = ( int )(client.MaxNetworkBatchPacketLength.Bytes
-                        - Protocol.PacketHeader.Length
-                        - Protocol.BatchHeader.Length
-                        - Protocol.DeadLetterQuery.Length
-                        - Protocol.PacketHeader.Length
-                        - new Protocol.PushMessageHeader( 1, firstMessageLength, false ).Header.Payload
-                        - Protocol.PushMessageHeader.Length);
+                    s.ReadDeadLetterQuery();
+                    s.SendDeadLetterQueryResponse( 0, 0, Timestamp.Zero );
+                    s.ReadBatch(
+                    [
+                        (MessageBrokerServerEndpoint.DeadLetterQuery, Protocol.DeadLetterQuery.Length),
+                        (MessageBrokerServerEndpoint.PushMessage, Protocol.PacketHeader.Length
+                            + ( int )new Protocol.PushMessageHeader( 1, firstMessageLength, false ).Header.Payload),
+                        (MessageBrokerServerEndpoint.PushMessage, Protocol.PacketHeader.Length
+                            + ( int )new Protocol.PushMessageHeader( 1, secondMessageLength, false ).Header.Payload)
+                    ] );
 
-                    await batchStart.Task;
-                    var a = client.QueryDeadLetterAsync( 1, 0 );
-                    var b = publisher.PushAsync(
-                        Enumerable.Range( 0, firstMessageLength ).Select( x => ( byte )x ).ToArray(),
-                        confirm: false );
-
-                    var c = publisher.PushAsync(
-                        Enumerable.Range( 0, secondMessageLength ).Select( x => ( byte )x ).ToArray(),
-                        confirm: false );
-
-                    var d = publisher.PushAsync( Array.Empty<byte>(), confirm: false );
-
-                    await server.GetTask(
-                        s =>
-                        {
-                            s.ReadDeadLetterQuery();
-                            s.SendDeadLetterQueryResponse( 0, 0, Timestamp.Zero );
-                            s.ReadBatch(
-                            [
-                                (MessageBrokerServerEndpoint.DeadLetterQuery, Protocol.DeadLetterQuery.Length),
-                                (MessageBrokerServerEndpoint.PushMessage, Protocol.PacketHeader.Length
-                                    + ( int )new Protocol.PushMessageHeader( 1, firstMessageLength, false ).Header.Payload),
-                                (MessageBrokerServerEndpoint.PushMessage, Protocol.PacketHeader.Length
-                                    + ( int )new Protocol.PushMessageHeader( 1, secondMessageLength, false ).Header.Payload)
-                            ] );
-
-                            s.SendDeadLetterQueryResponse( 0, 0, Timestamp.Zero );
-                            s.ReadPushMessage( 0 );
-                        } );
-
-                    await a;
-                    await b;
-                    await c;
-                    await d;
+                    s.SendDeadLetterQueryResponse( 0, 0, Timestamp.Zero );
+                    s.ReadPushMessage( 0 );
                 } );
+
+                await a;
+                await b;
+                await c;
+                await d;
+            } );
 
             await client.QueryDeadLetterAsync( 1, 0 );
             await batchTask;
@@ -1787,44 +1768,41 @@ public partial class MessageBrokerClientTests
                                 } ) ) ) );
 
             await server.EstablishHandshake( client, maxBatchPacketCount: 10, maxNetworkBatchPacketLength: MemorySize.FromKilobytes( 16 ) );
-            var serverTask = server.GetTask(
-                s =>
-                {
-                    s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
-                    s.SendPublisherBoundResponse( true, true, 1, 1 );
-                } );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( new Protocol.BindPublisherRequest( "foo", null, true ) );
+                s.SendPublisherBoundResponse( true, true, 1, 1 );
+            } );
 
             await client.Publishers.BindAsync( "foo" );
             var publisher = client.Publishers.TryGetByChannelId( 1 )!;
             await serverTask;
 
-            var batchTask = Task.Run(
-                async () =>
+            var batchTask = Task.Run( async () =>
+            {
+                var messageLength = ( int )client.MaxNetworkBatchPacketLength.Bytes
+                    - Protocol.PacketHeader.Length
+                    - Protocol.BatchHeader.Length
+                    - Protocol.PushMessageHeader.Length;
+
+                await batchStart.Task;
+                var a = publisher.PushAsync(
+                    Enumerable.Range( 0, messageLength ).Select( x => ( byte )x ).ToArray(),
+                    confirm: false );
+
+                var b = publisher.PushAsync( Array.Empty<byte>(), confirm: false );
+
+                await server.GetTask( s =>
                 {
-                    var messageLength = ( int )client.MaxNetworkBatchPacketLength.Bytes
-                        - Protocol.PacketHeader.Length
-                        - Protocol.BatchHeader.Length
-                        - Protocol.PushMessageHeader.Length;
-
-                    await batchStart.Task;
-                    var a = publisher.PushAsync(
-                        Enumerable.Range( 0, messageLength ).Select( x => ( byte )x ).ToArray(),
-                        confirm: false );
-
-                    var b = publisher.PushAsync( Array.Empty<byte>(), confirm: false );
-
-                    await server.GetTask(
-                        s =>
-                        {
-                            s.ReadDeadLetterQuery();
-                            s.SendDeadLetterQueryResponse( 0, 0, Timestamp.Zero );
-                            s.ReadPushMessage( messageLength );
-                            s.ReadPushMessage( 0 );
-                        } );
-
-                    await a;
-                    await b;
+                    s.ReadDeadLetterQuery();
+                    s.SendDeadLetterQueryResponse( 0, 0, Timestamp.Zero );
+                    s.ReadPushMessage( messageLength );
+                    s.ReadPushMessage( 0 );
                 } );
+
+                await a;
+                await b;
+            } );
 
             await client.QueryDeadLetterAsync( 1, 0 );
             await batchTask;

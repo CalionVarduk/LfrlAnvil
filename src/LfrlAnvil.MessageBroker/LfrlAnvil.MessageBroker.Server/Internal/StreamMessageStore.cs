@@ -70,7 +70,7 @@ internal struct StreamMessageStore
     {
         if ( ! _nextPendingNodeId.HasValue )
         {
-            key = default;
+            key = 0;
             message = default;
             routingData = default;
             return false;
@@ -146,7 +146,7 @@ internal struct StreamMessageStore
         if ( Unsafe.IsNullRef( ref entry ) )
         {
             message = default;
-            refCount = default;
+            refCount = 0;
             return false;
         }
 
@@ -161,7 +161,7 @@ internal struct StreamMessageStore
         if ( Unsafe.IsNullRef( ref entry ) )
         {
             message = default;
-            isPending = default;
+            isPending = false;
             return false;
         }
 

@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public enum MessageBrokerRemoteClientState : byte
     Inactive = 4,
 
     /// <summary>
-    /// Specifies the the client is currently being disposed.
+    /// Specifies the client is currently being disposed.
     /// </summary>
     Disposing = 5,
 
