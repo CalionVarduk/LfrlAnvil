@@ -75,7 +75,7 @@ public sealed class MessageBrokerPublisher
     public string StreamName { get; }
 
     /// <summary>
-    /// Specifies whether or not the publisher is ephemeral.
+    /// Specifies whether the publisher is ephemeral.
     /// </summary>
     /// <remarks>Ephemeral publishers will be removed by the server when client disconnects.</remarks>
     public bool IsEphemeral { get; }
@@ -128,7 +128,7 @@ public sealed class MessageBrokerPublisher
     /// <param name="data">Message to push.</param>
     /// <param name="targets">Optional collection of explicit routing targets. Equal to <b>null</b> by default.</param>
     /// <param name="confirm">
-    /// Specifies whether or not the server should send confirmation that it received the message. Equal to <b>true</b> by default.
+    /// Specifies whether the server should send confirmation that it received the message. Equal to <b>true</b> by default.
     /// </param>
     /// <returns>
     /// A task that represents the operation, which returns a <see cref="Result{T}"/> instance,

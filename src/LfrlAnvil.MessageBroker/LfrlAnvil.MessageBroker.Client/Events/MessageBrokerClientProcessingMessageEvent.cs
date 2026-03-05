@@ -92,7 +92,7 @@ public readonly struct MessageBrokerClientProcessingMessageEvent
     public int Retry => _retry.IntValue;
 
     /// <summary>
-    /// Specifies whether or not this is a retry of the message.
+    /// Specifies whether this is a retry of the message.
     /// </summary>
     public bool IsRetry => _retry.BoolValue;
 
@@ -102,7 +102,7 @@ public readonly struct MessageBrokerClientProcessingMessageEvent
     public int Redelivery => _redelivery.IntValue;
 
     /// <summary>
-    /// Specifies whether or not this is a redelivery of the message.
+    /// Specifies whether this is a redelivery of the message.
     /// </summary>
     public bool IsRedelivery => _redelivery.BoolValue;
 

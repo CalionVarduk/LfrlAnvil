@@ -58,7 +58,7 @@ public readonly struct MessageBrokerClientPushingMessageEvent
     public short RoutingTargetCount { get; }
 
     /// <summary>
-    /// Specifies whether or not the server should send confirmation that it successfully handled the message.
+    /// Specifies whether the server should send confirmation that it successfully handled the message.
     /// </summary>
     public bool Confirm { get; }
 

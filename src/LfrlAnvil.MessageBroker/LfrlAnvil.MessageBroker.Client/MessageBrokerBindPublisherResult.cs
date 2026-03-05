@@ -36,18 +36,18 @@ public readonly struct MessageBrokerBindPublisherResult
     public MessageBrokerPublisher Publisher { get; }
 
     /// <summary>
-    /// Specifies whether or not request to the server has been cancelled
+    /// Specifies whether request to the server has been cancelled
     /// because the client is already locally bound as publisher to the channel.
     /// </summary>
     public bool AlreadyBound => _state == 1;
 
     /// <summary>
-    /// Specifies whether or not a new channel has been created by the server.
+    /// Specifies whether a new channel has been created by the server.
     /// </summary>
     public bool ChannelCreated => (_state & 2) != 0;
 
     /// <summary>
-    /// Specifies whether or not a new stream has been created by the server.
+    /// Specifies whether a new stream has been created by the server.
     /// </summary>
     public bool StreamCreated => (_state & 4) != 0;
 

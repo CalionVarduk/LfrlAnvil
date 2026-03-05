@@ -43,7 +43,7 @@ public readonly struct MessageBrokerClientRoutingTarget
     public string Name => _name ?? string.Empty;
 
     /// <summary>
-    /// Specifies whether or not this routing target is based on a name.
+    /// Specifies whether this routing target is based on a name.
     /// </summary>
     public bool IsFromName => Id == 0;
 

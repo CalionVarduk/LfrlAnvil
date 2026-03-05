@@ -16,6 +16,7 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using LfrlAnvil.Chrono;
 using LfrlAnvil.Memory;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Exceptions;
@@ -50,6 +51,13 @@ public sealed partial class MessageBrokerRemoteClient
                     stream = _stream;
                     PacketListener.SetUnderlyingTask( null );
                     _state = MessageBrokerRemoteClientState.Running;
+
+                    if ( QueueStore.Count > 0 )
+                    {
+                        var queues = QueueStore.GetAll();
+                        foreach ( var queue in queues )
+                            queue.Reactivate();
+                    }
                 }
 
                 var packetListenerTask = PacketListener.StartUnderlyingTask( this, stream );
@@ -93,36 +101,54 @@ public sealed partial class MessageBrokerRemoteClient
 
     private async ValueTask<Result> SendHandshakeAcceptedResponseAsync(ulong traceId)
     {
-        var response = new Protocol.HandshakeAcceptedResponse( this );
-
         var sendPacket = Logger.SendPacket;
-        sendPacket?.Emit( MessageBrokerRemoteClientSendPacketEvent.CreateSending( this, traceId, response.Header ) );
+        var responseHeader = Protocol.HandshakeAcceptedResponse.Header;
+        sendPacket?.Emit( MessageBrokerRemoteClientSendPacketEvent.CreateSending( this, traceId, responseHeader ) );
 
         var poolToken = MemoryPoolToken<byte>.Empty;
         try
         {
-            poolToken = MemoryPool.Rent(
-                Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload,
-                ClearBuffers,
-                out var data );
-
-            response.Serialize( data, IsLittleEndian != BitConverter.IsLittleEndian );
-
             Stream stream;
             CancellationToken timeoutToken;
+            bool clearBuffers;
+            bool isLittleEndian;
+            Duration messageTimeout;
+            Duration pingInterval;
+            short maxBatchPacketCount;
+            int maxNetworkBatchPacketBytes;
             using ( AcquireActiveLock( traceId, out var exc ) )
             {
                 if ( exc is not null )
                     return exc;
 
+                clearBuffers = _clearBuffers;
+                isLittleEndian = _isLittleEndian;
+                messageTimeout = _messageTimeout;
+                pingInterval = _pingInterval;
+                maxBatchPacketCount = _maxBatchPacketCount;
+                maxNetworkBatchPacketBytes = _maxNetworkBatchPacketBytes;
                 Assume.IsNotNull( _stream );
                 stream = _stream;
-                timeoutToken = EventScheduler.ScheduleWriteTimeout( this );
+                timeoutToken = EventScheduler.ScheduleWriteTimeout( this, messageTimeout );
             }
+
+            var response = new Protocol.HandshakeAcceptedResponse(
+                this,
+                messageTimeout,
+                pingInterval,
+                maxBatchPacketCount,
+                maxNetworkBatchPacketBytes );
+
+            poolToken = MemoryPool.Rent(
+                Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload,
+                clearBuffers,
+                out var data );
+
+            response.Serialize( data, isLittleEndian != BitConverter.IsLittleEndian );
 
             await stream.WriteAsync( data, timeoutToken ).ConfigureAwait( false );
 
-            sendPacket?.Emit( MessageBrokerRemoteClientSendPacketEvent.CreateSent( this, traceId, response.Header ) );
+            sendPacket?.Emit( MessageBrokerRemoteClientSendPacketEvent.CreateSent( this, traceId, responseHeader ) );
             return Result.Valid;
         }
         catch ( Exception exc )
@@ -148,20 +174,21 @@ public sealed partial class MessageBrokerRemoteClient
         var poolToken = MemoryPoolToken<byte>.Empty;
         try
         {
-            poolToken = MemoryPool.Rent( Protocol.PacketHeader.Length, ClearBuffers, out var data );
-
             Stream stream;
+            bool clearBuffers;
             using ( AcquireActiveLock( traceId, out var exc ) )
             {
                 if ( exc is not null )
                     return exc;
 
+                clearBuffers = _clearBuffers;
                 Assume.IsNotNull( _stream );
                 stream = _stream;
                 EventScheduler.ResetWriteTimeout();
-                timeoutToken = EventScheduler.ScheduleReadTimeout( this );
+                timeoutToken = EventScheduler.ScheduleReadTimeout( this, _messageTimeout );
             }
 
+            poolToken = MemoryPool.Rent( Protocol.PacketHeader.Length, clearBuffers, out var data );
             await stream.ReadExactlyAsync( data, timeoutToken ).ConfigureAwait( false );
             header = Protocol.PacketHeader.Parse( data );
         }

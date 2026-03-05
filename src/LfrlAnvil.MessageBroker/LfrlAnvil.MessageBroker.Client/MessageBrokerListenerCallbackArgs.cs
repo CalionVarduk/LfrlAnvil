@@ -113,7 +113,7 @@ public readonly struct MessageBrokerListenerCallbackArgs
     public int Retry => _retry.IntValue;
 
     /// <summary>
-    /// Specifies whether or not this message is a retry.
+    /// Specifies whether this message is a retry.
     /// </summary>
     public bool IsRetry => _retry.BoolValue;
 
@@ -127,17 +127,17 @@ public readonly struct MessageBrokerListenerCallbackArgs
     public int Redelivery => _redelivery.IntValue;
 
     /// <summary>
-    /// Specifies whether or not this message is a redelivery.
+    /// Specifies whether this message is a redelivery.
     /// </summary>
     public bool IsRedelivery => _redelivery.BoolValue;
 
     /// <summary>
-    /// Specifies whether or not this message is not a retry and not a redelivery.
+    /// Specifies whether this message is not a retry and not a redelivery.
     /// </summary>
     public bool IsFirst => _retry.Data == 0 && _redelivery.Data == 0 && ! IsFromDeadLetter;
 
     /// <summary>
-    /// Specifies whether or not this message is from a dead letter.
+    /// Specifies whether this message is from a dead letter.
     /// </summary>
     public bool IsFromDeadLetter => AckId < 0;
 

@@ -154,18 +154,20 @@ internal struct WriterQueue
         ref long batchLength,
         ref bool clearBuffer)
     {
+        var maxBatchPacketCount = client.GetMaxBatchPacketCountOption();
+        var maxNetworkBatchPacketBytes = client.GetMaxNetworkBatchPacketBytesOption();
         foreach ( ref readonly var source in span )
         {
             if ( ! source.IsActive )
                 return true;
 
             var nextBatchLength = unchecked( batchLength + source.Data.Length );
-            if ( nextBatchLength > client.MaxNetworkBatchPacketBytes )
+            if ( nextBatchLength > maxNetworkBatchPacketBytes )
                 return true;
 
             batchLength = nextBatchLength;
             clearBuffer |= source.ClearBuffer;
-            if ( ++packetCount == client.MaxBatchPacketCount )
+            if ( ++packetCount == maxBatchPacketCount )
                 return true;
         }
 

@@ -87,17 +87,17 @@ public readonly struct MessageBrokerServerHandshakeReceivedEvent
     public short MaxBatchPacketCount { get; }
 
     /// <summary>
-    /// Specifies whether or not the client enabled synchronization of external object names.
+    /// Specifies whether the client enabled synchronization of external object names.
     /// </summary>
     public bool SynchronizeExternalObjectNames { get; }
 
     /// <summary>
-    /// Specifies whether or not the client requested to clear internal buffers once the server is done using them.
+    /// Specifies whether the client requested to clear internal buffers once the server is done using them.
     /// </summary>
     public bool ClearBuffers { get; }
 
     /// <summary>
-    /// Specifies whether or not the client is ephemeral.
+    /// Specifies whether the client is ephemeral.
     /// </summary>
     public bool IsEphemeral { get; }
 

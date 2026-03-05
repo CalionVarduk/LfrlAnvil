@@ -86,9 +86,9 @@ public readonly struct MessageBrokerListenerCollection
     /// </param>
     /// <param name="options">Optional creation options. Equal to <see cref="MessageBrokerListenerOptions.Default"/> by default.</param>
     /// <param name="createChannelIfNotExists">
-    /// Specifies whether or not the server should create the channel if it does not exist yet. Equal to <b>true</b> by default.
+    /// Specifies whether the server should create the channel if it does not exist yet. Equal to <b>true</b> by default.
     /// </param>
-    /// <param name="isEphemeral">Specifies whether or not the listener will be ephemeral. Equal to <b>false</b> by default.</param>
+    /// <param name="isEphemeral">Specifies whether the listener will be ephemeral. Equal to <b>false</b> by default.</param>
     /// <returns>
     /// A task that represents the operation, which returns a <see cref="Result{T}"/> instance,
     /// with underlying <see cref="MessageBrokerBindListenerResult"/> instance.

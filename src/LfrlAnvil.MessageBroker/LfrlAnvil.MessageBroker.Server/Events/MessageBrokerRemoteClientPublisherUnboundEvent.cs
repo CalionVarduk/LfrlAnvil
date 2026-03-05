@@ -45,12 +45,12 @@ public readonly struct MessageBrokerRemoteClientPublisherUnboundEvent
     public MessageBrokerChannelPublisherBinding Publisher { get; }
 
     /// <summary>
-    /// Specifies whether or not removal of the channel bound to the <see cref="Publisher"/> was part of the unbinding operation.
+    /// Specifies whether removal of the channel bound to the <see cref="Publisher"/> was part of the unbinding operation.
     /// </summary>
     public bool ChannelRemoved { get; }
 
     /// <summary>
-    /// Specifies whether or not removal of the stream bound to the <see cref="Publisher"/> was part of the unbinding operation.
+    /// Specifies whether removal of the stream bound to the <see cref="Publisher"/> was part of the unbinding operation.
     /// </summary>
     public bool StreamRemoved { get; }
 

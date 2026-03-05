@@ -139,9 +139,9 @@ internal struct EventScheduler
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal CancellationToken ScheduleWriteTimeout(MessageBrokerRemoteClient client)
+    internal CancellationToken ScheduleWriteTimeout(MessageBrokerRemoteClient client, Duration messageTimeout)
     {
-        var timestamp = client.GetTimestamp() + client.MessageTimeout;
+        var timestamp = client.GetTimestamp() + messageTimeout;
         _writerCancellation = _writerCancellation.Prepare( timestamp );
         var token = _writerCancellation.GetPreparedToken();
 
@@ -152,15 +152,16 @@ internal struct EventScheduler
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal CancellationToken ScheduleReadTimeout(MessageBrokerRemoteClient client)
+    internal CancellationToken ScheduleReadTimeout(MessageBrokerRemoteClient client, Duration messageTimeout)
     {
-        return ScheduleReadTimeout( client, client.MessageTimeout );
-    }
+        var timestamp = client.GetTimestamp() + messageTimeout;
+        _readerCancellation = _readerCancellation.Prepare( timestamp );
+        var token = _readerCancellation.GetPreparedToken();
 
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal CancellationToken ScheduleMaxReadTimeout(MessageBrokerRemoteClient client)
-    {
-        return ScheduleReadTimeout( client, client.MaxReadTimeout );
+        if ( _nextEventTimestamp > _readerCancellation.Timestamp )
+            _reset.Set();
+
+        return token;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -199,7 +200,7 @@ internal struct EventScheduler
         {
             var waitResult = await client.EventScheduler._reset.WaitAsync( delay ).ConfigureAwait( false );
             if ( waitResult == AsyncManualResetEventResult.Disposed )
-                return client.State < MessageBrokerRemoteClientState.Disposing
+                return client.State < MessageBrokerRemoteClientState.Deactivating
                     ? new OperationCanceledException( Resources.ExternalDelaySourceHasBeenDisposed )
                     : null;
 
@@ -235,19 +236,6 @@ internal struct EventScheduler
 
         _nextEventTimestamp = now + delay;
         return delay;
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private CancellationToken ScheduleReadTimeout(MessageBrokerRemoteClient client, Duration delay)
-    {
-        var timestamp = client.GetTimestamp() + delay;
-        _readerCancellation = _readerCancellation.Prepare( timestamp );
-        var token = _readerCancellation.GetPreparedToken();
-
-        if ( _nextEventTimestamp > _readerCancellation.Timestamp )
-            _reset.Set();
-
-        return token;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

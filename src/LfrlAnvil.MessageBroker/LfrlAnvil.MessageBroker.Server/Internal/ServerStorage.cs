@@ -57,9 +57,7 @@ internal readonly struct ServerStorage
     [Pure]
     internal Client CreateForClient(int id, bool isEphemeral)
     {
-        return ServerRootDir is not null && ! isEphemeral
-            ? new Client( Path.Combine( ServerRootDir, ClientsDir, Storage.ClientMetadata.GetDirName( id ) ), new AsyncMutex() )
-            : new Client( null, null );
+        return new Client( ServerRootDir is not null && ! isEphemeral ? new AsyncMutex() : null );
     }
 
     [Pure]
@@ -195,26 +193,30 @@ internal readonly struct ServerStorage
         Assume.IsNotNull( _mutex );
         var dir = Path.Combine( ServerRootDir, ChannelsDir );
 
+        IReadOnlyCollection<string> filePaths;
         using ( await _mutex.EnterAsync().ConfigureAwait( false ) )
         {
             if ( server.State >= MessageBrokerServerState.Disposing )
                 yield break;
 
-            var filePaths = Directory.EnumerateFiles(
-                dir,
-                $"{Storage.ChannelMetadata.FilePrefix}*.{Storage.ChannelMetadata.FileExtension}",
-                SearchOption.TopDirectoryOnly );
+            filePaths = Directory.EnumerateFiles(
+                    dir,
+                    $"{Storage.ChannelMetadata.FilePrefix}*.{Storage.ChannelMetadata.FileExtension}",
+                    SearchOption.TopDirectoryOnly )
+                .Materialize();
+        }
 
-            foreach ( var filePath in filePaths )
+        foreach ( var filePath in filePaths )
+        {
+            var context = new Storage.Context( server, filePath );
+            var id = context.ParseId( prefixLength: Storage.ChannelMetadata.FilePrefix.Length );
+
+            Storage.ChannelMetadata metadata;
+            await using ( var file = OpenRead( context.Path ) )
             {
-                var context = new Storage.Context( server, filePath );
-                var id = context.ParseId( prefixLength: Storage.ChannelMetadata.FilePrefix.Length );
-
-                await using var file = OpenRead( context.Path );
                 var fileLength = file.Length;
                 context.AssertFileLength( Storage.ChannelMetadata.MinLength, Defaults.Memory.DefaultNetworkPacketLength, fileLength );
 
-                Storage.ChannelMetadata metadata;
                 var poolToken = MemoryPoolToken<byte>.Empty;
                 try
                 {
@@ -228,9 +230,9 @@ internal readonly struct ServerStorage
                     if ( exc is not null && server.Logger.Error is { } error )
                         error.Emit( MessageBrokerServerErrorEvent.Create( server, traceId, exc ) );
                 }
-
-                yield return KeyValuePair.Create( id, metadata );
             }
+
+            yield return KeyValuePair.Create( id, metadata );
         }
     }
 
@@ -242,25 +244,30 @@ internal readonly struct ServerStorage
         Assume.IsNotNull( _mutex );
         var dir = Path.Combine( ServerRootDir, StreamsDir );
 
+        IReadOnlyCollection<string> directories;
         using ( await _mutex.EnterAsync().ConfigureAwait( false ) )
         {
             if ( server.State >= MessageBrokerServerState.Disposing )
                 yield break;
 
-            var directories = Directory.EnumerateDirectories( dir, $"{Storage.StreamMetadata.DirPrefix}*", SearchOption.TopDirectoryOnly );
-            foreach ( var directory in directories )
+            directories = Directory.EnumerateDirectories( dir, $"{Storage.StreamMetadata.DirPrefix}*", SearchOption.TopDirectoryOnly )
+                .Materialize();
+        }
+
+        foreach ( var directory in directories )
+        {
+            var context = new Storage.Context( server, directory );
+            var id = context.ParseId( prefixLength: Storage.StreamMetadata.DirPrefix.Length );
+
+            context = context.WithSubPath( Storage.StreamMetadata.FileName );
+            context.AssertFileExistence();
+
+            Storage.StreamMetadata metadata;
+            await using ( var file = OpenRead( context.Path ) )
             {
-                var context = new Storage.Context( server, directory );
-                var id = context.ParseId( prefixLength: Storage.StreamMetadata.DirPrefix.Length );
-
-                context = context.WithSubPath( Storage.StreamMetadata.FileName );
-                context.AssertFileExistence();
-
-                await using var file = OpenRead( context.Path );
                 var fileLength = file.Length;
                 context.AssertFileLength( Storage.StreamMetadata.MinLength, Defaults.Memory.DefaultNetworkPacketLength, fileLength );
 
-                Storage.StreamMetadata metadata;
                 var poolToken = MemoryPoolToken<byte>.Empty;
                 try
                 {
@@ -274,9 +281,9 @@ internal readonly struct ServerStorage
                     if ( exc is not null && server.Logger.Error is { } error )
                         error.Emit( MessageBrokerServerErrorEvent.Create( server, traceId, exc ) );
                 }
-
-                yield return KeyValuePair.Create( id, metadata );
             }
+
+            yield return KeyValuePair.Create( id, metadata );
         }
     }
 
@@ -288,25 +295,30 @@ internal readonly struct ServerStorage
         Assume.IsNotNull( _mutex );
         var dir = Path.Combine( ServerRootDir, ClientsDir );
 
+        IReadOnlyCollection<string> directories;
         using ( await _mutex.EnterAsync().ConfigureAwait( false ) )
         {
             if ( server.State >= MessageBrokerServerState.Disposing )
                 yield break;
 
-            var directories = Directory.EnumerateDirectories( dir, $"{Storage.ClientMetadata.DirPrefix}*", SearchOption.TopDirectoryOnly );
-            foreach ( var directory in directories )
+            directories = Directory.EnumerateDirectories( dir, $"{Storage.ClientMetadata.DirPrefix}*", SearchOption.TopDirectoryOnly )
+                .Materialize();
+        }
+
+        foreach ( var directory in directories )
+        {
+            var context = new Storage.Context( server, directory );
+            var id = context.ParseId( prefixLength: Storage.ClientMetadata.DirPrefix.Length );
+
+            context = context.WithSubPath( Storage.ClientMetadata.FileName );
+            context.AssertFileExistence();
+
+            Storage.ClientMetadata metadata;
+            await using ( var file = OpenRead( context.Path ) )
             {
-                var context = new Storage.Context( server, directory );
-                var id = context.ParseId( prefixLength: Storage.ClientMetadata.DirPrefix.Length );
-
-                context = context.WithSubPath( Storage.ClientMetadata.FileName );
-                context.AssertFileExistence();
-
-                await using var file = OpenRead( context.Path );
                 var fileLength = file.Length;
                 context.AssertFileLength( Storage.ClientMetadata.MinLength, Defaults.Memory.DefaultNetworkPacketLength, fileLength );
 
-                Storage.ClientMetadata metadata;
                 var poolToken = MemoryPoolToken<byte>.Empty;
                 try
                 {
@@ -320,9 +332,9 @@ internal readonly struct ServerStorage
                     if ( exc is not null && server.Logger.Error is { } error )
                         error.Emit( MessageBrokerServerErrorEvent.Create( server, traceId, exc ) );
                 }
-
-                yield return KeyValuePair.Create( id, metadata );
             }
+
+            yield return KeyValuePair.Create( id, metadata );
         }
     }
 
@@ -340,6 +352,53 @@ internal readonly struct ServerStorage
     {
         Assume.IsNotNull( ServerRootDir );
         return Path.Combine( ServerRootDir, StreamsDir, Storage.StreamMetadata.GetDirName( id ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private string GetClientRootDir(int id)
+    {
+        Assume.IsNotNull( ServerRootDir );
+        return Path.Combine( ServerRootDir, ClientsDir, Storage.ClientMetadata.GetDirName( id ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private string GetPublisherMetafilePath(int clientId, int channelId)
+    {
+        Assume.IsNotNull( ServerRootDir );
+        return Path.Combine(
+            ServerRootDir,
+            ClientsDir,
+            Storage.ClientMetadata.GetDirName( clientId ),
+            Client.PublishersDir,
+            Storage.PublisherMetadata.GetFileName( channelId ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private string GetListenerMetafilePath(int clientId, int channelId)
+    {
+        Assume.IsNotNull( ServerRootDir );
+        return Path.Combine(
+            ServerRootDir,
+            ClientsDir,
+            Storage.ClientMetadata.GetDirName( clientId ),
+            Client.ListenersDir,
+            Storage.ListenerMetadata.GetFileName( channelId ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private string GetQueueRootDir(int clientId, int queueId)
+    {
+        Assume.IsNotNull( ServerRootDir );
+        return Path.Combine(
+            ServerRootDir,
+            ClientsDir,
+            Storage.ClientMetadata.GetDirName( clientId ),
+            Client.QueuesDir,
+            Storage.QueueMetadata.GetDirName( queueId ) );
     }
 
     [Pure]
@@ -383,39 +442,43 @@ internal readonly struct ServerStorage
 
     internal readonly struct Client
     {
-        private const string PublishersDir = "publishers";
-        private const string ListenersDir = "listeners";
-        private const string QueuesDir = "queues";
+        internal const string PublishersDir = "publishers";
+        internal const string ListenersDir = "listeners";
+        internal const string QueuesDir = "queues";
 
         private readonly AsyncMutex? _mutex;
 
-        internal Client(string? rootDir, AsyncMutex? mutex)
+        internal Client(AsyncMutex? mutex)
         {
-            ClientRootDir = rootDir;
             _mutex = mutex;
         }
 
-        internal readonly string? ClientRootDir;
+        internal bool IsActive => _mutex is not null;
 
         [Pure]
         internal Queue CreateForQueue()
         {
-            return new Queue( ClientRootDir is not null ? new AsyncMutex() : null );
+            return new Queue( IsActive ? new AsyncMutex() : null );
         }
 
         internal async ValueTask SaveMetadataAsync(MessageBrokerRemoteClient client, ulong traceId, bool skipDisposed = false)
         {
-            if ( ClientRootDir is null )
+            if ( _mutex is null )
                 return;
 
-            Assume.IsNotNull( _mutex );
-            var root = new DirectoryInfo( ClientRootDir );
+            var root = new DirectoryInfo( client.Server.Storage.GetClientRootDir( client.Id ) );
             var filePath = Path.Combine( root.FullName, Storage.ClientMetadata.FileName );
 
             using ( await _mutex.EnterAsync().ConfigureAwait( false ) )
             {
-                if ( skipDisposed && client.State >= MessageBrokerRemoteClientState.Disposing )
-                    return;
+                bool clearBuffers;
+                using ( client.AcquireLock() )
+                {
+                    if ( skipDisposed && client.IsDisposed )
+                        return;
+
+                    clearBuffers = client.GetClearBuffersOption();
+                }
 
                 root.Create();
                 root.CreateSubdirectory( PublishersDir );
@@ -426,8 +489,8 @@ internal readonly struct ServerStorage
                 var poolToken = MemoryPoolToken<byte>.Empty;
                 try
                 {
-                    var metadata = new Storage.ClientMetadata( traceId, client.ClearBuffers, name );
-                    poolToken = client.MemoryPool.Rent( metadata.Length, metadata.ClearBuffers, out var data );
+                    var metadata = new Storage.ClientMetadata( traceId, clearBuffers, name );
+                    poolToken = client.MemoryPool.Rent( metadata.Length, clearBuffers, out var data );
                     metadata.Serialize( data );
                     await using var file = OpenWrite( filePath );
                     await file.WriteAsync( data ).ConfigureAwait( false );
@@ -439,14 +502,13 @@ internal readonly struct ServerStorage
             }
         }
 
-        internal async ValueTask SaveMetadataAsync(MessageBrokerChannelPublisherBinding publisher, ulong traceId)
+        internal async ValueTask SaveMetadataAsync(MessageBrokerChannelPublisherBinding publisher, bool clearBuffers, ulong traceId)
         {
-            if ( ClientRootDir is null || publisher.IsEphemeral )
+            if ( _mutex is null || publisher.IsEphemeral )
                 return;
 
-            Assume.IsNotNull( _mutex );
             var client = publisher.Client;
-            var filePath = GetPublisherMetafilePath( publisher.Channel.Id );
+            var filePath = client.Server.Storage.GetPublisherMetafilePath( client.Id, publisher.Channel.Id );
 
             using ( await _mutex.EnterAsync().ConfigureAwait( false ) )
             {
@@ -457,7 +519,7 @@ internal readonly struct ServerStorage
                 try
                 {
                     var metadata = new Storage.PublisherMetadata( publisher.Stream.Id );
-                    poolToken = client.MemoryPool.Rent( Storage.PublisherMetadata.Length, client.ClearBuffers, out var data );
+                    poolToken = client.MemoryPool.Rent( Storage.PublisherMetadata.Length, clearBuffers, out var data );
                     metadata.Serialize( data );
                     await using var file = OpenWrite( filePath );
                     await file.WriteAsync( data ).ConfigureAwait( false );
@@ -469,26 +531,25 @@ internal readonly struct ServerStorage
             }
         }
 
-        internal async ValueTask DeleteAsync()
+        internal async ValueTask DeleteAsync(MessageBrokerRemoteClient client)
         {
-            if ( ClientRootDir is null )
+            if ( _mutex is null )
                 return;
 
-            Assume.IsNotNull( _mutex );
+            var rootDir = client.Server.Storage.GetClientRootDir( client.Id );
             using ( await _mutex.EnterAsync().ConfigureAwait( false ) )
             {
-                if ( Directory.Exists( ClientRootDir ) )
-                    Directory.Delete( ClientRootDir, recursive: true );
+                if ( Directory.Exists( rootDir ) )
+                    Directory.Delete( rootDir, recursive: true );
             }
         }
 
         internal async ValueTask DeleteAsync(MessageBrokerChannelPublisherBinding publisher)
         {
-            if ( ClientRootDir is null )
+            if ( _mutex is null )
                 return;
 
-            Assume.IsNotNull( _mutex );
-            var filePath = GetPublisherMetafilePath( publisher.Channel.Id );
+            var filePath = publisher.Client.Server.Storage.GetPublisherMetafilePath( publisher.Client.Id, publisher.Channel.Id );
             using ( await _mutex.EnterAsync().ConfigureAwait( false ) )
             {
                 if ( File.Exists( filePath ) )
@@ -496,14 +557,13 @@ internal readonly struct ServerStorage
             }
         }
 
-        internal async ValueTask SaveMetadataAsync(MessageBrokerChannelListenerBinding listener, ulong traceId)
+        internal async ValueTask SaveMetadataAsync(MessageBrokerChannelListenerBinding listener, bool clearBuffers, ulong traceId)
         {
-            if ( ClientRootDir is null || listener.IsEphemeral )
+            if ( _mutex is null || listener.IsEphemeral )
                 return;
 
-            Assume.IsNotNull( _mutex );
             var client = listener.Client;
-            var filePath = GetListenerMetafilePath( listener.Channel.Id );
+            var filePath = client.Server.Storage.GetListenerMetafilePath( client.Id, listener.Channel.Id );
 
             using ( await _mutex.EnterAsync().ConfigureAwait( false ) )
             {
@@ -525,7 +585,7 @@ internal readonly struct ServerStorage
                         listener.MinDeadLetterRetention,
                         filter );
 
-                    poolToken = client.MemoryPool.Rent( metadata.Length, client.ClearBuffers, out var data );
+                    poolToken = client.MemoryPool.Rent( metadata.Length, clearBuffers, out var data );
                     metadata.Serialize( data );
                     await using var file = OpenWrite( filePath );
                     await file.WriteAsync( data ).ConfigureAwait( false );
@@ -539,11 +599,10 @@ internal readonly struct ServerStorage
 
         internal async ValueTask DeleteAsync(MessageBrokerChannelListenerBinding listener)
         {
-            if ( ClientRootDir is null )
+            if ( _mutex is null )
                 return;
 
-            Assume.IsNotNull( _mutex );
-            var filePath = GetListenerMetafilePath( listener.Channel.Id );
+            var filePath = listener.Client.Server.Storage.GetListenerMetafilePath( listener.Client.Id, listener.Channel.Id );
             using ( await _mutex.EnterAsync().ConfigureAwait( false ) )
             {
                 if ( File.Exists( filePath ) )
@@ -555,35 +614,38 @@ internal readonly struct ServerStorage
             MessageBrokerRemoteClient client,
             ulong traceId)
         {
-            if ( ClientRootDir is null )
+            if ( _mutex is null )
                 yield break;
 
-            Assume.IsNotNull( _mutex );
-            var dir = Path.Combine( ClientRootDir, QueuesDir );
+            var dir = Path.Combine( client.Server.Storage.GetClientRootDir( client.Id ), QueuesDir );
 
+            IReadOnlyCollection<string> directories;
             using ( await _mutex.EnterAsync().ConfigureAwait( false ) )
             {
                 if ( client.State >= MessageBrokerRemoteClientState.Disposing || ! Directory.Exists( dir ) )
                     yield break;
 
-                var directories = Directory.EnumerateDirectories(
-                    dir,
-                    $"{Storage.QueueMetadata.DirPrefix}*",
-                    SearchOption.TopDirectoryOnly );
+                directories = Directory.EnumerateDirectories(
+                        dir,
+                        $"{Storage.QueueMetadata.DirPrefix}*",
+                        SearchOption.TopDirectoryOnly )
+                    .Materialize();
+            }
 
-                foreach ( var directory in directories )
+            foreach ( var directory in directories )
+            {
+                var context = new Storage.Context( client.Server, directory );
+                var id = context.ParseId( prefixLength: Storage.QueueMetadata.DirPrefix.Length );
+
+                context = context.WithSubPath( Storage.QueueMetadata.FileName );
+                context.AssertFileExistence();
+
+                Storage.QueueMetadata metadata;
+                await using ( var file = OpenRead( context.Path ) )
                 {
-                    var context = new Storage.Context( client.Server, directory );
-                    var id = context.ParseId( prefixLength: Storage.QueueMetadata.DirPrefix.Length );
-
-                    context = context.WithSubPath( Storage.QueueMetadata.FileName );
-                    context.AssertFileExistence();
-
-                    await using var file = OpenRead( context.Path );
                     var fileLength = file.Length;
                     context.AssertFileLength( Storage.QueueMetadata.MinLength, Defaults.Memory.DefaultNetworkPacketLength, fileLength );
 
-                    Storage.QueueMetadata metadata;
                     var poolToken = MemoryPoolToken<byte>.Empty;
                     try
                     {
@@ -595,9 +657,9 @@ internal readonly struct ServerStorage
                     {
                         poolToken.Return( client, traceId );
                     }
-
-                    yield return KeyValuePair.Create( id, metadata );
                 }
+
+                yield return KeyValuePair.Create( id, metadata );
             }
         }
 
@@ -605,32 +667,35 @@ internal readonly struct ServerStorage
             MessageBrokerRemoteClient client,
             ulong traceId)
         {
-            if ( ClientRootDir is null )
+            if ( _mutex is null )
                 yield break;
 
-            Assume.IsNotNull( _mutex );
-            var dir = Path.Combine( ClientRootDir, PublishersDir );
+            var dir = Path.Combine( client.Server.Storage.GetClientRootDir( client.Id ), PublishersDir );
 
+            IReadOnlyCollection<string> filePaths;
             using ( await _mutex.EnterAsync().ConfigureAwait( false ) )
             {
                 if ( client.State >= MessageBrokerRemoteClientState.Disposing || ! Directory.Exists( dir ) )
                     yield break;
 
-                var filePaths = Directory.EnumerateFiles(
-                    dir,
-                    $"{Storage.PublisherMetadata.MetaFilePrefix}*.{Storage.PublisherMetadata.MetaFileExtension}",
-                    SearchOption.TopDirectoryOnly );
+                filePaths = Directory.EnumerateFiles(
+                        dir,
+                        $"{Storage.PublisherMetadata.MetaFilePrefix}*.{Storage.PublisherMetadata.MetaFileExtension}",
+                        SearchOption.TopDirectoryOnly )
+                    .Materialize();
+            }
 
-                foreach ( var filePath in filePaths )
+            foreach ( var filePath in filePaths )
+            {
+                var context = new Storage.Context( client.Server, filePath );
+                var channelId = context.ParseId( prefixLength: Storage.PublisherMetadata.MetaFilePrefix.Length );
+
+                Storage.PublisherMetadata metadata;
+                await using ( var file = OpenRead( context.Path ) )
                 {
-                    var context = new Storage.Context( client.Server, filePath );
-                    var channelId = context.ParseId( prefixLength: Storage.PublisherMetadata.MetaFilePrefix.Length );
-
-                    await using var file = OpenRead( context.Path );
                     var fileLength = file.Length;
                     context.AssertFileLength( Storage.PublisherMetadata.Length, fileLength );
 
-                    Storage.PublisherMetadata metadata;
                     var poolToken = MemoryPoolToken<byte>.Empty;
                     try
                     {
@@ -642,9 +707,9 @@ internal readonly struct ServerStorage
                     {
                         poolToken.Return( client, traceId );
                     }
-
-                    yield return KeyValuePair.Create( channelId, metadata );
                 }
+
+                yield return KeyValuePair.Create( channelId, metadata );
             }
         }
 
@@ -652,35 +717,38 @@ internal readonly struct ServerStorage
             MessageBrokerRemoteClient client,
             ulong traceId)
         {
-            if ( ClientRootDir is null )
+            if ( _mutex is null )
                 yield break;
 
-            Assume.IsNotNull( _mutex );
-            var dir = Path.Combine( ClientRootDir, ListenersDir );
+            var dir = Path.Combine( client.Server.Storage.GetClientRootDir( client.Id ), ListenersDir );
 
+            IReadOnlyCollection<string> filePaths;
             using ( await _mutex.EnterAsync().ConfigureAwait( false ) )
             {
                 if ( client.State >= MessageBrokerRemoteClientState.Disposing || ! Directory.Exists( dir ) )
                     yield break;
 
-                var filePaths = Directory.EnumerateFiles(
-                    dir,
-                    $"{Storage.ListenerMetadata.MetaFilePrefix}*.{Storage.ListenerMetadata.MetaFileExtension}",
-                    SearchOption.TopDirectoryOnly );
+                filePaths = Directory.EnumerateFiles(
+                        dir,
+                        $"{Storage.ListenerMetadata.MetaFilePrefix}*.{Storage.ListenerMetadata.MetaFileExtension}",
+                        SearchOption.TopDirectoryOnly )
+                    .Materialize();
+            }
 
-                foreach ( var filePath in filePaths )
+            foreach ( var filePath in filePaths )
+            {
+                var context = new Storage.Context( client.Server, filePath );
+                var channelId = context.ParseId( prefixLength: Storage.ListenerMetadata.MetaFilePrefix.Length );
+
+                Storage.ListenerMetadata metadata;
+                await using ( var file = OpenRead( context.Path ) )
                 {
-                    var context = new Storage.Context( client.Server, filePath );
-                    var channelId = context.ParseId( prefixLength: Storage.ListenerMetadata.MetaFilePrefix.Length );
-
-                    await using var file = OpenRead( context.Path );
                     var fileLength = file.Length;
                     context.AssertFileLength(
                         Storage.ListenerMetadata.MinLength,
                         ( int )Defaults.Memory.MaxNetworkPacketLengthBounds.Max.Bytes,
                         fileLength );
 
-                    Storage.ListenerMetadata metadata;
                     var poolToken = MemoryPoolToken<byte>.Empty;
                     try
                     {
@@ -692,34 +760,10 @@ internal readonly struct ServerStorage
                     {
                         poolToken.Return( client, traceId );
                     }
-
-                    yield return KeyValuePair.Create( channelId, metadata );
                 }
+
+                yield return KeyValuePair.Create( channelId, metadata );
             }
-        }
-
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private string GetPublisherMetafilePath(int channelId)
-        {
-            Assume.IsNotNull( ClientRootDir );
-            return Path.Combine( ClientRootDir, PublishersDir, Storage.PublisherMetadata.GetFileName( channelId ) );
-        }
-
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private string GetListenerMetafilePath(int channelId)
-        {
-            Assume.IsNotNull( ClientRootDir );
-            return Path.Combine( ClientRootDir, ListenersDir, Storage.ListenerMetadata.GetFileName( channelId ) );
-        }
-
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private string GetQueueRootDir(int id)
-        {
-            Assume.IsNotNull( ClientRootDir );
-            return Path.Combine( ClientRootDir, QueuesDir, Storage.QueueMetadata.GetDirName( id ) );
         }
 
         internal readonly struct Queue
@@ -731,12 +775,16 @@ internal readonly struct ServerStorage
                 _mutex = mutex;
             }
 
-            internal async ValueTask SaveMetadataAsync(MessageBrokerQueue queue, ulong traceId, bool skipDisposed = false)
+            internal async ValueTask SaveMetadataAsync(
+                MessageBrokerQueue queue,
+                bool clearBuffers,
+                ulong traceId,
+                bool skipDisposed = false)
             {
                 if ( _mutex is null )
                     return;
 
-                var root = new DirectoryInfo( queue.Client.Storage.GetQueueRootDir( queue.Id ) );
+                var root = new DirectoryInfo( queue.Client.Server.Storage.GetQueueRootDir( queue.Client.Id, queue.Id ) );
                 var filePath = Path.Combine( root.FullName, Storage.QueueMetadata.FileName );
 
                 using ( await _mutex.EnterAsync().ConfigureAwait( false ) )
@@ -751,7 +799,7 @@ internal readonly struct ServerStorage
                     try
                     {
                         var metadata = new Storage.QueueMetadata( traceId, name );
-                        poolToken = queue.Client.MemoryPool.Rent( metadata.Length, queue.Client.ClearBuffers, out var data );
+                        poolToken = queue.Client.MemoryPool.Rent( metadata.Length, clearBuffers, out var data );
                         metadata.Serialize( data );
                         await using var file = OpenWrite( filePath );
                         await file.WriteAsync( data ).ConfigureAwait( false );
@@ -765,12 +813,12 @@ internal readonly struct ServerStorage
                 }
             }
 
-            internal async ValueTask SaveAsync(MessageBrokerQueue queue, ListSlim<QueueMessage> messages, ulong traceId)
+            internal async ValueTask SaveAsync(MessageBrokerQueue queue, ListSlim<QueueMessage> messages, bool clearBuffers, ulong traceId)
             {
                 if ( _mutex is null )
                     return;
 
-                var rootDir = queue.Client.Storage.GetQueueRootDir( queue.Id );
+                var rootDir = queue.Client.Server.Storage.GetQueueRootDir( queue.Client.Id, queue.Id );
                 var filePath = Path.Combine( rootDir, Storage.QueuePendingMessage.FileName );
 
                 using ( await _mutex.EnterAsync().ConfigureAwait( false ) )
@@ -783,7 +831,7 @@ internal readonly struct ServerStorage
                         await using var file = OpenWrite( filePath );
                         poolToken = queue.Client.MemoryPool.Rent(
                             Storage.QueueMetadata.Header.Length.Max( chunkSize * Storage.QueuePendingMessage.Length ),
-                            queue.Client.ClearBuffers,
+                            clearBuffers,
                             out var data );
 
                         Storage.QueueMetadata.SerializeHeader( data );
@@ -806,12 +854,16 @@ internal readonly struct ServerStorage
                 }
             }
 
-            internal async ValueTask SaveAsync(MessageBrokerQueue queue, ListSlim<QueueMessageStore.UnackedEntry> entries, ulong traceId)
+            internal async ValueTask SaveAsync(
+                MessageBrokerQueue queue,
+                ListSlim<QueueMessageStore.UnackedEntry> entries,
+                bool clearBuffers,
+                ulong traceId)
             {
                 if ( _mutex is null )
                     return;
 
-                var rootDir = queue.Client.Storage.GetQueueRootDir( queue.Id );
+                var rootDir = queue.Client.Server.Storage.GetQueueRootDir( queue.Client.Id, queue.Id );
                 var filePath = Path.Combine( rootDir, Storage.QueueUnackedMessage.FileName );
 
                 using ( await _mutex.EnterAsync().ConfigureAwait( false ) )
@@ -824,7 +876,7 @@ internal readonly struct ServerStorage
                         await using var file = OpenWrite( filePath );
                         poolToken = queue.Client.MemoryPool.Rent(
                             Storage.QueueMetadata.Header.Length.Max( chunkSize * Storage.QueueUnackedMessage.Length ),
-                            queue.Client.ClearBuffers,
+                            clearBuffers,
                             out var data );
 
                         Storage.QueueMetadata.SerializeHeader( data );
@@ -847,12 +899,16 @@ internal readonly struct ServerStorage
                 }
             }
 
-            internal async ValueTask SaveAsync(MessageBrokerQueue queue, ListSlim<QueueRetryHeap.Entry> entries, ulong traceId)
+            internal async ValueTask SaveAsync(
+                MessageBrokerQueue queue,
+                ListSlim<QueueRetryHeap.Entry> entries,
+                bool clearBuffers,
+                ulong traceId)
             {
                 if ( _mutex is null )
                     return;
 
-                var rootDir = queue.Client.Storage.GetQueueRootDir( queue.Id );
+                var rootDir = queue.Client.Server.Storage.GetQueueRootDir( queue.Client.Id, queue.Id );
                 var filePath = Path.Combine( rootDir, Storage.QueueMessageRetry.FileName );
 
                 using ( await _mutex.EnterAsync().ConfigureAwait( false ) )
@@ -865,7 +921,7 @@ internal readonly struct ServerStorage
                         await using var file = OpenWrite( filePath );
                         poolToken = queue.Client.MemoryPool.Rent(
                             Storage.QueueMetadata.Header.Length.Max( chunkSize * Storage.QueueMessageRetry.Length ),
-                            queue.Client.ClearBuffers,
+                            clearBuffers,
                             out var data );
 
                         Storage.QueueMetadata.SerializeHeader( data );
@@ -888,12 +944,16 @@ internal readonly struct ServerStorage
                 }
             }
 
-            internal async ValueTask SaveAsync(MessageBrokerQueue queue, ListSlim<QueueMessageStore.DeadLetterEntry> entries, ulong traceId)
+            internal async ValueTask SaveAsync(
+                MessageBrokerQueue queue,
+                ListSlim<QueueMessageStore.DeadLetterEntry> entries,
+                bool clearBuffers,
+                ulong traceId)
             {
                 if ( _mutex is null )
                     return;
 
-                var rootDir = queue.Client.Storage.GetQueueRootDir( queue.Id );
+                var rootDir = queue.Client.Server.Storage.GetQueueRootDir( queue.Client.Id, queue.Id );
                 var filePath = Path.Combine( rootDir, Storage.QueueDeadLetterMessage.FileName );
 
                 using ( await _mutex.EnterAsync().ConfigureAwait( false ) )
@@ -906,7 +966,7 @@ internal readonly struct ServerStorage
                         await using var file = OpenWrite( filePath );
                         poolToken = queue.Client.MemoryPool.Rent(
                             Storage.QueueMetadata.Header.Length.Max( chunkSize * Storage.QueueDeadLetterMessage.Length ),
-                            queue.Client.ClearBuffers,
+                            clearBuffers,
                             out var data );
 
                         Storage.QueueMetadata.SerializeHeader( data );
@@ -934,7 +994,7 @@ internal readonly struct ServerStorage
                 if ( _mutex is null )
                     return;
 
-                var rootDir = queue.Client.Storage.GetQueueRootDir( queue.Id );
+                var rootDir = queue.Client.Server.Storage.GetQueueRootDir( queue.Client.Id, queue.Id );
                 var filePath = Path.Combine( rootDir, Storage.QueuePendingMessage.FileName );
 
                 using ( await _mutex.EnterAsync().ConfigureAwait( false ) )
@@ -985,7 +1045,7 @@ internal readonly struct ServerStorage
                             }
 
                             if ( ! enqueued )
-                                context.DecrementFailedMessageRefCount( streamMessage, message.StoreKey, serverTraceId );
+                                context.DecrementFailedMessageRefCount( queue, streamMessage, message.StoreKey, serverTraceId );
                         }
                     }
                     finally
@@ -994,12 +1054,15 @@ internal readonly struct ServerStorage
                         if ( exc is not null && queue.Client.Server.Logger.Error is { } error )
                             error.Emit( MessageBrokerServerErrorEvent.Create( queue.Client.Server, serverTraceId, exc ) );
                     }
+                }
 
+                using ( await _mutex.EnterAsync().ConfigureAwait( false ) )
+                {
                     if ( queue.State >= MessageBrokerQueueState.Disposing )
                         return;
 
                     filePath = Path.Combine( rootDir, Storage.QueueUnackedMessage.FileName );
-                    poolToken = MemoryPoolToken<byte>.Empty;
+                    var poolToken = MemoryPoolToken<byte>.Empty;
                     try
                     {
                         poolToken = queue.Client.Server.MemoryPool.Rent(
@@ -1051,7 +1114,7 @@ internal readonly struct ServerStorage
                             }
 
                             if ( ! enqueued )
-                                context.DecrementFailedMessageRefCount( streamMessage, message.StoreKey, serverTraceId );
+                                context.DecrementFailedMessageRefCount( queue, streamMessage, message.StoreKey, serverTraceId );
                         }
                     }
                     finally
@@ -1060,12 +1123,15 @@ internal readonly struct ServerStorage
                         if ( exc is not null && queue.Client.Server.Logger.Error is { } error )
                             error.Emit( MessageBrokerServerErrorEvent.Create( queue.Client.Server, serverTraceId, exc ) );
                     }
+                }
 
+                using ( await _mutex.EnterAsync().ConfigureAwait( false ) )
+                {
                     if ( queue.State >= MessageBrokerQueueState.Disposing )
                         return;
 
                     filePath = Path.Combine( rootDir, Storage.QueueMessageRetry.FileName );
-                    poolToken = MemoryPoolToken<byte>.Empty;
+                    var poolToken = MemoryPoolToken<byte>.Empty;
                     try
                     {
                         poolToken = queue.Client.Server.MemoryPool.Rent(
@@ -1114,7 +1180,7 @@ internal readonly struct ServerStorage
                             }
 
                             if ( ! enqueued )
-                                context.DecrementFailedMessageRefCount( streamMessage, message.StoreKey, serverTraceId );
+                                context.DecrementFailedMessageRefCount( queue, streamMessage, message.StoreKey, serverTraceId );
                         }
                     }
                     finally
@@ -1123,12 +1189,15 @@ internal readonly struct ServerStorage
                         if ( exc is not null && queue.Client.Server.Logger.Error is { } error )
                             error.Emit( MessageBrokerServerErrorEvent.Create( queue.Client.Server, serverTraceId, exc ) );
                     }
+                }
 
+                using ( await _mutex.EnterAsync().ConfigureAwait( false ) )
+                {
                     if ( queue.State >= MessageBrokerQueueState.Disposing )
                         return;
 
                     filePath = Path.Combine( rootDir, Storage.QueueDeadLetterMessage.FileName );
-                    poolToken = MemoryPoolToken<byte>.Empty;
+                    var poolToken = MemoryPoolToken<byte>.Empty;
                     try
                     {
                         poolToken = queue.Client.Server.MemoryPool.Rent(
@@ -1177,7 +1246,7 @@ internal readonly struct ServerStorage
                             }
 
                             if ( ! enqueued )
-                                context.DecrementFailedMessageRefCount( streamMessage, message.StoreKey, serverTraceId );
+                                context.DecrementFailedMessageRefCount( queue, streamMessage, message.StoreKey, serverTraceId );
                         }
                     }
                     finally
@@ -1194,7 +1263,7 @@ internal readonly struct ServerStorage
                 if ( _mutex is null )
                     return;
 
-                var rootDir = queue.Client.Storage.GetQueueRootDir( queue.Id );
+                var rootDir = queue.Client.Server.Storage.GetQueueRootDir( queue.Client.Id, queue.Id );
                 using ( await _mutex.EnterAsync().ConfigureAwait( false ) )
                 {
                     if ( Directory.Exists( rootDir ) )
@@ -1248,7 +1317,6 @@ internal readonly struct ServerStorage
             if ( _mutex is null )
                 return;
 
-            Assume.IsNotNull( _mutex );
             var filePath = channel.Server.Storage.GetChannelMetafilePath( channel.Id );
             using ( await _mutex.EnterAsync().ConfigureAwait( false ) )
             {
@@ -1423,7 +1491,7 @@ internal readonly struct ServerStorage
                     var header = Storage.StreamMessageRangeHeader.Parse( context, data );
 
                     var messageBuilders = ListSlim<StreamMessage.Builder>.Create( header.MessageCount );
-                    var ephemeralPublishersByClientChannelIdPair = new Dictionary<Pair<int, int>, MessageBrokerChannelPublisherBinding>();
+                    var disposedPublishersByClientChannelIdPair = new Dictionary<Pair<int, int>, MessageBrokerChannelPublisherBinding>();
                     var ephemeralPublishersByVirtualId = new Dictionary<int, EphemeralPublisher.Builder>();
 
                     for ( var i = 0; i < header.MessageCount; ++i )
@@ -1467,15 +1535,17 @@ internal readonly struct ServerStorage
                         MessageBrokerChannelPublisherBinding? publisher = null;
                         if ( client is not null )
                         {
-                            using ( client.AcquireLock() )
+                            using ( stream.AcquireLock() )
                             {
-                                if ( client.IsDisposed )
+                                if ( stream.IsDisposed )
                                     return;
 
-                                publisher = client.PublishersByChannelId.TryGet( channel.Id, out var p ) ? p : null;
+                                publisher = stream.PublishersByClientChannelIdPair.TryGet( Pair.Create( client.Id, channel.Id ), out var p )
+                                    ? p
+                                    : null;
                             }
 
-                            publisher ??= GetOrAddEphemeralPublisher( ephemeralPublishersByClientChannelIdPair, client, channel, stream );
+                            publisher ??= GetOrAddDisposedPublisher( disposedPublishersByClientChannelIdPair, client, channel, stream );
                         }
 
                         context.AssertFileMinLength( read, fileLength );
@@ -1613,7 +1683,7 @@ internal readonly struct ServerStorage
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private static MessageBrokerChannelPublisherBinding GetOrAddEphemeralPublisher(
+        private static MessageBrokerChannelPublisherBinding GetOrAddDisposedPublisher(
             Dictionary<Pair<int, int>, MessageBrokerChannelPublisherBinding> publishersByClientChannelIdPair,
             MessageBrokerRemoteClient client,
             MessageBrokerChannel channel,

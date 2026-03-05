@@ -40,7 +40,7 @@ public readonly struct MessageBrokerChannelListenerUnboundEvent
     public MessageBrokerChannelListenerBinding Listener { get; }
 
     /// <summary>
-    /// Specifies whether or not removal of the queue bound to the <see cref="Listener"/> was part of the unbinding operation.
+    /// Specifies whether removal of the queue bound to the <see cref="Listener"/> was part of the unbinding operation.
     /// </summary>
     public bool QueueRemoved { get; }
 

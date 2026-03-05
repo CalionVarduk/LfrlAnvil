@@ -80,7 +80,7 @@ public readonly struct MessageBrokerClientMessageAcknowledgedEvent
     public int Redelivery => _redelivery;
 
     /// <summary>
-    /// Specifies whether or not this ACK was negative.
+    /// Specifies whether this ACK was negative.
     /// </summary>
     public bool IsNack => _data1.BoolValue;
 

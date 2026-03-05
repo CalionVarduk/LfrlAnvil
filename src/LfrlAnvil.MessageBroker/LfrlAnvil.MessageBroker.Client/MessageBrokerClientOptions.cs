@@ -50,13 +50,13 @@ namespace LfrlAnvil.MessageBroker.Client;
 /// Value will be clamped to [<b>1 ms</b>, <b>2147483647 ms</b>] range.
 /// </param>
 /// <param name="SynchronizeExternalObjectNames">
-/// Specifies whether or not synchronization of external object names is enabled. Equal to <b>true</b> by default.
+/// Specifies whether synchronization of external object names is enabled. Equal to <b>true</b> by default.
 /// </param>
 /// <param name="ClearBuffers">
-/// Specifies whether or not to clear internal buffers once the client is done using them. Equal to <b>false</b> by default.
+/// Specifies whether to clear internal buffers once the client is done using them. Equal to <b>false</b> by default.
 /// </param>
 /// <param name="IsEphemeral">
-/// Specifies whether or not the client should be ephemeral. Non-ephemeral clients will be persisted by the server when offline.
+/// Specifies whether the client should be ephemeral. Non-ephemeral clients will be persisted by the server when offline.
 /// Equal to <b>true</b> by default.
 /// </param>
 /// <param name="Timestamps"><see cref="Timestamp"/> provider.</param>

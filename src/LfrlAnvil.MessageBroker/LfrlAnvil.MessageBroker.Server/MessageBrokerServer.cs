@@ -38,7 +38,7 @@ namespace LfrlAnvil.MessageBroker.Server;
 // TODO: NEXT
 // x add to do comments to define what tests to add...
 // x then, write tests
-// - then, add client reconnect
+// x then, add client reconnect
 // - then, add tests for that
 // - then, add client delete method
 // - then, add tests for that
@@ -270,7 +270,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     }
 
     /// <summary>
-    /// Attempts to initialize the server and start listening for client connections.
+    /// Attempts to initialise the server and start listening for client connections.
     /// </summary>
     /// <param name="cancellationToken">Optional <see cref="CancellationToken"/>.</param>
     /// <returns>A task that represents the operation, which returns a <see cref="Result"/> instance.</returns>
@@ -280,7 +280,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     /// When this server is not disposed and not in <see cref="MessageBrokerServerState.Created"/> state.
     /// </exception>
     /// <remarks>
-    /// Errors encountered during server initialization will cause it to be automatically disposed.
+    /// Errors encountered during server initialisation will cause it to be automatically disposed.
     /// Returned <see cref="Result"/> will only be valid when the server will successfully start listening for client connections
     /// and proceed to the <see cref="MessageBrokerServerState.Running"/> state.
     /// </remarks>
@@ -351,10 +351,6 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
 
                 if ( Storage.ServerRootDir is not null )
                 {
-                    // TODO: tests
-                    // - happy path core test
-                    //   might wait for client reconnect to be implemented to test immediate unacked messages redelivery in one go
-
                     if ( Logger.StorageLoading is { } storageLoading )
                         storageLoading.Emit( MessageBrokerServerStorageLoadingEvent.Create( this, traceId, Storage.ServerRootDir ) );
 
@@ -598,66 +594,16 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
 
             EmitErrors( ref exceptions, traceId );
 
-            // TODO:
-            // (sync) begin shutdown of all connectors
-            // ^ change state
-            // ^ begin cancelling, but don't wait
-            // (async) begin shutdown of all streams
-            // ^ change state
-            // ^ stop processors (wait until stopped, this way no more data will flow to client listeners/queues)
-            // (sync) begin shutdown of all channels
-            // ^ change state
-            // (sync) begin shutdown of all clients
-            // ^ change state
-            // ^ close tcp
-            // ^ change publishers/listeners/queues state
-            // ^ begin stopping internal tasks, no need to wait for them (same goes for queues), although might as well wait?
-            // ^ essentially, dispose everything except for relationships between objects and underlying message stores <= stuff that requires persistence
-            // ^ waiting for client should be fine, since they are the last thing to begin shutting down
-            // ---
-            // (async) finish shutdown of all clients (begin and finish shutdown phases could be merge into one)
-            // ^ if ephemeral, then clear collections, finalize listeners/publishers/queues disposal and done (also, delete storage, client is allowed to change to ephemeral when connecting)
-            // ^ otherwise, persist header + listeners/publishers/queues (along with messages)
-            // ^ then clear collections and done
-            // (async) finish shutdown of all streams <= this is the most complex part
-            // ^ if bound only to ephemeral publishers, then clear collections + messages and done (also, delete storage)
-            // ^ otherwise, persist header + messages (all) and done
-            // ^ message persistence:
-            //   - don't persist ref-count (rebuild on reload)
-            //     ^ during reload, some messages may have to be removed immediately due to only being referenced by dropped ephemeral listeners
-            //     ^ it would be better not to store such messages to begin with
-            //     ^ it might be better to remove references 1-by-1 when finalizing ephemeral client disposal
-            //     ^ this way, channels/streams will be naturally trimmed to what's actually necessary (and may not even have to be persisted due to no more references)
-            //   - persist a number of pending messages (its always a sequence at the end of message list)
-            //   - if from ephemeral publisher, then needs to store its id AND name
-            //   - otherwise, store id only
-            // (async) finish shutdown of all channels
-            // ^ if bound only to ephemeral publishers/listeners, then clear collections and done (also, delete storage)
-            // ^ otherwise, persist header
-            // (async) wait for all connectors to finish shutting down
-            // (async) wait for client listener task to complete, store stuff and done
-
-            // TODO: NEXT STEPS:
-            // x go through client disconnect separately
-            // x add IsEphemeral flag to Bind protocol
-            // x implement server reload
-            // x refactor server reload (create protocol-like dtos for storage contracts etc.)
-            // x probably should implement some sort of server directory lock, so that only one server instance can use it at a time
-            //   - apparently, FileStream to some .lock file, OpenOrCreate, no share, DeleteOnClose should be fine
-            // - implement dynamic non-ephemeral client reconnect
-            //   - this requires mutable remote-client, listener, publisher and queue
-            // - add client delete method
-            // - tests...
-            // - that's it!
-            //   - add a to do entry for not keeping disconnected client's data in memory, but rather storing it on the disk
-            //     - requires a swap of queue processor task which will open a file stream with some sort of buffering
-            //     - on client reconnect, load everything from the disk to memory
-            //     - I _might_ implement it at some point in the near future...
-            //   - add a to do entry for more efficient stream message store storage, on the disk
-            //     - requires some sort of LRU in-memory cache with the ability to load data from the disk, random access
-            //     - would require multiple file blocks of const size, and each message would need to know
-            //     - which file contains it and at what offset does it start
-            //     - chances for me implementing it are close to zero - maybe when I'm done playing around with actual apps
+            // TODO: NEXT STEPS
+            // - add a to do entry for not keeping disconnected client's data in memory, but rather storing it on the disk
+            //   - requires a swap of queue processor task which will open a file stream with some sort of buffering
+            //   - on client reconnect, load everything from the disk to memory
+            //   - I _might_ implement it at some point in the near future...
+            // - add a to do entry for more efficient stream message store storage, on the disk
+            //   - requires some sort of LRU in-memory cache with the ability to load data from the disk, random access
+            //   - would require multiple file blocks of const size, and each message would need to know
+            //   - which file contains it and at what offset does it start
+            //   - chances for me implementing it are close to zero - maybe when I'm done playing around with actual apps
 
             foreach ( var connector in connectors )
                 connector.OnServerDisposing( traceId );

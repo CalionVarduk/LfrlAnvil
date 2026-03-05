@@ -30,18 +30,18 @@ public readonly struct MessageBrokerUnbindListenerResult
     }
 
     /// <summary>
-    /// Specifies whether or not request to the server has been cancelled
+    /// Specifies whether request to the server has been cancelled
     /// because the client is not locally bound as a listener to the channel.
     /// </summary>
     public bool NotBound => _state == 1;
 
     /// <summary>
-    /// Specifies whether or not the channel has been removed by the server.
+    /// Specifies whether the channel has been removed by the server.
     /// </summary>
     public bool ChannelRemoved => (_state & 2) != 0;
 
     /// <summary>
-    /// Specifies whether or not the queue has been removed by the server.
+    /// Specifies whether the queue has been removed by the server.
     /// </summary>
     public bool QueueRemoved => (_state & 4) != 0;
 

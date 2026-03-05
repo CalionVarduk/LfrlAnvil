@@ -30,7 +30,7 @@ public interface IMessageBrokerMessagePublisher
     string ClientName { get; }
 
     /// <summary>
-    /// Specifies whether or not the client is ephemeral.
+    /// Specifies whether the client is ephemeral.
     /// </summary>
     bool IsClientEphemeral { get; }
 

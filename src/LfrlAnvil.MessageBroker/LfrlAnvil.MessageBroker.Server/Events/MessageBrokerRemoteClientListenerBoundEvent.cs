@@ -45,12 +45,12 @@ public readonly struct MessageBrokerRemoteClientListenerBoundEvent
     public MessageBrokerChannelListenerBinding Listener { get; }
 
     /// <summary>
-    /// Specifies whether or not creation of the channel bound to the <see cref="Listener"/> was part of the binding operation.
+    /// Specifies whether creation of the channel bound to the <see cref="Listener"/> was part of the binding operation.
     /// </summary>
     public bool ChannelCreated { get; }
 
     /// <summary>
-    /// Specifies whether or not creation of the queue bound to the <see cref="Listener"/> was part of the binding operation.
+    /// Specifies whether creation of the queue bound to the <see cref="Listener"/> was part of the binding operation.
     /// </summary>
     public bool QueueCreated { get; }
 

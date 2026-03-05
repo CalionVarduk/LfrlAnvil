@@ -151,7 +151,7 @@ public sealed class MessageBrokerPushContext : IBufferWriter<byte>, IDisposable
     /// Pushes the buffered message to the publisher's bound channel.
     /// </summary>
     /// <param name="confirm">
-    /// Specifies whether or not the server should send confirmation that it received the message. Equal to <b>true</b> by default.
+    /// Specifies whether the server should send confirmation that it received the message. Equal to <b>true</b> by default.
     /// </param>
     /// <returns>
     /// A task that represents the operation, which returns a <see cref="Result{T}"/> instance,
@@ -177,7 +177,7 @@ public sealed class MessageBrokerPushContext : IBufferWriter<byte>, IDisposable
     /// Enqueues the buffered message for sending and returns an object capable of finalizing the process.
     /// </summary>
     /// <param name="confirm">
-    /// Specifies whether or not the server should send confirmation that it received the message. Equal to <b>true</b> by default.
+    /// Specifies whether the server should send confirmation that it received the message. Equal to <b>true</b> by default.
     /// </param>
     /// <returns>
     /// A task that represents the operation, which returns a <see cref="Result{T}"/> instance,

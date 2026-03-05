@@ -118,7 +118,7 @@ public readonly struct MessageBrokerListenerOptions
     public short PrefetchHint => _prefetchHint ?? DefaultPrefetchHint;
 
     /// <summary>
-    /// Specifies whether or not the client is expected to send ACK or negative ACK to the server in order to confirm message notification.
+    /// Specifies whether the client is expected to send ACK or negative ACK to the server in order to confirm message notification.
     /// </summary>
     /// <remarks>
     /// This will always be enabled when <see cref="MaxRetries"/> or <see cref="MaxRedeliveries"/> or <see cref="DeadLetterCapacityHint"/>

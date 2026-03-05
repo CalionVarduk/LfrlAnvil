@@ -84,16 +84,10 @@ internal struct RemoteClientCollection
             var token = server.RemoteClientCollection._store.GetOrAddNull( name );
             if ( token.Exists )
             {
-                // TODO
-                // this will have to change
-                // if non-ephemeral client exists, but is disposed/inactive, then it should be possible to reconnect to it
-                // if it's not disposed (but e.g. disposing), then yeah, return already-connected error
-                // may lead to some minor race conditions e.g. when
-                // server disconnects the client, client catches that and attempts to reconnect immediately, but server is still cleaning it up
-                // but I think that's fine
-                //
-                // also, be careful about allowing to reconnect to the same client with different sockets at the same time
-                // probably change client's state to Created immediately?
+                var client = token.GetObject();
+                if ( client.PrepareForReactivation( tcp, stream, in handshake ) )
+                    return client;
+
                 alreadyConnected = true;
                 return server.Exception( Resources.ClientAlreadyConnected( name ) );
             }
@@ -183,8 +177,12 @@ internal struct RemoteClientCollection
             }
 
             ulong clientTraceId;
+            ServerStorage.Client clientStorage;
             using ( client.AcquireLock() )
+            {
+                clientStorage = client.GetStorage();
                 clientTraceId = client.GetTraceId();
+            }
 
             using ( MessageBrokerRemoteClientTraceEvent.CreateScope(
                 client,
@@ -194,17 +192,15 @@ internal struct RemoteClientCollection
                 if ( client.Logger.ServerTrace is { } serverTrace )
                     serverTrace.Emit( MessageBrokerRemoteClientServerTraceEvent.Create( client, clientTraceId, traceId ) );
 
-                var nestedResult = await LoadQueuesAsync( client, clientTraceId, cancellationToken ).ConfigureAwait( false );
-                if ( nestedResult.Exception is not null )
-                    return nestedResult.Exception;
+                await LoadQueuesAsync( client, clientStorage, clientTraceId, cancellationToken ).ConfigureAwait( false );
 
-                nestedResult = await LoadPublishersAsync( client, traceId, clientTraceId, cancellationToken )
+                var nestedResult = await LoadPublishersAsync( client, clientStorage, traceId, clientTraceId, cancellationToken )
                     .ConfigureAwait( false );
 
                 if ( nestedResult.Exception is not null )
                     return nestedResult.Exception;
 
-                nestedResult = await LoadListenersAsync( client, traceId, clientTraceId, cancellationToken )
+                nestedResult = await LoadListenersAsync( client, clientStorage, traceId, clientTraceId, cancellationToken )
                     .ConfigureAwait( false );
 
                 if ( nestedResult.Exception is not null )
@@ -215,12 +211,13 @@ internal struct RemoteClientCollection
         return Result.Valid;
     }
 
-    private static async ValueTask<Result> LoadQueuesAsync(
+    private static async ValueTask LoadQueuesAsync(
         MessageBrokerRemoteClient client,
+        ServerStorage.Client clientStorage,
         ulong clientTraceId,
         CancellationToken cancellationToken)
     {
-        await foreach ( var info in client.Storage.LoadQueuesAsync( client, clientTraceId )
+        await foreach ( var info in clientStorage.LoadQueuesAsync( client, clientTraceId )
             .WithCancellation( cancellationToken )
             .ConfigureAwait( false ) )
         {
@@ -230,7 +227,13 @@ internal struct RemoteClientCollection
                 if ( client.IsDisposed )
                     break;
 
-                queue = MessageBrokerQueue.CreateInactive( client, info.Key, info.Value.Name.Value.ToString(), info.Value.TraceId );
+                queue = MessageBrokerQueue.CreateInactive(
+                    client,
+                    clientStorage.CreateForQueue(),
+                    info.Key,
+                    info.Value.Name.Value.ToString(),
+                    info.Value.TraceId );
+
                 if ( ! client.QueueStore.TryAdd( queue.Id, queue.Name, queue ) )
                     ExceptionThrower.Throw( client.Exception( Resources.RecreatedQueueDuplicate( client, queue.Id, queue.Name ) ) );
             }
@@ -245,17 +248,16 @@ internal struct RemoteClientCollection
                     clientTrace.Emit( MessageBrokerQueueClientTraceEvent.Create( queue, queueTraceId, clientTraceId ) );
             }
         }
-
-        return Result.Valid;
     }
 
     private static async ValueTask<Result> LoadPublishersAsync(
         MessageBrokerRemoteClient client,
+        ServerStorage.Client clientStorage,
         ulong traceId,
         ulong clientTraceId,
         CancellationToken cancellationToken)
     {
-        await foreach ( var info in client.Storage.LoadPublishersAsync( client, clientTraceId )
+        await foreach ( var info in clientStorage.LoadPublishersAsync( client, clientTraceId )
             .WithCancellation( cancellationToken )
             .ConfigureAwait( false ) )
         {
@@ -344,12 +346,13 @@ internal struct RemoteClientCollection
 
     private static async ValueTask<Result> LoadListenersAsync(
         MessageBrokerRemoteClient client,
+        ServerStorage.Client clientStorage,
         ulong traceId,
         ulong clientTraceId,
         CancellationToken cancellationToken)
     {
         var error = client.Logger.Error;
-        await foreach ( var info in client.Storage.LoadListenersAsync( client, clientTraceId )
+        await foreach ( var info in clientStorage.LoadListenersAsync( client, clientTraceId )
             .WithCancellation( cancellationToken )
             .ConfigureAwait( false ) )
         {

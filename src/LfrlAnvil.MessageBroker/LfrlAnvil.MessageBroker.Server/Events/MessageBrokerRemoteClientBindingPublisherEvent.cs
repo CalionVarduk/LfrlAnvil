@@ -51,7 +51,7 @@ public readonly struct MessageBrokerRemoteClientBindingPublisherEvent
     public string StreamName { get; }
 
     /// <summary>
-    /// Specifies whether or not the publisher will be ephemeral.
+    /// Specifies whether the publisher will be ephemeral.
     /// </summary>
     public bool IsEphemeral { get; }
 

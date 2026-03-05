@@ -77,7 +77,7 @@ public readonly struct MessageBrokerRemoteClientMessageProcessedEvent
     public int Retry => _retry.IntValue;
 
     /// <summary>
-    /// Specifies whether or not this message is a retry.
+    /// Specifies whether this message is a retry.
     /// </summary>
     public bool IsRetry => _retry.BoolValue;
 
@@ -87,12 +87,12 @@ public readonly struct MessageBrokerRemoteClientMessageProcessedEvent
     public int Redelivery => _redelivery.IntValue;
 
     /// <summary>
-    /// Specifies whether or not this message is a redelivery.
+    /// Specifies whether this message is a redelivery.
     /// </summary>
     public bool IsRedelivery => _redelivery.BoolValue;
 
     /// <summary>
-    /// Specifies whether or not this message is from dead letter.
+    /// Specifies whether this message is from dead letter.
     /// </summary>
     public bool IsFromDeadLetter => AckId < 0;
 

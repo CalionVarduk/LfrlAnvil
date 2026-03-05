@@ -463,7 +463,10 @@ public sealed class MessageBrokerRemoteClientConnector
 
             Assume.IsNotNull( client.Value );
             readPacket?.Emit( MessageBrokerServerReadPacketEvent.CreateAccepted( this, serverTraceId, header ) );
-            return new HandshakeResult( client.Value, Protocol.HandshakeRejectedResponse.Reasons.None, client.Value.IsLittleEndian );
+            return new HandshakeResult(
+                client.Value,
+                Protocol.HandshakeRejectedResponse.Reasons.None,
+                handshakeHeader.IsClientLittleEndian );
         }
         catch ( Exception exc )
         {

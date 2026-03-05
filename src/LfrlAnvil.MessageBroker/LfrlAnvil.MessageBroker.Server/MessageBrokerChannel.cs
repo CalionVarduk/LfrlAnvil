@@ -320,11 +320,8 @@ public sealed class MessageBrokerChannel
                 using ( AcquireLock() )
                     isReferenced = PublishersByClientId.Count > 0 || ListenersByClientId.Count > 0;
 
-                if ( ! isReferenced )
-                {
-                    if ( storageLoaded )
-                        EmitError( await Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), autoDisposalTraceId.Value );
-                }
+                if ( ! isReferenced && storageLoaded )
+                    EmitError( await Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), autoDisposalTraceId.Value );
                 else
                     EmitError(
                         await Storage.SaveMetadataAsync( this, autoDisposalTraceId.Value ).AsSafe().ConfigureAwait( false ),

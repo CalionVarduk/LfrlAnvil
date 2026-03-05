@@ -25,8 +25,6 @@ using LfrlAnvil.MessageBroker.Server.Internal;
 
 namespace LfrlAnvil.MessageBroker.Server;
 
-// TODO: mutable public properties will probably be exposed via Interlocked/Volatile
-
 /// <summary>
 /// Represents a message broker channel binding for a listener, which allows clients to listen to messages published through channels.
 /// </summary>
@@ -153,12 +151,12 @@ public sealed class MessageBrokerChannelListenerBinding
     public string? FilterExpression { get; }
 
     /// <summary>
-    /// Specifies whether or not the listener is ephemeral.
+    /// Specifies whether the listener is ephemeral.
     /// </summary>
     public bool IsEphemeral => _isEphemeral.Value;
 
     /// <summary>
-    /// Specifies whether or not the <see cref="Client"/> is expected to send ACK or negative ACK to the <see cref="Queue"/>
+    /// Specifies whether the <see cref="Client"/> is expected to send ACK or negative ACK to the <see cref="Queue"/>
     /// in order to confirm message notification.
     /// </summary>
     public bool AreAcksEnabled => MinAckTimeout > Duration.Zero;
@@ -238,6 +236,17 @@ public sealed class MessageBrokerChannelListenerBinding
             counter: InactiveZeroCounterValue,
             isEphemeral: false,
             MessageBrokerChannelListenerBindingState.Inactive );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void MarkAsEphemeral()
+    {
+        using ( AcquireLock() )
+        {
+            var state = ( MessageBrokerChannelListenerBindingState )_state.Value;
+            if ( state == MessageBrokerChannelListenerBindingState.Inactive )
+                _isEphemeral.WriteTrue();
+        }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -433,12 +442,12 @@ public sealed class MessageBrokerChannelListenerBinding
         return true;
     }
 
-    internal void OnServerDisposing()
+    internal bool OnServerDisposing()
     {
         using ( AcquireLock() )
         {
             if ( IsDisposed )
-                return;
+                return false;
 
             _state.Write( ( int )MessageBrokerChannelListenerBindingState.Disposing );
             _prefetchCounter.Write( DisposedCounterValue );
@@ -446,6 +455,8 @@ public sealed class MessageBrokerChannelListenerBinding
             _deactivated = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
             _autoDisposed = true;
         }
+
+        return true;
     }
 
     internal void OnClientDeactivating(bool keepAlive)
@@ -476,7 +487,11 @@ public sealed class MessageBrokerChannelListenerBinding
         }
     }
 
-    internal async ValueTask OnServerDisposedAsync(ulong clientTraceId, bool storageLoaded)
+    internal async ValueTask OnServerDisposedAsync(
+        ServerStorage.Client clientStorage,
+        bool clearBuffers,
+        bool storageLoaded,
+        ulong clientTraceId)
     {
         bool isEphemeral;
         bool autoDisposed;
@@ -497,7 +512,7 @@ public sealed class MessageBrokerChannelListenerBinding
             if ( state == MessageBrokerChannelListenerBindingState.Disposing )
             {
                 if ( storageLoaded )
-                    Client.EmitError( await Client.Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), clientTraceId );
+                    Client.EmitError( await clientStorage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), clientTraceId );
 
                 Client.EmitError( await (deactivated?.Task).AsSafeCancellable().ConfigureAwait( false ), clientTraceId );
             }
@@ -517,7 +532,7 @@ public sealed class MessageBrokerChannelListenerBinding
             }
             else
                 Client.EmitError(
-                    await Client.Storage.SaveMetadataAsync( this, clientTraceId ).AsSafe().ConfigureAwait( false ),
+                    await clientStorage.SaveMetadataAsync( this, clearBuffers, clientTraceId ).AsSafe().ConfigureAwait( false ),
                     clientTraceId );
 
             using ( AcquireLock() )
@@ -533,7 +548,7 @@ public sealed class MessageBrokerChannelListenerBinding
         }
     }
 
-    internal async ValueTask OnClientDeactivatedAsync(bool keepAlive, ulong clientTraceId)
+    internal async ValueTask OnClientDeactivatedAsync(ServerStorage.Client clientStorage, bool keepAlive, ulong clientTraceId)
     {
         bool dispose;
         bool autoDisposed;
@@ -542,9 +557,11 @@ public sealed class MessageBrokerChannelListenerBinding
 
         using ( AcquireLock() )
         {
-            Assume.IsGreaterThanOrEqualTo( State, MessageBrokerChannelListenerBindingState.Deactivating );
-            Assume.NotEquals( State, MessageBrokerChannelListenerBindingState.Inactive );
             state = State;
+            Assume.IsGreaterThanOrEqualTo( state, MessageBrokerChannelListenerBindingState.Deactivating );
+            if ( state == MessageBrokerChannelListenerBindingState.Inactive && keepAlive )
+                return;
+
             autoDisposed = _autoDisposed;
             deactivated = _deactivated;
             dispose = IsEphemeral || ! keepAlive;
@@ -554,7 +571,7 @@ public sealed class MessageBrokerChannelListenerBinding
         {
             if ( state == MessageBrokerChannelListenerBindingState.Disposing )
             {
-                Client.EmitError( await Client.Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), clientTraceId );
+                Client.EmitError( await clientStorage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), clientTraceId );
                 Client.EmitError( await (deactivated?.Task).AsSafeCancellable().ConfigureAwait( false ), clientTraceId );
             }
 
@@ -575,7 +592,7 @@ public sealed class MessageBrokerChannelListenerBinding
                 }
 
                 await Channel.OnListenerDisposingAsync( Client, clientTraceId ).ConfigureAwait( false );
-                Client.EmitError( await Client.Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), clientTraceId );
+                Client.EmitError( await clientStorage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), clientTraceId );
 
                 using ( AcquireLock() )
                 {
@@ -610,13 +627,13 @@ public sealed class MessageBrokerChannelListenerBinding
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal async ValueTask EndDisposingAsync(ulong clientTraceId)
+    internal async ValueTask EndDisposingAsync(ServerStorage.Client clientStorage, ulong clientTraceId)
     {
         TaskCompletionSource? deactivated = null;
         try
         {
             Assume.Equals( State, MessageBrokerChannelListenerBindingState.Disposing );
-            Client.EmitError( await Client.Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), clientTraceId );
+            Client.EmitError( await clientStorage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), clientTraceId );
 
             using ( Client.AcquireLock() )
             {

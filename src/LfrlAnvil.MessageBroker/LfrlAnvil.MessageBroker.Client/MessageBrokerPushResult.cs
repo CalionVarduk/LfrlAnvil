@@ -40,12 +40,12 @@ public readonly struct MessageBrokerPushResult
     public ulong? Id { get; }
 
     /// <summary>
-    /// Specifies whether or not the client requested confirmation from the server that it received the message.
+    /// Specifies whether the client requested confirmation from the server that it received the message.
     /// </summary>
     public bool Confirm => (_state & 1) != 0;
 
     /// <summary>
-    /// Specifies whether or not request to the server has been cancelled
+    /// Specifies whether request to the server has been cancelled
     /// because the client does not contain a local publisher bound to the channel.
     /// </summary>
     public bool NotBound => (_state & 2) == 0;

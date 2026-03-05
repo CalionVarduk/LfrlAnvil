@@ -36,18 +36,18 @@ public readonly struct MessageBrokerBindListenerResult
     public MessageBrokerListener Listener { get; }
 
     /// <summary>
-    /// Specifies whether or not request to the server has been cancelled
+    /// Specifies whether request to the server has been cancelled
     /// because the client is already locally bound as listener to the channel.
     /// </summary>
     public bool AlreadyBound => _state == 1;
 
     /// <summary>
-    /// Specifies whether or not a new channel has been created by the server.
+    /// Specifies whether a new channel has been created by the server.
     /// </summary>
     public bool ChannelCreated => (_state & 2) != 0;
 
     /// <summary>
-    /// Specifies whether or not a new queue has been created by the server.
+    /// Specifies whether a new queue has been created by the server.
     /// </summary>
     public bool QueueCreated => (_state & 4) != 0;
 

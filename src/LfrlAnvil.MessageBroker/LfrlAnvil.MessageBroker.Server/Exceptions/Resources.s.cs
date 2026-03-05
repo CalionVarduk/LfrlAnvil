@@ -825,10 +825,14 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string ListenerDoesNotExist(MessageBrokerChannel channel, MessageBrokerStream stream, int storeKey)
+    internal static string ListenerDoesNotExist(
+        MessageBrokerChannel channel,
+        MessageBrokerStream stream,
+        MessageBrokerQueue queue,
+        int storeKey)
     {
         return
-            $"Failed to enqueue a message from stream [{stream.Id}] '{stream.Name}' with store key {storeKey} because Listener for channel [{channel.Id}] '{channel.Name}' does not exist.";
+            $"Failed to enqueue a message from stream [{stream.Id}] '{stream.Name}' with store key {storeKey} in queue [{queue.Id}] '{queue.Name}' because Listener for channel [{channel.Id}] '{channel.Name}' does not exist.";
     }
 
     [Pure]

@@ -34,7 +34,7 @@ public readonly struct MessageBrokerQueueDeactivatedEvent
     public MessageBrokerQueueEventSource Source { get; }
 
     /// <summary>
-    /// Specifies whether or not the queue remains alive after its deactivation.
+    /// Specifies whether the queue remains alive after its deactivation.
     /// </summary>
     public bool IsAlive { get; }
 

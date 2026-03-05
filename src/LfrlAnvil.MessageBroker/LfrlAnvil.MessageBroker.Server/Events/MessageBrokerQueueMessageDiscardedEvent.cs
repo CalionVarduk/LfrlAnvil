@@ -75,13 +75,13 @@ public readonly struct MessageBrokerQueueMessageDiscardedEvent
     public int Redelivery { get; }
 
     /// <summary>
-    /// Specifies whether or not the data of this message has been removed from the stream's message store
+    /// Specifies whether the data of this message has been removed from the stream's message store
     /// due to no longer being referenced.
     /// </summary>
     public bool MessageRemoved { get; }
 
     /// <summary>
-    /// Specifies whether or not the message has been moved to dead letter.
+    /// Specifies whether the message has been moved to dead letter.
     /// </summary>
     public bool MovedToDeadLetter { get; }
 

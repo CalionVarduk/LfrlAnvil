@@ -124,6 +124,12 @@ internal struct QueueProcessor
         _continuation.TrySetResult( true );
     }
 
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void ResetSignal()
+    {
+        _continuation.Reset();
+    }
+
     // TODO
     // initial non-ephemeral inactive queue implementation could simply hold everything in memory just like it is doing now
     // just don't have an active queue processor
@@ -168,7 +174,7 @@ internal struct QueueProcessor
                         if ( queue.TryDisposeDueToPotentiallyEmptyStoreUnsafe() )
                             disposed = true;
                         else
-                            queue.QueueProcessor._continuation.Reset();
+                            queue.QueueProcessor.ResetSignal();
 
                         break;
                     }
@@ -339,13 +345,15 @@ internal struct QueueProcessor
 
                         var requiresSenderName = false;
                         var requiresStreamName = false;
+                        bool clearBuffers;
                         using ( AcquireActiveClientLock( queue, traceId, out var exc ) )
                         {
                             if ( exc is not null )
                                 return;
 
                             var enqueued = true;
-                            var synchronizeExternalObjectNames = queue.Client.SynchronizeExternalObjectNames;
+                            clearBuffers = queue.Client.GetClearBuffersOption();
+                            var synchronizeExternalObjectNames = queue.Client.GetSynchronizeExternalObjectNamesOption();
                             if ( synchronizeExternalObjectNames )
                             {
                                 if ( queue.Client.ExternalNameCache.RequiresUpdate( message.Publisher ) )
@@ -395,7 +403,7 @@ internal struct QueueProcessor
 
                                     senderNamePoolToken = queue.Client.MemoryPool.Rent(
                                         notification.Length,
-                                        queue.Client.ClearBuffers,
+                                        clearBuffers,
                                         out senderNameData );
 
                                     notification.Serialize( senderNameData );
@@ -410,7 +418,7 @@ internal struct QueueProcessor
 
                                     streamNamePoolToken = queue.Client.MemoryPool.Rent(
                                         notification.Length,
-                                        queue.Client.ClearBuffers,
+                                        clearBuffers,
                                         out streamNameData );
 
                                     notification.Serialize( streamNameData );
@@ -475,40 +483,6 @@ internal struct QueueProcessor
                     {
                         if ( failed )
                         {
-                            // TODO:
-                            // one edge case to think about
-                            // if non-ephemeral listener has prefetch hint X and client disconnects
-                            // and that listener has X pending unACKed messages (will be redelivered on reconnect)
-                            // and then client reconnects but reduces listeners prefetch hint to lower than X
-                            // will redeliveries be consumed correctly?
-                            //
-                            // I think it will be fine, as long as listener prefetch counters correctly reflect
-                            // initial number of unACKed queue messages related to them
-                            //
-                            // the only issue is that the lowered prefetch hint will be initially ignored
-                            // due to larger number of messages to redeliver, which won't wait until prefetch counter is released enough
-                            // I think that's acceptable, client seems to be ok with it, there is no prefetch validation
-                            //
-                            // however, a test that verifies that would be useful
-                            //
-                            // there is another, probably more important issue
-                            // retry & redelivery limits on the listener
-                            // if listener is reactivated with lower limits but some messages are pending/retrying etc.
-                            // with larger retry/redelivery values than the new limits
-                            // then it might end up not working - some assumptions or actual validations may block it
-                            // solution: respect old limits one last time and send those messages anyway
-                            // if client is no longer interested, then they can send a proper NACK
-
-                            // TODO: TESTS
-                            // - listener starts with prefetch hint 2, 2 messages are sent to client, unacked
-                            //   client disconnects, inactive listener receives another message
-                            //   client reconnects, then binds the same listener with 1 prefetch hint
-                            //   should send both unacked messages immediately, should send third message only when both get acked
-                            // - listener starts with max-redelivery = max, single message gets sent without acks 3 times
-                            //   client disconnects, client reconnects, binds the same listener with max-redelivery = 1
-                            //   message should be sent one last time, even though redelivery count exceeds max
-                            // - same with max-retries
-                            // - what about dead letter count? they might get marked as exceeded immediately on listener rebind, which is fine
                             if ( messageType != QueueMessageStore.MessageType.Redelivery )
                                 message.Listener.DecrementPrefetchCounter();
 

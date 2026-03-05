@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -47,10 +47,7 @@ internal struct DelaySource
     internal ValueTaskDelaySource GetSource()
     {
         if ( _owned )
-        {
-            Assume.IsNull( _source );
-            _source = ValueTaskDelaySource.Start();
-        }
+            _source ??= ValueTaskDelaySource.Start();
 
         Assume.IsNotNull( _source );
         return _source;

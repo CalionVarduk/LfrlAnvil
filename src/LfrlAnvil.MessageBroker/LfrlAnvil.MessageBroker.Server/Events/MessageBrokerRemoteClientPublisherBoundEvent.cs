@@ -45,12 +45,12 @@ public readonly struct MessageBrokerRemoteClientPublisherBoundEvent
     public MessageBrokerChannelPublisherBinding Publisher { get; }
 
     /// <summary>
-    /// Specifies whether or not creation of the channel bound to the <see cref="Publisher"/> was part of the binding operation.
+    /// Specifies whether creation of the channel bound to the <see cref="Publisher"/> was part of the binding operation.
     /// </summary>
     public bool ChannelCreated { get; }
 
     /// <summary>
-    /// Specifies whether or not creation of the stream bound to the <see cref="Publisher"/> was part of the binding operation.
+    /// Specifies whether creation of the stream bound to the <see cref="Publisher"/> was part of the binding operation.
     /// </summary>
     public bool StreamCreated { get; }
 

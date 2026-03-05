@@ -45,7 +45,7 @@ public readonly struct MessageBrokerStreamMessageCollection
     /// Attempts to retrieve a message from the store by its store <paramref name="key"/>.
     /// </summary>
     /// <param name="key">Store key of the message to retrieve.</param>
-    /// <param name="includeData">Specifies whether or not to include a copy of binary data. Equal to <b>false</b> by default.</param>
+    /// <param name="includeData">Specifies whether to include a copy of binary data. Equal to <b>false</b> by default.</param>
     /// <returns>
     /// <see cref="MessageBrokerStreamMessage"/> instance associated with the given store <paramref name="key"/>
     /// or <b>null</b> if such a message doesn't exist.

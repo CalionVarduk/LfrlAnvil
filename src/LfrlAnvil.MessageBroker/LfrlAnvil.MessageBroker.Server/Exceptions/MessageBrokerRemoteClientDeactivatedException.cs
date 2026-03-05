@@ -26,7 +26,7 @@ public class MessageBrokerRemoteClientDeactivatedException : OperationCanceledEx
     /// Creates a new <see cref="MessageBrokerRemoteClientDeactivatedException"/> instance.
     /// </summary>
     /// <param name="client">Deactivated <see cref="MessageBrokerRemoteClient"/>.</param>
-    /// <param name="disposed">Specifies whether or not the client has been disposed.</param>
+    /// <param name="disposed">Specifies whether the client has been disposed.</param>
     public MessageBrokerRemoteClientDeactivatedException(MessageBrokerRemoteClient client, bool disposed)
         : base( Resources.ClientDeactivated( client.Id, client.Name, disposed ), new CancellationToken( canceled: true ) )
     {
@@ -40,7 +40,7 @@ public class MessageBrokerRemoteClientDeactivatedException : OperationCanceledEx
     public MessageBrokerRemoteClient Client { get; }
 
     /// <summary>
-    /// Specifies whether or not the <see cref="Client"/> has been disposed.
+    /// Specifies whether the <see cref="Client"/> has been disposed.
     /// </summary>
     public bool Disposed { get; }
 }

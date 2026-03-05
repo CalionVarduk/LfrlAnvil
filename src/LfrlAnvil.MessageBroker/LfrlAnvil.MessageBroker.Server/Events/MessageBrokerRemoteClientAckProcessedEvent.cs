@@ -78,7 +78,7 @@ public readonly struct MessageBrokerRemoteClientAckProcessedEvent
     public int Redelivery { get; }
 
     /// <summary>
-    /// Specifies whether or not the ACK is negative.
+    /// Specifies whether the ACK is negative.
     /// </summary>
     public bool IsNack { get; }
 

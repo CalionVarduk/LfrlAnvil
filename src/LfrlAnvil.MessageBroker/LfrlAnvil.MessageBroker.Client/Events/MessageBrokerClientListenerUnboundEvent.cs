@@ -41,12 +41,12 @@ public readonly struct MessageBrokerClientListenerUnboundEvent
     public MessageBrokerListener Listener { get; }
 
     /// <summary>
-    /// Specifies whether or not the channel has been removed by the server.
+    /// Specifies whether the channel has been removed by the server.
     /// </summary>
     public bool ChannelRemoved { get; }
 
     /// <summary>
-    /// Specifies whether or not the queue has been removed by the server.
+    /// Specifies whether the queue has been removed by the server.
     /// </summary>
     public bool QueueRemoved { get; }
 

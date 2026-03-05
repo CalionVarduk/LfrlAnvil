@@ -856,7 +856,8 @@ public partial class MessageBrokerServerTests
                                     "queue",
                                     q.State.TestEquals( MessageBrokerQueueState.Inactive ),
                                     q.Listeners.Count.TestEquals( 1 ),
-                                    q.Listeners.TryGetByChannelId( 2 ).TestRefEquals( listener ) ) ) ) ) )
+                                    q.Listeners.TryGetByChannelId( 2 ).TestRefEquals( listener ),
+                                    q.Messages.Unacked.Count.TestEquals( 1 ) ) ) ) ) )
                     .Go();
             }
 
@@ -878,11 +879,288 @@ public partial class MessageBrokerServerTests
                             c.Name.TestEquals( "c1" ),
                             c.Publishers.Count.TestEquals( 1 ),
                             c.Listeners.Count.TestEquals( 1 ),
-                            c.Queues.TryGetById( 1 ).TestNotNull() ) ),
+                            c.Queues.TryGetById( 1 ).TestNotNull( q => q.Messages.Unacked.Count.TestEquals( 1 ) ) ) ),
                         stream.TestNotNull( s => s.Name.TestEquals( "str" ) ),
                         channel.TestNotNull( c => c.Name.TestEquals( "foo" ) ) )
                     .Go();
             }
+        }
+
+        [Fact]
+        public async Task StatePersistenceShouldRecreateDisposedPublisherWhenOneExistsButForDifferentStream()
+        {
+            using var storage = StorageScope.Create();
+            storage.WriteServerMetadata();
+            storage.WriteChannelMetadata( channelId: 1, channelName: "foo" );
+            storage.WriteStreamMetadata( streamId: 1, streamName: "foo" );
+            storage.WriteStreamMessages(
+                streamId: 1,
+                nextPendingNodeId: NullableIndex.Create( 0 ),
+                messages: [ StorageScope.PrepareStreamMessage( id: 0, storeKey: 0, senderId: 1, channelId: 1, data: [ 1 ] ) ] );
+
+            storage.WriteStreamMetadata( streamId: 2, streamName: "bar" );
+            storage.WriteStreamMessages( streamId: 2, messages: [ ] );
+            storage.WriteClientMetadata( clientId: 1, clientName: "foo" );
+            storage.WritePublisherMetadata( clientId: 1, channelId: 1, streamId: 2 );
+            storage.WriteListenerMetadata(
+                clientId: 1,
+                channelId: 1,
+                queueId: 1,
+                maxRedeliveries: 5,
+                minAckTimeout: Duration.FromHours( 1 ) );
+
+            storage.WriteQueueMetadata( clientId: 1, queueId: 1, queueName: "foo" );
+            storage.WriteQueuePendingMessages( clientId: 1, queueId: 1, messages: [ ] );
+            storage.WriteQueueUnackedMessages( clientId: 1, queueId: 1, messages: [ ] );
+            storage.WriteQueueRetryMessages( clientId: 1, queueId: 1, messages: [ ] );
+            storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 1, messages: [ ] );
+
+            var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
+            await using var server = new MessageBrokerServer(
+                originalEndPoint,
+                MessageBrokerServerOptions.Default
+                    .SetRootStoragePath( storage.Path ) );
+
+            await server.StartAsync();
+
+            var stream1 = server.Streams.TryGetById( 1 );
+            var stream2 = server.Streams.TryGetById( 2 );
+            var publisher = server.Clients.TryGetById( 1 )?.Publishers.TryGetByChannelId( 1 );
+
+            Assertion.All(
+                    stream2.TestNotNull( s => s.Publishers.GetAll().TestSequence( [ (e, _) => e.TestRefEquals( publisher ) ] ) ),
+                    stream1.TestNotNull( s =>
+                        s.Messages.TryGetByKey( 0 )
+                            .TestNotNull( m => Assertion.All(
+                                "message0",
+                                m.Publisher.Client.TestRefEquals( publisher?.Client ),
+                                m.Publisher.TestNotRefEquals( publisher ) ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task StartAsync_ShouldNotDeleteUnreferencedObjects_WhenServerIsDisposedBeforeStorageLoadingIsFinished()
+        {
+            using var storage = StorageScope.Create();
+            storage.WriteServerMetadata();
+            storage.WriteChannelMetadata( channelId: 1, channelName: "foo" );
+            storage.WriteStreamMetadata( streamId: 1, streamName: "foo" );
+
+            storage.WritePublisherMetadata( clientId: 1, channelId: 1, streamId: 1, header: [ 1, 2, 3, 4 ] );
+            storage.WriteListenerMetadata(
+                clientId: 1,
+                channelId: 1,
+                queueId: 1,
+                maxRedeliveries: 5,
+                minAckTimeout: Duration.FromHours( 1 ),
+                maxRetries: 5,
+                retryDelay: Duration.FromHours( 1 ),
+                deadLetterCapacityHint: 5,
+                minDeadLetterRetention: Duration.FromHours( 1 ) );
+
+            storage.WriteQueueMetadata( clientId: 1, queueId: 1, queueName: "foo" );
+            storage.WriteQueuePendingMessages(
+                clientId: 1,
+                queueId: 1,
+                messages: [ StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 3 ) ] );
+
+            storage.WriteQueueUnackedMessages(
+                clientId: 1,
+                queueId: 1,
+                messages: [ StorageScope.PrepareQueueUnackedMessage( streamId: 1, storeKey: 2, retry: 0, redelivery: 0 ) ] );
+
+            storage.WriteQueueRetryMessages(
+                clientId: 1,
+                queueId: 1,
+                messages: [ StorageScope.PrepareQueueRetryMessage( streamId: 1, storeKey: 1, retry: 0, redelivery: 0 ) ] );
+
+            storage.WriteQueueDeadLetterMessages(
+                clientId: 1,
+                queueId: 1,
+                messages: [ StorageScope.PrepareQueueDeadLetterMessage( streamId: 1, storeKey: 0, retry: 0, redelivery: 0 ) ] );
+
+            var originalEndPoint = new IPEndPoint( IPAddress.Any, 0 );
+            await using ( var failedServer = new MessageBrokerServer(
+                originalEndPoint,
+                MessageBrokerServerOptions.Default.SetRootStoragePath( storage.Path ) ) )
+                await failedServer.StartAsync();
+
+            storage.WriteClientMetadata( clientId: 1, clientName: "foo" );
+
+            await using ( var failedServer = new MessageBrokerServer(
+                originalEndPoint,
+                MessageBrokerServerOptions.Default.SetRootStoragePath( storage.Path ) ) )
+                await failedServer.StartAsync();
+
+            storage.WriteStreamMessages(
+                streamId: 1,
+                messages:
+                [
+                    StorageScope.PrepareStreamMessage( id: 0, storeKey: 0, senderId: 1, channelId: 1, data: [ 1 ] ),
+                    StorageScope.PrepareStreamMessage( id: 1, storeKey: 1, senderId: 1, channelId: 1, data: [ 2, 3 ] ),
+                    StorageScope.PrepareStreamMessage( id: 2, storeKey: 2, senderId: 1, channelId: 1, data: [ 4, 5, 6 ] ),
+                    StorageScope.PrepareStreamMessage( id: 3, storeKey: 3, senderId: 1, channelId: 1, data: [ 7, 8, 9, 10 ] )
+                ] );
+
+            await using ( var failedServer = new MessageBrokerServer(
+                originalEndPoint,
+                MessageBrokerServerOptions.Default.SetRootStoragePath( storage.Path ) ) )
+                await failedServer.StartAsync();
+
+            storage.WritePublisherMetadata( clientId: 1, channelId: 1, streamId: 1 );
+
+            await using var server = new MessageBrokerServer(
+                originalEndPoint,
+                MessageBrokerServerOptions.Default.SetRootStoragePath( storage.Path ) );
+
+            await server.StartAsync();
+
+            Assertion.All(
+                    server.Channels.Count.TestEquals( 1 ),
+                    server.Channels.TryGetById( 1 )
+                        .TestNotNull( c => Assertion.All(
+                            "channel",
+                            c.Publishers.Count.TestEquals( 1 ),
+                            c.Listeners.Count.TestEquals( 1 ) ) ),
+                    server.Streams.Count.TestEquals( 1 ),
+                    server.Streams.TryGetById( 1 )
+                        .TestNotNull( s => Assertion.All(
+                            "stream",
+                            s.Publishers.Count.TestEquals( 1 ),
+                            s.Messages.Count.TestEquals( 4 ),
+                            s.Messages.TryGetByKey( 0, includeData: true ).TestNotNull( m => m.Data.TestSequence<byte>( [ 1 ] ) ),
+                            s.Messages.TryGetByKey( 1, includeData: true ).TestNotNull( m => m.Data.TestSequence<byte>( [ 2, 3 ] ) ),
+                            s.Messages.TryGetByKey( 2, includeData: true ).TestNotNull( m => m.Data.TestSequence<byte>( [ 4, 5, 6 ] ) ),
+                            s.Messages.TryGetByKey( 3, includeData: true )
+                                .TestNotNull( m => m.Data.TestSequence<byte>( [ 7, 8, 9, 10 ] ) ) ) ),
+                    server.Clients.Count.TestEquals( 1 ),
+                    server.Clients.TryGetById( 1 )
+                        .TestNotNull( c => Assertion.All(
+                            "client",
+                            c.Publishers.Count.TestEquals( 1 ),
+                            c.Listeners.Count.TestEquals( 1 ),
+                            c.Queues.Count.TestEquals( 1 ),
+                            c.Queues.TryGetById( 1 )
+                                .TestNotNull( q => Assertion.All(
+                                    "queue",
+                                    q.Messages.Pending.Count.TestEquals( 1 ),
+                                    q.Messages.Unacked.Count.TestEquals( 1 ),
+                                    q.Messages.Retries.Count.TestEquals( 1 ),
+                                    q.Messages.DeadLetter.Count.TestEquals( 1 ),
+                                    q.Messages.Pending.TryPeekAt( 0 ).TestNotNull( m => m.StoreKey.TestEquals( 3 ) ),
+                                    q.Messages.Unacked.TryGetFirst().TestNotNull( m => m.StoreKey.TestEquals( 2 ) ),
+                                    q.Messages.Retries.TryGetNext().TestNotNull( m => m.StoreKey.TestEquals( 1 ) ),
+                                    q.Messages.DeadLetter.TryPeekAt( 0 ).TestNotNull( m => m.StoreKey.TestEquals( 0 ) ) ) ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task StartAsync_ShouldNotDeleteUnreferencedObjects_WhenServerIsManuallyDisposedBeforeStorageLoadingIsFinished()
+        {
+            using var storage = StorageScope.Create();
+            storage.WriteServerMetadata();
+            storage.WriteChannelMetadata( channelId: 1, channelName: "foo" );
+            storage.WriteStreamMetadata( streamId: 1, streamName: "foo" );
+            storage.WriteStreamMessages(
+                streamId: 1,
+                messages:
+                [
+                    StorageScope.PrepareStreamMessage( id: 0, storeKey: 0, senderId: 1, channelId: 1, data: [ 1 ] ),
+                    StorageScope.PrepareStreamMessage( id: 1, storeKey: 1, senderId: 1, channelId: 1, data: [ 2, 3 ] ),
+                    StorageScope.PrepareStreamMessage( id: 2, storeKey: 2, senderId: 1, channelId: 1, data: [ 4, 5, 6 ] ),
+                    StorageScope.PrepareStreamMessage( id: 3, storeKey: 3, senderId: 1, channelId: 1, data: [ 7, 8, 9, 10 ] )
+                ] );
+
+            storage.WriteClientMetadata( clientId: 1, clientName: "foo" );
+            storage.WritePublisherMetadata( clientId: 1, channelId: 1, streamId: 1 );
+            storage.WriteListenerMetadata(
+                clientId: 1,
+                channelId: 1,
+                queueId: 1,
+                maxRedeliveries: 5,
+                minAckTimeout: Duration.FromHours( 1 ),
+                maxRetries: 5,
+                retryDelay: Duration.FromHours( 1 ),
+                deadLetterCapacityHint: 5,
+                minDeadLetterRetention: Duration.FromHours( 1 ) );
+
+            storage.WriteQueueMetadata( clientId: 1, queueId: 1, queueName: "foo" );
+            storage.WriteQueuePendingMessages(
+                clientId: 1,
+                queueId: 1,
+                messages: [ StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 3 ) ] );
+
+            storage.WriteQueueUnackedMessages(
+                clientId: 1,
+                queueId: 1,
+                messages: [ StorageScope.PrepareQueueUnackedMessage( streamId: 1, storeKey: 2, retry: 0, redelivery: 0 ) ] );
+
+            storage.WriteQueueRetryMessages(
+                clientId: 1,
+                queueId: 1,
+                messages: [ StorageScope.PrepareQueueRetryMessage( streamId: 1, storeKey: 1, retry: 0, redelivery: 0 ) ] );
+
+            storage.WriteQueueDeadLetterMessages(
+                clientId: 1,
+                queueId: 1,
+                messages: [ StorageScope.PrepareQueueDeadLetterMessage( streamId: 1, storeKey: 0, retry: 0, redelivery: 0 ) ] );
+
+            var originalEndPoint = new IPEndPoint( IPAddress.Any, 0 );
+            await using ( var disposedServer = new MessageBrokerServer(
+                originalEndPoint,
+                MessageBrokerServerOptions.Default
+                    .SetRootStoragePath( storage.Path )
+                    .SetClientLoggerFactory( _ => MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.Recreated )
+                                e.Source.Client.Server.Dispose();
+                        } ) ) ) )
+                await disposedServer.StartAsync();
+
+            await using var server = new MessageBrokerServer(
+                originalEndPoint,
+                MessageBrokerServerOptions.Default.SetRootStoragePath( storage.Path ) );
+
+            await server.StartAsync();
+
+            Assertion.All(
+                    server.Channels.Count.TestEquals( 1 ),
+                    server.Channels.TryGetById( 1 )
+                        .TestNotNull( c => Assertion.All(
+                            "channel",
+                            c.Publishers.Count.TestEquals( 1 ),
+                            c.Listeners.Count.TestEquals( 1 ) ) ),
+                    server.Streams.Count.TestEquals( 1 ),
+                    server.Streams.TryGetById( 1 )
+                        .TestNotNull( s => Assertion.All(
+                            "stream",
+                            s.Publishers.Count.TestEquals( 1 ),
+                            s.Messages.Count.TestEquals( 4 ),
+                            s.Messages.TryGetByKey( 0, includeData: true ).TestNotNull( m => m.Data.TestSequence<byte>( [ 1 ] ) ),
+                            s.Messages.TryGetByKey( 1, includeData: true ).TestNotNull( m => m.Data.TestSequence<byte>( [ 2, 3 ] ) ),
+                            s.Messages.TryGetByKey( 2, includeData: true ).TestNotNull( m => m.Data.TestSequence<byte>( [ 4, 5, 6 ] ) ),
+                            s.Messages.TryGetByKey( 3, includeData: true )
+                                .TestNotNull( m => m.Data.TestSequence<byte>( [ 7, 8, 9, 10 ] ) ) ) ),
+                    server.Clients.Count.TestEquals( 1 ),
+                    server.Clients.TryGetById( 1 )
+                        .TestNotNull( c => Assertion.All(
+                            "client",
+                            c.Publishers.Count.TestEquals( 1 ),
+                            c.Listeners.Count.TestEquals( 1 ),
+                            c.Queues.Count.TestEquals( 1 ),
+                            c.Queues.TryGetById( 1 )
+                                .TestNotNull( q => Assertion.All(
+                                    "queue",
+                                    q.Messages.Pending.Count.TestEquals( 1 ),
+                                    q.Messages.Unacked.Count.TestEquals( 1 ),
+                                    q.Messages.Retries.Count.TestEquals( 1 ),
+                                    q.Messages.DeadLetter.Count.TestEquals( 1 ),
+                                    q.Messages.Pending.TryPeekAt( 0 ).TestNotNull( m => m.StoreKey.TestEquals( 3 ) ),
+                                    q.Messages.Unacked.TryGetFirst().TestNotNull( m => m.StoreKey.TestEquals( 2 ) ),
+                                    q.Messages.Retries.TryGetNext().TestNotNull( m => m.StoreKey.TestEquals( 1 ) ),
+                                    q.Messages.DeadLetter.TryPeekAt( 0 ).TestNotNull( m => m.StoreKey.TestEquals( 0 ) ) ) ) ) ) )
+                .Go();
         }
 
         [Fact]
@@ -2584,6 +2862,13 @@ public partial class MessageBrokerServerTests
                 queueId: 1,
                 messages: [ StorageScope.PrepareQueueDeadLetterMessage( streamId: 1, storeKey: 3, retry: 0, redelivery: 0 ) ] );
 
+            storage.WriteListenerMetadata( clientId: 1, channelId: 1, queueId: 2 );
+            storage.WriteQueueMetadata( clientId: 1, queueId: 2, queueName: "bar" );
+            storage.WriteQueuePendingMessages( clientId: 1, queueId: 2, messages: [ ] );
+            storage.WriteQueueUnackedMessages( clientId: 1, queueId: 2, messages: [ ] );
+            storage.WriteQueueRetryMessages( clientId: 1, queueId: 2, messages: [ ] );
+            storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 2, messages: [ ] );
+
             var logger = new ServerEventLogger();
             var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
             await using var server = new MessageBrokerServer(
@@ -2602,22 +2887,22 @@ public partial class MessageBrokerServerTests
                             $"""
                              [Error] Server = {originalEndPoint}, TraceId = 1
                              LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerStorageException: Server storage file '{Path.Combine( server.RootStorageDirectoryPath!, "clients", "_1", "queues", "_1", "pending.mbpm" )}' contains invalid data. Encountered 1 error(s):
-                             1. Failed to enqueue a message from stream [1] 'foo' with store key 0 because Listener for channel [1] 'foo' does not exist.
+                             1. Failed to enqueue a message from stream [1] 'foo' with store key 0 in queue [1] 'foo' because Listener for channel [1] 'foo' does not exist.
                              """,
                             $"""
                              [Error] Server = {originalEndPoint}, TraceId = 1
                              LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerStorageException: Server storage file '{Path.Combine( server.RootStorageDirectoryPath!, "clients", "_1", "queues", "_1", "unacked.mbue" )}' contains invalid data. Encountered 1 error(s):
-                             1. Failed to enqueue a message from stream [1] 'foo' with store key 1 because Listener for channel [1] 'foo' does not exist.
+                             1. Failed to enqueue a message from stream [1] 'foo' with store key 1 in queue [1] 'foo' because Listener for channel [1] 'foo' does not exist.
                              """,
                             $"""
                              [Error] Server = {originalEndPoint}, TraceId = 1
                              LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerStorageException: Server storage file '{Path.Combine( server.RootStorageDirectoryPath!, "clients", "_1", "queues", "_1", "retries.mbre" )}' contains invalid data. Encountered 1 error(s):
-                             1. Failed to enqueue a message from stream [1] 'foo' with store key 2 because Listener for channel [1] 'foo' does not exist.
+                             1. Failed to enqueue a message from stream [1] 'foo' with store key 2 in queue [1] 'foo' because Listener for channel [1] 'foo' does not exist.
                              """,
                             $"""
                              [Error] Server = {originalEndPoint}, TraceId = 1
                              LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerStorageException: Server storage file '{Path.Combine( server.RootStorageDirectoryPath!, "clients", "_1", "queues", "_1", "deadletter.mbdl" )}' contains invalid data. Encountered 1 error(s):
-                             1. Failed to enqueue a message from stream [1] 'foo' with store key 3 because Listener for channel [1] 'foo' does not exist.
+                             1. Failed to enqueue a message from stream [1] 'foo' with store key 3 in queue [1] 'foo' because Listener for channel [1] 'foo' does not exist.
                              """
                         ] ) ) )
                 .Go();

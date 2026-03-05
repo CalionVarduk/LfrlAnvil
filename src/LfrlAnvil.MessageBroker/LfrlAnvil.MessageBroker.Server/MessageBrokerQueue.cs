@@ -32,22 +32,28 @@ namespace LfrlAnvil.MessageBroker.Server;
 /// </summary>
 public sealed class MessageBrokerQueue
 {
+    internal readonly MessageBrokerQueueLogger Logger;
     internal ReferenceStore<int, MessageBrokerChannelListenerBinding> ListenersByChannelId;
     internal QueueProcessor QueueProcessor;
     internal QueueMessageStore MessageStore;
-    internal readonly ServerStorage.Client.Queue Storage;
-    internal readonly MessageBrokerQueueLogger Logger;
     internal int EventHeapIndex;
     internal int DeadLetterQueryCounter;
     private readonly object _sync = new object();
+    private ServerStorage.Client.Queue _storage;
     private MessageBrokerQueueState _state;
     private TaskCompletionSource? _deactivated;
     private ulong _nextTraceId;
     private ulong? _autoStopTraceId;
 
-    private MessageBrokerQueue(MessageBrokerRemoteClient client, int id, string name, ulong nextTraceId, MessageBrokerQueueState state)
+    private MessageBrokerQueue(
+        MessageBrokerRemoteClient client,
+        ServerStorage.Client.Queue storage,
+        int id,
+        string name,
+        ulong nextTraceId,
+        MessageBrokerQueueState state)
     {
-        Storage = client.Storage.CreateForQueue();
+        _storage = storage;
         Client = client;
         Id = id;
         Name = name;
@@ -103,6 +109,15 @@ public sealed class MessageBrokerQueue
     internal bool IsInactive => _state >= MessageBrokerQueueState.Deactivating;
     internal bool IsDisposed => _state >= MessageBrokerQueueState.Disposing;
 
+    internal ServerStorage.Client.Queue Storage
+    {
+        get
+        {
+            using ( AcquireLock() )
+                return _storage;
+        }
+    }
+
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerQueue"/> instance.
     /// </summary>
@@ -115,16 +130,51 @@ public sealed class MessageBrokerQueue
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerQueue Create(MessageBrokerRemoteClient client, int id, string name)
+    internal static MessageBrokerQueue Create(MessageBrokerRemoteClient client, ServerStorage.Client.Queue storage, int id, string name)
     {
-        return new MessageBrokerQueue( client, id, name, nextTraceId: 0, MessageBrokerQueueState.Running );
+        return new MessageBrokerQueue( client, storage, id, name, nextTraceId: 0, MessageBrokerQueueState.Running );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerQueue CreateInactive(MessageBrokerRemoteClient client, int id, string name, ulong nextTraceId)
+    internal static MessageBrokerQueue CreateInactive(
+        MessageBrokerRemoteClient client,
+        ServerStorage.Client.Queue storage,
+        int id,
+        string name,
+        ulong nextTraceId)
     {
-        return new MessageBrokerQueue( client, id, name, nextTraceId, MessageBrokerQueueState.Inactive );
+        return new MessageBrokerQueue( client, storage, id, name, nextTraceId, MessageBrokerQueueState.Inactive );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void MarkAsEphemeral()
+    {
+        using ( AcquireLock() )
+        {
+            if ( _state == MessageBrokerQueueState.Inactive )
+                _storage = default;
+        }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void Reactivate()
+    {
+        using ( AcquireLock() )
+        {
+            if ( _state != MessageBrokerQueueState.Inactive )
+                return;
+
+            _state = MessageBrokerQueueState.Running;
+            QueueProcessor.ResetSignal();
+            Client.EventScheduler.AddQueue( this );
+            Client.EventScheduler.UpdateQueue( this );
+
+            if ( QueueProcessor.GetUnderlyingTask() is null )
+                QueueProcessor.SetUnderlyingTask( QueueProcessor.StartUnderlyingTask( this ) );
+
+            QueueProcessor.SignalContinuation();
+        }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -485,13 +535,15 @@ public sealed class MessageBrokerQueue
 
     internal async ValueTask OnServerDisposedAsync(
         bool isEphemeral,
+        bool clearBuffers,
         Dictionary<int, MessageBrokerChannelListenerBinding> listenersByChannelId,
-        ulong clientTraceId,
-        bool storageLoaded)
+        bool storageLoaded,
+        ulong clientTraceId)
     {
         ulong? autoDisposalTraceId;
         MessageBrokerQueueState state;
         TaskCompletionSource? deactivatedSource;
+        ServerStorage.Client.Queue storage;
 
         using ( AcquireLock() )
         {
@@ -499,6 +551,7 @@ public sealed class MessageBrokerQueue
             state = _state;
             autoDisposalTraceId = _autoStopTraceId;
             deactivatedSource = _deactivated;
+            storage = _storage;
         }
 
         if ( autoDisposalTraceId is null )
@@ -506,7 +559,7 @@ public sealed class MessageBrokerQueue
             if ( state == MessageBrokerQueueState.Disposing )
             {
                 if ( storageLoaded )
-                    Client.EmitError( await Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), clientTraceId );
+                    Client.EmitError( await storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), clientTraceId );
 
                 Client.EmitError( await (deactivatedSource?.Task).AsSafeCancellable().ConfigureAwait( false ), clientTraceId );
             }
@@ -537,33 +590,41 @@ public sealed class MessageBrokerQueue
                     && pendingMessages.IsEmpty
                     && unackedEntries.IsEmpty
                     && retryEntries.IsEmpty
-                    && deadLetterEntries.IsEmpty )
-                {
-                    if ( storageLoaded )
-                        EmitError( await Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), autoDisposalTraceId.Value );
-                }
+                    && deadLetterEntries.IsEmpty
+                    && storageLoaded )
+                    EmitError( await storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), autoDisposalTraceId.Value );
                 else
                 {
                     EmitError(
-                        await Storage.SaveMetadataAsync( this, autoDisposalTraceId.Value ).AsSafe().ConfigureAwait( false ),
+                        await storage.SaveMetadataAsync( this, clearBuffers, autoDisposalTraceId.Value )
+                            .AsSafe()
+                            .ConfigureAwait( false ),
                         autoDisposalTraceId.Value );
 
                     if ( storageLoaded )
                     {
                         EmitError(
-                            await Storage.SaveAsync( this, pendingMessages, autoDisposalTraceId.Value ).AsSafe().ConfigureAwait( false ),
+                            await storage.SaveAsync( this, pendingMessages, clearBuffers, autoDisposalTraceId.Value )
+                                .AsSafe()
+                                .ConfigureAwait( false ),
                             autoDisposalTraceId.Value );
 
                         EmitError(
-                            await Storage.SaveAsync( this, unackedEntries, autoDisposalTraceId.Value ).AsSafe().ConfigureAwait( false ),
+                            await storage.SaveAsync( this, unackedEntries, clearBuffers, autoDisposalTraceId.Value )
+                                .AsSafe()
+                                .ConfigureAwait( false ),
                             autoDisposalTraceId.Value );
 
                         EmitError(
-                            await Storage.SaveAsync( this, retryEntries, autoDisposalTraceId.Value ).AsSafe().ConfigureAwait( false ),
+                            await storage.SaveAsync( this, retryEntries, clearBuffers, autoDisposalTraceId.Value )
+                                .AsSafe()
+                                .ConfigureAwait( false ),
                             autoDisposalTraceId.Value );
 
                         EmitError(
-                            await Storage.SaveAsync( this, deadLetterEntries, autoDisposalTraceId.Value ).AsSafe().ConfigureAwait( false ),
+                            await storage.SaveAsync( this, deadLetterEntries, clearBuffers, autoDisposalTraceId.Value )
+                                .AsSafe()
+                                .ConfigureAwait( false ),
                             autoDisposalTraceId.Value );
                     }
                 }
@@ -597,11 +658,11 @@ public sealed class MessageBrokerQueue
         MessageBrokerQueueState state;
         bool dispose;
         TaskCompletionSource? deactivatedSource;
+        ServerStorage.Client.Queue storage;
 
         using ( AcquireLock() )
         {
             Assume.IsGreaterThanOrEqualTo( _state, MessageBrokerQueueState.Deactivating );
-            Assume.NotEquals( _state, MessageBrokerQueueState.Inactive );
             state = _state;
             autoDisposalTraceId = _autoStopTraceId;
             dispose = ListenersByChannelId.Count == 0 && MessageStore.IsEmpty;
@@ -609,13 +670,14 @@ public sealed class MessageBrokerQueue
                 _state = MessageBrokerQueueState.Disposing;
 
             deactivatedSource = _deactivated;
+            storage = _storage;
         }
 
         if ( autoDisposalTraceId is null )
         {
             if ( state == MessageBrokerQueueState.Disposing )
             {
-                Client.EmitError( await Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), clientTraceId );
+                Client.EmitError( await storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), clientTraceId );
                 Client.EmitError( await (deactivatedSource?.Task).AsSafeCancellable().ConfigureAwait( false ), clientTraceId );
             }
 
@@ -633,15 +695,12 @@ public sealed class MessageBrokerQueue
                 // in one lock, also must make sure that the order of messages is preserved during the swap
                 // so the swap might have to happen inside storage async mutex lock?
 
-                // TODO: tests
-                // - persistent queue forces unacked messages to be sent first on reconnect (without server disposal)
-
                 if ( dispose )
                 {
                     using ( Client.AcquireLock() )
                         Client.QueueStore.Remove( Id, Name );
 
-                    EmitError( await Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), autoDisposalTraceId.Value );
+                    EmitError( await storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), autoDisposalTraceId.Value );
 
                     using ( AcquireLock() )
                     {
@@ -677,7 +736,7 @@ public sealed class MessageBrokerQueue
                     out _,
                     out _ );
 
-                EmitError( await Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), autoDisposalTraceId.Value );
+                EmitError( await storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), autoDisposalTraceId.Value );
 
                 using ( AcquireLock() )
                 {
@@ -704,9 +763,6 @@ public sealed class MessageBrokerQueue
 
     internal async ValueTask DisposeDueToLackOfReferencesAsync(bool ignoreProcessorTask, ulong traceId)
     {
-        // TODO: tests
-        // - unreferenced queue on client reconnect should be disposed via started processor
-
         TaskCompletionSource? deactivatedSource = null;
         try
         {
@@ -714,8 +770,10 @@ public sealed class MessageBrokerQueue
             if ( Logger.Deactivating is { } deactivating )
                 deactivating.Emit( MessageBrokerQueueDeactivatingEvent.Create( this, traceId, isAlive: false ) );
 
+            ServerStorage.Client.Queue storage;
             var exceptions = Chain<Exception>.Empty;
             Task? processorTask;
+
             using ( AcquireLock() )
             {
                 Assume.Equals( ListenersByChannelId.Count, 0 );
@@ -728,11 +786,12 @@ public sealed class MessageBrokerQueue
 
                 QueueProcessor.BeginDispose( ref exceptions );
                 deactivatedSource = _deactivated;
+                storage = _storage;
             }
 
             EmitErrors( ref exceptions, traceId );
             EmitError( await processorTask.AsSafeNonCancellable().ConfigureAwait( false ), traceId );
-            EmitError( await Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), traceId );
+            EmitError( await storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), traceId );
 
             using ( Client.AcquireLock() )
             {

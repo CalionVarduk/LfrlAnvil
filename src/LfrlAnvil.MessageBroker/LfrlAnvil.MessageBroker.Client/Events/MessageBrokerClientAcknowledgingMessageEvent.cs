@@ -109,7 +109,7 @@ public readonly struct MessageBrokerClientAcknowledgingMessageEvent
     public ulong? MessageTraceId => _data2.BoolValue ? _messageTraceId : null;
 
     /// <summary>
-    /// Specifies whether or not this ACK was initialized automatically by the client.
+    /// Specifies whether this ACK was initialized automatically by the client.
     /// </summary>
     /// <remarks>Applies only if <see cref="Nack"/> is not <b>null</b>.</remarks>
     public bool IsAutomatic => _data1.BoolValue;

@@ -37,12 +37,12 @@ public readonly struct MessageBrokerNegativeAck
     }
 
     /// <summary>
-    /// Specifies whether or not future retries for the message will be skipped.
+    /// Specifies whether future retries for the message will be skipped.
     /// </summary>
     public bool SkipRetry { get; }
 
     /// <summary>
-    /// Specifies whether or not the last failed message attempt should not add it to dead letter.
+    /// Specifies whether the last failed message attempt should not add it to dead letter.
     /// </summary>
     public bool SkipDeadLetter { get; }
 
@@ -56,7 +56,7 @@ public readonly struct MessageBrokerNegativeAck
     /// </summary>
     /// <param name="delay">Custom retry delay. Sub-millisecond components will be trimmed.</param>
     /// <param name="skipDeadLetter">
-    /// Specifies whether or not the last failed message attempt should not add it to dead letter. Equal to <b>false</b> by default.
+    /// Specifies whether the last failed message attempt should not add it to dead letter. Equal to <b>false</b> by default.
     /// </param>
     /// <returns>New <see cref="MessageBrokerNegativeAck"/> instance.</returns>
     /// <exception cref="ArgumentOutOfRangeException">
@@ -75,7 +75,7 @@ public readonly struct MessageBrokerNegativeAck
     /// Creates a negative ACK that skips any future retries for the message.
     /// </summary>
     /// <param name="skipDeadLetter">
-    /// Specifies whether or not the last failed message attempt should not add it to dead letter. Equal to <b>false</b> by default.
+    /// Specifies whether the last failed message attempt should not add it to dead letter. Equal to <b>false</b> by default.
     /// </param>
     /// <returns>New <see cref="MessageBrokerNegativeAck"/> instance.</returns>
     [Pure]

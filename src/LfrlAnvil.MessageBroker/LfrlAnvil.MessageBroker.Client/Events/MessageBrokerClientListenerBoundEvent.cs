@@ -41,12 +41,12 @@ public readonly struct MessageBrokerClientListenerBoundEvent
     public MessageBrokerListener Listener { get; }
 
     /// <summary>
-    /// Specifies whether or not a new channel has been created by the server.
+    /// Specifies whether a new channel has been created by the server.
     /// </summary>
     public bool ChannelCreated { get; }
 
     /// <summary>
-    /// Specifies whether or not a new queue has been created by the server.
+    /// Specifies whether a new queue has been created by the server.
     /// </summary>
     public bool QueueCreated { get; }
 

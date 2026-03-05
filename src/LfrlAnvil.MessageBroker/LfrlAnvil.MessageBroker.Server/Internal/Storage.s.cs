@@ -91,7 +91,7 @@ internal static class Storage
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal void DecrementFailedMessageRefCount(StreamMessage message, int storeKey, ulong traceId)
+        internal void DecrementFailedMessageRefCount(MessageBrokerQueue queue, StreamMessage message, int storeKey, ulong traceId)
         {
             var stream = message.Publisher.Stream;
             if ( Server.Logger.Error is { } error )
@@ -101,7 +101,7 @@ internal static class Storage
                         traceId,
                         Server.StorageException(
                             Path,
-                            Chain.Create( Resources.ListenerDoesNotExist( message.Publisher.Channel, stream, storeKey ) ) ) ) );
+                            Chain.Create( Resources.ListenerDoesNotExist( message.Publisher.Channel, stream, queue, storeKey ) ) ) ) );
 
             using ( stream.AcquireLock() )
                 stream.MessageStore.DecrementRefCount( storeKey );

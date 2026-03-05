@@ -172,17 +172,17 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     public Duration ListenerDisposalTimeout { get; }
 
     /// <summary>
-    /// Specifies whether or not synchronization of external object names is enabled.
+    /// Specifies whether synchronization of external object names is enabled.
     /// </summary>
     public bool SynchronizeExternalObjectNames { get; }
 
     /// <summary>
-    /// Specifies whether or not to clear internal buffers once the client is done using them.
+    /// Specifies whether to clear internal buffers once the client is done using them.
     /// </summary>
     public bool ClearBuffers { get; }
 
     /// <summary>
-    /// Specifies whether or not the client is ephemeral.
+    /// Specifies whether the client is ephemeral.
     /// </summary>
     /// <remarks>Non-ephemeral clients will be persisted by the server when offline.</remarks>
     public bool IsEphemeral { get; }

@@ -40,7 +40,7 @@ public readonly struct MessageBrokerChannelPublisherUnboundEvent
     public MessageBrokerChannelPublisherBinding Publisher { get; }
 
     /// <summary>
-    /// Specifies whether or not removal of the stream bound to the <see cref="Publisher"/> was part of the unbinding operation.
+    /// Specifies whether removal of the stream bound to the <see cref="Publisher"/> was part of the unbinding operation.
     /// </summary>
     public bool StreamRemoved { get; }
 

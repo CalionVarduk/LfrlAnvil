@@ -78,7 +78,7 @@ public readonly struct MessageBrokerQueueUnackedMessage
     /// <summary>
     /// Attempts to retrieve a message from the stream store by the <see cref="StoreKey"/>.
     /// </summary>
-    /// <param name="includeData">Specifies whether or not to include a copy of binary data. Equal to <b>false</b> by default.</param>
+    /// <param name="includeData">Specifies whether to include a copy of binary data. Equal to <b>false</b> by default.</param>
     /// <returns>
     /// <see cref="MessageBrokerStreamMessage"/> instance associated with the <see cref="StoreKey"/>
     /// or <b>null</b> if such a message doesn't exist.

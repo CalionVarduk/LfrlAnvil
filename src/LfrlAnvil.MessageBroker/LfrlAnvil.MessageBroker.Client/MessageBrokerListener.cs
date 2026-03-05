@@ -161,13 +161,13 @@ public sealed class MessageBrokerListener
     public string? FilterExpression { get; }
 
     /// <summary>
-    /// Specifies whether or not the listener is ephemeral.
+    /// Specifies whether the listener is ephemeral.
     /// </summary>
     /// <remarks>Ephemeral listeners will be removed by the server when client disconnects.</remarks>
     public bool IsEphemeral { get; }
 
     /// <summary>
-    /// Specifies whether or not the <see cref="Client"/> is expected to send ACK or negative ACK to the server
+    /// Specifies whether the <see cref="Client"/> is expected to send ACK or negative ACK to the server
     /// in order to confirm message notification.
     /// </summary>
     public bool AreAcksEnabled => MinAckTimeout > Duration.Zero;

@@ -70,7 +70,7 @@ internal struct PacketListener
                 }
             }
 
-            Assume.IsGreaterThanOrEqualTo( client.State, MessageBrokerRemoteClientState.Disposing );
+            Assume.IsGreaterThanOrEqualTo( client.State, MessageBrokerRemoteClientState.Deactivating );
         } );
     }
 
@@ -96,6 +96,9 @@ internal struct PacketListener
             awaitPacket?.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( client ) );
 
             var timeoutToken = default( CancellationToken );
+            bool clearBuffers;
+            short maxBatchPacketCount;
+            int maxNetworkBatchPacketBytes;
             try
             {
                 using ( AcquireActiveLock( client, out var acquired ) )
@@ -103,7 +106,10 @@ internal struct PacketListener
                     if ( ! acquired )
                         return;
 
-                    timeoutToken = client.EventScheduler.ScheduleMaxReadTimeout( client );
+                    clearBuffers = client.GetClearBuffersOption();
+                    maxBatchPacketCount = client.GetMaxBatchPacketCountOption();
+                    maxNetworkBatchPacketBytes = client.GetMaxNetworkBatchPacketBytesOption();
+                    timeoutToken = client.EventScheduler.ScheduleReadTimeout( client, client.GetMaxReadTimeoutOption() );
                 }
 
                 await stream.ReadExactlyAsync( buffer, timeoutToken ).ConfigureAwait( false );
@@ -123,7 +129,7 @@ internal struct PacketListener
                 var batchPoolToken = MemoryPoolToken<byte>.Empty;
                 var batchBuffer = Memory<byte>.Empty;
 
-                if ( client.MaxBatchPacketCount == 0 )
+                if ( maxBatchPacketCount == 0 )
                 {
                     var exc = client.ProtocolException( header, Resources.UnexpectedServerEndpoint );
                     awaitPacket?.Emit( MessageBrokerRemoteClientAwaitPacketEvent.Create( client, header, exception: exc ) );
@@ -131,7 +137,7 @@ internal struct PacketListener
                     return;
                 }
 
-                var packetLength = header.AssertPacketLength( client, client.MaxNetworkBatchPacketBytes );
+                var packetLength = header.AssertPacketLength( client, maxNetworkBatchPacketBytes );
                 if ( packetLength.Exception is not null )
                 {
                     awaitPacket?.Emit(
@@ -145,7 +151,7 @@ internal struct PacketListener
                 {
                     batchPoolToken = client.MemoryPool.Rent(
                         packetLength.Value.Min( client.MemoryPool.SegmentLength ),
-                        client.ClearBuffers,
+                        clearBuffers,
                         out batchBuffer );
 
                     try
@@ -155,7 +161,7 @@ internal struct PacketListener
                         {
                             var oldPoolToken = batchPoolToken;
                             var oldBuffer = batchBuffer;
-                            batchPoolToken = client.Server.MemoryPool.Rent( packetLength.Value, client.ClearBuffers, out batchBuffer );
+                            batchPoolToken = client.Server.MemoryPool.Rent( packetLength.Value, clearBuffers, out batchBuffer );
                             try
                             {
                                 await stream.ReadExactlyAsync( batchBuffer.Slice( oldBuffer.Length ), timeoutToken )
@@ -185,7 +191,7 @@ internal struct PacketListener
                 }
 
                 var batchHeader = Protocol.BatchHeader.Parse( batchBuffer );
-                var errors = batchHeader.StringifyErrors( client.MaxBatchPacketCount );
+                var errors = batchHeader.StringifyErrors( maxBatchPacketCount );
                 if ( errors.Count > 0 )
                 {
                     var error = client.ProtocolException( header, errors );
@@ -300,7 +306,7 @@ internal struct PacketListener
                     {
                         packetPoolToken = client.MemoryPool.Rent(
                             packetLength.Value.Min( client.MemoryPool.SegmentLength ),
-                            client.ClearBuffers,
+                            clearBuffers,
                             out packetBuffer );
 
                         try
@@ -310,10 +316,7 @@ internal struct PacketListener
                             {
                                 var oldPoolToken = packetPoolToken;
                                 var oldBuffer = packetBuffer;
-                                packetPoolToken = client.Server.MemoryPool.Rent(
-                                    packetLength.Value,
-                                    client.ClearBuffers,
-                                    out packetBuffer );
+                                packetPoolToken = client.Server.MemoryPool.Rent( packetLength.Value, clearBuffers, out packetBuffer );
 
                                 try
                                 {

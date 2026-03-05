@@ -45,12 +45,12 @@ public readonly struct MessageBrokerClientPublisherBoundEvent
     public MessageBrokerPublisher Publisher { get; }
 
     /// <summary>
-    /// Specifies whether or not a new channel has been created by the server.
+    /// Specifies whether a new channel has been created by the server.
     /// </summary>
     public bool ChannelCreated { get; }
 
     /// <summary>
-    /// Specifies whether or not a new stream has been created by the server.
+    /// Specifies whether a new stream has been created by the server.
     /// </summary>
     public bool StreamCreated { get; }
 

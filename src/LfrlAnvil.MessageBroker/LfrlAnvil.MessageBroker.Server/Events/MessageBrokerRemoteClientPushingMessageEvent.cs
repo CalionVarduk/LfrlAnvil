@@ -51,7 +51,7 @@ public readonly struct MessageBrokerRemoteClientPushingMessageEvent
     public int ChannelId { get; }
 
     /// <summary>
-    /// Specifies whether or not the client requested confirmation from the server that it successfully handled the message.
+    /// Specifies whether the client requested confirmation from the server that it successfully handled the message.
     /// </summary>
     public bool Confirm { get; }
 

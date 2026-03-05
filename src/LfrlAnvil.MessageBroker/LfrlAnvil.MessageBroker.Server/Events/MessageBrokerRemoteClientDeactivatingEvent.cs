@@ -34,7 +34,7 @@ public readonly struct MessageBrokerRemoteClientDeactivatingEvent
     public MessageBrokerRemoteClientEventSource Source { get; }
 
     /// <summary>
-    /// Specifies whether or not the client should remain active after deactivation is finished.
+    /// Specifies whether the client should remain active after deactivation is finished.
     /// </summary>
     public bool IsAlive { get; }
 

@@ -86,12 +86,12 @@ public readonly struct MessageBrokerRemoteClientProcessingNegativeAckEvent
     public int StreamId => _streamId;
 
     /// <summary>
-    /// Specifies whether or not the client requested to not send retries for the message.
+    /// Specifies whether the client requested to not send retries for the message.
     /// </summary>
     public bool NoRetry => (_flags & 1) != 0;
 
     /// <summary>
-    /// Specifies whether or not the client requested to not store the message in dead letter.
+    /// Specifies whether the client requested to not store the message in dead letter.
     /// </summary>
     public bool NoDeadLetter => (_flags & 2) != 0;
 

@@ -71,7 +71,7 @@ internal struct NotificationSender
             }
         }
 
-        Assume.IsGreaterThanOrEqualTo( client.State, MessageBrokerRemoteClientState.Disposing );
+        Assume.IsGreaterThanOrEqualTo( client.State, MessageBrokerRemoteClientState.Deactivating );
     }
 
     internal void BeginDispose(ref Chain<Exception> exceptions)
@@ -128,6 +128,12 @@ internal struct NotificationSender
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void ResetSignal()
+    {
+        _continuation.Reset();
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static bool TryEnqueueSenderNameUnsafe(
         MessageBrokerRemoteClient client,
         in QueueMessage message,
@@ -137,7 +143,7 @@ internal struct NotificationSender
         if ( ! client.ExternalNameCache.TryUpdate( message.Publisher ) )
             return false;
 
-        var writerSource = client.WriterQueue.AcquireSource( packet, client.ClearBuffers );
+        var writerSource = client.WriterQueue.AcquireSource( packet, client.GetClearBuffersOption() );
         client.NotificationSender._notifications.Enqueue(
             new Notification( in message, default, default, default, default, NotificationType.SenderName, writerSource, poolToken ) );
 
@@ -156,7 +162,7 @@ internal struct NotificationSender
         if ( ! client.ExternalNameCache.TryUpdate( stream ) )
             return false;
 
-        var writerSource = client.WriterQueue.AcquireSource( packet, client.ClearBuffers );
+        var writerSource = client.WriterQueue.AcquireSource( packet, client.GetClearBuffersOption() );
         client.NotificationSender._notifications.Enqueue(
             new Notification( in message, default, default, default, default, NotificationType.StreamName, writerSource, poolToken ) );
 
@@ -194,6 +200,8 @@ internal struct NotificationSender
                 ulong traceId;
                 Notification notification;
                 ReadOnlyMemory<byte> data;
+                short maxBatchPacketCount;
+                int maxNetworkBatchPacketBytes;
                 using ( client.AcquireLock() )
                 {
                     if ( client.IsInactive )
@@ -201,12 +209,14 @@ internal struct NotificationSender
 
                     if ( client.NotificationSender._notifications.IsEmpty )
                     {
-                        client.NotificationSender._continuation.Reset();
+                        client.NotificationSender.ResetSignal();
                         break;
                     }
 
                     notification = client.NotificationSender._notifications.First();
                     data = notification.WriterSource.Data;
+                    maxBatchPacketCount = client.GetMaxBatchPacketCountOption();
+                    maxNetworkBatchPacketBytes = client.GetMaxNetworkBatchPacketBytesOption();
                     traceId = client.GetTraceId();
                 }
 
@@ -239,7 +249,12 @@ internal struct NotificationSender
                                 case WriterSourceResultStatus.Ready:
                                 {
                                     var (packetCount, exception) = await client
-                                        .WritePotentialBatchAsync( packetHeader, data, traceId )
+                                        .WritePotentialBatchAsync(
+                                            packetHeader,
+                                            data,
+                                            maxBatchPacketCount,
+                                            maxNetworkBatchPacketBytes,
+                                            traceId )
                                         .ConfigureAwait( false );
 
                                     if ( exception is not null )
@@ -255,6 +270,7 @@ internal struct NotificationSender
                                 }
                                 case WriterSourceResultStatus.Batched:
                                 {
+                                    Assume.IsGreaterThan( maxBatchPacketCount, 1 );
                                     if ( ! ReleaseBatchedWriter( client, notification.WriterSource, packetHeader, writerResult, traceId ) )
                                         return;
 
@@ -331,7 +347,12 @@ internal struct NotificationSender
                                 case WriterSourceResultStatus.Ready:
                                 {
                                     var (packetCount, exception) = await client
-                                        .WritePotentialBatchAsync( packetHeader, data, traceId )
+                                        .WritePotentialBatchAsync(
+                                            packetHeader,
+                                            data,
+                                            maxBatchPacketCount,
+                                            maxNetworkBatchPacketBytes,
+                                            traceId )
                                         .ConfigureAwait( false );
 
                                     if ( exception is not null )
@@ -347,6 +368,7 @@ internal struct NotificationSender
                                 }
                                 case WriterSourceResultStatus.Batched:
                                 {
+                                    Assume.IsGreaterThan( maxBatchPacketCount, 1 );
                                     if ( ! ReleaseBatchedWriter( client, notification.WriterSource, packetHeader, writerResult, traceId ) )
                                         return;
 
@@ -399,7 +421,6 @@ internal struct NotificationSender
         WriterSourceResult writerResult,
         ulong traceId)
     {
-        Assume.IsGreaterThan( client.MaxBatchPacketCount, 1 );
         Assume.Equals( writerResult.Status, WriterSourceResultStatus.Batched );
 
         if ( client.Logger.SendPacket is { } sendPacket )

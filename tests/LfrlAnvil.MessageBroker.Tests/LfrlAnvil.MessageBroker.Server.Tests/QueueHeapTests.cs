@@ -372,7 +372,7 @@ public class QueueHeapTests : TestsBase
     [Pure]
     private static MessageBrokerQueue CreateQueue(MessageBrokerRemoteClient client, int id)
     {
-        return MessageBrokerQueue.Create( client, id, $"foo_{id}" );
+        return MessageBrokerQueue.Create( client, default, id, $"foo_{id}" );
     }
 
     [Pure]

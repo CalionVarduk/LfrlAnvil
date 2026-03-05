@@ -70,7 +70,7 @@ internal struct ResponseSender
             }
         }
 
-        Assume.IsGreaterThanOrEqualTo( client.State, MessageBrokerRemoteClientState.Disposing );
+        Assume.IsGreaterThanOrEqualTo( client.State, MessageBrokerRemoteClientState.Deactivating );
     }
 
     internal void BeginDispose(ref Chain<Exception> exceptions)
@@ -124,6 +124,12 @@ internal struct ResponseSender
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void ResetSignal()
+    {
+        _continuation.Reset();
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static void EnqueueUnsafe(
         MessageBrokerRemoteClient client,
         Protocol.PacketHeader packetHeader,
@@ -150,6 +156,8 @@ internal struct ResponseSender
             {
                 Entry response;
                 ReadOnlyMemory<byte> data;
+                short maxBatchPacketCount;
+                int maxNetworkBatchPacketBytes;
                 using ( client.AcquireLock() )
                 {
                     if ( client.IsInactive )
@@ -157,6 +165,8 @@ internal struct ResponseSender
 
                     Assume.False( client.ResponseSender._responses.IsEmpty );
                     response = client.ResponseSender._responses.First();
+                    maxBatchPacketCount = client.GetMaxBatchPacketCountOption();
+                    maxNetworkBatchPacketBytes = client.GetMaxNetworkBatchPacketBytesOption();
                     client.ResponseSender._responses.Dequeue();
                     data = response.WriterSource.Data;
                 }
@@ -169,7 +179,12 @@ internal struct ResponseSender
                         case WriterSourceResultStatus.Ready:
                         {
                             var (packetCount, exception) = await client
-                                .WritePotentialBatchAsync( response.PacketHeader, data, response.TraceId )
+                                .WritePotentialBatchAsync(
+                                    response.PacketHeader,
+                                    data,
+                                    maxBatchPacketCount,
+                                    maxNetworkBatchPacketBytes,
+                                    response.TraceId )
                                 .ConfigureAwait( false );
 
                             if ( exception is not null )
@@ -198,7 +213,7 @@ internal struct ResponseSender
                         }
                         case WriterSourceResultStatus.Batched:
                         {
-                            Assume.IsGreaterThan( client.MaxBatchPacketCount, 1 );
+                            Assume.IsGreaterThan( maxBatchPacketCount, 1 );
                             Assume.Equals( writerResult.Status, WriterSourceResultStatus.Batched );
                             if ( client.Logger.SendPacket is { } sendPacket )
                                 sendPacket.Emit(
@@ -251,7 +266,7 @@ internal struct ResponseSender
                 if ( client.IsInactive )
                     return;
 
-                client.ResponseSender._continuation.Reset();
+                client.ResponseSender.ResetSignal();
                 if ( ! client.ResponseSender._responses.IsEmpty )
                     client.ResponseSender.SignalContinuation();
             }

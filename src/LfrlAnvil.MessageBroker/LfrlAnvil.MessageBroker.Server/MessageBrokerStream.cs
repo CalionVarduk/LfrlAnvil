@@ -341,11 +341,8 @@ public sealed class MessageBrokerStream
                     routings = MessageStore.GetRoutings();
                 }
 
-                if ( ! hasPublishers && messages.IsEmpty )
-                {
-                    if ( storageLoaded )
-                        EmitError( await Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), autoDisposalTraceId.Value );
-                }
+                if ( ! hasPublishers && messages.IsEmpty && storageLoaded )
+                    EmitError( await Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), autoDisposalTraceId.Value );
                 else
                 {
                     EmitError(

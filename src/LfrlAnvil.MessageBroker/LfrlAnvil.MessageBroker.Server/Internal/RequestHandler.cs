@@ -71,7 +71,7 @@ internal struct RequestHandler
             }
         }
 
-        Assume.IsGreaterThanOrEqualTo( client.State, MessageBrokerRemoteClientState.Disposing );
+        Assume.IsGreaterThanOrEqualTo( client.State, MessageBrokerRemoteClientState.Deactivating );
     }
 
     internal void Dispose(ref Chain<Exception> exceptions)
@@ -103,6 +103,12 @@ internal struct RequestHandler
     internal void SignalContinuation()
     {
         _continuation.TrySetResult( true );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void ResetSignal()
+    {
+        _continuation.Reset();
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -183,7 +189,7 @@ internal struct RequestHandler
                 if ( client.IsInactive )
                     return;
 
-                client.RequestHandler._continuation.Reset();
+                client.RequestHandler.ResetSignal();
                 if ( client.RequestQueue.IsNotEmpty() )
                     client.RequestHandler.SignalContinuation();
             }
@@ -281,6 +287,8 @@ internal struct RequestHandler
             if ( streamName.Value.Length == 0 )
                 streamName = channelName;
 
+            ServerStorage.Client storage;
+            bool clearBuffers;
             using ( AcquireActiveServerLock( client, traceId, out var serverExc ) )
             {
                 if ( serverExc is not null )
@@ -291,6 +299,8 @@ internal struct RequestHandler
                     if ( exc is not null )
                         return RequestResult.Done();
 
+                    storage = client.GetStorage();
+                    clearBuffers = client.GetClearBuffersOption();
                     channel = ChannelCollection.RegisterUnsafe( client.Server, channelName.Value, out channelCreated );
                     try
                     {
@@ -338,7 +348,7 @@ internal struct RequestHandler
 
                 var responseLength = Protocol.PacketHeader.Length + Protocol.BindPublisherFailureResponse.Payload;
                 var response = new Protocol.BindPublisherFailureResponse( bindResult );
-                responsePoolToken = client.MemoryPool.Rent( responseLength, client.ClearBuffers, out responseData );
+                responsePoolToken = client.MemoryPool.Rent( responseLength, clearBuffers, out responseData );
                 responseHeader = response.Header;
                 response.Serialize( responseData );
             }
@@ -390,14 +400,14 @@ internal struct RequestHandler
                 }
 
                 stream.StartProcessor();
-                await client.Storage.SaveMetadataAsync( publisher, traceId ).ConfigureAwait( false );
+                await storage.SaveMetadataAsync( publisher, clearBuffers, traceId ).ConfigureAwait( false );
                 if ( client.Logger.PublisherBound is { } publisherBound )
                     publisherBound.Emit(
                         MessageBrokerRemoteClientPublisherBoundEvent.Create( publisher, traceId, channelCreated, streamCreated ) );
 
                 var responseLength = Protocol.PacketHeader.Length + Protocol.PublisherBoundResponse.Payload;
                 var response = new Protocol.PublisherBoundResponse( channelCreated, streamCreated, channel.Id, stream.Id );
-                responsePoolToken = client.MemoryPool.Rent( responseLength, client.ClearBuffers, out responseData );
+                responsePoolToken = client.MemoryPool.Rent( responseLength, clearBuffers, out responseData );
                 responseHeader = response.Header;
                 response.Serialize( responseData );
             }
@@ -407,7 +417,7 @@ internal struct RequestHandler
                 if ( exc is not null )
                     return RequestResult.Done();
 
-                writerSource.Activate( responseData, client.ClearBuffers );
+                writerSource.Activate( responseData, clearBuffers );
                 ResponseSender.EnqueueUnsafe( client, responseHeader, writerSource, responsePoolToken, eventType, traceId );
                 responseEnqueued = true;
                 client.ResponseSender.SignalContinuation();
@@ -475,9 +485,14 @@ internal struct RequestHandler
                 unbindingPublisher.Emit(
                     MessageBrokerRemoteClientUnbindingPublisherEvent.Create( client, traceId, parsedRequest.ChannelId ) );
 
+            ServerStorage.Client storage = default;
+            bool clearBuffers;
             var channel = ChannelCollection.TryGetById( client.Server, parsedRequest.ChannelId );
             if ( channel is null )
+            {
                 unbindResult = UnbindResult.NotBound;
+                clearBuffers = client.ClearBuffers;
+            }
             else
             {
                 using ( client.AcquireActiveLock( traceId, out var exc ) )
@@ -485,6 +500,8 @@ internal struct RequestHandler
                     if ( exc is not null )
                         return RequestResult.Done();
 
+                    storage = client.GetStorage();
+                    clearBuffers = client.GetClearBuffersOption();
                     unbindResult = client.BeginUnbindPublisherUnsafe(
                         channel,
                         ref publisher,
@@ -520,7 +537,7 @@ internal struct RequestHandler
 
                 var responseLength = Protocol.PacketHeader.Length + Protocol.UnbindPublisherFailureResponse.Payload;
                 var response = new Protocol.UnbindPublisherFailureResponse( unbindResult );
-                responsePoolToken = client.MemoryPool.Rent( responseLength, client.ClearBuffers, out responseData );
+                responsePoolToken = client.MemoryPool.Rent( responseLength, clearBuffers, out responseData );
                 responseHeader = response.Header;
                 response.Serialize( responseData );
             }
@@ -563,14 +580,14 @@ internal struct RequestHandler
                         await channel.DisposeDueToLackOfReferencesAsync( channelTraceId ).ConfigureAwait( false );
                 }
 
-                await publisher.EndDisposingAsync( traceId ).ConfigureAwait( false );
+                await publisher.EndDisposingAsync( storage, traceId ).ConfigureAwait( false );
                 if ( client.Logger.PublisherUnbound is { } publisherUnbound )
                     publisherUnbound.Emit(
                         MessageBrokerRemoteClientPublisherUnboundEvent.Create( publisher, traceId, disposingChannel, disposingStream ) );
 
                 var responseLength = Protocol.PacketHeader.Length + Protocol.PublisherUnboundResponse.Payload;
                 var response = new Protocol.PublisherUnboundResponse( disposingChannel, disposingStream );
-                responsePoolToken = client.MemoryPool.Rent( responseLength, client.ClearBuffers, out responseData );
+                responsePoolToken = client.MemoryPool.Rent( responseLength, clearBuffers, out responseData );
                 responseHeader = response.Header;
                 response.Serialize( responseData );
             }
@@ -580,7 +597,7 @@ internal struct RequestHandler
                 if ( exc is not null )
                     return RequestResult.Done();
 
-                var writerSource = client.WriterQueue.AcquireSource( responseData, client.ClearBuffers );
+                var writerSource = client.WriterQueue.AcquireSource( responseData, clearBuffers );
                 ResponseSender.EnqueueUnsafe( client, responseHeader, writerSource, responsePoolToken, eventType, traceId );
                 responseEnqueued = true;
                 client.ResponseSender.SignalContinuation();
@@ -751,6 +768,8 @@ internal struct RequestHandler
                 }
             }
 
+            ServerStorage.Client storage;
+            bool clearBuffers;
             using ( AcquireActiveServerLock( client, traceId, out var serverExc ) )
             {
                 if ( serverExc is not null )
@@ -761,6 +780,8 @@ internal struct RequestHandler
                     if ( exc is not null )
                         return RequestResult.Done();
 
+                    storage = client.GetStorage();
+                    clearBuffers = client.GetClearBuffersOption();
                     if ( bindResult == BindResult.Success )
                     {
                         channel = ChannelCollection.TryRegisterUnsafe(
@@ -828,7 +849,7 @@ internal struct RequestHandler
 
                 var responseLength = Protocol.PacketHeader.Length + Protocol.BindListenerFailureResponse.Payload;
                 var response = new Protocol.BindListenerFailureResponse( bindResult );
-                responsePoolToken = client.MemoryPool.Rent( responseLength, client.ClearBuffers, out responseData );
+                responsePoolToken = client.MemoryPool.Rent( responseLength, clearBuffers, out responseData );
                 responseHeader = response.Header;
                 response.Serialize( responseData );
             }
@@ -866,7 +887,9 @@ internal struct RequestHandler
 
                     if ( queueCreated )
                     {
-                        await queue.Storage.SaveMetadataAsync( queue, queueTraceId, skipDisposed: true ).ConfigureAwait( false );
+                        await queue.Storage.SaveMetadataAsync( queue, clearBuffers, queueTraceId, skipDisposed: true )
+                            .ConfigureAwait( false );
+
                         if ( queue.Logger.Created is { } created )
                             created.Emit( MessageBrokerQueueCreatedEvent.Create( queue, queueTraceId ) );
                     }
@@ -876,14 +899,14 @@ internal struct RequestHandler
                 }
 
                 queue.StartProcessor();
-                await client.Storage.SaveMetadataAsync( listener, traceId ).ConfigureAwait( false );
+                await storage.SaveMetadataAsync( listener, clearBuffers, traceId ).ConfigureAwait( false );
                 if ( client.Logger.ListenerBound is { } listenerBound )
                     listenerBound.Emit(
                         MessageBrokerRemoteClientListenerBoundEvent.Create( listener, traceId, channelCreated, queueCreated ) );
 
                 var responseLength = Protocol.PacketHeader.Length + Protocol.ListenerBoundResponse.Payload;
                 var response = new Protocol.ListenerBoundResponse( channelCreated, queueCreated, channel.Id, queue.Id );
-                responsePoolToken = client.MemoryPool.Rent( responseLength, client.ClearBuffers, out responseData );
+                responsePoolToken = client.MemoryPool.Rent( responseLength, clearBuffers, out responseData );
                 responseHeader = response.Header;
                 response.Serialize( responseData );
             }
@@ -893,7 +916,7 @@ internal struct RequestHandler
                 if ( exc is not null )
                     return RequestResult.Done();
 
-                writerSource.Activate( responseData, client.ClearBuffers );
+                writerSource.Activate( responseData, clearBuffers );
                 ResponseSender.EnqueueUnsafe( client, responseHeader, writerSource, responsePoolToken, eventType, traceId );
                 responseEnqueued = true;
                 client.ResponseSender.SignalContinuation();
@@ -962,9 +985,14 @@ internal struct RequestHandler
             MessageBrokerQueue? queue = null;
             UnbindResult unbindResult;
 
+            ServerStorage.Client storage = default;
+            bool clearBuffers;
             var channel = ChannelCollection.TryGetById( client.Server, parsedRequest.ChannelId );
             if ( channel is null )
+            {
                 unbindResult = UnbindResult.NotBound;
+                clearBuffers = client.ClearBuffers;
+            }
             else
             {
                 using ( client.AcquireActiveLock( traceId, out var exc ) )
@@ -972,6 +1000,8 @@ internal struct RequestHandler
                     if ( exc is not null )
                         return RequestResult.Done();
 
+                    storage = client.GetStorage();
+                    clearBuffers = client.GetClearBuffersOption();
                     unbindResult = client.BeginUnbindListenerUnsafe(
                         channel,
                         ref listener,
@@ -1007,7 +1037,7 @@ internal struct RequestHandler
 
                 var responseLength = Protocol.PacketHeader.Length + Protocol.UnbindListenerFailureResponse.Payload;
                 var response = new Protocol.UnbindListenerFailureResponse( unbindResult );
-                responsePoolToken = client.MemoryPool.Rent( responseLength, client.ClearBuffers, out responseData );
+                responsePoolToken = client.MemoryPool.Rent( responseLength, clearBuffers, out responseData );
                 responseHeader = response.Header;
                 response.Serialize( responseData );
             }
@@ -1031,8 +1061,7 @@ internal struct RequestHandler
                             MessageBrokerQueueListenerUnboundEvent.Create( listener, queueTraceId, disposingChannel ) );
 
                     if ( disposingQueue )
-                        await queue.DisposeDueToLackOfReferencesAsync( ignoreProcessorTask: false, queueTraceId )
-                            .ConfigureAwait( false );
+                        await queue.DisposeDueToLackOfReferencesAsync( ignoreProcessorTask: false, queueTraceId ).ConfigureAwait( false );
                 }
 
                 using ( MessageBrokerChannelTraceEvent.CreateScope(
@@ -1051,14 +1080,14 @@ internal struct RequestHandler
                         await channel.DisposeDueToLackOfReferencesAsync( channelTraceId ).ConfigureAwait( false );
                 }
 
-                await listener.EndDisposingAsync( traceId ).ConfigureAwait( false );
+                await listener.EndDisposingAsync( storage, traceId ).ConfigureAwait( false );
                 if ( client.Logger.ListenerUnbound is { } listenerUnbound )
                     listenerUnbound.Emit(
                         MessageBrokerRemoteClientListenerUnboundEvent.Create( listener, traceId, disposingChannel, disposingQueue ) );
 
                 var responseLength = Protocol.PacketHeader.Length + Protocol.ListenerUnboundResponse.Payload;
                 var response = new Protocol.ListenerUnboundResponse( disposingChannel, disposingQueue );
-                responsePoolToken = client.MemoryPool.Rent( responseLength, client.ClearBuffers, out responseData );
+                responsePoolToken = client.MemoryPool.Rent( responseLength, clearBuffers, out responseData );
                 responseHeader = response.Header;
                 response.Serialize( responseData );
             }
@@ -1068,7 +1097,7 @@ internal struct RequestHandler
                 if ( exc is not null )
                     return RequestResult.Done();
 
-                var writerSource = client.WriterQueue.AcquireSource( responseData, client.ClearBuffers );
+                var writerSource = client.WriterQueue.AcquireSource( responseData, clearBuffers );
                 ResponseSender.EnqueueUnsafe( client, responseHeader, writerSource, responsePoolToken, eventType, traceId );
                 responseEnqueued = true;
                 client.ResponseSender.SignalContinuation();
@@ -1115,9 +1144,13 @@ internal struct RequestHandler
                     return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
                 }
 
+                bool clearBuffers;
                 bool hasEnqueuedRouting;
                 using ( client.AcquireLock() )
+                {
+                    clearBuffers = client.GetClearBuffersOption();
                     hasEnqueuedRouting = client.MessageRouting.IsActive;
+                }
 
                 if ( hasEnqueuedRouting )
                 {
@@ -1133,7 +1166,8 @@ internal struct RequestHandler
                     traceId,
                     request.Header,
                     parsedRequest.TargetCount,
-                    request.Data.Slice( Protocol.PushMessageRoutingHeader.Length ).Span );
+                    request.Data.Slice( Protocol.PushMessageRoutingHeader.Length ).Span,
+                    clearBuffers );
             }
             finally
             {
@@ -1196,6 +1230,7 @@ internal struct RequestHandler
             Protocol.PushMessageHeader parsedRequest;
             var messageRouting = MessageRouting.Empty;
             var messageData = Memory<byte>.Empty;
+            bool? clearBuffers = null;
 
             try
             {
@@ -1236,6 +1271,7 @@ internal struct RequestHandler
                     if ( exc is not null )
                         return RequestResult.Done();
 
+                    clearBuffers = client.GetClearBuffersOption();
                     messageRouting = client.MessageRouting;
                     client.MessageRouting = MessageRouting.Empty;
                     if ( client.PublishersByChannelId.TryGet( parsedRequest.ChannelId, out publisher ) )
@@ -1261,6 +1297,8 @@ internal struct RequestHandler
 
                 if ( pushMessageResult != PushMessageResult.Success )
                     messageRouting.PoolToken.Return( client, traceId );
+
+                clearBuffers ??= client.ClearBuffers;
             }
 
             Protocol.PacketHeader responseHeader;
@@ -1287,7 +1325,7 @@ internal struct RequestHandler
 
                 var responseLength = Protocol.PacketHeader.Length + Protocol.MessageRejectedResponse.Payload;
                 var response = new Protocol.MessageRejectedResponse( pushMessageResult );
-                responsePoolToken = client.MemoryPool.Rent( responseLength, client.ClearBuffers, out responseData );
+                responsePoolToken = client.MemoryPool.Rent( responseLength, clearBuffers.Value, out responseData );
                 responseHeader = response.Header;
                 response.Serialize( responseData );
             }
@@ -1327,7 +1365,7 @@ internal struct RequestHandler
 
                 var responseLength = Protocol.PacketHeader.Length + Protocol.MessageAcceptedResponse.Payload;
                 var response = new Protocol.MessageAcceptedResponse( messageId );
-                responsePoolToken = client.MemoryPool.Rent( responseLength, client.ClearBuffers, out responseData );
+                responsePoolToken = client.MemoryPool.Rent( responseLength, clearBuffers.Value, out responseData );
                 responseHeader = response.Header;
                 response.Serialize( responseData );
             }
@@ -1337,7 +1375,7 @@ internal struct RequestHandler
                 if ( exc is not null )
                     return RequestResult.Done();
 
-                var writerSource = client.WriterQueue.AcquireSource( responseData, client.ClearBuffers );
+                var writerSource = client.WriterQueue.AcquireSource( responseData, clearBuffers.Value );
                 ResponseSender.EnqueueUnsafe( client, responseHeader, writerSource, responsePoolToken, eventType, traceId );
                 responseEnqueued = true;
                 client.ResponseSender.SignalContinuation();
@@ -1406,12 +1444,14 @@ internal struct RequestHandler
             var maxReadCount = 0;
             var nextExpirationAt = Timestamp.Zero;
             DeadLetterQueryResult result;
+            bool clearBuffers;
 
             using ( client.AcquireActiveLock( traceId, out var exc ) )
             {
                 if ( exc is not null )
                     return RequestResult.Done();
 
+                clearBuffers = client.GetClearBuffersOption();
                 queue = client.QueueStore.TryGetById( parsedRequest.QueueId );
                 result = queue is not null
                     ? queue.HandleDeadLetterQuery(
@@ -1452,7 +1492,7 @@ internal struct RequestHandler
 
             responsePoolToken = client.MemoryPool.Rent(
                 Protocol.PacketHeader.Length + Protocol.DeadLetterQueryResponse.Payload,
-                client.ClearBuffers,
+                clearBuffers,
                 out var responseData );
 
             var response = new Protocol.DeadLetterQueryResponse( totalCount, maxReadCount, nextExpirationAt );
@@ -1463,7 +1503,7 @@ internal struct RequestHandler
                 if ( exc is not null )
                     return RequestResult.Done();
 
-                var writerSource = client.WriterQueue.AcquireSource( responseData, client.ClearBuffers );
+                var writerSource = client.WriterQueue.AcquireSource( responseData, clearBuffers );
                 ResponseSender.EnqueueUnsafe( client, response.Header, writerSource, responsePoolToken, eventType, traceId );
                 responseEnqueued = true;
                 client.ResponseSender.SignalContinuation();
@@ -1806,7 +1846,7 @@ internal struct RequestHandler
                 if ( exc is not null )
                     return RequestResult.Done();
 
-                var writerSource = client.WriterQueue.AcquireSource( responseData, client.ClearBuffers );
+                var writerSource = client.WriterQueue.AcquireSource( responseData, client.GetClearBuffersOption() );
                 ResponseSender.EnqueueUnsafe( client, response, writerSource, MemoryPoolToken<byte>.Empty, eventType, traceId );
                 responseEnqueued = true;
                 client.ResponseSender.SignalContinuation();

@@ -67,7 +67,7 @@ public readonly struct MessageBrokerQueueMessageProcessedEvent
     public int AckId { get; }
 
     /// <summary>
-    /// Specifies whether or not the data of the message has been removed from the stream's message store
+    /// Specifies whether the data of the message has been removed from the stream's message store
     /// due to no longer being referenced.
     /// </summary>
     public bool MessageRemoved { get; }
@@ -78,7 +78,7 @@ public readonly struct MessageBrokerQueueMessageProcessedEvent
     public Timestamp AckExpiresAt { get; }
 
     /// <summary>
-    /// Specifies whether or not the message is from dead letter.
+    /// Specifies whether the message is from dead letter.
     /// </summary>
     public bool IsFromDeadLetter => AckId < 0;
 

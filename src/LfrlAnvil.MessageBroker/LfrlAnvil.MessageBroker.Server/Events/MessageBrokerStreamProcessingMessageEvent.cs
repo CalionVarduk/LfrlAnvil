@@ -59,7 +59,7 @@ public readonly struct MessageBrokerStreamProcessingMessageEvent
     public int Length { get; }
 
     /// <summary>
-    /// Specifies whether or not this message has explicit routing.
+    /// Specifies whether this message has explicit routing.
     /// </summary>
     public bool HasRouting { get; }
 

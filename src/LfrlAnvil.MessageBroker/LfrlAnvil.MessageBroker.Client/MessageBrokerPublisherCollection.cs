@@ -82,7 +82,7 @@ public readonly struct MessageBrokerPublisherCollection
     /// <param name="streamName">
     /// Optional unique name of the stream to which to push messages. Equal to the provided <paramref name="channelName"/> by default.
     /// </param>
-    /// <param name="isEphemeral">Specifies whether or not the publisher will be ephemeral. Equal to <b>false</b> by default.</param>
+    /// <param name="isEphemeral">Specifies whether the publisher will be ephemeral. Equal to <b>false</b> by default.</param>
     /// <returns>
     /// A task that represents the operation, which returns a <see cref="Result{T}"/> instance,
     /// with underlying <see cref="MessageBrokerBindPublisherResult"/> instance.

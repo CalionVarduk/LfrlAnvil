@@ -57,9 +57,6 @@ internal struct QueueMessageStore
         Assume.True( discarded.IsEmpty );
         Assume.IsGreaterThan( discarded.Capacity, 0 );
 
-        // TODO: TESTS
-        // - inactive listener blocks the queue, no matter the type of message (including next event calculation)
-
         var unackedNode = Unacked.First;
         while ( unackedNode is not null )
         {

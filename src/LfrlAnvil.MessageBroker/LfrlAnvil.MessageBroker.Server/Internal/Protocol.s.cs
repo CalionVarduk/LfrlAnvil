@@ -166,7 +166,8 @@ internal static class Protocol
     internal readonly struct HandshakeAcceptedResponse
     {
         internal const int Payload = sizeof( byte ) + sizeof( ushort ) + sizeof( uint ) * 6;
-        internal readonly PacketHeader Header;
+        internal static PacketHeader Header => PacketHeader.Create( MessageBrokerClientEndpoint.HandshakeAcceptedResponse, Payload );
+
         internal readonly byte Flags;
         internal readonly int Id;
         internal readonly Duration MessageTimeout;
@@ -176,17 +177,21 @@ internal static class Protocol
         internal readonly int MaxBatchPacketCount;
         internal readonly MemorySize MaxNetworkBatchPacketLength;
 
-        internal HandshakeAcceptedResponse(MessageBrokerRemoteClient client)
+        internal HandshakeAcceptedResponse(
+            MessageBrokerRemoteClient client,
+            Duration messageTimeout,
+            Duration pingInterval,
+            short maxBatchPacketCount,
+            int maxNetworkBatchPacketBytes)
         {
-            Header = PacketHeader.Create( MessageBrokerClientEndpoint.HandshakeAcceptedResponse, Payload );
             Flags = ( byte )(BitConverter.IsLittleEndian ? 1 : 0);
             Id = client.Id;
-            MessageTimeout = client.MessageTimeout;
-            PingInterval = client.PingInterval;
+            MessageTimeout = messageTimeout;
+            PingInterval = pingInterval;
             MaxNetworkPacketLength = client.Server.MaxNetworkPacketLength;
             MaxNetworkMessagePacketLength = client.Server.MaxNetworkMessagePacketLength;
-            MaxBatchPacketCount = client.MaxBatchPacketCount;
-            MaxNetworkBatchPacketLength = client.MaxNetworkBatchPacketLength;
+            MaxBatchPacketCount = maxBatchPacketCount;
+            MaxNetworkBatchPacketLength = MemorySize.FromBytes( maxNetworkBatchPacketBytes );
         }
 
         [Pure]
@@ -201,7 +206,8 @@ internal static class Protocol
         {
             Assume.IsGreaterThanOrEqualTo( target.Length, PacketHeader.Length + Payload );
 
-            var payload = Header.Payload;
+            var header = Header;
+            var payload = header.Payload;
             var id = unchecked( ( uint )Id );
             var messageTimeoutMs = unchecked( ( uint )MessageTimeout.FullMilliseconds );
             var pingIntervalMs = unchecked( ( uint )PingInterval.FullMilliseconds );
@@ -223,7 +229,7 @@ internal static class Protocol
             }
 
             var writer = new BinaryContractWriter( target.Span );
-            writer.MoveWrite( Header.EndpointCode );
+            writer.MoveWrite( header.EndpointCode );
             writer.MoveWrite( payload );
             writer.MoveWrite( Flags );
             writer.MoveWrite( id );

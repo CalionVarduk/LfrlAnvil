@@ -62,7 +62,7 @@ public sealed class MessageBrokerChannelPublisherBinding : IMessageBrokerMessage
     public MessageBrokerStream Stream { get; }
 
     /// <summary>
-    /// Specifies whether or not the listener is ephemeral.
+    /// Specifies whether the publisher is ephemeral.
     /// </summary>
     public bool IsEphemeral => _isEphemeral.Value;
 
@@ -143,6 +143,16 @@ public sealed class MessageBrokerChannelPublisherBinding : IMessageBrokerMessage
             $"[{Client.Id}] '{Client.Name}' => [{Channel.Id}] '{Channel.Name}' publisher binding (using [{Stream.Id}] '{Stream.Name}' stream) ({State})";
     }
 
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void MarkAsEphemeral()
+    {
+        using ( AcquireLock() )
+        {
+            if ( _state == MessageBrokerChannelPublisherBindingState.Inactive )
+                _isEphemeral.WriteTrue();
+        }
+    }
+
     internal void OnServerDisposing()
     {
         using ( AcquireLock() )
@@ -178,7 +188,11 @@ public sealed class MessageBrokerChannelPublisherBinding : IMessageBrokerMessage
         }
     }
 
-    internal async ValueTask OnServerDisposedAsync(ulong clientTraceId, bool storageLoaded)
+    internal async ValueTask OnServerDisposedAsync(
+        ServerStorage.Client clientStorage,
+        bool clearBuffers,
+        bool storageLoaded,
+        ulong clientTraceId)
     {
         bool isEphemeral;
         bool autoDisposed;
@@ -199,7 +213,7 @@ public sealed class MessageBrokerChannelPublisherBinding : IMessageBrokerMessage
             if ( state == MessageBrokerChannelPublisherBindingState.Disposing )
             {
                 if ( storageLoaded )
-                    Client.EmitError( await Client.Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), clientTraceId );
+                    Client.EmitError( await clientStorage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), clientTraceId );
 
                 Client.EmitError( await (deactivated?.Task).AsSafeCancellable().ConfigureAwait( false ), clientTraceId );
             }
@@ -219,7 +233,7 @@ public sealed class MessageBrokerChannelPublisherBinding : IMessageBrokerMessage
             }
             else
                 Client.EmitError(
-                    await Client.Storage.SaveMetadataAsync( this, clientTraceId ).AsSafe().ConfigureAwait( false ),
+                    await clientStorage.SaveMetadataAsync( this, clearBuffers, clientTraceId ).AsSafe().ConfigureAwait( false ),
                     clientTraceId );
 
             using ( AcquireLock() )
@@ -235,7 +249,7 @@ public sealed class MessageBrokerChannelPublisherBinding : IMessageBrokerMessage
         }
     }
 
-    internal async ValueTask OnClientDeactivatedAsync(bool keepAlive, ulong clientTraceId)
+    internal async ValueTask OnClientDeactivatedAsync(ServerStorage.Client clientStorage, bool keepAlive, ulong clientTraceId)
     {
         bool dispose;
         bool autoDisposed;
@@ -244,9 +258,11 @@ public sealed class MessageBrokerChannelPublisherBinding : IMessageBrokerMessage
 
         using ( AcquireLock() )
         {
+            state = State;
             Assume.IsGreaterThanOrEqualTo( _state, MessageBrokerChannelPublisherBindingState.Deactivating );
-            Assume.NotEquals( _state, MessageBrokerChannelPublisherBindingState.Inactive );
-            state = _state;
+            if ( state == MessageBrokerChannelPublisherBindingState.Inactive && keepAlive )
+                return;
+
             autoDisposed = _autoDisposed;
             deactivated = _deactivated;
             dispose = IsEphemeral || ! keepAlive;
@@ -256,7 +272,7 @@ public sealed class MessageBrokerChannelPublisherBinding : IMessageBrokerMessage
         {
             if ( state == MessageBrokerChannelPublisherBindingState.Disposing )
             {
-                Client.EmitError( await Client.Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), clientTraceId );
+                Client.EmitError( await clientStorage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), clientTraceId );
                 Client.EmitError( await (deactivated?.Task).AsSafeCancellable().ConfigureAwait( false ), clientTraceId );
             }
 
@@ -275,7 +291,7 @@ public sealed class MessageBrokerChannelPublisherBinding : IMessageBrokerMessage
 
                 await Stream.OnPublisherDisposingAsync( Client, Channel, clientTraceId ).ConfigureAwait( false );
                 await Channel.OnPublisherDisposingAsync( Client, clientTraceId ).ConfigureAwait( false );
-                Client.EmitError( await Client.Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), clientTraceId );
+                Client.EmitError( await clientStorage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), clientTraceId );
 
                 using ( AcquireLock() )
                 {
@@ -309,13 +325,13 @@ public sealed class MessageBrokerChannelPublisherBinding : IMessageBrokerMessage
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal async ValueTask EndDisposingAsync(ulong clientTraceId)
+    internal async ValueTask EndDisposingAsync(ServerStorage.Client clientStorage, ulong clientTraceId)
     {
         TaskCompletionSource? deactivated = null;
         try
         {
             Assume.Equals( State, MessageBrokerChannelPublisherBindingState.Disposing );
-            Client.EmitError( await Client.Storage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), clientTraceId );
+            Client.EmitError( await clientStorage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), clientTraceId );
 
             using ( Client.AcquireLock() )
             {

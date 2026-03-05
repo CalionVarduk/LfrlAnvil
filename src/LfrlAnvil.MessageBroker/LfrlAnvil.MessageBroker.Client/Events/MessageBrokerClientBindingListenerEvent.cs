@@ -81,12 +81,12 @@ public readonly struct MessageBrokerClientBindingListenerEvent
     public int MaxRetries { get; }
 
     /// <summary>
-    /// Specifies whether or not the server should create the channel if it does not exist yet.
+    /// Specifies whether the server should create the channel if it does not exist yet.
     /// </summary>
     public bool CreateChannelIfNotExists { get; }
 
     /// <summary>
-    /// Specifies whether or not the listener will be ephemeral.
+    /// Specifies whether the listener will be ephemeral.
     /// </summary>
     public bool IsEphemeral { get; }
 
@@ -121,7 +121,7 @@ public readonly struct MessageBrokerClientBindingListenerEvent
     public string? FilterExpression { get; }
 
     /// <summary>
-    /// Specifies whether or not the listener has ACKs enabled.
+    /// Specifies whether the listener has ACKs enabled.
     /// </summary>
     public bool AreAcksEnabled => MinAckTimeout > Duration.Zero;
 

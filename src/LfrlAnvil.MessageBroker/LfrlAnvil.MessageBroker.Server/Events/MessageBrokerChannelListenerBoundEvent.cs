@@ -40,7 +40,7 @@ public readonly struct MessageBrokerChannelListenerBoundEvent
     public MessageBrokerChannelListenerBinding Listener { get; }
 
     /// <summary>
-    /// Specifies whether or not creation of the queue bound to the <see cref="Listener"/> was part of the binding operation.
+    /// Specifies whether creation of the queue bound to the <see cref="Listener"/> was part of the binding operation.
     /// </summary>
     public bool QueueCreated { get; }
 

@@ -45,12 +45,12 @@ public readonly struct MessageBrokerClientPublisherUnboundEvent
     public MessageBrokerPublisher Publisher { get; }
 
     /// <summary>
-    /// Specifies whether or not the channel has been removed by the server.
+    /// Specifies whether the channel has been removed by the server.
     /// </summary>
     public bool ChannelRemoved { get; }
 
     /// <summary>
-    /// Specifies whether or not the stream has been removed by the server.
+    /// Specifies whether the stream has been removed by the server.
     /// </summary>
     public bool StreamRemoved { get; }
 
