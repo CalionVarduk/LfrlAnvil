@@ -338,7 +338,8 @@ internal struct RemoteClientCollection
                         publisher,
                         clientTraceId,
                         channelCreated: false,
-                        streamCreated: false ) );
+                        streamCreated: false,
+                        reactivated: false ) );
         }
 
         return Result.Valid;

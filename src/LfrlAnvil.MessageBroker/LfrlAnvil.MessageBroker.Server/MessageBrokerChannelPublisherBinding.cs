@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -141,6 +142,24 @@ public sealed class MessageBrokerChannelPublisherBinding : IMessageBrokerMessage
     {
         return
             $"[{Client.Id}] '{Client.Name}' => [{Channel.Id}] '{Channel.Name}' publisher binding (using [{Stream.Id}] '{Stream.Name}' stream) ({State})";
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool TryReactivate(string streamName, bool isEphemeral)
+    {
+        using ( AcquireLock() )
+        {
+            // TODO
+            // implement rebinding to a different stream
+            if ( _state != MessageBrokerChannelPublisherBindingState.Inactive
+                || ! Stream.Name.Equals( streamName, StringComparison.OrdinalIgnoreCase ) )
+                return false;
+
+            _isEphemeral.Write( isEphemeral );
+            _state = MessageBrokerChannelPublisherBindingState.Running;
+        }
+
+        return true;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -317,11 +336,17 @@ public sealed class MessageBrokerChannelPublisherBinding : IMessageBrokerMessage
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void BeginDisposingUnsafe()
+    internal bool TryBeginDisposingUnsafe()
     {
-        Assume.Equals( _state, MessageBrokerChannelPublisherBindingState.Running );
+        if ( IsInactive )
+        {
+            if ( _state != MessageBrokerChannelPublisherBindingState.Inactive )
+                return false;
+        }
+
         _state = MessageBrokerChannelPublisherBindingState.Disposing;
         _deactivated = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
+        return true;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

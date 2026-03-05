@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ internal enum PushMessageResult : byte
 {
     Success = 0,
     NotBound = 1,
-    StreamDisposed = 2,
-    BindingDisposed = 3
+    BindingInactive = 2,
+    StreamDisposed = 3,
+    BindingDisposed = 4
 }

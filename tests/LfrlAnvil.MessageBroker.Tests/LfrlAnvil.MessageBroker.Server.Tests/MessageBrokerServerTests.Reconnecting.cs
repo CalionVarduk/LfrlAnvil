@@ -812,16 +812,18 @@ public partial class MessageBrokerServerTests
         //   if it itself is ephemeral
 
         // TODO: tests
-        // - rebind publisher
-        // - rebind publisher as ephemeral
-        // - rebind publisher to different stream => throws
-        // - send message via inactive publisher => fails
-        // - unbind non-ephemeral publisher => deletes it
+        // x rebind publisher
+        // x rebind ephemeral publisher
+        // x rebind publisher as ephemeral
+        // o rebind publisher to different stream => throws
+        // x send message via inactive publisher => fails
+        // x unbind inactive publisher => allow
         // - rebind listener
+        // - rebind ephemeral listener
         // - rebind listener as ephemeral (& different settings)
-        // - rebind listener to different queue => throws
+        // o rebind listener to different queue => throws
         // - inactive listener receives message from publisher
-        // - unbind non-ephemeral listener => deletes it
+        // - unbind inactive listener => allow
         // - rebind listener causes messages targeted for it to start being sent (2 tests, same server instance and after server restart)
         //   test pending/unacked/retries/dead-letter at the same time, in a single test (verify order)
         //   unacked messages' expiration is ignored and they should be sent immediately, only retries respect timers

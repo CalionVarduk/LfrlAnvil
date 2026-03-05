@@ -1156,4 +1156,76 @@ public class MessageBrokerStreamTests : TestsBase, IClassFixture<SharedResourceF
                     ] ) )
             .Go();
     }
+
+    [Fact]
+    public async Task PushMessage_ShouldBeIgnoredForInactivePublisher()
+    {
+        using var storage = StorageScope.Create();
+        storage.WriteServerMetadata();
+        storage.WriteChannelMetadata( channelId: 1, channelName: "foo" );
+        storage.WriteStreamMetadata( streamId: 1, streamName: "foo" );
+        storage.WriteStreamMessages( streamId: 1, messages: [ ] );
+        storage.WriteClientMetadata( clientId: 1, clientName: "test" );
+        storage.WritePublisherMetadata( clientId: 1, channelId: 1, streamId: 1 );
+
+        var endSource = new SafeTaskCompletionSource();
+        var clientLogs = new ClientEventLogger();
+
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetRootStoragePath( storage.Path )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.PushMessage )
+                                endSource.Complete();
+                        } ) ) ) );
+
+        await server.StartAsync();
+
+        var remoteClient = server.Clients.TryGetById( 1 );
+        var binding = remoteClient?.Publishers.TryGetByChannelId( 1 );
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server, isEphemeral: false );
+        await client.GetTask( c =>
+        {
+            c.SendPushMessage( channelId: 1, data: [ 1 ] );
+            c.ReadMessageRejectedResponse();
+        } );
+
+        await endSource.Task;
+
+        Assertion.All(
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.State.TestEquals( MessageBrokerRemoteClientState.Running ),
+                    c.Publishers.Count.TestEquals( 1 ) ) ),
+                binding.TestNotNull( p => Assertion.All(
+                    "publisher",
+                    p.State.TestEquals( MessageBrokerChannelPublisherBindingState.Inactive ) ) ),
+                clientLogs.GetAll()
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:PushMessage] Client = [1] 'test', TraceId = 3 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 3, Packet = (PushMessage, Length = 11)",
+                            "[PushingMessage] Client = [1] 'test', TraceId = 3, Length = 1, ChannelId = 1, Confirm = True",
+                            """
+                            [Error] Client = [1] 'test', TraceId = 3
+                            LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerChannelPublisherBindingDeactivatedException: Operation has been cancelled because publisher binding between client [1] 'test' and channel [1] 'foo' is deactivated.
+                            """,
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 3, Packet = (MessageRejectedResponse, Length = 6)",
+                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 3, Packet = (MessageRejectedResponse, Length = 6)",
+                            "[Trace:PushMessage] Client = [1] 'test', TraceId = 3 (end)"
+                        ] )
+                    ] ) )
+            .Go();
+    }
 }

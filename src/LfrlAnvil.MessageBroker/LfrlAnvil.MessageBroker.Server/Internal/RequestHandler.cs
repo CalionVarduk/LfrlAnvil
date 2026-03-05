@@ -218,6 +218,7 @@ internal struct RequestHandler
             ulong streamTraceId = 0;
             MessageBrokerChannel channel;
             MessageBrokerStream? stream = null;
+            MessageBrokerChannelPublisherBinding? existingPublisher = null;
             MessageBrokerChannelPublisherBinding? publisher = null;
             BindResult bindResult;
             WriterQueue.TaskSource writerSource;
@@ -309,6 +310,7 @@ internal struct RequestHandler
                             channelCreated,
                             streamName.Value,
                             isEphemeral,
+                            ref existingPublisher,
                             ref publisher,
                             ref channelTraceId,
                             ref stream,
@@ -400,10 +402,20 @@ internal struct RequestHandler
                 }
 
                 stream.StartProcessor();
-                await storage.SaveMetadataAsync( publisher, clearBuffers, traceId ).ConfigureAwait( false );
+
+                if ( isEphemeral )
+                    await storage.DeleteAsync( publisher ).ConfigureAwait( false );
+                else
+                    await storage.SaveMetadataAsync( publisher, clearBuffers, traceId ).ConfigureAwait( false );
+
                 if ( client.Logger.PublisherBound is { } publisherBound )
                     publisherBound.Emit(
-                        MessageBrokerRemoteClientPublisherBoundEvent.Create( publisher, traceId, channelCreated, streamCreated ) );
+                        MessageBrokerRemoteClientPublisherBoundEvent.Create(
+                            publisher,
+                            traceId,
+                            channelCreated,
+                            streamCreated,
+                            reactivated: existingPublisher is not null ) );
 
                 var responseLength = Protocol.PacketHeader.Length + Protocol.PublisherBoundResponse.Payload;
                 var response = new Protocol.PublisherBoundResponse( channelCreated, streamCreated, channel.Id, stream.Id );
@@ -529,7 +541,7 @@ internal struct RequestHandler
                                 : Resources.PublisherNotBound( client, channel ) ),
                         UnbindResult.ChannelDisposed => channel!.DisposedException(),
                         UnbindResult.ParentDisposed => stream!.DisposedException(),
-                        _ => publisher!.DisposedException()
+                        _ => publisher!.DeactivatedException( disposed: true )
                     };
 
                     error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
@@ -1314,7 +1326,8 @@ internal struct RequestHandler
                             null,
                             Resources.PublisherNotBound( client, parsedRequest.ChannelId ) ),
                         PushMessageResult.StreamDisposed => publisher!.Stream.DisposedException(),
-                        _ => publisher!.DisposedException()
+                        PushMessageResult.BindingDisposed => publisher!.DeactivatedException( disposed: true ),
+                        _ => publisher!.DeactivatedException( disposed: false )
                     };
 
                     error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );

@@ -80,10 +80,10 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string PublisherDisposed(MessageBrokerRemoteClient client, MessageBrokerChannel channel)
+    internal static string PublisherDeactivated(MessageBrokerRemoteClient client, MessageBrokerChannel channel, bool disposed)
     {
         return
-            $"Operation has been cancelled because publisher binding between client [{client.Id}] '{client.Name}' and channel [{channel.Id}] '{channel.Name}' is disposed.";
+            $"Operation has been cancelled because publisher binding between client [{client.Id}] '{client.Name}' and channel [{channel.Id}] '{channel.Name}' is {(disposed ? "disposed" : "deactivated")}.";
     }
 
     [Pure]

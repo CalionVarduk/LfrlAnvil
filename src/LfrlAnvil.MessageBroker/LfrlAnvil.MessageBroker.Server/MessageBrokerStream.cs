@@ -159,7 +159,7 @@ public sealed class MessageBrokerStream
             using ( publisher.AcquireLock() )
             {
                 if ( publisher.IsInactive )
-                    return PushMessageResult.BindingDisposed;
+                    return publisher.IsDisposed ? PushMessageResult.BindingDisposed : PushMessageResult.BindingInactive;
 
                 messageId = MessageStore.Add( publisher, token, data, in routing, out storeKey );
             }

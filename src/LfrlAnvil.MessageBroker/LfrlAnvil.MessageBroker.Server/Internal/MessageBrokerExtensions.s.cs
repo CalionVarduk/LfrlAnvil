@@ -200,10 +200,11 @@ internal static class MessageBrokerExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerChannelPublisherBindingDisposedException DisposedException(
-        this MessageBrokerChannelPublisherBinding publisher)
+    internal static MessageBrokerChannelPublisherBindingDeactivatedException DeactivatedException(
+        this MessageBrokerChannelPublisherBinding publisher,
+        bool disposed)
     {
-        return new MessageBrokerChannelPublisherBindingDisposedException( publisher );
+        return new MessageBrokerChannelPublisherBindingDeactivatedException( publisher, disposed );
     }
 
     [Pure]

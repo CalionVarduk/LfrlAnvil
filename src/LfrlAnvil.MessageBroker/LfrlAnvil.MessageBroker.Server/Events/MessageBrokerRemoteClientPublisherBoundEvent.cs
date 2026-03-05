@@ -26,12 +26,14 @@ public readonly struct MessageBrokerRemoteClientPublisherBoundEvent
         MessageBrokerChannelPublisherBinding publisher,
         ulong traceId,
         bool channelCreated,
-        bool streamCreated)
+        bool streamCreated,
+        bool reactivated)
     {
         Source = MessageBrokerRemoteClientEventSource.Create( publisher.Client, traceId );
         Publisher = publisher;
         ChannelCreated = channelCreated;
         StreamCreated = streamCreated;
+        Reactivated = reactivated;
     }
 
     /// <summary>
@@ -55,6 +57,11 @@ public readonly struct MessageBrokerRemoteClientPublisherBoundEvent
     public bool StreamCreated { get; }
 
     /// <summary>
+    /// Specifies whether the publisher existed and was reactivated.
+    /// </summary>
+    public bool Reactivated { get; }
+
+    /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerRemoteClientPublisherBoundEvent"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
@@ -63,8 +70,9 @@ public readonly struct MessageBrokerRemoteClientPublisherBoundEvent
     {
         var channelCreated = ChannelCreated ? " (created)" : string.Empty;
         var streamCreated = StreamCreated ? " (created)" : string.Empty;
+        var reactivated = Reactivated ? " (reactivated)" : string.Empty;
         return
-            $"[PublisherBound] {Source}, Channel = [{Publisher.Channel.Id}] '{Publisher.Channel.Name}'{channelCreated}, Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}'{streamCreated}";
+            $"[PublisherBound] {Source}, Channel = [{Publisher.Channel.Id}] '{Publisher.Channel.Name}'{channelCreated}, Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}'{streamCreated}{reactivated}";
     }
 
     [Pure]
@@ -73,8 +81,9 @@ public readonly struct MessageBrokerRemoteClientPublisherBoundEvent
         MessageBrokerChannelPublisherBinding publisher,
         ulong traceId,
         bool channelCreated,
-        bool streamCreated)
+        bool streamCreated,
+        bool reactivated)
     {
-        return new MessageBrokerRemoteClientPublisherBoundEvent( publisher, traceId, channelCreated, streamCreated );
+        return new MessageBrokerRemoteClientPublisherBoundEvent( publisher, traceId, channelCreated, streamCreated, reactivated );
     }
 }

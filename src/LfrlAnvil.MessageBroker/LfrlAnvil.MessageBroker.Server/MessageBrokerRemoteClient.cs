@@ -624,6 +624,7 @@ public sealed partial class MessageBrokerRemoteClient
         bool channelCreated,
         string streamName,
         bool isEphemeral,
+        ref MessageBrokerChannelPublisherBinding? existingPublisher,
         ref MessageBrokerChannelPublisherBinding? publisher,
         ref ulong channelTraceId,
         ref MessageBrokerStream? stream,
@@ -639,8 +640,9 @@ public sealed partial class MessageBrokerRemoteClient
             if ( token.Exists )
             {
                 publisher = token.GetObject();
+                existingPublisher = publisher;
                 stream = publisher.Stream;
-                return BindResult.AlreadyBound;
+                return publisher.TryReactivate( streamName, isEphemeral ) ? BindResult.Success : BindResult.AlreadyBound;
             }
 
             try
@@ -712,10 +714,9 @@ public sealed partial class MessageBrokerRemoteClient
 
                 using ( publisher.AcquireLock() )
                 {
-                    if ( publisher.IsInactive )
+                    if ( ! publisher.TryBeginDisposingUnsafe() )
                         return UnbindResult.BindingDisposed;
 
-                    publisher.BeginDisposingUnsafe();
                     disposingChannel = channel.TryDisposeByRemovingPublisherUnsafe( Id );
                     disposingStream = stream.TryDisposeByRemovingPublisherUnsafe( Id, channel.Id );
                     channelTraceId = channel.GetTraceId();

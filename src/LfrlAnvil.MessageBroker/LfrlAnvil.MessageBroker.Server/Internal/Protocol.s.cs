@@ -934,7 +934,7 @@ internal static class Protocol
         {
             Assume.IsInRange( result, PushMessageResult.NotBound, PushMessageResult.BindingDisposed );
             Header = PacketHeader.Create( MessageBrokerClientEndpoint.MessageRejectedResponse, Payload );
-            Flags = result == PushMessageResult.BindingDisposed ? ( byte )PushMessageResult.StreamDisposed : ( byte )result;
+            Flags = ( byte )(result <= PushMessageResult.BindingInactive ? 1 : 2);
         }
 
         [Pure]
