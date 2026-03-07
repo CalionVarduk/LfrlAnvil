@@ -18,29 +18,29 @@ using System.Threading;
 namespace LfrlAnvil.MessageBroker.Server.Exceptions;
 
 /// <summary>
-/// Represents an exception thrown when <see cref="MessageBrokerChannelPublisherBinding"/> is in deactivated state.
+/// Represents an exception thrown when <see cref="MessageBrokerChannelListenerBinding"/> is in a deactivated state.
 /// </summary>
-public class MessageBrokerChannelPublisherBindingDeactivatedException : OperationCanceledException
+public class MessageBrokerChannelListenerBindingDeactivatedException : OperationCanceledException
 {
     /// <summary>
-    /// Creates a new <see cref="MessageBrokerChannelPublisherBindingDeactivatedException"/> instance.
+    /// Creates a new <see cref="MessageBrokerChannelListenerBindingDeactivatedException"/> instance.
     /// </summary>
-    /// <param name="publisher">Deactivated <see cref="MessageBrokerChannelPublisherBinding"/>.</param>
+    /// <param name="listener">Deactivated <see cref="MessageBrokerChannelListenerBinding"/>.</param>
     /// <param name="disposed">Specifies whether the publisher has been disposed.</param>
-    public MessageBrokerChannelPublisherBindingDeactivatedException(MessageBrokerChannelPublisherBinding publisher, bool disposed)
-        : base( Resources.PublisherDeactivated( publisher.Client, publisher.Channel, disposed ), new CancellationToken( canceled: true ) )
+    public MessageBrokerChannelListenerBindingDeactivatedException(MessageBrokerChannelListenerBinding listener, bool disposed)
+        : base( Resources.ListenerDeactivated( listener.Client, listener.Channel, disposed ), new CancellationToken( canceled: true ) )
     {
-        Publisher = publisher;
+        Listener = listener;
         Disposed = disposed;
     }
 
     /// <summary>
-    /// Deactivated <see cref="MessageBrokerChannelPublisherBinding"/>.
+    /// Deactivated <see cref="MessageBrokerChannelListenerBinding"/>.
     /// </summary>
-    public MessageBrokerChannelPublisherBinding Publisher { get; }
+    public MessageBrokerChannelListenerBinding Listener { get; }
 
     /// <summary>
-    /// Specifies whether the <see cref="Publisher"/> has been disposed.
+    /// Specifies whether the <see cref="Listener"/> has been disposed.
     /// </summary>
     public bool Disposed { get; }
 }

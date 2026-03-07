@@ -309,7 +309,11 @@ internal struct RemoteClientCollection
 
                 if ( channel.Logger.PublisherBound is { } channelPublisherBound )
                     channelPublisherBound.Emit(
-                        MessageBrokerChannelPublisherBoundEvent.Create( publisher, channelTraceId, streamCreated: false ) );
+                        MessageBrokerChannelPublisherBoundEvent.Create(
+                            publisher,
+                            channelTraceId,
+                            streamCreated: false,
+                            reactivated: false ) );
             }
 
             ulong streamTraceId;
@@ -329,7 +333,11 @@ internal struct RemoteClientCollection
 
                 if ( stream.Logger.PublisherBound is { } streamPublisherBound )
                     streamPublisherBound.Emit(
-                        MessageBrokerStreamPublisherBoundEvent.Create( publisher, streamTraceId, channelCreated: false ) );
+                        MessageBrokerStreamPublisherBoundEvent.Create(
+                            publisher,
+                            streamTraceId,
+                            channelCreated: false,
+                            reactivated: false ) );
             }
 
             if ( client.Logger.PublisherBound is { } publisherBound )
@@ -453,7 +461,11 @@ internal struct RemoteClientCollection
 
                 if ( channel.Logger.ListenerBound is { } channelListenerBound )
                     channelListenerBound.Emit(
-                        MessageBrokerChannelListenerBoundEvent.Create( listener, channelTraceId, queueCreated: false ) );
+                        MessageBrokerChannelListenerBoundEvent.Create(
+                            listener,
+                            channelTraceId,
+                            queueCreated: false,
+                            reactivated: false ) );
             }
 
             ulong queueTraceId;
@@ -472,7 +484,8 @@ internal struct RemoteClientCollection
                     clientTrace.Emit( MessageBrokerQueueClientTraceEvent.Create( queue, queueTraceId, clientTraceId ) );
 
                 if ( queue.Logger.ListenerBound is { } queueListenerBound )
-                    queueListenerBound.Emit( MessageBrokerQueueListenerBoundEvent.Create( listener, queueTraceId, channelCreated: false ) );
+                    queueListenerBound.Emit(
+                        MessageBrokerQueueListenerBoundEvent.Create( listener, queueTraceId, channelCreated: false, reactivated: false ) );
             }
 
             if ( client.Logger.ListenerBound is { } listenerBound )
@@ -481,7 +494,8 @@ internal struct RemoteClientCollection
                         listener,
                         clientTraceId,
                         channelCreated: false,
-                        queueCreated: false ) );
+                        queueCreated: false,
+                        reactivated: false ) );
         }
 
         return Result.Valid;

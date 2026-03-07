@@ -1071,6 +1071,141 @@ public class MessageTests : TestsBase, IClassFixture<SharedResourceFixture>
             .Go();
     }
 
+    [Fact]
+    public async Task Server_ShouldRedeliverMessages_WhenNonEphemeralClientReconnects()
+    {
+        using var storage = StorageScope.Create();
+
+        var firstEndSource = new SafeTaskCompletionSource( completionCount: 3 );
+        var secondEndSource = new SafeTaskCompletionSource( completionCount: 3 );
+        var disposalSource = new SafeTaskCompletionSource();
+        var disposalCount = Atomic.Create( 0 );
+
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetRootStoragePath( storage.Path )
+                .SetClientLoggerFactory( _ => MessageBrokerRemoteClientLogger.Create(
+                    traceEnd: e =>
+                    {
+                        if ( disposalCount.Value == 0 && e.Type == MessageBrokerRemoteClientTraceEventType.Deactivate )
+                        {
+                            disposalCount.Value = 1;
+                            disposalSource.Complete();
+                        }
+                    } ) ) );
+
+        await server.StartAsync();
+
+        var sentMessageIds = new List<ulong?>();
+        var receivedMessages = new List<MessageSnapshot>();
+        MessageBrokerListener disposedListener;
+
+        await using ( var disposedClient = new MessageBrokerClient(
+            ( IPEndPoint )server.LocalEndPoint,
+            "test",
+            MessageBrokerClientOptions.Default
+                .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) )
+                .SetDelaySource( _sharedDelaySource )
+                .SetEphemeral( false ) ) )
+        {
+            await disposedClient.StartAsync();
+
+            await disposedClient.Publishers.BindAsync( "foo" );
+            await disposedClient.Listeners.BindAsync(
+                "foo",
+                (a, _) =>
+                {
+                    lock ( receivedMessages )
+                        receivedMessages.Add( MessageSnapshot.FromArgs( a ) );
+
+                    firstEndSource.Complete();
+                    return ValueTask.CompletedTask;
+                },
+                MessageBrokerListenerOptions.Default
+                    .SetPrefetchHint( 5 )
+                    .SetMaxRedeliveries( 5 ) );
+
+            disposedListener = disposedClient.Listeners.TryGetByChannelId( 1 )!;
+            var publisher = disposedClient.Publishers.TryGetByChannelId( 1 );
+            if ( publisher is not null )
+            {
+                var finalizers = new MessageBrokerPushMessageFinalizer[3];
+
+                var context = publisher.GetPushContext();
+                context.Append( [ 1 ] );
+                finalizers[0] = (await context.EnqueueAsync()).GetValueOrThrow();
+                context = publisher.GetPushContext();
+                context.Append( [ 2, 3 ] );
+                finalizers[1] = (await context.EnqueueAsync()).GetValueOrThrow();
+                context = publisher.GetPushContext();
+                context.Append( [ 4, 5, 6 ] );
+                finalizers[2] = (await context.EnqueueAsync()).GetValueOrThrow();
+
+                foreach ( var f in finalizers )
+                {
+                    var result = await f.PushAsync();
+                    sentMessageIds.Add( result.Value.Id );
+                    f.Context.Dispose();
+                }
+            }
+
+            await firstEndSource.Task;
+        }
+
+        await disposalSource.Task;
+
+        await using var client = new MessageBrokerClient(
+            ( IPEndPoint )server.LocalEndPoint,
+            "test",
+            MessageBrokerClientOptions.Default
+                .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) )
+                .SetDelaySource( _sharedDelaySource )
+                .SetEphemeral( false ) );
+
+        await client.StartAsync();
+
+        await client.Listeners.BindAsync(
+            "foo",
+            (a, _) =>
+            {
+                lock ( receivedMessages )
+                    receivedMessages.Add( MessageSnapshot.FromArgs( a ) );
+
+                secondEndSource.Complete();
+                return ValueTask.CompletedTask;
+            },
+            MessageBrokerListenerOptions.Default
+                .SetPrefetchHint( 5 )
+                .SetMaxRedeliveries( 5 ) );
+
+        var listener = client.Listeners.TryGetByChannelId( 1 )!;
+
+        await secondEndSource.Task;
+
+        var sender = new MessageBrokerExternalObject( 1, "test" );
+        var stream = new MessageBrokerExternalObject( 1, "foo" );
+
+        Assertion.All(
+                sentMessageIds.TestSequence( [ 0UL, 1UL, 2UL ] ),
+                receivedMessages.TestSequence(
+                [
+                    new MessageSnapshot( disposedListener, 0, sender, stream, 0, 0, false, MessageSnapshot.GetData( [ 1 ] ) ),
+                    new MessageSnapshot( disposedListener, 1, sender, stream, 0, 0, false, MessageSnapshot.GetData( [ 2, 3 ] ) ),
+                    new MessageSnapshot( disposedListener, 2, sender, stream, 0, 0, false, MessageSnapshot.GetData( [ 4, 5, 6 ] ) ),
+                    new MessageSnapshot( listener, 0, sender, stream, 0, 1, false, MessageSnapshot.GetData( [ 1 ] ) ),
+                    new MessageSnapshot( listener, 1, sender, stream, 0, 1, false, MessageSnapshot.GetData( [ 2, 3 ] ) ),
+                    new MessageSnapshot( listener, 2, sender, stream, 0, 1, false, MessageSnapshot.GetData( [ 4, 5, 6 ] ) )
+                ] ) )
+            .Go();
+    }
+
     private readonly record struct MessageSnapshot(
         MessageBrokerListener Listener,
         ulong Id,

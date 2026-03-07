@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,11 +22,16 @@ namespace LfrlAnvil.MessageBroker.Server.Events;
 /// </summary>
 public readonly struct MessageBrokerQueueListenerBoundEvent
 {
-    private MessageBrokerQueueListenerBoundEvent(MessageBrokerChannelListenerBinding listener, ulong traceId, bool channelCreated)
+    private MessageBrokerQueueListenerBoundEvent(
+        MessageBrokerChannelListenerBinding listener,
+        ulong traceId,
+        bool channelCreated,
+        bool reactivated)
     {
         Source = MessageBrokerQueueEventSource.Create( listener.Queue, traceId );
         Listener = listener;
         ChannelCreated = channelCreated;
+        Reactivated = reactivated;
     }
 
     /// <summary>
@@ -45,6 +50,11 @@ public readonly struct MessageBrokerQueueListenerBoundEvent
     public bool ChannelCreated { get; }
 
     /// <summary>
+    /// Specifies whether the <see cref="Listener"/> existed and was reactivated.
+    /// </summary>
+    public bool Reactivated { get; }
+
+    /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerQueueListenerBoundEvent"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
@@ -52,7 +62,8 @@ public readonly struct MessageBrokerQueueListenerBoundEvent
     public override string ToString()
     {
         var channelCreated = ChannelCreated ? " (created)" : string.Empty;
-        return $"[ListenerBound] {Source}, Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}'{channelCreated}";
+        var reactivated = Reactivated ? " (reactivated)" : string.Empty;
+        return $"[ListenerBound] {Source}, Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}'{channelCreated}{reactivated}";
     }
 
     [Pure]
@@ -60,8 +71,9 @@ public readonly struct MessageBrokerQueueListenerBoundEvent
     internal static MessageBrokerQueueListenerBoundEvent Create(
         MessageBrokerChannelListenerBinding listener,
         ulong traceId,
-        bool channelCreated)
+        bool channelCreated,
+        bool reactivated)
     {
-        return new MessageBrokerQueueListenerBoundEvent( listener, traceId, channelCreated );
+        return new MessageBrokerQueueListenerBoundEvent( listener, traceId, channelCreated, reactivated );
     }
 }

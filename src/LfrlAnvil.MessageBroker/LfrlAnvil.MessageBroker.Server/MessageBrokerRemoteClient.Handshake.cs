@@ -85,12 +85,7 @@ public sealed partial class MessageBrokerRemoteClient
             finally
             {
                 if ( failed )
-                {
-                    using ( AcquireLock() )
-                        PacketListener.SetUnderlyingTask( null );
-
-                    await DeactivateAsync( traceId ).ConfigureAwait( false );
-                }
+                    await DeactivateAsync( traceId, DeactivationSource.PacketListener ).ConfigureAwait( false );
 
                 if ( Logger.TraceEnd is { } traceEnd )
                     traceEnd.Emit(

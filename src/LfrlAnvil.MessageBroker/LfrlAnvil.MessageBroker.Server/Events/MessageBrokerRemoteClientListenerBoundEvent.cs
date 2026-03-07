@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,12 +26,14 @@ public readonly struct MessageBrokerRemoteClientListenerBoundEvent
         MessageBrokerChannelListenerBinding listener,
         ulong traceId,
         bool channelCreated,
-        bool queueCreated)
+        bool queueCreated,
+        bool reactivated)
     {
         Source = MessageBrokerRemoteClientEventSource.Create( listener.Client, traceId );
         Listener = listener;
         ChannelCreated = channelCreated;
         QueueCreated = queueCreated;
+        Reactivated = reactivated;
     }
 
     /// <summary>
@@ -55,6 +57,11 @@ public readonly struct MessageBrokerRemoteClientListenerBoundEvent
     public bool QueueCreated { get; }
 
     /// <summary>
+    /// Specifies whether the <see cref="Listener"/> existed and was reactivated.
+    /// </summary>
+    public bool Reactivated { get; }
+
+    /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerRemoteClientListenerBoundEvent"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
@@ -63,8 +70,9 @@ public readonly struct MessageBrokerRemoteClientListenerBoundEvent
     {
         var channelCreated = ChannelCreated ? " (created)" : string.Empty;
         var queueCreated = QueueCreated ? " (created)" : string.Empty;
+        var reactivated = Reactivated ? " (reactivated)" : string.Empty;
         return
-            $"[ListenerBound] {Source}, Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}'{channelCreated}, Queue = [{Listener.Queue.Id}] '{Listener.Queue.Name}'{queueCreated}";
+            $"[ListenerBound] {Source}, Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}'{channelCreated}, Queue = [{Listener.Queue.Id}] '{Listener.Queue.Name}'{queueCreated}{reactivated}";
     }
 
     [Pure]
@@ -73,8 +81,9 @@ public readonly struct MessageBrokerRemoteClientListenerBoundEvent
         MessageBrokerChannelListenerBinding listener,
         ulong traceId,
         bool channelCreated,
-        bool queueCreated)
+        bool queueCreated,
+        bool reactivated)
     {
-        return new MessageBrokerRemoteClientListenerBoundEvent( listener, traceId, channelCreated, queueCreated );
+        return new MessageBrokerRemoteClientListenerBoundEvent( listener, traceId, channelCreated, queueCreated, reactivated );
     }
 }

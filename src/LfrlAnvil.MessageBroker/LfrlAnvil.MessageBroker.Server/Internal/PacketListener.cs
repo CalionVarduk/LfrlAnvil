@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -53,10 +53,7 @@ internal struct PacketListener
             {
                 ulong traceId;
                 using ( client.AcquireLock() )
-                {
-                    client.PacketListener._task = null;
                     traceId = client.GetTraceId();
-                }
 
                 using ( MessageBrokerRemoteClientTraceEvent.CreateScope(
                     client,
@@ -66,7 +63,8 @@ internal struct PacketListener
                     if ( client.Logger.Error is { } error )
                         error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
 
-                    await client.DeactivateAsync( traceId ).ConfigureAwait( false );
+                    await client.DeactivateAsync( traceId, MessageBrokerRemoteClient.DeactivationSource.PacketListener )
+                        .ConfigureAwait( false );
                 }
             }
 
@@ -412,15 +410,12 @@ internal struct PacketListener
     {
         ulong traceId;
         using ( client.AcquireLock() )
-        {
-            client.PacketListener._task = null;
             traceId = client.GetTraceId();
-        }
 
         using ( MessageBrokerRemoteClientTraceEvent.CreateScope( client, traceId, MessageBrokerRemoteClientTraceEventType.Unexpected ) )
         {
             poolToken.Return( client, traceId );
-            await client.DeactivateAsync( traceId ).ConfigureAwait( false );
+            await client.DeactivateAsync( traceId, MessageBrokerRemoteClient.DeactivationSource.PacketListener ).ConfigureAwait( false );
         }
     }
 
@@ -442,7 +437,6 @@ internal struct PacketListener
             if ( isCancelException && ! client.TryBeginDeactivate( out isEphemeral ) )
                 return;
 
-            client.PacketListener._task = null;
             traceId = client.GetTraceId();
         }
 
@@ -459,10 +453,13 @@ internal struct PacketListener
                     error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
                 }
 
-                disposeTask = client.DeactivateAsyncCore( traceId, isEphemeral );
+                disposeTask = client.DeactivateAsyncCore(
+                    traceId,
+                    isEphemeral,
+                    MessageBrokerRemoteClient.DeactivationSource.PacketListener );
             }
             else
-                disposeTask = client.DeactivateAsync( traceId );
+                disposeTask = client.DeactivateAsync( traceId, MessageBrokerRemoteClient.DeactivationSource.PacketListener );
 
             await disposeTask.ConfigureAwait( false );
         }

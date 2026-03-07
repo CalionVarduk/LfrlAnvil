@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public readonly struct MessageBrokerRemoteClientPublisherBoundEvent
     public bool StreamCreated { get; }
 
     /// <summary>
-    /// Specifies whether the publisher existed and was reactivated.
+    /// Specifies whether the <see cref="Publisher"/> existed and was reactivated.
     /// </summary>
     public bool Reactivated { get; }
 

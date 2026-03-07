@@ -96,25 +96,25 @@ internal struct QueueMessageStore
             if ( entry.SendAt > now )
                 break;
 
-            if ( entry.Message.Listener.TryIncrementPrefetchCounter( out var disposed ) )
+            var discardReason = MessageBrokerQueueDiscardMessageReason.DisposedRetry;
+            if ( entry.Retry <= entry.Message.Listener.MaxRetries )
             {
-                message = entry.Message;
-                messageType = MessageType.Retry;
-                retry = entry.Retry;
-                lastRedelivery = entry.Redelivery;
-                return true;
+                if ( entry.Message.Listener.TryIncrementPrefetchCounter( out var disposed ) )
+                {
+                    message = entry.Message;
+                    messageType = MessageType.Retry;
+                    retry = entry.Retry;
+                    lastRedelivery = entry.Redelivery;
+                    return true;
+                }
+
+                if ( ! disposed )
+                    break;
             }
+            else
+                discardReason = MessageBrokerQueueDiscardMessageReason.MaxRetriesReached;
 
-            if ( ! disposed )
-                break;
-
-            discarded.Add(
-                new DiscardedMessage(
-                    entry.Message,
-                    entry.Retry,
-                    entry.Redelivery,
-                    MessageBrokerQueueDiscardMessageReason.DisposedRetry ) );
-
+            discarded.Add( new DiscardedMessage( entry.Message, entry.Retry, entry.Redelivery, discardReason ) );
             Retries.Pop();
             if ( discarded.Count >= discarded.Capacity )
                 return false;
@@ -231,7 +231,7 @@ internal struct QueueMessageStore
         if ( unackedNode is not null )
         {
             ref var entry = ref unackedNode.Value.Value;
-            if ( entry.Message.Listener.CanConsumeUnackedOrDeadLetter() )
+            if ( entry.Message.Listener.CanConsumeUnackedOrExpiredDeadLetter() )
                 result = entry.ExpiresAt;
         }
 
@@ -245,7 +245,7 @@ internal struct QueueMessageStore
         if ( ! DeadLetter.IsEmpty )
         {
             ref var entry = ref DeadLetter.First();
-            if ( entry.Message.Listener.CanConsumeUnackedOrDeadLetter() )
+            if ( entry.Message.Listener.CanConsumeUnackedOrExpiredDeadLetter() )
                 result = result.Min( entry.ExpiresAt );
         }
 

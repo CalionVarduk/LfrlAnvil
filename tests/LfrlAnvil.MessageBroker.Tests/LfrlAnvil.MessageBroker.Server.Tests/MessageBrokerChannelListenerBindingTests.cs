@@ -2815,4 +2815,300 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                 storage.FileExists( StorageScope.GetChannelMetadataSubpath( channelId: 1 ) ).TestFalse() )
             .Go();
     }
+
+    [Theory]
+    [InlineData( true )]
+    [InlineData( false )]
+    public async Task Unbind_ShouldUnbindInactiveListener(bool isClientEphemeral)
+    {
+        using var storage = StorageScope.Create();
+        storage.WriteServerMetadata();
+        storage.WriteChannelMetadata( channelId: 1, channelName: "foo" );
+        storage.WriteClientMetadata( clientId: 1, clientName: "test" );
+        storage.WriteQueueMetadata( clientId: 1, queueId: 1, queueName: "foo" );
+        storage.WriteQueuePendingMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteListenerMetadata( clientId: 1, channelId: 1, queueId: 1 );
+
+        var endSource = new SafeTaskCompletionSource();
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetRootStoragePath( storage.Path )
+                .SetClientLoggerFactory( _ => MessageBrokerRemoteClientLogger.Create(
+                    traceEnd: e =>
+                    {
+                        if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindListener )
+                            endSource.Complete();
+                    } ) ) );
+
+        await server.StartAsync();
+
+        var remoteClient = server.Clients.TryGetById( 1 );
+        var binding = remoteClient?.Listeners.TryGetByChannelId( 1 );
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server, isEphemeral: isClientEphemeral );
+        await client.GetTask( c =>
+        {
+            c.SendUnbindListenerRequest( channelId: 1 );
+            c.ReadListenerUnboundResponse();
+        } );
+
+        await endSource.Task;
+
+        Assertion.All(
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Publishers.Count.TestEquals( 0 ) ) ),
+                binding.TestNotNull( p => Assertion.All(
+                    "listener",
+                    p.State.TestEquals( MessageBrokerChannelListenerBindingState.Disposed ),
+                    p.IsEphemeral.TestEquals( isClientEphemeral ) ) ),
+                storage.FileExists( StorageScope.GetListenerMetadataSubpath( clientId: 1, channelId: 1 ) ).TestFalse() )
+            .Go();
+    }
+
+    [Fact]
+    public async Task Rebind_ShouldReactivateInactiveNonEphemeralListener()
+    {
+        using var storage = StorageScope.Create();
+        storage.WriteServerMetadata();
+        storage.WriteChannelMetadata( channelId: 1, channelName: "foo" );
+        storage.WriteClientMetadata( clientId: 1, clientName: "test" );
+        storage.WriteQueueMetadata( clientId: 1, queueId: 1, queueName: "foo" );
+        storage.WriteQueuePendingMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteListenerMetadata(
+            clientId: 1,
+            channelId: 1,
+            queueId: 1,
+            prefetchHint: 3,
+            maxRetries: 1,
+            retryDelay: Duration.FromHours( 1 ),
+            maxRedeliveries: 2,
+            minAckTimeout: Duration.FromHours( 2 ),
+            deadLetterCapacityHint: 4,
+            minDeadLetterRetention: Duration.FromHours( 3 ) );
+
+        var endSource = new SafeTaskCompletionSource();
+        var clientLogs = new ClientEventLogger();
+
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetRootStoragePath( storage.Path )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
+                                endSource.Complete();
+                        } ) ) ) );
+
+        await server.StartAsync();
+
+        var remoteClient = server.Clients.TryGetById( 1 );
+        var binding = remoteClient?.Listeners.TryGetByChannelId( 1 );
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server, isEphemeral: false );
+        await client.GetTask( c =>
+        {
+            c.SendBindListenerRequest( "foo", true, maxRedeliveries: 20, minAckTimeout: Duration.FromHours( 5 ), isEphemeral: false );
+            c.ReadListenerBoundResponse();
+        } );
+
+        await endSource.Task;
+
+        Assertion.All(
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Listeners.Count.TestEquals( 1 ) ) ),
+                binding.TestNotNull( p => Assertion.All(
+                    "listener",
+                    p.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ),
+                    p.IsEphemeral.TestFalse(),
+                    p.PrefetchHint.TestEquals( 1 ),
+                    p.MaxRetries.TestEquals( 0 ),
+                    p.RetryDelay.TestEquals( Duration.Zero ),
+                    p.MaxRedeliveries.TestEquals( 20 ),
+                    p.MinAckTimeout.TestEquals( Duration.FromHours( 5 ) ),
+                    p.DeadLetterCapacityHint.TestEquals( 0 ),
+                    p.MinDeadLetterRetention.TestEquals( Duration.Zero ) ) ),
+                storage.FileExists( StorageScope.GetListenerMetadataSubpath( clientId: 1, channelId: 1 ) ).TestTrue(),
+                clientLogs.GetAll()
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', TraceId = 3 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 3, Packet = (BindListenerRequest, Length = 43)",
+                            "[BindingListener] Client = [1] 'test', TraceId = 3, ChannelName = 'foo', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 20, MinAckTimeout = 18000 second(s), DeadLetter = <disabled>, IsEphemeral = False, CreateChannelIfNotExists = True",
+                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 3, Packet = (BindListenerRequest, Length = 43)",
+                            "[ListenerBound] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [1] 'foo' (reactivated)",
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 3, Packet = (ListenerBoundResponse, Length = 14)",
+                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 3, Packet = (ListenerBoundResponse, Length = 14)",
+                            "[Trace:BindListener] Client = [1] 'test', TraceId = 3 (end)"
+                        ] )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task Rebind_ShouldReactivateInactiveNonEphemeralListener_AsEphemeral()
+    {
+        using var storage = StorageScope.Create();
+        storage.WriteServerMetadata();
+        storage.WriteChannelMetadata( channelId: 1, channelName: "foo" );
+        storage.WriteClientMetadata( clientId: 1, clientName: "test" );
+        storage.WriteQueueMetadata( clientId: 1, queueId: 1, queueName: "foo" );
+        storage.WriteQueuePendingMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteListenerMetadata( clientId: 1, channelId: 1, queueId: 1 );
+
+        var endSource = new SafeTaskCompletionSource();
+        var clientLogs = new ClientEventLogger();
+
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetRootStoragePath( storage.Path )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
+                                endSource.Complete();
+                        } ) ) ) );
+
+        await server.StartAsync();
+
+        var remoteClient = server.Clients.TryGetById( 1 );
+        var binding = remoteClient?.Listeners.TryGetByChannelId( 1 );
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server, isEphemeral: false );
+        await client.GetTask( c =>
+        {
+            c.SendBindListenerRequest( "foo", true, isEphemeral: true );
+            c.ReadListenerBoundResponse();
+        } );
+
+        await endSource.Task;
+
+        Assertion.All(
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Listeners.Count.TestEquals( 1 ) ) ),
+                binding.TestNotNull( p => Assertion.All(
+                    "listener",
+                    p.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ),
+                    p.IsEphemeral.TestTrue() ) ),
+                storage.FileExists( StorageScope.GetListenerMetadataSubpath( clientId: 1, channelId: 1 ) ).TestFalse(),
+                clientLogs.GetAll()
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', TraceId = 3 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 3, Packet = (BindListenerRequest, Length = 43)",
+                            "[BindingListener] Client = [1] 'test', TraceId = 3, ChannelName = 'foo', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = <disabled>, DeadLetter = <disabled>, IsEphemeral = True, CreateChannelIfNotExists = True",
+                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 3, Packet = (BindListenerRequest, Length = 43)",
+                            "[ListenerBound] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [1] 'foo' (reactivated)",
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 3, Packet = (ListenerBoundResponse, Length = 14)",
+                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 3, Packet = (ListenerBoundResponse, Length = 14)",
+                            "[Trace:BindListener] Client = [1] 'test', TraceId = 3 (end)"
+                        ] )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task Rebind_ShouldReactivateInactiveEphemeralListener()
+    {
+        using var storage = StorageScope.Create();
+        storage.WriteServerMetadata();
+        storage.WriteChannelMetadata( channelId: 1, channelName: "foo" );
+        storage.WriteClientMetadata( clientId: 1, clientName: "test" );
+        storage.WriteQueueMetadata( clientId: 1, queueId: 1, queueName: "foo" );
+        storage.WriteQueuePendingMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteListenerMetadata( clientId: 1, channelId: 1, queueId: 1 );
+
+        var endSource = new SafeTaskCompletionSource();
+        var clientLogs = new ClientEventLogger();
+
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetRootStoragePath( storage.Path )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
+                                endSource.Complete();
+                        } ) ) ) );
+
+        await server.StartAsync();
+
+        var remoteClient = server.Clients.TryGetById( 1 );
+        var binding = remoteClient?.Listeners.TryGetByChannelId( 1 );
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server, isEphemeral: true );
+        await client.GetTask( c =>
+        {
+            c.SendBindListenerRequest( "foo", true, isEphemeral: false );
+            c.ReadListenerBoundResponse();
+        } );
+
+        await endSource.Task;
+
+        Assertion.All(
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Listeners.Count.TestEquals( 1 ) ) ),
+                binding.TestNotNull( p => Assertion.All(
+                    "listener",
+                    p.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ),
+                    p.IsEphemeral.TestTrue() ) ),
+                storage.FileExists( StorageScope.GetListenerMetadataSubpath( clientId: 1, channelId: 1 ) ).TestFalse(),
+                clientLogs.GetAll()
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', TraceId = 3 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 3, Packet = (BindListenerRequest, Length = 43)",
+                            "[BindingListener] Client = [1] 'test', TraceId = 3, ChannelName = 'foo', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = <disabled>, DeadLetter = <disabled>, IsEphemeral = True, CreateChannelIfNotExists = True",
+                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 3, Packet = (BindListenerRequest, Length = 43)",
+                            "[ListenerBound] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [1] 'foo' (reactivated)",
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 3, Packet = (ListenerBoundResponse, Length = 14)",
+                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 3, Packet = (ListenerBoundResponse, Length = 14)",
+                            "[Trace:BindListener] Client = [1] 'test', TraceId = 3 (end)"
+                        ] )
+                    ] ) )
+            .Go();
+    }
 }

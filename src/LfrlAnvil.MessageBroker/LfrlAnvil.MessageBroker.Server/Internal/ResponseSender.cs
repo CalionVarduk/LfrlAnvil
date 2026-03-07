@@ -56,17 +56,15 @@ internal struct ResponseSender
         {
             ulong traceId;
             using ( client.AcquireLock() )
-            {
-                client.ResponseSender._task = null;
                 traceId = client.GetTraceId();
-            }
 
             using ( MessageBrokerRemoteClientTraceEvent.CreateScope( client, traceId, MessageBrokerRemoteClientTraceEventType.Unexpected ) )
             {
                 if ( client.Logger.Error is { } error )
                     error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
 
-                await client.DeactivateAsync( traceId ).ConfigureAwait( false );
+                await client.DeactivateAsync( traceId, MessageBrokerRemoteClient.DeactivationSource.ResponseSender )
+                    .ConfigureAwait( false );
             }
         }
 
@@ -189,10 +187,11 @@ internal struct ResponseSender
 
                             if ( exception is not null )
                             {
-                                using ( client.AcquireLock() )
-                                    client.ResponseSender._task = null;
+                                await client.DeactivateAsync(
+                                        response.TraceId,
+                                        MessageBrokerRemoteClient.DeactivationSource.ResponseSender )
+                                    .ConfigureAwait( false );
 
-                                await client.DeactivateAsync( response.TraceId ).ConfigureAwait( false );
                                 return;
                             }
 

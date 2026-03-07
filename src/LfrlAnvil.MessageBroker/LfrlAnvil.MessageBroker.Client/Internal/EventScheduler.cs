@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -68,17 +68,14 @@ internal struct EventScheduler
 
         ulong traceId;
         using ( client.AcquireLock() )
-        {
-            client.EventScheduler._task = null;
             traceId = client.GetTraceId();
-        }
 
         using ( MessageBrokerClientTraceEvent.CreateScope( client, traceId, MessageBrokerClientTraceEventType.Unexpected ) )
         {
             if ( client.Logger.Error is { } error )
                 error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
 
-            await client.DisposeAsync( traceId ).ConfigureAwait( false );
+            await client.DisposeAsync( traceId, MessageBrokerClient.DeactivationSource.EventScheduler ).ConfigureAwait( false );
         }
     }
 

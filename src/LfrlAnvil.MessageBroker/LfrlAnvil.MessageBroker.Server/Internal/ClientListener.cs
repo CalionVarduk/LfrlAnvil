@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -49,17 +49,14 @@ internal struct ClientListener
         {
             ulong traceId;
             using ( server.AcquireLock() )
-            {
-                server.ClientListener._task = null;
                 traceId = server.GetTraceId();
-            }
 
             using ( MessageBrokerServerTraceEvent.CreateScope( server, traceId, MessageBrokerServerTraceEventType.Unexpected ) )
             {
                 if ( server.Logger.Error is { } error )
                     error.Emit( MessageBrokerServerErrorEvent.Create( server, traceId, exc ) );
 
-                await server.DisposeAsync( traceId ).ConfigureAwait( false );
+                await server.DisposeAsync( traceId, ignoreClientListenerTask: true ).ConfigureAwait( false );
             }
         }
 
@@ -102,12 +99,11 @@ internal struct ClientListener
                     if ( ! server.TryBeginDispose() )
                         return;
 
-                    server.ClientListener._task = null;
                     traceId = server.GetTraceId();
                 }
 
                 using ( MessageBrokerServerTraceEvent.CreateScope( server, traceId, MessageBrokerServerTraceEventType.Dispose ) )
-                    await server.DisposeAsyncCore( traceId ).ConfigureAwait( false );
+                    await server.DisposeAsyncCore( traceId, ignoreClientListenerTask: true ).ConfigureAwait( false );
 
                 return;
             }

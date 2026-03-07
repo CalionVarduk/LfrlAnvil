@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,11 +22,16 @@ namespace LfrlAnvil.MessageBroker.Server.Events;
 /// </summary>
 public readonly struct MessageBrokerChannelListenerBoundEvent
 {
-    private MessageBrokerChannelListenerBoundEvent(MessageBrokerChannelListenerBinding listener, ulong traceId, bool queueCreated)
+    private MessageBrokerChannelListenerBoundEvent(
+        MessageBrokerChannelListenerBinding listener,
+        ulong traceId,
+        bool queueCreated,
+        bool reactivated)
     {
         Source = MessageBrokerChannelEventSource.Create( listener.Channel, traceId );
         Listener = listener;
         QueueCreated = queueCreated;
+        Reactivated = reactivated;
     }
 
     /// <summary>
@@ -45,6 +50,11 @@ public readonly struct MessageBrokerChannelListenerBoundEvent
     public bool QueueCreated { get; }
 
     /// <summary>
+    /// Specifies whether the <see cref="Listener"/> existed and was reactivated.
+    /// </summary>
+    public bool Reactivated { get; }
+
+    /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerChannelListenerBoundEvent"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
@@ -52,8 +62,9 @@ public readonly struct MessageBrokerChannelListenerBoundEvent
     public override string ToString()
     {
         var queueCreated = QueueCreated ? " (created)" : string.Empty;
+        var reactivated = Reactivated ? " (reactivated)" : string.Empty;
         return
-            $"[ListenerBound] {Source}, Client = [{Listener.Client.Id}] '{Listener.Client.Name}', Queue = [{Listener.Queue.Id}] '{Listener.Queue.Name}'{queueCreated}";
+            $"[ListenerBound] {Source}, Client = [{Listener.Client.Id}] '{Listener.Client.Name}', Queue = [{Listener.Queue.Id}] '{Listener.Queue.Name}'{queueCreated}{reactivated}";
     }
 
     [Pure]
@@ -61,8 +72,9 @@ public readonly struct MessageBrokerChannelListenerBoundEvent
     internal static MessageBrokerChannelListenerBoundEvent Create(
         MessageBrokerChannelListenerBinding listener,
         ulong traceId,
-        bool queueCreated)
+        bool queueCreated,
+        bool reactivated)
     {
-        return new MessageBrokerChannelListenerBoundEvent( listener, traceId, queueCreated );
+        return new MessageBrokerChannelListenerBoundEvent( listener, traceId, queueCreated, reactivated );
     }
 }

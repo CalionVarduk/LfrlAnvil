@@ -57,17 +57,15 @@ internal struct RequestHandler
         {
             ulong traceId;
             using ( client.AcquireLock() )
-            {
-                client.RequestHandler._task = null;
                 traceId = client.GetTraceId();
-            }
 
             using ( MessageBrokerRemoteClientTraceEvent.CreateScope( client, traceId, MessageBrokerRemoteClientTraceEventType.Unexpected ) )
             {
                 if ( client.Logger.Error is { } error )
                     error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
 
-                await client.DeactivateAsync( traceId ).ConfigureAwait( false );
+                await client.DeactivateAsync( traceId, MessageBrokerRemoteClient.DeactivationSource.RequestHandler )
+                    .ConfigureAwait( false );
             }
         }
 
@@ -378,7 +376,11 @@ internal struct RequestHandler
 
                     if ( channel.Logger.PublisherBound is { } channelPublisherBound )
                         channelPublisherBound.Emit(
-                            MessageBrokerChannelPublisherBoundEvent.Create( publisher, channelTraceId, streamCreated ) );
+                            MessageBrokerChannelPublisherBoundEvent.Create(
+                                publisher,
+                                channelTraceId,
+                                streamCreated,
+                                reactivated: existingPublisher is not null ) );
                 }
 
                 using ( MessageBrokerStreamTraceEvent.CreateScope(
@@ -398,7 +400,11 @@ internal struct RequestHandler
 
                     if ( stream.Logger.PublisherBound is { } streamPublisherBound )
                         streamPublisherBound.Emit(
-                            MessageBrokerStreamPublisherBoundEvent.Create( publisher, streamTraceId, channelCreated ) );
+                            MessageBrokerStreamPublisherBoundEvent.Create(
+                                publisher,
+                                streamTraceId,
+                                channelCreated,
+                                reactivated: existingPublisher is not null ) );
                 }
 
                 stream.StartProcessor();
@@ -573,7 +579,7 @@ internal struct RequestHandler
                             MessageBrokerStreamPublisherUnboundEvent.Create( publisher, streamTraceId, disposingChannel ) );
 
                     if ( disposingStream )
-                        await stream.DisposeDueToLackOfReferencesAsync( ignoreProcessorTask: false, streamTraceId ).ConfigureAwait( false );
+                        await stream.DisposeDueToLackOfReferencesAsync( streamTraceId ).ConfigureAwait( false );
                 }
 
                 using ( MessageBrokerChannelTraceEvent.CreateScope(
@@ -651,6 +657,7 @@ internal struct RequestHandler
             ulong queueTraceId = 0;
             MessageBrokerChannel? channel = null;
             MessageBrokerQueue? queue = null;
+            MessageBrokerChannelListenerBinding? existingListener = null;
             MessageBrokerChannelListenerBinding? listener = null;
             WriterQueue.TaskSource writerSource;
             Result<string> channelName;
@@ -816,6 +823,7 @@ internal struct RequestHandler
                                     isEphemeral,
                                     filterExpressionDelegate,
                                     in parsedRequestHeader,
+                                    ref existingListener,
                                     ref listener,
                                     ref channelTraceId,
                                     ref queue,
@@ -889,7 +897,11 @@ internal struct RequestHandler
 
                     if ( channel.Logger.ListenerBound is { } channelListenerBound )
                         channelListenerBound.Emit(
-                            MessageBrokerChannelListenerBoundEvent.Create( listener, channelTraceId, queueCreated ) );
+                            MessageBrokerChannelListenerBoundEvent.Create(
+                                listener,
+                                channelTraceId,
+                                queueCreated,
+                                reactivated: existingListener is not null ) );
                 }
 
                 using ( MessageBrokerQueueTraceEvent.CreateScope( queue, queueTraceId, MessageBrokerQueueTraceEventType.BindListener ) )
@@ -907,14 +919,29 @@ internal struct RequestHandler
                     }
 
                     if ( queue.Logger.ListenerBound is { } queueListenerBound )
-                        queueListenerBound.Emit( MessageBrokerQueueListenerBoundEvent.Create( listener, queueTraceId, channelCreated ) );
+                        queueListenerBound.Emit(
+                            MessageBrokerQueueListenerBoundEvent.Create(
+                                listener,
+                                queueTraceId,
+                                channelCreated,
+                                reactivated: existingListener is not null ) );
                 }
 
                 queue.StartProcessor();
-                await storage.SaveMetadataAsync( listener, clearBuffers, traceId ).ConfigureAwait( false );
+
+                if ( isEphemeral )
+                    await storage.DeleteAsync( listener ).ConfigureAwait( false );
+                else
+                    await storage.SaveMetadataAsync( listener, clearBuffers, traceId ).ConfigureAwait( false );
+
                 if ( client.Logger.ListenerBound is { } listenerBound )
                     listenerBound.Emit(
-                        MessageBrokerRemoteClientListenerBoundEvent.Create( listener, traceId, channelCreated, queueCreated ) );
+                        MessageBrokerRemoteClientListenerBoundEvent.Create(
+                            listener,
+                            traceId,
+                            channelCreated,
+                            queueCreated,
+                            reactivated: existingListener is not null ) );
 
                 var responseLength = Protocol.PacketHeader.Length + Protocol.ListenerBoundResponse.Payload;
                 var response = new Protocol.ListenerBoundResponse( channelCreated, queueCreated, channel.Id, queue.Id );
@@ -1041,7 +1068,7 @@ internal struct RequestHandler
                                 : Resources.ListenerNotBound( client, channel ) ),
                         UnbindResult.ChannelDisposed => channel!.DisposedException(),
                         UnbindResult.ParentDisposed => queue!.DisposedException(),
-                        _ => listener!.DisposedException()
+                        _ => listener!.DeactivatedException( disposed: true )
                     };
 
                     error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
@@ -1073,7 +1100,7 @@ internal struct RequestHandler
                             MessageBrokerQueueListenerUnboundEvent.Create( listener, queueTraceId, disposingChannel ) );
 
                     if ( disposingQueue )
-                        await queue.DisposeDueToLackOfReferencesAsync( ignoreProcessorTask: false, queueTraceId ).ConfigureAwait( false );
+                        await queue.DisposeDueToLackOfReferencesAsync( queueTraceId ).ConfigureAwait( false );
                 }
 
                 using ( MessageBrokerChannelTraceEvent.CreateScope(
@@ -1644,7 +1671,7 @@ internal struct RequestHandler
                             MessageBrokerQueueAckProcessedEvent.Create( queue, queueTraceId, parsedRequest.AckId, messageRemoved ) );
 
                     if ( disposing )
-                        await queue.DisposeDueToLackOfReferencesAsync( ignoreProcessorTask: false, queueTraceId ).ConfigureAwait( false );
+                        await queue.DisposeDueToLackOfReferencesAsync( queueTraceId ).ConfigureAwait( false );
                 }
 
                 if ( client.Logger.AckProcessed is { } ackProcessed )
@@ -1808,7 +1835,7 @@ internal struct RequestHandler
                                 messageRemoved ) );
 
                     if ( disposing )
-                        await queue.DisposeDueToLackOfReferencesAsync( ignoreProcessorTask: false, queueTraceId ).ConfigureAwait( false );
+                        await queue.DisposeDueToLackOfReferencesAsync( queueTraceId ).ConfigureAwait( false );
                 }
 
                 if ( client.Logger.AckProcessed is { } ackProcessed )
@@ -1916,10 +1943,7 @@ internal struct RequestHandler
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static ValueTask DisposeClientAsync(MessageBrokerRemoteClient client, ulong traceId)
     {
-        using ( client.AcquireLock() )
-            client.RequestHandler._task = null;
-
-        return client.DeactivateAsync( traceId );
+        return client.DeactivateAsync( traceId, MessageBrokerRemoteClient.DeactivationSource.RequestHandler );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

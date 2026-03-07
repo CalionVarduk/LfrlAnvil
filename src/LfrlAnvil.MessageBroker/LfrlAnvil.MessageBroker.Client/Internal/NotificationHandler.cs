@@ -54,17 +54,14 @@ internal struct NotificationHandler
         {
             ulong traceId;
             using ( client.AcquireLock() )
-            {
-                client.NotificationHandler._task = null;
                 traceId = client.GetTraceId();
-            }
 
             using ( MessageBrokerClientTraceEvent.CreateScope( client, traceId, MessageBrokerClientTraceEventType.Unexpected ) )
             {
                 if ( client.Logger.Error is { } error )
                     error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
 
-                await client.DisposeAsync( traceId ).ConfigureAwait( false );
+                await client.DisposeAsync( traceId, MessageBrokerClient.DeactivationSource.NotificationHandler ).ConfigureAwait( false );
             }
         }
 
@@ -553,10 +550,7 @@ internal struct NotificationHandler
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static ValueTask DisposeClientAsync(MessageBrokerClient client, ulong traceId)
     {
-        using ( client.AcquireLock() )
-            client.NotificationHandler._task = null;
-
-        return client.DisposeAsync( traceId );
+        return client.DisposeAsync( traceId, MessageBrokerClient.DeactivationSource.NotificationHandler );
     }
 
     private readonly struct Notification

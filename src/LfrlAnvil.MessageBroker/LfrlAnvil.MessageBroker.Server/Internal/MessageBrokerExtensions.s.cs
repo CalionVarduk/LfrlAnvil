@@ -209,10 +209,11 @@ internal static class MessageBrokerExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerChannelListenerBindingDisposedException DisposedException(
-        this MessageBrokerChannelListenerBinding listener)
+    internal static MessageBrokerChannelListenerBindingDeactivatedException DeactivatedException(
+        this MessageBrokerChannelListenerBinding listener,
+        bool disposed)
     {
-        return new MessageBrokerChannelListenerBindingDisposedException( listener );
+        return new MessageBrokerChannelListenerBindingDeactivatedException( listener, disposed );
     }
 
     [Pure]

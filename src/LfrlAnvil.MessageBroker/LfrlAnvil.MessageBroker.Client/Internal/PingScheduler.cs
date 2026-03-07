@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -54,17 +54,14 @@ internal struct PingScheduler
         {
             ulong traceId;
             using ( client.AcquireLock() )
-            {
-                client.PingScheduler._task = null;
                 traceId = client.GetTraceId();
-            }
 
             using ( MessageBrokerClientTraceEvent.CreateScope( client, traceId, MessageBrokerClientTraceEventType.Unexpected ) )
             {
                 if ( client.Logger.Error is { } error )
                     error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
 
-                await client.DisposeAsync( traceId ).ConfigureAwait( false );
+                await client.DisposeAsync( traceId, MessageBrokerClient.DeactivationSource.PingScheduler ).ConfigureAwait( false );
             }
         }
 
@@ -244,9 +241,6 @@ internal struct PingScheduler
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static ValueTask DisposeClientAsync(MessageBrokerClient client, ulong traceId)
     {
-        using ( client.AcquireLock() )
-            client.PingScheduler._task = null;
-
-        return client.DisposeAsync( traceId );
+        return client.DisposeAsync( traceId, MessageBrokerClient.DeactivationSource.PingScheduler );
     }
 }

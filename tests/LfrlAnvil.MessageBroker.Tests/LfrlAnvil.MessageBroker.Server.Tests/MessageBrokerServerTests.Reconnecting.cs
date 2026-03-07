@@ -802,44 +802,5 @@ public partial class MessageBrokerServerTests
                     queueLogs.GetAll().Skip( 2 ).TestEmpty() )
                 .Go();
         }
-
-        // TODO: features
-        // - rebind publisher handling
-        // - rebind listener handling
-        //   marking as ephemeral may require careful changes, since Inactive state currently means non-ephemeral,
-        //   so check assertions etc.: check IsEphemeral & State assertions (publisher, listener, queue)
-        //   on publisher/listener rebinding, only check if state is Inactive, client should not be allowed to bind as non-ephemeral
-        //   if it itself is ephemeral
-
-        // TODO: tests
-        // x rebind publisher
-        // x rebind ephemeral publisher
-        // x rebind publisher as ephemeral
-        // o rebind publisher to different stream => throws
-        // x send message via inactive publisher => fails
-        // x unbind inactive publisher => allow
-        // - rebind listener
-        // - rebind ephemeral listener
-        // - rebind listener as ephemeral (& different settings)
-        // o rebind listener to different queue => throws
-        // - inactive listener receives message from publisher
-        // - unbind inactive listener => allow
-        // - rebind listener causes messages targeted for it to start being sent (2 tests, same server instance and after server restart)
-        //   test pending/unacked/retries/dead-letter at the same time, in a single test (verify order)
-        //   unacked messages' expiration is ignored and they should be sent immediately, only retries respect timers
-        // - inactive listener blocks the queue, no matter the type of message (including next event calculation)
-        //   this requires an active listener on the same queue, whose messages are to be sent after the inactive listener's
-
-        // TODO: listener options change tests
-        // - listener starts with prefetch hint 2, 2 messages are sent to client, unacked
-        //   client disconnects, inactive listener receives another message
-        //   client reconnects, then binds the same listener with 1 prefetch hint
-        //   should send both unacked messages immediately, should send third message only when both get acked
-        // - listener starts with max-redelivery = max, single message gets sent without acks 3 times
-        //   client disconnects, client reconnects, binds the same listener with max-redelivery = 1
-        //   message should be sent one last time, even though redelivery count exceeds max
-        // - same with max-retries
-        // - what if ACKs are completely disabled? same for retries? I guess send one last time?
-        // - what about dead letter count? they might get marked as exceeded immediately on listener rebind, which is fine
     }
 }

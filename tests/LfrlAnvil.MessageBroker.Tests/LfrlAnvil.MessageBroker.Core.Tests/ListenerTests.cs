@@ -18,7 +18,7 @@ public class ListenerTests : TestsBase, IClassFixture<SharedResourceFixture>
     }
 
     [Fact]
-    public async Task Server_ShouldCreateSubscriptionAndChannel_WhenClientBindsAsListenerToNonExistingChannel()
+    public async Task Server_ShouldCreateListenerAndChannel_WhenClientBindsAsListenerToNonExistingChannel()
     {
         await using var server = new MessageBrokerServer(
             new IPEndPoint( IPAddress.Loopback, 0 ),

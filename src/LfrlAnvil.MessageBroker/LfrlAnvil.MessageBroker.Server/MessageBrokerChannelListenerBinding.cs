@@ -34,13 +34,21 @@ public sealed class MessageBrokerChannelListenerBinding
     private const int InactiveZeroCounterValue = -1;
 
     private readonly object _sync = new object();
-    private readonly MessageBrokerFilterExpressionContext[] _filterPredicateArgs;
-    private readonly Func<MessageBrokerFilterExpressionContext[], bool>? _filterPredicate;
+    private MessageBrokerFilterExpressionContext[] _filterPredicateArgs = Array.Empty<MessageBrokerFilterExpressionContext>();
+    private Func<MessageBrokerFilterExpressionContext[], bool>? _filterPredicate;
+    private string? _filterExpression;
     private TaskCompletionSource? _deactivated;
+    private int _prefetchHint;
+    private int _maxRetries;
+    private int _maxRedeliveries;
+    private int _deadLetterCapacityHint;
+    private Duration _retryDelay;
+    private Duration _minAckTimeout;
+    private Duration _minDeadLetterRetention;
     private InterlockedInt32 _prefetchCounter;
     private InterlockedInt32 _deadLetterCounter;
-    private InterlockedBoolean _isEphemeral;
     private InterlockedInt32 _state;
+    private bool _isEphemeral;
     private bool _autoDisposed;
 
     private MessageBrokerChannelListenerBinding(
@@ -71,19 +79,21 @@ public sealed class MessageBrokerChannelListenerBinding
         Channel = channel;
         Queue = queue;
         _state = new InterlockedInt32( ( int )state );
-        PrefetchHint = prefetchHint;
-        MaxRetries = maxRetries;
-        RetryDelay = retryDelay;
-        MaxRedeliveries = maxRedeliveries;
-        MinAckTimeout = minAckTimeout;
-        DeadLetterCapacityHint = deadLetterCapacityHint;
-        MinDeadLetterRetention = minDeadLetterRetention;
-        _filterPredicateArgs = filterExpression is not null ? [ default ] : Array.Empty<MessageBrokerFilterExpressionContext>();
-        _filterPredicate = filterExpressionDelegate?.Delegate;
-        FilterExpression = filterExpression;
+
+        SetProperties(
+            prefetchHint,
+            maxRetries,
+            retryDelay,
+            maxRedeliveries,
+            minAckTimeout,
+            deadLetterCapacityHint,
+            minDeadLetterRetention,
+            filterExpression,
+            filterExpressionDelegate );
+
         _prefetchCounter = new InterlockedInt32( counter );
         _deadLetterCounter = new InterlockedInt32( counter );
-        _isEphemeral = new InterlockedBoolean( isEphemeral );
+        _isEphemeral = isEphemeral;
     }
 
     /// <summary>
@@ -105,55 +115,118 @@ public sealed class MessageBrokerChannelListenerBinding
     /// Specifies how many messages intended for this listener can be sent by the <see cref="Queue"/>
     /// to the <see cref="Client"/> at the same time.
     /// </summary>
-    public int PrefetchHint { get; }
+    public int PrefetchHint
+    {
+        get
+        {
+            using ( AcquireLock() )
+                return _prefetchHint;
+        }
+    }
 
     /// <summary>
     /// Specifies how many times the <see cref="Queue"/> will attempt to automatically send a message notification retry
     /// when the <see cref="Client"/> responds with a negative ACK, before giving up.
     /// </summary>
-    public int MaxRetries { get; }
+    public int MaxRetries
+    {
+        get
+        {
+            using ( AcquireLock() )
+                return _maxRetries;
+        }
+    }
 
     /// <summary>
     /// Specifies the delay between the <see cref="Queue"/> successfully processing negative ACK sent by the <see cref="Client"/>
     /// and the <see cref="Queue"/> sending a message notification retry.
     /// </summary>
-    public Duration RetryDelay { get; }
+    public Duration RetryDelay
+    {
+        get
+        {
+            using ( AcquireLock() )
+                return _retryDelay;
+        }
+    }
 
     /// <summary>
     /// Specifies how many times the <see cref="Queue"/> will attempt to automatically send a message notification redelivery
     /// when the <see cref="Client"/> fails to respond with either an ACK or a negative ACK in time (see <see cref="MinAckTimeout"/>),
     /// before giving up.
     /// </summary>
-    public int MaxRedeliveries { get; }
+    public int MaxRedeliveries
+    {
+        get
+        {
+            using ( AcquireLock() )
+                return _maxRedeliveries;
+        }
+    }
 
     /// <summary>
     /// Specifies the minimum amount of time that the <see cref="Queue"/> will wait for the <see cref="Client"/>
     /// to send either an ACK or a negative ACK before attempting a message notification redelivery.
     /// Actual ACK timeout may be different due to the state of the <see cref="Queue"/> and other listeners bound to it.
     /// </summary>
-    public Duration MinAckTimeout { get; }
+    public Duration MinAckTimeout
+    {
+        get
+        {
+            using ( AcquireLock() )
+                return _minAckTimeout;
+        }
+    }
 
     /// <summary>
     /// Specifies how many messages intended for this listener can be stored at most by the <see cref="Queue"/>'s dead letter.
     /// Actual capacity may be different due to the state of the <see cref="Queue"/> and other listeners bound to it.
     /// </summary>
-    public int DeadLetterCapacityHint { get; }
+    public int DeadLetterCapacityHint
+    {
+        get
+        {
+            using ( AcquireLock() )
+                return _deadLetterCapacityHint;
+        }
+    }
 
     /// <summary>
     /// Specifies the minimum retention period for messages intended for this listener stored in the <see cref="Queue"/>'s dead letter.
     /// Actual retention period may be different due to the state of the <see cref="Queue"/> and other listeners bound to it.
     /// </summary>
-    public Duration MinDeadLetterRetention { get; }
+    public Duration MinDeadLetterRetention
+    {
+        get
+        {
+            using ( AcquireLock() )
+                return _minDeadLetterRetention;
+        }
+    }
 
     /// <summary>
     /// Specifies message filter expression.
     /// </summary>
-    public string? FilterExpression { get; }
+    public string? FilterExpression
+    {
+        get
+        {
+            using ( AcquireLock() )
+                return _filterExpression;
+        }
+    }
 
     /// <summary>
     /// Specifies whether the listener is ephemeral.
     /// </summary>
-    public bool IsEphemeral => _isEphemeral.Value;
+    public bool IsEphemeral
+    {
+        get
+        {
+            using ( AcquireLock() )
+                return _isEphemeral;
+        }
+    }
 
     /// <summary>
     /// Specifies whether the <see cref="Client"/> is expected to send ACK or negative ACK to the <see cref="Queue"/>
@@ -239,32 +312,73 @@ public sealed class MessageBrokerChannelListenerBinding
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool TryReactivate(
+        string queueName,
+        in Protocol.BindListenerRequestHeader header,
+        string? filterExpression,
+        IParsedExpressionDelegate<MessageBrokerFilterExpressionContext, bool>? filterExpressionDelegate,
+        bool isEphemeral)
+    {
+        using ( AcquireLock() )
+        {
+            // TODO
+            // implement rebinding to a different queue
+            if ( State != MessageBrokerChannelListenerBindingState.Inactive
+                || ! Queue.Name.Equals( queueName, StringComparison.OrdinalIgnoreCase ) )
+                return false;
+
+            SetProperties(
+                header.PrefetchHint,
+                header.MaxRetries,
+                header.RetryDelay,
+                header.MaxRedeliveries,
+                header.MinAckTimeout,
+                header.DeadLetterCapacityHint,
+                header.MinDeadLetterRetention,
+                filterExpression,
+                filterExpressionDelegate );
+
+            ActivatePrefetchCounter();
+            ActivateDeadLetterCounter();
+            _isEphemeral = isEphemeral;
+            _state.Write( ( byte )MessageBrokerChannelPublisherBindingState.Running );
+        }
+
+        return true;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void MarkAsEphemeral()
     {
         using ( AcquireLock() )
         {
             var state = ( MessageBrokerChannelListenerBindingState )_state.Value;
             if ( state == MessageBrokerChannelListenerBindingState.Inactive )
-                _isEphemeral.WriteTrue();
+                _isEphemeral = true;
         }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal bool FilterMessage(in StreamMessage message, ulong queueTraceId)
     {
-        Assume.IsNotNull( _filterPredicate );
-        var context = new MessageBrokerFilterExpressionContext( this, in message );
         MessageBrokerFilterExpressionContext[] args;
+        Func<MessageBrokerFilterExpressionContext[], bool> filterPredicate;
         using ( AcquireLock() )
         {
+            if ( _filterExpression is null )
+                return true;
+
+            Assume.IsNotNull( _filterPredicate );
+            Assume.Equals( _filterPredicateArgs.Length, 1 );
             Assume.Equals( _filterPredicateArgs[0], default );
-            _filterPredicateArgs[0] = context;
             args = _filterPredicateArgs;
+            filterPredicate = _filterPredicate;
+            args[0] = new MessageBrokerFilterExpressionContext( this, in message );
         }
 
         try
         {
-            return _filterPredicate( args );
+            return filterPredicate( args );
         }
         catch ( Exception exc )
         {
@@ -276,7 +390,7 @@ public sealed class MessageBrokerChannelListenerBinding
         finally
         {
             using ( AcquireLock() )
-                _filterPredicateArgs[0] = default;
+                args[0] = default;
         }
     }
 
@@ -346,7 +460,7 @@ public sealed class MessageBrokerChannelListenerBinding
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool CanConsumeUnackedOrDeadLetter()
+    internal bool CanConsumeUnackedOrExpiredDeadLetter()
     {
         var current = _prefetchCounter.Value;
         return current >= 0 || current == DisposedCounterValue;
@@ -451,7 +565,7 @@ public sealed class MessageBrokerChannelListenerBinding
 
             _state.Write( ( int )MessageBrokerChannelListenerBindingState.Disposing );
             _prefetchCounter.Write( DisposedCounterValue );
-            _deadLetterCounter.Write( DisposedCounterValue );
+            _deadLetterCounter.Write( InactiveZeroCounterValue );
             _deactivated = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
             _autoDisposed = true;
         }
@@ -466,7 +580,7 @@ public sealed class MessageBrokerChannelListenerBinding
             if ( State == MessageBrokerChannelListenerBindingState.Disposed )
                 return;
 
-            if ( keepAlive && ! IsEphemeral )
+            if ( keepAlive && ! _isEphemeral )
             {
                 if ( IsInactive )
                     return;
@@ -500,11 +614,11 @@ public sealed class MessageBrokerChannelListenerBinding
 
         using ( AcquireLock() )
         {
-            Assume.IsGreaterThanOrEqualTo( State, MessageBrokerChannelListenerBindingState.Disposing );
             state = State;
+            Assume.IsGreaterThanOrEqualTo( state, MessageBrokerChannelListenerBindingState.Disposing );
             autoDisposed = _autoDisposed;
             deactivated = _deactivated;
-            isEphemeral = IsEphemeral;
+            isEphemeral = _isEphemeral;
         }
 
         if ( ! autoDisposed )
@@ -564,7 +678,7 @@ public sealed class MessageBrokerChannelListenerBinding
 
             autoDisposed = _autoDisposed;
             deactivated = _deactivated;
-            dispose = IsEphemeral || ! keepAlive;
+            dispose = _isEphemeral || ! keepAlive;
         }
 
         if ( ! autoDisposed )
@@ -618,12 +732,19 @@ public sealed class MessageBrokerChannelListenerBinding
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void BeginDisposingUnsafe()
+    internal bool TryBeginDisposingUnsafe()
     {
-        Assume.Equals( State, MessageBrokerChannelListenerBindingState.Running );
+        if ( IsInactive )
+        {
+            if ( State != MessageBrokerChannelListenerBindingState.Inactive )
+                return false;
+        }
+
         _state.Write( ( int )MessageBrokerChannelListenerBindingState.Disposing );
         _prefetchCounter.Write( DisposedCounterValue );
         _deadLetterCounter.Write( InactiveZeroCounterValue );
+        _deactivated = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
+        return true;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -697,5 +818,29 @@ public sealed class MessageBrokerChannelListenerBinding
                 return;
         }
         while ( ! _deadLetterCounter.Write( unchecked( InactiveZeroCounterValue - current ), current ) );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private void SetProperties(
+        int prefetchHint,
+        int maxRetries,
+        Duration retryDelay,
+        int maxRedeliveries,
+        Duration minAckTimeout,
+        int deadLetterCapacityHint,
+        Duration minDeadLetterRetention,
+        string? filterExpression,
+        IParsedExpressionDelegate<MessageBrokerFilterExpressionContext, bool>? filterExpressionDelegate)
+    {
+        _prefetchHint = prefetchHint;
+        _maxRetries = maxRetries;
+        _retryDelay = retryDelay;
+        _maxRedeliveries = maxRedeliveries;
+        _minAckTimeout = minAckTimeout;
+        _deadLetterCapacityHint = deadLetterCapacityHint;
+        _minDeadLetterRetention = minDeadLetterRetention;
+        _filterPredicateArgs = filterExpression is not null ? [ default ] : Array.Empty<MessageBrokerFilterExpressionContext>();
+        _filterPredicate = filterExpressionDelegate?.Delegate;
+        _filterExpression = filterExpression;
     }
 }

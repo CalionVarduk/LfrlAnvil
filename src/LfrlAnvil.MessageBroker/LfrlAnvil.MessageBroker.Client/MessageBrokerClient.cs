@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -989,7 +989,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         return true;
     }
 
-    internal ValueTask DisposeAsync(ulong traceId)
+    internal ValueTask DisposeAsync(ulong traceId, DeactivationSource source = DeactivationSource.Manual)
     {
         using ( AcquireLock() )
         {
@@ -999,10 +999,10 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
             _state = MessageBrokerClientState.Disposing;
         }
 
-        return DisposeAsyncCore( traceId );
+        return DisposeAsyncCore( traceId, source );
     }
 
-    internal async ValueTask DisposeAsyncCore(ulong traceId)
+    internal async ValueTask DisposeAsyncCore(ulong traceId, DeactivationSource source = DeactivationSource.Manual)
     {
         try
         {
@@ -1012,7 +1012,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
             Task? eventSchedulerTask;
             Task? pingSchedulerTask;
             Task? packetListenerTask;
-            Task? messageNotificationsTask;
+            Task? notificationHandlerTask;
             ValueTaskDelaySource? ownedDelaySource;
             var exceptions = Chain<Exception>.Empty;
 
@@ -1022,7 +1022,27 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
                 eventSchedulerTask = EventScheduler.DiscardUnderlyingTask();
                 pingSchedulerTask = PingScheduler.DiscardUnderlyingTask();
                 packetListenerTask = PacketListener.DiscardUnderlyingTask();
-                messageNotificationsTask = NotificationHandler.DiscardUnderlyingTask();
+                notificationHandlerTask = NotificationHandler.DiscardUnderlyingTask();
+
+                switch ( source )
+                {
+                    case DeactivationSource.EventScheduler:
+                        eventSchedulerTask = null;
+                        break;
+
+                    case DeactivationSource.PingScheduler:
+                        pingSchedulerTask = null;
+                        break;
+
+                    case DeactivationSource.PacketListener:
+                        packetListenerTask = null;
+                        break;
+
+                    case DeactivationSource.NotificationHandler:
+                        notificationHandlerTask = null;
+                        break;
+                }
+
                 PingScheduler.Dispose( ref exceptions );
                 EventScheduler.Dispose( ref exceptions );
                 NotificationHandler.BeginDispose( ref exceptions );
@@ -1034,7 +1054,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
             EmitError( await eventSchedulerTask.AsSafeCancellable().ConfigureAwait( false ), traceId );
             EmitError( await pingSchedulerTask.AsSafeCancellable().ConfigureAwait( false ), traceId );
             EmitError( await packetListenerTask.AsSafeCancellable().ConfigureAwait( false ), traceId );
-            EmitError( await messageNotificationsTask.AsSafeCancellable().ConfigureAwait( false ), traceId );
+            EmitError( await notificationHandlerTask.AsSafeCancellable().ConfigureAwait( false ), traceId );
 
             MessageBrokerListener[] listeners;
             MessageBrokerPublisher[] publishers;
@@ -1089,6 +1109,15 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         {
             _disposed.TrySetResult();
         }
+    }
+
+    internal enum DeactivationSource : byte
+    {
+        Manual = 0,
+        EventScheduler = 1,
+        PingScheduler = 2,
+        PacketListener = 3,
+        NotificationHandler = 4
     }
 
     private async ValueTask<Result> WriteAsync(Protocol.PacketHeader header, ReadOnlyMemory<byte> data, ulong traceId)

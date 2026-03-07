@@ -239,7 +239,7 @@ public sealed class MessageBrokerStream
                 publisherUnbound.Emit( MessageBrokerStreamPublisherUnboundEvent.Create( publisher, traceId, channelRemoved: false ) );
 
             if ( dispose )
-                await DisposeDueToLackOfReferencesAsync( ignoreProcessorTask: false, traceId ).ConfigureAwait( false );
+                await DisposeDueToLackOfReferencesAsync( traceId ).ConfigureAwait( false );
         }
     }
 
@@ -392,7 +392,7 @@ public sealed class MessageBrokerStream
         }
     }
 
-    internal async ValueTask DisposeDueToLackOfReferencesAsync(bool ignoreProcessorTask, ulong traceId)
+    internal async ValueTask DisposeDueToLackOfReferencesAsync(ulong traceId, bool ignoreProcessorTask = false)
     {
         try
         {

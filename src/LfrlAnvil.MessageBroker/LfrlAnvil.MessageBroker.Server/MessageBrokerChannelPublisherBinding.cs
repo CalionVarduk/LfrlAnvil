@@ -30,7 +30,7 @@ public sealed class MessageBrokerChannelPublisherBinding : IMessageBrokerMessage
     private readonly object _sync = new object();
     private MessageBrokerChannelPublisherBindingState _state;
     private TaskCompletionSource? _deactivated;
-    private InterlockedBoolean _isEphemeral;
+    private bool _isEphemeral;
     private bool _autoDisposed;
 
     private MessageBrokerChannelPublisherBinding(
@@ -43,7 +43,7 @@ public sealed class MessageBrokerChannelPublisherBinding : IMessageBrokerMessage
         Client = client;
         Channel = channel;
         Stream = stream;
-        _isEphemeral = new InterlockedBoolean( isEphemeral );
+        _isEphemeral = isEphemeral;
         _state = state;
     }
 
@@ -65,7 +65,14 @@ public sealed class MessageBrokerChannelPublisherBinding : IMessageBrokerMessage
     /// <summary>
     /// Specifies whether the publisher is ephemeral.
     /// </summary>
-    public bool IsEphemeral => _isEphemeral.Value;
+    public bool IsEphemeral
+    {
+        get
+        {
+            using ( AcquireLock() )
+                return _isEphemeral;
+        }
+    }
 
     /// <summary>
     /// Current publisher's state.
@@ -155,7 +162,7 @@ public sealed class MessageBrokerChannelPublisherBinding : IMessageBrokerMessage
                 || ! Stream.Name.Equals( streamName, StringComparison.OrdinalIgnoreCase ) )
                 return false;
 
-            _isEphemeral.Write( isEphemeral );
+            _isEphemeral = isEphemeral;
             _state = MessageBrokerChannelPublisherBindingState.Running;
         }
 
@@ -168,7 +175,7 @@ public sealed class MessageBrokerChannelPublisherBinding : IMessageBrokerMessage
         using ( AcquireLock() )
         {
             if ( _state == MessageBrokerChannelPublisherBindingState.Inactive )
-                _isEphemeral.WriteTrue();
+                _isEphemeral = true;
         }
     }
 
@@ -192,7 +199,7 @@ public sealed class MessageBrokerChannelPublisherBinding : IMessageBrokerMessage
             if ( _state == MessageBrokerChannelPublisherBindingState.Disposed )
                 return;
 
-            if ( keepAlive && ! IsEphemeral )
+            if ( keepAlive && ! _isEphemeral )
             {
                 if ( IsInactive )
                     return;
@@ -223,7 +230,7 @@ public sealed class MessageBrokerChannelPublisherBinding : IMessageBrokerMessage
             Assume.IsGreaterThanOrEqualTo( _state, MessageBrokerChannelPublisherBindingState.Disposing );
             state = _state;
             autoDisposed = _autoDisposed;
-            isEphemeral = IsEphemeral;
+            isEphemeral = _isEphemeral;
             deactivated = _deactivated;
         }
 
@@ -277,14 +284,14 @@ public sealed class MessageBrokerChannelPublisherBinding : IMessageBrokerMessage
 
         using ( AcquireLock() )
         {
-            state = State;
+            state = _state;
             Assume.IsGreaterThanOrEqualTo( _state, MessageBrokerChannelPublisherBindingState.Deactivating );
             if ( state == MessageBrokerChannelPublisherBindingState.Inactive && keepAlive )
                 return;
 
             autoDisposed = _autoDisposed;
             deactivated = _deactivated;
-            dispose = IsEphemeral || ! keepAlive;
+            dispose = _isEphemeral || ! keepAlive;
         }
 
         if ( ! autoDisposed )

@@ -57,17 +57,15 @@ internal struct NotificationSender
         {
             ulong traceId;
             using ( client.AcquireLock() )
-            {
-                client.NotificationSender._task = null;
                 traceId = client.GetTraceId();
-            }
 
             using ( MessageBrokerRemoteClientTraceEvent.CreateScope( client, traceId, MessageBrokerRemoteClientTraceEventType.Unexpected ) )
             {
                 if ( client.Logger.Error is { } error )
                     error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
 
-                await client.DeactivateAsync( traceId ).ConfigureAwait( false );
+                await client.DeactivateAsync( traceId, MessageBrokerRemoteClient.DeactivationSource.NotificationSender )
+                    .ConfigureAwait( false );
             }
         }
 
@@ -454,10 +452,7 @@ internal struct NotificationSender
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static ValueTask DisposeClientAsync(MessageBrokerRemoteClient client, ulong traceId)
     {
-        using ( client.AcquireLock() )
-            client.NotificationSender._task = null;
-
-        return client.DeactivateAsync( traceId );
+        return client.DeactivateAsync( traceId, MessageBrokerRemoteClient.DeactivationSource.NotificationSender );
     }
 
     [Pure]

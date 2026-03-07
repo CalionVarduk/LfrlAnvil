@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -91,7 +91,7 @@ public readonly struct MessageBrokerListenerOptions
     /// Specifies how many messages will be stored at most by the dead letter.
     /// </summary>
     /// <remarks>
-    /// This is a min value. Actual value is dependant on all listeners attached to the queue and the state of the queue's dead letter.
+    /// This is a min value. Actual value is dependent on all listeners attached to the queue and the state of the queue's dead letter.
     /// </remarks>
     public int DeadLetterCapacityHint { get; }
 
@@ -104,7 +104,7 @@ public readonly struct MessageBrokerListenerOptions
     /// Specifies the retention period for messages stored in the dead letter.
     /// </summary>
     /// <remarks>
-    /// This is a min value. Actual value is dependant on all listeners attached to the queue and the state of the queue's dead letter.
+    /// This is a min value. Actual value is dependent on all listeners attached to the queue and the state of the queue's dead letter.
     /// </remarks>
     public Duration MinDeadLetterRetention => DeadLetterCapacityHint > 0 ? _minDeadLetterRetention : Duration.Zero;
 
@@ -112,7 +112,7 @@ public readonly struct MessageBrokerListenerOptions
     /// Specifies how many messages intended for the created listener can be sent by the server to the client at the same time.
     /// </summary>
     /// <remarks>
-    /// This is a max potential value. Actual value is dependant on all listeners attached to the queue
+    /// This is a max potential value. Actual value is dependent on all listeners attached to the queue
     /// and all of its currently pending messages.
     /// </remarks>
     public short PrefetchHint => _prefetchHint ?? DefaultPrefetchHint;

@@ -199,7 +199,8 @@ internal struct QueueProcessor
                             {
                                 var messageRemoved = false;
                                 message.Listener.DecrementPrefetchCounter();
-                                if ( message.Listener.DeadLetterCapacityHint > 0 )
+                                var deadLetterCapacityHint = message.Listener.DeadLetterCapacityHint;
+                                if ( deadLetterCapacityHint > 0 )
                                 {
                                     using ( queue.AcquireLock() )
                                     {
@@ -226,7 +227,7 @@ internal struct QueueProcessor
                                             retryNo,
                                             lastRedeliveryNo,
                                             messageRemoved,
-                                            message.Listener.DeadLetterCapacityHint > 0,
+                                            deadLetterCapacityHint > 0,
                                             MessageBrokerQueueDiscardMessageReason.MaxRedeliveriesReached ) );
 
                                 continue;
@@ -282,8 +283,10 @@ internal struct QueueProcessor
                         continue;
                     }
 
+                    // TODO
+                    // when peeking next queue message to process
+                    // acquire listener lock and get all of its relevant options immediately
                     if ( messageType == QueueMessageStore.MessageType.Pending
-                        && message.Listener.FilterExpression is not null
                         && ! message.Listener.FilterMessage( in streamMessage, traceId ) )
                     {
                         message.Listener.DecrementPrefetchCounter();
@@ -522,7 +525,7 @@ internal struct QueueProcessor
                     traceId = queue.GetTraceId();
 
                 using ( MessageBrokerQueueTraceEvent.CreateScope( queue, traceId, MessageBrokerQueueTraceEventType.Deactivate ) )
-                    await queue.DisposeDueToLackOfReferencesAsync( ignoreProcessorTask: true, traceId ).ConfigureAwait( false );
+                    await queue.DisposeDueToLackOfReferencesAsync( traceId, ignoreProcessorTask: true ).ConfigureAwait( false );
 
                 return;
             }

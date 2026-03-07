@@ -39,7 +39,7 @@ namespace LfrlAnvil.MessageBroker.Server;
 // x add to do comments to define what tests to add...
 // x then, write tests
 // x then, add client reconnect
-// - then, add tests for that
+// x then, add tests for that
 // - then, add client delete method
 // - then, add tests for that
 // - done?
@@ -270,7 +270,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     }
 
     /// <summary>
-    /// Attempts to initialise the server and start listening for client connections.
+    /// Attempts to initialize the server and start listening for client connections.
     /// </summary>
     /// <param name="cancellationToken">Optional <see cref="CancellationToken"/>.</param>
     /// <returns>A task that represents the operation, which returns a <see cref="Result"/> instance.</returns>
@@ -280,7 +280,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     /// When this server is not disposed and not in <see cref="MessageBrokerServerState.Created"/> state.
     /// </exception>
     /// <remarks>
-    /// Errors encountered during server initialisation will cause it to be automatically disposed.
+    /// Errors encountered during server initialization will cause it to be automatically disposed.
     /// Returned <see cref="Result"/> will only be valid when the server will successfully start listening for client connections
     /// and proceed to the <see cref="MessageBrokerServerState.Running"/> state.
     /// </remarks>
@@ -541,7 +541,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
         return true;
     }
 
-    internal ValueTask DisposeAsync(ulong traceId)
+    internal ValueTask DisposeAsync(ulong traceId, bool ignoreClientListenerTask = false)
     {
         using ( AcquireLock() )
         {
@@ -551,10 +551,10 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
             _state = MessageBrokerServerState.Disposing;
         }
 
-        return DisposeAsyncCore( traceId );
+        return DisposeAsyncCore( traceId, ignoreClientListenerTask );
     }
 
-    internal async ValueTask DisposeAsyncCore(ulong traceId)
+    internal async ValueTask DisposeAsyncCore(ulong traceId, bool ignoreClientListenerTask = false)
     {
         FileStream? storageLock = null;
         try
@@ -575,7 +575,11 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
                 storageLoaded = _storageLoaded;
                 storageLock = _storageLock;
                 _storageLock = null;
+
                 clientListenerTask = ClientListener.DiscardUnderlyingTask();
+                if ( ignoreClientListenerTask )
+                    clientListenerTask = null;
+
                 try
                 {
                     _listener.Stop();

@@ -761,7 +761,7 @@ public sealed class MessageBrokerQueue
         }
     }
 
-    internal async ValueTask DisposeDueToLackOfReferencesAsync(bool ignoreProcessorTask, ulong traceId)
+    internal async ValueTask DisposeDueToLackOfReferencesAsync(ulong traceId, bool ignoreProcessorTask = false)
     {
         TaskCompletionSource? deactivatedSource = null;
         try

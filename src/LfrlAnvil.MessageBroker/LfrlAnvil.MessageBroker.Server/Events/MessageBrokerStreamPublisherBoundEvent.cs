@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,11 +22,16 @@ namespace LfrlAnvil.MessageBroker.Server.Events;
 /// </summary>
 public readonly struct MessageBrokerStreamPublisherBoundEvent
 {
-    private MessageBrokerStreamPublisherBoundEvent(MessageBrokerChannelPublisherBinding publisher, ulong traceId, bool channelCreated)
+    private MessageBrokerStreamPublisherBoundEvent(
+        MessageBrokerChannelPublisherBinding publisher,
+        ulong traceId,
+        bool channelCreated,
+        bool reactivated)
     {
         Source = MessageBrokerStreamEventSource.Create( publisher.Stream, traceId );
         Publisher = publisher;
         ChannelCreated = channelCreated;
+        Reactivated = reactivated;
     }
 
     /// <summary>
@@ -45,6 +50,11 @@ public readonly struct MessageBrokerStreamPublisherBoundEvent
     public bool ChannelCreated { get; }
 
     /// <summary>
+    /// Specifies whether the <see cref="Publisher"/> existed and was reactivated.
+    /// </summary>
+    public bool Reactivated { get; }
+
+    /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerStreamPublisherBoundEvent"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
@@ -52,8 +62,9 @@ public readonly struct MessageBrokerStreamPublisherBoundEvent
     public override string ToString()
     {
         var channelCreated = ChannelCreated ? " (created)" : string.Empty;
+        var reactivated = Reactivated ? " (reactivated)" : string.Empty;
         return
-            $"[PublisherBound] {Source}, Client = [{Publisher.Client.Id}] '{Publisher.Client.Name}', Channel = [{Publisher.Channel.Id}] '{Publisher.Channel.Name}'{channelCreated}";
+            $"[PublisherBound] {Source}, Client = [{Publisher.Client.Id}] '{Publisher.Client.Name}', Channel = [{Publisher.Channel.Id}] '{Publisher.Channel.Name}'{channelCreated}{reactivated}";
     }
 
     [Pure]
@@ -61,8 +72,9 @@ public readonly struct MessageBrokerStreamPublisherBoundEvent
     internal static MessageBrokerStreamPublisherBoundEvent Create(
         MessageBrokerChannelPublisherBinding publisher,
         ulong traceId,
-        bool channelCreated)
+        bool channelCreated,
+        bool reactivated)
     {
-        return new MessageBrokerStreamPublisherBoundEvent( publisher, traceId, channelCreated );
+        return new MessageBrokerStreamPublisherBoundEvent( publisher, traceId, channelCreated, reactivated );
     }
 }

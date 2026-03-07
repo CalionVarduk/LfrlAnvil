@@ -104,6 +104,63 @@ public class ConnectionTests : TestsBase, IClassFixture<SharedResourceFixture>
     }
 
     [Fact]
+    public async Task Server_ShouldAcceptClientHandshake_WhenNonEphemeralClientReconnects()
+    {
+        using var storage = StorageScope.Create();
+
+        var endSource = new SafeTaskCompletionSource( completionCount: 2 );
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetRootStoragePath( storage.Path )
+                .SetClientLoggerFactory( _ => MessageBrokerRemoteClientLogger.Create(
+                    traceEnd: e =>
+                    {
+                        if ( e.Type == MessageBrokerRemoteClientTraceEventType.Start )
+                            endSource.Complete();
+                    } ) ) );
+
+        await server.StartAsync();
+
+        await using ( var client1 = new MessageBrokerClient(
+            ( IPEndPoint )server.LocalEndPoint,
+            "test",
+            MessageBrokerClientOptions.Default
+                .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredPingInterval( Duration.FromSeconds( 10 ) )
+                .SetDelaySource( _sharedDelaySource )
+                .SetEphemeral( false ) ) )
+        {
+            await client1.StartAsync();
+            var remoteClient1 = server.Clients.TryGetById( 1 );
+            if ( remoteClient1 is not null )
+                await remoteClient1.DisconnectAsync();
+        }
+
+        await using var client2 = new MessageBrokerClient(
+            ( IPEndPoint )server.LocalEndPoint,
+            "test",
+            MessageBrokerClientOptions.Default
+                .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredPingInterval( Duration.FromSeconds( 10 ) )
+                .SetDelaySource( _sharedDelaySource )
+                .SetEphemeral( false ) );
+
+        var result = await client2.StartAsync();
+        await endSource.Task;
+
+        Assertion.All(
+                server.Clients.Count.TestEquals( 1 ),
+                server.Clients.TryGetByName( "test" ).TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Running ) ),
+                result.Exception.TestNull() )
+            .Go();
+    }
+
+    [Fact]
     public async Task ClientDispose_ShouldRemoveClientFromServer()
     {
         var endSource = new SafeTaskCompletionSource();
@@ -138,6 +195,48 @@ public class ConnectionTests : TestsBase, IClassFixture<SharedResourceFixture>
         Assertion.All(
                 remoteClient.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Disposed ) ),
                 server.Clients.Count.TestEquals( 0 ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task ClientDispose_ShouldDeactivateNonEphemeralClientInServer()
+    {
+        using var storage = StorageScope.Create();
+
+        var endSource = new SafeTaskCompletionSource();
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetRootStoragePath( storage.Path )
+                .SetClientLoggerFactory( _ => MessageBrokerRemoteClientLogger.Create(
+                    traceEnd: e =>
+                    {
+                        if ( e.Type == MessageBrokerRemoteClientTraceEventType.Deactivate )
+                            endSource.Complete();
+                    } ) ) );
+
+        await server.StartAsync();
+
+        var client = new MessageBrokerClient(
+            ( IPEndPoint )server.LocalEndPoint,
+            "test",
+            MessageBrokerClientOptions.Default
+                .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) )
+                .SetDelaySource( _sharedDelaySource )
+                .SetEphemeral( false ) );
+
+        await client.StartAsync();
+        var remoteClient = server.Clients.TryGetById( 1 );
+        await client.DisposeAsync();
+        await endSource.Task;
+
+        Assertion.All(
+                remoteClient.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Inactive ) ),
+                server.Clients.Count.TestEquals( 1 ) )
             .Go();
     }
 
