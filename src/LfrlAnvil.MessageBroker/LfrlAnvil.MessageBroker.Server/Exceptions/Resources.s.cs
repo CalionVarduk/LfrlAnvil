@@ -25,6 +25,7 @@ namespace LfrlAnvil.MessageBroker.Server.Exceptions;
 
 internal static class Resources
 {
+    internal const string ServerIsNotRunning = "Operation has been cancelled because server hasn't fully started running.";
     internal const string ServerDisposed = "Operation has been cancelled because server is disposed.";
     internal const string UnexpectedServerEndpoint = "Received unexpected server endpoint.";
     internal const string MessageRoutingIsAlreadyEnqueued = "Message routing is already enqueued.";

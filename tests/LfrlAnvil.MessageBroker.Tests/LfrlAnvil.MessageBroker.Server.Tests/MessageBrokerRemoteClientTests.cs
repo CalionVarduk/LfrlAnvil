@@ -1164,4 +1164,119 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
             ] )
             .Go();
     }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldDeleteNonEphemeralClient()
+    {
+        using var storage = StorageScope.Create();
+
+        var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
+        var clientLogs = new ClientEventLogger();
+
+        await using var server = new MessageBrokerServer(
+            originalEndPoint,
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetRootStoragePath( storage.Path )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger() ) );
+
+        await server.StartAsync();
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server, isEphemeral: false );
+
+        var remoteClient = server.Clients.TryGetById( 1 );
+        if ( remoteClient is not null )
+            await remoteClient.DeleteAsync();
+
+        Assertion.All(
+                remoteClient.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Disposed ) ),
+                server.Clients.Count.TestEquals( 0 ),
+                storage.DirectoryExists( StorageScope.GetClientMetadataSubpath( clientId: 1 ) ).TestFalse(),
+                clientLogs.GetAll()
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:Deactivate] Client = [1] 'test', TraceId = 1 (start)",
+                            "[Deactivating] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', TraceId = 1, IsAlive = False",
+                            "[Trace:Deactivate] Client = [1] 'test', TraceId = 1 (end)"
+                        ] )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldDoNothing_WhenClientIsDisposed()
+    {
+        var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
+        await using var server = new MessageBrokerServer(
+            originalEndPoint,
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource ) );
+
+        await server.StartAsync();
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server );
+
+        var remoteClient = server.Clients.TryGetById( 1 );
+        if ( remoteClient is not null )
+        {
+            await remoteClient.DeleteAsync();
+            await remoteClient.DeleteAsync();
+        }
+
+        Assertion.All(
+                remoteClient.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Disposed ) ),
+                server.Clients.Count.TestEquals( 0 ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldDeleteInactiveClient()
+    {
+        using var storage = StorageScope.Create();
+        storage.WriteServerMetadata();
+        storage.WriteClientMetadata( clientId: 1, clientName: "foo" );
+
+        var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
+        var clientLogs = new ClientEventLogger();
+
+        await using var server = new MessageBrokerServer(
+            originalEndPoint,
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetRootStoragePath( storage.Path )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger() ) );
+
+        await server.StartAsync();
+
+        var remoteClient = server.Clients.TryGetById( 1 );
+        if ( remoteClient is not null )
+            await remoteClient.DeleteAsync();
+
+        Assertion.All(
+                remoteClient.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Disposed ) ),
+                server.Clients.Count.TestEquals( 0 ),
+                storage.DirectoryExists( StorageScope.GetClientMetadataSubpath( clientId: 1 ) ).TestFalse(),
+                clientLogs.GetAll()
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:Deactivate] Client = [1] 'foo', TraceId = 2 (start)",
+                            "[Deactivating] Client = [1] 'foo', TraceId = 2, IsAlive = False",
+                            "[Deactivated] Client = [1] 'foo', TraceId = 2, IsAlive = False",
+                            "[Trace:Deactivate] Client = [1] 'foo', TraceId = 2 (end)"
+                        ] )
+                    ] ) )
+            .Go();
+    }
 }

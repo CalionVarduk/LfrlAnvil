@@ -271,4 +271,36 @@ public class ConnectionTests : TestsBase, IClassFixture<SharedResourceFixture>
 
         client.State.TestEquals( MessageBrokerClientState.Disposed ).Go();
     }
+
+    [Fact]
+    public async Task RemoteClientDelete_ShouldDisposeClient()
+    {
+        var endSource = new SafeTaskCompletionSource();
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource ) );
+
+        await server.StartAsync();
+
+        await using var client = new MessageBrokerClient(
+            ( IPEndPoint )server.LocalEndPoint,
+            "test",
+            MessageBrokerClientOptions.Default
+                .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) )
+                .SetDelaySource( _sharedDelaySource )
+                .SetLogger( MessageBrokerClientLogger.Create( disposed: _ => endSource.Complete() ) ) );
+
+        await client.StartAsync();
+        var remoteClient = server.Clients.TryGetById( 1 );
+        if ( remoteClient is not null )
+            await remoteClient.DeleteAsync();
+
+        await endSource.Task;
+
+        client.State.TestEquals( MessageBrokerClientState.Disposed ).Go();
+    }
 }

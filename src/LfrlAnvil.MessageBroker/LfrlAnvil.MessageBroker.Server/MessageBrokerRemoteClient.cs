@@ -27,6 +27,7 @@ using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.Computable.Expressions;
 using LfrlAnvil.Diagnostics;
+using LfrlAnvil.Exceptions;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Memory;
 using LfrlAnvil.MessageBroker.Server.Events;
@@ -375,6 +376,61 @@ public sealed partial class MessageBrokerRemoteClient
 
         using ( MessageBrokerRemoteClientTraceEvent.CreateScope( this, traceId, MessageBrokerRemoteClientTraceEventType.Deactivate ) )
             await DeactivateAsyncCore( traceId, isEphemeral ).ConfigureAwait( false );
+    }
+
+    /// <summary>
+    /// Deletes this client from the server.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous delete operation.</returns>
+    public async ValueTask DeleteAsync()
+    {
+        if ( Server.State < MessageBrokerServerState.Running )
+            ExceptionThrower.Throw( Server.Exception( Resources.ServerIsNotRunning ) );
+
+        var traceId = 0UL;
+        bool isEphemeral;
+
+        while ( true )
+        {
+            MessageBrokerRemoteClientState state;
+            TaskCompletionSource? deactivated;
+            using ( AcquireLock() )
+            {
+                state = _state;
+                if ( TryBeginDeactivate( out isEphemeral, forceDisposal: true ) )
+                    traceId = GetTraceId();
+
+                deactivated = _deactivated;
+            }
+
+            if ( state < MessageBrokerRemoteClientState.Deactivating )
+                break;
+
+            if ( state is MessageBrokerRemoteClientState.Deactivating or MessageBrokerRemoteClientState.Disposing
+                && deactivated is not null )
+                await deactivated.Task.ConfigureAwait( false );
+
+            if ( state >= MessageBrokerRemoteClientState.Disposing )
+                return;
+
+            using ( AcquireLock() )
+            {
+                if ( _state == MessageBrokerRemoteClientState.Disposed )
+                    return;
+
+                if ( _state == MessageBrokerRemoteClientState.Inactive )
+                {
+                    _state = MessageBrokerRemoteClientState.Disposing;
+                    traceId = GetTraceId();
+                    isEphemeral = _isEphemeral;
+                    _deactivated = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
+                    break;
+                }
+            }
+        }
+
+        using ( MessageBrokerRemoteClientTraceEvent.CreateScope( this, traceId, MessageBrokerRemoteClientTraceEventType.Deactivate ) )
+            await DeactivateAsyncCore( traceId, isEphemeral, reason: ClientStopReason.Delete ).ConfigureAwait( false );
     }
 
     [Pure]
