@@ -407,6 +407,7 @@ internal struct RequestHandler
                                 reactivated: existingPublisher is not null ) );
                 }
 
+                publisher.MarkAsRunning();
                 stream.StartProcessor();
 
                 if ( isEphemeral )

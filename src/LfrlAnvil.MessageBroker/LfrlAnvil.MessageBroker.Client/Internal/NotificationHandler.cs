@@ -200,6 +200,11 @@ internal struct NotificationHandler
                                         reverseEndianness,
                                         traceId )
                                     .ConfigureAwait( false ),
+                                MessageBrokerSystemNotificationType.PublisherDeleted => await HandlePublisherDeletedNotificationAsync(
+                                        client,
+                                        notification,
+                                        traceId )
+                                    .ConfigureAwait( false ),
                                 _ => await HandleInvalidSystemNotificationAsync( client, notification.Header, requestHeader.Type, traceId )
                                     .ConfigureAwait( false )
                             };
@@ -527,6 +532,57 @@ internal struct NotificationHandler
         if ( client.Logger.StreamNameProcessed is { } streamNameProcessed )
             streamNameProcessed.Emit(
                 MessageBrokerClientStreamNameProcessedEvent.Create( client, traceId, parsedRequest.Id, prev, name.Value ) );
+
+        return true;
+    }
+
+    private static async ValueTask<bool> HandlePublisherDeletedNotificationAsync(
+        MessageBrokerClient client,
+        Notification notification,
+        ulong traceId)
+    {
+        Assume.IsGreaterThanOrEqualTo( notification.Data.Length, Protocol.SystemNotificationHeader.Length );
+        var channelName = TextEncoding.Parse( notification.Data.Slice( Protocol.SystemNotificationHeader.Length ) );
+        if ( channelName.Exception is not null )
+        {
+            if ( client.Logger.Error is { } error )
+                error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, channelName.Exception ) );
+
+            await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
+            return false;
+        }
+
+        Assume.IsNotNull( channelName.Value );
+        if ( ! Defaults.NameLengthBounds.Contains( channelName.Value.Length ) )
+        {
+            if ( client.Logger.Error is { } error )
+            {
+                var exc = client.ProtocolException( notification.Header, Resources.InvalidChannelNameLength( channelName.Value.Length ) );
+                error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
+            }
+
+            await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
+            return false;
+        }
+
+        bool deleted;
+        MessageBrokerPublisher? publisher;
+        using ( client.AcquireActiveLock( traceId, out var exc ) )
+        {
+            if ( exc is not null )
+                return false;
+
+            publisher = PublisherCollection.TryRemoveUnsafe( client, channelName.Value );
+            deleted = publisher is not null || client.PendingBindings.TryDeactivatePublisher( channelName.Value );
+            publisher?.MarkAsDisposed();
+        }
+
+        if ( client.Logger.ReadPacket is { } readPacket )
+            readPacket.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, notification.Header ) );
+
+        if ( client.Logger.PublisherDeleted is { } publisherDeleted )
+            publisherDeleted.Emit(
+                MessageBrokerClientPublisherDeletedEvent.Create( client, traceId, publisher, channelName.Value, deleted ) );
 
         return true;
     }

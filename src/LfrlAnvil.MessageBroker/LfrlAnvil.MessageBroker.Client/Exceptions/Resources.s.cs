@@ -436,9 +436,24 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string InvalidChannelNameLength(int length)
+    {
+        return
+            $"Expected channel name length to be in [{Defaults.NameLengthBounds.Min}, {Defaults.NameLengthBounds.Max}] range but found {length}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string UnexpectedSystemNotificationType(MessageBrokerSystemNotificationType type)
     {
         return $"Received unexpected system notification type {GetType( type )}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string PublisherIsInProcessOfBeingBound(string channelName)
+    {
+        return $"Publisher for channel '{channelName}' is already in the process of being bound.";
     }
 
     [Pure]

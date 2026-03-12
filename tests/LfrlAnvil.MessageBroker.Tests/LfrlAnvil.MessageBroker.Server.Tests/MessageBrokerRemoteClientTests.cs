@@ -6,6 +6,7 @@ using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.Diagnostics;
+using LfrlAnvil.Functional;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Exceptions;
 using LfrlAnvil.MessageBroker.Server.Internal;
@@ -1186,11 +1187,16 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
         using var client = new ClientMock();
         await client.EstablishHandshake( server, isEphemeral: false );
 
+        var action = () => ValueTask.CompletedTask;
         var remoteClient = server.Clients.TryGetById( 1 );
         if ( remoteClient is not null )
+        {
             await remoteClient.DeleteAsync();
+            action = Lambda.Of( () => remoteClient.DeleteAsync() );
+        }
 
         Assertion.All(
+                action.Test( exc => exc.TestNull() ),
                 remoteClient.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Disposed ) ),
                 server.Clients.Count.TestEquals( 0 ),
                 storage.DirectoryExists( StorageScope.GetClientMetadataSubpath( clientId: 1 ) ).TestFalse(),
@@ -1206,34 +1212,6 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                             "[Trace:Deactivate] Client = [1] 'test', TraceId = 1 (end)"
                         ] )
                     ] ) )
-            .Go();
-    }
-
-    [Fact]
-    public async Task DeleteAsync_ShouldDoNothing_WhenClientIsDisposed()
-    {
-        var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
-        await using var server = new MessageBrokerServer(
-            originalEndPoint,
-            MessageBrokerServerOptions.Default
-                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
-                .SetDelaySourceFactory( _ => _sharedDelaySource ) );
-
-        await server.StartAsync();
-
-        using var client = new ClientMock();
-        await client.EstablishHandshake( server );
-
-        var remoteClient = server.Clients.TryGetById( 1 );
-        if ( remoteClient is not null )
-        {
-            await remoteClient.DeleteAsync();
-            await remoteClient.DeleteAsync();
-        }
-
-        Assertion.All(
-                remoteClient.TestNotNull( c => c.State.TestEquals( MessageBrokerRemoteClientState.Disposed ) ),
-                server.Clients.Count.TestEquals( 0 ) )
             .Go();
     }
 

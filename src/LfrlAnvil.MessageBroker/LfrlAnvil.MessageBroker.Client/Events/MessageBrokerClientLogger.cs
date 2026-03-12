@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ public readonly struct MessageBrokerClientLogger
         Action<MessageBrokerClientProcessingSystemNotificationEvent>? processingSystemNotification,
         Action<MessageBrokerClientSenderNameProcessedEvent>? senderNameProcessed,
         Action<MessageBrokerClientStreamNameProcessedEvent>? streamNameProcessed,
+        Action<MessageBrokerClientPublisherDeletedEvent>? publisherDeleted,
         Action<MessageBrokerClientDisposingEvent>? disposing,
         Action<MessageBrokerClientDisposedEvent>? disposed,
         Action<MessageBrokerClientErrorEvent>? error)
@@ -83,6 +84,7 @@ public readonly struct MessageBrokerClientLogger
         ProcessingSystemNotification = processingSystemNotification;
         SenderNameProcessed = senderNameProcessed;
         StreamNameProcessed = streamNameProcessed;
+        PublisherDeleted = publisherDeleted;
         Disposing = disposing;
         Disposed = disposed;
         Error = error;
@@ -229,6 +231,11 @@ public readonly struct MessageBrokerClientLogger
     public readonly Action<MessageBrokerClientStreamNameProcessedEvent>? StreamNameProcessed;
 
     /// <summary>
+    /// Optional callback for a <see cref="MessageBrokerClientPublisherDeletedEvent"/>.
+    /// </summary>
+    public readonly Action<MessageBrokerClientPublisherDeletedEvent>? PublisherDeleted;
+
+    /// <summary>
     /// Optional callback for a <see cref="MessageBrokerClientDisposingEvent"/>.
     /// </summary>
     public readonly Action<MessageBrokerClientDisposingEvent>? Disposing;
@@ -274,6 +281,7 @@ public readonly struct MessageBrokerClientLogger
     /// <param name="processingSystemNotification">Optional <see cref="ProcessingSystemNotification"/> callback.</param>
     /// <param name="senderNameProcessed">Optional <see cref="SenderNameProcessed"/> callback.</param>
     /// <param name="streamNameProcessed">Optional <see cref="StreamNameProcessed"/> callback.</param>
+    /// <param name="publisherDeleted">Optional <see cref="PublisherDeleted"/> callback.</param>
     /// <param name="disposing">Optional <see cref="Disposing"/> callback.</param>
     /// <param name="disposed">Optional <see cref="Disposed"/> callback.</param>
     /// <param name="error">Optional <see cref="Error"/> callback.</param>
@@ -308,6 +316,7 @@ public readonly struct MessageBrokerClientLogger
         Action<MessageBrokerClientProcessingSystemNotificationEvent>? processingSystemNotification = null,
         Action<MessageBrokerClientSenderNameProcessedEvent>? senderNameProcessed = null,
         Action<MessageBrokerClientStreamNameProcessedEvent>? streamNameProcessed = null,
+        Action<MessageBrokerClientPublisherDeletedEvent>? publisherDeleted = null,
         Action<MessageBrokerClientDisposingEvent>? disposing = null,
         Action<MessageBrokerClientDisposedEvent>? disposed = null,
         Action<MessageBrokerClientErrorEvent>? error = null)
@@ -341,6 +350,7 @@ public readonly struct MessageBrokerClientLogger
             processingSystemNotification,
             senderNameProcessed,
             streamNameProcessed,
+            publisherDeleted,
             disposing,
             disposed,
             error );

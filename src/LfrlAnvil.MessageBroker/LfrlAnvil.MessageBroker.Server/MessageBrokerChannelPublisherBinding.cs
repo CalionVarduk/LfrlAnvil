@@ -17,7 +17,11 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
+using LfrlAnvil.Exceptions;
 using LfrlAnvil.Extensions;
+using LfrlAnvil.Memory;
+using LfrlAnvil.MessageBroker.Server.Events;
+using LfrlAnvil.MessageBroker.Server.Exceptions;
 using LfrlAnvil.MessageBroker.Server.Internal;
 
 namespace LfrlAnvil.MessageBroker.Server;
@@ -107,7 +111,7 @@ public sealed class MessageBrokerChannelPublisherBinding : IMessageBrokerMessage
             channel,
             stream,
             isEphemeral,
-            MessageBrokerChannelPublisherBindingState.Running );
+            MessageBrokerChannelPublisherBindingState.Created );
     }
 
     [Pure]
@@ -151,6 +155,98 @@ public sealed class MessageBrokerChannelPublisherBinding : IMessageBrokerMessage
             $"[{Client.Id}] '{Client.Name}' => [{Channel.Id}] '{Channel.Name}' publisher binding (using [{Stream.Id}] '{Stream.Name}' stream) ({State})";
     }
 
+    /// <summary>
+    /// Deletes this publisher from the server.
+    /// </summary>
+    /// <exception cref="MessageBrokerServerException">
+    /// When server is in <see cref="MessageBrokerServerState.Created"/> or <see cref="MessageBrokerServerState.Starting"/> state.
+    /// </exception>
+    /// <exception cref="MessageBrokerRemoteClientException">
+    /// When this publisher is in <see cref="MessageBrokerChannelPublisherBindingState.Created"/> state.
+    /// </exception>
+    /// <returns>A task that represents the asynchronous delete operation.</returns>
+    public async ValueTask DeleteAsync()
+    {
+        if ( Client.Server.State < MessageBrokerServerState.Running )
+            ExceptionThrower.Throw( Client.Server.Exception( Resources.ServerIsNotRunning ) );
+
+        TaskCompletionSource? deactivated;
+        while ( true )
+        {
+            MessageBrokerChannelPublisherBindingState state;
+
+            using ( AcquireLock() )
+            {
+                if ( _state == MessageBrokerChannelPublisherBindingState.Created )
+                    ExceptionThrower.Throw( Client.Exception( Resources.PublisherIsBeingBound ) );
+
+                if ( ! IsInactive )
+                {
+                    _state = MessageBrokerChannelPublisherBindingState.Disposing;
+                    _deactivated = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
+                    deactivated = _deactivated;
+                    break;
+                }
+
+                state = _state;
+                deactivated = _deactivated;
+            }
+
+            if ( state is MessageBrokerChannelPublisherBindingState.Deactivating or MessageBrokerChannelPublisherBindingState.Disposing
+                && deactivated is not null )
+                await deactivated.Task.ConfigureAwait( false );
+
+            if ( state >= MessageBrokerChannelPublisherBindingState.Disposing )
+                return;
+
+            using ( AcquireLock() )
+            {
+                if ( _state == MessageBrokerChannelPublisherBindingState.Disposed )
+                    return;
+
+                if ( _state == MessageBrokerChannelPublisherBindingState.Inactive )
+                {
+                    _state = MessageBrokerChannelPublisherBindingState.Disposing;
+                    _deactivated = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
+                    deactivated = _deactivated;
+                    break;
+                }
+            }
+        }
+
+        try
+        {
+            ulong? traceId = null;
+            ServerStorage.Client clientStorage = default;
+
+            using ( Client.AcquireLock() )
+            {
+                if ( Client.IsDisposed )
+                    clientStorage = Client.GetStorage();
+                else
+                    traceId = Client.GetTraceId();
+            }
+
+            if ( traceId is null )
+            {
+                await clientStorage.DeleteAsync( this ).AsSafe().ConfigureAwait( false );
+                return;
+            }
+
+            await DeleteAsyncCore( traceId.Value ).ConfigureAwait( false );
+        }
+        finally
+        {
+            using ( AcquireLock() )
+            {
+                _state = MessageBrokerChannelPublisherBindingState.Disposed;
+                _deactivated = null;
+            }
+
+            deactivated.TrySetResult();
+        }
+    }
+
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal bool TryReactivate(string streamName, bool isEphemeral)
     {
@@ -163,7 +259,7 @@ public sealed class MessageBrokerChannelPublisherBinding : IMessageBrokerMessage
                 return false;
 
             _isEphemeral = isEphemeral;
-            _state = MessageBrokerChannelPublisherBindingState.Running;
+            _state = MessageBrokerChannelPublisherBindingState.Created;
         }
 
         return true;
@@ -176,6 +272,16 @@ public sealed class MessageBrokerChannelPublisherBinding : IMessageBrokerMessage
         {
             if ( _state == MessageBrokerChannelPublisherBindingState.Inactive )
                 _isEphemeral = true;
+        }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void MarkAsRunning()
+    {
+        using ( AcquireLock() )
+        {
+            if ( _state == MessageBrokerChannelPublisherBindingState.Created )
+                _state = MessageBrokerChannelPublisherBindingState.Running;
         }
     }
 
@@ -196,7 +302,7 @@ public sealed class MessageBrokerChannelPublisherBinding : IMessageBrokerMessage
     {
         using ( AcquireLock() )
         {
-            if ( _state == MessageBrokerChannelPublisherBindingState.Disposed )
+            if ( IsDisposed )
                 return;
 
             if ( keepAlive && ! _isEphemeral )
@@ -388,5 +494,164 @@ public sealed class MessageBrokerChannelPublisherBinding : IMessageBrokerMessage
     internal ExclusiveLock AcquireLock()
     {
         return ExclusiveLock.Enter( _sync );
+    }
+
+    private async ValueTask DeleteAsyncCore(ulong clientTraceId)
+    {
+        var notificationEnqueued = false;
+        var notificationPoolToken = MemoryPoolToken<byte>.Empty;
+        if ( Client.Logger.TraceStart is { } traceStart )
+            traceStart.Emit(
+                MessageBrokerRemoteClientTraceEvent.Create(
+                    Client,
+                    clientTraceId,
+                    MessageBrokerRemoteClientTraceEventType.UnbindPublisher ) );
+
+        try
+        {
+            var channelTraceId = 0UL;
+            var streamTraceId = 0UL;
+            var disposingChannel = false;
+            var disposingStream = false;
+            var clearBuffers = true;
+            ServerStorage.Client clientStorage;
+            Exception? exception = null;
+
+            using ( Client.AcquireLock() )
+            {
+                clientStorage = Client.GetStorage();
+                if ( Client.IsDisposed )
+                    exception = Client.DeactivatedException( disposed: true );
+                else
+                {
+                    clearBuffers = Client.GetClearBuffersOption();
+
+                    using ( Channel.AcquireLock() )
+                    {
+                        if ( Channel.IsDisposed )
+                            exception = Channel.DisposedException();
+                        else
+                        {
+                            using ( Stream.AcquireLock() )
+                            {
+                                if ( Stream.IsDisposed )
+                                    exception = Stream.DisposedException();
+                                else
+                                {
+                                    using ( AcquireLock() )
+                                    {
+                                        Assume.Equals( _state, MessageBrokerChannelPublisherBindingState.Disposing );
+                                        disposingChannel = Channel.TryDisposeByRemovingPublisherUnsafe( Client.Id );
+                                        disposingStream = Stream.TryDisposeByRemovingPublisherUnsafe( Client.Id, Channel.Id );
+                                        channelTraceId = Channel.GetTraceId();
+                                        streamTraceId = Stream.GetTraceId();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Client.EmitError( await clientStorage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), clientTraceId );
+            if ( exception is not null )
+            {
+                if ( Client.Logger.Error is { } error )
+                    error.Emit( MessageBrokerRemoteClientErrorEvent.Create( Client, clientTraceId, exception ) );
+
+                return;
+            }
+
+            using ( MessageBrokerStreamTraceEvent.CreateScope(
+                Stream,
+                streamTraceId,
+                MessageBrokerStreamTraceEventType.UnbindPublisher ) )
+            {
+                if ( Stream.Logger.ClientTrace is { } clientTrace )
+                    clientTrace.Emit( MessageBrokerStreamClientTraceEvent.Create( Stream, streamTraceId, Client, clientTraceId ) );
+
+                if ( Stream.Logger.PublisherUnbound is { } streamPublisherUnbound )
+                    streamPublisherUnbound.Emit( MessageBrokerStreamPublisherUnboundEvent.Create( this, streamTraceId, disposingChannel ) );
+
+                if ( disposingStream )
+                    await Stream.DisposeDueToLackOfReferencesAsync( streamTraceId ).ConfigureAwait( false );
+            }
+
+            using ( MessageBrokerChannelTraceEvent.CreateScope(
+                Channel,
+                channelTraceId,
+                MessageBrokerChannelTraceEventType.UnbindPublisher ) )
+            {
+                if ( Channel.Logger.ClientTrace is { } clientTrace )
+                    clientTrace.Emit( MessageBrokerChannelClientTraceEvent.Create( Channel, channelTraceId, Client, clientTraceId ) );
+
+                if ( Channel.Logger.PublisherUnbound is { } channelPublisherUnbound )
+                    channelPublisherUnbound.Emit(
+                        MessageBrokerChannelPublisherUnboundEvent.Create( this, channelTraceId, disposingStream ) );
+
+                if ( disposingChannel )
+                    await Channel.DisposeDueToLackOfReferencesAsync( channelTraceId ).ConfigureAwait( false );
+            }
+
+            using ( Client.AcquireLock() )
+            {
+                if ( ! Client.IsDisposed )
+                    Client.PublishersByChannelId.Remove( Channel.Id );
+            }
+
+            using ( AcquireLock() )
+                _state = MessageBrokerChannelPublisherBindingState.Disposed;
+
+            if ( Client.Logger.PublisherUnbound is { } publisherUnbound )
+                publisherUnbound.Emit(
+                    MessageBrokerRemoteClientPublisherUnboundEvent.Create( this, clientTraceId, disposingChannel, disposingStream ) );
+
+            var notification = new Protocol.ChannelBindingDeletedNotification(
+                MessageBrokerSystemNotificationType.PublisherDeleted,
+                Channel.Name );
+
+            var notificationLength = notification.Length;
+            notificationPoolToken = Client.MemoryPool.Rent( notificationLength, clearBuffers, out var responseData );
+            notification.Serialize( responseData );
+
+            using ( Client.AcquireLock() )
+            {
+                if ( Client.IsInactive )
+                    exception = Client.IsDisposed ? Client.DeactivatedException( disposed: true ) : null;
+                else
+                {
+                    var writerSource = Client.WriterQueue.AcquireSource( responseData, clearBuffers );
+                    ResponseSender.EnqueueUnsafe(
+                        Client,
+                        notification.Header,
+                        writerSource,
+                        notificationPoolToken,
+                        MessageBrokerRemoteClientTraceEventType.UnbindPublisher,
+                        clientTraceId );
+
+                    notificationEnqueued = true;
+                    Client.ResponseSender.SignalContinuation();
+                }
+            }
+
+            if ( exception is not null )
+            {
+                if ( Client.Logger.Error is { } error )
+                    error.Emit( MessageBrokerRemoteClientErrorEvent.Create( Client, clientTraceId, exception ) );
+            }
+        }
+        finally
+        {
+            if ( ! notificationEnqueued )
+            {
+                notificationPoolToken.Return( Client, clientTraceId );
+                if ( Client.Logger.TraceEnd is { } traceEnd )
+                    traceEnd.Emit(
+                        MessageBrokerRemoteClientTraceEvent.Create(
+                            Client,
+                            clientTraceId,
+                            MessageBrokerRemoteClientTraceEventType.UnbindPublisher ) );
+            }
+        }
     }
 }

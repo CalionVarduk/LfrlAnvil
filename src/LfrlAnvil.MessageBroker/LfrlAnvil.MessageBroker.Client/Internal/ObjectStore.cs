@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -85,6 +85,25 @@ internal struct ObjectStore<T>
         {
             _byId.Remove( id );
             _byName.Remove( name );
+        }
+        finally
+        {
+            _cache = null;
+        }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal T? TryRemoveByName(string name)
+    {
+        return _byName.Remove( name, out var obj ) ? obj : null;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void RemoveById(int id)
+    {
+        try
+        {
+            _byId.Remove( id );
         }
         finally
         {

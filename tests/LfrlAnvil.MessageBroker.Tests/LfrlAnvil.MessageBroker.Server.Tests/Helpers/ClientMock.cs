@@ -385,7 +385,28 @@ internal sealed class ClientMock : IDisposable
 
     internal byte[] ReadObjectNameSystemNotification(Protocol.ObjectNameNotification notification)
     {
-        return AssertEndpoint( Read( notification.Length ), MessageBrokerClientEndpoint.SystemNotification );
+        var data = Read( notification.Length );
+        AssertEndpoint( data, MessageBrokerClientEndpoint.SystemNotification );
+        (( MessageBrokerSystemNotificationType )data[5]).TestEquals( notification.Type ).Go();
+        return data;
+    }
+
+    internal byte[] ReadPublisherDeletedSystemNotification(string channelName)
+    {
+        var encodedName = TextEncoding.Prepare( channelName ).GetValueOrThrow();
+        var data = Read( Protocol.PacketHeader.Length + encodedName.ByteCount );
+        AssertEndpoint( data, MessageBrokerClientEndpoint.SystemNotification );
+        (( MessageBrokerSystemNotificationType )data[5]).TestEquals( MessageBrokerSystemNotificationType.PublisherDeleted ).Go();
+        return data;
+    }
+
+    internal byte[] ReadListenerDeletedSystemNotification(string channelName)
+    {
+        var encodedName = TextEncoding.Prepare( channelName ).GetValueOrThrow();
+        var data = Read( Protocol.PacketHeader.Length + encodedName.ByteCount );
+        AssertEndpoint( data, MessageBrokerClientEndpoint.SystemNotification );
+        (( MessageBrokerSystemNotificationType )data[5]).TestEquals( MessageBrokerSystemNotificationType.ListenerDeleted ).Go();
+        return data;
     }
 
     internal byte[] ReadDeadLetterQueryResponse()

@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,7 +25,12 @@ public enum MessageBrokerPublisherState : byte
     Bound = 0,
 
     /// <summary>
+    /// Specifies the publisher is currently being disposed.
+    /// </summary>
+    Disposing = 1,
+
+    /// <summary>
     /// Specifies that the publisher has been disposed.
     /// </summary>
-    Disposed = 1
+    Disposed = 2
 }

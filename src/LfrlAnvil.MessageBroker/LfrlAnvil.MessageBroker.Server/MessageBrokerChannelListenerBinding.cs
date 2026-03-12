@@ -341,7 +341,7 @@ public sealed class MessageBrokerChannelListenerBinding
             ActivatePrefetchCounter();
             ActivateDeadLetterCounter();
             _isEphemeral = isEphemeral;
-            _state.Write( ( byte )MessageBrokerChannelPublisherBindingState.Running );
+            _state.Write( ( byte )MessageBrokerChannelListenerBindingState.Running );
         }
 
         return true;

@@ -49,6 +49,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     internal PublisherCollection PublisherCollection;
     internal ListenerCollection ListenerCollection;
     internal ExternalNameCache ExternalNameCache;
+    internal PendingBindings PendingBindings;
     internal int MaxNetworkBatchPacketBytes;
     internal int MaxNetworkPacketBytes;
     internal int MaxNetworkMessagePacketBytes;
@@ -118,6 +119,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
         PublisherCollection = PublisherCollection.Create();
         ListenerCollection = ListenerCollection.Create();
         ExternalNameCache = ExternalNameCache.Create();
+        PendingBindings = PendingBindings.Create();
     }
 
     /// <summary>
@@ -1096,6 +1098,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
                 _stream = null;
                 _messageContextPool.Clear();
                 ExternalNameCache.Clear();
+                PendingBindings.Clear();
                 _state = MessageBrokerClientState.Disposed;
             }
 

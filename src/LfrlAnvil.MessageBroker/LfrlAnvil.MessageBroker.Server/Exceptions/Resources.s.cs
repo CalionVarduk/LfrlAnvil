@@ -29,6 +29,7 @@ internal static class Resources
     internal const string ServerDisposed = "Operation has been cancelled because server is disposed.";
     internal const string UnexpectedServerEndpoint = "Received unexpected server endpoint.";
     internal const string MessageRoutingIsAlreadyEnqueued = "Message routing is already enqueued.";
+    internal const string PublisherIsBeingBound = "Publisher is currently in the process of being bound.";
 
     internal const string ExternalDelaySourceHasBeenDisposed
         = "Operation has been cancelled because external delay value task source has been disposed.";

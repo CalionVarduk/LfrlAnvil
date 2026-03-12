@@ -801,6 +801,77 @@ public partial class MessageBrokerClientTests
                 .Go();
         }
 
+        [Fact]
+        public async Task BindAsync_ShouldReturnAnError_WhenBindingIsAlreadyInProgress()
+        {
+            var continuationSource = new SafeTaskCompletionSource();
+            var failureEndSource = new SafeTaskCompletionSource();
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger(
+                        logs.GetLogger(
+                            MessageBrokerClientLogger.Create(
+                                bindingPublisher: _ =>
+                                {
+                                    continuationSource.Complete();
+                                    failureEndSource.Task.Wait();
+                                } ) ) ) );
+
+            await server.EstablishHandshake( client );
+
+            var bindRequest = new Protocol.BindPublisherRequest( "foo", null, true );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( bindRequest );
+                s.SendPublisherBoundResponse( true, true, 1, 1 );
+            } );
+
+            var bindTask = Task.Run( async () => await client.Publishers.BindAsync( "foo" ) );
+            await continuationSource.Task;
+            var failureResult = await client.Publishers.BindAsync( "foo" );
+            failureEndSource.Complete();
+            await serverTask;
+            var publisher = (await bindTask).Value?.Publisher;
+
+            Assertion.All(
+                    failureResult.Value.TestNull(),
+                    failureResult.Exception.TestType().Exact<InvalidOperationException>(),
+                    client.Publishers.Count.TestEquals( 1 ),
+                    publisher.TestNotNull( p => p.State.TestEquals( MessageBrokerPublisherState.Bound ) ),
+                    logs.GetAll()
+                        .Skip( 1 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
+                                "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', StreamName = 'foo', IsEphemeral = True",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (PublisherBoundResponse, Length = 14)",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (PublisherBoundResponse, Length = 14)",
+                                "[PublisherBound] Client = [1] 'test', TraceId = 1, Channel = [1] 'foo' (created), Stream = [1] 'foo' (created)",
+                                "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (end)"
+                            ] )
+                        ] ),
+                    logs.GetAllAwaitPacket()
+                        .TestContainsContiguousSequence(
+                        [
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (PublisherBoundResponse, Length = 14)"
+                        ] ) )
+                .Go();
+        }
+
         [Theory]
         [InlineData( true, true )]
         [InlineData( false, true )]
@@ -1999,6 +2070,270 @@ public partial class MessageBrokerClientTests
                         [
                             "[AwaitPacket] Client = [1] 'test'",
                             "[AwaitPacket] Client = [1] 'test', Packet = (<unrecognized-endpoint-0>, Length = 5)"
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task PublisherDeletedNotification_ShouldRemovePublisher()
+        {
+            var endSource = new SafeTaskCompletionSource();
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger(
+                        logs.GetLogger(
+                            MessageBrokerClientLogger.Create(
+                                traceEnd: e =>
+                                {
+                                    if ( e.Type == MessageBrokerClientTraceEventType.SystemNotification )
+                                        endSource.Complete();
+                                } ) ) ) );
+
+            await server.EstablishHandshake( client );
+            var serverTask = server.GetTask( s =>
+            {
+                var request = new Protocol.BindPublisherRequest( "foo", null, true );
+                s.Read( request );
+                s.SendPublisherBoundResponse( true, true, 1, 1 );
+            } );
+
+            await client.Publishers.BindAsync( "foo" );
+            var publisher = client.Publishers.TryGetByChannelId( 1 );
+            await serverTask;
+
+            await server.GetTask( s =>
+                s.SendChannelBindingDeletedNotification( MessageBrokerSystemNotificationType.PublisherDeleted, "foo" ) );
+
+            await endSource.Task;
+
+            Assertion.All(
+                    client.Publishers.Count.TestEquals( 0 ),
+                    publisher.TestNotNull( p => p.State.TestEquals( MessageBrokerPublisherState.Disposed ) ),
+                    logs.GetAll()
+                        .Skip( 2 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:SystemNotification] Client = [1] 'test', TraceId = 2 (start)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 9)",
+                                "[ProcessingSystemNotification] Client = [1] 'test', TraceId = 2, Type = PublisherDeleted",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 9)",
+                                "[PublisherDeleted] Client = [1] 'test', TraceId = 2, Deleted = True, Channel = [1] 'foo', Stream = [1] 'foo'",
+                                "[Trace:SystemNotification] Client = [1] 'test', TraceId = 2 (end)"
+                            ] )
+                        ] ),
+                    logs.GetAllAwaitPacket()
+                        .TestContainsContiguousSequence(
+                        [
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (SystemNotification, Length = 9)"
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task PublisherDeletedNotification_ShouldRemovePendingPublisherBinding()
+        {
+            var endSource = new SafeTaskCompletionSource();
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger(
+                        logs.GetLogger(
+                            MessageBrokerClientLogger.Create(
+                                traceEnd: e =>
+                                {
+                                    if ( e.Type == MessageBrokerClientTraceEventType.SystemNotification )
+                                        endSource.Complete();
+                                } ) ) ) );
+
+            await server.EstablishHandshake( client );
+
+            var bindTask = client.Publishers.BindAsync( "foo" );
+            await server.GetTask( s =>
+            {
+                var request = new Protocol.BindPublisherRequest( "foo", null, true );
+                s.Read( request );
+                s.SendChannelBindingDeletedNotification( MessageBrokerSystemNotificationType.PublisherDeleted, "foo" );
+            } );
+
+            await endSource.Task;
+
+            await server.GetTask( s => s.SendPublisherBoundResponse( true, true, 1, 1 ) );
+            var publisher = (await bindTask).Value?.Publisher;
+
+            Assertion.All(
+                    client.Publishers.Count.TestEquals( 0 ),
+                    publisher.TestNotNull( p => p.State.TestEquals( MessageBrokerPublisherState.Disposed ) ),
+                    logs.GetAll()
+                        .Skip( 1 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (start)",
+                                "[BindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', StreamName = 'foo', IsEphemeral = True",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindPublisherRequest, Length = 11)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (PublisherBoundResponse, Length = 14)",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (PublisherBoundResponse, Length = 14)",
+                                "[PublisherBound] Client = [1] 'test', TraceId = 1, Channel = [1] 'foo' (created), Stream = [1] 'foo' (created)",
+                                "[Trace:BindPublisher] Client = [1] 'test', TraceId = 1 (end)"
+                            ] ),
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:SystemNotification] Client = [1] 'test', TraceId = 2 (start)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 9)",
+                                "[ProcessingSystemNotification] Client = [1] 'test', TraceId = 2, Type = PublisherDeleted",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 9)",
+                                "[PublisherDeleted] Client = [1] 'test', TraceId = 2, Deleted = True, ChannelName = 'foo'",
+                                "[Trace:SystemNotification] Client = [1] 'test', TraceId = 2 (end)"
+                            ] )
+                        ] ),
+                    logs.GetAllAwaitPacket()
+                        .TestContainsContiguousSequence(
+                        [
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (SystemNotification, Length = 9)",
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (PublisherBoundResponse, Length = 14)"
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task PublisherDeletedNotification_ShouldDoNothing_WhenPublisherDoesNotExist()
+        {
+            var endSource = new SafeTaskCompletionSource();
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger(
+                        logs.GetLogger(
+                            MessageBrokerClientLogger.Create(
+                                traceEnd: e =>
+                                {
+                                    if ( e.Type == MessageBrokerClientTraceEventType.SystemNotification )
+                                        endSource.Complete();
+                                } ) ) ) );
+
+            await server.EstablishHandshake( client );
+            await server.GetTask( s =>
+                s.SendChannelBindingDeletedNotification( MessageBrokerSystemNotificationType.PublisherDeleted, "x" ) );
+
+            await endSource.Task;
+
+            Assertion.All(
+                    logs.GetAll()
+                        .Skip( 1 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:SystemNotification] Client = [1] 'test', TraceId = 1 (start)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (SystemNotification, Length = 7)",
+                                "[ProcessingSystemNotification] Client = [1] 'test', TraceId = 1, Type = PublisherDeleted",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (SystemNotification, Length = 7)",
+                                "[PublisherDeleted] Client = [1] 'test', TraceId = 1, Deleted = False, ChannelName = 'x'",
+                                "[Trace:SystemNotification] Client = [1] 'test', TraceId = 1 (end)"
+                            ] )
+                        ] ),
+                    logs.GetAllAwaitPacket()
+                        .TestContainsContiguousSequence(
+                        [
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (SystemNotification, Length = 7)"
+                        ] ) )
+                .Go();
+        }
+
+        [Theory]
+        [InlineData( 0 )]
+        [InlineData( 513 )]
+        public async Task PublisherDeletedNotification_ShouldDisposeClient_WhenChannelNameIsInvalid(int nameLength)
+        {
+            var endSource = new SafeTaskCompletionSource();
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger(
+                        logs.GetLogger(
+                            MessageBrokerClientLogger.Create(
+                                traceEnd: e =>
+                                {
+                                    if ( e.Type == MessageBrokerClientTraceEventType.SystemNotification )
+                                        endSource.Complete();
+                                } ) ) ) );
+
+            var channelName = new string( 'x', nameLength );
+            var notificationLength = nameLength + 6;
+
+            await server.EstablishHandshake( client );
+            await server.GetTask( s =>
+                s.SendChannelBindingDeletedNotification( MessageBrokerSystemNotificationType.PublisherDeleted, channelName ) );
+
+            await endSource.Task;
+
+            Assertion.All(
+                    client.State.TestEquals( MessageBrokerClientState.Disposed ),
+                    logs.GetAll()
+                        .Skip( 1 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:SystemNotification] Client = [1] 'test', TraceId = 1 (start)",
+                                $"[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (SystemNotification, Length = {notificationLength})",
+                                "[ProcessingSystemNotification] Client = [1] 'test', TraceId = 1, Type = PublisherDeleted",
+                                $"""
+                                 [Error] Client = [1] 'test', TraceId = 1
+                                 LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Client 'test' received an invalid SystemNotification from the server. Encountered 1 error(s):
+                                 1. Expected channel name length to be in [1, 512] range but found {nameLength}.
+                                 """,
+                                "[Disposing] Client = [1] 'test', TraceId = 1",
+                                "[Disposed] Client = [1] 'test', TraceId = 1",
+                                "[Trace:SystemNotification] Client = [1] 'test', TraceId = 1 (end)"
+                            ] )
+                        ] ),
+                    logs.GetAllAwaitPacket()
+                        .TestContainsContiguousSequence(
+                        [
+                            "[AwaitPacket] Client = [1] 'test'",
+                            $"[AwaitPacket] Client = [1] 'test', Packet = (SystemNotification, Length = {notificationLength})"
                         ] ) )
                 .Go();
         }

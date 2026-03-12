@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -182,24 +182,40 @@ public sealed class MessageBrokerPublisher
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool Dispose()
+    internal bool BeginDisposing()
     {
         using ( AcquireLock() )
         {
-            if ( _state == MessageBrokerPublisherState.Disposed )
+            if ( _state != MessageBrokerPublisherState.Bound )
                 return false;
 
-            _state = MessageBrokerPublisherState.Disposed;
+            _state = MessageBrokerPublisherState.Disposing;
         }
 
         return true;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void OnClientDisposed()
+    internal void EndDisposing()
+    {
+        using ( AcquireLock() )
+        {
+            if ( _state == MessageBrokerPublisherState.Disposing )
+                _state = MessageBrokerPublisherState.Disposed;
+        }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void MarkAsDisposed()
     {
         using ( AcquireLock() )
             _state = MessageBrokerPublisherState.Disposed;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void OnClientDisposed()
+    {
+        MarkAsDisposed();
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

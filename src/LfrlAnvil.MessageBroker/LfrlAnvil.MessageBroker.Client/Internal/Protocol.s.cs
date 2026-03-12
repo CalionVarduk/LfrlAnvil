@@ -1420,6 +1420,12 @@ internal static class Protocol
         }
 
         [Pure]
+        public override string ToString()
+        {
+            return $"Type = {Type}";
+        }
+
+        [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal static SystemNotificationHeader Parse(ReadOnlyMemory<byte> source)
         {
@@ -1438,6 +1444,12 @@ internal static class Protocol
         private ObjectNameNotificationHeader(int id)
         {
             Id = id;
+        }
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"Id = {Id}";
         }
 
         [Pure]

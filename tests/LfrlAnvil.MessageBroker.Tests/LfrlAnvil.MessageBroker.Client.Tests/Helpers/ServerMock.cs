@@ -251,6 +251,25 @@ internal sealed class ServerMock : IDisposable
     }
 
     [Pure]
+    internal static byte[] PrepareChannelBindingDeletedNotification(
+        MessageBrokerSystemNotificationType type,
+        string channelName,
+        uint? payload = null)
+    {
+        var encodedChannelName = TextEncoding.Prepare( channelName ).GetValueOrThrow();
+        var buffer = new byte[Protocol.PacketHeader.Length
+            + Protocol.SystemNotificationHeader.Length
+            + encodedChannelName.ByteCount];
+
+        var writer = new BinaryContractWriter( buffer );
+        writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.SystemNotification );
+        writer.MoveWrite( payload ?? ( uint )(Protocol.SystemNotificationHeader.Length + encodedChannelName.ByteCount) );
+        writer.MoveWrite( ( byte )type );
+        encodedChannelName.Encode( writer.GetSpan( encodedChannelName.ByteCount ) ).ThrowIfError();
+        return buffer;
+    }
+
+    [Pure]
     internal static byte[] PrepareBatch(byte[][] packets, short? packetCount = null, uint? payload = null)
     {
         var contentLength = Protocol.BatchHeader.Length + packets.Sum( p => p.Length );
@@ -542,6 +561,11 @@ internal sealed class ServerMock : IDisposable
     internal void SendObjectNameNotification(MessageBrokerSystemNotificationType type, int objectId, string name, uint? payload = null)
     {
         Send( PrepareObjectNameNotification( type, objectId, name, payload ) );
+    }
+
+    internal void SendChannelBindingDeletedNotification(MessageBrokerSystemNotificationType type, string channelName, uint? payload = null)
+    {
+        Send( PrepareChannelBindingDeletedNotification( type, channelName, payload ) );
     }
 
     internal void SendBatch(byte[][] packets, short? packetCount = null, uint? payload = null)

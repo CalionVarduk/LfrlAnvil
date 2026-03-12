@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.MessageBroker.Client;
+using LfrlAnvil.MessageBroker.Client.Events;
 using LfrlAnvil.MessageBroker.Core.Tests.Helpers;
 using LfrlAnvil.MessageBroker.Server;
 
@@ -351,6 +352,55 @@ public class PublisherTests : TestsBase, IClassFixture<SharedResourceFixture>
                 stream.TestNotNull( q => q.State.TestEquals( MessageBrokerStreamState.Disposed ) ),
                 binding.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Disposed ) ),
                 listener.TestNotNull( s => s.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ) ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task DeletePublisher_ShouldBePropagatedToClient()
+    {
+        var completionSource = new SafeTaskCompletionSource();
+
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource ) );
+
+        await server.StartAsync();
+
+        await using var client = new MessageBrokerClient(
+            ( IPEndPoint )server.LocalEndPoint,
+            "test",
+            MessageBrokerClientOptions.Default
+                .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) )
+                .SetDelaySource( _sharedDelaySource )
+                .SetLogger(
+                    MessageBrokerClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerClientTraceEventType.SystemNotification )
+                                completionSource.Complete();
+                        } ) ) );
+
+        await client.StartAsync();
+
+        await client.Publishers.BindAsync( "foo" );
+        var publisher = client.Publishers.TryGetByChannelId( 1 );
+        var remoteClient = server.Clients.TryGetById( 1 );
+        var binding = remoteClient?.Publishers.TryGetByChannelId( 1 );
+
+        await (binding?.DeleteAsync().AsTask() ?? Task.CompletedTask);
+        await completionSource.Task;
+
+        Assertion.All(
+                publisher.TestNotNull( c => c.State.TestEquals( MessageBrokerPublisherState.Disposed ) ),
+                client.Publishers.Count.TestEquals( 0 ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "remoteClient",
+                    c.Publishers.Count.TestEquals( 0 ) ) ),
+                binding.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Disposed ) ) )
             .Go();
     }
 }

@@ -1294,4 +1294,40 @@ internal static class Protocol
             return result;
         }
     }
+
+    internal readonly struct ChannelBindingDeletedNotification
+    {
+        internal readonly PacketHeader Header;
+        internal readonly MessageBrokerSystemNotificationType Type;
+        internal readonly EncodeableText ChannelName;
+
+        internal ChannelBindingDeletedNotification(MessageBrokerSystemNotificationType type, string channelName)
+        {
+            Assume.True(
+                type is MessageBrokerSystemNotificationType.PublisherDeleted or MessageBrokerSystemNotificationType.ListenerDeleted );
+
+            Type = type;
+            ChannelName = TextEncoding.Prepare( channelName ).GetValueOrThrow();
+            Header = PacketHeader.Create( MessageBrokerClientEndpoint.SystemNotification, sizeof( byte ) + ( uint )ChannelName.ByteCount );
+        }
+
+        internal int Length => PacketHeader.Length + unchecked( ( int )Header.Payload );
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"[{Header}] Type = {Type}, ChannelName = ({ChannelName})";
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal void Serialize(Memory<byte> target)
+        {
+            Assume.IsGreaterThanOrEqualTo( target.Length, Length );
+            var writer = new BinaryContractWriter( target.Span );
+            writer.MoveWrite( Header.EndpointCode );
+            writer.MoveWrite( Header.Payload );
+            writer.MoveWrite( ( byte )Type );
+            ChannelName.Encode( writer.GetSpan( ChannelName.ByteCount ) ).ThrowIfError();
+        }
+    }
 }

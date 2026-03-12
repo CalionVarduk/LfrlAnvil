@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,5 +27,15 @@ public enum MessageBrokerSystemNotificationType : byte
     /// <summary>
     /// Represents a system notification that updates stream name.
     /// </summary>
-    StreamName = 2
+    StreamName = 2,
+
+    /// <summary>
+    /// Represents a system notification about a publisher being deleted.
+    /// </summary>
+    PublisherDeleted = 3,
+
+    /// <summary>
+    /// Represents a system notification about a listener being deleted.
+    /// </summary>
+    ListenerDeleted = 4
 }

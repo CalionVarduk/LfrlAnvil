@@ -381,6 +381,9 @@ public sealed partial class MessageBrokerRemoteClient
     /// <summary>
     /// Deletes this client from the server.
     /// </summary>
+    /// <exception cref="MessageBrokerServerException">
+    /// When server is in <see cref="MessageBrokerServerState.Created"/> or <see cref="MessageBrokerServerState.Starting"/> state.
+    /// </exception>
     /// <returns>A task that represents the asynchronous delete operation.</returns>
     public async ValueTask DeleteAsync()
     {
