@@ -928,6 +928,7 @@ internal struct RequestHandler
                                 reactivated: existingListener is not null ) );
                 }
 
+                listener.MarkAsRunning();
                 queue.StartProcessor();
 
                 if ( isEphemeral )

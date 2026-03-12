@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -303,7 +303,7 @@ public sealed class MessageBrokerListener
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool BeginUnbinding()
+    internal bool BeginDisposing()
     {
         using ( AcquireLock() )
         {
@@ -335,7 +335,7 @@ public sealed class MessageBrokerListener
         Client.EmitError( CancellationSource.TryDispose(), traceId );
     }
 
-    internal async ValueTask EndUnbindingAsync(ulong traceId)
+    internal async ValueTask EndDisposingAsync(ulong traceId)
     {
         try
         {
@@ -344,8 +344,10 @@ public sealed class MessageBrokerListener
 
             using ( AcquireLock() )
             {
+                if ( _state != MessageBrokerListenerState.Disposing )
+                    return;
+
                 Assume.Equals( _autoDisposed, false );
-                Assume.Equals( _state, MessageBrokerListenerState.Disposing );
                 messageEmitterTask = MessageEmitter.DiscardUnderlyingTask();
                 MessageEmitter.BeginDispose( ref exceptions );
             }
@@ -353,6 +355,7 @@ public sealed class MessageBrokerListener
             Client.EmitErrors( ref exceptions, traceId );
             Client.EmitError( CancellationSource.TryCancel(), traceId );
             Client.EmitError( CancellationSource.TryDispose(), traceId );
+
             Client.EmitError(
                 await messageEmitterTask.AsSafeCancellable( Client.ListenerDisposalTimeout ).ConfigureAwait( false ),
                 traceId );

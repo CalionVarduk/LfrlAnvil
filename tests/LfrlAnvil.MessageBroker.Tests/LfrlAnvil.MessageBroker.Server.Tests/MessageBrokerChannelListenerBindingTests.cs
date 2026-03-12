@@ -3111,4 +3111,533 @@ public class MessageBrokerChannelListenerBindingTests : TestsBase, IClassFixture
                     ] ) )
             .Go();
     }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldDeletePublisherAndSendSystemNotificationToClient()
+    {
+        var bindEndSource = new SafeTaskCompletionSource();
+        var endSource = new SafeTaskCompletionSource();
+        var clientLogs = new ClientEventLogger();
+        var channelLogs = new ChannelEventLogger();
+        var streamLogs = new StreamEventLogger();
+
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
+                .SetStreamLoggerFactory( _ => streamLogs.GetLogger() )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindPublisher )
+                                bindEndSource.Complete();
+                            else if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindPublisher )
+                                endSource.Complete();
+                        } ) ) ) );
+
+        await server.StartAsync();
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server );
+        await client.GetTask( c =>
+        {
+            c.SendBindPublisherRequest( "foo" );
+            c.ReadPublisherBoundResponse();
+        } );
+
+        await bindEndSource.Task;
+
+        var remoteClient = server.Clients.TryGetById( 1 );
+        var binding = remoteClient?.Publishers.TryGetByChannelId( 1 );
+        var deleteTask = binding?.DeleteAsync().AsTask() ?? Task.CompletedTask;
+
+        await client.GetTask( c => c.ReadPublisherDeletedSystemNotification( "foo" ) );
+        await deleteTask;
+        await endSource.Task;
+
+        var action = () => binding?.DeleteAsync().AsTask() ?? Task.CompletedTask;
+
+        Assertion.All(
+                action.Test( exc => exc.TestNull() ),
+                server.Channels.Count.TestEquals( 0 ),
+                server.Streams.Count.TestEquals( 0 ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Publishers.Count.TestEquals( 0 ) ) ),
+                binding.TestNotNull( p => Assertion.All(
+                    "publisher",
+                    p.State.TestEquals( MessageBrokerChannelPublisherBindingState.Disposed ),
+                    p.Channel.State.TestEquals( MessageBrokerChannelState.Disposed ),
+                    p.Stream.State.TestEquals( MessageBrokerStreamState.Disposed ) ) ),
+                channelLogs.GetAll()
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindPublisher] Channel = [1] 'foo', TraceId = 1 (start)",
+                            "[ClientTrace] Channel = [1] 'foo', TraceId = 1, Correlation = (Client = [1] 'test', TraceId = 2)",
+                            "[PublisherUnbound] Channel = [1] 'foo', TraceId = 1, Client = [1] 'test', Stream = [1] 'foo' (removed)",
+                            "[Disposing] Channel = [1] 'foo', TraceId = 1",
+                            "[Disposed] Channel = [1] 'foo', TraceId = 1",
+                            "[Trace:UnbindPublisher] Channel = [1] 'foo', TraceId = 1 (end)"
+                        ] )
+                    ] ),
+                streamLogs.GetAll()
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindPublisher] Stream = [1] 'foo', TraceId = 1 (start)",
+                            "[ClientTrace] Stream = [1] 'foo', TraceId = 1, Correlation = (Client = [1] 'test', TraceId = 2)",
+                            "[PublisherUnbound] Stream = [1] 'foo', TraceId = 1, Client = [1] 'test', Channel = [1] 'foo' (removed)",
+                            "[Disposing] Stream = [1] 'foo', TraceId = 1",
+                            "[Disposed] Stream = [1] 'foo', TraceId = 1",
+                            "[Trace:UnbindPublisher] Stream = [1] 'foo', TraceId = 1 (end)"
+                        ] )
+                    ] ),
+                clientLogs.GetAll()
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 2 (start)",
+                            "[PublisherUnbound] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo' (removed), Stream = [1] 'foo' (removed)",
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 9)",
+                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 9)",
+                            "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 2 (end)"
+                        ] )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldDeleteNonEphemeralListenerAndSendSystemNotificationToClient()
+    {
+        using var storage = StorageScope.Create();
+        var bindEndSource = new SafeTaskCompletionSource();
+        var endSource = new SafeTaskCompletionSource();
+        var clientLogs = new ClientEventLogger();
+        var channelLogs = new ChannelEventLogger();
+        var queueLogs = new QueueEventLogger();
+
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetRootStoragePath( storage.Path )
+                .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
+                .SetQueueLoggerFactory( _ => queueLogs.GetLogger() )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
+                                bindEndSource.Complete();
+                            else if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindListener )
+                                endSource.Complete();
+                        } ) ) ) );
+
+        await server.StartAsync();
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server, isEphemeral: false );
+        await client.GetTask( c =>
+        {
+            c.SendBindListenerRequest( "foo", true, isEphemeral: false );
+            c.ReadListenerBoundResponse();
+        } );
+
+        await bindEndSource.Task;
+
+        var remoteClient = server.Clients.TryGetById( 1 );
+        var binding = remoteClient?.Listeners.TryGetByChannelId( 1 );
+        var deleteTask = binding?.DeleteAsync().AsTask() ?? Task.CompletedTask;
+
+        await client.GetTask( c => c.ReadListenerDeletedSystemNotification( "foo" ) );
+        await deleteTask;
+        await endSource.Task;
+
+        Assertion.All(
+                server.Channels.Count.TestEquals( 0 ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Queues.Count.TestEquals( 0 ) ) ),
+                binding.TestNotNull( p => Assertion.All(
+                    "listener",
+                    p.State.TestEquals( MessageBrokerChannelListenerBindingState.Disposed ),
+                    p.Channel.State.TestEquals( MessageBrokerChannelState.Disposed ),
+                    p.Queue.State.TestEquals( MessageBrokerQueueState.Disposed ) ) ),
+                storage.FileExists( StorageScope.GetListenerMetadataSubpath( clientId: 1, channelId: 1 ) ).TestFalse(),
+                channelLogs.GetAll()
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindListener] Channel = [1] 'foo', TraceId = 1 (start)",
+                            "[ClientTrace] Channel = [1] 'foo', TraceId = 1, Correlation = (Client = [1] 'test', TraceId = 2)",
+                            "[ListenerUnbound] Channel = [1] 'foo', TraceId = 1, Client = [1] 'test', Queue = [1] 'foo' (removed)",
+                            "[Disposing] Channel = [1] 'foo', TraceId = 1",
+                            "[Disposed] Channel = [1] 'foo', TraceId = 1",
+                            "[Trace:UnbindListener] Channel = [1] 'foo', TraceId = 1 (end)"
+                        ] )
+                    ] ),
+                queueLogs.GetAll()
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindListener] Client = [1] 'test', Queue = [1] 'foo', TraceId = 1 (start)",
+                            "[ClientTrace] Client = [1] 'test', Queue = [1] 'foo', TraceId = 1, ClientTraceId = 2",
+                            "[ListenerUnbound] Client = [1] 'test', Queue = [1] 'foo', TraceId = 1, Channel = [1] 'foo' (removed)",
+                            "[Deactivating] Client = [1] 'test', Queue = [1] 'foo', TraceId = 1, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', Queue = [1] 'foo', TraceId = 1, IsAlive = False",
+                            "[Trace:UnbindListener] Client = [1] 'test', Queue = [1] 'foo', TraceId = 1 (end)"
+                        ] )
+                    ] ),
+                clientLogs.GetAll()
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindListener] Client = [1] 'test', TraceId = 2 (start)",
+                            "[ListenerUnbound] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo' (removed), Queue = [1] 'foo' (removed)",
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 9)",
+                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 9)",
+                            "[Trace:UnbindListener] Client = [1] 'test', TraceId = 2 (end)"
+                        ] )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldDeleteInactiveListenerAndSendSystemNotificationToClient()
+    {
+        using var storage = StorageScope.Create();
+        storage.WriteServerMetadata();
+        storage.WriteChannelMetadata( channelId: 1, channelName: "foo" );
+        storage.WriteClientMetadata( clientId: 1, clientName: "test" );
+        storage.WriteQueueMetadata( clientId: 1, queueId: 1, queueName: "foo" );
+        storage.WriteQueuePendingMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteListenerMetadata( clientId: 1, channelId: 1, queueId: 1 );
+
+        var endSource = new SafeTaskCompletionSource();
+        var clientLogs = new ClientEventLogger();
+        var channelLogs = new ChannelEventLogger();
+        var queueLogs = new QueueEventLogger();
+
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetRootStoragePath( storage.Path )
+                .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
+                .SetQueueLoggerFactory( _ => queueLogs.GetLogger() )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindListener )
+                                endSource.Complete();
+                        } ) ) ) );
+
+        await server.StartAsync();
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server, isEphemeral: false );
+
+        var remoteClient = server.Clients.TryGetById( 1 );
+        var binding = remoteClient?.Listeners.TryGetByChannelId( 1 );
+        var deleteTask = binding?.DeleteAsync().AsTask() ?? Task.CompletedTask;
+
+        await client.GetTask( c => c.ReadListenerDeletedSystemNotification( "foo" ) );
+        await deleteTask;
+        await endSource.Task;
+
+        Assertion.All(
+                server.Channels.Count.TestEquals( 0 ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Queues.Count.TestEquals( 0 ) ) ),
+                binding.TestNotNull( p => Assertion.All(
+                    "listener",
+                    p.State.TestEquals( MessageBrokerChannelListenerBindingState.Disposed ),
+                    p.Channel.State.TestEquals( MessageBrokerChannelState.Disposed ),
+                    p.Queue.State.TestEquals( MessageBrokerQueueState.Disposed ) ) ),
+                storage.FileExists( StorageScope.GetListenerMetadataSubpath( clientId: 1, channelId: 1 ) ).TestFalse(),
+                channelLogs.GetAll()
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindListener] Channel = [1] 'foo', TraceId = 3 (start)",
+                            "[ClientTrace] Channel = [1] 'foo', TraceId = 3, Correlation = (Client = [1] 'test', TraceId = 3)",
+                            "[ListenerUnbound] Channel = [1] 'foo', TraceId = 3, Client = [1] 'test', Queue = [1] 'foo' (removed)",
+                            "[Disposing] Channel = [1] 'foo', TraceId = 3",
+                            "[Disposed] Channel = [1] 'foo', TraceId = 3",
+                            "[Trace:UnbindListener] Channel = [1] 'foo', TraceId = 3 (end)"
+                        ] )
+                    ] ),
+                queueLogs.GetAll()
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindListener] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3 (start)",
+                            "[ClientTrace] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3, ClientTraceId = 3",
+                            "[ListenerUnbound] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3, Channel = [1] 'foo' (removed)",
+                            "[Deactivating] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3, IsAlive = False",
+                            "[Trace:UnbindListener] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3 (end)"
+                        ] )
+                    ] ),
+                clientLogs.GetAll()
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindListener] Client = [1] 'test', TraceId = 3 (start)",
+                            "[ListenerUnbound] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo' (removed), Queue = [1] 'foo' (removed)",
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 3, Packet = (SystemNotification, Length = 9)",
+                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 3, Packet = (SystemNotification, Length = 9)",
+                            "[Trace:UnbindListener] Client = [1] 'test', TraceId = 3 (end)"
+                        ] )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldDeleteInactiveListenerAndNotSendSystemNotificationToInactiveClient()
+    {
+        using var storage = StorageScope.Create();
+        storage.WriteServerMetadata();
+        storage.WriteChannelMetadata( channelId: 1, channelName: "foo" );
+        storage.WriteClientMetadata( clientId: 1, clientName: "test" );
+        storage.WriteQueueMetadata( clientId: 1, queueId: 1, queueName: "foo" );
+        storage.WriteQueuePendingMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteListenerMetadata( clientId: 1, channelId: 1, queueId: 1 );
+
+        var endSource = new SafeTaskCompletionSource();
+        var clientLogs = new ClientEventLogger();
+        var channelLogs = new ChannelEventLogger();
+        var queueLogs = new QueueEventLogger();
+
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetRootStoragePath( storage.Path )
+                .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
+                .SetQueueLoggerFactory( _ => queueLogs.GetLogger() )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindListener )
+                                endSource.Complete();
+                        } ) ) ) );
+
+        await server.StartAsync();
+
+        var remoteClient = server.Clients.TryGetById( 1 );
+        var binding = remoteClient?.Listeners.TryGetByChannelId( 1 );
+        await (binding?.DeleteAsync().AsTask() ?? Task.CompletedTask);
+        await endSource.Task;
+
+        Assertion.All(
+                server.Channels.Count.TestEquals( 0 ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Queues.Count.TestEquals( 0 ) ) ),
+                binding.TestNotNull( p => Assertion.All(
+                    "listener",
+                    p.State.TestEquals( MessageBrokerChannelListenerBindingState.Disposed ),
+                    p.Channel.State.TestEquals( MessageBrokerChannelState.Disposed ),
+                    p.Queue.State.TestEquals( MessageBrokerQueueState.Disposed ) ) ),
+                storage.FileExists( StorageScope.GetListenerMetadataSubpath( clientId: 1, channelId: 1 ) ).TestFalse(),
+                channelLogs.GetAll()
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindListener] Channel = [1] 'foo', TraceId = 3 (start)",
+                            "[ClientTrace] Channel = [1] 'foo', TraceId = 3, Correlation = (Client = [1] 'test', TraceId = 2)",
+                            "[ListenerUnbound] Channel = [1] 'foo', TraceId = 3, Client = [1] 'test', Queue = [1] 'foo' (removed)",
+                            "[Disposing] Channel = [1] 'foo', TraceId = 3",
+                            "[Disposed] Channel = [1] 'foo', TraceId = 3",
+                            "[Trace:UnbindListener] Channel = [1] 'foo', TraceId = 3 (end)"
+                        ] )
+                    ] ),
+                queueLogs.GetAll()
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindListener] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3 (start)",
+                            "[ClientTrace] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3, ClientTraceId = 2",
+                            "[ListenerUnbound] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3, Channel = [1] 'foo' (removed)",
+                            "[Deactivating] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3, IsAlive = False",
+                            "[Trace:UnbindListener] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3 (end)"
+                        ] )
+                    ] ),
+                clientLogs.GetAll()
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindListener] Client = [1] 'test', TraceId = 2 (start)",
+                            "[ListenerUnbound] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo' (removed), Queue = [1] 'foo' (removed)",
+                            "[Trace:UnbindListener] Client = [1] 'test', TraceId = 2 (end)"
+                        ] )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldDeleteListenerAndWakeUpQueueProcessorWhenMessageForDeletedListenerIsBlockingIt()
+    {
+        using var storage = StorageScope.Create();
+        storage.WriteServerMetadata();
+        storage.WriteChannelMetadata( channelId: 1, channelName: "foo" );
+        storage.WriteStreamMetadata( streamId: 1, streamName: "foo" );
+        storage.WriteStreamMessages(
+            streamId: 1,
+            messages: [ StorageScope.PrepareStreamMessage( id: 0, storeKey: 0, senderId: 1, channelId: 1, data: [ 1 ] ) ] );
+
+        storage.WriteClientMetadata( clientId: 1, clientName: "test" );
+        storage.WriteQueueMetadata( clientId: 1, queueId: 1, queueName: "foo" );
+        storage.WriteQueuePendingMessages(
+            clientId: 1,
+            queueId: 1,
+            messages: [ StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 0 ) ] );
+
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteListenerMetadata( clientId: 1, channelId: 1, queueId: 1 );
+
+        var endSource = new SafeTaskCompletionSource( completionCount: 2 );
+        var clientLogs = new ClientEventLogger();
+        var channelLogs = new ChannelEventLogger();
+        var queueLogs = new QueueEventLogger();
+
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetRootStoragePath( storage.Path )
+                .SetChannelLoggerFactory( _ => channelLogs.GetLogger() )
+                .SetQueueLoggerFactory( _ => queueLogs.GetLogger(
+                    MessageBrokerQueueLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerQueueTraceEventType.Deactivate )
+                                endSource.Complete();
+                        } ) ) )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.UnbindListener )
+                                endSource.Complete();
+                        } ) ) ) );
+
+        await server.StartAsync();
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server, isEphemeral: false );
+        await Task.Delay( 15 );
+
+        var remoteClient = server.Clients.TryGetById( 1 );
+        var binding = remoteClient?.Listeners.TryGetByChannelId( 1 );
+        await (binding?.DeleteAsync().AsTask() ?? Task.CompletedTask);
+        await endSource.Task;
+
+        Assertion.All(
+                server.Channels.Count.TestEquals( 0 ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Listeners.Count.TestEquals( 0 ),
+                    c.Queues.Count.TestEquals( 0 ) ) ),
+                binding.TestNotNull( p => Assertion.All(
+                    "listener",
+                    p.State.TestEquals( MessageBrokerChannelListenerBindingState.Disposed ),
+                    p.Channel.State.TestEquals( MessageBrokerChannelState.Disposed ),
+                    p.Queue.State.TestEquals( MessageBrokerQueueState.Disposed ) ) ),
+                storage.FileExists( StorageScope.GetListenerMetadataSubpath( clientId: 1, channelId: 1 ) ).TestFalse(),
+                channelLogs.GetAll()
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindListener] Channel = [1] 'foo', TraceId = 3 (start)",
+                            "[ClientTrace] Channel = [1] 'foo', TraceId = 3, Correlation = (Client = [1] 'test', TraceId = 3)",
+                            "[ListenerUnbound] Channel = [1] 'foo', TraceId = 3, Client = [1] 'test', Queue = [1] 'foo'",
+                            "[Disposing] Channel = [1] 'foo', TraceId = 3",
+                            "[Disposed] Channel = [1] 'foo', TraceId = 3",
+                            "[Trace:UnbindListener] Channel = [1] 'foo', TraceId = 3 (end)"
+                        ] )
+                    ] ),
+                queueLogs.GetAll()
+                    .TakeLast( 2 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'foo', TraceId = 4 (start)",
+                            "[MessageDiscarded] Client = [1] 'test', Queue = [1] 'foo', TraceId = 4, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', Reason = DisposedPending, StoreKey = 0, Retry = 0, Redelivery = 0, MessageRemoved = True, MovedToDeadLetter = False",
+                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'foo', TraceId = 4 (end)"
+                        ] ),
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:Deactivate] Client = [1] 'test', Queue = [1] 'foo', TraceId = 5 (start)",
+                            "[Deactivating] Client = [1] 'test', Queue = [1] 'foo', TraceId = 5, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', Queue = [1] 'foo', TraceId = 5, IsAlive = False",
+                            "[Trace:Deactivate] Client = [1] 'test', Queue = [1] 'foo', TraceId = 5 (end)"
+                        ] )
+                    ] ),
+                clientLogs.GetAll()
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindListener] Client = [1] 'test', TraceId = 3 (start)",
+                            "[ListenerUnbound] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo' (removed), Queue = [1] 'foo'",
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 3, Packet = (SystemNotification, Length = 9)",
+                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 3, Packet = (SystemNotification, Length = 9)",
+                            "[Trace:UnbindListener] Client = [1] 'test', TraceId = 3 (end)"
+                        ] )
+                    ] ) )
+            .Go();
+    }
 }

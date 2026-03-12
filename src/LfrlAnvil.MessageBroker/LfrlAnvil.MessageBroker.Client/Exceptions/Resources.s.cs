@@ -458,6 +458,13 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string ListenerIsInProcessOfBeingBound(string channelName)
+    {
+        return $"Listener for channel '{channelName}' is already in the process of being bound.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string ClientPayloadRejected(string clientName, MessageBrokerServerEndpoint endpoint, Chain<string> errors)
     {
         var header = $"Server rejected an invalid {GetEndpoint( endpoint )} sent by client '{clientName}'.";

@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -79,6 +79,16 @@ internal struct ListenerCollection
         return _store.TryGetById( channelId );
     }
 
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerListener? TryRemoveUnsafe(MessageBrokerClient client, string channelName)
+    {
+        var listener = client.ListenerCollection._store.TryRemoveByName( channelName );
+        if ( listener is not null )
+            client.ListenerCollection._store.RemoveById( listener.ChannelId );
+
+        return listener;
+    }
+
     internal static async ValueTask<Result<MessageBrokerBindListenerResult?>> BindAsync(
         MessageBrokerClient client,
         string channelName,
@@ -105,6 +115,7 @@ internal struct ListenerCollection
         var filterExpression = options.FilterExpression;
 
         ulong traceId;
+        ulong version;
         bool reverseEndianness;
         using ( client.AcquireLock() )
         {
@@ -116,19 +127,47 @@ internal struct ListenerCollection
             if ( listener is not null )
                 return MessageBrokerBindListenerResult.CreateAlreadyBound( listener );
 
+            var bindingVersion = client.PendingBindings.TryAddListener( channelName );
+            if ( bindingVersion is null )
+                return new InvalidOperationException( Resources.ListenerIsInProcessOfBeingBound( channelName ) );
+
+            version = bindingVersion.Value;
             reverseEndianness = BitConverter.IsLittleEndian != client.IsServerLittleEndian;
             traceId = client.GetTraceId();
         }
 
         using ( MessageBrokerClientTraceEvent.CreateScope( client, traceId, MessageBrokerClientTraceEventType.BindListener ) )
         {
-            if ( client.Logger.BindingListener is { } bindingListener )
-                bindingListener.Emit(
-                    MessageBrokerClientBindingListenerEvent.Create(
-                        client,
-                        traceId,
+            var failed = true;
+            try
+            {
+                if ( client.Logger.BindingListener is { } bindingListener )
+                    bindingListener.Emit(
+                        MessageBrokerClientBindingListenerEvent.Create(
+                            client,
+                            traceId,
+                            channelName,
+                            queueName ?? channelName,
+                            prefetchHint,
+                            maxRetries,
+                            retryDelay,
+                            maxRedeliveries,
+                            minAckTimeout,
+                            deadLetterCapacityHint,
+                            minDeadLetterRetention,
+                            filterExpression,
+                            createChannelIfNotExists,
+                            isEphemeral ) );
+
+                ManualResetValueTaskSource<IncomingPacketToken> responseSource;
+                Protocol.BindListenerRequest request;
+
+                var poolToken = MemoryPoolToken<byte>.Empty;
+                try
+                {
+                    request = new Protocol.BindListenerRequest(
                         channelName,
-                        queueName ?? channelName,
+                        queueName,
                         prefetchHint,
                         maxRetries,
                         retryDelay,
@@ -138,204 +177,206 @@ internal struct ListenerCollection
                         minDeadLetterRetention,
                         filterExpression,
                         createChannelIfNotExists,
-                        isEphemeral ) );
+                        isEphemeral );
 
-            ManualResetValueTaskSource<IncomingPacketToken> responseSource;
-            Protocol.BindListenerRequest request;
+                    poolToken = client.MemoryPool.Rent( request.Length, client.ClearBuffers, out var buffer );
+                    request.Serialize( buffer, reverseEndianness );
 
-            var poolToken = MemoryPoolToken<byte>.Empty;
-            try
-            {
-                request = new Protocol.BindListenerRequest(
-                    channelName,
-                    queueName,
-                    prefetchHint,
-                    maxRetries,
-                    retryDelay,
-                    maxRedeliveries,
-                    minAckTimeout,
-                    deadLetterCapacityHint,
-                    minDeadLetterRetention,
-                    filterExpression,
-                    createChannelIfNotExists,
-                    isEphemeral );
+                    ManualResetValueTaskSource<WriterSourceResult> writerSource;
+                    using ( client.AcquireActiveLock( traceId, out var exc ) )
+                    {
+                        if ( exc is not null )
+                            return exc;
 
-                poolToken = client.MemoryPool.Rent( request.Length, client.ClearBuffers, out var buffer );
-                request.Serialize( buffer, reverseEndianness );
+                        writerSource = client.WriterQueue.AcquireSource( buffer );
+                        responseSource = client.ResponseQueue.EnqueueSource();
+                    }
 
-                ManualResetValueTaskSource<WriterSourceResult> writerSource;
-                using ( client.AcquireActiveLock( traceId, out var exc ) )
+                    var writerResult = await writerSource.GetTask().ConfigureAwait( false );
+                    switch ( writerResult.Status )
+                    {
+                        case WriterSourceResultStatus.Ready:
+                        {
+                            if ( ! client.PausePingSchedule( traceId, out var exc ) )
+                                return exc;
+
+                            var (packetCount, exception) = await client
+                                .WritePotentialBatchAsync( request.Header, buffer, reverseEndianness, traceId )
+                                .ConfigureAwait( false );
+
+                            if ( exception is not null )
+                            {
+                                await client.DisposeAsync( traceId ).ConfigureAwait( false );
+                                return exception;
+                            }
+
+                            if ( ! client.ReleaseWriterWithResponse( writerSource, responseSource, packetCount, traceId, out exc ) )
+                                return exc;
+
+                            break;
+                        }
+                        case WriterSourceResultStatus.Batched:
+                        {
+                            if ( ! client.ReleaseBatchedWriterWithResponse(
+                                writerSource,
+                                responseSource,
+                                request.Header,
+                                writerResult,
+                                traceId,
+                                out var exc ) )
+                                return exc;
+
+                            break;
+                        }
+                        default:
+                            return client.EmitError( client.DisposedException(), traceId );
+                    }
+                }
+                catch ( Exception exc )
                 {
-                    if ( exc is not null )
+                    return await client.DisposeAsync( exc, traceId ).ConfigureAwait( false );
+                }
+                finally
+                {
+                    poolToken.Return( client, traceId );
+                }
+
+                var response = await responseSource.GetTask().ConfigureAwait( false );
+                try
+                {
+                    if ( response.Type != IncomingPacketToken.Result.Ok )
+                        return await client.HandleResponseErrorAsync( response.Type, request.Header, traceId ).ConfigureAwait( false );
+
+                    if ( ! client.ReleaseResponse( responseSource, traceId, out var exc ) )
                         return exc;
 
-                    writerSource = client.WriterQueue.AcquireSource( buffer );
-                    responseSource = client.ResponseQueue.EnqueueSource();
-                }
-
-                var writerResult = await writerSource.GetTask().ConfigureAwait( false );
-                switch ( writerResult.Status )
-                {
-                    case WriterSourceResultStatus.Ready:
+                    switch ( response.Header.GetClientEndpoint() )
                     {
-                        if ( ! client.PausePingSchedule( traceId, out var exc ) )
-                            return exc;
-
-                        var (packetCount, exception) = await client
-                            .WritePotentialBatchAsync( request.Header, buffer, reverseEndianness, traceId )
-                            .ConfigureAwait( false );
-
-                        if ( exception is not null )
+                        case MessageBrokerClientEndpoint.ListenerBoundResponse:
                         {
-                            await client.DisposeAsync( traceId ).ConfigureAwait( false );
-                            return exception;
+                            var readPacket = client.Logger.ReadPacket;
+                            readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header ) );
+
+                            var exception = response.Header.AssertExactPayload( client, Protocol.ListenerBoundResponse.Length );
+                            if ( exception is not null )
+                            {
+                                if ( client.Logger.Error is { } error )
+                                    error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
+
+                                await client.DisposeAsync( traceId ).ConfigureAwait( false );
+                                return exception;
+                            }
+
+                            var parsedResponse = Protocol.ListenerBoundResponse.Parse( response.Data, reverseEndianness );
+                            var errors = parsedResponse.StringifyErrors();
+
+                            if ( errors.Count > 0 )
+                            {
+                                var error = client.EmitError( client.ProtocolException( response.Header, errors ), traceId );
+                                await client.DisposeAsync( traceId ).ConfigureAwait( false );
+                                return error;
+                            }
+
+                            var listenerDisposed = false;
+                            MessageBrokerBindListenerResult bindResult;
+                            using ( client.AcquireActiveLock( traceId, out exc ) )
+                            {
+                                if ( exc is not null )
+                                    return exc;
+
+                                var listener = new MessageBrokerListener(
+                                    client,
+                                    parsedResponse.ChannelId,
+                                    channelName,
+                                    parsedResponse.QueueId,
+                                    queueName ?? channelName,
+                                    prefetchHint,
+                                    maxRetries,
+                                    retryDelay,
+                                    maxRedeliveries,
+                                    minAckTimeout,
+                                    deadLetterCapacityHint,
+                                    minDeadLetterRetention,
+                                    filterExpression,
+                                    isEphemeral,
+                                    callback );
+
+                                if ( client.PendingBindings.TryRemoveListener( channelName, version ) )
+                                    client.ListenerCollection._store.Add( parsedResponse.ChannelId, channelName, listener );
+                                else
+                                {
+                                    listenerDisposed = true;
+                                    listener.BeginDisposing();
+                                }
+
+                                bindResult = MessageBrokerBindListenerResult.Create(
+                                    listener,
+                                    parsedResponse.ChannelCreated,
+                                    parsedResponse.QueueCreated );
+
+                                failed = false;
+                            }
+
+                            if ( listenerDisposed )
+                                await bindResult.Listener.EndDisposingAsync( traceId ).ConfigureAwait( false );
+
+                            readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header ) );
+                            if ( client.Logger.ListenerBound is { } listenerBound )
+                                listenerBound.Emit(
+                                    MessageBrokerClientListenerBoundEvent.Create(
+                                        bindResult.Listener,
+                                        traceId,
+                                        parsedResponse.ChannelCreated,
+                                        parsedResponse.QueueCreated ) );
+
+                            return bindResult;
                         }
-
-                        if ( ! client.ReleaseWriterWithResponse( writerSource, responseSource, packetCount, traceId, out exc ) )
-                            return exc;
-
-                        break;
-                    }
-                    case WriterSourceResultStatus.Batched:
-                    {
-                        if ( ! client.ReleaseBatchedWriterWithResponse(
-                            writerSource,
-                            responseSource,
-                            request.Header,
-                            writerResult,
-                            traceId,
-                            out var exc ) )
-                            return exc;
-
-                        break;
-                    }
-                    default:
-                        return client.EmitError( client.DisposedException(), traceId );
-                }
-            }
-            catch ( Exception exc )
-            {
-                return await client.DisposeAsync( exc, traceId ).ConfigureAwait( false );
-            }
-            finally
-            {
-                poolToken.Return( client, traceId );
-            }
-
-            var response = await responseSource.GetTask().ConfigureAwait( false );
-            try
-            {
-                if ( response.Type != IncomingPacketToken.Result.Ok )
-                    return await client.HandleResponseErrorAsync( response.Type, request.Header, traceId ).ConfigureAwait( false );
-
-                if ( ! client.ReleaseResponse( responseSource, traceId, out var exc ) )
-                    return exc;
-
-                switch ( response.Header.GetClientEndpoint() )
-                {
-                    case MessageBrokerClientEndpoint.ListenerBoundResponse:
-                    {
-                        var readPacket = client.Logger.ReadPacket;
-                        readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header ) );
-
-                        var exception = response.Header.AssertExactPayload( client, Protocol.ListenerBoundResponse.Length );
-                        if ( exception is not null )
+                        case MessageBrokerClientEndpoint.BindListenerFailureResponse:
                         {
-                            if ( client.Logger.Error is { } error )
-                                error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
+                            var readPacket = client.Logger.ReadPacket;
+                            readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header ) );
 
-                            await client.DisposeAsync( traceId ).ConfigureAwait( false );
-                            return exception;
+                            var exception = response.Header.AssertExactPayload( client, Protocol.BindListenerFailureResponse.Length );
+                            if ( exception is not null )
+                            {
+                                if ( client.Logger.Error is { } error )
+                                    error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
+
+                                await client.DisposeAsync( traceId ).ConfigureAwait( false );
+                                return exception;
+                            }
+
+                            var parsedResponse = Protocol.BindListenerFailureResponse.Parse( response.Data );
+                            readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header ) );
+
+                            return client.EmitError(
+                                client.RequestException( request.Header, parsedResponse.StringifyErrors( channelName ) ),
+                                traceId );
                         }
-
-                        var parsedResponse = Protocol.ListenerBoundResponse.Parse( response.Data, reverseEndianness );
-                        var errors = parsedResponse.StringifyErrors();
-
-                        if ( errors.Count > 0 )
+                        default:
                         {
-                            var error = client.EmitError( client.ProtocolException( response.Header, errors ), traceId );
+                            var error = client.HandleUnexpectedEndpoint( response.Header, traceId );
                             await client.DisposeAsync( traceId ).ConfigureAwait( false );
                             return error;
                         }
-
-                        MessageBrokerBindListenerResult bindResult;
-                        using ( client.AcquireActiveLock( traceId, out exc ) )
-                        {
-                            if ( exc is not null )
-                                return exc;
-
-                            var listener = new MessageBrokerListener(
-                                client,
-                                parsedResponse.ChannelId,
-                                channelName,
-                                parsedResponse.QueueId,
-                                queueName ?? channelName,
-                                prefetchHint,
-                                maxRetries,
-                                retryDelay,
-                                maxRedeliveries,
-                                minAckTimeout,
-                                deadLetterCapacityHint,
-                                minDeadLetterRetention,
-                                filterExpression,
-                                isEphemeral,
-                                callback );
-
-                            client.ListenerCollection._store.Add( parsedResponse.ChannelId, channelName, listener );
-                            bindResult = MessageBrokerBindListenerResult.Create(
-                                listener,
-                                parsedResponse.ChannelCreated,
-                                parsedResponse.QueueCreated );
-                        }
-
-                        readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header ) );
-                        if ( client.Logger.ListenerBound is { } listenerBound )
-                            listenerBound.Emit(
-                                MessageBrokerClientListenerBoundEvent.Create(
-                                    bindResult.Listener,
-                                    traceId,
-                                    parsedResponse.ChannelCreated,
-                                    parsedResponse.QueueCreated ) );
-
-                        return bindResult;
-                    }
-                    case MessageBrokerClientEndpoint.BindListenerFailureResponse:
-                    {
-                        var readPacket = client.Logger.ReadPacket;
-                        readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateReceived( client, traceId, response.Header ) );
-
-                        var exception = response.Header.AssertExactPayload( client, Protocol.BindListenerFailureResponse.Length );
-                        if ( exception is not null )
-                        {
-                            if ( client.Logger.Error is { } error )
-                                error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exception ) );
-
-                            await client.DisposeAsync( traceId ).ConfigureAwait( false );
-                            return exception;
-                        }
-
-                        var parsedResponse = Protocol.BindListenerFailureResponse.Parse( response.Data );
-                        readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header ) );
-
-                        return client.EmitError(
-                            client.RequestException( request.Header, parsedResponse.StringifyErrors( channelName ) ),
-                            traceId );
-                    }
-                    default:
-                    {
-                        var error = client.HandleUnexpectedEndpoint( response.Header, traceId );
-                        await client.DisposeAsync( traceId ).ConfigureAwait( false );
-                        return error;
                     }
                 }
-            }
-            catch ( Exception exc )
-            {
-                return await client.DisposeAsync( exc, traceId ).ConfigureAwait( false );
+                catch ( Exception exc )
+                {
+                    return await client.DisposeAsync( exc, traceId ).ConfigureAwait( false );
+                }
+                finally
+                {
+                    response.PoolToken.Return( client, traceId );
+                }
             }
             finally
             {
-                response.PoolToken.Return( client, traceId );
+                if ( failed )
+                {
+                    using ( client.AcquireLock() )
+                        client.PendingBindings.TryRemoveListener( channelName, version );
+                }
             }
         }
     }
@@ -350,7 +391,7 @@ internal struct ListenerCollection
             if ( client.ShouldCancel )
                 ExceptionThrower.Throw( client.DisposedException() );
 
-            if ( ! listener.BeginUnbinding() )
+            if ( ! listener.BeginDisposing() )
                 return MessageBrokerUnbindListenerResult.CreateNotBound();
 
             reverseEndianness = BitConverter.IsLittleEndian != client.IsServerLittleEndian;
@@ -362,7 +403,8 @@ internal struct ListenerCollection
             if ( client.Logger.UnbindingListener is { } unbindingListener )
                 unbindingListener.Emit( MessageBrokerClientUnbindingListenerEvent.Create( listener, traceId ) );
 
-            var endUnbinding = listener.EndUnbindingAsync( traceId );
+            var failed = true;
+            var endDisposing = listener.EndDisposingAsync( traceId );
             try
             {
                 ManualResetValueTaskSource<IncomingPacketToken> responseSource;
@@ -467,6 +509,7 @@ internal struct ListenerCollection
                                     return exc;
 
                                 client.ListenerCollection._store.Remove( listener.ChannelId, listener.ChannelName );
+                                failed = false;
                             }
 
                             readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header ) );
@@ -478,7 +521,9 @@ internal struct ListenerCollection
                                         parsedResponse.ChannelRemoved,
                                         parsedResponse.QueueRemoved ) );
 
-                            return MessageBrokerUnbindListenerResult.Create( parsedResponse.ChannelRemoved, parsedResponse.QueueRemoved );
+                            return MessageBrokerUnbindListenerResult.Create(
+                                parsedResponse.ChannelRemoved,
+                                parsedResponse.QueueRemoved );
                         }
                         case MessageBrokerClientEndpoint.UnbindListenerFailureResponse:
                         {
@@ -521,7 +566,16 @@ internal struct ListenerCollection
             }
             finally
             {
-                await endUnbinding.ConfigureAwait( false );
+                if ( failed )
+                {
+                    using ( client.AcquireLock() )
+                    {
+                        if ( ReferenceEquals( client.ListenerCollection._store.TryGetById( listener.ChannelId ), listener ) )
+                            client.ListenerCollection._store.Remove( listener.ChannelId, listener.ChannelName );
+                    }
+                }
+
+                await endDisposing.ConfigureAwait( false );
             }
         }
     }

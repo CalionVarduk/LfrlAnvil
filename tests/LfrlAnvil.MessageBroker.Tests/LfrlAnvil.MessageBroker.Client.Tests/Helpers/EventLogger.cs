@@ -159,6 +159,11 @@ public sealed class EventLogger
                 Add( e.Source.TraceId, e.ToString() );
                 logger.PublisherDeleted?.Invoke( e );
             },
+            listenerDeleted: e =>
+            {
+                Add( e.Source.TraceId, e.ToString() );
+                logger.ListenerDeleted?.Invoke( e );
+            },
             disposing: e =>
             {
                 Add( e.Source.TraceId, e.ToString() );

@@ -205,6 +205,11 @@ internal struct NotificationHandler
                                         notification,
                                         traceId )
                                     .ConfigureAwait( false ),
+                                MessageBrokerSystemNotificationType.ListenerDeleted => await HandleListenerDeletedNotificationAsync(
+                                        client,
+                                        notification,
+                                        traceId )
+                                    .ConfigureAwait( false ),
                                 _ => await HandleInvalidSystemNotificationAsync( client, notification.Header, requestHeader.Type, traceId )
                                     .ConfigureAwait( false )
                             };
@@ -583,6 +588,60 @@ internal struct NotificationHandler
         if ( client.Logger.PublisherDeleted is { } publisherDeleted )
             publisherDeleted.Emit(
                 MessageBrokerClientPublisherDeletedEvent.Create( client, traceId, publisher, channelName.Value, deleted ) );
+
+        return true;
+    }
+
+    private static async ValueTask<bool> HandleListenerDeletedNotificationAsync(
+        MessageBrokerClient client,
+        Notification notification,
+        ulong traceId)
+    {
+        Assume.IsGreaterThanOrEqualTo( notification.Data.Length, Protocol.SystemNotificationHeader.Length );
+        var channelName = TextEncoding.Parse( notification.Data.Slice( Protocol.SystemNotificationHeader.Length ) );
+        if ( channelName.Exception is not null )
+        {
+            if ( client.Logger.Error is { } error )
+                error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, channelName.Exception ) );
+
+            await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
+            return false;
+        }
+
+        Assume.IsNotNull( channelName.Value );
+        if ( ! Defaults.NameLengthBounds.Contains( channelName.Value.Length ) )
+        {
+            if ( client.Logger.Error is { } error )
+            {
+                var exc = client.ProtocolException( notification.Header, Resources.InvalidChannelNameLength( channelName.Value.Length ) );
+                error.Emit( MessageBrokerClientErrorEvent.Create( client, traceId, exc ) );
+            }
+
+            await DisposeClientAsync( client, traceId ).ConfigureAwait( false );
+            return false;
+        }
+
+        bool deleted;
+        bool disposing;
+        MessageBrokerListener? listener;
+        using ( client.AcquireActiveLock( traceId, out var exc ) )
+        {
+            if ( exc is not null )
+                return false;
+
+            listener = ListenerCollection.TryRemoveUnsafe( client, channelName.Value );
+            deleted = listener is not null || client.PendingBindings.TryDeactivateListener( channelName.Value );
+            disposing = listener?.BeginDisposing() ?? false;
+        }
+
+        if ( listener is not null && disposing )
+            await listener.EndDisposingAsync( traceId ).ConfigureAwait( false );
+
+        if ( client.Logger.ReadPacket is { } readPacket )
+            readPacket.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, notification.Header ) );
+
+        if ( client.Logger.ListenerDeleted is { } listenerDeleted )
+            listenerDeleted.Emit( MessageBrokerClientListenerDeletedEvent.Create( client, traceId, listener, channelName.Value, deleted ) );
 
         return true;
     }

@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,27 +20,32 @@ namespace LfrlAnvil.MessageBroker.Server;
 public enum MessageBrokerChannelListenerBindingState : byte
 {
     /// <summary>
+    /// Specifies that the listener is in the process of being bound.
+    /// </summary>
+    Created = 0,
+
+    /// <summary>
     /// Specifies that the listener binding is currently running.
     /// </summary>
-    Running = 0,
+    Running = 1,
 
     /// <summary>
     /// Specifies that the listener binding is currently being deactivated.
     /// </summary>
-    Deactivating = 1,
+    Deactivating = 2,
 
     /// <summary>
     /// Specifies that the listener binding is currently inactive.
     /// </summary>
-    Inactive = 2,
+    Inactive = 3,
 
     /// <summary>
     /// Specifies that the listener binding is currently being disposed.
     /// </summary>
-    Disposing = 3,
+    Disposing = 4,
 
     /// <summary>
     /// Specifies that the listener binding has been disposed.
     /// </summary>
-    Disposed = 4
+    Disposed = 5
 }

@@ -998,6 +998,77 @@ public partial class MessageBrokerClientTests
                 .Go();
         }
 
+        [Fact]
+        public async Task BindAsync_ShouldReturnAnError_WhenBindingIsAlreadyInProgress()
+        {
+            var continuationSource = new SafeTaskCompletionSource();
+            var failureEndSource = new SafeTaskCompletionSource();
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger(
+                        logs.GetLogger(
+                            MessageBrokerClientLogger.Create(
+                                bindingListener: _ =>
+                                {
+                                    continuationSource.Complete();
+                                    failureEndSource.Task.Wait();
+                                } ) ) ) );
+
+            await server.EstablishHandshake( client );
+
+            var bindRequest = GetBindListenerRequest( "foo" );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( bindRequest );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+            } );
+
+            var bindTask = Task.Run( async () => await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask ) );
+            await continuationSource.Task;
+            var failureResult = await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
+            failureEndSource.Complete();
+            await serverTask;
+            var listener = (await bindTask).Value?.Listener;
+
+            Assertion.All(
+                    failureResult.Value.TestNull(),
+                    failureResult.Exception.TestType().Exact<InvalidOperationException>(),
+                    client.Listeners.Count.TestEquals( 1 ),
+                    listener.TestNotNull( p => p.State.TestEquals( MessageBrokerListenerState.Bound ) ),
+                    logs.GetAll()
+                        .Skip( 1 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
+                                "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', QueueName = 'foo', PrefetchHint = 1, MaxRetries = 0, MaxRedeliveries = 0, MinAckTimeout = 600 second(s), DeadLetter = <disabled>, IsEphemeral = True, CreateChannelIfNotExists = True",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 43)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 43)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (ListenerBoundResponse, Length = 14)",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (ListenerBoundResponse, Length = 14)",
+                                "[ListenerBound] Client = [1] 'test', TraceId = 1, Channel = [1] 'foo' (created), Queue = [1] 'foo' (created)",
+                                "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (end)"
+                            ] )
+                        ] ),
+                    logs.GetAllAwaitPacket()
+                        .TestContainsContiguousSequence(
+                        [
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (ListenerBoundResponse, Length = 14)"
+                        ] ) )
+                .Go();
+        }
+
         [Theory]
         [InlineData( true, true )]
         [InlineData( false, true )]
@@ -3062,6 +3133,270 @@ public partial class MessageBrokerClientTests
                 filterExpression,
                 createChannelIfNotExists,
                 isEphemeral );
+        }
+
+        [Fact]
+        public async Task ListenerDeletedNotification_ShouldRemoveListener()
+        {
+            var endSource = new SafeTaskCompletionSource();
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger(
+                        logs.GetLogger(
+                            MessageBrokerClientLogger.Create(
+                                traceEnd: e =>
+                                {
+                                    if ( e.Type == MessageBrokerClientTraceEventType.SystemNotification )
+                                        endSource.Complete();
+                                } ) ) ) );
+
+            await server.EstablishHandshake( client );
+            var serverTask = server.GetTask( s =>
+            {
+                var request = GetBindListenerRequest( "foo" );
+                s.Read( request );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+            } );
+
+            await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
+            var listener = client.Listeners.TryGetByChannelId( 1 );
+            await serverTask;
+
+            await server.GetTask( s =>
+                s.SendChannelBindingDeletedNotification( MessageBrokerSystemNotificationType.ListenerDeleted, "foo" ) );
+
+            await endSource.Task;
+
+            Assertion.All(
+                    client.Listeners.Count.TestEquals( 0 ),
+                    listener.TestNotNull( p => p.State.TestEquals( MessageBrokerListenerState.Disposed ) ),
+                    logs.GetAll()
+                        .Skip( 2 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:SystemNotification] Client = [1] 'test', TraceId = 2 (start)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 9)",
+                                "[ProcessingSystemNotification] Client = [1] 'test', TraceId = 2, Type = ListenerDeleted",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 9)",
+                                "[ListenerDeleted] Client = [1] 'test', TraceId = 2, Deleted = True, Channel = [1] 'foo', Queue = [1] 'foo'",
+                                "[Trace:SystemNotification] Client = [1] 'test', TraceId = 2 (end)"
+                            ] )
+                        ] ),
+                    logs.GetAllAwaitPacket()
+                        .TestContainsContiguousSequence(
+                        [
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (SystemNotification, Length = 9)"
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task ListenerDeletedNotification_ShouldRemovePendingListenerBinding()
+        {
+            var endSource = new SafeTaskCompletionSource();
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger(
+                        logs.GetLogger(
+                            MessageBrokerClientLogger.Create(
+                                traceEnd: e =>
+                                {
+                                    if ( e.Type == MessageBrokerClientTraceEventType.SystemNotification )
+                                        endSource.Complete();
+                                } ) ) ) );
+
+            await server.EstablishHandshake( client );
+
+            var bindTask = client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
+            await server.GetTask( s =>
+            {
+                var request = GetBindListenerRequest( "foo" );
+                s.Read( request );
+                s.SendChannelBindingDeletedNotification( MessageBrokerSystemNotificationType.ListenerDeleted, "foo" );
+            } );
+
+            await endSource.Task;
+
+            await server.GetTask( s => s.SendListenerBoundResponse( true, true, 1, 1 ) );
+            var listener = (await bindTask).Value?.Listener;
+
+            Assertion.All(
+                    client.Listeners.Count.TestEquals( 0 ),
+                    listener.TestNotNull( p => p.State.TestEquals( MessageBrokerListenerState.Disposed ) ),
+                    logs.GetAll()
+                        .Skip( 1 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (start)",
+                                "[BindingListener] Client = [1] 'test', TraceId = 1, ChannelName = 'foo', QueueName = 'foo', PrefetchHint = 1, MaxRetries = 0, MaxRedeliveries = 0, MinAckTimeout = 600 second(s), DeadLetter = <disabled>, IsEphemeral = True, CreateChannelIfNotExists = True",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 43)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (BindListenerRequest, Length = 43)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (ListenerBoundResponse, Length = 14)",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (ListenerBoundResponse, Length = 14)",
+                                "[ListenerBound] Client = [1] 'test', TraceId = 1, Channel = [1] 'foo' (created), Queue = [1] 'foo' (created)",
+                                "[Trace:BindListener] Client = [1] 'test', TraceId = 1 (end)"
+                            ] ),
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:SystemNotification] Client = [1] 'test', TraceId = 2 (start)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 9)",
+                                "[ProcessingSystemNotification] Client = [1] 'test', TraceId = 2, Type = ListenerDeleted",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (SystemNotification, Length = 9)",
+                                "[ListenerDeleted] Client = [1] 'test', TraceId = 2, Deleted = True, ChannelName = 'foo'",
+                                "[Trace:SystemNotification] Client = [1] 'test', TraceId = 2 (end)"
+                            ] )
+                        ] ),
+                    logs.GetAllAwaitPacket()
+                        .TestContainsContiguousSequence(
+                        [
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (SystemNotification, Length = 9)",
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (ListenerBoundResponse, Length = 14)"
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task ListenerDeletedNotification_ShouldDoNothing_WhenListenerDoesNotExist()
+        {
+            var endSource = new SafeTaskCompletionSource();
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger(
+                        logs.GetLogger(
+                            MessageBrokerClientLogger.Create(
+                                traceEnd: e =>
+                                {
+                                    if ( e.Type == MessageBrokerClientTraceEventType.SystemNotification )
+                                        endSource.Complete();
+                                } ) ) ) );
+
+            await server.EstablishHandshake( client );
+            await server.GetTask( s =>
+                s.SendChannelBindingDeletedNotification( MessageBrokerSystemNotificationType.ListenerDeleted, "x" ) );
+
+            await endSource.Task;
+
+            Assertion.All(
+                    logs.GetAll()
+                        .Skip( 1 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:SystemNotification] Client = [1] 'test', TraceId = 1 (start)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (SystemNotification, Length = 7)",
+                                "[ProcessingSystemNotification] Client = [1] 'test', TraceId = 1, Type = ListenerDeleted",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (SystemNotification, Length = 7)",
+                                "[ListenerDeleted] Client = [1] 'test', TraceId = 1, Deleted = False, ChannelName = 'x'",
+                                "[Trace:SystemNotification] Client = [1] 'test', TraceId = 1 (end)"
+                            ] )
+                        ] ),
+                    logs.GetAllAwaitPacket()
+                        .TestContainsContiguousSequence(
+                        [
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (SystemNotification, Length = 7)"
+                        ] ) )
+                .Go();
+        }
+
+        [Theory]
+        [InlineData( 0 )]
+        [InlineData( 513 )]
+        public async Task ListenerDeletedNotification_ShouldDisposeClient_WhenChannelNameIsInvalid(int nameLength)
+        {
+            var endSource = new SafeTaskCompletionSource();
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger(
+                        logs.GetLogger(
+                            MessageBrokerClientLogger.Create(
+                                traceEnd: e =>
+                                {
+                                    if ( e.Type == MessageBrokerClientTraceEventType.SystemNotification )
+                                        endSource.Complete();
+                                } ) ) ) );
+
+            var channelName = new string( 'x', nameLength );
+            var notificationLength = nameLength + 6;
+
+            await server.EstablishHandshake( client );
+            await server.GetTask( s =>
+                s.SendChannelBindingDeletedNotification( MessageBrokerSystemNotificationType.ListenerDeleted, channelName ) );
+
+            await endSource.Task;
+
+            Assertion.All(
+                    client.State.TestEquals( MessageBrokerClientState.Disposed ),
+                    logs.GetAll()
+                        .Skip( 1 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:SystemNotification] Client = [1] 'test', TraceId = 1 (start)",
+                                $"[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (SystemNotification, Length = {notificationLength})",
+                                "[ProcessingSystemNotification] Client = [1] 'test', TraceId = 1, Type = ListenerDeleted",
+                                $"""
+                                 [Error] Client = [1] 'test', TraceId = 1
+                                 LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Client 'test' received an invalid SystemNotification from the server. Encountered 1 error(s):
+                                 1. Expected channel name length to be in [1, 512] range but found {nameLength}.
+                                 """,
+                                "[Disposing] Client = [1] 'test', TraceId = 1",
+                                "[Disposed] Client = [1] 'test', TraceId = 1",
+                                "[Trace:SystemNotification] Client = [1] 'test', TraceId = 1 (end)"
+                            ] )
+                        ] ),
+                    logs.GetAllAwaitPacket()
+                        .TestContainsContiguousSequence(
+                        [
+                            "[AwaitPacket] Client = [1] 'test'",
+                            $"[AwaitPacket] Client = [1] 'test', Packet = (SystemNotification, Length = {notificationLength})"
+                        ] ) )
+                .Go();
         }
     }
 }

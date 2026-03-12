@@ -19,8 +19,11 @@ using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Computable.Expressions;
+using LfrlAnvil.Exceptions;
 using LfrlAnvil.Extensions;
+using LfrlAnvil.Memory;
 using LfrlAnvil.MessageBroker.Server.Events;
+using LfrlAnvil.MessageBroker.Server.Exceptions;
 using LfrlAnvil.MessageBroker.Server.Internal;
 
 namespace LfrlAnvil.MessageBroker.Server;
@@ -254,6 +257,103 @@ public sealed class MessageBrokerChannelListenerBinding
             $"[{Client.Id}] '{Client.Name}' => [{Channel.Id}] '{Channel.Name}' listener binding (using [{Queue.Id}] '{Queue.Name}' queue) ({State})";
     }
 
+    /// <summary>
+    /// Deletes this listener from the server.
+    /// </summary>
+    /// <exception cref="MessageBrokerServerException">
+    /// When server is in <see cref="MessageBrokerServerState.Created"/> or <see cref="MessageBrokerServerState.Starting"/> state.
+    /// </exception>
+    /// <exception cref="MessageBrokerRemoteClientException">
+    /// When this listener is in <see cref="MessageBrokerChannelListenerBindingState.Created"/> state.
+    /// </exception>
+    /// <returns>A task that represents the asynchronous delete operation.</returns>
+    public async ValueTask DeleteAsync()
+    {
+        if ( Client.Server.State < MessageBrokerServerState.Running )
+            ExceptionThrower.Throw( Client.Server.Exception( Resources.ServerIsNotRunning ) );
+
+        TaskCompletionSource? deactivated;
+        while ( true )
+        {
+            MessageBrokerChannelListenerBindingState state;
+
+            using ( AcquireLock() )
+            {
+                state = ( MessageBrokerChannelListenerBindingState )_state.Value;
+                if ( state == MessageBrokerChannelListenerBindingState.Created )
+                    ExceptionThrower.Throw( Client.Exception( Resources.ListenerIsBeingBound ) );
+
+                if ( ! IsInactive )
+                {
+                    _state.Write( ( byte )MessageBrokerChannelPublisherBindingState.Disposing );
+                    _prefetchCounter.Write( DisposedCounterValue );
+                    _deadLetterCounter.Write( InactiveZeroCounterValue );
+                    _deactivated = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
+                    deactivated = _deactivated;
+                    break;
+                }
+
+                deactivated = _deactivated;
+            }
+
+            if ( state is MessageBrokerChannelListenerBindingState.Deactivating or MessageBrokerChannelListenerBindingState.Disposing
+                && deactivated is not null )
+                await deactivated.Task.ConfigureAwait( false );
+
+            if ( state >= MessageBrokerChannelListenerBindingState.Disposing )
+                return;
+
+            using ( AcquireLock() )
+            {
+                state = ( MessageBrokerChannelListenerBindingState )_state.Value;
+                if ( state == MessageBrokerChannelListenerBindingState.Disposed )
+                    return;
+
+                if ( state == MessageBrokerChannelListenerBindingState.Inactive )
+                {
+                    _state.Write( ( byte )MessageBrokerChannelPublisherBindingState.Disposing );
+                    _prefetchCounter.Write( DisposedCounterValue );
+                    _deadLetterCounter.Write( InactiveZeroCounterValue );
+                    _deactivated = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
+                    deactivated = _deactivated;
+                    break;
+                }
+            }
+        }
+
+        try
+        {
+            ulong? traceId = null;
+            ServerStorage.Client clientStorage = default;
+
+            using ( Client.AcquireLock() )
+            {
+                if ( Client.IsDisposed )
+                    clientStorage = Client.GetStorage();
+                else
+                    traceId = Client.GetTraceId();
+            }
+
+            if ( traceId is null )
+            {
+                await clientStorage.DeleteAsync( this ).AsSafe().ConfigureAwait( false );
+                return;
+            }
+
+            await DeleteAsyncCore( traceId.Value ).ConfigureAwait( false );
+        }
+        finally
+        {
+            using ( AcquireLock() )
+            {
+                _state.Write( ( byte )MessageBrokerChannelListenerBindingState.Disposed );
+                _deactivated = null;
+            }
+
+            deactivated.TrySetResult();
+        }
+    }
+
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerChannelListenerBinding Create(
@@ -280,7 +380,7 @@ public sealed class MessageBrokerChannelListenerBinding
             filterExpressionDelegate,
             counter: 0,
             isEphemeral,
-            MessageBrokerChannelListenerBindingState.Running );
+            MessageBrokerChannelListenerBindingState.Created );
     }
 
     [Pure]
@@ -341,7 +441,7 @@ public sealed class MessageBrokerChannelListenerBinding
             ActivatePrefetchCounter();
             ActivateDeadLetterCounter();
             _isEphemeral = isEphemeral;
-            _state.Write( ( byte )MessageBrokerChannelListenerBindingState.Running );
+            _state.Write( ( byte )MessageBrokerChannelListenerBindingState.Created );
         }
 
         return true;
@@ -356,6 +456,12 @@ public sealed class MessageBrokerChannelListenerBinding
             if ( state == MessageBrokerChannelListenerBindingState.Inactive )
                 _isEphemeral = true;
         }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void MarkAsRunning()
+    {
+        _state.Write( ( byte )MessageBrokerChannelListenerBindingState.Running, ( byte )MessageBrokerChannelListenerBindingState.Created );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -842,5 +948,164 @@ public sealed class MessageBrokerChannelListenerBinding
         _filterPredicateArgs = filterExpression is not null ? [ default ] : Array.Empty<MessageBrokerFilterExpressionContext>();
         _filterPredicate = filterExpressionDelegate?.Delegate;
         _filterExpression = filterExpression;
+    }
+
+    private async ValueTask DeleteAsyncCore(ulong clientTraceId)
+    {
+        var notificationEnqueued = false;
+        var notificationPoolToken = MemoryPoolToken<byte>.Empty;
+        if ( Client.Logger.TraceStart is { } traceStart )
+            traceStart.Emit(
+                MessageBrokerRemoteClientTraceEvent.Create(
+                    Client,
+                    clientTraceId,
+                    MessageBrokerRemoteClientTraceEventType.UnbindListener ) );
+
+        try
+        {
+            var channelTraceId = 0UL;
+            var queueTraceId = 0UL;
+            var disposingChannel = false;
+            var disposingQueue = false;
+            var clearBuffers = true;
+            ServerStorage.Client clientStorage;
+            Exception? exception = null;
+
+            using ( Client.AcquireLock() )
+            {
+                clientStorage = Client.GetStorage();
+                if ( Client.IsDisposed )
+                    exception = Client.DeactivatedException( disposed: true );
+                else
+                {
+                    clearBuffers = Client.GetClearBuffersOption();
+
+                    using ( Channel.AcquireLock() )
+                    {
+                        if ( Channel.IsDisposed )
+                            exception = Channel.DisposedException();
+                        else
+                        {
+                            using ( Queue.AcquireLock() )
+                            {
+                                if ( Queue.IsDisposed )
+                                    exception = Queue.DisposedException();
+                                else
+                                {
+                                    using ( AcquireLock() )
+                                    {
+                                        Assume.Equals( _state.Value, ( int )MessageBrokerChannelPublisherBindingState.Disposing );
+                                        disposingChannel = Channel.TryDisposeByRemovingListenerUnsafe( Client.Id );
+                                        disposingQueue = Queue.TryDisposeByRemovingListenerUnsafe( Channel.Id );
+                                        channelTraceId = Channel.GetTraceId();
+                                        queueTraceId = Queue.GetTraceId();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Client.EmitError( await clientStorage.DeleteAsync( this ).AsSafe().ConfigureAwait( false ), clientTraceId );
+            if ( exception is not null )
+            {
+                if ( Client.Logger.Error is { } error )
+                    error.Emit( MessageBrokerRemoteClientErrorEvent.Create( Client, clientTraceId, exception ) );
+
+                return;
+            }
+
+            using ( MessageBrokerQueueTraceEvent.CreateScope(
+                Queue,
+                queueTraceId,
+                MessageBrokerQueueTraceEventType.UnbindListener ) )
+            {
+                if ( Queue.Logger.ClientTrace is { } clientTrace )
+                    clientTrace.Emit( MessageBrokerQueueClientTraceEvent.Create( Queue, queueTraceId, clientTraceId ) );
+
+                if ( Queue.Logger.ListenerUnbound is { } queueListenerUnbound )
+                    queueListenerUnbound.Emit( MessageBrokerQueueListenerUnboundEvent.Create( this, queueTraceId, disposingChannel ) );
+
+                if ( disposingQueue )
+                    await Queue.DisposeDueToLackOfReferencesAsync( queueTraceId ).ConfigureAwait( false );
+                else
+                    Queue.StartProcessor();
+            }
+
+            using ( MessageBrokerChannelTraceEvent.CreateScope(
+                Channel,
+                channelTraceId,
+                MessageBrokerChannelTraceEventType.UnbindListener ) )
+            {
+                if ( Channel.Logger.ClientTrace is { } clientTrace )
+                    clientTrace.Emit( MessageBrokerChannelClientTraceEvent.Create( Channel, channelTraceId, Client, clientTraceId ) );
+
+                if ( Channel.Logger.ListenerUnbound is { } channelListenerUnbound )
+                    channelListenerUnbound.Emit( MessageBrokerChannelListenerUnboundEvent.Create( this, channelTraceId, disposingQueue ) );
+
+                if ( disposingChannel )
+                    await Channel.DisposeDueToLackOfReferencesAsync( channelTraceId ).ConfigureAwait( false );
+            }
+
+            using ( Client.AcquireLock() )
+            {
+                if ( ! Client.IsDisposed )
+                    Client.ListenersByChannelId.Remove( Channel.Id );
+            }
+
+            _state.Write( ( byte )MessageBrokerChannelPublisherBindingState.Disposed );
+
+            if ( Client.Logger.ListenerUnbound is { } listenerUnbound )
+                listenerUnbound.Emit(
+                    MessageBrokerRemoteClientListenerUnboundEvent.Create( this, clientTraceId, disposingChannel, disposingQueue ) );
+
+            var notification = new Protocol.ChannelBindingDeletedNotification(
+                MessageBrokerSystemNotificationType.ListenerDeleted,
+                Channel.Name );
+
+            var notificationLength = notification.Length;
+            notificationPoolToken = Client.MemoryPool.Rent( notificationLength, clearBuffers, out var responseData );
+            notification.Serialize( responseData );
+
+            using ( Client.AcquireLock() )
+            {
+                if ( Client.IsInactive )
+                    exception = Client.IsDisposed ? Client.DeactivatedException( disposed: true ) : null;
+                else
+                {
+                    var writerSource = Client.WriterQueue.AcquireSource( responseData, clearBuffers );
+                    ResponseSender.EnqueueUnsafe(
+                        Client,
+                        notification.Header,
+                        writerSource,
+                        notificationPoolToken,
+                        MessageBrokerRemoteClientTraceEventType.UnbindListener,
+                        clientTraceId );
+
+                    notificationEnqueued = true;
+                    Client.ResponseSender.SignalContinuation();
+                }
+            }
+
+            if ( exception is not null )
+            {
+                if ( Client.Logger.Error is { } error )
+                    error.Emit( MessageBrokerRemoteClientErrorEvent.Create( Client, clientTraceId, exception ) );
+            }
+        }
+        finally
+        {
+            if ( ! notificationEnqueued )
+            {
+                notificationPoolToken.Return( Client, clientTraceId );
+                if ( Client.Logger.TraceEnd is { } traceEnd )
+                    traceEnd.Emit(
+                        MessageBrokerRemoteClientTraceEvent.Create(
+                            Client,
+                            clientTraceId,
+                            MessageBrokerRemoteClientTraceEventType.UnbindListener ) );
+            }
+        }
     }
 }
