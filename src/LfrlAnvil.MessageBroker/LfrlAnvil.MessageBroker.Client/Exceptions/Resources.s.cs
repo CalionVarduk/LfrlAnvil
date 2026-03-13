@@ -282,16 +282,18 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string PublisherNotBound(int channelId, string channelName)
+    internal static string PublisherNotBound(int? channelId, string channelName)
     {
-        return $"Client is not bound as a publisher to channel [{channelId}] '{channelName}'.";
+        return
+            $"Client is not bound as a publisher to channel{(channelId is null ? string.Empty : $" [{channelId.Value}]")} '{channelName}'.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string ListenerNotBound(int channelId, string channelName)
+    internal static string ListenerNotBound(int? channelId, string channelName)
     {
-        return $"Client is not bound as a listener to channel [{channelId}] '{channelName}'.";
+        return
+            $"Client is not bound as a listener to channel{(channelId is null ? string.Empty : $" [{channelId.Value}]")} '{channelName}'.";
     }
 
     [Pure]
@@ -451,16 +453,16 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string PublisherIsInProcessOfBeingBound(string channelName)
+    internal static string PublisherChangeIsInProgress(string channelName, bool isBinding)
     {
-        return $"Publisher for channel '{channelName}' is already in the process of being bound.";
+        return $"Publisher for channel '{channelName}' is in the process of being {(isBinding ? "bound" : "unbound")}.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string ListenerIsInProcessOfBeingBound(string channelName)
+    internal static string ListenerChangeIsInProgress(string channelName, bool isBinding)
     {
-        return $"Listener for channel '{channelName}' is already in the process of being bound.";
+        return $"Listener for channel '{channelName}' is in the process of being {(isBinding ? "bound" : "unbound")}.";
     }
 
     [Pure]

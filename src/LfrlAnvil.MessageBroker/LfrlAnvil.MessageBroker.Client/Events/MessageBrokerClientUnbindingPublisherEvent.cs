@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,10 +22,15 @@ namespace LfrlAnvil.MessageBroker.Client.Events;
 /// </summary>
 public readonly struct MessageBrokerClientUnbindingPublisherEvent
 {
-    private MessageBrokerClientUnbindingPublisherEvent(MessageBrokerPublisher publisher, ulong traceId)
+    private MessageBrokerClientUnbindingPublisherEvent(
+        MessageBrokerClient client,
+        MessageBrokerPublisher? publisher,
+        string channelName,
+        ulong traceId)
     {
-        Source = MessageBrokerClientEventSource.Create( publisher.Client, traceId );
+        Source = MessageBrokerClientEventSource.Create( client, traceId );
         Publisher = publisher;
+        ChannelName = channelName;
     }
 
     /// <summary>
@@ -36,7 +41,12 @@ public readonly struct MessageBrokerClientUnbindingPublisherEvent
     /// <summary>
     /// <see cref="MessageBrokerPublisher"/> related to this event.
     /// </summary>
-    public MessageBrokerPublisher Publisher { get; }
+    public MessageBrokerPublisher? Publisher { get; }
+
+    /// <summary>
+    /// Name of the channel from which the client is unbinding a publisher.
+    /// </summary>
+    public string ChannelName { get; }
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerClientUnbindingPublisherEvent"/> instance.
@@ -45,14 +55,24 @@ public readonly struct MessageBrokerClientUnbindingPublisherEvent
     [Pure]
     public override string ToString()
     {
-        return
-            $"[UnbindingPublisher] {Source}, Channel = [{Publisher.ChannelId}] '{Publisher.ChannelName}', Stream = [{Publisher.StreamId}] '{Publisher.StreamName}'";
+        var info = Publisher is not null
+            ? $"Channel = [{Publisher.ChannelId}] '{Publisher.ChannelName}', Stream = [{Publisher.StreamId}] '{Publisher.StreamName}'"
+            : $"ChannelName = '{ChannelName}'";
+
+        return $"[UnbindingPublisher] {Source}, {info}";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerClientUnbindingPublisherEvent Create(MessageBrokerPublisher publisher, ulong traceId)
     {
-        return new MessageBrokerClientUnbindingPublisherEvent( publisher, traceId );
+        return new MessageBrokerClientUnbindingPublisherEvent( publisher.Client, publisher, publisher.ChannelName, traceId );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerClientUnbindingPublisherEvent Create(MessageBrokerClient client, string channelName, ulong traceId)
+    {
+        return new MessageBrokerClientUnbindingPublisherEvent( client, publisher: null, channelName, traceId );
     }
 }

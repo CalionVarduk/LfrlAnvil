@@ -575,6 +575,43 @@ internal static class Protocol
         }
     }
 
+    internal readonly struct UnbindPublisherByNameRequest
+    {
+        internal readonly PacketHeader Header;
+        internal readonly EncodeableText ChannelName;
+
+        internal UnbindPublisherByNameRequest(string channelName)
+        {
+            ChannelName = TextEncoding.Prepare( channelName ).GetValueOrThrow();
+            Header = PacketHeader.Create(
+                MessageBrokerServerEndpoint.UnbindPublisherByNameRequest,
+                unchecked( ( uint )ChannelName.ByteCount ) );
+        }
+
+        internal int Length => PacketHeader.Length + ChannelName.ByteCount;
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"[{Header}] ChannelName = ({ChannelName})";
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal void Serialize(Memory<byte> target, bool reverseEndianness)
+        {
+            Assume.IsGreaterThanOrEqualTo( target.Length, Length );
+
+            var payload = Header.Payload;
+            if ( reverseEndianness )
+                payload = BinaryPrimitives.ReverseEndianness( payload );
+
+            var writer = new BinaryContractWriter( target.Span );
+            writer.MoveWrite( Header.EndpointCode );
+            writer.MoveWrite( payload );
+            ChannelName.Encode( writer.GetSpan( ChannelName.ByteCount ) ).ThrowIfError();
+        }
+    }
+
     internal readonly struct PublisherUnboundResponse
     {
         internal const int Length = sizeof( byte );
@@ -635,9 +672,9 @@ internal static class Protocol
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal Chain<string> StringifyErrors(MessageBrokerPublisher channel)
+        internal Chain<string> StringifyErrors(int? channelId, string channelName)
         {
-            return NotBound ? Chain.Create( Resources.PublisherNotBound( channel.ChannelId, channel.ChannelName ) ) : Chain<string>.Empty;
+            return NotBound ? Chain.Create( Resources.PublisherNotBound( channelId, channelName ) ) : Chain<string>.Empty;
         }
     }
 
@@ -911,6 +948,43 @@ internal static class Protocol
         }
     }
 
+    internal readonly struct UnbindListenerByNameRequest
+    {
+        internal readonly PacketHeader Header;
+        internal readonly EncodeableText ChannelName;
+
+        internal UnbindListenerByNameRequest(string channelName)
+        {
+            ChannelName = TextEncoding.Prepare( channelName ).GetValueOrThrow();
+            Header = PacketHeader.Create(
+                MessageBrokerServerEndpoint.UnbindListenerByNameRequest,
+                unchecked( ( uint )ChannelName.ByteCount ) );
+        }
+
+        internal int Length => PacketHeader.Length + ChannelName.ByteCount;
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"[{Header}] ChannelName = ({ChannelName})";
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal void Serialize(Memory<byte> target, bool reverseEndianness)
+        {
+            Assume.IsGreaterThanOrEqualTo( target.Length, Length );
+
+            var payload = Header.Payload;
+            if ( reverseEndianness )
+                payload = BinaryPrimitives.ReverseEndianness( payload );
+
+            var writer = new BinaryContractWriter( target.Span );
+            writer.MoveWrite( Header.EndpointCode );
+            writer.MoveWrite( payload );
+            ChannelName.Encode( writer.GetSpan( ChannelName.ByteCount ) ).ThrowIfError();
+        }
+    }
+
     internal readonly struct ListenerUnboundResponse
     {
         internal const int Length = sizeof( byte );
@@ -971,11 +1045,9 @@ internal static class Protocol
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal Chain<string> StringifyErrors(MessageBrokerListener listener)
+        internal Chain<string> StringifyErrors(int? channelId, string channelName)
         {
-            return NotBound
-                ? Chain.Create( Resources.ListenerNotBound( listener.ChannelId, listener.ChannelName ) )
-                : Chain<string>.Empty;
+            return NotBound ? Chain.Create( Resources.ListenerNotBound( channelId, channelName ) ) : Chain<string>.Empty;
         }
     }
 

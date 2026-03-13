@@ -83,6 +83,18 @@ internal sealed class ClientMock : IDisposable
     }
 
     [Pure]
+    internal static byte[] PrepareUnbindPublisherByNameRequest(string channelName, uint? payload = null)
+    {
+        var encodedName = TextEncoding.Prepare( channelName ).GetValueOrThrow();
+        var buffer = new byte[Protocol.PacketHeader.Length + encodedName.ByteCount];
+        var writer = new BinaryContractWriter( buffer );
+        writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.UnbindPublisherByNameRequest );
+        writer.MoveWrite( payload ?? ( uint )encodedName.ByteCount );
+        encodedName.Encode( writer.GetSpan( encodedName.ByteCount ) ).ThrowIfError();
+        return buffer;
+    }
+
+    [Pure]
     internal static byte[] PrepareBindListenerRequest(
         string channelName,
         bool createChannelIfNotExists,
@@ -528,6 +540,11 @@ internal sealed class ClientMock : IDisposable
     internal void SendUnbindPublisherRequest(int channelId, uint? payload = null)
     {
         Send( PrepareUnbindPublisherRequest( channelId, payload ) );
+    }
+
+    internal void SendUnbindPublisherByNameRequest(string channelName, uint? payload = null)
+    {
+        Send( PrepareUnbindPublisherByNameRequest( channelName, payload ) );
     }
 
     internal void SendBindListenerRequest(

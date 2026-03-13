@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,10 +22,15 @@ namespace LfrlAnvil.MessageBroker.Server.Events;
 /// </summary>
 public readonly struct MessageBrokerRemoteClientUnbindingPublisherEvent
 {
-    private MessageBrokerRemoteClientUnbindingPublisherEvent(MessageBrokerRemoteClient client, ulong traceId, int channelId)
+    private MessageBrokerRemoteClientUnbindingPublisherEvent(
+        MessageBrokerRemoteClient client,
+        ulong traceId,
+        int? channelId,
+        string? channelName)
     {
         Source = MessageBrokerRemoteClientEventSource.Create( client, traceId );
         ChannelId = channelId;
+        ChannelName = channelName;
     }
 
     /// <summary>
@@ -36,7 +41,12 @@ public readonly struct MessageBrokerRemoteClientUnbindingPublisherEvent
     /// <summary>
     /// Channel's identifier.
     /// </summary>
-    public int ChannelId { get; }
+    public int? ChannelId { get; }
+
+    /// <summary>
+    /// Channel's name.
+    /// </summary>
+    public string? ChannelName { get; }
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerRemoteClientUnbindingPublisherEvent"/> instance.
@@ -45,13 +55,24 @@ public readonly struct MessageBrokerRemoteClientUnbindingPublisherEvent
     [Pure]
     public override string ToString()
     {
-        return $"[UnbindingPublisher] {Source}, ChannelId = {ChannelId}";
+        var channel = ChannelId is not null ? $"ChannelId = {ChannelId.Value}" : $"ChannelName = '{ChannelName}'";
+        return $"[UnbindingPublisher] {Source}, {channel}";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerRemoteClientUnbindingPublisherEvent Create(MessageBrokerRemoteClient client, ulong traceId, int channelId)
     {
-        return new MessageBrokerRemoteClientUnbindingPublisherEvent( client, traceId, channelId );
+        return new MessageBrokerRemoteClientUnbindingPublisherEvent( client, traceId, channelId, channelName: null );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerRemoteClientUnbindingPublisherEvent Create(
+        MessageBrokerRemoteClient client,
+        ulong traceId,
+        string channelName)
+    {
+        return new MessageBrokerRemoteClientUnbindingPublisherEvent( client, traceId, channelId: null, channelName );
     }
 }

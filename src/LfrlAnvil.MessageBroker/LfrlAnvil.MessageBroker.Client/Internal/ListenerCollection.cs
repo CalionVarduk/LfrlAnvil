@@ -127,11 +127,9 @@ internal struct ListenerCollection
             if ( listener is not null )
                 return MessageBrokerBindListenerResult.CreateAlreadyBound( listener );
 
-            var bindingVersion = client.PendingBindings.TryAddListener( channelName );
-            if ( bindingVersion is null )
-                return new InvalidOperationException( Resources.ListenerIsInProcessOfBeingBound( channelName ) );
+            if ( ! client.PendingBindings.TryAddListenerBind( channelName, out version, out var isBinding ) )
+                return new InvalidOperationException( Resources.ListenerChangeIsInProgress( channelName, isBinding ) );
 
-            version = bindingVersion.Value;
             reverseEndianness = BitConverter.IsLittleEndian != client.IsServerLittleEndian;
             traceId = client.GetTraceId();
         }
@@ -544,7 +542,9 @@ internal struct ListenerCollection
                             readPacket?.Emit( MessageBrokerClientReadPacketEvent.CreateAccepted( client, traceId, response.Header ) );
 
                             return client.EmitError(
-                                client.RequestException( request.Header, parsedResponse.StringifyErrors( listener ) ),
+                                client.RequestException(
+                                    request.Header,
+                                    parsedResponse.StringifyErrors( listener.ChannelId, listener.ChannelName ) ),
                                 traceId );
                         }
                         default:

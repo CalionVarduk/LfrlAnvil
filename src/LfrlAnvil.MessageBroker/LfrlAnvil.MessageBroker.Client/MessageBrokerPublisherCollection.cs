@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -106,5 +106,30 @@ public readonly struct MessageBrokerPublisherCollection
         bool isEphemeral = false)
     {
         return PublisherCollection.BindAsync( _client, channelName, streamName, isEphemeral );
+    }
+
+    /// <summary>
+    /// Attempts to unbind a publisher from the provided channel.
+    /// </summary>
+    /// <param name="channelName">Name of the channel to unbind a publisher from.</param>
+    /// <returns>
+    /// A task that represents the operation, which returns a <see cref="Result{T}"/> instance,
+    /// with underlying <see cref="MessageBrokerUnbindPublisherResult"/> instance.
+    /// </returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// When <paramref name="channelName"/> length is less than <b>1</b> or greater than <b>512</b>.
+    /// </exception>
+    /// <exception cref="MessageBrokerClientDisposedException">When client has already been disposed.</exception>
+    /// <exception cref="MessageBrokerClientStateException">
+    /// When client is not disposed and not in <see cref="MessageBrokerClientState.Running"/> state.
+    /// </exception>
+    /// <remarks>
+    /// Unexpected errors encountered during publisher unbinding will cause the client to be automatically disposed.
+    /// Returned <see cref="Result{T}"/> will only be valid when either the publisher has been successfully unbound from the channel
+    /// on the server side, or the publisher is already locally unbound from the channel, which will cancel the request to the server.
+    /// </remarks>
+    public ValueTask<Result<MessageBrokerUnbindPublisherResult>> UnbindAsync(string channelName)
+    {
+        return PublisherCollection.UnbindAsync( _client, channelName );
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -45,29 +45,39 @@ public enum MessageBrokerServerEndpoint : byte
     UnbindPublisherRequest = 5,
 
     /// <summary>
+    /// Represents unbind publisher by channel name request sent by client.
+    /// </summary>
+    UnbindPublisherByNameRequest = 6,
+
+    /// <summary>
     /// Represents bind listener request sent by client.
     /// </summary>
-    BindListenerRequest = 6,
+    BindListenerRequest = 7,
 
     /// <summary>
     /// Represents unbind listener request sent by client.
     /// </summary>
-    UnbindListenerRequest = 7,
+    UnbindListenerRequest = 8,
+
+    /// <summary>
+    /// Represents unbind listener by channel name request sent by client.
+    /// </summary>
+    UnbindListenerByNameRequest = 9,
 
     /// <summary>
     /// Represents dead letter query sent by client.
     /// </summary>
-    DeadLetterQuery = 8,
+    DeadLetterQuery = 10,
 
     /// <summary>
     /// Represents message notification ACK sent by client.
     /// </summary>
-    MessageNotificationAck = 9,
+    MessageNotificationAck = 11,
 
     /// <summary>
     /// Represents message notification negative ACK sent by client.
     /// </summary>
-    MessageNotificationNack = 10,
+    MessageNotificationNack = 12,
 
     /// <summary>
     /// Represents handshake request sent by client.

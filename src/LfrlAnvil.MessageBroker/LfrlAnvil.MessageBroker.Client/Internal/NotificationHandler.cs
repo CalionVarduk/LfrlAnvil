@@ -578,7 +578,7 @@ internal struct NotificationHandler
                 return false;
 
             publisher = PublisherCollection.TryRemoveUnsafe( client, channelName.Value );
-            deleted = publisher is not null || client.PendingBindings.TryDeactivatePublisher( channelName.Value );
+            deleted = publisher is not null || client.PendingBindings.TryDeactivatePublisherBind( channelName.Value );
             publisher?.MarkAsDisposed();
         }
 
@@ -630,7 +630,7 @@ internal struct NotificationHandler
                 return false;
 
             listener = ListenerCollection.TryRemoveUnsafe( client, channelName.Value );
-            deleted = listener is not null || client.PendingBindings.TryDeactivateListener( channelName.Value );
+            deleted = listener is not null || client.PendingBindings.TryDeactivateListenerBind( channelName.Value );
             disposing = listener?.BeginDisposing() ?? false;
         }
 

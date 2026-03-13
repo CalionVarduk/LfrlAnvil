@@ -356,6 +356,52 @@ public class PublisherTests : TestsBase, IClassFixture<SharedResourceFixture>
     }
 
     [Fact]
+    public async Task Server_ShouldUnbindChannel_WhenClientUnbindsPublisherByName()
+    {
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource ) );
+
+        await server.StartAsync();
+
+        await using var client = new MessageBrokerClient(
+            ( IPEndPoint )server.LocalEndPoint,
+            "test",
+            MessageBrokerClientOptions.Default
+                .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) )
+                .SetDelaySource( _sharedDelaySource ) );
+
+        await client.StartAsync();
+
+        await client.Publishers.BindAsync( "foo" );
+        var publisher = client.Publishers.TryGetByChannelId( 1 );
+        var remoteClient = server.Clients.TryGetById( 1 );
+        var channel = server.Channels.TryGetById( 1 );
+        var stream = server.Streams.TryGetById( 1 );
+        var binding = channel?.Publishers.TryGetByClientId( 1 );
+        var result = await client.Publishers.UnbindAsync( "foo" );
+
+        Assertion.All(
+                publisher.TestNotNull( c => c.State.TestEquals( MessageBrokerPublisherState.Disposed ) ),
+                client.Publishers.Count.TestEquals( 0 ),
+                result.Exception.TestNull(),
+                result.Value.ChannelRemoved.TestTrue(),
+                result.Value.StreamRemoved.TestTrue(),
+                result.Value.NotBound.TestFalse(),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "remoteClient",
+                    c.Publishers.Count.TestEquals( 0 ) ) ),
+                channel.TestNotNull( c => c.State.TestEquals( MessageBrokerChannelState.Disposed ) ),
+                stream.TestNotNull( q => q.State.TestEquals( MessageBrokerStreamState.Disposed ) ),
+                binding.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelPublisherBindingState.Disposed ) ) )
+            .Go();
+    }
+
+    [Fact]
     public async Task DeletePublisher_ShouldBePropagatedToClient()
     {
         var completionSource = new SafeTaskCompletionSource();

@@ -334,6 +334,14 @@ internal sealed class ServerMock : IDisposable
         return AssertEndpoint( Read( Protocol.UnbindPublisherRequest.Length ), MessageBrokerServerEndpoint.UnbindPublisherRequest );
     }
 
+    internal byte[] ReadUnbindPublisherByNameRequest(string channelName)
+    {
+        var encodedName = TextEncoding.Prepare( channelName ).GetValueOrThrow();
+        return AssertEndpoint(
+            Read( Protocol.PacketHeader.Length + encodedName.ByteCount ),
+            MessageBrokerServerEndpoint.UnbindPublisherByNameRequest );
+    }
+
     internal byte[] ReadUnbindListenerRequest()
     {
         return AssertEndpoint( Read( Protocol.UnbindListenerRequest.Length ), MessageBrokerServerEndpoint.UnbindListenerRequest );

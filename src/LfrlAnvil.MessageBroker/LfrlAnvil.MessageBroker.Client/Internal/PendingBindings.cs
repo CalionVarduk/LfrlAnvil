@@ -38,15 +38,27 @@ internal struct PendingBindings
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ulong? TryAddPublisher(string channelName)
+    internal bool TryAddPublisherBind(string channelName, out ulong version, out bool isBinding)
     {
-        return TryAdd( new EntryKey( isPublisher: true, channelName ) );
+        return TryAdd( new EntryKey( isPublisher: true, channelName ), isBind: true, out version, out isBinding );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ulong? TryAddListener(string channelName)
+    internal bool TryAddPublisherUnbind(string channelName, out ulong version, out bool isBinding)
     {
-        return TryAdd( new EntryKey( isPublisher: false, channelName ) );
+        return TryAdd( new EntryKey( isPublisher: true, channelName ), isBind: false, out version, out isBinding );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool TryAddListenerBind(string channelName, out ulong version, out bool isBinding)
+    {
+        return TryAdd( new EntryKey( isPublisher: false, channelName ), isBind: true, out version, out isBinding );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool TryAddListenerUnbind(string channelName, out ulong version, out bool isBinding)
+    {
+        return TryAdd( new EntryKey( isPublisher: false, channelName ), isBind: false, out version, out isBinding );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -62,15 +74,15 @@ internal struct PendingBindings
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool TryDeactivatePublisher(string channelName)
+    internal bool TryDeactivatePublisherBind(string channelName)
     {
-        return TryDeactivate( new EntryKey( isPublisher: true, channelName ) );
+        return TryDeactivateBind( new EntryKey( isPublisher: true, channelName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool TryDeactivateListener(string channelName)
+    internal bool TryDeactivateListenerBind(string channelName)
     {
-        return TryDeactivate( new EntryKey( isPublisher: false, channelName ) );
+        return TryDeactivateBind( new EntryKey( isPublisher: false, channelName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -80,14 +92,15 @@ internal struct PendingBindings
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private ulong? TryAdd(EntryKey key)
+    private bool TryAdd(EntryKey key, bool isBind, out ulong version, out bool isBinding)
     {
         ref var value = ref CollectionsMarshal.GetValueRefOrAddDefault( _entries, key, out var exists );
-        if ( exists )
-            return null;
+        if ( ! exists )
+            value = new EntryValue( unchecked( _nextVersion++ ), isBind );
 
-        value = new EntryValue( unchecked( _nextVersion++ ) );
-        return value.Version;
+        version = value.Version;
+        isBinding = value.IsBind;
+        return ! exists;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -104,10 +117,10 @@ internal struct PendingBindings
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private bool TryDeactivate(EntryKey key)
+    private bool TryDeactivateBind(EntryKey key)
     {
         ref var value = ref CollectionsMarshal.GetValueRefOrNullRef( _entries, key );
-        if ( Unsafe.IsNullRef( ref value ) || ! value.IsActive )
+        if ( Unsafe.IsNullRef( ref value ) || ! value.IsBind || ! value.IsActive )
             return false;
 
         value.IsActive = false;
@@ -153,18 +166,20 @@ internal struct PendingBindings
     private struct EntryValue
     {
         internal readonly ulong Version;
+        internal readonly bool IsBind;
         internal bool IsActive;
 
-        internal EntryValue(ulong version)
+        internal EntryValue(ulong version, bool isBind)
         {
             Version = version;
+            IsBind = isBind;
             IsActive = true;
         }
 
         [Pure]
         public override string ToString()
         {
-            return $"Version = {Version} ({(IsActive ? "active" : "inactive")})";
+            return $"Version = {Version}, IsBind = {IsBind} ({(IsActive ? "active" : "inactive")})";
         }
     }
 }

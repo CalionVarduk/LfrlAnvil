@@ -1412,6 +1412,496 @@ public partial class MessageBrokerClientTests
                 .Go();
         }
 
+        [Theory]
+        [InlineData( true, true )]
+        [InlineData( false, true )]
+        [InlineData( true, false )]
+        [InlineData( false, false )]
+        public async Task UnbindAsync_ByChannelName_ShouldUnbindPublisherCorrectly(bool channelRemoved, bool streamRemoved)
+        {
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger( logs.GetLogger() ) );
+
+            var channelId = 1;
+            var channelName = "foo";
+            await server.EstablishHandshake( client );
+            var serverTask = server.GetTask( s =>
+            {
+                s.ReadUnbindPublisherByNameRequest( "foo" );
+                s.SendPublisherUnboundResponse( channelRemoved, streamRemoved );
+            } );
+
+            var result = await client.Publishers.UnbindAsync( "foo" );
+            await serverTask;
+
+            Assertion.All(
+                    result.Exception.TestNull(),
+                    result.Value.NotBound.TestFalse(),
+                    result.Value.ChannelRemoved.TestEquals( channelRemoved ),
+                    result.Value.StreamRemoved.TestEquals( streamRemoved ),
+                    result.Value.ToString()
+                        .TestEquals(
+                            channelRemoved
+                                ? streamRemoved ? "Success (channel removed) (stream removed)" : "Success (channel removed)"
+                                : streamRemoved
+                                    ? "Success (stream removed)"
+                                    : "Success" ),
+                    client.Publishers.Count.TestEquals( 0 ),
+                    client.Publishers.GetAll().TestEmpty(),
+                    client.Publishers.TryGetByChannelName( channelName ).TestNull(),
+                    client.Publishers.TryGetByChannelId( channelId ).TestNull(),
+                    logs.GetAll()
+                        .Skip( 1 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 1 (start)",
+                                $"[UnbindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = '{channelName}'",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (UnbindPublisherByNameRequest, Length = 8)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (UnbindPublisherByNameRequest, Length = 8)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (PublisherUnboundResponse, Length = 6)",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (PublisherUnboundResponse, Length = 6)",
+                                $"[PublisherUnbound] Client = [1] 'test', TraceId = 1, ChannelName = '{channelName}'{(channelRemoved ? " (channel removed)" : string.Empty)}{(streamRemoved ? " (stream removed)" : string.Empty)}",
+                                "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 1 (end)"
+                            ] )
+                        ] ),
+                    logs.GetAllAwaitPacket()
+                        .TestContainsContiguousSequence(
+                        [
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (PublisherUnboundResponse, Length = 6)"
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task UnbindAsync_ByChannelName_ShouldUnbindLocallyExistingPublisherCorrectly()
+        {
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger( logs.GetLogger() ) );
+
+            await server.EstablishHandshake( client );
+
+            var bindRequest = new Protocol.BindPublisherRequest( "foo", null, true );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( bindRequest );
+                s.SendPublisherBoundResponse( true, true, 1, 2 );
+                s.ReadUnbindPublisherRequest();
+                s.SendPublisherUnboundResponse( false, false );
+            } );
+
+            await client.Publishers.BindAsync( "foo" );
+            var result = await client.Publishers.UnbindAsync( "foo" );
+
+            await serverTask;
+
+            Assertion.All(
+                    result.Exception.TestNull(),
+                    result.Value.NotBound.TestFalse(),
+                    result.Value.ChannelRemoved.TestFalse(),
+                    result.Value.StreamRemoved.TestFalse(),
+                    result.Value.ToString().TestEquals( "Success" ),
+                    client.Publishers.Count.TestEquals( 0 ),
+                    client.Publishers.GetAll().TestEmpty(),
+                    client.Publishers.TryGetByChannelName( "foo" ).TestNull(),
+                    client.Publishers.TryGetByChannelId( 1 ).TestNull(),
+                    logs.GetAll()
+                        .Skip( 2 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 2 (start)",
+                                "[UnbindingPublisher] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [2] 'foo'",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 2, Packet = (UnbindPublisherRequest, Length = 9)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 2, Packet = (UnbindPublisherRequest, Length = 9)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (PublisherUnboundResponse, Length = 6)",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (PublisherUnboundResponse, Length = 6)",
+                                "[PublisherUnbound] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [2] 'foo'",
+                                "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 2 (end)"
+                            ] )
+                        ] ),
+                    logs.GetAllAwaitPacket()
+                        .TestContainsContiguousSequence(
+                        [
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (PublisherUnboundResponse, Length = 6)"
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task UnbindAsync_ByChannelName_ShouldThrowMessageBrokerClientDisposedException_WhenClientIsDisposed()
+        {
+            var client = new MessageBrokerClient( new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
+            await client.DisposeAsync();
+
+            Exception? exception = null;
+            try
+            {
+                _ = await client.Publishers.UnbindAsync( "foo" );
+            }
+            catch ( Exception exc )
+            {
+                exception = exc;
+            }
+
+            exception.TestType().Exact<MessageBrokerClientDisposedException>( e => e.Client.TestRefEquals( client ) ).Go();
+        }
+
+        [Fact]
+        public async Task UnbindAsync_ByChannelName_ShouldReturnErrorAndDisposeClient_WhenServerDoesNotRespondInTime()
+        {
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger( logs.GetLogger() ) );
+
+            await server.EstablishHandshake( client );
+            var result = await client.Publishers.UnbindAsync( "foo" );
+
+            Assertion.All(
+                    client.State.TestEquals( MessageBrokerClientState.Disposed ),
+                    result.Exception.TestType()
+                        .Exact<MessageBrokerClientResponseTimeoutException>( exc => Assertion.All(
+                            exc.Client.TestRefEquals( client ),
+                            exc.RequestEndpoint.TestEquals( MessageBrokerServerEndpoint.UnbindPublisherByNameRequest ) ) ),
+                    logs.GetAll()
+                        .Skip( 1 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 1 (start)",
+                                "[UnbindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo'",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (UnbindPublisherByNameRequest, Length = 8)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (UnbindPublisherByNameRequest, Length = 8)",
+                                """
+                                [Error] Client = [1] 'test', TraceId = 1
+                                LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Server failed to respond to 'test' client's UnbindPublisherByNameRequest in the specified amount of time (1 second(s)).
+                                """,
+                                "[Disposing] Client = [1] 'test', TraceId = 1",
+                                "[Disposed] Client = [1] 'test', TraceId = 1",
+                                "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 1 (end)"
+                            ] )
+                        ] ),
+                    logs.GetAllAwaitPacket().Length.TestGreaterThan( 0 ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task UnbindAsync_ByChannelName_ShouldReturnError_WhenClientIsDisposedBeforeServerResponds()
+        {
+            var ready = Atomic.Create( false );
+            var endSource = new SafeTaskCompletionSource<Task>();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger(
+                        MessageBrokerClientLogger.Create(
+                            sendPacket: e =>
+                            {
+                                var bound = ready.Value;
+                                if ( bound
+                                    && e.Type == MessageBrokerClientSendPacketEventType.Sending
+                                    && e.Packet.Endpoint == MessageBrokerServerEndpoint.Ping )
+                                    endSource.Complete( e.Source.Client.DisposeAsync().AsTask() );
+                            } ) ) );
+
+            await server.EstablishHandshake( client, pingInterval: Duration.FromSeconds( 0.2 ) );
+            ready.Value = true;
+
+            var result = await client.Publishers.UnbindAsync( "foo" );
+            await endSource.Task.Unwrap();
+
+            result.Exception.TestType().Exact<MessageBrokerClientDisposedException>( exc => exc.Client.TestRefEquals( client ) ).Go();
+        }
+
+        [Fact]
+        public async Task
+            UnbindAsync_ByChannelName_ShouldReturnErrorAndDisposeClient_WhenServerRespondsWithPublisherUnboundResponseWithInvalidPayload()
+        {
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger( logs.GetLogger() ) );
+
+            await server.EstablishHandshake( client );
+            var serverTask = server.GetTask( s =>
+            {
+                s.ReadUnbindPublisherByNameRequest( "foo" );
+                s.SendPublisherUnboundResponse( true, true, payload: 0 );
+            } );
+
+            var result = await client.Publishers.UnbindAsync( "foo" );
+            await serverTask;
+
+            Assertion.All(
+                    client.State.TestEquals( MessageBrokerClientState.Disposed ),
+                    result.Exception.TestType()
+                        .Exact<MessageBrokerClientProtocolException>( exc => Assertion.All(
+                            exc.Client.TestRefEquals( client ),
+                            exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.PublisherUnboundResponse ) ) ),
+                    logs.GetAll()
+                        .Skip( 1 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 1 (start)",
+                                "[UnbindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo'",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (UnbindPublisherByNameRequest, Length = 8)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (UnbindPublisherByNameRequest, Length = 8)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (PublisherUnboundResponse, Length = 5)",
+                                """
+                                [Error] Client = [1] 'test', TraceId = 1
+                                LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Client 'test' received an invalid PublisherUnboundResponse from the server. Encountered 1 error(s):
+                                1. Expected header payload to be 1 but found 0.
+                                """,
+                                "[Disposing] Client = [1] 'test', TraceId = 1",
+                                "[Disposed] Client = [1] 'test', TraceId = 1",
+                                "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 1 (end)"
+                            ] )
+                        ] ),
+                    logs.GetAllAwaitPacket()
+                        .TestContainsContiguousSequence(
+                        [
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (PublisherUnboundResponse, Length = 5)"
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task UnbindAsync_ByChannelName_ShouldReturnError_WhenServerRespondsWithUnbindPublisherFailureResponse()
+        {
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger( logs.GetLogger() ) );
+
+            await server.EstablishHandshake( client );
+            var serverTask = server.GetTask( s =>
+            {
+                s.ReadUnbindPublisherByNameRequest( "foo" );
+                s.SendUnbindPublisherFailureResponse( true );
+            } );
+
+            var result = await client.Publishers.UnbindAsync( "foo" );
+            await serverTask;
+
+            Assertion.All(
+                    client.State.TestEquals( MessageBrokerClientState.Running ),
+                    result.Exception.TestType()
+                        .Exact<MessageBrokerClientRequestException>( exc => Assertion.All(
+                            exc.Client.TestRefEquals( client ),
+                            exc.Endpoint.TestEquals( MessageBrokerServerEndpoint.UnbindPublisherByNameRequest ) ) ),
+                    logs.GetAll()
+                        .Skip( 1 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 1 (start)",
+                                "[UnbindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo'",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (UnbindPublisherByNameRequest, Length = 8)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (UnbindPublisherByNameRequest, Length = 8)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (UnbindPublisherFailureResponse, Length = 6)",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 1, Packet = (UnbindPublisherFailureResponse, Length = 6)",
+                                """
+                                [Error] Client = [1] 'test', TraceId = 1
+                                LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientRequestException: Server rejected an invalid UnbindPublisherByNameRequest sent by client 'test'. Encountered 1 error(s):
+                                1. Client is not bound as a publisher to channel 'foo'.
+                                """,
+                                "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 1 (end)"
+                            ] )
+                        ] ),
+                    logs.GetAllAwaitPacket()
+                        .TestContainsContiguousSequence(
+                        [
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (UnbindPublisherFailureResponse, Length = 6)"
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task
+            UnbindAsync_ByChannelName_ShouldReturnErrorAndDisposeClient_WhenServerRespondsWithUnbindPublisherFailureResponseWithInvalidPayload()
+        {
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger( logs.GetLogger() ) );
+
+            await server.EstablishHandshake( client );
+            var serverTask = server.GetTask( s =>
+            {
+                s.ReadUnbindPublisherByNameRequest( "foo" );
+                s.SendUnbindPublisherFailureResponse( true, payload: 0 );
+            } );
+
+            var result = await client.Publishers.UnbindAsync( "foo" );
+            await serverTask;
+
+            Assertion.All(
+                    client.State.TestEquals( MessageBrokerClientState.Disposed ),
+                    result.Exception.TestType()
+                        .Exact<MessageBrokerClientProtocolException>( exc => Assertion.All(
+                            exc.Client.TestRefEquals( client ),
+                            exc.Endpoint.TestEquals( MessageBrokerClientEndpoint.UnbindPublisherFailureResponse ) ) ),
+                    logs.GetAll()
+                        .Skip( 1 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 1 (start)",
+                                "[UnbindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo'",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (UnbindPublisherByNameRequest, Length = 8)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (UnbindPublisherByNameRequest, Length = 8)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 1, Packet = (UnbindPublisherFailureResponse, Length = 5)",
+                                """
+                                [Error] Client = [1] 'test', TraceId = 1
+                                LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Client 'test' received an invalid UnbindPublisherFailureResponse from the server. Encountered 1 error(s):
+                                1. Expected header payload to be 1 but found 0.
+                                """,
+                                "[Disposing] Client = [1] 'test', TraceId = 1",
+                                "[Disposed] Client = [1] 'test', TraceId = 1",
+                                "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 1 (end)"
+                            ] )
+                        ] ),
+                    logs.GetAllAwaitPacket()
+                        .TestContainsContiguousSequence(
+                        [
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (UnbindPublisherFailureResponse, Length = 5)"
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task UnbindAsync_ByChannelName_ShouldReturnErrorAndDisposeClient_WhenServerRespondsWithInvalidEndpoint()
+        {
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger( logs.GetLogger() ) );
+
+            await server.EstablishHandshake( client );
+            var serverTask = server.GetTask( s =>
+            {
+                s.ReadUnbindPublisherByNameRequest( "foo" );
+                s.Send( [ 0, 0, 0, 0, 0 ] );
+            } );
+
+            var result = await client.Publishers.UnbindAsync( "foo" );
+            await serverTask;
+
+            Assertion.All(
+                    client.State.TestEquals( MessageBrokerClientState.Disposed ),
+                    result.Exception.TestType()
+                        .Exact<MessageBrokerClientProtocolException>( exc => Assertion.All(
+                            exc.Client.TestRefEquals( client ),
+                            exc.Endpoint.TestEquals( ( MessageBrokerClientEndpoint )0 ) ) ),
+                    logs.GetAll()
+                        .Skip( 1 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 1 (start)",
+                                "[UnbindingPublisher] Client = [1] 'test', TraceId = 1, ChannelName = 'foo'",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 1, Packet = (UnbindPublisherByNameRequest, Length = 8)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 1, Packet = (UnbindPublisherByNameRequest, Length = 8)",
+                                """
+                                [Error] Client = [1] 'test', TraceId = 1
+                                LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Client 'test' received an invalid <unrecognized-endpoint-0> from the server. Encountered 1 error(s):
+                                1. Received unexpected client endpoint.
+                                """,
+                                "[Disposing] Client = [1] 'test', TraceId = 1",
+                                "[Disposed] Client = [1] 'test', TraceId = 1",
+                                "[Trace:UnbindPublisher] Client = [1] 'test', TraceId = 1 (end)"
+                            ] )
+                        ] ),
+                    logs.GetAllAwaitPacket()
+                        .TestContainsContiguousSequence(
+                        [
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (<unrecognized-endpoint-0>, Length = 5)"
+                        ] ) )
+                .Go();
+        }
+
         [Fact]
         public async Task PushAsync_ShouldPushSingleMessage()
         {

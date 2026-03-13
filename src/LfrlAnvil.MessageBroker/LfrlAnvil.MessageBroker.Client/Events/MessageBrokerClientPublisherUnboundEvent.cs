@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,13 +23,16 @@ namespace LfrlAnvil.MessageBroker.Client.Events;
 public readonly struct MessageBrokerClientPublisherUnboundEvent
 {
     private MessageBrokerClientPublisherUnboundEvent(
-        MessageBrokerPublisher publisher,
+        MessageBrokerClient client,
+        MessageBrokerPublisher? publisher,
+        string channelName,
         ulong traceId,
         bool channelRemoved,
         bool streamRemoved)
     {
-        Source = MessageBrokerClientEventSource.Create( publisher.Client, traceId );
+        Source = MessageBrokerClientEventSource.Create( client, traceId );
         Publisher = publisher;
+        ChannelName = channelName;
         ChannelRemoved = channelRemoved;
         StreamRemoved = streamRemoved;
     }
@@ -42,7 +45,12 @@ public readonly struct MessageBrokerClientPublisherUnboundEvent
     /// <summary>
     /// <see cref="MessageBrokerPublisher"/> related to this event.
     /// </summary>
-    public MessageBrokerPublisher Publisher { get; }
+    public MessageBrokerPublisher? Publisher { get; }
+
+    /// <summary>
+    /// Name of the channel from which the client has unbound a publisher.
+    /// </summary>
+    public string ChannelName { get; }
 
     /// <summary>
     /// Specifies whether the channel has been removed by the server.
@@ -61,10 +69,11 @@ public readonly struct MessageBrokerClientPublisherUnboundEvent
     [Pure]
     public override string ToString()
     {
-        var channelRemoved = ChannelRemoved ? " (removed)" : string.Empty;
-        var streamRemoved = StreamRemoved ? " (removed)" : string.Empty;
-        return
-            $"[PublisherUnbound] {Source}, Channel = [{Publisher.ChannelId}] '{Publisher.ChannelName}'{channelRemoved}, Stream = [{Publisher.StreamId}] '{Publisher.StreamName}'{streamRemoved}";
+        var info = Publisher is not null
+            ? $"Channel = [{Publisher.ChannelId}] '{Publisher.ChannelName}'{(ChannelRemoved ? " (removed)" : string.Empty)}, Stream = [{Publisher.StreamId}] '{Publisher.StreamName}'{(StreamRemoved ? " (removed)" : string.Empty)}"
+            : $"ChannelName = '{ChannelName}'{(ChannelRemoved ? " (channel removed)" : string.Empty)}{(StreamRemoved ? " (stream removed)" : string.Empty)}";
+
+        return $"[PublisherUnbound] {Source}, {info}";
     }
 
     [Pure]
@@ -75,6 +84,24 @@ public readonly struct MessageBrokerClientPublisherUnboundEvent
         bool channelRemoved,
         bool streamRemoved)
     {
-        return new MessageBrokerClientPublisherUnboundEvent( publisher, traceId, channelRemoved, streamRemoved );
+        return new MessageBrokerClientPublisherUnboundEvent(
+            publisher.Client,
+            publisher,
+            publisher.ChannelName,
+            traceId,
+            channelRemoved,
+            streamRemoved );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerClientPublisherUnboundEvent Create(
+        MessageBrokerClient client,
+        string channelName,
+        ulong traceId,
+        bool channelRemoved,
+        bool streamRemoved)
+    {
+        return new MessageBrokerClientPublisherUnboundEvent( client, publisher: null, channelName, traceId, channelRemoved, streamRemoved );
     }
 }
