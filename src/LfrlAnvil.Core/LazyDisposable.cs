@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -44,12 +44,12 @@ public sealed class LazyDisposable<T> : IDisposable
     public T? Inner { get; private set; }
 
     /// <summary>
-    /// Specifies whether or not an underlying <see cref="Inner"/> object can be assigned to this instance.
+    /// Specifies whether an underlying <see cref="Inner"/> object can be assigned to this instance.
     /// </summary>
     public bool CanAssign => _canAssign.Value;
 
     /// <summary>
-    /// Specifies whether or not this instance has already been disposed.
+    /// Specifies whether this instance has already been disposed.
     /// </summary>
     public bool IsDisposed => _isDisposed.Value;
 

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public readonly struct SqlParameterConfiguration
     public int? ParameterIndex { get; }
 
     /// <summary>
-    /// Specifies whether or not null source values will be completely ignored.
+    /// Specifies whether null source values will be completely ignored.
     /// Overrides the <see cref="SqlParameterBinderCreationOptions.IgnoreNullValues"/> option when not null.
     /// </summary>
     public bool? IsIgnoredWhenNull { get; }
@@ -69,7 +69,7 @@ public readonly struct SqlParameterConfiguration
     public LambdaExpression? CustomSelector { get; }
 
     /// <summary>
-    /// Specifies whether or not the associated source type member should be completely ignored.
+    /// Specifies whether the associated source type member should be completely ignored.
     /// </summary>
     [MemberNotNullWhen( false, nameof( TargetParameterName ) )]
     public bool IsIgnored => TargetParameterName is null;
@@ -102,7 +102,7 @@ public readonly struct SqlParameterConfiguration
     /// </summary>
     /// <param name="memberName">Source type's field or property name.</param>
     /// <param name="enabled">
-    /// Specifies whether or not null source values will be completely ignored. Equal to <b>true</b> by default.
+    /// Specifies whether null source values will be completely ignored. Equal to <b>true</b> by default.
     /// </param>
     /// <param name="parameterIndex">Optional 0-based index to mark the parameter as positional. Equal to null by default.</param>
     /// <returns>New <see cref="SqlParameterConfiguration"/> instance.</returns>
@@ -121,7 +121,7 @@ public readonly struct SqlParameterConfiguration
     /// <param name="memberName">Source type's field or property name.</param>
     /// <param name="parameterIndex">Optional 0-based index to mark the parameter as positional.</param>
     /// <param name="isIgnoredWhenNull">
-    /// Specifies whether or not null source values will be completely ignored. Equal to null by default.
+    /// Specifies whether null source values will be completely ignored. Equal to null by default.
     /// </param>
     /// <returns>New <see cref="SqlParameterConfiguration"/> instance.</returns>
     /// <exception cref="ArgumentOutOfRangeException">When <paramref name="parameterIndex"/> is less than <b>0</b>.</exception>
@@ -139,7 +139,7 @@ public readonly struct SqlParameterConfiguration
     /// <param name="targetParameterName">Name of the SQL parameter.</param>
     /// <param name="memberName">Source type's field or property name.</param>
     /// <param name="isIgnoredWhenNull">
-    /// Specifies whether or not null source values will be completely ignored. Equal to null by default.
+    /// Specifies whether null source values will be completely ignored. Equal to null by default.
     /// </param>
     /// <param name="parameterIndex">Optional 0-based index to mark the parameter as positional.</param>
     /// <returns>New <see cref="SqlParameterConfiguration"/> instance.</returns>
@@ -162,7 +162,7 @@ public readonly struct SqlParameterConfiguration
     /// <param name="targetParameterName">Name of the SQL parameter.</param>
     /// <param name="selector">Custom source value selector expression.</param>
     /// <param name="isIgnoredWhenNull">
-    /// Specifies whether or not null source values will be completely ignored. Equal to null by default.
+    /// Specifies whether null source values will be completely ignored. Equal to null by default.
     /// </param>
     /// <param name="parameterIndex">Optional 0-based index to mark the parameter as positional.</param>
     /// <typeparam name="TSource">Parameter source type.</typeparam>

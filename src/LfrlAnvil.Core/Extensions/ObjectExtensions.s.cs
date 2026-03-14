@@ -340,7 +340,7 @@ public static class ObjectExtensions
     /// Attempts to dispose the provided object.
     /// </summary>
     /// <param name="obj">Object to dispose.</param>
-    /// <returns><see cref="Result"/> instance that specifies whether or not the disposal operation was successful.</returns>
+    /// <returns><see cref="Result"/> instance that specifies whether the disposal operation was successful.</returns>
     public static Result TryDispose<T>(this T obj)
         where T : IDisposable
     {
@@ -361,7 +361,7 @@ public static class ObjectExtensions
     /// <param name="obj">Object to dispose.</param>
     /// <returns>
     /// <see cref="ValueTask{TResult}"/> with underlying <see cref="Result"/> instance
-    /// that specifies whether or not the disposal operation was successful.
+    /// that specifies whether the disposal operation was successful.
     /// </returns>
     public static async ValueTask<Result> TryDisposeAsync<T>(this T obj)
         where T : IAsyncDisposable

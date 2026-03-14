@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public readonly struct ValidationMessageFormatterArgs
     }
 
     /// <summary>
-    /// Specifies whether or not the message formatter should include message indexes.
+    /// Specifies whether the message formatter should include message indexes.
     /// </summary>
     public bool IncludeIndex { get; }
 

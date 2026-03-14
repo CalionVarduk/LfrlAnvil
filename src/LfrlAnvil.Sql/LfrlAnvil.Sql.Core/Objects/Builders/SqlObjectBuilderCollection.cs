@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -290,7 +290,7 @@ public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuil
     /// <param name="table">Table that this index is attached to.</param>
     /// <param name="name">Index's name.</param>
     /// <param name="columns">Collection of columns that define this index.</param>
-    /// <param name="isUnique">Specifies whether or not this index is unique.</param>
+    /// <param name="isUnique">Specifies whether this index is unique.</param>
     /// <param name="referencedColumns">Collection of columns referenced by this index's <see cref="SqlIndexBuilder.Columns"/>.</param>
     /// <returns>New <see cref="SqlIndexBuilder"/> instance.</returns>
     protected abstract SqlIndexBuilder CreateIndexBuilder(
@@ -339,7 +339,7 @@ public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuil
     /// </summary>
     /// <param name="table"><see cref="SqlTableBuilder"/> that the index belongs to.</param>
     /// <param name="columns">Collection of columns that belong to the index.</param>
-    /// <param name="isUnique">Specifies whether or not the index is unique.</param>
+    /// <param name="isUnique">Specifies whether the index is unique.</param>
     /// <exception cref="SqlObjectBuilderException">When index columns are not considered valid.</exception>
     /// <remarks>
     /// See <see cref="SqlHelpers.AssertIndexColumns(SqlTableBuilder,SqlIndexBuilderColumns{SqlColumnBuilder},bool)"/> for more information.
@@ -412,7 +412,7 @@ public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuil
     }
 
     /// <summary>
-    /// Checks whether or not an existing object can be replaced with a new primary key.
+    /// Checks whether an existing object can be replaced with a new primary key.
     /// </summary>
     /// <param name="obj">Existing object to check.</param>
     /// <param name="oldPrimaryKey">Primary key to replace.</param>

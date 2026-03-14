@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public interface IDirectedGraphNode<TKey, TNodeValue, TEdgeValue>
     IEnumerable<IDirectedGraphNode<TKey, TNodeValue, TEdgeValue>> GetReachableNodes(GraphDirection direction = GraphDirection.Out);
 
     /// <summary>
-    /// Checks whether or not this node is connected with a node associated with the provided <paramref name="key"/>.
+    /// Checks whether this node is connected with a node associated with the provided <paramref name="key"/>.
     /// </summary>
     /// <param name="key">Node's key to check.</param>
     /// <returns><b>true</b> when the two nodes are directly connected, otherwise <b>false</b>.</returns>

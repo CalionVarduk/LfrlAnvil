@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public sealed class SqlNamedParameterCollection : IReadOnlyCollection<SqlParamet
     public int Count => _map.Count;
 
     /// <summary>
-    /// Checks whether or not a parameter with the specified <paramref name="name"/> exists.
+    /// Checks whether a parameter with the specified <paramref name="name"/> exists.
     /// </summary>
     /// <param name="name">Name to check.</param>
     /// <returns><b>true</b> when parameter exists, otherwise <b>false</b>.</returns>

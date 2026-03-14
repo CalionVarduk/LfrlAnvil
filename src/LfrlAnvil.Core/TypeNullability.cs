@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public readonly struct TypeNullability : IEquatable<TypeNullability>
     }
 
     /// <summary>
-    /// Specifies whether or not the <see cref="ActualType"/> is nullable.
+    /// Specifies whether the <see cref="ActualType"/> is nullable.
     /// </summary>
     public bool IsNullable { get; }
 
@@ -52,7 +52,7 @@ public readonly struct TypeNullability : IEquatable<TypeNullability>
     /// <summary>
     /// Creates a new <see cref="TypeNullability"/> instance.
     /// </summary>
-    /// <param name="isNullable">Specifies whether or not the result should be nullable. Equal to <b>false</b> by default.</param>
+    /// <param name="isNullable">Specifies whether the result should be nullable. Equal to <b>false</b> by default.</param>
     /// <typeparam name="T">Underlying type.</typeparam>
     /// <returns>New <see cref="TypeNullability"/> instance.</returns>
     [Pure]
@@ -69,7 +69,7 @@ public readonly struct TypeNullability : IEquatable<TypeNullability>
     /// </summary>
     /// <param name="type">Source type.</param>
     /// <param name="isNullable">
-    /// Specifies whether or not the result should be nullable. Equal to <b>false</b> by default. Will be ignored for nullable value types.
+    /// Specifies whether the result should be nullable. Equal to <b>false</b> by default. Will be ignored for nullable value types.
     /// </param>
     /// <returns>New <see cref="TypeNullability"/> instance.</returns>
     [Pure]

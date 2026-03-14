@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -265,7 +265,7 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
         ref SqlDatabaseFactoryStatementExecutor executor) { }
 
     /// <summary>
-    /// Checks whether or not the version history table should be attached as a change
+    /// Checks whether the version history table should be attached as a change
     /// from which an SQL statement should be created and executed.
     /// </summary>
     /// <param name="changeTracker">Database builder's change tracker.</param>

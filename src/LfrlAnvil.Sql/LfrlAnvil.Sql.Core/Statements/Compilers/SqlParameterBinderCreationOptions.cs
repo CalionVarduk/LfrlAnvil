@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -52,12 +52,12 @@ public readonly struct SqlParameterBinderCreationOptions
     }
 
     /// <summary>
-    /// Specifies whether or not to completely ignore source null values.
+    /// Specifies whether to completely ignore source null values.
     /// </summary>
     public bool IgnoreNullValues { get; }
 
     /// <summary>
-    /// Specifies whether or not source collection values should create separate SQL parameters for each element.
+    /// Specifies whether source collection values should create separate SQL parameters for each element.
     /// <see cref="string"/> and <see cref="byte"/> arrays are excluded.
     /// </summary>
     public bool ReduceCollections { get; }

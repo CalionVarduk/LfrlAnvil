@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public readonly struct Bitmask<T> : IEquatable<Bitmask<T>>, IComparable<Bitmask<
     public static readonly Bitmask<T> All;
 
     /// <summary>
-    /// Specifies whether or not the underlying value type is an <see cref="Enum"/>.
+    /// Specifies whether the underlying value type is an <see cref="Enum"/>.
     /// </summary>
     public static readonly bool IsEnum = typeof( T ).IsEnum;
 
@@ -171,7 +171,7 @@ public readonly struct Bitmask<T> : IEquatable<Bitmask<T>>, IComparable<Bitmask<
     }
 
     /// <summary>
-    /// Checks whether or not the <see cref="Value"/> of this instance
+    /// Checks whether the <see cref="Value"/> of this instance
     /// contains at least one set bit specified by the provided <paramref name="value"/>.
     /// </summary>
     /// <param name="value">Bits to verify.</param>
@@ -188,7 +188,7 @@ public readonly struct Bitmask<T> : IEquatable<Bitmask<T>>, IComparable<Bitmask<
     }
 
     /// <summary>
-    /// Checks whether or not the <see cref="Value"/> of this instance
+    /// Checks whether the <see cref="Value"/> of this instance
     /// contains at least one set bit specified by the provided <paramref name="other"/>.
     /// </summary>
     /// <param name="other">Bits to verify.</param>
@@ -204,7 +204,7 @@ public readonly struct Bitmask<T> : IEquatable<Bitmask<T>>, IComparable<Bitmask<
     }
 
     /// <summary>
-    /// Checks whether or not the <see cref="Value"/> of this instance
+    /// Checks whether the <see cref="Value"/> of this instance
     /// contains all set bits specified by the provided <paramref name="value"/>.
     /// </summary>
     /// <param name="value">Bits to verify.</param>
@@ -220,7 +220,7 @@ public readonly struct Bitmask<T> : IEquatable<Bitmask<T>>, IComparable<Bitmask<
     }
 
     /// <summary>
-    /// Checks whether or not the <see cref="Value"/> of this instance
+    /// Checks whether the <see cref="Value"/> of this instance
     /// contains all set bits specified by the provided <paramref name="other"/>.
     /// </summary>
     /// <param name="other">Bits to verify.</param>
@@ -235,7 +235,7 @@ public readonly struct Bitmask<T> : IEquatable<Bitmask<T>>, IComparable<Bitmask<
     }
 
     /// <summary>
-    /// Checks whether or not the <see cref="Value"/> of this instance
+    /// Checks whether the <see cref="Value"/> of this instance
     /// contains set bit at the specified 0-based <paramref name="bitIndex"/> position.
     /// </summary>
     /// <param name="bitIndex">0-based bit position to verify.</param>

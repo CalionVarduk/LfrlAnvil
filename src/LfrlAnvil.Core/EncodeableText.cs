@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public readonly struct EncodeableText
     /// <param name="value"><see cref="System.String"/> to encode into a span of bytes.</param>
     /// <returns>
     /// New <see cref="EncodeableText"/> instance wrapped in a <see cref="Result{T}"/>
-    /// that specifies whether or not the operation was successful.
+    /// that specifies whether the operation was successful.
     /// </returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -75,7 +75,7 @@ public readonly struct EncodeableText
     /// <param name="value">Set of characters to encode into a span of bytes.</param>
     /// <returns>
     /// New <see cref="EncodeableText"/> instance wrapped in a <see cref="Result{T}"/>
-    /// that specifies whether or not the operation was successful.
+    /// that specifies whether the operation was successful.
     /// </returns>
     [Pure]
     public static Result<EncodeableText> Create(Encoding encoding, ReadOnlyMemory<char> value)
@@ -107,7 +107,7 @@ public readonly struct EncodeableText
     /// <param name="target">
     /// Span of bytes to encode the <see cref="Value"/> into.
     /// </param>
-    /// <returns><see cref="Result"/> instance that specifies whether or not the operation was successful.</returns>
+    /// <returns><see cref="Result"/> instance that specifies whether the operation was successful.</returns>
     public Result Encode(Span<byte> target)
     {
         try

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -52,14 +52,14 @@ public readonly struct Either<T1, T2> : IEquatable<Either<T1, T2>>
     }
 
     /// <summary>
-    /// Specifies whether or not this instance contains first value.
+    /// Specifies whether this instance contains first value.
     /// </summary>
     [MemberNotNullWhen( true, nameof( First ) )]
     [MemberNotNullWhen( false, nameof( Second ) )]
     public bool HasFirst { get; }
 
     /// <summary>
-    /// Specifies whether or not this instance contains second value.
+    /// Specifies whether this instance contains second value.
     /// </summary>
     [MemberNotNullWhen( true, nameof( Second ) )]
     [MemberNotNullWhen( false, nameof( First ) )]

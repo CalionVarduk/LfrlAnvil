@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -119,7 +119,7 @@ public readonly struct Bounds<T> : IEquatable<Bounds<T>>
     }
 
     /// <summary>
-    /// Checks whether or not this [<see cref="Min"/>, <see cref="Max"/>] range contains the provided <paramref name="value"/>.
+    /// Checks whether this [<see cref="Min"/>, <see cref="Max"/>] range contains the provided <paramref name="value"/>.
     /// </summary>
     /// <param name="value">Value to check.</param>
     /// <returns><b>true</b> when this range contains the provided <paramref name="value"/>, otherwise <b>false</b>.</returns>
@@ -131,7 +131,7 @@ public readonly struct Bounds<T> : IEquatable<Bounds<T>>
     }
 
     /// <summary>
-    /// Checks whether or not this exclusive (<see cref="Min"/>, <see cref="Max"/>) range contains the provided <paramref name="value"/>.
+    /// Checks whether this exclusive (<see cref="Min"/>, <see cref="Max"/>) range contains the provided <paramref name="value"/>.
     /// </summary>
     /// <param name="value">Value to check.</param>
     /// <returns><b>true</b> when this exclusive range contains the provided <paramref name="value"/>, otherwise <b>false</b>.</returns>
@@ -143,7 +143,7 @@ public readonly struct Bounds<T> : IEquatable<Bounds<T>>
     }
 
     /// <summary>
-    /// Checks whether or not this [<see cref="Min"/>, <see cref="Max"/>] range contains the provided <paramref name="other"/> range.
+    /// Checks whether this [<see cref="Min"/>, <see cref="Max"/>] range contains the provided <paramref name="other"/> range.
     /// </summary>
     /// <param name="other">Range to check.</param>
     /// <returns><b>true</b> when this range contains the provided <paramref name="other"/> range, otherwise <b>false</b>.</returns>
@@ -155,7 +155,7 @@ public readonly struct Bounds<T> : IEquatable<Bounds<T>>
     }
 
     /// <summary>
-    /// Checks whether or not this exclusive (<see cref="Min"/>, <see cref="Max"/>) range contains
+    /// Checks whether this exclusive (<see cref="Min"/>, <see cref="Max"/>) range contains
     /// the provided <paramref name="other"/> range.
     /// </summary>
     /// <param name="other">Range to check.</param>
@@ -170,7 +170,7 @@ public readonly struct Bounds<T> : IEquatable<Bounds<T>>
     }
 
     /// <summary>
-    /// Checks whether or not this [<see cref="Min"/>, <see cref="Max"/>] range intersects with the provided <paramref name="other"/> range.
+    /// Checks whether this [<see cref="Min"/>, <see cref="Max"/>] range intersects with the provided <paramref name="other"/> range.
     /// </summary>
     /// <param name="other">Range to check.</param>
     /// <returns><b>true</b> when this range intersects with the provided <paramref name="other"/> range, otherwise <b>false</b>.</returns>

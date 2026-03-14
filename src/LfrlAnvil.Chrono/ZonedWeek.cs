@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -68,12 +68,12 @@ public readonly struct ZonedWeek : IEquatable<ZonedWeek>, IComparable<ZonedWeek>
     public Duration Duration => _duration ?? Duration.FromTicks( ChronoConstants.TicksPerStandardWeek );
 
     /// <summary>
-    /// Checks whether or not the <see cref="TimeZone"/> is UTC.
+    /// Checks whether the <see cref="TimeZone"/> is UTC.
     /// </summary>
     public bool IsUtc => Start.IsUtc;
 
     /// <summary>
-    /// Checks whether or not the <see cref="TimeZone"/> is local.
+    /// Checks whether the <see cref="TimeZone"/> is local.
     /// </summary>
     public bool IsLocal => Start.IsLocal;
 
@@ -385,7 +385,7 @@ public readonly struct ZonedWeek : IEquatable<ZonedWeek>, IComparable<ZonedWeek>
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="dateTime"/> belongs to this week.
+    /// Checks whether the provided <paramref name="dateTime"/> belongs to this week.
     /// </summary>
     /// <param name="dateTime">Date time to check.</param>
     /// <returns><b>true</b> when the provided <paramref name="dateTime"/> belongs to this week, otherwise <b>false</b>.</returns>
@@ -400,7 +400,7 @@ public readonly struct ZonedWeek : IEquatable<ZonedWeek>, IComparable<ZonedWeek>
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="day"/> belongs to this week.
+    /// Checks whether the provided <paramref name="day"/> belongs to this week.
     /// </summary>
     /// <param name="day">Day to check.</param>
     /// <returns><b>true</b> when the provided <paramref name="day"/> belongs to this week, otherwise <b>false</b>.</returns>

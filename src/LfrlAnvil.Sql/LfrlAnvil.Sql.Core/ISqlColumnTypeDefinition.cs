@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ public interface ISqlColumnTypeDefinition
     /// Updates information of the provided <paramref name="parameter"/> with this type's definition.
     /// </summary>
     /// <param name="parameter">Parameter to update.</param>
-    /// <param name="isNullable">Specifies whether or not the <paramref name="parameter"/> should be marked as nullable.</param>
+    /// <param name="isNullable">Specifies whether the <paramref name="parameter"/> should be marked as nullable.</param>
     void SetParameterInfo(IDbDataParameter parameter, bool isNullable);
 }
 

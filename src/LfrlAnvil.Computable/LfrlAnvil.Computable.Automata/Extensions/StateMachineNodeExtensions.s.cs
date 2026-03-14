@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ namespace LfrlAnvil.Computable.Automata.Extensions;
 public static class StateMachineNodeExtensions
 {
     /// <summary>
-    /// Checks whether or not the provided <paramref name="node"/> is of <see cref="StateMachineNodeType.Accept"/> type.
+    /// Checks whether the provided <paramref name="node"/> is of <see cref="StateMachineNodeType.Accept"/> type.
     /// </summary>
     /// <param name="node">Node to check.</param>
     /// <typeparam name="TState">State type.</typeparam>
@@ -44,7 +44,7 @@ public static class StateMachineNodeExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="node"/> is of <see cref="StateMachineNodeType.Initial"/> type.
+    /// Checks whether the provided <paramref name="node"/> is of <see cref="StateMachineNodeType.Initial"/> type.
     /// </summary>
     /// <param name="node">Node to check.</param>
     /// <typeparam name="TState">State type.</typeparam>
@@ -63,7 +63,7 @@ public static class StateMachineNodeExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="node"/> is of <see cref="StateMachineNodeType.Dead"/> type.
+    /// Checks whether the provided <paramref name="node"/> is of <see cref="StateMachineNodeType.Dead"/> type.
     /// </summary>
     /// <param name="node">Node to check.</param>
     /// <typeparam name="TState">State type.</typeparam>
@@ -82,7 +82,7 @@ public static class StateMachineNodeExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="node"/> contains any transitions.
+    /// Checks whether the provided <paramref name="node"/> contains any transitions.
     /// </summary>
     /// <param name="node">Node to check.</param>
     /// <typeparam name="TState">State type.</typeparam>
@@ -101,7 +101,7 @@ public static class StateMachineNodeExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="node"/> contains transition with the provided identifier.
+    /// Checks whether the provided <paramref name="node"/> contains transition with the provided identifier.
     /// </summary>
     /// <param name="node">Node to check.</param>
     /// <param name="input">Transition identifier to check.</param>

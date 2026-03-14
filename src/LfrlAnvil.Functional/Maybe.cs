@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IReadOnlyCollection<T>
     }
 
     /// <summary>
-    /// Specifies whether or not this instance contains a non-null value.
+    /// Specifies whether this instance contains a non-null value.
     /// </summary>
     [MemberNotNullWhen( true, nameof( Value ) )]
     public bool HasValue { get; }

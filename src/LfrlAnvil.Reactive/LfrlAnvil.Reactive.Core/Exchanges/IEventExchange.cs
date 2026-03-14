@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ namespace LfrlAnvil.Reactive.Exchanges;
 public interface IEventExchange
 {
     /// <summary>
-    /// Specifies whether or not this event exchange has been disposed.
+    /// Specifies whether this event exchange has been disposed.
     /// </summary>
     bool IsDisposed { get; }
 
@@ -38,7 +38,7 @@ public interface IEventExchange
     IEnumerable<Type> GetRegisteredEventTypes();
 
     /// <summary>
-    /// Checks whether or not an event stream for the provided <paramref name="eventType"/> exists.
+    /// Checks whether an event stream for the provided <paramref name="eventType"/> exists.
     /// </summary>
     /// <param name="eventType">Event type to check.</param>
     /// <returns><b>true</b> when event stream exists, otherwise <b>false</b>.</returns>

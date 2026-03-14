@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ public interface ITypeMapper
     bool TryMapMany<TSource, TDestination>(IEnumerable<TSource> source, [MaybeNullWhen( false )] out IEnumerable<TDestination> result);
 
     /// <summary>
-    /// Checks whether or not the mapping definition from <paramref name="sourceType"/> to <paramref name="destinationType"/> exists.
+    /// Checks whether the mapping definition from <paramref name="sourceType"/> to <paramref name="destinationType"/> exists.
     /// </summary>
     /// <param name="sourceType">Source type.</param>
     /// <param name="destinationType">Destination type.</param>

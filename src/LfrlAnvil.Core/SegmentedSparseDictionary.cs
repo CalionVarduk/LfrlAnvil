@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public struct SegmentedSparseDictionary<T>
     public int SegmentCount => _segments.Length;
 
     /// <summary>
-    /// Specifies whether or not this dictionary is empty.
+    /// Specifies whether this dictionary is empty.
     /// </summary>
     public bool IsEmpty => Count == 0;
 
@@ -75,7 +75,7 @@ public struct SegmentedSparseDictionary<T>
     }
 
     /// <summary>
-    /// Checks whether or not an entry with the provided <paramref name="key"/> exists.
+    /// Checks whether an entry with the provided <paramref name="key"/> exists.
     /// </summary>
     /// <param name="key">Entry's key to check.</param>
     /// <returns><b>true</b> when entry exists, otherwise <b>false</b>.</returns>

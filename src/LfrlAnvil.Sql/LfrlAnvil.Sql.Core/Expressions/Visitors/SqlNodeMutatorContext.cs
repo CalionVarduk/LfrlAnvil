@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -93,7 +93,7 @@ public class SqlNodeMutatorContext
         public SqlNodeBase Value { get; }
 
         /// <summary>
-        /// Specifies whether or not the <see cref="Value"/> should be recursively visited.
+        /// Specifies whether the <see cref="Value"/> should be recursively visited.
         /// </summary>
         /// <remarks>
         /// When this property is equal to <b>true</b>, then the <see cref="Value"/> is recursively visited,

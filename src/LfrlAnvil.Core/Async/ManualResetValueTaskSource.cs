@@ -1,4 +1,4 @@
-﻿// Copyright 2024-2025 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ public sealed class ManualResetValueTaskSource<TResult> : IValueTaskSource<TResu
     /// Creates a new <see cref="ManualResetValueTaskSource{T}"/> instance.
     /// </summary>
     /// <param name="runContinuationsAsynchronously">
-    /// Specifies whether or not to force continuations to run asynchronously. Equal to <b>true</b> by default.
+    /// Specifies whether to force continuations to run asynchronously. Equal to <b>true</b> by default.
     /// </param>
     public ManualResetValueTaskSource(bool runContinuationsAsynchronously = true)
     {
@@ -40,7 +40,7 @@ public sealed class ManualResetValueTaskSource<TResult> : IValueTaskSource<TResu
     }
 
     /// <summary>
-    /// Specifies whether or not continuations are forced to run asynchronously.
+    /// Specifies whether continuations are forced to run asynchronously.
     /// </summary>
     public bool RunContinuationsAsynchronously => _core.RunContinuationsAsynchronously;
 

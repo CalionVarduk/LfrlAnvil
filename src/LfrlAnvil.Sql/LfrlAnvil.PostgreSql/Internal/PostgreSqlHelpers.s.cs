@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ public static class PostgreSqlHelpers
     }
 
     /// <summary>
-    /// Specifies whether or not the provided <paramref name="key"/> of a connection string entry is considered to be mutable.
+    /// Specifies whether the provided <paramref name="key"/> of a connection string entry is considered to be mutable.
     /// </summary>
     /// <param name="key">Key to check.</param>
     /// <returns><b>true</b> when <paramref name="key"/> is mutable, otherwise <b>false</b>.</returns>

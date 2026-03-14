@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public readonly struct ImplementorKey : IEquatable<ImplementorKey>
     public IDependencyKey Value { get; }
 
     /// <summary>
-    /// Specifies whether or not this key denotes a shared implementor.
+    /// Specifies whether this key denotes a shared implementor.
     /// </summary>
     public bool IsShared => _data == -1;
 

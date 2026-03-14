@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ namespace LfrlAnvil.Reactive.Extensions;
 public static class EventExchangeExtensions
 {
     /// <summary>
-    /// Checks whether or not an event stream for the provided event type exists.
+    /// Checks whether an event stream for the provided event type exists.
     /// </summary>
     /// <param name="exchange">Source event exchange.</param>
     /// <typeparam name="TEvent">Event type to check.</typeparam>

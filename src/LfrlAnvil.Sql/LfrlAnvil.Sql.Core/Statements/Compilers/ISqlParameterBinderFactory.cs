@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ public interface ISqlParameterBinderFactory
     SqlDialect Dialect { get; }
 
     /// <summary>
-    /// Specifies whether or not this factory supports positional parameters.
+    /// Specifies whether this factory supports positional parameters.
     /// </summary>
     bool SupportsPositionalParameters { get; }
 

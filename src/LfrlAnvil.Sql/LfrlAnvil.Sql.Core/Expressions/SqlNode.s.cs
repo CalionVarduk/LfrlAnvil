@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ public static partial class SqlNode
     /// Creates a new <see cref="SqlParameterNode"/> instance.
     /// </summary>
     /// <param name="name">Parameter's name.</param>
-    /// <param name="isNullable">Specifies whether or not this parameter should be nullable. Equal to <b>false</b> by default.</param>
+    /// <param name="isNullable">Specifies whether this parameter should be nullable. Equal to <b>false</b> by default.</param>
     /// <param name="index">
     /// Optional 0-based position of this parameter.
     /// Non-null values mean that the parameter may be interpreted as a positional parameter. Equal to null by default.
@@ -117,7 +117,7 @@ public static partial class SqlNode
     /// </summary>
     /// <param name="name">Base name of all parameters.</param>
     /// <param name="count">Number of parameters.</param>
-    /// <param name="isNullable">Specifies whether or not all parameters should be nullable. Equal to <b>false</b> by default.</param>
+    /// <param name="isNullable">Specifies whether all parameters should be nullable. Equal to <b>false</b> by default.</param>
     /// <param name="firstIndex">
     /// Optional 0-based position of the first parameter.
     /// Non-null values mean that the parameter may be interpreted as a positional parameter. Equal to null by default.
@@ -735,7 +735,7 @@ public static partial class SqlNode
     /// </summary>
     /// <param name="filter">Underlying predicate.</param>
     /// <param name="isConjunction">
-    /// Specifies whether or not this trait should be merged with other <see cref="SqlFilterTraitNode"/> instances through
+    /// Specifies whether this trait should be merged with other <see cref="SqlFilterTraitNode"/> instances through
     /// an <see cref="SqlAndConditionNode"/> rather than an <see cref="SqlOrConditionNode"/>.
     /// </param>
     /// <returns>New <see cref="SqlFilterTraitNode"/> instance.</returns>
@@ -761,7 +761,7 @@ public static partial class SqlNode
     /// </summary>
     /// <param name="filter">Underlying predicate.</param>
     /// <param name="isConjunction">
-    /// Specifies whether or not this trait should be merged with other <see cref="SqlAggregationFilterTraitNode"/> instances through
+    /// Specifies whether this trait should be merged with other <see cref="SqlAggregationFilterTraitNode"/> instances through
     /// an <see cref="SqlAndConditionNode"/> rather than an <see cref="SqlOrConditionNode"/>.
     /// </param>
     /// <returns>New <see cref="SqlAggregationFilterTraitNode"/> instance.</returns>
@@ -1511,7 +1511,7 @@ public static partial class SqlNode
     /// Creates a new <see cref="SqlColumnDefinitionNode"/> instance.
     /// </summary>
     /// <param name="name">Column's name.</param>
-    /// <param name="isNullable">Specifies whether or not this column should be nullable. Equal to <b>false</b> by default.</param>
+    /// <param name="isNullable">Specifies whether this column should be nullable. Equal to <b>false</b> by default.</param>
     /// <param name="defaultValue">Column's optional default value. Equal to null by default.</param>
     /// <param name="computation">Column's optional computation. Equal to null by default.</param>
     /// <typeparam name="T">Column's runtime type.</typeparam>
@@ -1551,7 +1551,7 @@ public static partial class SqlNode
     /// </summary>
     /// <param name="name">Column's name.</param>
     /// <param name="typeDefinition"><see cref="ISqlColumnTypeDefinition"/> instance that defines this column's type.</param>
-    /// <param name="isNullable">Specifies whether or not this column should be nullable. Equal to <b>false</b> by default.</param>
+    /// <param name="isNullable">Specifies whether this column should be nullable. Equal to <b>false</b> by default.</param>
     /// <param name="defaultValue">Column's optional default value. Equal to null by default.</param>
     /// <param name="computation">Column's optional computation. Equal to null by default.</param>
     /// <returns>New <see cref="SqlColumnDefinitionNode"/> instance.</returns>
@@ -1628,7 +1628,7 @@ public static partial class SqlNode
     /// <param name="info">Table's name.</param>
     /// <param name="columns">Collection of columns.</param>
     /// <param name="ifNotExists">
-    /// Specifies whether or not this table should only be created if it does not already exist in DB. Equal to <b>false</b> by default.
+    /// Specifies whether this table should only be created if it does not already exist in DB. Equal to <b>false</b> by default.
     /// </param>
     /// <param name="constraintsProvider">Optional <see cref="SqlCreateTableConstraints"/> provider.</param>
     /// <returns>New <see cref="SqlCreateTableNode"/> instance.</returns>
@@ -1648,7 +1648,7 @@ public static partial class SqlNode
     /// <param name="info">View's name.</param>
     /// <param name="source">Underlying source query expression that defines this view.</param>
     /// <param name="replaceIfExists">
-    /// Specifies whether or not the view should be replaced if it already exists in DB. Equal to <b>false</b> by default.
+    /// Specifies whether the view should be replaced if it already exists in DB. Equal to <b>false</b> by default.
     /// </param>
     /// <returns>New <see cref="SqlCreateViewNode"/> instance.</returns>
     [Pure]
@@ -1661,11 +1661,11 @@ public static partial class SqlNode
     /// Creates a new <see cref="SqlCreateIndexNode"/> instance.
     /// </summary>
     /// <param name="name">Index's name.</param>
-    /// <param name="isUnique">Specifies whether or not this index is unique.</param>
+    /// <param name="isUnique">Specifies whether this index is unique.</param>
     /// <param name="table">Table on which this index is created.</param>
     /// <param name="columns">Collection of expressions that define this index.</param>
     /// <param name="replaceIfExists">
-    /// Specifies whether or not the index should be replaced if it already exists in DB. Equal to <b>false</b> by default.
+    /// Specifies whether the index should be replaced if it already exists in DB. Equal to <b>false</b> by default.
     /// </param>
     /// <param name="filter">Optional filter condition. Equal to null by default.</param>
     /// <returns>New <see cref="SqlCreateIndexNode"/> instance.</returns>
@@ -1735,7 +1735,7 @@ public static partial class SqlNode
     /// </summary>
     /// <param name="table">Table's name.</param>
     /// <param name="ifExists">
-    /// Specifies whether or not the removal attempt should only be made if this table exists in DB. Equal to <b>false</b> by default.
+    /// Specifies whether the removal attempt should only be made if this table exists in DB. Equal to <b>false</b> by default.
     /// </param>
     /// <returns>New <see cref="SqlDropTableNode"/> instance.</returns>
     [Pure]
@@ -1749,7 +1749,7 @@ public static partial class SqlNode
     /// </summary>
     /// <param name="view">View's name.</param>
     /// <param name="ifExists">
-    /// Specifies whether or not the removal attempt should only be made if this view exists in DB. Equal to <b>false</b> by default.
+    /// Specifies whether the removal attempt should only be made if this view exists in DB. Equal to <b>false</b> by default.
     /// </param>
     /// <returns>New <see cref="SqlDropViewNode"/> instance.</returns>
     [Pure]
@@ -1764,7 +1764,7 @@ public static partial class SqlNode
     /// <param name="table">Source table.</param>
     /// <param name="name">Index's name.</param>
     /// <param name="ifExists">
-    /// Specifies whether or not the removal attempt should only be made if this index exists in DB. Equal to <b>false</b> by default.
+    /// Specifies whether the removal attempt should only be made if this index exists in DB. Equal to <b>false</b> by default.
     /// </param>
     /// <returns>New <see cref="SqlDropIndexNode"/> instance.</returns>
     [Pure]

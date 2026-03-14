@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public sealed class SqlLikeConditionNode : SqlConditionNode
     public SqlExpressionNode? Escape { get; }
 
     /// <summary>
-    /// Specifies whether or not this node represents a check if <see cref="Value"/> does not satisfy a string <see cref="Pattern"/>.
+    /// Specifies whether this node represents a check if <see cref="Value"/> does not satisfy a string <see cref="Pattern"/>.
     /// </summary>
     public bool IsNegated { get; }
 }

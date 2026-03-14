@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,8 +32,8 @@ public readonly struct SqlResultSetField
     /// </summary>
     /// <param name="ordinal">Ordinal of this field.</param>
     /// <param name="name">Name of this field.</param>
-    /// <param name="isUsed">Specifies whether or not this field is used in a query.</param>
-    /// <param name="includeTypeNames">Specifies whether or not to record type names of values associated with this field.</param>
+    /// <param name="isUsed">Specifies whether this field is used in a query.</param>
+    /// <param name="includeTypeNames">Specifies whether to record type names of values associated with this field.</param>
     public SqlResultSetField(int ordinal, string name, bool isUsed = true, bool includeTypeNames = false)
     {
         Ordinal = ordinal;
@@ -48,7 +48,7 @@ public readonly struct SqlResultSetField
     public int Ordinal { get; }
 
     /// <summary>
-    /// Specifies whether or not this field is used in a query.
+    /// Specifies whether this field is used in a query.
     /// </summary>
     public bool IsUsed { get; }
 

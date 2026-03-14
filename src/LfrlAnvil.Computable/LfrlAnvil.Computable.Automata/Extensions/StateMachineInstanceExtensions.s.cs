@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ namespace LfrlAnvil.Computable.Automata.Extensions;
 public static class StateMachineInstanceExtensions
 {
     /// <summary>
-    /// Checks whether or not the <paramref name="instance"/> is in accepted state.
+    /// Checks whether the <paramref name="instance"/> is in accepted state.
     /// </summary>
     /// <param name="instance">Source state machine instance.</param>
     /// <typeparam name="TState">State type.</typeparam>
@@ -43,7 +43,7 @@ public static class StateMachineInstanceExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the <paramref name="instance"/> can transition to an accepted state.
+    /// Checks whether the <paramref name="instance"/> can transition to an accepted state.
     /// </summary>
     /// <param name="instance">Source state machine instance.</param>
     /// <typeparam name="TState">State type.</typeparam>
@@ -60,7 +60,7 @@ public static class StateMachineInstanceExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the <paramref name="instance"/> can transition to any other state.
+    /// Checks whether the <paramref name="instance"/> can transition to any other state.
     /// </summary>
     /// <param name="instance">Source state machine instance.</param>
     /// <typeparam name="TState">State type.</typeparam>
@@ -77,7 +77,7 @@ public static class StateMachineInstanceExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the <paramref name="instance"/> can transition to the provided <paramref name="destination"/> state.
+    /// Checks whether the <paramref name="instance"/> can transition to the provided <paramref name="destination"/> state.
     /// </summary>
     /// <param name="instance">Source state machine instance.</param>
     /// <param name="destination">Destination state to check.</param>
@@ -99,7 +99,7 @@ public static class StateMachineInstanceExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the <paramref name="instance"/> can transition with the provided transition identifier.
+    /// Checks whether the <paramref name="instance"/> can transition with the provided transition identifier.
     /// </summary>
     /// <param name="instance">Source state machine instance.</param>
     /// <param name="input">Transition identifier.</param>

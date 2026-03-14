@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -113,14 +113,14 @@ public readonly struct Chain<T> : IReadOnlyCollection<T>
     public int Count { get; }
 
     /// <summary>
-    /// Specifies whether or not new values can be appended to this sequence.
+    /// Specifies whether new values can be appended to this sequence.
     /// <see cref="Chain{T}"/> is considered extendable when it hasn't been attached to the end of another sequence
     /// and no value has been added after its last node.
     /// </summary>
     public bool IsExtendable => _head is null || (! _head.HasPrev && _tail!.Next is null);
 
     /// <summary>
-    /// Specifies whether or not this sequence has been attached to the end of another sequence.
+    /// Specifies whether this sequence has been attached to the end of another sequence.
     /// </summary>
     public bool IsAttached => _head is not null && _head.HasPrev;
 

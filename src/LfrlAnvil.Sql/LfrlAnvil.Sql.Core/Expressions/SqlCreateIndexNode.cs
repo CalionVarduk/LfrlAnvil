@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -46,12 +46,12 @@ public sealed class SqlCreateIndexNode : SqlNodeBase, ISqlStatementNode
     public SqlSchemaObjectName Name { get; }
 
     /// <summary>
-    /// Specifies whether or not this index is unique.
+    /// Specifies whether this index is unique.
     /// </summary>
     public bool IsUnique { get; }
 
     /// <summary>
-    /// Specifies whether or not the index should be replaced if it already exists in DB.
+    /// Specifies whether the index should be replaced if it already exists in DB.
     /// </summary>
     public bool ReplaceIfExists { get; }
 

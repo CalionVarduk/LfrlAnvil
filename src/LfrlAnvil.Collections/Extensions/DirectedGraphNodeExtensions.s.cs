@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ namespace LfrlAnvil.Collections.Extensions;
 public static class DirectedGraphNodeExtensions
 {
     /// <summary>
-    /// Checks whether or not the <paramref name="node"/> is a root node, that is a node that cannot be reached by any graph edge.
+    /// Checks whether the <paramref name="node"/> is a root node, that is a node that cannot be reached by any graph edge.
     /// </summary>
     /// <param name="node">Node to check.</param>
     /// <typeparam name="TKey">Graph key type.</typeparam>

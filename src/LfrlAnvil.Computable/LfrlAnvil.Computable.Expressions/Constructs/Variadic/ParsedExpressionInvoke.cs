@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ public sealed class ParsedExpressionInvoke : ParsedExpressionVariadicFunction
     /// Creates a new <see cref="ParsedExpressionInvoke"/> instance.
     /// </summary>
     /// <param name="foldConstantsWhenPossible">
-    /// Specifies whether or not invocations with all parameters being constant and target being constant
+    /// Specifies whether invocations with all parameters being constant and target being constant
     /// should be resolved immediately as constant expression. Equal to <b>true</b> by default.
     /// </param>
     public ParsedExpressionInvoke(bool foldConstantsWhenPossible = true)
@@ -38,7 +38,7 @@ public sealed class ParsedExpressionInvoke : ParsedExpressionVariadicFunction
     }
 
     /// <summary>
-    /// Specifies whether or not invocations with all parameters being constant and target being constant
+    /// Specifies whether invocations with all parameters being constant and target being constant
     /// should be resolved immediately as constant expression.
     /// </summary>
     public bool FoldConstantsWhenPossible { get; }

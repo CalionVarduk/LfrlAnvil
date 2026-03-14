@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public sealed class PipelineContext<TArgs, TResult>
     public TResult Result { get; private set; }
 
     /// <summary>
-    /// Specifies whether or not this context has been marked as complete.
+    /// Specifies whether this context has been marked as complete.
     /// Pipeline invocation will stop when it detects a completed context.
     /// </summary>
     public bool IsCompleted { get; private set; }

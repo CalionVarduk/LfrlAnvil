@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -127,7 +127,7 @@ public readonly ref struct RentedMemorySequenceSpan<T>
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="item"/> exists in this span.
+    /// Checks whether the provided <paramref name="item"/> exists in this span.
     /// </summary>
     /// <param name="item">Item to check.</param>
     /// <returns><b>true</b> when the provided <paramref name="item"/> exists, otherwise <b>false</b>.</returns>

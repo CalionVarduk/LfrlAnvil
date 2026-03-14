@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,5 +19,5 @@ namespace LfrlAnvil.Sql.Internal;
 /// </summary>
 /// <param name="Key">Key of this entry.</param>
 /// <param name="Value">Value of this entry.</param>
-/// <param name="IsMutable">Specifies whether or not this entry can be changed.</param>
+/// <param name="IsMutable">Specifies whether this entry can be changed.</param>
 public readonly record struct SqlConnectionStringEntry(string Key, object Value, bool IsMutable);

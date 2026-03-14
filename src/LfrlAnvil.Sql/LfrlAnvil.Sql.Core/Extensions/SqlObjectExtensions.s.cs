@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -214,7 +214,7 @@ public static class SqlObjectExtensions
     }
 
     /// <summary>
-    /// Checks whether or not <see cref="ISqlForeignKeyBuilder.OriginIndex"/> and <see cref="ISqlForeignKeyBuilder.ReferencedIndex"/>
+    /// Checks whether <see cref="ISqlForeignKeyBuilder.OriginIndex"/> and <see cref="ISqlForeignKeyBuilder.ReferencedIndex"/>
     /// of the provided <paramref name="foreignKey"/> belong to the same table.
     /// </summary>
     /// <param name="foreignKey">Foreign key to check.</param>
@@ -227,7 +227,7 @@ public static class SqlObjectExtensions
     }
 
     /// <summary>
-    /// Checks whether or not <see cref="ISqlForeignKey.OriginIndex"/> and <see cref="ISqlForeignKey.ReferencedIndex"/>
+    /// Checks whether <see cref="ISqlForeignKey.OriginIndex"/> and <see cref="ISqlForeignKey.ReferencedIndex"/>
     /// of the provided <paramref name="foreignKey"/> belong to the same table.
     /// </summary>
     /// <param name="foreignKey">Foreign key to check.</param>
@@ -453,10 +453,10 @@ public static class SqlObjectExtensions
     /// Custom <see cref="SqlRecordSetInfo"/> to use as <see cref="SqlCreateTableNode.Info"/> of the result. Equal to null by default.
     /// </param>
     /// <param name="includeForeignKeys">
-    /// Specifies whether or not foreign key constrains should be included in the result. Equal to <b>true</b> by default.
+    /// Specifies whether foreign key constrains should be included in the result. Equal to <b>true</b> by default.
     /// </param>
     /// <param name="sortComputedColumns">
-    /// Specifies whether or not columns with non-null <see cref="ISqlColumnBuilder.Computation"/> should be sorted
+    /// Specifies whether columns with non-null <see cref="ISqlColumnBuilder.Computation"/> should be sorted
     /// by their computation reference depth and added to the end of the resulting collection of columns. Equal to <b>false</b> by default.
     /// </param>
     /// <param name="ifNotExists">
@@ -628,7 +628,7 @@ public static class SqlObjectExtensions
     /// </summary>
     /// <param name="columns">Source collection of columns.</param>
     /// <param name="sortComputedColumns">
-    /// Specifies whether or not columns with non-null <see cref="ISqlColumnBuilder.Computation"/> should be sorted
+    /// Specifies whether columns with non-null <see cref="ISqlColumnBuilder.Computation"/> should be sorted
     /// by their computation reference depth and added to the end of the resulting collection. Equal to <b>false</b> by default.
     /// </param>
     /// <returns>New collection of <see cref="SqlColumnDefinitionNode"/> instances.</returns>

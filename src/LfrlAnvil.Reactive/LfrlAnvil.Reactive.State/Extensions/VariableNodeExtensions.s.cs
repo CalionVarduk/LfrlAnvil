@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ namespace LfrlAnvil.Reactive.State.Extensions;
 public static class VariableNodeExtensions
 {
     /// <summary>
-    /// Checks whether or not the <paramref name="node"/> contains <see cref="VariableState.Changed"/> state.
+    /// Checks whether the <paramref name="node"/> contains <see cref="VariableState.Changed"/> state.
     /// </summary>
     /// <param name="node">Node to check.</param>
     /// <returns><b>true</b> when the <paramref name="node"/> contains expected state, otherwise <b>false</b>.</returns>
@@ -35,7 +35,7 @@ public static class VariableNodeExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the <paramref name="node"/> contains <see cref="VariableState.Invalid"/> state.
+    /// Checks whether the <paramref name="node"/> contains <see cref="VariableState.Invalid"/> state.
     /// </summary>
     /// <param name="node">Node to check.</param>
     /// <returns><b>true</b> when the <paramref name="node"/> contains expected state, otherwise <b>false</b>.</returns>
@@ -47,7 +47,7 @@ public static class VariableNodeExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the <paramref name="node"/> contains <see cref="VariableState.Warning"/> state.
+    /// Checks whether the <paramref name="node"/> contains <see cref="VariableState.Warning"/> state.
     /// </summary>
     /// <param name="node">Node to check.</param>
     /// <returns><b>true</b> when the <paramref name="node"/> contains expected state, otherwise <b>false</b>.</returns>
@@ -59,7 +59,7 @@ public static class VariableNodeExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the <paramref name="node"/> contains <see cref="VariableState.ReadOnly"/> state.
+    /// Checks whether the <paramref name="node"/> contains <see cref="VariableState.ReadOnly"/> state.
     /// </summary>
     /// <param name="node">Node to check.</param>
     /// <returns><b>true</b> when the <paramref name="node"/> contains expected state, otherwise <b>false</b>.</returns>
@@ -71,7 +71,7 @@ public static class VariableNodeExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the <paramref name="node"/> contains <see cref="VariableState.Disposed"/> state.
+    /// Checks whether the <paramref name="node"/> contains <see cref="VariableState.Disposed"/> state.
     /// </summary>
     /// <param name="node">Node to check.</param>
     /// <returns><b>true</b> when the <paramref name="node"/> contains expected state, otherwise <b>false</b>.</returns>
@@ -83,7 +83,7 @@ public static class VariableNodeExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the <paramref name="node"/> contains <see cref="VariableState.Dirty"/> state.
+    /// Checks whether the <paramref name="node"/> contains <see cref="VariableState.Dirty"/> state.
     /// </summary>
     /// <param name="node">Node to check.</param>
     /// <returns><b>true</b> when the <paramref name="node"/> contains expected state, otherwise <b>false</b>.</returns>

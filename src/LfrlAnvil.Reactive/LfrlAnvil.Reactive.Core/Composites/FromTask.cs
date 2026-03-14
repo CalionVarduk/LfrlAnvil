@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -51,17 +51,17 @@ public readonly struct FromTask<TEvent>
     public AggregateException? Exception { get; }
 
     /// <summary>
-    /// Specifies whether or not the source task has been cancelled.
+    /// Specifies whether the source task has been cancelled.
     /// </summary>
     public bool IsCanceled => Status == TaskStatus.Canceled;
 
     /// <summary>
-    /// Specifies whether or not the source task has faulted.
+    /// Specifies whether the source task has faulted.
     /// </summary>
     public bool IsFaulted => Status == TaskStatus.Faulted;
 
     /// <summary>
-    /// Specifies whether or not the source task ran to completion.
+    /// Specifies whether the source task ran to completion.
     /// </summary>
     public bool IsCompletedSuccessfully => Status == TaskStatus.RanToCompletion;
 

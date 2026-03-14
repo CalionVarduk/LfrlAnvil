@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -188,7 +188,7 @@ public sealed class IdentifierGenerator : IIdentifierGenerator
     }
 
     /// <summary>
-    /// Specifies whether or not this generator can still create identifiers.
+    /// Specifies whether this generator can still create identifiers.
     /// </summary>
     public bool IsOutOfValues => ValuesLeft <= 0;
 

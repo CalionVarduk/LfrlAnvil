@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -1320,7 +1320,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="dataType"/> is a text or a blob type.
+    /// Checks whether the provided <paramref name="dataType"/> is a text or a blob type.
     /// </summary>
     /// <param name="dataType">Data type to check.</param>
     /// <returns><b>true</b> when <paramref name="dataType"/> is a text or a blob type, otherwise <b>false</b>.</returns>
@@ -1543,7 +1543,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
     /// Appends an SQL upsert's value source's alias to <see cref="SqlNodeInterpreter.Context"/>.
     /// </summary>
     /// <param name="node">Source upsert node.</param>
-    /// <param name="includeFieldNames">Specifies whether or not all field names should be included.</param>
+    /// <param name="includeFieldNames">Specifies whether all field names should be included.</param>
     protected void AppendUpsertSourceAlias(SqlUpsertNode node, bool includeFieldNames)
     {
         Context.Sql.Append( "AS" ).AppendSpace();
@@ -1672,7 +1672,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
     }
 
     /// <summary>
-    /// Checks whether or not a data source of an <see cref="SqlDeleteFromNode"/> is considered valid for a single record set version.
+    /// Checks whether a data source of an <see cref="SqlDeleteFromNode"/> is considered valid for a single record set version.
     /// </summary>
     /// <param name="node">Data source node to check.</param>
     /// <param name="traits">Collection of traits.</param>
@@ -1695,7 +1695,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
     }
 
     /// <summary>
-    /// Checks whether or not a data source of an <see cref="SqlDeleteFromNode"/> is considered valid
+    /// Checks whether a data source of an <see cref="SqlDeleteFromNode"/> is considered valid
     /// for a version with multiple record sets.
     /// </summary>
     /// <param name="node">Data source node to check.</param>
@@ -1718,7 +1718,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
     }
 
     /// <summary>
-    /// Checks whether or not a data source of an <see cref="SqlUpdateNode"/> is considered valid for a single record set version.
+    /// Checks whether a data source of an <see cref="SqlUpdateNode"/> is considered valid for a single record set version.
     /// </summary>
     /// <param name="node">Data source node to check.</param>
     /// <param name="traits">Collection of traits.</param>
@@ -1740,7 +1740,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
     }
 
     /// <summary>
-    /// Checks whether or not a data source of an <see cref="SqlUpdateNode"/> is considered valid for a version with multiple record sets.
+    /// Checks whether a data source of an <see cref="SqlUpdateNode"/> is considered valid for a version with multiple record sets.
     /// </summary>
     /// <param name="node">Data source node to check.</param>
     /// <param name="traits">Collection of traits.</param>

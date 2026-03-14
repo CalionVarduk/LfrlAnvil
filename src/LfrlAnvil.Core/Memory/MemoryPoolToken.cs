@@ -43,7 +43,7 @@ public readonly struct MemoryPoolToken<T> : IDisposable
     private int NodeId => _data.IntValue;
 
     /// <summary>
-    /// Specifies whether or not the underlying buffer will be additionally cleared during this token's disposal.
+    /// Specifies whether the underlying buffer will be additionally cleared during this token's disposal.
     /// </summary>
     public bool Clear => _data.BoolValue;
 
@@ -112,7 +112,7 @@ public readonly struct MemoryPoolToken<T> : IDisposable
     /// </summary>
     /// <param name="length">New underlying buffer length.</param>
     /// <param name="trimStart">
-    /// Specifies whether or not elements at the start of the buffer should be trimmed instead of elements at the end,
+    /// Specifies whether elements at the start of the buffer should be trimmed instead of elements at the end,
     /// when new <paramref name="length"/> is less than current length.
     /// Equal to <b>false</b> by default.
     /// </param>
@@ -120,7 +120,7 @@ public readonly struct MemoryPoolToken<T> : IDisposable
     /// <remarks>
     /// When new <paramref name="length"/> is less than the current length, then elements at the end of the buffer will be discarded,
     /// unless <paramref name="trimStart"/> is equal to <b>true</b>, in which case elements at the start of the buffer will be discarded.
-    /// Additionally, the <see cref="Clear"/> value will determine whether or not discarded elements will be cleared.
+    /// Additionally, the <see cref="Clear"/> value will determine whether discarded elements will be cleared.
     /// </remarks>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public void SetLength(int length, bool trimStart = false)

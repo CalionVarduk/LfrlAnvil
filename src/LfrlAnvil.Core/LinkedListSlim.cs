@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public struct LinkedListSlim<T>
     public int Capacity => _items.Length;
 
     /// <summary>
-    /// Specifies whether or not this list is empty.
+    /// Specifies whether this list is empty.
     /// </summary>
     public bool IsEmpty => Count == 0;
 
@@ -354,7 +354,7 @@ public struct LinkedListSlim<T>
     }
 
     /// <summary>
-    /// Checks whether or not an item at the specified position exists.
+    /// Checks whether an item at the specified position exists.
     /// </summary>
     /// <param name="index">Zero-based index to check for item existence.</param>
     /// <returns><b>true</b> when item at the specified position exists, otherwise <b>false</b>.</returns>

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public static class ParameterInfoExtensions
     /// <param name="parameter">Parameter to retrieve an attribute from.</param>
     /// <param name="attributeType">Type of an <see cref="Attribute"/> to search for.</param>
     /// <param name="inherit">
-    /// Specifies whether or not to include parameter's ancestors in the search. Equal to <b>true</b> by default.
+    /// Specifies whether to include parameter's ancestors in the search. Equal to <b>true</b> by default.
     /// </param>
     /// <returns>Found attribute's instance or null, if it does not exist.</returns>
     /// <remarks>See <see cref="Attribute.GetCustomAttribute(ParameterInfo,Type,Boolean)"/> for more information.</remarks>
@@ -49,7 +49,7 @@ public static class ParameterInfoExtensions
     /// </summary>
     /// <param name="parameter">Parameter to retrieve an attribute from.</param>
     /// <param name="inherit">
-    /// Specifies whether or not to include parameter's ancestors in the search. Equal to <b>true</b> by default.
+    /// Specifies whether to include parameter's ancestors in the search. Equal to <b>true</b> by default.
     /// </param>
     /// <typeparam name="T">Type of an <see cref="Attribute"/> to search for.</typeparam>
     /// <returns>Found attribute's instance or null, if it does not exist.</returns>
@@ -68,7 +68,7 @@ public static class ParameterInfoExtensions
     /// <param name="parameter">Parameter to retrieve attributes from.</param>
     /// <param name="attributeType">Type of an <see cref="Attribute"/> to search for.</param>
     /// <param name="inherit">
-    /// Specifies whether or not to include parameter's ancestors in the search. Equal to <b>true</b> by default.
+    /// Specifies whether to include parameter's ancestors in the search. Equal to <b>true</b> by default.
     /// </param>
     /// <returns>All found attribute's instances or an empty array, if it does not exist.</returns>
     /// <remarks>See <see cref="Attribute.GetCustomAttributes(ParameterInfo,Type,Boolean)"/> for more information.</remarks>
@@ -84,7 +84,7 @@ public static class ParameterInfoExtensions
     /// </summary>
     /// <param name="parameter">Parameter to retrieve attributes from.</param>
     /// <param name="inherit">
-    /// Specifies whether or not to include parameter's ancestors in the search. Equal to <b>true</b> by default.
+    /// Specifies whether to include parameter's ancestors in the search. Equal to <b>true</b> by default.
     /// </param>
     /// <typeparam name="T">Type of an <see cref="Attribute"/> to search for.</typeparam>
     /// <returns>All found attribute's instances or an empty array, if it does not exist.</returns>
@@ -103,7 +103,7 @@ public static class ParameterInfoExtensions
     /// <param name="parameter">Parameter to check.</param>
     /// <param name="attributeType">Type of an <see cref="Attribute"/> to search for.</param>
     /// <param name="inherit">
-    /// Specifies whether or not to include parameter's ancestors in the search. Equal to <b>true</b> by default.
+    /// Specifies whether to include parameter's ancestors in the search. Equal to <b>true</b> by default.
     /// </param>
     /// <returns>
     /// <b>true</b> when an attribute of the specified type exists for the given <paramref name="parameter"/>, otherwise <b>false</b>.
@@ -121,7 +121,7 @@ public static class ParameterInfoExtensions
     /// </summary>
     /// <param name="parameter">Parameter to check.</param>
     /// <param name="inherit">
-    /// Specifies whether or not to include parameter's ancestors in the search. Equal to <b>true</b> by default.
+    /// Specifies whether to include parameter's ancestors in the search. Equal to <b>true</b> by default.
     /// </param>
     /// <typeparam name="T">Type of an <see cref="Attribute"/> to search for.</typeparam>
     /// <returns>

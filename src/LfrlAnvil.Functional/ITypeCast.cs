@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,12 +30,12 @@ public interface ITypeCast<out TDestination> : IReadOnlyCollection<TDestination>
     object? Source { get; }
 
     /// <summary>
-    /// Specifies whether or not this type cast is valid.
+    /// Specifies whether this type cast is valid.
     /// </summary>
     bool IsValid { get; }
 
     /// <summary>
-    /// Specifies whether or not this type cast is invalid.
+    /// Specifies whether this type cast is invalid.
     /// </summary>
     bool IsInvalid { get; }
 

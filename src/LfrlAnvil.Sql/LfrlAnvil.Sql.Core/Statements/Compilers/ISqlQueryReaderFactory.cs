@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ namespace LfrlAnvil.Sql.Statements.Compilers;
 public interface ISqlQueryReaderFactory
 {
     /// <summary>
-    /// Specifies whether or not generic asynchronous query readers can be constructed by this factory.
+    /// Specifies whether generic asynchronous query readers can be constructed by this factory.
     /// </summary>
     bool SupportsAsync { get; }
 
@@ -94,7 +94,7 @@ public interface ISqlQueryReaderFactory
     /// Creates a new <see cref="SqlScalarQueryReaderExpression"/> instance.
     /// </summary>
     /// <param name="resultType">Value type.</param>
-    /// <param name="isNullable">Specifies whether or not the result is nullable. Equal to <b>false</b> by default.</param>
+    /// <param name="isNullable">Specifies whether the result is nullable. Equal to <b>false</b> by default.</param>
     /// <returns>New <see cref="SqlScalarQueryReaderExpression"/> instance.</returns>
     /// <exception cref="SqlCompilerException">When <paramref name="resultType"/> is not a valid result type.</exception>
     [Pure]
@@ -104,7 +104,7 @@ public interface ISqlQueryReaderFactory
     /// Creates a new <see cref="SqlAsyncScalarQueryReaderExpression"/> instance.
     /// </summary>
     /// <param name="resultType">Value type.</param>
-    /// <param name="isNullable">Specifies whether or not the result is nullable. Equal to <b>false</b> by default.</param>
+    /// <param name="isNullable">Specifies whether the result is nullable. Equal to <b>false</b> by default.</param>
     /// <returns>New <see cref="SqlAsyncScalarQueryReaderExpression"/> instance.</returns>
     /// <exception cref="SqlCompilerException">
     /// When <paramref name="resultType"/> is not a valid result type

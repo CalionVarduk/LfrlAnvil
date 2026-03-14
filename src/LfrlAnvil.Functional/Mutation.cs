@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public readonly struct Mutation<T> : IEquatable<Mutation<T>>
     public T Value { get; }
 
     /// <summary>
-    /// Specifies whether or not the <see cref="OldValue"/> is different than the <see cref="Value"/>,
+    /// Specifies whether the <see cref="OldValue"/> is different than the <see cref="Value"/>,
     /// using the <see cref="EqualityComparer{T}.Default"/> comparer.
     /// </summary>
     public bool HasChanged => Generic<T>.AreNotEqual( OldValue, Value );

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -88,22 +88,22 @@ public readonly struct ZonedDateTime : IEquatable<ZonedDateTime>, IComparable<Zo
     public Duration UtcOffset => new Duration( Value.Ticks - DateTime.UnixEpoch.Ticks - Timestamp.UnixEpochTicks );
 
     /// <summary>
-    /// Checks whether or not the <see cref="TimeZone"/> is UTC.
+    /// Checks whether the <see cref="TimeZone"/> is UTC.
     /// </summary>
     public bool IsUtc => ReferenceEquals( TimeZone, TimeZoneInfo.Utc );
 
     /// <summary>
-    /// Checks whether or not the <see cref="TimeZone"/> is local.
+    /// Checks whether the <see cref="TimeZone"/> is local.
     /// </summary>
     public bool IsLocal => ReferenceEquals( TimeZone, TimeZoneInfo.Local );
 
     /// <summary>
-    /// Checks whether or not this date time is in daylight saving time.
+    /// Checks whether this date time is in daylight saving time.
     /// </summary>
     public bool IsInDaylightSavingTime => UtcOffset.Ticks != TimeZone.BaseUtcOffset.Ticks;
 
     /// <summary>
-    /// Checks whether or not this date time is ambiguous.
+    /// Checks whether this date time is ambiguous.
     /// </summary>
     public bool IsAmbiguous => TimeZone.IsAmbiguousTime( Value );
 

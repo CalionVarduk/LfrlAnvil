@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public abstract class SqlCommonTableExpressionNode : SqlNodeBase
     public string Name { get; }
 
     /// <summary>
-    /// Specifies whether or not this common table expression is recursive.
+    /// Specifies whether this common table expression is recursive.
     /// </summary>
     public bool IsRecursive { get; }
 

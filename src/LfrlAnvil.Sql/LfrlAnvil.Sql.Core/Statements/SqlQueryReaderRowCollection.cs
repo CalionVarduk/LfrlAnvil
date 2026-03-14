@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ public sealed class SqlQueryReaderRowCollection : IReadOnlyList<SqlQueryReaderRo
     }
 
     /// <summary>
-    /// Checks whether or not a field with the provided name exists.
+    /// Checks whether a field with the provided name exists.
     /// </summary>
     /// <param name="fieldName">Name to check.</param>
     /// <returns><b>true</b> when field exists, otherwise <b>false</b>.</returns>

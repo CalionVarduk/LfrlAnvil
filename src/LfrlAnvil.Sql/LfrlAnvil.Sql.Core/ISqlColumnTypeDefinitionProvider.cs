@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ public interface ISqlColumnTypeDefinitionProvider
     ISqlColumnTypeDefinition? TryGetByType(Type type);
 
     /// <summary>
-    /// Checks whether or not the specified <paramref name="definition"/> belongs to this provider.
+    /// Checks whether the specified <paramref name="definition"/> belongs to this provider.
     /// </summary>
     /// <param name="definition">Definition to check.</param>
     /// <returns><b>true</b> when <paramref name="definition"/> belongs to this provider, otherwise <b>false</b>.</returns>

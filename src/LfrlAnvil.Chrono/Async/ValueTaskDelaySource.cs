@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -180,7 +180,7 @@ public sealed class ValueTaskDelaySource : IDisposable, IAsyncDisposable
     /// Creates a new <see cref="AsyncManualResetEvent"/> instance backed by this delay source.
     /// </summary>
     /// <param name="signaled">
-    /// Specifies whether or not created event should start in signaled state. Equal to <b>false</b> by default.
+    /// Specifies whether created event should start in signaled state. Equal to <b>false</b> by default.
     /// </param>
     /// <returns>New <see cref="AsyncManualResetEvent"/> instance.</returns>
     [Pure]

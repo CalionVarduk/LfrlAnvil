@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ public readonly struct SqliteNodeInterpreterOptions
     public SqliteColumnTypeDefinitionProvider? TypeDefinitions { get; }
 
     /// <summary>
-    /// Specifies whether or not the <b>STRICT</b> mode is enabled for table creation.
+    /// Specifies whether the <b>STRICT</b> mode is enabled for table creation.
     /// </summary>
     public bool IsStrictModeEnabled { get; }
 
@@ -72,23 +72,23 @@ public readonly struct SqliteNodeInterpreterOptions
     public SqliteUpsertOptions UpsertOptions { get; }
 
     /// <summary>
-    /// Specifies whether or not <see cref="SqlSortTraitNode"/> instances that decorate aggregate function nodes
+    /// Specifies whether <see cref="SqlSortTraitNode"/> instances that decorate aggregate function nodes
     /// should be included or ignored.
     /// </summary>
     public bool IsAggregateFunctionOrderingEnabled { get; }
 
     /// <summary>
-    /// Specifies whether or not positional <see cref="SqliteParameter"/> instances are enabled.
+    /// Specifies whether positional <see cref="SqliteParameter"/> instances are enabled.
     /// </summary>
     public bool ArePositionalParametersEnabled { get; }
 
     /// <summary>
-    /// Specifies whether or not the <b>UPDATE FROM</b> syntax is supported.
+    /// Specifies whether the <b>UPDATE FROM</b> syntax is supported.
     /// </summary>
     public bool IsUpdateFromEnabled => ! _isUpdateFromDisabled;
 
     /// <summary>
-    /// Specifies whether or not the <b>ORDER BY</b>, <b>LIMIT</b> and <b>OFFSET</b> clauses are enabled
+    /// Specifies whether the <b>ORDER BY</b>, <b>LIMIT</b> and <b>OFFSET</b> clauses are enabled
     /// for <b>UPDATE</b> and <b>DELETE</b> statements.
     /// </summary>
     public bool IsUpdateOrDeleteLimitEnabled => ! _isUpdateOrDeleteLimitDisabled;

@@ -56,14 +56,14 @@ bitmask = bitmask.Intersect( Foo.A | Foo.C );
 // of disjointed bounds instances
 var bounds = new Bounds<int>( min: 4, max: 104 );
 
-// checks whether or not 42 is contained in [4, 104] range, should return true
+// checks whether 42 is contained in [4, 104] range, should return true
 var contains = bounds.Contains( 42 );
 
 // ----------
 // the Interlocked* structures represent atomic values
 var b = new InterlockedBoolean( false );
 
-// atomically writes true to 'b' and returns information about whether or not the value has changed,
+// atomically writes true to 'b' and returns information about whether the value has changed,
 // which in this case should return true
 var changed = b.WriteTrue();
 

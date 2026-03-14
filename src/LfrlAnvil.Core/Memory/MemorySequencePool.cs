@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -178,7 +178,7 @@ public class MemorySequencePool<T>
     }
 
     /// <summary>
-    /// Specifies whether or not this pool clears the contents of memory sequences that get returned to the pool.
+    /// Specifies whether this pool clears the contents of memory sequences that get returned to the pool.
     /// </summary>
     public bool ClearReturnedSequences { get; set; }
 

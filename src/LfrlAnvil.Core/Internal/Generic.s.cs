@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,13 +27,13 @@ namespace LfrlAnvil.Internal;
 public static class Generic<T>
 {
     /// <summary>
-    /// Specifies whether or not the object type is a nullable value type.
+    /// Specifies whether the object type is a nullable value type.
     /// </summary>
     public static readonly bool IsNullableType =
         typeof( T ).IsValueType && Nullable.GetUnderlyingType( typeof( T ) ) is not null;
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="obj"/> is null.
+    /// Checks whether the provided <paramref name="obj"/> is null.
     /// </summary>
     /// <param name="obj">Object to check.</param>
     /// <returns><b>true</b> when <paramref name="obj"/> is null, otherwise <b>false</b>.</returns>
@@ -48,7 +48,7 @@ public static class Generic<T>
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="obj"/> is not null.
+    /// Checks whether the provided <paramref name="obj"/> is not null.
     /// </summary>
     /// <param name="obj">Object to check.</param>
     /// <returns><b>true</b> when <paramref name="obj"/> is not null, otherwise <b>false</b>.</returns>
@@ -60,7 +60,7 @@ public static class Generic<T>
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="obj"/> is equivalent to default.
+    /// Checks whether the provided <paramref name="obj"/> is equivalent to default.
     /// </summary>
     /// <param name="obj">Object to check.</param>
     /// <returns><b>true</b> when <paramref name="obj"/> is equivalent to default, otherwise <b>false</b>.</returns>
@@ -74,7 +74,7 @@ public static class Generic<T>
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="obj"/> is not equivalent to default.
+    /// Checks whether the provided <paramref name="obj"/> is not equivalent to default.
     /// </summary>
     /// <param name="obj">Object to check.</param>
     /// <returns><b>true</b> when <paramref name="obj"/> is not equivalent to default, otherwise <b>false</b>.</returns>
@@ -86,7 +86,7 @@ public static class Generic<T>
     }
 
     /// <summary>
-    /// Checks whether or not two instances are considered equal by the <see cref="EqualityComparer{T}.Default"/> equality comparer.
+    /// Checks whether two instances are considered equal by the <see cref="EqualityComparer{T}.Default"/> equality comparer.
     /// </summary>
     /// <param name="a">First operand.</param>
     /// <param name="b">Second operand.</param>
@@ -99,7 +99,7 @@ public static class Generic<T>
     }
 
     /// <summary>
-    /// Checks whether or not two instances are considered not equal by the <see cref="EqualityComparer{T}.Default"/> equality comparer.
+    /// Checks whether two instances are considered not equal by the <see cref="EqualityComparer{T}.Default"/> equality comparer.
     /// </summary>
     /// <param name="a">First operand.</param>
     /// <param name="b">Second operand.</param>

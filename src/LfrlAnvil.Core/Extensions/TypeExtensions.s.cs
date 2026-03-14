@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ namespace LfrlAnvil.Extensions;
 public static class TypeExtensions
 {
     /// <summary>
-    /// Checks whether or not the given <paramref name="type"/> is constructable.
+    /// Checks whether the given <paramref name="type"/> is constructable.
     /// </summary>
     /// <param name="type">Type to check.</param>
     /// <returns><b>true</b> when <paramref name="type"/> is constructable, otherwise <b>false</b>.</returns>
@@ -73,7 +73,7 @@ public static class TypeExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the specified interface is implemented by the given <paramref name="type"/>.
+    /// Checks whether the specified interface is implemented by the given <paramref name="type"/>.
     /// </summary>
     /// <param name="type">Source type.</param>
     /// <param name="interfaceType">Type of an interface to check.</param>
@@ -86,7 +86,7 @@ public static class TypeExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the specified interface is implemented by the given <paramref name="type"/>.
+    /// Checks whether the specified interface is implemented by the given <paramref name="type"/>.
     /// </summary>
     /// <param name="type">Source type.</param>
     /// <typeparam name="T">Type of an interface to check.</typeparam>
@@ -116,7 +116,7 @@ public static class TypeExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the specified open generic interface definition is implemented by the given <paramref name="type"/>.
+    /// Checks whether the specified open generic interface definition is implemented by the given <paramref name="type"/>.
     /// </summary>
     /// <param name="type">Source type.</param>
     /// <param name="openGenericInterfaceDefinition">Type of an open generic interface definition to check.</param>
@@ -172,7 +172,7 @@ public static class TypeExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the specified base type is extended by the given <paramref name="type"/>.
+    /// Checks whether the specified base type is extended by the given <paramref name="type"/>.
     /// </summary>
     /// <param name="type">Source type.</param>
     /// <param name="baseType">Base type to check.</param>
@@ -185,7 +185,7 @@ public static class TypeExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the specified base type is extended by the given <paramref name="type"/>.
+    /// Checks whether the specified base type is extended by the given <paramref name="type"/>.
     /// </summary>
     /// <param name="type">Source type.</param>
     /// <typeparam name="T">Base type to check.</typeparam>
@@ -215,7 +215,7 @@ public static class TypeExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the specified open generic base type definition is extended by the given <paramref name="type"/>.
+    /// Checks whether the specified open generic base type definition is extended by the given <paramref name="type"/>.
     /// </summary>
     /// <param name="type">Source type.</param>
     /// <param name="openGenericBaseTypeDefinition">Type of an open generic base type definition to check.</param>

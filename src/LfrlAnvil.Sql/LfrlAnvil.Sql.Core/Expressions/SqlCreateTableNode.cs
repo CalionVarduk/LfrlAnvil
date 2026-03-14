@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public sealed class SqlCreateTableNode : SqlNodeBase, ISqlStatementNode
     public SqlRecordSetInfo Info { get; }
 
     /// <summary>
-    /// Specifies whether or not this table should only be created if it does not already exist in DB.
+    /// Specifies whether this table should only be created if it does not already exist in DB.
     /// </summary>
     public bool IfNotExists { get; }
 

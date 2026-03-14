@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ public readonly struct SqliteDatabaseFactoryOptions
     }
 
     /// <summary>
-    /// Specifies whether or not the DB connection should stay permanently connected.
+    /// Specifies whether the DB connection should stay permanently connected.
     /// </summary>
     /// <remarks>
     /// Enabling this option will cause the normal disposal of the <see cref="SqliteConnection"/> instance
@@ -84,7 +84,7 @@ public readonly struct SqliteDatabaseFactoryOptions
     public bool IsConnectionPermanent { get; }
 
     /// <summary>
-    /// Specifies whether or not foreign key checks are disabled.
+    /// Specifies whether foreign key checks are disabled.
     /// </summary>
     /// <remarks>
     /// Foreign key constraint validity is checked in <see cref="SqlDatabaseCreateMode.Commit"/> mode only,

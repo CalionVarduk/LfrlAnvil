@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public interface IReadOnlyDirectedGraph<TKey, TNodeValue, TEdgeValue>
     IEnumerable<IDirectedGraphEdge<TKey, TNodeValue, TEdgeValue>> Edges { get; }
 
     /// <summary>
-    /// Checks whether or not a node with the specified <paramref name="key"/> exists in this graph.
+    /// Checks whether a node with the specified <paramref name="key"/> exists in this graph.
     /// </summary>
     /// <param name="key">Key to check.</param>
     /// <returns><b>true</b> when node exists, otherwise <b>false</b>.</returns>
@@ -53,7 +53,7 @@ public interface IReadOnlyDirectedGraph<TKey, TNodeValue, TEdgeValue>
     bool ContainsNode(TKey key);
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="node"/> exists in this graph.
+    /// Checks whether the provided <paramref name="node"/> exists in this graph.
     /// </summary>
     /// <param name="node">Node to check.</param>
     /// <returns><b>true</b> when node exists, otherwise <b>false</b>.</returns>
@@ -61,7 +61,7 @@ public interface IReadOnlyDirectedGraph<TKey, TNodeValue, TEdgeValue>
     bool Contains(IDirectedGraphNode<TKey, TNodeValue, TEdgeValue> node);
 
     /// <summary>
-    /// Checks whether or not an edge that connects nodes associated with the <paramref name="firstKey"/> and <paramref name="secondKey"/>
+    /// Checks whether an edge that connects nodes associated with the <paramref name="firstKey"/> and <paramref name="secondKey"/>
     /// exists in this graph.
     /// </summary>
     /// <param name="firstKey">Key of the first node to check.</param>
@@ -71,7 +71,7 @@ public interface IReadOnlyDirectedGraph<TKey, TNodeValue, TEdgeValue>
     bool ContainsEdge(TKey firstKey, TKey secondKey);
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="edge"/> exists in this graph.
+    /// Checks whether the provided <paramref name="edge"/> exists in this graph.
     /// </summary>
     /// <param name="edge">Edge to check.</param>
     /// <returns><b>true</b> when edge exists, otherwise <b>false</b>.</returns>

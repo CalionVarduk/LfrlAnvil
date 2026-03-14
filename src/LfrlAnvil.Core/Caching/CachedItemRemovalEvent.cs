@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ namespace LfrlAnvil.Caching;
 /// <param name="Key">Key of an entry associated with this event.</param>
 /// <param name="Removed">Value of a removed entry associated with this event.</param>
 /// <param name="Replacement">Value of an entry that replaced the <see cref="Removed"/> value associated with this event.</param>
-/// <param name="IsReplaced">Indicates whether or not this event contains a <see cref="Replacement"/> value.</param>
+/// <param name="IsReplaced">Indicates whether this event contains a <see cref="Replacement"/> value.</param>
 /// <typeparam name="TKey">Cache entry's key (identifier) type.</typeparam>
 /// <typeparam name="TValue">Cache entry's value type.</typeparam>
 public readonly record struct CachedItemRemovalEvent<TKey, TValue>(TKey Key, TValue Removed, TValue? Replacement, bool IsReplaced)

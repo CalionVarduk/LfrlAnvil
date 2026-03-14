@@ -75,7 +75,7 @@ var foo = cache["foo"];
 // this will also remove the 'foo' entry from cache
 cache.Move( Duration.FromMinutes( 2 ) );
 
-// checks whether or not the 'foo' entry exits, should return false
+// checks whether the 'foo' entry exits, should return false
 var exists = cache.ContainsKey( "foo" );
 ```
 

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public readonly struct SqlQueryResult
     public ReadOnlySpan<SqlResultSetField> ResultSetFields => _resultSetFields;
 
     /// <summary>
-    /// Specifies whether or not this result contains any <see cref="Rows"/>.
+    /// Specifies whether this result contains any <see cref="Rows"/>.
     /// </summary>
     [MemberNotNullWhen( false, nameof( Rows ) )]
     public bool IsEmpty => Rows is null;
@@ -98,7 +98,7 @@ public readonly struct SqlQueryResult<TRow>
     public ReadOnlySpan<SqlResultSetField> ResultSetFields => _resultSetFields;
 
     /// <summary>
-    /// Specifies whether or not this result contains any <see cref="Rows"/>.
+    /// Specifies whether this result contains any <see cref="Rows"/>.
     /// </summary>
     [MemberNotNullWhen( false, nameof( Rows ) )]
     public bool IsEmpty => Rows is null;

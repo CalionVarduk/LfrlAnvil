@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ public readonly struct SqlIndexBuilderColumns<T>
     }
 
     /// <summary>
-    /// Checks whether or not an expression at the specified 0-based position is not a single column.
+    /// Checks whether an expression at the specified 0-based position is not a single column.
     /// </summary>
     /// <param name="index">0-based position.</param>
     /// <returns><b>true</b> when expression at the specified position is not a single column, otherwise <b>false</b>.</returns>

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ public interface ISqlObjectBuilderCollection : IReadOnlyCollection<ISqlObjectBui
     ISqlSchemaBuilder Schema { get; }
 
     /// <summary>
-    /// Checks whether or not an object with the provided <paramref name="name"/> exists.
+    /// Checks whether an object with the provided <paramref name="name"/> exists.
     /// </summary>
     /// <param name="name">Name to check.</param>
     /// <returns><b>true</b> when object exists, otherwise <b>false</b>.</returns>

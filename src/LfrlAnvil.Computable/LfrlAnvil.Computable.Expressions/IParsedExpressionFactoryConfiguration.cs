@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -35,12 +35,12 @@ public interface IParsedExpressionFactoryConfiguration
     string ScientificNotationExponents { get; }
 
     /// <summary>
-    /// Specifies whether or not non-integer numbers are allowed.
+    /// Specifies whether non-integer numbers are allowed.
     /// </summary>
     bool AllowNonIntegerNumbers { get; }
 
     /// <summary>
-    /// Specifies whether or not scientific notation for numbers is allowed.
+    /// Specifies whether scientific notation for numbers is allowed.
     /// </summary>
     bool AllowScientificNotation { get; }
 
@@ -50,27 +50,27 @@ public interface IParsedExpressionFactoryConfiguration
     char StringDelimiter { get; }
 
     /// <summary>
-    /// Specifies whether or not the expression's result is automatically converted to the expected result type.
+    /// Specifies whether the expression's result is automatically converted to the expected result type.
     /// </summary>
     bool ConvertResultToOutputTypeAutomatically { get; }
 
     /// <summary>
-    /// Specifies whether or not non-public member access is allowed.
+    /// Specifies whether non-public member access is allowed.
     /// </summary>
     bool AllowNonPublicMemberAccess { get; }
 
     /// <summary>
-    /// Specifies whether or not member names are case insensitive.
+    /// Specifies whether member names are case insensitive.
     /// </summary>
     bool IgnoreMemberNameCase { get; }
 
     /// <summary>
-    /// Specifies whether or not nested static delegate expressions should not be compiled immediately.
+    /// Specifies whether nested static delegate expressions should not be compiled immediately.
     /// </summary>
     bool PostponeStaticInlineDelegateCompilation { get; }
 
     /// <summary>
-    /// Specifies whether or not unused arguments should be discarded.
+    /// Specifies whether unused arguments should be discarded.
     /// </summary>
     bool DiscardUnusedArguments { get; }
 }

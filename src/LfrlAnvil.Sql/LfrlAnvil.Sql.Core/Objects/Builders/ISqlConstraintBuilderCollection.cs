@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public interface ISqlConstraintBuilderCollection : IReadOnlyCollection<ISqlConst
     ISqlTableBuilder Table { get; }
 
     /// <summary>
-    /// Checks whether or not a constraint with the provided <paramref name="name"/> exists.
+    /// Checks whether a constraint with the provided <paramref name="name"/> exists.
     /// </summary>
     /// <param name="name">Name to check.</param>
     /// <returns><b>true</b> when constraint exists, otherwise <b>false</b>.</returns>
@@ -145,7 +145,7 @@ public interface ISqlConstraintBuilderCollection : IReadOnlyCollection<ISqlConst
     /// Creates a new index builder with a default name.
     /// </summary>
     /// <param name="columns">Collection of columns that define the index.</param>
-    /// <param name="isUnique">Specifies whether or not the index should start as unique. Equal to <b>false</b> by default.</param>
+    /// <param name="isUnique">Specifies whether the index should start as unique. Equal to <b>false</b> by default.</param>
     /// <returns>New <see cref="ISqlIndexBuilder"/> instance.</returns>
     /// <exception cref="SqlObjectBuilderException">When index constraint could not be created.</exception>
     ISqlIndexBuilder CreateIndex(ReadOnlyArray<SqlOrderByNode> columns, bool isUnique = false);
@@ -155,7 +155,7 @@ public interface ISqlConstraintBuilderCollection : IReadOnlyCollection<ISqlConst
     /// </summary>
     /// <param name="name">Name of the index constraint.</param>
     /// <param name="columns">Collection of columns that define the index.</param>
-    /// <param name="isUnique">Specifies whether or not the index should start as unique. Equal to <b>false</b> by default.</param>
+    /// <param name="isUnique">Specifies whether the index should start as unique. Equal to <b>false</b> by default.</param>
     /// <returns>New <see cref="ISqlIndexBuilder"/> instance.</returns>
     /// <exception cref="SqlObjectBuilderException">When index constraint could not be created.</exception>
     ISqlIndexBuilder CreateIndex(string name, ReadOnlyArray<SqlOrderByNode> columns, bool isUnique = false);

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -44,12 +44,12 @@ public interface ISqlIndexBuilder : ISqlConstraintBuilder
     ISqlPrimaryKeyBuilder? PrimaryKey { get; }
 
     /// <summary>
-    /// Specifies whether or not this index is unique.
+    /// Specifies whether this index is unique.
     /// </summary>
     bool IsUnique { get; }
 
     /// <summary>
-    /// Specifies whether or not this index is virtual.
+    /// Specifies whether this index is virtual.
     /// </summary>
     /// <remarks>Virtual indexes aren't actually created in the database.</remarks>
     bool IsVirtual { get; }

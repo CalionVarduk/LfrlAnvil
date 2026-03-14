@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -143,7 +143,7 @@ public abstract class VariableRoot<TKey> : VariableNode, IVariableRoot<TKey>, IM
     /// <summary>
     /// Changes the read-only state of this variable.
     /// </summary>
-    /// <param name="enabled">Specifies whether or not the read-only state should be enabled.</param>
+    /// <param name="enabled">Specifies whether the read-only state should be enabled.</param>
     public void SetReadOnly(bool enabled)
     {
         if ( (_state & VariableState.Disposed) != VariableState.Default )

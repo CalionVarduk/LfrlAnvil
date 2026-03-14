@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -111,7 +111,7 @@ public static class SqlStatementExpressionFactoryExtensions
     /// Creates a new <see cref="SqlScalarQueryReaderExpression{T}"/> instance.
     /// </summary>
     /// <param name="factory">Source factory.</param>
-    /// <param name="isNullable">Specifies whether or not the result is nullable. Equal to <b>false</b> by default.</param>
+    /// <param name="isNullable">Specifies whether the result is nullable. Equal to <b>false</b> by default.</param>
     /// <typeparam name="T">Value type.</typeparam>
     /// <returns>New <see cref="SqlScalarQueryReaderExpression{T}"/> instance.</returns>
     /// <exception cref="SqlCompilerException">When <typeparamref name="T"/> is not a valid result type.</exception>
@@ -126,7 +126,7 @@ public static class SqlStatementExpressionFactoryExtensions
     /// Creates a new compiled <see cref="SqlScalarQueryReader{T}"/> instance.
     /// </summary>
     /// <param name="factory">Source factory.</param>
-    /// <param name="isNullable">Specifies whether or not the result is nullable. Equal to <b>false</b> by default.</param>
+    /// <param name="isNullable">Specifies whether the result is nullable. Equal to <b>false</b> by default.</param>
     /// <typeparam name="T">Value type.</typeparam>
     /// <returns>New <see cref="SqlScalarQueryReader{T}"/> instance.</returns>
     /// <exception cref="SqlCompilerException">When <typeparamref name="T"/> is not a valid result type.</exception>
@@ -141,7 +141,7 @@ public static class SqlStatementExpressionFactoryExtensions
     /// Creates a new <see cref="SqlAsyncScalarQueryReaderExpression{T}"/> instance.
     /// </summary>
     /// <param name="factory">Source factory.</param>
-    /// <param name="isNullable">Specifies whether or not the result is nullable. Equal to <b>false</b> by default.</param>
+    /// <param name="isNullable">Specifies whether the result is nullable. Equal to <b>false</b> by default.</param>
     /// <typeparam name="T">Value type.</typeparam>
     /// <returns>New <see cref="SqlAsyncScalarQueryReaderExpression{T}"/> instance.</returns>
     /// <exception cref="SqlCompilerException">
@@ -161,7 +161,7 @@ public static class SqlStatementExpressionFactoryExtensions
     /// Creates a new compiled <see cref="SqlAsyncScalarQueryReader{T}"/> instance.
     /// </summary>
     /// <param name="factory">Source factory.</param>
-    /// <param name="isNullable">Specifies whether or not the result is nullable. Equal to <b>false</b> by default.</param>
+    /// <param name="isNullable">Specifies whether the result is nullable. Equal to <b>false</b> by default.</param>
     /// <typeparam name="T">Value type.</typeparam>
     /// <returns>New <see cref="SqlAsyncScalarQueryReader{T}"/> instance.</returns>
     /// <exception cref="SqlCompilerException">

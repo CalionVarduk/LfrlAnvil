@@ -1,4 +1,4 @@
-﻿// Copyright 2024-2025 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -289,7 +289,7 @@ public abstract class Batch<T> : IBatch<T>, IDisposable, IAsyncDisposable
     /// or due to this batch being disposed.
     /// </summary>
     /// <param name="items">Range of elements to be discarded.</param>
-    /// <param name="disposing">Specifies whether or not this batch is in the process of being disposed.</param>
+    /// <param name="disposing">Specifies whether this batch is in the process of being disposed.</param>
     /// <remarks>
     /// Exceptions thrown by this method will be completely ignored.
     /// </remarks>
@@ -300,7 +300,7 @@ public abstract class Batch<T> : IBatch<T>, IDisposable, IAsyncDisposable
     /// </summary>
     /// <param name="items">Range of enqueued elements.</param>
     /// <param name="autoFlushing">
-    /// Specifies whether or not this batch will be automatically flushed
+    /// Specifies whether this batch will be automatically flushed
     /// due to the combination of its <see cref="AutoFlushCount"/> and new elements being added.
     /// </param>
     /// <remarks>
@@ -312,7 +312,7 @@ public abstract class Batch<T> : IBatch<T>, IDisposable, IAsyncDisposable
     /// Allows to react to a non-empty range of elements being dequeued and made ready to process.
     /// </summary>
     /// <param name="items">Range of dequeued elements.</param>
-    /// <param name="disposing">Specifies whether or not this batch is in the process of being disposed.</param>
+    /// <param name="disposing">Specifies whether this batch is in the process of being disposed.</param>
     /// <remarks>
     /// Exceptions thrown by this method will be completely ignored.
     /// Disposing the batch from inside this method may cause a deadlock.
@@ -332,7 +332,7 @@ public abstract class Batch<T> : IBatch<T>, IDisposable, IAsyncDisposable
     /// Asynchronously processes provided non-empty range of dequeued elements.
     /// </summary>
     /// <param name="items">Range of elements to process. Number of elements will not exceed <see cref="AutoFlushCount"/>.</param>
-    /// <param name="disposing">Specifies whether or not this batch is in the process of being disposed.</param>
+    /// <param name="disposing">Specifies whether this batch is in the process of being disposed.</param>
     /// <returns>Task that returns the number of successfully processed elements.</returns>
     /// <remarks>
     /// Exceptions thrown by this method will be completely ignored.

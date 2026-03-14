@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -71,17 +71,17 @@ public readonly struct MySqlNodeInterpreterOptions
     public int? IndexPrefixLength { get; }
 
     /// <summary>
-    /// Specifies whether or not <b>FULL JOIN</b> should be included in SQL statements.
+    /// Specifies whether <b>FULL JOIN</b> should be included in SQL statements.
     /// </summary>
     public bool IsFullJoinParsingEnabled { get; }
 
     /// <summary>
-    /// Specifies whether or not index filters should be included in SQL statements.
+    /// Specifies whether index filters should be included in SQL statements.
     /// </summary>
     public bool IsIndexFilterParsingEnabled { get; }
 
     /// <summary>
-    /// Specifies whether or not an exception should be thrown when a temporary view node is visited.
+    /// Specifies whether an exception should be thrown when a temporary view node is visited.
     /// </summary>
     public bool AreTemporaryViewsForbidden { get; }
 

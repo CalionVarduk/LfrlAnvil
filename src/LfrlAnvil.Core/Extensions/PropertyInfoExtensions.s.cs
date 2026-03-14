@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public static class PropertyInfoExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the given <paramref name="property"/> is an indexer.
+    /// Checks whether the given <paramref name="property"/> is an indexer.
     /// </summary>
     /// <param name="property">Property to check.</param>
     /// <returns><b>true</b> when <paramref name="property"/> is an indexer, otherwise <b>false</b>.</returns>

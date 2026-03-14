@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -187,7 +187,7 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
     }
 
     /// <summary>
-    /// Checks whether or not this collection contains the provided <paramref name="value"/>.
+    /// Checks whether this collection contains the provided <paramref name="value"/>.
     /// </summary>
     /// <param name="value">Value to check.</param>
     /// <returns><b>true</b> when this collection contains the provided <paramref name="value"/>, otherwise <b>false</b>.</returns>
@@ -199,7 +199,7 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
     }
 
     /// <summary>
-    /// Checks whether or not this collection contains the provided <paramref name="value"/> range.
+    /// Checks whether this collection contains the provided <paramref name="value"/> range.
     /// </summary>
     /// <param name="value">Range to check.</param>
     /// <returns><b>true</b> when this collection contains the provided <paramref name="value"/> range, otherwise <b>false</b>.</returns>
@@ -212,7 +212,7 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
     }
 
     /// <summary>
-    /// Checks whether or not this collection contains the provided <paramref name="other"/> collection of ranges.
+    /// Checks whether this collection contains the provided <paramref name="other"/> collection of ranges.
     /// </summary>
     /// <param name="other">Collection of ranges to check.</param>
     /// <returns>
@@ -279,7 +279,7 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
     }
 
     /// <summary>
-    /// Checks whether or not this collection intersects with the provided <paramref name="value"/> range.
+    /// Checks whether this collection intersects with the provided <paramref name="value"/> range.
     /// </summary>
     /// <param name="value">Range to check.</param>
     /// <returns>
@@ -300,7 +300,7 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
     }
 
     /// <summary>
-    /// Checks whether or not this collection intersects with the provided <paramref name="other"/> collection of ranges.
+    /// Checks whether this collection intersects with the provided <paramref name="other"/> collection of ranges.
     /// </summary>
     /// <param name="other">Collection of ranges to check.</param>
     /// <returns>

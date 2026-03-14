@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -1393,7 +1393,7 @@ public class PostgreSqlNodeInterpreter : SqlNodeInterpreter
     }
 
     /// <summary>
-    /// Checks whether or not a data source of an <see cref="SqlDeleteFromNode"/> is considered valid for a single record set version.
+    /// Checks whether a data source of an <see cref="SqlDeleteFromNode"/> is considered valid for a single record set version.
     /// </summary>
     /// <param name="node">Data source node to check.</param>
     /// <param name="traits">Collection of traits.</param>
@@ -1417,7 +1417,7 @@ public class PostgreSqlNodeInterpreter : SqlNodeInterpreter
     }
 
     /// <summary>
-    /// Checks whether or not a data source of an <see cref="SqlDeleteFromNode"/> is considered valid for a version
+    /// Checks whether a data source of an <see cref="SqlDeleteFromNode"/> is considered valid for a version
     /// with multiple record sets.
     /// </summary>
     /// <param name="node">Data source node to check.</param>
@@ -1444,7 +1444,7 @@ public class PostgreSqlNodeInterpreter : SqlNodeInterpreter
     }
 
     /// <summary>
-    /// Checks whether or not a data source of an <see cref="SqlUpdateNode"/> is considered valid for a single record set version.
+    /// Checks whether a data source of an <see cref="SqlUpdateNode"/> is considered valid for a single record set version.
     /// </summary>
     /// <param name="node">Data source node to check.</param>
     /// <param name="traits">Collection of traits.</param>
@@ -1468,7 +1468,7 @@ public class PostgreSqlNodeInterpreter : SqlNodeInterpreter
     }
 
     /// <summary>
-    /// Checks whether or not a data source of an <see cref="SqlUpdateNode"/> is considered valid for an <b>UPDATE FROM</b> statement.
+    /// Checks whether a data source of an <see cref="SqlUpdateNode"/> is considered valid for an <b>UPDATE FROM</b> statement.
     /// </summary>
     /// <param name="node">Data source node to check.</param>
     /// <param name="traits">Collection of traits.</param>

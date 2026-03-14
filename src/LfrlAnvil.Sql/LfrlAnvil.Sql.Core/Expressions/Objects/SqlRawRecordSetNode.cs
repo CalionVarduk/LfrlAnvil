@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ public class SqlRawRecordSetNode : SqlRecordSetNode
     /// </summary>
     /// <param name="name">Raw name of this record set.</param>
     /// <param name="alias">Optional alias of this record set.</param>
-    /// <param name="isOptional">Specifies whether or not this record set is marked as optional.</param>
+    /// <param name="isOptional">Specifies whether this record set is marked as optional.</param>
     protected internal SqlRawRecordSetNode(string name, string? alias, bool isOptional)
         : this( SqlRecordSetInfo.Create( name ), alias, isOptional, isInfoRaw: true ) { }
 
@@ -39,7 +39,7 @@ public class SqlRawRecordSetNode : SqlRecordSetNode
     /// </summary>
     /// <param name="info"><see cref="SqlRecordSetInfo"/> associated with this record set.</param>
     /// <param name="alias">Optional alias of this record set.</param>
-    /// <param name="isOptional">Specifies whether or not this record set is marked as optional.</param>
+    /// <param name="isOptional">Specifies whether this record set is marked as optional.</param>
     protected internal SqlRawRecordSetNode(SqlRecordSetInfo info, string? alias, bool isOptional)
         : this( info, alias, isOptional, isInfoRaw: false ) { }
 
@@ -54,7 +54,7 @@ public class SqlRawRecordSetNode : SqlRecordSetNode
     public sealed override SqlRecordSetInfo Info => _info;
 
     /// <summary>
-    /// Specifies whether or not this record set has been created with a <see cref="String"/> name
+    /// Specifies whether this record set has been created with a <see cref="String"/> name
     /// rather than <see cref="SqlRecordSetInfo"/>.
     /// </summary>
     public bool IsInfoRaw { get; }

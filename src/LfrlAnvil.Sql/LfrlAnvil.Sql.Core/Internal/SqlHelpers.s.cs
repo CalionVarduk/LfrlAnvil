@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -356,7 +356,7 @@ public static class SqlHelpers
     /// </summary>
     /// <param name="table"><see cref="ISqlTableBuilder"/> that the index belongs to.</param>
     /// <param name="columns">Collection of columns that belong to the index.</param>
-    /// <param name="isUnique">Specifies whether or not the index is unique.</param>
+    /// <param name="isUnique">Specifies whether the index is unique.</param>
     /// <returns>Default index constraint name.</returns>
     [Pure]
     public static string GetDefaultIndexName(ISqlTableBuilder table, SqlIndexBuilderColumns<ISqlColumnBuilder> columns, bool isUnique)
@@ -390,7 +390,7 @@ public static class SqlHelpers
     /// </summary>
     /// <param name="table"><see cref="SqlTableBuilder"/> that the index belongs to.</param>
     /// <param name="columns">Collection of columns that belong to the index.</param>
-    /// <param name="isUnique">Specifies whether or not the index is unique.</param>
+    /// <param name="isUnique">Specifies whether the index is unique.</param>
     /// <exception cref="SqlObjectBuilderException">When index columns are not considered valid.</exception>
     /// <remarks>
     /// Index must contain at least one column and columns must be distinct. When index is unique, then it cannot contain expressions.

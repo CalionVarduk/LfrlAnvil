@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -85,7 +85,7 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
     public bool IsAttached => (_mode & IsDetachedBit) == 0;
 
     /// <summary>
-    /// Specifies whether or not this change tracker will register changes.
+    /// Specifies whether this change tracker will register changes.
     /// </summary>
     /// <remarks>See <see cref="IsAttached"/> and <see cref="Mode"/> for more information.</remarks>
     public bool IsActive => _mode <= ReadModeMask;

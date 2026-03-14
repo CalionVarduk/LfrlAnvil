@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public abstract class SqlRecordSetNode : SqlNodeBase
     }
 
     /// <summary>
-    /// Specifies whether or not this record set is marked as optional.
+    /// Specifies whether this record set is marked as optional.
     /// </summary>
     /// <remarks>Optional record sets will only contain nullable data fields.</remarks>
     public bool IsOptional { get; }
@@ -58,7 +58,7 @@ public abstract class SqlRecordSetNode : SqlNodeBase
     public abstract SqlRecordSetInfo Info { get; }
 
     /// <summary>
-    /// Specifies whether or not this record set is aliased.
+    /// Specifies whether this record set is aliased.
     /// </summary>
     [MemberNotNullWhen( true, nameof( Alias ) )]
     public bool IsAliased => Alias is not null;

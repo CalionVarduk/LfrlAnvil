@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -992,7 +992,7 @@ public class SqlParameterBinderFactory<TCommand> : SqlParameterBinderFactory
     /// <param name="columnTypeDefinitions">
     /// Specifies <see cref="ISqlColumnTypeDefinitionProvider"/> instance attached to this factory.
     /// </param>
-    /// <param name="supportsPositionalParameters">Specifies whether or not this factory supports positional parameters.</param>
+    /// <param name="supportsPositionalParameters">Specifies whether this factory supports positional parameters.</param>
     protected SqlParameterBinderFactory(
         SqlDialect dialect,
         ISqlColumnTypeDefinitionProvider columnTypeDefinitions,

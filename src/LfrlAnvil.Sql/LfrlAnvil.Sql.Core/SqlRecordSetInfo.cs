@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public readonly struct SqlRecordSetInfo : IEquatable<SqlRecordSetInfo>
     public SqlSchemaObjectName Name { get; }
 
     /// <summary>
-    /// Specifies whether or not this record set is temporary.
+    /// Specifies whether this record set is temporary.
     /// </summary>
     public bool IsTemporary { get; }
 

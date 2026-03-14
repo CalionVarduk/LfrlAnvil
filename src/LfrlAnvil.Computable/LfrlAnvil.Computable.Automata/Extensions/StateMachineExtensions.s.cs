@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ public static class StateMachineExtensions
     }
 
     /// <summary>
-    /// Checks whether or not a transition between two states exists.
+    /// Checks whether a transition between two states exists.
     /// </summary>
     /// <param name="machine">State machine to check.</param>
     /// <param name="source">Source state.</param>
@@ -99,7 +99,7 @@ public static class StateMachineExtensions
     }
 
     /// <summary>
-    /// Checks whether or not a transition exists.
+    /// Checks whether a transition exists.
     /// </summary>
     /// <param name="machine">State machine to check.</param>
     /// <param name="source">Source state.</param>

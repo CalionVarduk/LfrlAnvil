@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public readonly struct EnqueuedEvent<TEvent, TPoint, TPointDelta>
     public int Repetitions { get; }
 
     /// <summary>
-    /// Specifies whether or not this event repeats infinitely.
+    /// Specifies whether this event repeats infinitely.
     /// </summary>
     public bool IsInfinite => Repetitions == 0;
 

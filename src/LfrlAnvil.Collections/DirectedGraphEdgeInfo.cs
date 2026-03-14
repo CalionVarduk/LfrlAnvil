@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -61,12 +61,12 @@ public readonly struct DirectedGraphEdgeInfo<TKey, TNodeValue, TEdgeValue>
     public GraphDirection Direction { get; }
 
     /// <summary>
-    /// Specifies whether or not the traversal from the <see cref="From"/> node to the <see cref="To"/> node is valid.
+    /// Specifies whether the traversal from the <see cref="From"/> node to the <see cref="To"/> node is valid.
     /// </summary>
     public bool CanReach => (Direction & GraphDirection.Out) != GraphDirection.None;
 
     /// <summary>
-    /// Specifies whether or not the traversal from the <see cref="To"/> node to the <see cref="From"/> node is valid.
+    /// Specifies whether the traversal from the <see cref="To"/> node to the <see cref="From"/> node is valid.
     /// </summary>
     public bool CanBeReached => (Direction & GraphDirection.In) != GraphDirection.None;
 

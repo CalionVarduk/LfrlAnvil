@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ public sealed class ParsedExpressionMemberAccess : ParsedExpressionVariadicFunct
     /// </summary>
     /// <param name="configuration">Underlying configuration.</param>
     /// <param name="foldConstantsWhenPossible">
-    /// Specifies whether or not member access for constant target
+    /// Specifies whether member access for constant target
     /// should be resolved immediately as constant expression. Equal to <b>true</b> by default.
     /// </param>
     public ParsedExpressionMemberAccess(
@@ -44,7 +44,7 @@ public sealed class ParsedExpressionMemberAccess : ParsedExpressionVariadicFunct
     }
 
     /// <summary>
-    /// Specifies whether or not member access for constant target
+    /// Specifies whether member access for constant target
     /// should be resolved immediately as constant expression.
     /// </summary>
     public bool FoldConstantsWhenPossible { get; }

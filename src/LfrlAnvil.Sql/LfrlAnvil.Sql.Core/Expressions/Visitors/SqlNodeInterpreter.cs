@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -1994,7 +1994,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     /// Visits an optional collection of <see cref="SqlCommonTableExpressionNode"/> instances.
     /// </summary>
     /// <param name="commonTableExpressions">Collection of nodes to visit.</param>
-    /// <param name="addRecursiveKeyword">Specifies whether or not any of the common table expressions to visit is recursive.</param>
+    /// <param name="addRecursiveKeyword">Specifies whether any of the common table expressions to visit is recursive.</param>
     protected void VisitOptionalCommonTableExpressionRange(
         Chain<ReadOnlyArray<SqlCommonTableExpressionNode>> commonTableExpressions,
         bool addRecursiveKeyword)
@@ -2156,7 +2156,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     }
 
     /// <summary>
-    /// Specifies whether or not the provided <paramref name="node"/> should be interpreted as a child node.
+    /// Specifies whether the provided <paramref name="node"/> should be interpreted as a child node.
     /// </summary>
     /// <param name="node">Node to check.</param>
     /// <returns><b>true</b> when node should be interpreted as a child node, otherwise <b>false</b>.</returns>
@@ -2695,7 +2695,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         }
 
         /// <summary>
-        /// Checks whether or not this visitor has found at least one complex value assignment.
+        /// Checks whether this visitor has found at least one complex value assignment.
         /// </summary>
         /// <returns><b>true</b> when at least one complex assignment has been found, otherwise <b>false</b>.</returns>
         [Pure]

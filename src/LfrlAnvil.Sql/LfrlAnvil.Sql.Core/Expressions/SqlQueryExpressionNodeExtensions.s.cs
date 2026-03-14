@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -672,7 +672,7 @@ public static class SqlQueryExpressionNodeExtensions
     /// <param name="node">Underlying source query expression that defines this view.</param>
     /// <param name="view">View's name.</param>
     /// <param name="replaceIfExists">
-    /// Specifies whether or not the view should be replaced if it already exists in DB. Equal to <b>false</b> by default.
+    /// Specifies whether the view should be replaced if it already exists in DB. Equal to <b>false</b> by default.
     /// </param>
     /// <returns>New <see cref="SqlCreateViewNode"/> instance.</returns>
     [Pure]

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
     public int Year => Start.Year;
 
     /// <summary>
-    /// Specifies whether or not this year is a leap year.
+    /// Specifies whether this year is a leap year.
     /// </summary>
     public bool IsLeap => DateTime.IsLeapYear( Year );
 
@@ -73,12 +73,12 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
     public Duration Duration => _duration ?? Duration.FromHours( ChronoConstants.HoursPerStandardDay * ChronoConstants.DaysInYear );
 
     /// <summary>
-    /// Checks whether or not the <see cref="TimeZone"/> is UTC.
+    /// Checks whether the <see cref="TimeZone"/> is UTC.
     /// </summary>
     public bool IsUtc => Start.IsUtc;
 
     /// <summary>
-    /// Checks whether or not the <see cref="TimeZone"/> is local.
+    /// Checks whether the <see cref="TimeZone"/> is local.
     /// </summary>
     public bool IsLocal => Start.IsLocal;
 
@@ -301,7 +301,7 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="dateTime"/> belongs to this year.
+    /// Checks whether the provided <paramref name="dateTime"/> belongs to this year.
     /// </summary>
     /// <param name="dateTime">Date time to check.</param>
     /// <returns><b>true</b> when the provided <paramref name="dateTime"/> belongs to this year, otherwise <b>false</b>.</returns>
@@ -314,7 +314,7 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="day"/> belongs to this year.
+    /// Checks whether the provided <paramref name="day"/> belongs to this year.
     /// </summary>
     /// <param name="day">Day to check.</param>
     /// <returns><b>true</b> when the provided <paramref name="day"/> belongs to this year, otherwise <b>false</b>.</returns>
@@ -326,7 +326,7 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="month"/> belongs to this year.
+    /// Checks whether the provided <paramref name="month"/> belongs to this year.
     /// </summary>
     /// <param name="month">Month to check.</param>
     /// <returns><b>true</b> when the provided <paramref name="month"/> belongs to this year, otherwise <b>false</b>.</returns>

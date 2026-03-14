@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ public interface ISqlColumnTypeDefinitionProviderBuilder
     SqlDialect Dialect { get; }
 
     /// <summary>
-    /// Checks whether or not a column type definition for the provided <paramref name="type"/> has been registered.
+    /// Checks whether a column type definition for the provided <paramref name="type"/> has been registered.
     /// </summary>
     /// <param name="type">Type to check.</param>
     /// <returns><b>true</b> when column type definition exists, otherwise <b>false</b>.</returns>

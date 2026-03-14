@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ public abstract class SqlDatabaseVersion<TDatabaseBuilder> : ISqlDatabaseVersion
     /// <param name="value">Identifier of this version.</param>
     /// <param name="description">Optional description of this version.</param>
     /// <param name="isTransactional">
-    /// Specifies whether or not this version's scripts should be contained in a DB transaction. Equal to <b>true</b> by default.
+    /// Specifies whether this version's scripts should be contained in a DB transaction. Equal to <b>true</b> by default.
     /// </param>
     protected SqlDatabaseVersion(Version value, string? description = null, bool isTransactional = true)
     {
@@ -81,7 +81,7 @@ public static class SqlDatabaseVersion
     /// <param name="description">Optional description of this version.</param>
     /// <param name="apply">Delegate that defines this version's changes.</param>
     /// <param name="isTransactional">
-    /// Specifies whether or not this version's scripts should be contained in a DB transaction. Equal to <b>true</b> by default.
+    /// Specifies whether this version's scripts should be contained in a DB transaction. Equal to <b>true</b> by default.
     /// </param>
     /// <typeparam name="TDatabaseBuilder">SQL database builder type.</typeparam>
     /// <returns>New <see cref="SqlDatabaseVersion{TDatabaseBuilder}"/> instance.</returns>
@@ -102,7 +102,7 @@ public static class SqlDatabaseVersion
     /// <param name="value">Identifier of this version.</param>
     /// <param name="apply">Delegate that defines this version's changes.</param>
     /// <param name="isTransactional">
-    /// Specifies whether or not this version's scripts should be contained in a DB transaction. Equal to <b>true</b> by default.
+    /// Specifies whether this version's scripts should be contained in a DB transaction. Equal to <b>true</b> by default.
     /// </param>
     /// <typeparam name="TDatabaseBuilder">SQL database builder type.</typeparam>
     /// <returns>New <see cref="SqlDatabaseVersion{TDatabaseBuilder}"/> instance.</returns>
@@ -123,7 +123,7 @@ public static class SqlDatabaseVersion
     /// <param name="description">Optional description of this version.</param>
     /// <param name="apply">Delegate that defines this version's changes.</param>
     /// <param name="isTransactional">
-    /// Specifies whether or not this version's scripts should be contained in a DB transaction. Equal to <b>true</b> by default.
+    /// Specifies whether this version's scripts should be contained in a DB transaction. Equal to <b>true</b> by default.
     /// </param>
     /// <returns>New <see cref="SqlDatabaseVersion{TDatabaseBuilder}"/> instance.</returns>
     [Pure]
@@ -142,7 +142,7 @@ public static class SqlDatabaseVersion
     /// <param name="value">Identifier of this version.</param>
     /// <param name="apply">Delegate that defines this version's changes.</param>
     /// <param name="isTransactional">
-    /// Specifies whether or not this version's scripts should be contained in a DB transaction. Equal to <b>true</b> by default.
+    /// Specifies whether this version's scripts should be contained in a DB transaction. Equal to <b>true</b> by default.
     /// </param>
     /// <returns>New <see cref="SqlDatabaseVersion{TDatabaseBuilder}"/> instance.</returns>
     [Pure]

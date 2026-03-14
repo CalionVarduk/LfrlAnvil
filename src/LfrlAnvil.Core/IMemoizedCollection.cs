@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ public interface IMemoizedCollection<T> : IReadOnlyCollection<T>
     Lazy<IReadOnlyCollection<T>> Source { get; }
 
     /// <summary>
-    /// Specifies whether or not this collection has been materialized.
+    /// Specifies whether this collection has been materialized.
     /// </summary>
     bool IsMaterialized { get; }
 }

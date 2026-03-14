@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public readonly struct DependencyContainerBuildResult<TContainer>
     }
 
     /// <summary>
-    /// Specifies whether or not this result has a valid <see cref="Container"/>.
+    /// Specifies whether this result has a valid <see cref="Container"/>.
     /// </summary>
     [MemberNotNullWhen( true, nameof( Container ) )]
     public bool IsOk => Container is not null;

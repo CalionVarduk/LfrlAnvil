@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public interface IReadOnlyMultiSet<T> : IReadOnlySet<Pair<T, int>>
     IEqualityComparer<T> Comparer { get; }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="item"/> exists in this set.
+    /// Checks whether the provided <paramref name="item"/> exists in this set.
     /// </summary>
     /// <param name="item">Element to check.</param>
     /// <returns><b>true</b> when the provided <paramref name="item"/> exists, otherwise <b>false</b>.</returns>
@@ -53,7 +53,7 @@ public interface IReadOnlyMultiSet<T> : IReadOnlySet<Pair<T, int>>
     bool Contains(T item);
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="item"/> exists in this set with a minimum number of repetitions.
+    /// Checks whether the provided <paramref name="item"/> exists in this set with a minimum number of repetitions.
     /// </summary>
     /// <param name="item">Element to check.</param>
     /// <param name="multiplicity">Expected minimum number of repetitions.</param>

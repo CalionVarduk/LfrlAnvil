@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public sealed class ParsedExpressionMethodCall : ParsedExpressionVariadicFunctio
     /// </summary>
     /// <param name="configuration">Underlying configuration.</param>
     /// <param name="foldConstantsWhenPossible">
-    /// Specifies whether or not method invocations with all parameters being constant and target being constant
+    /// Specifies whether method invocations with all parameters being constant and target being constant
     /// should be resolved immediately as constant expression. Equal to <b>true</b> by default.
     /// </param>
     public ParsedExpressionMethodCall(
@@ -45,7 +45,7 @@ public sealed class ParsedExpressionMethodCall : ParsedExpressionVariadicFunctio
     }
 
     /// <summary>
-    /// Specifies whether or not method invocations with all parameters being constant and target being constant
+    /// Specifies whether method invocations with all parameters being constant and target being constant
     /// should be resolved immediately as constant expression.
     /// </summary>
     public bool FoldConstantsWhenPossible { get; }

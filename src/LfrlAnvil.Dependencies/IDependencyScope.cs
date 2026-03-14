@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ namespace LfrlAnvil.Dependencies;
 public interface IDependencyScope
 {
     /// <summary>
-    /// Specifies whether or not this scope is a root scope.
+    /// Specifies whether this scope is a root scope.
     /// </summary>
     [MemberNotNullWhen( false, nameof( ParentScope ) )]
     bool IsRoot { get; }
@@ -48,7 +48,7 @@ public interface IDependencyScope
     int Level { get; }
 
     /// <summary>
-    /// Specifies whether or not this scope has been disposed.
+    /// Specifies whether this scope has been disposed.
     /// </summary>
     bool IsDisposed { get; }
 

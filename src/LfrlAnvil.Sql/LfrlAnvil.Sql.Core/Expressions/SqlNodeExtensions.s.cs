@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -1710,7 +1710,7 @@ public static class SqlNodeExtensions
     /// </summary>
     /// <param name="node">Source table.</param>
     /// <param name="ifExists">
-    /// Specifies whether or not the removal attempt should only be made if this table exists in DB. Equal to <b>false</b> by default.
+    /// Specifies whether the removal attempt should only be made if this table exists in DB. Equal to <b>false</b> by default.
     /// </param>
     /// <returns>New <see cref="SqlDropTableNode"/> instance.</returns>
     [Pure]
@@ -1725,7 +1725,7 @@ public static class SqlNodeExtensions
     /// </summary>
     /// <param name="node">Source view.</param>
     /// <param name="ifExists">
-    /// Specifies whether or not the removal attempt should only be made if this view exists in DB. Equal to <b>false</b> by default.
+    /// Specifies whether the removal attempt should only be made if this view exists in DB. Equal to <b>false</b> by default.
     /// </param>
     /// <returns>New <see cref="SqlDropViewNode"/> instance.</returns>
     [Pure]
@@ -1740,7 +1740,7 @@ public static class SqlNodeExtensions
     /// </summary>
     /// <param name="node">Source index.</param>
     /// <param name="ifExists">
-    /// Specifies whether or not the removal attempt should only be made if this index exists in DB. Equal to <b>false</b> by default.
+    /// Specifies whether the removal attempt should only be made if this index exists in DB. Equal to <b>false</b> by default.
     /// </param>
     /// <returns>New <see cref="SqlDropIndexNode"/> instance.</returns>
     [Pure]

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public interface ISqlDefaultObjectNameProvider
     /// </summary>
     /// <param name="table"><see cref="ISqlTableBuilder"/> that the index belongs to.</param>
     /// <param name="columns">Collection of columns that belong to the index.</param>
-    /// <param name="isUnique">Specifies whether or not the index is unique.</param>
+    /// <param name="isUnique">Specifies whether the index is unique.</param>
     /// <returns>Default index constraint name.</returns>
     [Pure]
     string GetForIndex(ISqlTableBuilder table, SqlIndexBuilderColumns<ISqlColumnBuilder> columns, bool isUnique);

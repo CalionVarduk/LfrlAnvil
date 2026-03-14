@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public interface IDependencyBuilder
     IDependencyRangeBuilder RangeBuilder { get; }
 
     /// <summary>
-    /// Specifies whether or not this dependency is included in the related <see cref="RangeBuilder"/>.
+    /// Specifies whether this dependency is included in the related <see cref="RangeBuilder"/>.
     /// </summary>
     bool IsIncludedInRange { get; }
 

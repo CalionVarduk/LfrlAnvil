@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -73,12 +73,12 @@ public readonly struct ZonedMonth : IEquatable<ZonedMonth>, IComparable<ZonedMon
     public Duration Duration => _duration ?? Duration.FromHours( ChronoConstants.HoursPerStandardDay * ChronoConstants.DaysInJanuary );
 
     /// <summary>
-    /// Checks whether or not the <see cref="TimeZone"/> is UTC.
+    /// Checks whether the <see cref="TimeZone"/> is UTC.
     /// </summary>
     public bool IsUtc => Start.IsUtc;
 
     /// <summary>
-    /// Checks whether or not the <see cref="TimeZone"/> is local.
+    /// Checks whether the <see cref="TimeZone"/> is local.
     /// </summary>
     public bool IsLocal => Start.IsLocal;
 
@@ -297,7 +297,7 @@ public readonly struct ZonedMonth : IEquatable<ZonedMonth>, IComparable<ZonedMon
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="dateTime"/> belongs to this month.
+    /// Checks whether the provided <paramref name="dateTime"/> belongs to this month.
     /// </summary>
     /// <param name="dateTime">Date time to check.</param>
     /// <returns><b>true</b> when the provided <paramref name="dateTime"/> belongs to this month, otherwise <b>false</b>.</returns>
@@ -312,7 +312,7 @@ public readonly struct ZonedMonth : IEquatable<ZonedMonth>, IComparable<ZonedMon
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="day"/> belongs to this month.
+    /// Checks whether the provided <paramref name="day"/> belongs to this month.
     /// </summary>
     /// <param name="day">Day to check.</param>
     /// <returns><b>true</b> when the provided <paramref name="day"/> belongs to this month, otherwise <b>false</b>.</returns>

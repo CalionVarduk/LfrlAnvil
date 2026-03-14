@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ namespace LfrlAnvil.Sql.Statements;
 public readonly record struct SqlParameter(string? Name, object? Value)
 {
     /// <summary>
-    /// Specifies whether or not this parameter is positional (does not have a <see cref="Name"/>).
+    /// Specifies whether this parameter is positional (does not have a <see cref="Name"/>).
     /// </summary>
     [MemberNotNullWhen( false, nameof( Name ) )]
     public bool IsPositional => Name is null;

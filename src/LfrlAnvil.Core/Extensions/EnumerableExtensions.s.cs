@@ -1,4 +1,4 @@
-﻿// Copyright 2024-2025 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ public static class EnumerableExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="source"/> contains at least one null element.
+    /// Checks whether the provided <paramref name="source"/> contains at least one null element.
     /// </summary>
     /// <param name="source">Source collection.</param>
     /// <typeparam name="T">Collection element type.</typeparam>
@@ -104,7 +104,7 @@ public static class EnumerableExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="source"/> contains at least one null element.
+    /// Checks whether the provided <paramref name="source"/> contains at least one null element.
     /// </summary>
     /// <param name="source">Source collection.</param>
     /// <typeparam name="T">Collection element type.</typeparam>
@@ -118,7 +118,7 @@ public static class EnumerableExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="source"/> contains at least one null element.
+    /// Checks whether the provided <paramref name="source"/> contains at least one null element.
     /// </summary>
     /// <param name="source">Source collection.</param>
     /// <param name="comparer">Element equality comparer.</param>
@@ -467,7 +467,7 @@ public static class EnumerableExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="source"/> contains duplicated elements,
+    /// Checks whether the provided <paramref name="source"/> contains duplicated elements,
     /// using the <see cref="EqualityComparer{T}.Default"/> equality comparer.
     /// </summary>
     /// <param name="source">Source collection.</param>
@@ -481,7 +481,7 @@ public static class EnumerableExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="source"/> contains duplicated elements.
+    /// Checks whether the provided <paramref name="source"/> contains duplicated elements.
     /// </summary>
     /// <param name="source">Source collection.</param>
     /// <param name="comparer">Comparer to use for element equality.</param>
@@ -573,7 +573,7 @@ public static class EnumerableExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="source"/> is either an instance of <see cref="IReadOnlyCollection{T}"/>
+    /// Checks whether the provided <paramref name="source"/> is either an instance of <see cref="IReadOnlyCollection{T}"/>
     /// or of <see cref="IMemoizedCollection{T}"/> with <see cref="IMemoizedCollection{T}.IsMaterialized"/> set to <b>true</b>.
     /// </summary>
     /// <param name="source">Source collection.</param>
@@ -590,7 +590,7 @@ public static class EnumerableExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="source"/> is an instance of <see cref="IMemoizedCollection{T}"/>.
+    /// Checks whether the provided <paramref name="source"/> is an instance of <see cref="IMemoizedCollection{T}"/>.
     /// </summary>
     /// <param name="source">Source collection.</param>
     /// <typeparam name="T">Collection element type.</typeparam>
@@ -603,7 +603,7 @@ public static class EnumerableExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the two collections are considered to be equal sets,
+    /// Checks whether the two collections are considered to be equal sets,
     /// using the <see cref="EqualityComparer{T}.Default"/> equality comparer.
     /// </summary>
     /// <param name="source">First collection.</param>
@@ -618,7 +618,7 @@ public static class EnumerableExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the two collections are considered to be equal sets.
+    /// Checks whether the two collections are considered to be equal sets.
     /// </summary>
     /// <param name="source">First collection.</param>
     /// <param name="other">Second collection.</param>
@@ -1215,7 +1215,7 @@ public static class EnumerableExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="source"/> elements are ordered
+    /// Checks whether the provided <paramref name="source"/> elements are ordered
     /// by using the <see cref="Comparer{T}.Default"/> comparer.
     /// </summary>
     /// <param name="source">Source collection.</param>
@@ -1229,7 +1229,7 @@ public static class EnumerableExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="source"/> elements are ordered.
+    /// Checks whether the provided <paramref name="source"/> elements are ordered.
     /// </summary>
     /// <param name="source">Source collection.</param>
     /// <param name="comparer">Comparer to use for value comparison.</param>

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,12 +24,12 @@ namespace LfrlAnvil.Functional;
 public interface IErratic
 {
     /// <summary>
-    /// Specifies whether or not this instance contains an error.
+    /// Specifies whether this instance contains an error.
     /// </summary>
     bool HasError { get; }
 
     /// <summary>
-    /// Specifies whether or not this instance contains a value.
+    /// Specifies whether this instance contains a value.
     /// </summary>
     bool IsOk { get; }
 

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public sealed class SqlCommonTableExpressionTraitNode : SqlTraitNode
     public ReadOnlyArray<SqlCommonTableExpressionNode> CommonTableExpressions { get; }
 
     /// <summary>
-    /// Specifies whether or not <see cref="CommonTableExpressions"/> contains at least one <see cref="SqlCommonTableExpressionNode"/>
+    /// Specifies whether <see cref="CommonTableExpressions"/> contains at least one <see cref="SqlCommonTableExpressionNode"/>
     /// that is marked as recursive.
     /// </summary>
     public bool ContainsRecursive

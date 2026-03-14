@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public static class MemberInfoExtensions
     /// </summary>
     /// <param name="member">Member to retrieve an attribute from.</param>
     /// <param name="attributeType">Type of an <see cref="Attribute"/> to search for.</param>
-    /// <param name="inherit">Specifies whether or not to include member's ancestors in the search. Equal to <b>true</b> by default.</param>
+    /// <param name="inherit">Specifies whether to include member's ancestors in the search. Equal to <b>true</b> by default.</param>
     /// <returns>Found attribute's instance or null, if it does not exist.</returns>
     /// <remarks>See <see cref="Attribute.GetCustomAttribute(MemberInfo,Type,Boolean)"/> for more information.</remarks>
     [Pure]
@@ -45,7 +45,7 @@ public static class MemberInfoExtensions
     /// Attempts to retrieve an attribute of the specified type from the given <paramref name="member"/>.
     /// </summary>
     /// <param name="member">Member to retrieve an attribute from.</param>
-    /// <param name="inherit">Specifies whether or not to include member's ancestors in the search. Equal to <b>true</b> by default.</param>
+    /// <param name="inherit">Specifies whether to include member's ancestors in the search. Equal to <b>true</b> by default.</param>
     /// <typeparam name="T">Type of an <see cref="Attribute"/> to search for.</typeparam>
     /// <returns>Found attribute's instance or null, if it does not exist.</returns>
     /// <remarks>See <see cref="Attribute.GetCustomAttribute(MemberInfo,Type,Boolean)"/> for more information.</remarks>
@@ -62,7 +62,7 @@ public static class MemberInfoExtensions
     /// </summary>
     /// <param name="member">Member to retrieve attributes from.</param>
     /// <param name="attributeType">Type of an <see cref="Attribute"/> to search for.</param>
-    /// <param name="inherit">Specifies whether or not to include member's ancestors in the search. Equal to <b>true</b> by default.</param>
+    /// <param name="inherit">Specifies whether to include member's ancestors in the search. Equal to <b>true</b> by default.</param>
     /// <returns>All found attribute's instances or an empty array, if it does not exist.</returns>
     /// <remarks>See <see cref="Attribute.GetCustomAttributes(MemberInfo,Type,Boolean)"/> for more information.</remarks>
     [Pure]
@@ -76,7 +76,7 @@ public static class MemberInfoExtensions
     /// Attempts to retrieve all attributes of the specified type from the given <paramref name="member"/>.
     /// </summary>
     /// <param name="member">Member to retrieve attributes from.</param>
-    /// <param name="inherit">Specifies whether or not to include member's ancestors in the search. Equal to <b>true</b> by default.</param>
+    /// <param name="inherit">Specifies whether to include member's ancestors in the search. Equal to <b>true</b> by default.</param>
     /// <typeparam name="T">Type of an <see cref="Attribute"/> to search for.</typeparam>
     /// <returns>All found attribute's instances or an empty array, if it does not exist.</returns>
     /// <remarks>See <see cref="Attribute.GetCustomAttributes(MemberInfo,Type,Boolean)"/> for more information.</remarks>
@@ -93,7 +93,7 @@ public static class MemberInfoExtensions
     /// </summary>
     /// <param name="member">Member to check.</param>
     /// <param name="attributeType">Type of an <see cref="Attribute"/> to search for.</param>
-    /// <param name="inherit">Specifies whether or not to include member's ancestors in the search. Equal to <b>true</b> by default.</param>
+    /// <param name="inherit">Specifies whether to include member's ancestors in the search. Equal to <b>true</b> by default.</param>
     /// <returns>
     /// <b>true</b> when an attribute of the specified type exists for the given <paramref name="member"/>, otherwise <b>false</b>.
     /// </returns>
@@ -109,7 +109,7 @@ public static class MemberInfoExtensions
     /// Checks if an attribute of the specified type exists for the given <paramref name="member"/>.
     /// </summary>
     /// <param name="member">Member to check.</param>
-    /// <param name="inherit">Specifies whether or not to include member's ancestors in the search. Equal to <b>true</b> by default.</param>
+    /// <param name="inherit">Specifies whether to include member's ancestors in the search. Equal to <b>true</b> by default.</param>
     /// <typeparam name="T">Type of an <see cref="Attribute"/> to search for.</typeparam>
     /// <returns>
     /// <b>true</b> when an attribute of the specified type exists for the given <paramref name="member"/>, otherwise <b>false</b>.

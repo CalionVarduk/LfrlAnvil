@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,13 +33,13 @@ public readonly record struct ReactiveTaskCompletionParams(
 )
 {
     /// <summary>
-    /// Specifies whether or not the invocation ended with an error.
+    /// Specifies whether the invocation ended with an error.
     /// </summary>
     [MemberNotNullWhen( true, nameof( Exception ) )]
     public bool IsFailed => Exception is not null;
 
     /// <summary>
-    /// Specifies whether or not the invocation ended successfully.
+    /// Specifies whether the invocation ended successfully.
     /// </summary>
     public bool IsSuccessful => ! IsFailed && CancellationReason is null;
 }

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ public interface IReadOnlyTwoWayDictionary<T1, T2> : IReadOnlyCollection<Pair<T1
     IEqualityComparer<T2> ReverseComparer { get; }
 
     /// <summary>
-    /// Checks whether or not the provided pair exists.
+    /// Checks whether the provided pair exists.
     /// </summary>
     /// <param name="first">First value.</param>
     /// <param name="second">Second value.</param>

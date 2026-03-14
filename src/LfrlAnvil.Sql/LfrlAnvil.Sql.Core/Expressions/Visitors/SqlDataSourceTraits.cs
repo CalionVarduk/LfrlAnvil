@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ namespace LfrlAnvil.Sql.Expressions.Visitors;
 /// Collection of common table expressions that is the result of parsing of all <see cref="SqlCommonTableExpressionTraitNode"/> instances.
 /// </param>
 /// <param name="ContainsRecursiveCommonTableExpression">
-/// Specifies whether or not any of <see cref="SqlCommonTableExpressionTraitNode"/> instances returned <b>true</b>
+/// Specifies whether any of <see cref="SqlCommonTableExpressionTraitNode"/> instances returned <b>true</b>
 /// for their <see cref="SqlCommonTableExpressionTraitNode.ContainsRecursive"/> property.
 /// </param>
 /// <param name="Distinct"><see cref="SqlDistinctTraitNode"/> instance.</param>

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public sealed class SqlFilterTraitNode : SqlTraitNode
     public SqlConditionNode Filter { get; }
 
     /// <summary>
-    /// Specifies whether or not this trait should be merged with other <see cref="SqlFilterTraitNode"/> instances through
+    /// Specifies whether this trait should be merged with other <see cref="SqlFilterTraitNode"/> instances through
     /// an <see cref="SqlAndConditionNode"/> rather than an <see cref="SqlOrConditionNode"/>.
     /// </summary>
     public bool IsConjunction { get; }

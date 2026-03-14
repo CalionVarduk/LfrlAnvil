@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public interface IDependencyContainerConfigurationBuilder
     Type OptionalDependencyAttributeType { get; }
 
     /// <summary>
-    /// Specifies whether or not captive dependencies should be treated as errors instead of warnings.
+    /// Specifies whether captive dependencies should be treated as errors instead of warnings.
     /// </summary>
     bool TreatCaptiveDependenciesAsErrors { get; }
 

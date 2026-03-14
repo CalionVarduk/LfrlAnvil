@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ public sealed class SqlDropViewNode : SqlNodeBase, ISqlStatementNode
     public SqlRecordSetInfo View { get; }
 
     /// <summary>
-    /// Specifies whether or not the removal attempt should only be made if this view exists in DB.
+    /// Specifies whether the removal attempt should only be made if this view exists in DB.
     /// </summary>
     public bool IfExists { get; }
 

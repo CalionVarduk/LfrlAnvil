@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public sealed class ParsedExpressionUnboundArguments : IReadOnlyCollection<KeyVa
     public int Count => _indexes.Count;
 
     /// <summary>
-    /// Checks whether or not this collection contains an argument with the specified <paramref name="name"/>.
+    /// Checks whether this collection contains an argument with the specified <paramref name="name"/>.
     /// </summary>
     /// <param name="name">Name to check.</param>
     /// <returns><b>true</b> when an argument exists, otherwise <b>false</b>.</returns>

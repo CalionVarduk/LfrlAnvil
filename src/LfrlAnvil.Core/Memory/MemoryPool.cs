@@ -373,13 +373,13 @@ public sealed class MemoryPool<T>
             public int Length { get; }
 
             /// <summary>
-            /// Specifies whether or not the segment to which this node belongs to is active.
+            /// Specifies whether the segment to which this node belongs to is active.
             /// Active segments contain at least one node, which is either fragmented or in use.
             /// </summary>
             public bool IsSegmentActive => (_flags & 1) == 1;
 
             /// <summary>
-            /// Specifies whether or not this node is fragmented.
+            /// Specifies whether this node is fragmented.
             /// </summary>
             public bool IsFragmented => (_flags & 2) == 2;
 

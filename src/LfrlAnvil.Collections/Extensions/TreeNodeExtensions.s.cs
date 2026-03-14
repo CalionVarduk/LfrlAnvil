@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ namespace LfrlAnvil.Collections.Extensions;
 public static class TreeNodeExtensions
 {
     /// <summary>
-    /// Checks whether or not the provided <paramref name="node"/> is a root node.
+    /// Checks whether the provided <paramref name="node"/> is a root node.
     /// </summary>
     /// <param name="node">Node to check.</param>
     /// <typeparam name="T">Value type.</typeparam>
@@ -39,7 +39,7 @@ public static class TreeNodeExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="node"/> is a leaf node.
+    /// Checks whether the provided <paramref name="node"/> is a leaf node.
     /// </summary>
     /// <param name="node">Node to check.</param>
     /// <typeparam name="T">Value type.</typeparam>
@@ -72,7 +72,7 @@ public static class TreeNodeExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="node"/> is a direct child node of the specified <paramref name="parent"/>.
+    /// Checks whether the provided <paramref name="node"/> is a direct child node of the specified <paramref name="parent"/>.
     /// </summary>
     /// <param name="node">Node to check.</param>
     /// <param name="parent">Parent node.</param>
@@ -88,7 +88,7 @@ public static class TreeNodeExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="parent"/> is a parent node of the specified <paramref name="node"/>.
+    /// Checks whether the provided <paramref name="parent"/> is a parent node of the specified <paramref name="node"/>.
     /// </summary>
     /// <param name="parent">Parent node.</param>
     /// <param name="node">Node to check.</param>
@@ -104,7 +104,7 @@ public static class TreeNodeExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="ancestor"/> is an ancestor node of the specified <paramref name="node"/>.
+    /// Checks whether the provided <paramref name="ancestor"/> is an ancestor node of the specified <paramref name="node"/>.
     /// </summary>
     /// <param name="ancestor">Ancestor node.</param>
     /// <param name="node">Node to check.</param>
@@ -120,7 +120,7 @@ public static class TreeNodeExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="node"/> is a descendant node of the specified <paramref name="ancestor"/>.
+    /// Checks whether the provided <paramref name="node"/> is a descendant node of the specified <paramref name="ancestor"/>.
     /// </summary>
     /// <param name="node">Node to check.</param>
     /// <param name="ancestor">Ancestor node.</param>

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ public class ParsedExpressionFunction
     /// </summary>
     /// <param name="lambda">Underlying <see cref="LambdaExpression"/>.</param>
     /// <param name="inlineIfPossible">
-    /// Specifies whether or not the <see cref="Lambda"/> should be inlined if possible. Equal to <b>true</b> by default.
+    /// Specifies whether the <see cref="Lambda"/> should be inlined if possible. Equal to <b>true</b> by default.
     /// </param>
     /// <exception cref="ArgumentException">When <paramref name="lambda"/> return type is equal to <b>void</b>.</exception>
     public ParsedExpressionFunction(LambdaExpression lambda, bool inlineIfPossible = true)
@@ -48,7 +48,7 @@ public class ParsedExpressionFunction
     public LambdaExpression Lambda { get; }
 
     /// <summary>
-    /// Specifies whether or not the <see cref="Lambda"/> will be inlined.
+    /// Specifies whether the <see cref="Lambda"/> will be inlined.
     /// </summary>
     public bool IsInlined { get; }
 

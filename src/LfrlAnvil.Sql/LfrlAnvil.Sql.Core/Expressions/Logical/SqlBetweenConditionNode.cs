@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public sealed class SqlBetweenConditionNode : SqlConditionNode
     public SqlExpressionNode Max { get; }
 
     /// <summary>
-    /// Specifies whether or not this node represents a not between comparison.
+    /// Specifies whether this node represents a not between comparison.
     /// </summary>
     public bool IsNegated { get; }
 }

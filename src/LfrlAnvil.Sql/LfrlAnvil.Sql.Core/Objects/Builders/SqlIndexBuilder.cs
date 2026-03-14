@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public abstract class SqlIndexBuilder : SqlConstraintBuilder, ISqlIndexBuilder
     /// <param name="table">Table that this constraint is attached to.</param>
     /// <param name="name">Object's name.</param>
     /// <param name="columns">Collection of columns that define this index.</param>
-    /// <param name="isUnique">Specifies whether or not this index is unique.</param>
+    /// <param name="isUnique">Specifies whether this index is unique.</param>
     /// <param name="referencedColumns">Collection of columns referenced by this index's <see cref="Columns"/>.</param>
     protected SqlIndexBuilder(
         SqlTableBuilder table,

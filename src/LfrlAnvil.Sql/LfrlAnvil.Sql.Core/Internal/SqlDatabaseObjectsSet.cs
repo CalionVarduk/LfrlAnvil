@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ public readonly struct SqlDatabaseObjectsSet<T>
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="obj"/> exists in this set.
+    /// Checks whether the provided <paramref name="obj"/> exists in this set.
     /// </summary>
     /// <param name="obj">Object to check.</param>
     /// <returns><b>true</b> when object exists, otherwise <b>false</b>.</returns>

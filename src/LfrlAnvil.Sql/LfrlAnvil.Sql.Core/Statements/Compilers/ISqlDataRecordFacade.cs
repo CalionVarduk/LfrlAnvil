@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ public interface ISqlDataRecordFacade<out TDataRecord>
         where T : notnull;
 
     /// <summary>
-    /// Checks whether or not a value associated with the provided field name is null in the <see cref="Record"/>.
+    /// Checks whether a value associated with the provided field name is null in the <see cref="Record"/>.
     /// </summary>
     /// <param name="name">Field name.</param>
     /// <returns><b>true</b> when value is null, otherwise <b>false</b>.</returns>

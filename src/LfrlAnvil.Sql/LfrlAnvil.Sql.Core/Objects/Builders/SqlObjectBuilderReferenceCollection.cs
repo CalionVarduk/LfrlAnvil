@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public readonly struct SqlObjectBuilderReferenceCollection<T> : IReadOnlyCollect
     public int Count => _object.ReferencedTargets?.Count ?? 0;
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="source"/> exists in this collection.
+    /// Checks whether the provided <paramref name="source"/> exists in this collection.
     /// </summary>
     /// <param name="source">Source to check.</param>
     /// <returns><b>true</b> when <paramref name="source"/> exists, otherwise <b>false</b>.</returns>

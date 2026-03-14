@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ public interface ISqlDatabaseChangeTracker
     SqlDatabaseCreateMode Mode { get; }
 
     /// <summary>
-    /// Specifies whether or not this change tracker is attached.
+    /// Specifies whether this change tracker is attached.
     /// </summary>
     /// <remarks>Change tracker will ignore all changes when <see cref="IsAttached"/> is equal to <b>false</b>.</remarks>
     bool IsAttached { get; }
@@ -94,7 +94,7 @@ public interface ISqlDatabaseChangeTracker
     SqlObjectExistenceState GetExistenceState(ISqlObjectBuilder target);
 
     /// <summary>
-    /// Checks whether or not a change for the given <paramref name="target"/>
+    /// Checks whether a change for the given <paramref name="target"/>
     /// and its property's <paramref name="descriptor"/> is currently pending.
     /// </summary>
     /// <param name="target">Object to check.</param>

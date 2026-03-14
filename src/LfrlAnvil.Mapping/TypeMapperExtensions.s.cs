@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -178,7 +178,7 @@ public static class TypeMapperExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the mapping definition from <typeparamref name="TSource"/> to <typeparamref name="TDestination"/> exists.
+    /// Checks whether the mapping definition from <typeparamref name="TSource"/> to <typeparamref name="TDestination"/> exists.
     /// </summary>
     /// <param name="mapper">Type mapper.</param>
     /// <typeparam name="TSource">Source type.</typeparam>

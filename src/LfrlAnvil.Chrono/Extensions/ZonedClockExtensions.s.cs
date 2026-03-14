@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public static class ZonedClockExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="dateTime"/> is in the past
+    /// Checks whether the provided <paramref name="dateTime"/> is in the past
     /// relative to the given <paramref name="clock"/>.
     /// </summary>
     /// <param name="clock">Source clock.</param>
@@ -72,7 +72,7 @@ public static class ZonedClockExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="dateTime"/> is in the present
+    /// Checks whether the provided <paramref name="dateTime"/> is in the present
     /// relative to the given <paramref name="clock"/>.
     /// </summary>
     /// <param name="clock">Source clock.</param>
@@ -86,7 +86,7 @@ public static class ZonedClockExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the provided <paramref name="dateTime"/> is in the future
+    /// Checks whether the provided <paramref name="dateTime"/> is in the future
     /// relative to the given <paramref name="clock"/>.
     /// </summary>
     /// <param name="clock">Source clock.</param>
@@ -100,7 +100,7 @@ public static class ZonedClockExtensions
     }
 
     /// <summary>
-    /// Checks whether or not the given <paramref name="clock"/> is frozen.
+    /// Checks whether the given <paramref name="clock"/> is frozen.
     /// </summary>
     /// <param name="clock">Clock to check.</param>
     /// <returns><b>true</b> when <paramref name="clock"/> is frozen, otherwise <b>false</b>.</returns>

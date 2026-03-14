@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public sealed class SqlInConditionNode : SqlConditionNode
     public ReadOnlyArray<SqlExpressionNode> Expressions { get; }
 
     /// <summary>
-    /// Specifies whether or not this node represents a check if <see cref="Value"/> does not exist in a set of values.
+    /// Specifies whether this node represents a check if <see cref="Value"/> does not exist in a set of values.
     /// </summary>
     public bool IsNegated { get; }
 }
