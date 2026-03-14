@@ -35,15 +35,6 @@ using LfrlAnvil.MessageBroker.Server.Internal;
 
 namespace LfrlAnvil.MessageBroker.Server;
 
-// TODO: NEXT
-// x add to do comments to define what tests to add...
-// x then, write tests
-// x then, add client reconnect
-// x then, add tests for that
-// - then, add client delete method
-// - then, add tests for that
-// - done?
-
 /// <summary>
 /// Represents a message broker server.
 /// </summary>
@@ -597,17 +588,6 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
             }
 
             EmitErrors( ref exceptions, traceId );
-
-            // TODO: NEXT STEPS
-            // - add a to do entry for not keeping disconnected client's data in memory, but rather storing it on the disk
-            //   - requires a swap of queue processor task which will open a file stream with some sort of buffering
-            //   - on client reconnect, load everything from the disk to memory
-            //   - I _might_ implement it at some point in the near future...
-            // - add a to do entry for more efficient stream message store storage, on the disk
-            //   - requires some sort of LRU in-memory cache with the ability to load data from the disk, random access
-            //   - would require multiple file blocks of const size, and each message would need to know
-            //   - which file contains it and at what offset does it start
-            //   - chances for me implementing it are close to zero - maybe when I'm done playing around with actual apps
 
             foreach ( var connector in connectors )
                 connector.OnServerDisposing( traceId );

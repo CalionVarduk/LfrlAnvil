@@ -568,6 +568,9 @@ public sealed class MessageBrokerChannelListenerBinding
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal bool CanConsumeUnackedOrExpiredDeadLetter()
     {
+        // TODO
+        // for expired dead letter, either check if listener is active, or allow to discard expired dead letter from inactive listeners
+        // for now, the counter blocks it
         var current = _prefetchCounter.Value;
         return current >= 0 || current == DisposedCounterValue;
     }

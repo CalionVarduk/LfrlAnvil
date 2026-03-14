@@ -130,13 +130,6 @@ internal struct QueueProcessor
         _continuation.Reset();
     }
 
-    // TODO
-    // initial non-ephemeral inactive queue implementation could simply hold everything in memory just like it is doing now
-    // just don't have an active queue processor
-    // and make sure that listener/queue state doesn't block stream processor from pushing messages to the queue
-    //
-    // later, this can be improved to work with an alternative queue processor which immediately pushes messages to an append-only log file
-    // so nothing is stored in memory for disconnected clients
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static async ValueTask RunCore(MessageBrokerQueue queue)
     {
@@ -283,9 +276,6 @@ internal struct QueueProcessor
                         continue;
                     }
 
-                    // TODO
-                    // when peeking next queue message to process
-                    // acquire listener lock and get all of its relevant options immediately
                     if ( messageType == QueueMessageStore.MessageType.Pending
                         && ! message.Listener.FilterMessage( in streamMessage, traceId ) )
                     {

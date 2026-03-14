@@ -1,52 +1,35 @@
 # TODO
 
-|       Project       |              Title               |                        Details                         |                   Requirements                    |
-|:-------------------:|:--------------------------------:|:------------------------------------------------------:|:-------------------------------------------------:|
-|   MessageBroker.*   |            Permanence            |           [link](#messagebroker-permanence)            |                                                   |
-|   MessageBroker.*   |      Request-Reply Channel       |      [link](#messagebroker-request-reply-channel)      |         [link](#messagebroker-permanence)         |
-|   MessageBroker.*   |        Server Maintenance        |       [link](#messagebroker-server-maintenance)        |                                                   |
-|    Dependencies     |     Generic dependency types     |     [link](#dependencies-generic-dependency-types)     |                         -                         |
-|   Dependencies.*    |  Dependencies.ServiceProviders   |            [link](#dependencies-aspnetcore)            |  [link](#dependencies-generic-dependency-types)   |
-|    Computable.*     |       Math/Physics structs       |        [link](#computable-mathphysics-structs)         |                         -                         |
-|        Sql.*        |     Add support for triggers     |               [link](#sqlcore-triggers)                |                         -                         |
-|          -          |             Terminal             |                   [link](#terminal)                    |                         -                         |
-| Computable.Automata |     Add Context-free grammar     |                           -                            |                         -                         |
-|        Sql.*        |    Add Microsoft SQL support     |                           -                            |                         -                         |
-|     Collections     |           Add SkipList           |                           -                            |                         -                         |
-|   Reactive.State    | Async validator & change tracker | [link](#reactivestate-async-validator--change-tracker) |                         -                         |
-|        Sql.*        |         DbBatch support          |            [link](#sqlcore-dbbatch-support)            |                         -                         |
-|      Sql.Core       |          Add JSON nodes          |            [link](#sqlcore-add-json-nodes)             |                         -                         |
+|        Project         |              Title               |                        Details                         |                  Requirements                  |
+|:----------------------:|:--------------------------------:|:------------------------------------------------------:|:----------------------------------------------:|
+|          Core          |   Add async reader-writer lock   |                           -                            |                       -                        |
+|         Sql.*          |           Refinements            |                [link](#sql-refinements)                |                       -                        |
+|       Reactive.*       |           Refinements            |             [link](#reactive-refinements)              |                       -                        |
+|    MessageBroker.*     |           Refinements            |           [link](#messagebroker-refinements)           |                       -                        |
+|      Dependencies      |           Refinements            |           [link](#dependencies-refinements)            |                       -                        |
+|      Dependencies      |     Generic dependency types     |     [link](#dependencies-generic-dependency-types)     |                       -                        |
+| Computable.Expressions |           Refinements            |       [link](#computableexpressions-refinements)       |                       -                        |
+|     Dependencies.*     |  Dependencies.ServiceProviders   |            [link](#dependencies-aspnetcore)            | [link](#dependencies-generic-dependency-types) |
+|      Computable.*      |       Math/Physics structs       |        [link](#computable-mathphysics-structs)         |                       -                        |
+|         Sql.*          |     Add support for triggers     |               [link](#sqlcore-triggers)                |                       -                        |
+|           -            |             Terminal             |                   [link](#terminal)                    |                       -                        |
+|  Computable.Automata   |     Add Context-free grammar     |                           -                            |                       -                        |
+|         Sql.*          |    Add Microsoft SQL support     |                           -                            |                       -                        |
+|      Collections       |           Add SkipList           |                           -                            |                       -                        |
+|     Reactive.State     | Async validator & change tracker | [link](#reactivestate-async-validator--change-tracker) |                       -                        |
+|         Sql.*          |         DbBatch support          |            [link](#sqlcore-dbbatch-support)            |                       -                        |
+|        Sql.Core        |          Add JSON nodes          |            [link](#sqlcore-add-json-nodes)             |                       -                        |
 
 ### Scribbles:
-Sql:
-
-- source generators for queries/statements?
-- for parameter binding too, maybe?
-- IncludedColumns for IXs? simple blocking link to SqlColumnBuilder (low priority)
-    - from implemented dialects only postgresql supports this
-
-MessageBroker:
-
-- add some basic memory pool tracking & possibility to trim excess
-
-Reactive:
-
-- scheduler requires DelayValueTaskSource usage, with async MRE
-    - also, add task container pooling
-    - task scheduler based on timer may also require changes
-    - maybe use sth akin to worker task pool, to make it fully async?
-      - main loop delegates tasks to workers pooled on-demand, notified via manual value task resets
 
 Core:
 
-- add async reader/writer lock
-
-Computable.Expressions:
-
-- add block expressions
-- they can have their own local variables and delegates (and macros? or should macros be global?)
-- starts with { and ends with }
-- returns last statement
+- add GetMaxNameLength<TEnum> static method
+- could add expression extensions for generating a lambda from a collection of members and a target
+  - would have to be null-aware
+- migrate to dotnet10 once most refinements are implemented
+  - swap to System.Threading.Lock instead of ExclusiveLock
+  - use directory.packages.props
 
 ### Terminal
 
@@ -56,86 +39,174 @@ project idea:
 - write colored fore/back-ground (with temp IDisposable swapper)
 - write table
 - prompt, switch etc. for user interaction
+- may add some sort of terminal script runner?
+  - handle output
+  - handle args
+  - handle exit code
 
-### MessageBroker: Permanence
+### Sql: Refinements
 
-- Clients, channels & subscribers can be configured as permanent
-    - or, more like they can be configured as transient, false by default
-- uses sqlite under the hood (no other option, for now)
-- Permanent subscribers:
-    - preserve id
-    - on-dispose, any unsent messages are persisted in db
-    - on-dispose, any un-acked messages are persisted in db before unsent, with re-delivery count increased (if allowed)
-    - on-dispose, dead-letter are persisted in db
-    - subscriber can configure max in-memory message queue size (min 2?)
-        - if that size is exceeded, then all following messages will be persisted in db immediately
-        - this will lower memory usage but will negatively impact performance
-        - when half(?) of entries get dequeued, then db-persisted entries will be moved to memory (with respect to max size)
-    - possibility to configure TTL for dead-letter
-    - on-reactivate, data should be loaded from db
-- Permanent channels:
-    - preserve id
-    - on-dispose, any non-propagated messages to subscribers are persisted in db
-        - should messages published by clients that specify this channel as non-permanent be persisted? I'm leaning towards: no, they should
-          not
-    - on-dispose, all info about permanent subscribers should be persisted in db
-    - similar to subscribers, configurable max in-memory queue size
-    - on-reactivate, subscribers & data should be loaded from db
-    - messages pushed to non-active permanent subscribers should be stored in their db (with some form of batching)
-    - large object temp files need to be handled correctly
-- Permanent clients:
-    - preserve id
-- channels need to track their permanence with relation to all linked clients & subscribers
-    - different clients may specify different permanence for the same channel
-    - if at least one client specifies the channel as permanent, then it stays permanent
-    - if at least one subscriber is permanent, then it also stays permanent
-- non-permanent client can only create non-permanent channel
-- non-permanent client can be linked to existing permanent channel
-- non-permanent client can only create non-permanent subscriber
-- non-permanent client can detach from channel
-    - may cause the channel to be deleted when no other client or subscriber is linked to it
-- permanent client can create any channel
-- permanent client can make existing non-permanent channel permanent
-- permanent client can detach from channel
-    - channel will be completely removed only when all permanent clients linked to it detach with that flag enabled
-    - also, all subscribers must be deleted as well
-- permanent client can create any subscriber
-- any client can explicitly detach from any channel
-    - severs the link between the client and the channel
-    - if channel is no longer linked to any other channel & subscriber, then it will be removed
-    - if channel is linked to clients that only specify it as non-permanent, then it will become non-permanent, if it wasn't already (all
-      subscribers must also be non-permanent)
-- any client can explicitly delete any subscriber
-- permanent clients can create permanent subscribers to non-permanent channels
-    - this will convert the channel to permanent
-- reactivating permanent client as non-permanent will make it non-permanent
-    - this will also modify all channel links and subscribers related to that client to non-permanent
-    - however, all persisted data will be processed as if permanent (until the connection is dropped, then data will also be dropped)
+- Add possibility do create/drop sequences, no alter
+  - should be convertible to expressions, e.g. for default column values
+- Add support for optional WHERE clause in upsert node
+  - sqlite and postgresql have the same syntax:
+    - UPDATE SET ..., ... WHERE [expr]
+  - mysql doesn't support this
+    - add options to interpreter: throw, ignore or add-anyway
+- check a parameter binder options issue when using From with expression which returns null
+- add WHERE and HAVING template nodes
+  - allow to prepare a query/statement sql template
+  - which can be easily replaced with an actual sql
+  - add extension methods for sql executors to replace templates?
+  - or maybe add methods to interpreters that return an sql template
+    - not as string but as an object which contains sql string template
+    - and a collection of placeholder nodes
+- add parameterized statement executor
+  - simple struct with generic parameter binder and sql string
+  - also has ExecuteAsync method which accepts a db command and parameters
+  - extension methods:
+    - applies a collection of parameters
+- add parameterized sync and async query reader executor
+  - simple struct with generic parameter binder and generic sync/async query reader executor
+  - also has ExecuteAsync method which accepts a db command, parameters and reader options
+  - extension methods:
+    - Execute[Single/First]Async: reads zero or one row
+- add parameter binder/query reader factory extension methods that create for a single Value<T>
+  - parameter binder accepts an optional context and parameter name
+  - query reader accepts a column name
+- add extension methods for sql column node:
+  - AssignFromParameter: creates assignment node, accepts optional parameter name
+  - IsEqualToParameter: creates conditional node, accepts optional parameter name
+- add extension methods for table node:
+  - create parameterized insert statement
+    - inserts a row from parameters using column names
+    - optional filter delegate, which can exclude columns
+    - optional parameter settings for mapping
+  - create parameterized delete statement
+    - deletes a row by PK parameters
+    - optional parameter settings for mapping
+  - create parameterized update statement
+    - updates a row by PK parameters with non-PK columns being updated from parameters
+    - optional filter delegate, which can exclude assignments
+    - optional parameter settings for mapping
+  - create parameterized upsert statement
+    - upserts a row from parameters using column names
+    - optional filter delegates, which can exclude insert columns and/or update assignments
+    - optional parameter settings for mapping
+  - create temp table
+    - copies table's schema
+    - requires explicit name
+    - optional filter delegate, which can exclude columns
+    - optional setting if PK should be copied or ignored
 
-### MessageBroker: Request-Reply Channel
+Low priority/probably won't do:
+- source generators for parameter bindings and queries/statements
+- IncludedColumns for IXs
+  - for now, only postgresql can use those
+  - requires a blocking collection of referenced columns
 
-- Add support
-- can have multiple subscribers, which all must respond
-- cannot be made permanent
-- its subscribers also cannot be permanent
-- WON'T DO
-    - can be setup manually with correct meta channels
+### Reactive: Refinements
 
-### MessageBroker: Server Maintenance
+- use ValueTaskDelaySource in ReactiveTimer
+- refactor schedulers to use ValueTaskDelaySource
+  - also, their disposal should wait for disposal of all currently running tasks
+  - with some timeout
+  - add task container pooling?
+  - add worker task pool, for full async and efficient memory usage?
 
-- allow the server to disconnect clients (already implemented)
-- send messages
-- delete publishers
-- delete listeners
-- deleting sends a notification request to the relevant client and doesn't wait for a response
-    - it's on the client to handle this correctly
-    - however, try to make it so that any 'racing' due to async doesn't cause the client to be auto-disposed
-    - e.g. server drops channel
-    - at the same time, client sends msg through that channel
-    - server discards msg, since client is no longer linked to that channel
-        - this should not drop server-client connection
-        - server should simply nack msg sent by client
-- memory pool usage, access to internal queues etc., statistics and clean-up
+Might do:
+- extension methods for converting between event sources and async enumerables
+
+### Computable.Expressions: Refinements
+
+- Add block expressions, with their own local variable scopes, starts with {, ends with }
+  - last statement is the result
+  - macros stay global
+- Add enum support, maybe?
+  - constants can be registered manually
+  - maybe an extension method which registers specific enum-related helpers?
+    - register all members as [EnumName]:[MemberName] constants
+    - register [EnumName]:Contains, [EnumName]:ContainsName
+    - register eq/cmp operators
+    - for flag enums, register binary operators and [EnumName]:HasAnyFlag and [EnumName]:HasAllFlags
+
+### Dependencies: Refinements
+
+- consider adding some sort of Decorate method/extension
+- add scope factory
+- async scope disposal/support for IAsyncDisposable
+  - scope will implement both IDisposable and IAsyncDisposable
+  - default should be async usage
+  - when registering dependency, async disposal delegate may be provided
+- better disposable scope instances tracking
+  - may have to track disposables in a hashset as well, for by-ref comparison
+  - disposal should still happen in reverse order, based on first resolution
+  - e.g. register Foo as disposable implementor, IBar as dependency using Foo
+    - and IQux as dependency using factory method which resolves IBar
+- hosted services registration?
+- options registration?
+
+### MessageBroker: Refinements
+
+- Add possibility to change publisher's stream and listener's queue during rebinding
+  - include client-defined flag which states if this is desired or not
+  - publishers are straightforward
+  - listeners will need a collection of queue-binding objects
+    - in order to not lose any messages
+    - queues and their messages will be linked to queue-bindings
+    - queue-bindings will store a copy of listener settings
+      - may either be static or be updated on every listener rebind
+      - NOTE: listeners may be refactored to no longer use interlocked counters
+        - and just use a lock for simplicity
+        - also, currently, expired dead letter for inactive listeners
+        - will cause the queue processor to essentially spin-wait, so fix that too
+    - queue-bindings will need to track how many messages reference them
+    - and get disposed automatically when the counter reaches 0
+    - message notifications will need an additional queue-id in their header
+      - important for ack/nack
+- Replace server-side public getters using lock with a single
+  - property/method which returns all values using a single lock
+  - this might further be converted into stats fetcher/maintenance public surface
+- Expose some public methods for fetching memory usage stats etc.
+  - should allow to trim unused memory
+- Expose better message querying for streams and queues
+  - could be useful for some sort of metrics/management app
+  - paging, maybe? or expect a buffer and starting position?
+- Allow server to send messages
+  - stream class would have to expose a public method, with SenderId = 0
+  - SenderId = 0 would have to be supported everywhere, including storage
+  - include possibility to route messages only to chosen client(s)
+    - along with the message, provide channel ref if not routing
+    - otherwise, provide a collection of listener bindings
+      - they must all be linked to the same channel
+    - a special method with a single listener might be added for easier routing to a single client
+
+Low priority/probably won't do:
+- Storage could be more dynamic, not just invoked on server dispose
+  - would improve resilience against unexpected errors, power outages etc.
+- in-memory queue messages could have an upper bound
+  - exceeding that limit would cause further messages to be stored on the disk
+  - append-only log files could be used, probably
+- in-memory stream messages could have an upper bound
+  - they might have to be remade into some sort of LRU cache with random access
+  - upper limit might either be the number of messages or total size of cached messages
+  - if message data does not exist in-memory, then load it from the disk
+  - messages would have to be stored in multiple files, fixed size
+    - so that none of them becomes too large
+  - each storeKey would have to always deterministically resolve to the same file
+    - may require some additional metadata file which stores message positions in a file
+    - entries in that file would have to be of fixed size
+    - so that only one such file can exist, and position for each storeKey is easily computable
+    - might add a separate LRU cache for message metadata which can store more entries
+      - each entry would be pretty small, so a larger cache should be fine
+      - this would allow to somewhat optimize message metadata access
+- inactive clients shouldn't store their queue data in-memory
+  - requires some sort of swap of underlying queue tasks during disconnect/reconnect
+  - may require async lock usage for the swap
+- request-reply channels:
+  - may have 0 or more listeners
+  - all listeners will have to respond for the requestor to continue, with timeouts
+  - always ephemeral
 
 ### Dependencies: Generic dependency types
 

@@ -688,13 +688,6 @@ public sealed class MessageBrokerQueue
         {
             if ( keepAlive )
             {
-                // TODO
-                // what if storage handling were to be added? there should be no overlap with server disposal/client delete
-                // so should be safe...? as long as queue processor is fully deactivated
-                // but this is another problem to solve: queue's message store must be swapped from in-memory to on-disk
-                // in one lock, also must make sure that the order of messages is preserved during the swap
-                // so the swap might have to happen inside storage async mutex lock?
-
                 if ( dispose )
                 {
                     using ( Client.AcquireLock() )
