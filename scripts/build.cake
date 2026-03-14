@@ -1,5 +1,4 @@
 #tool "dotnet:?package=GitVersion.Tool&version=5.12.0"
-#tool "nuget:?package=NuGet.CommandLine&version=5.9.1"
 
 #load "projects.cake"
 
@@ -176,13 +175,13 @@ Task("Push")
     var packages = GetFiles(System.IO.Path.Combine(nugetDir, "*.nupkg"));
     foreach (var package in packages)
     {
-        var settings = new NuGetPushSettings
+        var settings = new DotNetNuGetPushSettings
         {
             Source = nugetSource,
             ApiKey = nugetApiKey,
             SkipDuplicate = true
         };
-        NuGetPush(package.FullPath, settings);
+        DotNetNuGetPush(package.FullPath, settings);
     }
 });
 

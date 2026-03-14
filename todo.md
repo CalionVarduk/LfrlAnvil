@@ -24,7 +24,6 @@
 
 Core:
 
-- add GetMaxNameLength<TEnum> static method
 - could add expression extensions for generating a lambda from a collection of members and a target
   - would have to be null-aware
 - migrate to dotnet10 once most refinements are implemented

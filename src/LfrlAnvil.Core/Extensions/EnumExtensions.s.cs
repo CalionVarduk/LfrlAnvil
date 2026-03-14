@@ -36,4 +36,25 @@ public static class EnumExtensions
     {
         return new Bitmask<T>( value );
     }
+
+    /// <summary>
+    /// Returns the length of the longest enum member name.
+    /// </summary>
+    /// <typeparam name="T">Enum type.</typeparam>
+    /// <returns>Length of the longest enum member name.</returns>
+    [Pure]
+    public static int GetMaxNameLength<T>()
+        where T : struct, Enum
+    {
+        var names = Enum.GetNames<T>();
+        var result = 0;
+
+        foreach ( var n in names )
+        {
+            if ( n.Length > result )
+                result = n.Length;
+        }
+
+        return result;
+    }
 }
