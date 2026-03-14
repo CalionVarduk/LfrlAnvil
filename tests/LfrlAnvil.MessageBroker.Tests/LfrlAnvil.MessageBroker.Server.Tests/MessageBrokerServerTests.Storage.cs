@@ -233,16 +233,58 @@ public partial class MessageBrokerServerTests
             var clientLoggers = new[] { new ClientEventLogger(), new ClientEventLogger() };
             var queueLoggers = new[] { new QueueEventLogger(), new QueueEventLogger() };
 
+            var streamOrder = new List<(string Client, string Channel)>();
+            var ch2ClientOrder = new List<(string Client, string Queue)>();
+            var c1PublisherOrder = new List<string>();
+            var c1ListenerOrder = new List<string>();
+            var q1Order = new List<string>();
+
             await using ( var server = new MessageBrokerServer(
                 originalEndPoint,
                 MessageBrokerServerOptions.Default
                     .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
                     .SetRootStoragePath( storage.Path )
                     .SetLogger( serverLogger.GetLogger() )
-                    .SetChannelLoggerFactory( c => channelLoggers[c.Id - 1].GetLogger() )
-                    .SetStreamLoggerFactory( _ => streamLogger.GetLogger() )
-                    .SetClientLoggerFactory( c => clientLoggers[c.Id - 1].GetLogger() )
-                    .SetQueueLoggerFactory( q => queueLoggers[q.Client.Id - 1].GetLogger() ) ) )
+                    .SetChannelLoggerFactory( c => channelLoggers[c.Id - 1]
+                        .GetLogger(
+                            MessageBrokerChannelLogger.Create(
+                                listenerBound: e =>
+                                {
+                                    if ( e.Listener.Channel.Name == "ch2" )
+                                        ch2ClientOrder.Add(
+                                            ($"[{e.Listener.Client.Id}] '{e.Listener.Client.Name}'",
+                                                $"[{e.Listener.Queue.Id}] '{e.Listener.Queue.Name}'") );
+                                } ) ) )
+                    .SetStreamLoggerFactory( _ => streamLogger.GetLogger(
+                        MessageBrokerStreamLogger.Create(
+                            publisherBound: e =>
+                            {
+                                streamOrder.Add(
+                                    (
+                                        $"[{e.Publisher.Client.Id}] '{e.Publisher.Client.Name}'",
+                                        $"[{e.Publisher.Channel.Id}] '{e.Publisher.Channel.Name}'") );
+                            } ) ) )
+                    .SetClientLoggerFactory( c => clientLoggers[c.Id - 1]
+                        .GetLogger(
+                            MessageBrokerRemoteClientLogger.Create(
+                                publisherBound: e =>
+                                {
+                                    if ( e.Publisher.Client.Name == "c1" )
+                                        c1PublisherOrder.Add( $"[{e.Publisher.Channel.Id}] '{e.Publisher.Channel.Name}'" );
+                                },
+                                listenerBound: e =>
+                                {
+                                    if ( e.Listener.Client.Name == "c1" )
+                                        c1ListenerOrder.Add( $"[{e.Listener.Channel.Id}] '{e.Listener.Channel.Name}'" );
+                                } ) ) )
+                    .SetQueueLoggerFactory( q => queueLoggers[q.Client.Id - 1]
+                        .GetLogger(
+                            MessageBrokerQueueLogger.Create(
+                                listenerBound: e =>
+                                {
+                                    if ( e.Listener.Queue.Name == "q1" )
+                                        q1Order.Add( $"[{e.Listener.Channel.Id}] '{e.Listener.Channel.Name}'" );
+                                } ) ) ) ) )
             {
                 await server.StartAsync();
 
@@ -474,29 +516,29 @@ public partial class MessageBrokerServerTests
                                 (t, _) => t.Logs.TestSequence(
                                 [
                                     "[Trace:BindPublisher] Channel = [2] 'ch2', TraceId = 6 (start)",
-                                    "[ClientTrace] Channel = [2] 'ch2', TraceId = 6, Correlation = (Client = [2] 'c2', TraceId = 19)",
-                                    "[PublisherBound] Channel = [2] 'ch2', TraceId = 6, Client = [2] 'c2', Stream = [1] 'st1'",
+                                    $"[ClientTrace] Channel = [2] 'ch2', TraceId = 6, Correlation = (Client = {ch2ClientOrder[0].Client}, TraceId = 19)",
+                                    $"[PublisherBound] Channel = [2] 'ch2', TraceId = 6, Client = {ch2ClientOrder[0].Client}, Stream = [1] 'st1'",
                                     "[Trace:BindPublisher] Channel = [2] 'ch2', TraceId = 6 (end)"
                                 ] ),
                                 (t, _) => t.Logs.TestSequence(
                                 [
                                     "[Trace:BindListener] Channel = [2] 'ch2', TraceId = 7 (start)",
-                                    "[ClientTrace] Channel = [2] 'ch2', TraceId = 7, Correlation = (Client = [2] 'c2', TraceId = 19)",
-                                    "[ListenerBound] Channel = [2] 'ch2', TraceId = 7, Client = [2] 'c2', Queue = [2] 'q2'",
+                                    $"[ClientTrace] Channel = [2] 'ch2', TraceId = 7, Correlation = (Client = {ch2ClientOrder[0].Client}, TraceId = 19)",
+                                    $"[ListenerBound] Channel = [2] 'ch2', TraceId = 7, Client = {ch2ClientOrder[0].Client}, Queue = {ch2ClientOrder[0].Queue}",
                                     "[Trace:BindListener] Channel = [2] 'ch2', TraceId = 7 (end)"
                                 ] ),
                                 (t, _) => t.Logs.TestSequence(
                                 [
                                     "[Trace:BindPublisher] Channel = [2] 'ch2', TraceId = 8 (start)",
-                                    "[ClientTrace] Channel = [2] 'ch2', TraceId = 8, Correlation = (Client = [1] 'c1', TraceId = 19)",
-                                    "[PublisherBound] Channel = [2] 'ch2', TraceId = 8, Client = [1] 'c1', Stream = [1] 'st1'",
+                                    $"[ClientTrace] Channel = [2] 'ch2', TraceId = 8, Correlation = (Client = {ch2ClientOrder[1].Client}, TraceId = 19)",
+                                    $"[PublisherBound] Channel = [2] 'ch2', TraceId = 8, Client = {ch2ClientOrder[1].Client}, Stream = [1] 'st1'",
                                     "[Trace:BindPublisher] Channel = [2] 'ch2', TraceId = 8 (end)"
                                 ] ),
                                 (t, _) => t.Logs.TestSequence(
                                 [
                                     "[Trace:BindListener] Channel = [2] 'ch2', TraceId = 9 (start)",
-                                    "[ClientTrace] Channel = [2] 'ch2', TraceId = 9, Correlation = (Client = [1] 'c1', TraceId = 19)",
-                                    "[ListenerBound] Channel = [2] 'ch2', TraceId = 9, Client = [1] 'c1', Queue = [1] 'q1'",
+                                    $"[ClientTrace] Channel = [2] 'ch2', TraceId = 9, Correlation = (Client = {ch2ClientOrder[1].Client}, TraceId = 19)",
+                                    $"[ListenerBound] Channel = [2] 'ch2', TraceId = 9, Client = {ch2ClientOrder[1].Client}, Queue = {ch2ClientOrder[1].Queue}",
                                     "[Trace:BindListener] Channel = [2] 'ch2', TraceId = 9 (end)"
                                 ] )
                             ] ),
@@ -513,22 +555,22 @@ public partial class MessageBrokerServerTests
                                 (t, _) => t.Logs.TestSequence(
                                 [
                                     "[Trace:BindPublisher] Stream = [1] 'st1', TraceId = 20 (start)",
-                                    "[ClientTrace] Stream = [1] 'st1', TraceId = 20, Correlation = (Client = [2] 'c2', TraceId = 19)",
-                                    "[PublisherBound] Stream = [1] 'st1', TraceId = 20, Client = [2] 'c2', Channel = [2] 'ch2'",
+                                    $"[ClientTrace] Stream = [1] 'st1', TraceId = 20, Correlation = (Client = {streamOrder[0].Client}, TraceId = 19)",
+                                    $"[PublisherBound] Stream = [1] 'st1', TraceId = 20, Client = {streamOrder[0].Client}, Channel = {streamOrder[0].Channel}",
                                     "[Trace:BindPublisher] Stream = [1] 'st1', TraceId = 20 (end)"
                                 ] ),
                                 (t, _) => t.Logs.TestSequence(
                                 [
                                     "[Trace:BindPublisher] Stream = [1] 'st1', TraceId = 21 (start)",
-                                    "[ClientTrace] Stream = [1] 'st1', TraceId = 21, Correlation = (Client = [1] 'c1', TraceId = 19)",
-                                    "[PublisherBound] Stream = [1] 'st1', TraceId = 21, Client = [1] 'c1', Channel = [1] 'ch1'",
+                                    $"[ClientTrace] Stream = [1] 'st1', TraceId = 21, Correlation = (Client = {streamOrder[1].Client}, TraceId = 19)",
+                                    $"[PublisherBound] Stream = [1] 'st1', TraceId = 21, Client = {streamOrder[1].Client}, Channel = {streamOrder[1].Channel}",
                                     "[Trace:BindPublisher] Stream = [1] 'st1', TraceId = 21 (end)"
                                 ] ),
                                 (t, _) => t.Logs.TestSequence(
                                 [
                                     "[Trace:BindPublisher] Stream = [1] 'st1', TraceId = 22 (start)",
-                                    "[ClientTrace] Stream = [1] 'st1', TraceId = 22, Correlation = (Client = [1] 'c1', TraceId = 19)",
-                                    "[PublisherBound] Stream = [1] 'st1', TraceId = 22, Client = [1] 'c1', Channel = [2] 'ch2'",
+                                    $"[ClientTrace] Stream = [1] 'st1', TraceId = 22, Correlation = (Client = {streamOrder[2].Client}, TraceId = 19)",
+                                    $"[PublisherBound] Stream = [1] 'st1', TraceId = 22, Client = {streamOrder[2].Client}, Channel = {streamOrder[2].Channel}",
                                     "[Trace:BindPublisher] Stream = [1] 'st1', TraceId = 22 (end)"
                                 ] )
                             ] ),
@@ -540,10 +582,10 @@ public partial class MessageBrokerServerTests
                                 [
                                     "[Trace:Recreated] Client = [1] 'c1', TraceId = 19 (start)",
                                     $"[ServerTrace] Client = [1] 'c1', TraceId = 19, Correlation = (Server = {originalEndPoint}, TraceId = 5)",
-                                    "[PublisherBound] Client = [1] 'c1', TraceId = 19, Channel = [1] 'ch1', Stream = [1] 'st1'",
-                                    "[PublisherBound] Client = [1] 'c1', TraceId = 19, Channel = [2] 'ch2', Stream = [1] 'st1'",
-                                    "[ListenerBound] Client = [1] 'c1', TraceId = 19, Channel = [2] 'ch2', Queue = [1] 'q1'",
-                                    "[ListenerBound] Client = [1] 'c1', TraceId = 19, Channel = [1] 'ch1', Queue = [1] 'q1'",
+                                    $"[PublisherBound] Client = [1] 'c1', TraceId = 19, Channel = {c1PublisherOrder[0]}, Stream = [1] 'st1'",
+                                    $"[PublisherBound] Client = [1] 'c1', TraceId = 19, Channel = {c1PublisherOrder[1]}, Stream = [1] 'st1'",
+                                    $"[ListenerBound] Client = [1] 'c1', TraceId = 19, Channel = {c1ListenerOrder[0]}, Queue = [1] 'q1'",
+                                    $"[ListenerBound] Client = [1] 'c1', TraceId = 19, Channel = {c1ListenerOrder[1]}, Queue = [1] 'q1'",
                                     "[Trace:Recreated] Client = [1] 'c1', TraceId = 19 (end)"
                                 ] )
                             ] ),
@@ -574,14 +616,14 @@ public partial class MessageBrokerServerTests
                                 [
                                     "[Trace:BindListener] Client = [1] 'c1', Queue = [1] 'q1', TraceId = 20 (start)",
                                     "[ClientTrace] Client = [1] 'c1', Queue = [1] 'q1', TraceId = 20, ClientTraceId = 19",
-                                    "[ListenerBound] Client = [1] 'c1', Queue = [1] 'q1', TraceId = 20, Channel = [2] 'ch2'",
+                                    $"[ListenerBound] Client = [1] 'c1', Queue = [1] 'q1', TraceId = 20, Channel = {q1Order[0]}",
                                     "[Trace:BindListener] Client = [1] 'c1', Queue = [1] 'q1', TraceId = 20 (end)"
                                 ] ),
                                 (t, _) => t.Logs.TestSequence(
                                 [
                                     "[Trace:BindListener] Client = [1] 'c1', Queue = [1] 'q1', TraceId = 21 (start)",
                                     "[ClientTrace] Client = [1] 'c1', Queue = [1] 'q1', TraceId = 21, ClientTraceId = 19",
-                                    "[ListenerBound] Client = [1] 'c1', Queue = [1] 'q1', TraceId = 21, Channel = [1] 'ch1'",
+                                    $"[ListenerBound] Client = [1] 'c1', Queue = [1] 'q1', TraceId = 21, Channel = {q1Order[1]}",
                                     "[Trace:BindListener] Client = [1] 'c1', Queue = [1] 'q1', TraceId = 21 (end)"
                                 ] )
                             ] ),

@@ -61,8 +61,8 @@ public partial class MessageBrokerServerTests
                 await client.GetTask( c =>
                 {
                     c.SendBindPublisherRequest( "foo", isEphemeral: false );
-                    c.SendBindListenerRequest( "foo", createChannelIfNotExists: true, isEphemeral: false );
                     c.ReadPublisherBoundResponse();
+                    c.SendBindListenerRequest( "foo", createChannelIfNotExists: true, isEphemeral: false );
                     c.ReadListenerBoundResponse();
                 } );
 
@@ -87,8 +87,8 @@ public partial class MessageBrokerServerTests
             await reconnectedClient.GetTask( c =>
             {
                 c.SendBindPublisherRequest( "bar", isEphemeral: false );
-                c.SendBindListenerRequest( "bar", createChannelIfNotExists: true, isEphemeral: false );
                 c.ReadPublisherBoundResponse();
+                c.SendBindListenerRequest( "bar", createChannelIfNotExists: true, isEphemeral: false );
                 c.ReadListenerBoundResponse();
             } );
 
