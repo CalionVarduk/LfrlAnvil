@@ -165,6 +165,11 @@ internal struct RequestHandler
                         .ConfigureAwait( false ),
                     MessageBrokerServerEndpoint.UnbindListenerRequest => await HandleUnbindListenerRequestAsync( client, request, traceId )
                         .ConfigureAwait( false ),
+                    MessageBrokerServerEndpoint.UnbindListenerByNameRequest => await HandleUnbindListenerByNameRequestAsync(
+                            client,
+                            request,
+                            traceId )
+                        .ConfigureAwait( false ),
                     MessageBrokerServerEndpoint.DeadLetterQuery => await HandleDeadLetterQueryAsync( client, request, traceId )
                         .ConfigureAwait( false ),
                     MessageBrokerServerEndpoint.MessageNotificationAck => await HandleMessageNotificationAckAsync(
@@ -1251,6 +1256,186 @@ internal struct RequestHandler
                             listener,
                             channel is null
                                 ? Resources.CannotUnbindListenerFromNonExistingChannel( client, parsedRequest.ChannelId )
+                                : Resources.ListenerNotBound( client, channel ) ),
+                        UnbindResult.ChannelDisposed => channel!.DisposedException(),
+                        UnbindResult.ParentDisposed => queue!.DisposedException(),
+                        _ => listener!.DeactivatedException( disposed: true )
+                    };
+
+                    error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
+                }
+
+                var responseLength = Protocol.PacketHeader.Length + Protocol.UnbindListenerFailureResponse.Payload;
+                var response = new Protocol.UnbindListenerFailureResponse( unbindResult );
+                responsePoolToken = client.MemoryPool.Rent( responseLength, clearBuffers, out responseData );
+                responseHeader = response.Header;
+                response.Serialize( responseData );
+            }
+            else
+            {
+                Assume.IsNotNull( channel );
+                Assume.IsNotNull( queue );
+                Assume.IsNotNull( listener );
+                readPacket?.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( client, traceId, request.Header ) );
+
+                using ( MessageBrokerQueueTraceEvent.CreateScope(
+                    queue,
+                    queueTraceId,
+                    MessageBrokerQueueTraceEventType.UnbindListener ) )
+                {
+                    if ( queue.Logger.ClientTrace is { } clientTrace )
+                        clientTrace.Emit( MessageBrokerQueueClientTraceEvent.Create( queue, queueTraceId, traceId ) );
+
+                    if ( queue.Logger.ListenerUnbound is { } queueListenerUnbound )
+                        queueListenerUnbound.Emit(
+                            MessageBrokerQueueListenerUnboundEvent.Create( listener, queueTraceId, disposingChannel ) );
+
+                    if ( disposingQueue )
+                        await queue.DisposeDueToLackOfReferencesAsync( queueTraceId ).ConfigureAwait( false );
+                }
+
+                using ( MessageBrokerChannelTraceEvent.CreateScope(
+                    channel,
+                    channelTraceId,
+                    MessageBrokerChannelTraceEventType.UnbindListener ) )
+                {
+                    if ( channel.Logger.ClientTrace is { } clientTrace )
+                        clientTrace.Emit( MessageBrokerChannelClientTraceEvent.Create( channel, channelTraceId, client, traceId ) );
+
+                    if ( channel.Logger.ListenerUnbound is { } channelListenerUnbound )
+                        channelListenerUnbound.Emit(
+                            MessageBrokerChannelListenerUnboundEvent.Create( listener, channelTraceId, disposingQueue ) );
+
+                    if ( disposingChannel )
+                        await channel.DisposeDueToLackOfReferencesAsync( channelTraceId ).ConfigureAwait( false );
+                }
+
+                await listener.EndDisposingAsync( storage, traceId ).ConfigureAwait( false );
+                if ( client.Logger.ListenerUnbound is { } listenerUnbound )
+                    listenerUnbound.Emit(
+                        MessageBrokerRemoteClientListenerUnboundEvent.Create( listener, traceId, disposingChannel, disposingQueue ) );
+
+                var responseLength = Protocol.PacketHeader.Length + Protocol.ListenerUnboundResponse.Payload;
+                var response = new Protocol.ListenerUnboundResponse( disposingChannel, disposingQueue );
+                responsePoolToken = client.MemoryPool.Rent( responseLength, clearBuffers, out responseData );
+                responseHeader = response.Header;
+                response.Serialize( responseData );
+            }
+
+            using ( client.AcquireActiveLock( traceId, out var exc ) )
+            {
+                if ( exc is not null )
+                    return RequestResult.Done();
+
+                var writerSource = client.WriterQueue.AcquireSource( responseData, clearBuffers );
+                ResponseSender.EnqueueUnsafe( client, responseHeader, writerSource, responsePoolToken, eventType, traceId );
+                responseEnqueued = true;
+                client.ResponseSender.SignalContinuation();
+                return RequestResult.Ok( client.RequestQueue.IsNotEmpty() );
+            }
+        }
+        finally
+        {
+            if ( ! responseEnqueued )
+            {
+                responsePoolToken.Return( client, traceId );
+                if ( client.Logger.TraceEnd is { } traceEnd )
+                    traceEnd.Emit( MessageBrokerRemoteClientTraceEvent.Create( client, traceId, eventType ) );
+            }
+        }
+    }
+
+    private static async ValueTask<RequestResult> HandleUnbindListenerByNameRequestAsync(
+        MessageBrokerRemoteClient client,
+        IncomingPacketToken request,
+        ulong traceId)
+    {
+        const MessageBrokerRemoteClientTraceEventType eventType = MessageBrokerRemoteClientTraceEventType.UnbindListener;
+
+        var responseEnqueued = false;
+        var responsePoolToken = MemoryPoolToken<byte>.Empty;
+        if ( client.Logger.TraceStart is { } traceStart )
+            traceStart.Emit( MessageBrokerRemoteClientTraceEvent.Create( client, traceId, eventType ) );
+
+        try
+        {
+            var readPacket = client.Logger.ReadPacket;
+            string channelName;
+
+            try
+            {
+                readPacket?.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateReceived( client, traceId, request.Header ) );
+
+                var data = TextEncoding.Parse( request.Data );
+                if ( data.Exception is not null )
+                    return await FinishInvalidRequestHandlingAsync( client, data.Exception, traceId ).ConfigureAwait( false );
+
+                Assume.IsNotNull( data.Value );
+                if ( ! Defaults.NameLengthBounds.Contains( data.Value.Length ) )
+                {
+                    var error = client.ProtocolException( request.Header, Resources.InvalidChannelNameLength( data.Value.Length ) );
+                    return await FinishInvalidRequestHandlingAsync( client, error, traceId ).ConfigureAwait( false );
+                }
+
+                channelName = data.Value;
+            }
+            finally
+            {
+                request.PoolToken.Return( client, traceId );
+            }
+
+            if ( client.Logger.UnbindingListener is { } unbindingListener )
+                unbindingListener.Emit( MessageBrokerRemoteClientUnbindingListenerEvent.Create( client, traceId, channelName ) );
+
+            var disposingChannel = false;
+            var disposingQueue = false;
+            ulong channelTraceId = 0;
+            ulong queueTraceId = 0;
+            MessageBrokerChannelListenerBinding? listener = null;
+            MessageBrokerQueue? queue = null;
+            UnbindResult unbindResult;
+
+            ServerStorage.Client storage = default;
+            bool clearBuffers;
+            var channel = ChannelCollection.TryGetByName( client.Server, channelName );
+            if ( channel is null )
+            {
+                unbindResult = UnbindResult.NotBound;
+                clearBuffers = client.ClearBuffers;
+            }
+            else
+            {
+                using ( client.AcquireActiveLock( traceId, out var exc ) )
+                {
+                    if ( exc is not null )
+                        return RequestResult.Done();
+
+                    storage = client.GetStorage();
+                    clearBuffers = client.GetClearBuffersOption();
+                    unbindResult = client.BeginUnbindListenerUnsafe(
+                        channel,
+                        ref listener,
+                        ref channelTraceId,
+                        ref queue,
+                        ref queueTraceId,
+                        ref disposingChannel,
+                        ref disposingQueue );
+                }
+            }
+
+            Protocol.PacketHeader responseHeader;
+            Memory<byte> responseData;
+
+            if ( unbindResult != UnbindResult.Success )
+            {
+                if ( client.Logger.Error is { } error )
+                {
+                    Exception exc = unbindResult switch
+                    {
+                        UnbindResult.NotBound => client.ListenerException(
+                            listener,
+                            channel is null
+                                ? Resources.CannotUnbindListenerFromNonExistingChannel( client, channelName )
                                 : Resources.ListenerNotBound( client, channel ) ),
                         UnbindResult.ChannelDisposed => channel!.DisposedException(),
                         UnbindResult.ParentDisposed => queue!.DisposedException(),

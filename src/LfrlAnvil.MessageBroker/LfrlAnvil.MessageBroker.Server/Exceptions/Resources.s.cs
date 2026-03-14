@@ -589,6 +589,13 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string CannotUnbindListenerFromNonExistingChannel(MessageBrokerRemoteClient client, string channelName)
+    {
+        return $"Client [{client.Id}] '{client.Name}' could not be unbound as a listener from non-existing channel '{channelName}'.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string PublisherNotBound(MessageBrokerRemoteClient client, int channelId)
     {
         return

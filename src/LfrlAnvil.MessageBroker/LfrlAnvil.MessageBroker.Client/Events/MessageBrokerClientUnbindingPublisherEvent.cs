@@ -24,9 +24,9 @@ public readonly struct MessageBrokerClientUnbindingPublisherEvent
 {
     private MessageBrokerClientUnbindingPublisherEvent(
         MessageBrokerClient client,
+        ulong traceId,
         MessageBrokerPublisher? publisher,
-        string channelName,
-        ulong traceId)
+        string channelName)
     {
         Source = MessageBrokerClientEventSource.Create( client, traceId );
         Publisher = publisher;
@@ -66,13 +66,13 @@ public readonly struct MessageBrokerClientUnbindingPublisherEvent
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerClientUnbindingPublisherEvent Create(MessageBrokerPublisher publisher, ulong traceId)
     {
-        return new MessageBrokerClientUnbindingPublisherEvent( publisher.Client, publisher, publisher.ChannelName, traceId );
+        return new MessageBrokerClientUnbindingPublisherEvent( publisher.Client, traceId, publisher, publisher.ChannelName );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MessageBrokerClientUnbindingPublisherEvent Create(MessageBrokerClient client, string channelName, ulong traceId)
+    internal static MessageBrokerClientUnbindingPublisherEvent Create(MessageBrokerClient client, ulong traceId, string channelName)
     {
-        return new MessageBrokerClientUnbindingPublisherEvent( client, publisher: null, channelName, traceId );
+        return new MessageBrokerClientUnbindingPublisherEvent( client, traceId, publisher: null, channelName );
     }
 }

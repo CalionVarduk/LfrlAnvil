@@ -373,6 +373,52 @@ public class ListenerTests : TestsBase, IClassFixture<SharedResourceFixture>
     }
 
     [Fact]
+    public async Task Server_ShouldUnbindChannel_WhenClientUnbindsListenerByName()
+    {
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource ) );
+
+        await server.StartAsync();
+
+        await using var client = new MessageBrokerClient(
+            ( IPEndPoint )server.LocalEndPoint,
+            "test",
+            MessageBrokerClientOptions.Default
+                .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) )
+                .SetDelaySource( _sharedDelaySource ) );
+
+        await client.StartAsync();
+
+        await client.Listeners.BindAsync( "foo", (_, _) => ValueTask.CompletedTask );
+        var listener = client.Listeners.TryGetByChannelId( 1 );
+        var remoteClient = server.Clients.TryGetById( 1 );
+        var channel = server.Channels.TryGetById( 1 );
+        var binding = channel?.Listeners.TryGetByClientId( 1 );
+        var queue = binding?.Queue;
+        var result = await client.Listeners.UnbindAsync( "foo" );
+
+        Assertion.All(
+                listener.TestNotNull( c => c.State.TestEquals( MessageBrokerListenerState.Disposed ) ),
+                client.Listeners.Count.TestEquals( 0 ),
+                result.Exception.TestNull(),
+                result.Value.ChannelRemoved.TestTrue(),
+                result.Value.QueueRemoved.TestTrue(),
+                result.Value.NotBound.TestFalse(),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "remoteClient",
+                    c.Listeners.Count.TestEquals( 0 ) ) ),
+                channel.TestNotNull( c => c.State.TestEquals( MessageBrokerChannelState.Disposed ) ),
+                queue.TestNotNull( q => q.State.TestEquals( MessageBrokerQueueState.Disposed ) ),
+                binding.TestNotNull( b => b.State.TestEquals( MessageBrokerChannelListenerBindingState.Disposed ) ) )
+            .Go();
+    }
+
+    [Fact]
     public async Task DeleteListener_ShouldBePropagatedToClient()
     {
         var completionSource = new SafeTaskCompletionSource();

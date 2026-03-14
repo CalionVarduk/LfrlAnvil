@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,10 +22,15 @@ namespace LfrlAnvil.MessageBroker.Client.Events;
 /// </summary>
 public readonly struct MessageBrokerClientUnbindingListenerEvent
 {
-    private MessageBrokerClientUnbindingListenerEvent(MessageBrokerListener listener, ulong traceId)
+    private MessageBrokerClientUnbindingListenerEvent(
+        MessageBrokerClient client,
+        ulong traceId,
+        MessageBrokerListener? listener,
+        string channelName)
     {
-        Source = MessageBrokerClientEventSource.Create( listener.Client, traceId );
+        Source = MessageBrokerClientEventSource.Create( client, traceId );
         Listener = listener;
+        ChannelName = channelName;
     }
 
     /// <summary>
@@ -36,7 +41,12 @@ public readonly struct MessageBrokerClientUnbindingListenerEvent
     /// <summary>
     /// <see cref="MessageBrokerListener"/> related to this event.
     /// </summary>
-    public MessageBrokerListener Listener { get; }
+    public MessageBrokerListener? Listener { get; }
+
+    /// <summary>
+    /// Name of the channel from which the client is unbinding a listener.
+    /// </summary>
+    public string ChannelName { get; }
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerClientUnbindingListenerEvent"/> instance.
@@ -45,14 +55,24 @@ public readonly struct MessageBrokerClientUnbindingListenerEvent
     [Pure]
     public override string ToString()
     {
-        return
-            $"[UnbindingListener] {Source}, Channel = [{Listener.ChannelId}] '{Listener.ChannelName}', Queue = [{Listener.QueueId}] '{Listener.QueueName}'";
+        var info = Listener is not null
+            ? $"Channel = [{Listener.ChannelId}] '{Listener.ChannelName}', Queue = [{Listener.QueueId}] '{Listener.QueueName}'"
+            : $"ChannelName = '{ChannelName}'";
+
+        return $"[UnbindingListener] {Source}, {info}";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerClientUnbindingListenerEvent Create(MessageBrokerListener listener, ulong traceId)
     {
-        return new MessageBrokerClientUnbindingListenerEvent( listener, traceId );
+        return new MessageBrokerClientUnbindingListenerEvent( listener.Client, traceId, listener, listener.ChannelName );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerClientUnbindingListenerEvent Create(MessageBrokerClient client, ulong traceId, string channelName)
+    {
+        return new MessageBrokerClientUnbindingListenerEvent( client, traceId, listener: null, channelName );
     }
 }

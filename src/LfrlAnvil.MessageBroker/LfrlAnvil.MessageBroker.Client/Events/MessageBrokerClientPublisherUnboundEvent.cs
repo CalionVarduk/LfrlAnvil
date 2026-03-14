@@ -24,9 +24,9 @@ public readonly struct MessageBrokerClientPublisherUnboundEvent
 {
     private MessageBrokerClientPublisherUnboundEvent(
         MessageBrokerClient client,
+        ulong traceId,
         MessageBrokerPublisher? publisher,
         string channelName,
-        ulong traceId,
         bool channelRemoved,
         bool streamRemoved)
     {
@@ -86,9 +86,9 @@ public readonly struct MessageBrokerClientPublisherUnboundEvent
     {
         return new MessageBrokerClientPublisherUnboundEvent(
             publisher.Client,
+            traceId,
             publisher,
             publisher.ChannelName,
-            traceId,
             channelRemoved,
             streamRemoved );
     }
@@ -97,11 +97,11 @@ public readonly struct MessageBrokerClientPublisherUnboundEvent
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerClientPublisherUnboundEvent Create(
         MessageBrokerClient client,
-        string channelName,
         ulong traceId,
+        string channelName,
         bool channelRemoved,
         bool streamRemoved)
     {
-        return new MessageBrokerClientPublisherUnboundEvent( client, publisher: null, channelName, traceId, channelRemoved, streamRemoved );
+        return new MessageBrokerClientPublisherUnboundEvent( client, traceId, publisher: null, channelName, channelRemoved, streamRemoved );
     }
 }

@@ -161,6 +161,18 @@ internal sealed class ClientMock : IDisposable
     }
 
     [Pure]
+    internal static byte[] PrepareUnbindListenerByNameRequest(string channelName, uint? payload = null)
+    {
+        var encodedName = TextEncoding.Prepare( channelName ).GetValueOrThrow();
+        var buffer = new byte[Protocol.PacketHeader.Length + encodedName.ByteCount];
+        var writer = new BinaryContractWriter( buffer );
+        writer.MoveWrite( ( byte )MessageBrokerServerEndpoint.UnbindListenerByNameRequest );
+        writer.MoveWrite( payload ?? ( uint )encodedName.ByteCount );
+        encodedName.Encode( writer.GetSpan( encodedName.ByteCount ) ).ThrowIfError();
+        return buffer;
+    }
+
+    [Pure]
     internal static byte[] PrepareDeadLetterQuery(int queueId, int readCount, uint? payload = null)
     {
         var buffer = new byte[Protocol.PacketHeader.Length + Protocol.DeadLetterQuery.Length];
@@ -586,6 +598,11 @@ internal sealed class ClientMock : IDisposable
     internal void SendUnbindListenerRequest(int channelId, uint? payload = null)
     {
         Send( PrepareUnbindListenerRequest( channelId, payload ) );
+    }
+
+    internal void SendUnbindListenerByNameRequest(string channelName, uint? payload = null)
+    {
+        Send( PrepareUnbindListenerByNameRequest( channelName, payload ) );
     }
 
     internal void SendDeadLetterQuery(int queueId, int readCount, uint? payload = null)

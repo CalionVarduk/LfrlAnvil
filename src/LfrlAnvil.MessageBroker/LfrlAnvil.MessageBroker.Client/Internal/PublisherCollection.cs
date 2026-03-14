@@ -892,7 +892,7 @@ internal struct PublisherCollection
             try
             {
                 if ( client.Logger.UnbindingPublisher is { } unbindingPublisher )
-                    unbindingPublisher.Emit( MessageBrokerClientUnbindingPublisherEvent.Create( client, channelName, traceId ) );
+                    unbindingPublisher.Emit( MessageBrokerClientUnbindingPublisherEvent.Create( client, traceId, channelName ) );
 
                 ManualResetValueTaskSource<IncomingPacketToken> responseSource;
                 Protocol.UnbindPublisherByNameRequest request;
@@ -1005,8 +1005,8 @@ internal struct PublisherCollection
                                 publisherUnbound.Emit(
                                     MessageBrokerClientPublisherUnboundEvent.Create(
                                         client,
-                                        channelName,
                                         traceId,
+                                        channelName,
                                         parsedResponse.ChannelRemoved,
                                         parsedResponse.StreamRemoved ) );
 

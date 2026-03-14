@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,10 +22,17 @@ namespace LfrlAnvil.MessageBroker.Client.Events;
 /// </summary>
 public readonly struct MessageBrokerClientListenerUnboundEvent
 {
-    private MessageBrokerClientListenerUnboundEvent(MessageBrokerListener listener, ulong traceId, bool channelRemoved, bool queueRemoved)
+    private MessageBrokerClientListenerUnboundEvent(
+        MessageBrokerClient client,
+        ulong traceId,
+        MessageBrokerListener? listener,
+        string channelName,
+        bool channelRemoved,
+        bool queueRemoved)
     {
-        Source = MessageBrokerClientEventSource.Create( listener.Client, traceId );
+        Source = MessageBrokerClientEventSource.Create( client, traceId );
         Listener = listener;
+        ChannelName = channelName;
         ChannelRemoved = channelRemoved;
         QueueRemoved = queueRemoved;
     }
@@ -38,7 +45,12 @@ public readonly struct MessageBrokerClientListenerUnboundEvent
     /// <summary>
     /// <see cref="MessageBrokerListener"/> related to this event.
     /// </summary>
-    public MessageBrokerListener Listener { get; }
+    public MessageBrokerListener? Listener { get; }
+
+    /// <summary>
+    /// Name of the channel from which the client has unbound a listener.
+    /// </summary>
+    public string ChannelName { get; }
 
     /// <summary>
     /// Specifies whether the channel has been removed by the server.
@@ -57,10 +69,11 @@ public readonly struct MessageBrokerClientListenerUnboundEvent
     [Pure]
     public override string ToString()
     {
-        var channelRemoved = ChannelRemoved ? " (removed)" : string.Empty;
-        var queueRemoved = QueueRemoved ? " (removed)" : string.Empty;
-        return
-            $"[ListenerUnbound] {Source}, Channel = [{Listener.ChannelId}] '{Listener.ChannelName}'{channelRemoved}, Queue = [{Listener.QueueId}] '{Listener.QueueName}'{queueRemoved}";
+        var info = Listener is not null
+            ? $"Channel = [{Listener.ChannelId}] '{Listener.ChannelName}'{(ChannelRemoved ? " (removed)" : string.Empty)}, Queue = [{Listener.QueueId}] '{Listener.QueueName}'{(QueueRemoved ? " (removed)" : string.Empty)}"
+            : $"ChannelName = '{ChannelName}'{(ChannelRemoved ? " (channel removed)" : string.Empty)}{(QueueRemoved ? " (queue removed)" : string.Empty)}";
+
+        return $"[ListenerUnbound] {Source}, {info}";
     }
 
     [Pure]
@@ -71,6 +84,24 @@ public readonly struct MessageBrokerClientListenerUnboundEvent
         bool channelRemoved,
         bool queueRemoved)
     {
-        return new MessageBrokerClientListenerUnboundEvent( listener, traceId, channelRemoved, queueRemoved );
+        return new MessageBrokerClientListenerUnboundEvent(
+            listener.Client,
+            traceId,
+            listener,
+            listener.ChannelName,
+            channelRemoved,
+            queueRemoved );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MessageBrokerClientListenerUnboundEvent Create(
+        MessageBrokerClient client,
+        ulong traceId,
+        string channelName,
+        bool channelRemoved,
+        bool queueRemoved)
+    {
+        return new MessageBrokerClientListenerUnboundEvent( client, traceId, listener: null, channelName, channelRemoved, queueRemoved );
     }
 }
