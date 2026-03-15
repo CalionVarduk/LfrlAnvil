@@ -16,6 +16,7 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Sources;
 using LfrlAnvil.Exceptions;
 
 namespace LfrlAnvil.Async;
@@ -57,21 +58,23 @@ public sealed class AsyncMutex
     /// <param name="cancellationToken">
     /// Optional <see cref="CancellationToken"/> that can be used to cancel pending mutex acquisition.
     /// </param>
-    /// <returns>New <see cref="ValueTask{TResult}"/> instance which returns an <see cref="AsyncMutexLock"/> value.</returns>
+    /// <returns>New <see cref="ValueTask{TResult}"/> instance which returns an <see cref="AsyncMutexToken"/> value.</returns>
     /// <exception cref="OperationCanceledException">
     /// When provided <paramref name="cancellationToken"/> was cancelled before the lock was acquired.
     /// </exception>
-    public async ValueTask<AsyncMutexLock> EnterAsync(CancellationToken cancellationToken = default)
+    public async ValueTask<AsyncMutexToken> EnterAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
         bool entered;
         Entry? entry;
+        ulong version;
         using ( AcquireLock() )
         {
             if ( ! _entryCache.TryPop( out entry ) )
                 entry = new Entry( this );
 
+            version = entry.Version;
             entered = _participants.IsEmpty;
             entry.NodeId = _participants.AddLast( entry );
             if ( ! entered )
@@ -81,22 +84,50 @@ public sealed class AsyncMutex
                     {
                         Assume.IsNotNull( o );
                         var e = ReinterpretCast.To<Entry>( o );
-                        e.Complete( false );
+                        e.Mutex.Cancel( e );
                     },
                     entry );
             }
         }
 
         if ( entered )
-            return new AsyncMutexLock( entry );
+            return new AsyncMutexToken( entry, version );
 
         entered = await entry.Source.GetTask().ConfigureAwait( false );
         if ( entered )
-            return new AsyncMutexLock( entry );
+            return new AsyncMutexToken( entry, version );
 
-        Reset( entry );
+        Reset( entry, version );
         ExceptionThrower.Throw( new OperationCanceledException( cancellationToken ) );
         return default;
+    }
+
+    /// <summary>
+    /// Attempts to synchronously acquire an exclusive lock from this mutex.
+    /// </summary>
+    /// <param name="entered"><b>out</b> parameter which specifies whether the lock was acquired.</param>
+    /// <returns>
+    /// New <see cref="AsyncMutexToken"/> value. When <paramref name="entered"/> is <b>false</b>,
+    /// then returned instanced will be a default value.
+    /// </returns>
+    public AsyncMutexToken TryEnter(out bool entered)
+    {
+        Entry? entry;
+        ulong version;
+        using ( AcquireLock() )
+        {
+            entered = _participants.IsEmpty;
+            if ( ! entered )
+                return default;
+
+            if ( ! _entryCache.TryPop( out entry ) )
+                entry = new Entry( this );
+
+            version = entry.Version;
+            entry.NodeId = _participants.AddLast( entry );
+        }
+
+        return new AsyncMutexToken( entry, version );
     }
 
     /// <summary>
@@ -112,19 +143,14 @@ public sealed class AsyncMutex
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private bool Exit(Entry entry)
+    private bool Exit(Entry entry, ulong version)
     {
         using ( AcquireLock() )
         {
-            if ( _participants.First?.Index != entry.NodeId )
+            if ( version != entry.Version || ! _participants.IsFirst( entry.NodeId ) )
                 return false;
 
-            _participants.Remove( entry.NodeId );
-
-            entry.NodeId = -1;
-            entry.Source.Reset();
-            _entryCache.Push( entry );
-
+            Recycle( entry );
             var next = _participants.First;
             next?.Value.Complete( true );
             return true;
@@ -132,26 +158,36 @@ public sealed class AsyncMutex
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void Reset(Entry entry)
+    private void Reset(Entry entry, ulong version)
     {
         using ( AcquireLock() )
         {
-            if ( entry.NodeId == -1 )
+            if ( version != entry.Version || entry.NodeId == -1 )
                 return;
 
-            var wasFirst = _participants.First?.Index == entry.NodeId;
-            _participants.Remove( entry.NodeId );
-
-            entry.NodeId = -1;
-            entry.Source.Reset();
-            _entryCache.Push( entry );
-
+            var wasFirst = _participants.IsFirst( entry.NodeId );
+            Recycle( entry );
             if ( ! wasFirst )
                 return;
 
             var next = _participants.First;
             next?.Value.Complete( true );
         }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private void Cancel(Entry entry)
+    {
+        using ( AcquireLock() )
+            entry.Complete( false );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private void Recycle(Entry entry)
+    {
+        _participants.Remove( entry.NodeId );
+        entry.Reset();
+        _entryCache.Push( entry );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -167,32 +203,40 @@ public sealed class AsyncMutex
             Mutex = mutex;
             Source = new ManualResetValueTaskSource<bool>();
             CancellationTokenRegistration = default;
+            Version = 0;
             NodeId = -1;
         }
 
         internal readonly AsyncMutex Mutex;
         internal readonly ManualResetValueTaskSource<bool> Source;
         internal CancellationTokenRegistration CancellationTokenRegistration;
+        internal ulong Version;
         internal int NodeId;
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void Complete(bool entered)
         {
-            using ( Mutex.AcquireLock() )
-            {
-                if ( NodeId == -1 )
-                    return;
+            if ( NodeId == -1 || Source.Status != ValueTaskSourceStatus.Pending )
+                return;
 
-                CancellationTokenRegistration.Dispose();
-                CancellationTokenRegistration = default;
-                Source.TrySetResult( entered );
-            }
+            CancellationTokenRegistration.Dispose();
+            CancellationTokenRegistration = default;
+            Source.SetResult( entered );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal bool Exit()
+        internal bool Exit(ulong version)
         {
-            return Mutex.Exit( this );
+            return Mutex.Exit( this, version );
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal void Reset()
+        {
+            Assume.Equals( CancellationTokenRegistration, default );
+            ++Version;
+            NodeId = -1;
+            Source.Reset();
         }
     }
 }

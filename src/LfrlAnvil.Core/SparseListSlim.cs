@@ -102,6 +102,30 @@ public struct SparseListSlim<T>
     }
 
     /// <summary>
+    /// Checks whether the oldest element in this list is under the provided <paramref name="index"/>.
+    /// </summary>
+    /// <param name="index">Index to check.</param>
+    /// <returns><b>true</b> when <paramref name="index"/> points at the oldest element in this list, otherwise <b>false</b>.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public bool IsFirst(int index)
+    {
+        return _occupiedListHead == index;
+    }
+
+    /// <summary>
+    /// Checks whether the newest element in this list is under the provided <paramref name="index"/>.
+    /// </summary>
+    /// <param name="index">Index to check.</param>
+    /// <returns><b>true</b> when <paramref name="index"/> points at the newest element in this list, otherwise <b>false</b>.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public bool IsLast(int index)
+    {
+        return _occupiedListTail == index;
+    }
+
+    /// <summary>
     /// Adds <paramref name="item"/> to the tail of this list.
     /// </summary>
     /// <param name="item">Item to add.</param>

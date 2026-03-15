@@ -24,10 +24,12 @@
 
 Core:
 
+- add InterlockedInt64 & InterlockedRef
 - could add expression extensions for generating a lambda from a collection of members and a target
   - would have to be null-aware
 - migrate to dotnet10 once most refinements are implemented
   - swap to System.Threading.Lock instead of ExclusiveLock
+    - ExclusiveLock may stay for legacy Monitor usage
   - use directory.packages.props
 
 ### Terminal
@@ -42,6 +44,8 @@ project idea:
   - handle output
   - handle args
   - handle exit code
+  - handle graceful cancellation
+  - handle start/end/elapsed time tracking
 
 ### Sql: Refinements
 

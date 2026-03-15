@@ -70,6 +70,25 @@ public class AsyncMutexTests : TestsBase
     }
 
     [Fact]
+    public void TryEnter_ShouldReturnEnteredToken_ForFirstParticipant()
+    {
+        var sut = new AsyncMutex();
+        var token = sut.TryEnter( out var entered );
+        Assertion.All( token.Mutex.TestRefEquals( sut ), sut.Participants.TestEquals( 1 ), entered.TestTrue() ).Go();
+    }
+
+    [Fact]
+    public void TryEnter_ShouldReturnNotEnteredToken_ForNotFirstParticipant()
+    {
+        var sut = new AsyncMutex();
+        _ = sut.TryEnter( out _ );
+
+        var token = sut.TryEnter( out var entered );
+
+        Assertion.All( token.Mutex.TestNull(), sut.Participants.TestEquals( 1 ), entered.TestFalse() ).Go();
+    }
+
+    [Fact]
     public async Task LockDispose_ShouldReleaseLock_WithoutWaiters()
     {
         var sut = new AsyncMutex();
@@ -100,7 +119,7 @@ public class AsyncMutexTests : TestsBase
     [Fact]
     public void LockDispose_ShouldNotThrow_ForDefault()
     {
-        var token = default( AsyncMutexLock );
+        var token = default( AsyncMutexToken );
         var action = Lambda.Of( () => token.Dispose() );
         action.Test( exc => exc.TestNull() ).Go();
     }

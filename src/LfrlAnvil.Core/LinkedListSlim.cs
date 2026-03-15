@@ -96,6 +96,30 @@ public struct LinkedListSlim<T>
     }
 
     /// <summary>
+    /// Checks whether the first element in this list is under the provided <paramref name="index"/>.
+    /// </summary>
+    /// <param name="index">Index to check.</param>
+    /// <returns><b>true</b> when <paramref name="index"/> points at the first element in this list, otherwise <b>false</b>.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public bool IsFirst(int index)
+    {
+        return _occupiedListHead == index;
+    }
+
+    /// <summary>
+    /// Checks whether the last element in this list is under the provided <paramref name="index"/>.
+    /// </summary>
+    /// <param name="index">Index to check.</param>
+    /// <returns><b>true</b> when <paramref name="index"/> points at the last element in this list, otherwise <b>false</b>.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public bool IsLast(int index)
+    {
+        return _occupiedListTail == index;
+    }
+
+    /// <summary>
     /// Adds <paramref name="item"/> to the start of this list.
     /// </summary>
     /// <param name="item">Item to add.</param>

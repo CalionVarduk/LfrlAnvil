@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,16 +19,16 @@ namespace LfrlAnvil.Async;
 /// <summary>
 /// Represents an acquired lock from an <see cref="AsyncKeyedMutex{TKey}"/> instance.
 /// </summary>
-public readonly struct AsyncKeyedMutexLock<TKey> : IDisposable
+public readonly struct AsyncKeyedMutexToken<TKey> : IDisposable
     where TKey : notnull
 {
     private readonly AsyncKeyedMutex<TKey>.Entry? _entry;
-    private readonly AsyncMutexLock _lock;
+    private readonly AsyncMutexToken _token;
 
-    internal AsyncKeyedMutexLock(AsyncKeyedMutex<TKey>.Entry entry, AsyncMutexLock @lock)
+    internal AsyncKeyedMutexToken(AsyncKeyedMutex<TKey>.Entry entry, AsyncMutexToken token)
     {
         _entry = entry;
-        _lock = @lock;
+        _token = token;
     }
 
     /// <summary>
@@ -47,11 +47,11 @@ public readonly struct AsyncKeyedMutexLock<TKey> : IDisposable
         if ( _entry is null )
             return;
 
-        Assume.IsNotNull( _lock.Entry );
+        Assume.IsNotNull( _token.Entry );
         var released = false;
         try
         {
-            released = _lock.Entry.Exit();
+            released = _token.Entry.Exit( _token.Version );
         }
         finally
         {

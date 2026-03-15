@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,13 +19,15 @@ namespace LfrlAnvil.Async;
 /// <summary>
 /// Represents an acquired lock from an <see cref="AsyncMutex"/> instance.
 /// </summary>
-public readonly struct AsyncMutexLock : IDisposable
+public readonly struct AsyncMutexToken : IDisposable
 {
     internal readonly AsyncMutex.Entry? Entry;
+    internal readonly ulong Version;
 
-    internal AsyncMutexLock(AsyncMutex.Entry entry)
+    internal AsyncMutexToken(AsyncMutex.Entry entry, ulong version)
     {
         Entry = entry;
+        Version = version;
     }
 
     /// <summary>
@@ -36,6 +38,6 @@ public readonly struct AsyncMutexLock : IDisposable
     /// <inheritdoc/>
     public void Dispose()
     {
-        Entry?.Exit();
+        Entry?.Exit( Version );
     }
 }

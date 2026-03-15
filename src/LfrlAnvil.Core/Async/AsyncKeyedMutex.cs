@@ -67,34 +67,63 @@ public sealed class AsyncKeyedMutex<TKey>
     /// <param name="cancellationToken">
     /// Optional <see cref="CancellationToken"/> that can be used to cancel pending mutex acquisition.
     /// </param>
-    /// <returns>New <see cref="ValueTask{TResult}"/> instance which returns an <see cref="AsyncKeyedMutexLock{TKey}"/> value.</returns>
+    /// <returns>New <see cref="ValueTask{TResult}"/> instance which returns an <see cref="AsyncKeyedMutexToken{TKey}"/> value.</returns>
     /// <exception cref="OperationCanceledException">
     /// When provided <paramref name="cancellationToken"/> was cancelled before the lock was acquired.
     /// </exception>
-    public async ValueTask<AsyncKeyedMutexLock<TKey>> EnterAsync(TKey key, CancellationToken cancellationToken = default)
+    public async ValueTask<AsyncKeyedMutexToken<TKey>> EnterAsync(TKey key, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
         Entry? entry;
-        ValueTask<AsyncMutexLock> lockTask;
+        ValueTask<AsyncMutexToken> lockTask;
         using ( AcquireLock() )
         {
             entry = GetOrAddEntry( key );
             lockTask = entry.Mutex.EnterAsync( cancellationToken );
         }
 
-        AsyncMutexLock @lock;
+        AsyncMutexToken token;
         try
         {
-            @lock = await lockTask.ConfigureAwait( false );
+            token = await lockTask.ConfigureAwait( false );
         }
         catch
         {
-            entry.Exit();
+            using ( AcquireLock() )
+                entry.ExitUnsafe();
+
             throw;
         }
 
-        return new AsyncKeyedMutexLock<TKey>( entry, @lock );
+        return new AsyncKeyedMutexToken<TKey>( entry, token );
+    }
+
+    /// <summary>
+    /// Attempts to synchronously acquire an exclusive lock for the specified <paramref name="key"/> from this mutex.
+    /// </summary>
+    /// <param name="key">Key for which to acquire an exclusive lock.</param>
+    /// <param name="entered"><b>out</b> parameter which specifies whether the lock was acquired.</param>
+    /// <returns>
+    /// New <see cref="AsyncMutexToken"/> value. When <paramref name="entered"/> is <b>false</b>,
+    /// then returned instanced will be a default value.
+    /// </returns>
+    public AsyncKeyedMutexToken<TKey> TryEnter(TKey key, out bool entered)
+    {
+        Entry? entry;
+        AsyncMutexToken token;
+        using ( AcquireLock() )
+        {
+            entry = GetOrAddEntry( key );
+            token = entry.Mutex.TryEnter( out entered );
+            if ( ! entered )
+            {
+                entry.ExitUnsafe();
+                return default;
+            }
+        }
+
+        return new AsyncKeyedMutexToken<TKey>( entry, token );
     }
 
     /// <summary>
@@ -165,18 +194,22 @@ public sealed class AsyncKeyedMutex<TKey>
         internal void Exit()
         {
             using ( KeyedMutex.AcquireLock() )
-            {
-                RefCount = unchecked( RefCount - 1 );
-                if ( RefCount > 0 )
-                    return;
+                ExitUnsafe();
+        }
 
-                Assume.Equals( RefCount, 0 );
-                Assume.Equals( Mutex.Participants, 0 );
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal void ExitUnsafe()
+        {
+            RefCount = unchecked( RefCount - 1 );
+            if ( RefCount > 0 )
+                return;
 
-                KeyedMutex._entries.Remove( Key );
-                Key = default!;
-                KeyedMutex._entryCache.Push( this );
-            }
+            Assume.Equals( RefCount, 0 );
+            Assume.Equals( Mutex.Participants, 0 );
+
+            KeyedMutex._entries.Remove( Key );
+            Key = default!;
+            KeyedMutex._entryCache.Push( this );
         }
     }
 }

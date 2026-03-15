@@ -1205,6 +1205,52 @@ public class SparseListSlimTests : TestsBase
             .Go();
     }
 
+    [Fact]
+    public void IsFirst_ShouldReturnFalse_WhenListIsEmpty()
+    {
+        var sut = SparseListSlim<string>.Create();
+        var result = sut.IsFirst( 0 );
+        result.TestFalse().Go();
+    }
+
+    [Fact]
+    public void IsFirst_ShouldReturnTrueOnlyForTheFirstNodeIndex()
+    {
+        var sut = SparseListSlim<string>.Create();
+        var a = sut.Add( "x1" );
+        var b = sut.Add( "x2" );
+        var c = sut.Add( "x3" );
+
+        var resultA = sut.IsFirst( a );
+        var resultB = sut.IsFirst( b );
+        var resultC = sut.IsFirst( c );
+
+        Assertion.All( resultA.TestTrue(), resultB.TestFalse(), resultC.TestFalse() ).Go();
+    }
+
+    [Fact]
+    public void IsLast_ShouldReturnFalse_WhenListIsEmpty()
+    {
+        var sut = SparseListSlim<string>.Create();
+        var result = sut.IsLast( 0 );
+        result.TestFalse().Go();
+    }
+
+    [Fact]
+    public void IsLast_ShouldReturnTrueOnlyForTheFirstNodeIndex()
+    {
+        var sut = SparseListSlim<string>.Create();
+        var a = sut.Add( "x1" );
+        var b = sut.Add( "x2" );
+        var c = sut.Add( "x3" );
+
+        var resultA = sut.IsLast( a );
+        var resultB = sut.IsLast( b );
+        var resultC = sut.IsLast( c );
+
+        Assertion.All( resultA.TestFalse(), resultB.TestFalse(), resultC.TestTrue() ).Go();
+    }
+
     [Pure]
     private static Assertion AssertEnumerator<T>(SparseListSlim<T> source, params (int, T)[] expected)
     {

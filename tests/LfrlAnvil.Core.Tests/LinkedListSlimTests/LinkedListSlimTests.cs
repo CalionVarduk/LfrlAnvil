@@ -1438,6 +1438,52 @@ public class LinkedListSlimTests : TestsBase
             .Go();
     }
 
+    [Fact]
+    public void IsFirst_ShouldReturnFalse_WhenListIsEmpty()
+    {
+        var sut = LinkedListSlim<string>.Create();
+        var result = sut.IsFirst( 0 );
+        result.TestFalse().Go();
+    }
+
+    [Fact]
+    public void IsFirst_ShouldReturnTrueOnlyForTheFirstNodeIndex()
+    {
+        var sut = LinkedListSlim<string>.Create();
+        var a = sut.AddFirst( "x1" );
+        var b = sut.AddFirst( "x2" );
+        var c = sut.AddFirst( "x3" );
+
+        var resultA = sut.IsFirst( a );
+        var resultB = sut.IsFirst( b );
+        var resultC = sut.IsFirst( c );
+
+        Assertion.All( resultA.TestFalse(), resultB.TestFalse(), resultC.TestTrue() ).Go();
+    }
+
+    [Fact]
+    public void IsLast_ShouldReturnFalse_WhenListIsEmpty()
+    {
+        var sut = LinkedListSlim<string>.Create();
+        var result = sut.IsLast( 0 );
+        result.TestFalse().Go();
+    }
+
+    [Fact]
+    public void IsLast_ShouldReturnTrueOnlyForTheFirstNodeIndex()
+    {
+        var sut = LinkedListSlim<string>.Create();
+        var a = sut.AddLast( "x1" );
+        var b = sut.AddLast( "x2" );
+        var c = sut.AddLast( "x3" );
+
+        var resultA = sut.IsLast( a );
+        var resultB = sut.IsLast( b );
+        var resultC = sut.IsLast( c );
+
+        Assertion.All( resultA.TestFalse(), resultB.TestFalse(), resultC.TestTrue() ).Go();
+    }
+
     [Pure]
     private static Assertion AssertEnumerator<T>(LinkedListSlim<T> source, params (int, T)[] expected)
     {
