@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public struct InterlockedInt32 : IEquatable<InterlockedInt32>, IComparable<Inter
     /// <summary>
     /// Current value.
     /// </summary>
-    public int Value => Interlocked.Add( ref _value, 0 );
+    public int Value => Volatile.Read( ref _value );
 
     /// <summary>
     /// Returns a string representation of this <see cref="InterlockedInt32"/> instance.
@@ -132,7 +132,8 @@ public struct InterlockedInt32 : IEquatable<InterlockedInt32>, IComparable<Inter
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public bool Write(int value, int expected)
     {
-        return CompareExchange( value, expected ) == expected;
+        var oldValue = CompareExchange( value, expected );
+        return oldValue != value && oldValue == expected;
     }
 
     /// <summary>

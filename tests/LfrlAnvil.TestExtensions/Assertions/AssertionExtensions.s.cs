@@ -13,7 +13,7 @@ public static class AssertionExtensions
 {
     [Pure]
     public static TypeAssertionBuilder<T> TestType<T>(this T? subject, [CallerArgumentExpression( "subject" )] string context = "")
-        where T : class
+        where T : class?
     {
         return new TypeAssertionBuilder<T>( context, subject );
     }
@@ -96,7 +96,7 @@ public static class AssertionExtensions
 
     [Pure]
     public static SubjectAssertion<T?> TestNull<T>(this T? subject, [CallerArgumentExpression( "subject" )] string context = "")
-        where T : class
+        where T : class?
     {
         return new NullAssertion<T?>( context, subject, expected: true );
     }
@@ -110,7 +110,7 @@ public static class AssertionExtensions
 
     [Pure]
     public static SubjectAssertion<T?> TestNotNull<T>(this T? subject, [CallerArgumentExpression( "subject" )] string context = "")
-        where T : class
+        where T : class?
     {
         return new NullAssertion<T?>( context, subject, expected: false );
     }
@@ -128,7 +128,7 @@ public static class AssertionExtensions
         Func<T, Assertion> continuation,
         [CallerArgumentExpression( "subject" )]
         string context = "")
-        where T : class
+        where T : class?
     {
         return subject.TestNotNull( context ).Then( x => continuation( x! ) );
     }
@@ -162,7 +162,7 @@ public static class AssertionExtensions
         object? value,
         [CallerArgumentExpression( "subject" )]
         string context = "")
-        where T : class
+        where T : class?
     {
         return new RefEqualsAssertion<T?>( context, subject, value, expected: true );
     }
@@ -173,7 +173,7 @@ public static class AssertionExtensions
         object? value,
         [CallerArgumentExpression( "subject" )]
         string context = "")
-        where T : class
+        where T : class?
     {
         return new RefEqualsAssertion<T?>( context, subject, value, expected: false );
     }

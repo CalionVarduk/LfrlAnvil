@@ -97,7 +97,7 @@ public class InterlockedEnumTests : TestsBase
     }
 
     [Theory]
-    [InlineData( Foo.A, Foo.A, Foo.A, Foo.A, true )]
+    [InlineData( Foo.A, Foo.A, Foo.A, Foo.A, false )]
     [InlineData( Foo.A, Foo.B, Foo.A, Foo.B, true )]
     [InlineData( Foo.A, Foo.B, Foo.C, Foo.A, false )]
     [InlineData( Foo.C, Foo.B, Foo.A, Foo.C, false )]

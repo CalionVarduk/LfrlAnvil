@@ -3,7 +3,7 @@
 namespace LfrlAnvil.TestExtensions.Assertions;
 
 public sealed class TypeAssertionBuilder<T>
-    where T : class
+    where T : class?
 {
     internal TypeAssertionBuilder(string context, T? subject)
     {

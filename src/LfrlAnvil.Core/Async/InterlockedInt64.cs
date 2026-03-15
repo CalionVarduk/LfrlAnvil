@@ -1,4 +1,4 @@
-﻿// Copyright 2024-2026 Łukasz Furlepa
+﻿// Copyright 2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
 // limitations under the License.
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -22,30 +21,28 @@ using LfrlAnvil.Exceptions;
 namespace LfrlAnvil.Async;
 
 /// <summary>
-/// A lightweight representation of an <see cref="Interlocked"/> (atomic) <see cref="Enum"/>.
+/// A lightweight representation of an <see cref="Interlocked"/> (atomic) <see cref="Int64"/>.
 /// </summary>
-/// /// <typeparam name="T">Enum type.</typeparam>
-public struct InterlockedEnum<T> : IEquatable<InterlockedEnum<T>>, IComparable<InterlockedEnum<T>>, IComparable
-    where T : struct, Enum
+public struct InterlockedInt64 : IEquatable<InterlockedInt64>, IComparable<InterlockedInt64>, IComparable
 {
-    private int _value;
+    private long _value;
 
     /// <summary>
-    /// Creates a new <see cref="InterlockedEnum{T}"/> instance.
+    /// Creates a new <see cref="InterlockedInt64"/> instance.
     /// </summary>
     /// <param name="value">Initial value.</param>
-    public InterlockedEnum(T value)
+    public InterlockedInt64(long value)
     {
-        _value = ( int )( object )value;
+        _value = value;
     }
 
     /// <summary>
     /// Current value.
     /// </summary>
-    public T Value => ( T )( object )Volatile.Read( ref _value );
+    public long Value => Volatile.Read( ref _value );
 
     /// <summary>
-    /// Returns a string representation of this <see cref="InterlockedEnum{T}"/> instance.
+    /// Returns a string representation of this <see cref="InterlockedInt64"/> instance.
     /// </summary>
     /// <returns>String representation.</returns>
     [Pure]
@@ -58,35 +55,35 @@ public struct InterlockedEnum<T> : IEquatable<InterlockedEnum<T>>, IComparable<I
     [Pure]
     public override int GetHashCode()
     {
-        return EqualityComparer<T>.Default.GetHashCode( Value );
+        return Value.GetHashCode();
     }
 
     /// <inheritdoc />
     [Pure]
     public override bool Equals(object? obj)
     {
-        return obj is InterlockedEnum<T> b && Equals( b );
+        return obj is InterlockedInt64 b && Equals( b );
     }
 
     /// <inheritdoc />
     [Pure]
     public int CompareTo(object? obj)
     {
-        return obj is InterlockedEnum<T> b ? CompareTo( b ) : throw new ArgumentException( ExceptionResources.InvalidType, nameof( obj ) );
+        return obj is InterlockedInt64 b ? CompareTo( b ) : throw new ArgumentException( ExceptionResources.InvalidType, nameof( obj ) );
     }
 
     /// <inheritdoc />
     [Pure]
-    public bool Equals(InterlockedEnum<T> other)
+    public bool Equals(InterlockedInt64 other)
     {
-        return EqualityComparer<T>.Default.Equals( Value, other.Value );
+        return Value == other.Value;
     }
 
     /// <inheritdoc />
     [Pure]
-    public int CompareTo(InterlockedEnum<T> other)
+    public int CompareTo(InterlockedInt64 other)
     {
-        return Comparer<T>.Default.Compare( Value, other.Value );
+        return Value.CompareTo( other.Value );
     }
 
     /// <summary>
@@ -95,9 +92,9 @@ public struct InterlockedEnum<T> : IEquatable<InterlockedEnum<T>>, IComparable<I
     /// <param name="value">Value to set.</param>
     /// <returns><see cref="Value"/> before the change.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public T Exchange(T value)
+    public long Exchange(long value)
     {
-        return ( T )( object )Interlocked.Exchange( ref _value, ( int )( object )value );
+        return Interlocked.Exchange( ref _value, value );
     }
 
     /// <summary>
@@ -109,9 +106,9 @@ public struct InterlockedEnum<T> : IEquatable<InterlockedEnum<T>>, IComparable<I
     /// <param name="comparand">Value used for <see cref="Value"/> comparison.</param>
     /// <returns><see cref="Value"/> before the change.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public T CompareExchange(T value, T comparand)
+    public long CompareExchange(long value, long comparand)
     {
-        return ( T )( object )Interlocked.CompareExchange( ref _value, ( int )( object )value, ( int )( object )comparand );
+        return Interlocked.CompareExchange( ref _value, value, comparand );
     }
 
     /// <summary>
@@ -120,9 +117,9 @@ public struct InterlockedEnum<T> : IEquatable<InterlockedEnum<T>>, IComparable<I
     /// <param name="value">Value to set.</param>
     /// <returns><b>true</b> when value has changed, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public bool Write(T value)
+    public bool Write(long value)
     {
-        return ! EqualityComparer<T>.Default.Equals( Exchange( value ), value );
+        return Exchange( value ) != value;
     }
 
     /// <summary>
@@ -133,10 +130,76 @@ public struct InterlockedEnum<T> : IEquatable<InterlockedEnum<T>>, IComparable<I
     /// <param name="expected">Value used for <see cref="Value"/> comparison.</param>
     /// <returns><b>true</b> when value has changed, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public bool Write(T value, T expected)
+    public bool Write(long value, long expected)
     {
         var oldValue = CompareExchange( value, expected );
-        return ! EqualityComparer<T>.Default.Equals( oldValue, value ) && EqualityComparer<T>.Default.Equals( oldValue, expected );
+        return oldValue != value && oldValue == expected;
+    }
+
+    /// <summary>
+    /// Increments the current <see cref="Value"/> by <b>1</b>.
+    /// </summary>
+    /// <returns><see cref="Value"/> after the change.</returns>
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public long Increment()
+    {
+        return Interlocked.Increment( ref _value );
+    }
+
+    /// <summary>
+    /// Decrements the current <see cref="Value"/> by <b>1</b>.
+    /// </summary>
+    /// <returns><see cref="Value"/> after the change.</returns>
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public long Decrement()
+    {
+        return Interlocked.Decrement( ref _value );
+    }
+
+    /// <summary>
+    /// Adds provided <paramref name="value"/> to the current <see cref="Value"/>.
+    /// </summary>
+    /// <param name="value">Value to add.</param>
+    /// <returns><see cref="Value"/> after the change.</returns>
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public long Add(long value)
+    {
+        return Interlocked.Add( ref _value, value );
+    }
+
+    /// <summary>
+    /// Subtracts provided <paramref name="value"/> from the current <see cref="Value"/>.
+    /// </summary>
+    /// <param name="value">Value to subtract.</param>
+    /// <returns><see cref="Value"/> after the change.</returns>
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public long Subtract(long value)
+    {
+        return Add( unchecked( -value ) );
+    }
+
+    /// <summary>
+    /// Performs a bitwise and operation on the current <see cref="Value"/> and the provided <paramref name="value"/>
+    /// and stores the result in <see cref="Value"/>.
+    /// </summary>
+    /// <param name="value">Value to bitwise and.</param>
+    /// <returns><see cref="Value"/> before the change.</returns>
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public long And(long value)
+    {
+        return Interlocked.And( ref _value, value );
+    }
+
+    /// <summary>
+    /// Performs a bitwise or operation on the current <see cref="Value"/> and the provided <paramref name="value"/>
+    /// and stores the result in <see cref="Value"/>.
+    /// </summary>
+    /// <param name="value">Value to bitwise or.</param>
+    /// <returns><see cref="Value"/> before the change.</returns>
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public long Or(long value)
+    {
+        return Interlocked.Or( ref _value, value );
     }
 
     /// <summary>
@@ -146,7 +209,7 @@ public struct InterlockedEnum<T> : IEquatable<InterlockedEnum<T>>, IComparable<I
     /// <param name="b">Second operand.</param>
     /// <returns><b>true</b> when operands are equal, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static bool operator ==(InterlockedEnum<T> a, InterlockedEnum<T> b)
+    public static bool operator ==(InterlockedInt64 a, InterlockedInt64 b)
     {
         return a.Equals( b );
     }
@@ -158,7 +221,7 @@ public struct InterlockedEnum<T> : IEquatable<InterlockedEnum<T>>, IComparable<I
     /// <param name="b">Second operand.</param>
     /// <returns><b>true</b> when operands are not equal, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static bool operator !=(InterlockedEnum<T> a, InterlockedEnum<T> b)
+    public static bool operator !=(InterlockedInt64 a, InterlockedInt64 b)
     {
         return ! a.Equals( b );
     }
@@ -170,7 +233,7 @@ public struct InterlockedEnum<T> : IEquatable<InterlockedEnum<T>>, IComparable<I
     /// <param name="b">Second operand.</param>
     /// <returns><b>true</b> when <paramref name="a"/> is greater than or equal to <paramref name="b"/>, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static bool operator >=(InterlockedEnum<T> a, InterlockedEnum<T> b)
+    public static bool operator >=(InterlockedInt64 a, InterlockedInt64 b)
     {
         return a.CompareTo( b ) >= 0;
     }
@@ -182,7 +245,7 @@ public struct InterlockedEnum<T> : IEquatable<InterlockedEnum<T>>, IComparable<I
     /// <param name="b">Second operand.</param>
     /// <returns><b>true</b> when <paramref name="a"/> is less than or equal to <paramref name="b"/>, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static bool operator <=(InterlockedEnum<T> a, InterlockedEnum<T> b)
+    public static bool operator <=(InterlockedInt64 a, InterlockedInt64 b)
     {
         return a.CompareTo( b ) <= 0;
     }
@@ -194,7 +257,7 @@ public struct InterlockedEnum<T> : IEquatable<InterlockedEnum<T>>, IComparable<I
     /// <param name="b">Second operand.</param>
     /// <returns><b>true</b> when <paramref name="a"/> is greater than <paramref name="b"/>, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static bool operator >(InterlockedEnum<T> a, InterlockedEnum<T> b)
+    public static bool operator >(InterlockedInt64 a, InterlockedInt64 b)
     {
         return a.CompareTo( b ) > 0;
     }
@@ -206,7 +269,7 @@ public struct InterlockedEnum<T> : IEquatable<InterlockedEnum<T>>, IComparable<I
     /// <param name="b">Second operand.</param>
     /// <returns><b>true</b> when <paramref name="a"/> is less than <paramref name="b"/>, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static bool operator <(InterlockedEnum<T> a, InterlockedEnum<T> b)
+    public static bool operator <(InterlockedInt64 a, InterlockedInt64 b)
     {
         return a.CompareTo( b ) < 0;
     }

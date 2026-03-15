@@ -22,6 +22,20 @@ public class InterlockedBooleanTests : TestsBase
         sut.Value.TestEquals( value ).Go();
     }
 
+    [Fact]
+    public void True_ShouldReturnTrueValue()
+    {
+        var sut = InterlockedBoolean.True;
+        sut.Value.TestTrue().Go();
+    }
+
+    [Fact]
+    public void False_ShouldReturnFalseValue()
+    {
+        var sut = InterlockedBoolean.False;
+        sut.Value.TestFalse().Go();
+    }
+
     [Theory]
     [InlineData( true, "True" )]
     [InlineData( false, "False" )]

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,6 +26,16 @@ namespace LfrlAnvil.Async;
 /// </summary>
 public struct InterlockedBoolean : IEquatable<InterlockedBoolean>, IComparable<InterlockedBoolean>, IComparable
 {
+    /// <summary>
+    /// An <see cref="InterlockedBoolean"/> instance which represents <b>true</b> value.
+    /// </summary>
+    public static InterlockedBoolean True => new InterlockedBoolean( 1 );
+
+    /// <summary>
+    /// An <see cref="InterlockedBoolean"/> instance which represents <b>false</b> value.
+    /// </summary>
+    public static InterlockedBoolean False => new InterlockedBoolean( 0 );
+
     private int _value;
 
     /// <summary>
@@ -33,14 +43,17 @@ public struct InterlockedBoolean : IEquatable<InterlockedBoolean>, IComparable<I
     /// </summary>
     /// <param name="value">Initial value.</param>
     public InterlockedBoolean(bool value)
+        : this( value ? 1 : 0 ) { }
+
+    private InterlockedBoolean(int value)
     {
-        _value = value ? 1 : 0;
+        _value = value;
     }
 
     /// <summary>
     /// Current value.
     /// </summary>
-    public bool Value => Interlocked.Add( ref _value, 0 ).IsOdd();
+    public bool Value => Volatile.Read( ref _value ).IsOdd();
 
     /// <summary>
     /// Returns a string representation of this <see cref="InterlockedBoolean"/> instance.
