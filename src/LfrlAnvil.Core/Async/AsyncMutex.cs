@@ -77,21 +77,18 @@ public sealed class AsyncMutex
             version = entry.Version;
             entered = _participants.IsEmpty;
             entry.NodeId = _participants.AddLast( entry );
-            if ( ! entered )
-            {
-                entry.CancellationTokenRegistration = cancellationToken.UnsafeRegister(
-                    static o =>
-                    {
-                        Assume.IsNotNull( o );
-                        var e = ReinterpretCast.To<Entry>( o );
-                        e.Mutex.Cancel( e );
-                    },
-                    entry );
-            }
-        }
+            if ( entered )
+                return new AsyncMutexToken( entry, version );
 
-        if ( entered )
-            return new AsyncMutexToken( entry, version );
+            entry.CancellationTokenRegistration = cancellationToken.UnsafeRegister(
+                static o =>
+                {
+                    Assume.IsNotNull( o );
+                    var e = ReinterpretCast.To<Entry>( o );
+                    e.Mutex.Cancel( e );
+                },
+                entry );
+        }
 
         entered = await entry.Source.GetTask().ConfigureAwait( false );
         if ( entered )
