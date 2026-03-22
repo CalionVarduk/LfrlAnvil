@@ -1,7 +1,7 @@
 using System.Diagnostics.Contracts;
 using System.IO;
 
-namespace LfrlAnvil.MessageBroker.Core.Tests.Helpers;
+namespace LfrlAnvil.MessageBroker.Tests.Helpers;
 
 internal readonly struct StorageScope : IDisposable
 {

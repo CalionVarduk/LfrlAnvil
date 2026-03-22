@@ -3,7 +3,7 @@ using System.Linq;
 using LfrlAnvil.MessageBroker.Client.Events;
 using LfrlAnvil.MessageBroker.Client.Internal;
 
-namespace LfrlAnvil.MessageBroker.Core.Tests;
+namespace LfrlAnvil.MessageBroker.Tests;
 
 public class DefaultsSynchronizationTests : TestsBase
 {

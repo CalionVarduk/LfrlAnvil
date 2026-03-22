@@ -4,10 +4,10 @@ using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.MessageBroker.Client;
 using LfrlAnvil.MessageBroker.Client.Events;
-using LfrlAnvil.MessageBroker.Core.Tests.Helpers;
 using LfrlAnvil.MessageBroker.Server;
+using LfrlAnvil.MessageBroker.Tests.Helpers;
 
-namespace LfrlAnvil.MessageBroker.Core.Tests;
+namespace LfrlAnvil.MessageBroker.Tests;
 
 public class PublisherTests : TestsBase, IClassFixture<SharedResourceFixture>
 {

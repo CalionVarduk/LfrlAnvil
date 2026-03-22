@@ -10,11 +10,11 @@ using LfrlAnvil.Computable.Expressions.Extensions;
 using LfrlAnvil.Diagnostics;
 using LfrlAnvil.MessageBroker.Client;
 using LfrlAnvil.MessageBroker.Client.Internal;
-using LfrlAnvil.MessageBroker.Core.Tests.Helpers;
 using LfrlAnvil.MessageBroker.Server;
 using LfrlAnvil.MessageBroker.Server.Events;
+using LfrlAnvil.MessageBroker.Tests.Helpers;
 
-namespace LfrlAnvil.MessageBroker.Core.Tests;
+namespace LfrlAnvil.MessageBroker.Tests;
 
 public class MessageTests : TestsBase, IClassFixture<SharedResourceFixture>
 {

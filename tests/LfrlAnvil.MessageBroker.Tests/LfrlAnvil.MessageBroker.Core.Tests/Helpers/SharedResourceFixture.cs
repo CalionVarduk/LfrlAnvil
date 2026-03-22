@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using LfrlAnvil.Chrono.Async;
 
-namespace LfrlAnvil.MessageBroker.Core.Tests.Helpers;
+namespace LfrlAnvil.MessageBroker.Tests.Helpers;
 
 public sealed class SharedResourceFixture : IAsyncDisposable
 {

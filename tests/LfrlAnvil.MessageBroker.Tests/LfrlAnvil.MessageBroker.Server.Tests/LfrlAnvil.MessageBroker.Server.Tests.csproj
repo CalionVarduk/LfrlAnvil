@@ -4,11 +4,7 @@
         <ProjectReference Include="..\..\..\src\LfrlAnvil.Collections\LfrlAnvil.Collections.csproj" />
         <ProjectReference Include="..\..\..\src\LfrlAnvil.MessageBroker\LfrlAnvil.MessageBroker.Server\LfrlAnvil.MessageBroker.Server.csproj"/>
         <ProjectReference Include="..\..\..\src\LfrlAnvil.Functional\LfrlAnvil.Functional.csproj"/>
-        <ProjectReference Include="..\..\LfrlAnvil.TestExtensions.Sql\LfrlAnvil.TestExtensions.Sql.csproj"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <Using Include="LfrlAnvil.TestExtensions.Sql"/>
+        <ProjectReference Include="..\..\LfrlAnvil.TestExtensions\LfrlAnvil.TestExtensions.csproj"/>
     </ItemGroup>
 
 </Project>

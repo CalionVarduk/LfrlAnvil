@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+    <PropertyGroup>
+        <RootNamespace>LfrlAnvil.MessageBroker.Tests</RootNamespace>
+    </PropertyGroup>
+
     <ItemGroup>
         <ProjectReference Include="..\..\..\src\LfrlAnvil.MessageBroker\LfrlAnvil.MessageBroker.Client\LfrlAnvil.MessageBroker.Client.csproj"/>
         <ProjectReference Include="..\..\..\src\LfrlAnvil.MessageBroker\LfrlAnvil.MessageBroker.Server\LfrlAnvil.MessageBroker.Server.csproj"/>
         <ProjectReference Include="..\..\..\src\LfrlAnvil.Functional\LfrlAnvil.Functional.csproj"/>
-        <ProjectReference Include="..\..\LfrlAnvil.TestExtensions.Sql\LfrlAnvil.TestExtensions.Sql.csproj"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <Using Include="LfrlAnvil.TestExtensions.Sql"/>
+        <ProjectReference Include="..\..\LfrlAnvil.TestExtensions\LfrlAnvil.TestExtensions.csproj"/>
     </ItemGroup>
 
 </Project>
