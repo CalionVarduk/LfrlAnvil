@@ -13,18 +13,19 @@
 // limitations under the License.
 
 using System;
+using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Async;
 
 /// <summary>
-/// Represents an acquired read lock from an <see cref="AsyncReaderWriterLock"/> instance.
+/// Represents an acquired read lock upgraded to the write level from an <see cref="AsyncReaderWriterLock"/> instance.
 /// </summary>
-public readonly struct AsyncReaderWriterLockReadToken : IDisposable
+public readonly struct AsyncReaderWriterLockUpgradedReadToken : IDisposable
 {
     internal readonly AsyncReaderWriterLock.Entry? Entry;
     internal readonly ulong Version;
 
-    internal AsyncReaderWriterLockReadToken(AsyncReaderWriterLock.Entry entry, ulong version)
+    internal AsyncReaderWriterLockUpgradedReadToken(AsyncReaderWriterLock.Entry entry, ulong version)
     {
         Entry = entry;
         Version = version;
@@ -36,8 +37,19 @@ public readonly struct AsyncReaderWriterLockReadToken : IDisposable
     public AsyncReaderWriterLock? Lock => Entry?.Lock;
 
     /// <inheritdoc/>
+    /// <exception cref="InvalidOperationException">When this upgraded read lock has already been downgraded.</exception>
     public void Dispose()
     {
-        Entry?.ExitRead( Version );
+        Entry?.ExitUpgradedRead( Version );
+    }
+
+    /// <summary>
+    /// Creates an upgradeable read lock token associated with this upgraded read lock.
+    /// </summary>
+    /// <returns>New <see cref="AsyncReaderWriterLockUpgradeableReadToken"/> instance.</returns>
+    [Pure]
+    public AsyncReaderWriterLockUpgradeableReadToken GetReadToken()
+    {
+        return Entry is not null ? new AsyncReaderWriterLockUpgradeableReadToken( Entry, Version ) : default;
     }
 }

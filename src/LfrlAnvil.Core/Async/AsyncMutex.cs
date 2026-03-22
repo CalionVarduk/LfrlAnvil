@@ -13,11 +13,13 @@
 // limitations under the License.
 
 using System;
+using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Sources;
 using LfrlAnvil.Exceptions;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Async;
 
@@ -66,36 +68,55 @@ public sealed class AsyncMutex
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        bool entered;
-        Entry? entry;
-        ulong version;
-        using ( AcquireLock() )
+        CancellationTokenRegistration cancellationTokenRegistration = default;
+        try
         {
-            if ( ! _entryCache.TryPop( out entry ) )
-                entry = new Entry( this );
+            bool entered;
+            Entry? entry;
+            ulong version;
+            using ( AcquireLock() )
+            {
+                if ( ! _entryCache.TryPop( out entry ) )
+                    entry = new Entry( this );
 
-            version = entry.Version;
-            entered = _participants.IsEmpty;
-            entry.NodeId = _participants.AddLast( entry );
-            if ( entered )
-                return new AsyncMutexToken( entry, version );
+                version = entry.Version;
+                entered = _participants.IsEmpty;
+                entry.NodeId = _participants.AddLast( entry );
+                if ( entered )
+                    return new AsyncMutexToken( entry, version );
 
-            entry.CancellationTokenRegistration = cancellationToken.UnsafeRegister(
-                static o =>
+                cancellationTokenRegistration = cancellationToken.CanBeCanceled
+                    ? cancellationToken.UnsafeRegister(
+                        static o =>
+                        {
+                            Assume.IsNotNull( o );
+                            var state = ReinterpretCast.To<CancellationState>( o );
+                            state.Entry.Mutex.Cancel( state.Entry, state.Version );
+                        },
+                        new CancellationState( entry, version ) )
+                    : default;
+            }
+
+            try
+            {
+                entered = await entry.GetTask().ConfigureAwait( false );
+                if ( entered )
+                    return new AsyncMutexToken( entry, version );
+            }
+            finally
+            {
+                if ( ! entered )
                 {
-                    Assume.IsNotNull( o );
-                    var e = ReinterpretCast.To<Entry>( o );
-                    e.Mutex.Cancel( e );
-                },
-                entry );
+                    Reset( entry, version );
+                    ExceptionThrower.Throw( new OperationCanceledException( cancellationToken ) );
+                }
+            }
+        }
+        finally
+        {
+            cancellationTokenRegistration.TryDispose();
         }
 
-        entered = await entry.Source.GetTask().ConfigureAwait( false );
-        if ( entered )
-            return new AsyncMutexToken( entry, version );
-
-        Reset( entry, version );
-        ExceptionThrower.Throw( new OperationCanceledException( cancellationToken ) );
         return default;
     }
 
@@ -150,8 +171,9 @@ public sealed class AsyncMutex
             Recycle( entry );
             var next = _participants.First;
             next?.Value.Complete( true );
-            return true;
         }
+
+        return true;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -173,10 +195,13 @@ public sealed class AsyncMutex
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void Cancel(Entry entry)
+    private void Cancel(Entry entry, ulong version)
     {
         using ( AcquireLock() )
-            entry.Complete( false );
+        {
+            if ( entry.Version == version )
+                entry.Complete( false );
+        }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -193,32 +218,37 @@ public sealed class AsyncMutex
         return ExclusiveLock.Enter( _sync );
     }
 
-    internal sealed class Entry
+    internal sealed class Entry : IValueTaskSource<bool>
     {
+        private ManualResetValueTaskSourceCore<bool> _core;
+
         internal Entry(AsyncMutex mutex)
         {
             Mutex = mutex;
-            Source = new ManualResetValueTaskSource<bool>();
-            CancellationTokenRegistration = default;
+            _core = new ManualResetValueTaskSourceCore<bool> { RunContinuationsAsynchronously = true };
             Version = 0;
             NodeId = -1;
         }
 
         internal readonly AsyncMutex Mutex;
-        internal readonly ManualResetValueTaskSource<bool> Source;
-        internal CancellationTokenRegistration CancellationTokenRegistration;
         internal ulong Version;
         internal int NodeId;
+
+        private ValueTaskSourceStatus Status => _core.GetStatus( _core.Version );
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal ValueTask<bool> GetTask()
+        {
+            return new ValueTask<bool>( this, _core.Version );
+        }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void Complete(bool entered)
         {
-            if ( NodeId == -1 || Source.Status != ValueTaskSourceStatus.Pending )
-                return;
-
-            CancellationTokenRegistration.Dispose();
-            CancellationTokenRegistration = default;
-            Source.SetResult( entered );
+            Assume.NotEquals( NodeId, -1 );
+            if ( Status == ValueTaskSourceStatus.Pending )
+                _core.SetResult( entered );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -230,10 +260,30 @@ public sealed class AsyncMutex
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void Reset()
         {
-            Assume.Equals( CancellationTokenRegistration, default );
-            ++Version;
+            Version = unchecked( Version + 1 );
             NodeId = -1;
-            Source.Reset();
+            _core.Reset();
+        }
+
+        bool IValueTaskSource<bool>.GetResult(short token)
+        {
+            return _core.GetResult( token );
+        }
+
+        ValueTaskSourceStatus IValueTaskSource<bool>.GetStatus(short token)
+        {
+            return _core.GetStatus( token );
+        }
+
+        void IValueTaskSource<bool>.OnCompleted(
+            Action<object?> continuation,
+            object? state,
+            short token,
+            ValueTaskSourceOnCompletedFlags flags)
+        {
+            _core.OnCompleted( continuation, state, token, flags );
         }
     }
+
+    private sealed record CancellationState(Entry Entry, ulong Version);
 }

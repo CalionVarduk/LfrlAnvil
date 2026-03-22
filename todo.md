@@ -2,7 +2,6 @@
 
 |        Project         |              Title               |                        Details                         |                  Requirements                  |
 |:----------------------:|:--------------------------------:|:------------------------------------------------------:|:----------------------------------------------:|
-|          Core          |   Add async reader-writer lock   |                           -                            |                       -                        |
 |         Sql.*          |           Refinements            |                [link](#sql-refinements)                |                       -                        |
 |       Reactive.*       |           Refinements            |             [link](#reactive-refinements)              |                       -                        |
 |    MessageBroker.*     |           Refinements            |           [link](#messagebroker-refinements)           |                       -                        |
@@ -118,6 +117,8 @@ Low priority/probably won't do:
 
 Might do:
 - extension methods for converting between event sources and async enumerables
+- after upgrade to dotnet10, take a look at Source vs ConcurrentSource etc.
+  - lock everything? decorators may be a bit of an issue
 
 ### Computable.Expressions: Refinements
 

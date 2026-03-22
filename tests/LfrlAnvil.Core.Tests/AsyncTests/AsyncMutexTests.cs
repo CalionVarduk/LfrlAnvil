@@ -59,7 +59,14 @@ public class AsyncMutexTests : TestsBase
             source.CancelAfter( TimeSpan.FromMilliseconds( 15 ) );
             var result = sut.EnterAsync( source.Token );
             _ = sut.EnterAsync();
-            await result;
+            try
+            {
+                await result;
+            }
+            finally
+            {
+                await Task.Delay( 15 );
+            }
         } );
 
         action.Test( exc => Assertion.All(

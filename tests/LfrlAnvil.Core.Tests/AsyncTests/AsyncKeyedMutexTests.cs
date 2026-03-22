@@ -76,7 +76,14 @@ public class AsyncKeyedMutexTests : TestsBase
             source.CancelAfter( TimeSpan.FromMilliseconds( 15 ) );
             var result = sut.EnterAsync( "foo", source.Token );
             _ = sut.EnterAsync( "foo" );
-            await result;
+            try
+            {
+                await result;
+            }
+            finally
+            {
+                await Task.Delay( 15 );
+            }
         } );
 
         action.Test( exc => Assertion.All(

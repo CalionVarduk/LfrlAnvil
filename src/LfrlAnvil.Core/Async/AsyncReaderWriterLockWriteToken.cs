@@ -38,6 +38,6 @@ public readonly struct AsyncReaderWriterLockWriteToken : IDisposable
     /// <inheritdoc/>
     public void Dispose()
     {
-        Entry?.Exit( Version, AsyncReaderWriterLock.EntryType.EnteredWrite );
+        Entry?.ExitWrite( Version );
     }
 }

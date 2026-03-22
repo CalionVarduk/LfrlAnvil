@@ -80,10 +80,7 @@ public sealed class ValueTaskDelaySource : IDisposable, IAsyncDisposable
                 }
                 catch
                 {
-                    using ( source.AcquireLock() )
-                        source._task = null;
-
-                    source.Dispose();
+                    source.DisposeAsyncCore( ignoreTask: true ).AsTask().Wait();
                 }
             },
             result,
@@ -107,25 +104,9 @@ public sealed class ValueTaskDelaySource : IDisposable, IAsyncDisposable
 
     /// <inheritdoc/>
     /// <remarks>All scheduled delays will be prematurely completed with <see cref="ValueTaskDelayResult.Disposed"/> result.</remarks>
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
-        Task? task;
-        using ( AcquireLock() )
-        {
-            if ( _isDisposed )
-                return;
-
-            _isDisposed = true;
-            task = _task;
-            _task = null;
-
-            Clear();
-            _reset.Set();
-            _reset.TryDispose();
-        }
-
-        if ( task is not null )
-            await task.ConfigureAwait( false );
+        return DisposeAsyncCore( ignoreTask: false );
     }
 
     /// <summary>
@@ -136,43 +117,48 @@ public sealed class ValueTaskDelaySource : IDisposable, IAsyncDisposable
     /// <returns>New <see cref="ValueTask{TResult}"/> instance which returns a <see cref="ValueTaskDelayResult"/> value.</returns>
     public async ValueTask<ValueTaskDelayResult> Schedule(Duration delay, CancellationToken cancellationToken = default)
     {
-        Node? node;
-        ValueTask<ValueTaskDelayResult> task;
-        using ( AcquireLock() )
-        {
-            if ( _isDisposed )
-                return ValueTaskDelayResult.Disposed;
-
-            if ( ! _nodeCache.TryPop( out node ) )
-                node = new Node( this );
-
-            var now = _timestamps.GetNow();
-            node.Timestamp = now + delay;
-
-            if ( node.Timestamp <= now )
-                node.OnImmediateCompletion( cancellationToken.IsCancellationRequested );
-            else
-            {
-                node.HeapIndex = NullableIndex.Create( _schedule.Count );
-                _schedule.Add( node );
-                FixUp( node.HeapIndex.Value );
-                node.RegisterCancellation( cancellationToken );
-
-                if ( node.HeapIndex.Value == 0 )
-                    _reset.Set();
-            }
-
-            task = node.GetTask();
-        }
-
+        Node? node = null;
+        CancellationTokenRegistration cancellationTokenRegistration = default;
         try
         {
+            ValueTask<ValueTaskDelayResult> task;
+            using ( AcquireLock() )
+            {
+                if ( _isDisposed )
+                    return ValueTaskDelayResult.Disposed;
+
+                if ( ! _nodeCache.TryPop( out node ) )
+                    node = new Node( this );
+
+                var now = _timestamps.GetNow();
+                node.Timestamp = now + delay;
+
+                if ( node.Timestamp <= now )
+                    node.OnImmediateCompletion( cancellationToken.IsCancellationRequested );
+                else
+                {
+                    node.HeapIndex = NullableIndex.Create( _schedule.Count );
+                    _schedule.Add( node );
+                    FixUp( node.HeapIndex.Value );
+                    cancellationTokenRegistration = node.RegisterCancellation( cancellationToken );
+
+                    if ( node.HeapIndex.Value == 0 )
+                        _reset.Set();
+                }
+
+                task = node.GetTask();
+            }
+
             return await task.ConfigureAwait( false );
         }
         finally
         {
-            using ( AcquireLock() )
-                node.OnTaskAwaitFinished();
+            cancellationTokenRegistration.TryDispose();
+            if ( node is not null )
+            {
+                using ( AcquireLock() )
+                    node.OnTaskAwaitFinished();
+            }
         }
     }
 
@@ -361,14 +347,34 @@ public sealed class ValueTaskDelaySource : IDisposable, IAsyncDisposable
             (target.HeapIndex, parent.HeapIndex) = (parent.HeapIndex, target.HeapIndex);
             (target, parent) = (parent, target);
             i = t;
-            l = (l << 1) + 1;
+            l = (i << 1) + 1;
         }
+    }
+
+    private async ValueTask DisposeAsyncCore(bool ignoreTask)
+    {
+        Task? task;
+        using ( AcquireLock() )
+        {
+            if ( _isDisposed )
+                return;
+
+            _isDisposed = true;
+            task = ignoreTask ? null : _task;
+            _task = null;
+
+            Clear();
+            _reset.Set();
+            _reset.TryDispose();
+        }
+
+        if ( task is not null )
+            await task.ConfigureAwait( false );
     }
 
     [Flags]
     private enum ResetEventState : byte
     {
-        None = 0,
         Enabled = 1,
         Set = 2,
         Awaited = 4,
@@ -380,8 +386,7 @@ public sealed class ValueTaskDelaySource : IDisposable, IAsyncDisposable
         internal readonly ValueTaskDelaySource Source;
         internal Timestamp Timestamp;
         internal NullableIndex HeapIndex;
-        private uint _resetEventFlags;
-        private CancellationTokenRegistration _cancellationRegistration;
+        private ulong _resetEventFlags;
         private ManualResetValueTaskSourceCore<ValueTaskDelayResult> _core;
 
         internal Node(ValueTaskDelaySource source)
@@ -404,8 +409,6 @@ public sealed class ValueTaskDelaySource : IDisposable, IAsyncDisposable
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void OnScheduledCompletion()
         {
-            _cancellationRegistration.TryDispose();
-            _cancellationRegistration = default;
             Timestamp = MaxTimestamp;
             HeapIndex = NullableIndex.Null;
             if ( Status == ValueTaskSourceStatus.Pending )
@@ -417,7 +420,6 @@ public sealed class ValueTaskDelaySource : IDisposable, IAsyncDisposable
         {
             Assume.False( HasState( ResetEventState.Enabled ) );
             Assume.False( HeapIndex.HasValue );
-            Assume.Equals( _cancellationRegistration, default );
 
             Timestamp = MaxTimestamp;
             if ( Status == ValueTaskSourceStatus.Pending )
@@ -437,11 +439,6 @@ public sealed class ValueTaskDelaySource : IDisposable, IAsyncDisposable
                 Assume.True( HasState( ResetEventState.Awaited ) );
                 SetState( ResetEventState.Disposed );
             }
-            else
-            {
-                _cancellationRegistration.TryDispose();
-                _cancellationRegistration = default;
-            }
 
             if ( Status == ValueTaskSourceStatus.Pending )
                 _core.SetResult( ValueTaskDelayResult.Disposed );
@@ -456,34 +453,36 @@ public sealed class ValueTaskDelaySource : IDisposable, IAsyncDisposable
 
             Assume.False( HeapIndex.HasValue );
             Assume.Equals( Timestamp, MaxTimestamp );
-            Assume.Equals( _cancellationRegistration, default );
+            InvalidateVersion();
             Source._nodeCache.Push( this );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal void RegisterCancellation(CancellationToken cancellationToken)
+        internal CancellationTokenRegistration RegisterCancellation(CancellationToken cancellationToken)
         {
             Assume.False( HasState( ResetEventState.Enabled ) );
-            _cancellationRegistration = cancellationToken.UnsafeRegister(
-                static o =>
-                {
-                    Assume.IsNotNull( o );
-                    var node = ReinterpretCast.To<Node>( o );
-                    node.OnCancelled();
-                },
-                this );
+            return cancellationToken.CanBeCanceled
+                ? cancellationToken.UnsafeRegister(
+                    static o =>
+                    {
+                        Assume.IsNotNull( o );
+                        var state = ReinterpretCast.To<CancellationState>( o );
+                        state.Node.OnCancelled( state.Version );
+                    },
+                    new CancellationState( this, GetVersion() ) )
+                : default;
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal uint AsResetEvent(bool signaled)
+        internal ulong AsResetEvent(bool signaled)
         {
-            Assume.Equals( _resetEventFlags & 15, 0U );
+            Assume.Equals( _resetEventFlags & 15, 0UL );
             SetState( signaled ? ResetEventState.Enabled | ResetEventState.Set : ResetEventState.Enabled );
             return GetVersion();
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal void OnResetEventDispose(uint version)
+        internal void OnResetEventDispose(ulong version)
         {
             using ( Source.AcquireLock() )
             {
@@ -519,7 +518,7 @@ public sealed class ValueTaskDelaySource : IDisposable, IAsyncDisposable
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal bool OnResetEventSet(uint version)
+        internal bool OnResetEventSet(ulong version)
         {
             using ( Source.AcquireLock() )
             {
@@ -544,7 +543,7 @@ public sealed class ValueTaskDelaySource : IDisposable, IAsyncDisposable
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal bool OnResetEventReset(uint version)
+        internal bool OnResetEventReset(ulong version)
         {
             using ( Source.AcquireLock() )
             {
@@ -560,7 +559,7 @@ public sealed class ValueTaskDelaySource : IDisposable, IAsyncDisposable
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal ValueTask<ValueTaskDelayResult> OnResetEventWait(uint version, ref bool success, Duration? delay)
+        internal ValueTask<ValueTaskDelayResult> OnResetEventWait(ulong version, ref bool success, Duration? delay)
         {
             using ( Source.AcquireLock() )
             {
@@ -601,7 +600,7 @@ public sealed class ValueTaskDelaySource : IDisposable, IAsyncDisposable
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal void OnResetEventTaskAwaitFinished(uint version)
+        internal void OnResetEventTaskAwaitFinished(ulong version)
         {
             using ( Source.AcquireLock() )
             {
@@ -626,15 +625,14 @@ public sealed class ValueTaskDelaySource : IDisposable, IAsyncDisposable
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private void OnCancelled()
+        private void OnCancelled(ulong version)
         {
             using ( Source.AcquireLock() )
             {
-                if ( Source._isDisposed || ! HeapIndex.HasValue )
+                if ( Source._isDisposed || ! HeapIndex.HasValue || version != GetVersion() )
                     return;
 
                 Assume.False( HasState( ResetEventState.Enabled ) );
-                _cancellationRegistration = default;
                 Source.RemoveFromSchedule( HeapIndex.Value );
                 HeapIndex = NullableIndex.Null;
                 Timestamp = MaxTimestamp;
@@ -647,26 +645,26 @@ public sealed class ValueTaskDelaySource : IDisposable, IAsyncDisposable
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         private bool HasState(ResetEventState state)
         {
-            return (_resetEventFlags & ( uint )state) == ( uint )state;
+            return (_resetEventFlags & ( ulong )state) == ( ulong )state;
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         private bool HasAnyState(ResetEventState state)
         {
-            return (_resetEventFlags & ( uint )state) != 0;
+            return (_resetEventFlags & ( ulong )state) != 0;
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         private void SetState(ResetEventState state)
         {
-            _resetEventFlags |= ( uint )state;
+            _resetEventFlags |= ( ulong )state;
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         private void RemoveState(ResetEventState state)
         {
-            _resetEventFlags &= ~( uint )state;
+            _resetEventFlags &= ~( ulong )state;
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -678,14 +676,14 @@ public sealed class ValueTaskDelaySource : IDisposable, IAsyncDisposable
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private uint GetVersion()
+        private ulong GetVersion()
         {
             return _resetEventFlags >> 4;
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private bool HasVersion(uint version)
+        private bool HasVersion(ulong version)
         {
             return HasState( ResetEventState.Enabled ) && GetVersion() == version;
         }
@@ -709,4 +707,6 @@ public sealed class ValueTaskDelaySource : IDisposable, IAsyncDisposable
             _core.OnCompleted( continuation, state, token, flags );
         }
     }
+
+    private sealed record CancellationState(Node Node, ulong Version);
 }

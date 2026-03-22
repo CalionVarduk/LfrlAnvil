@@ -1,4 +1,4 @@
-﻿// Copyright 2024-2025 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -42,6 +42,20 @@ public static class ExceptionResources
 
     internal const string ChainCannotBeExtendedBecauseItIsAttachedToAnotherChain =
         "Chain cannot be extended because it is attached to another chain.";
+
+    internal const string CannotUpgradeDisposedReaderWriterReadLock
+        = "Upgradeable read lock cannot be upgraded because it has been disposed.";
+
+    internal const string CannotUpgradeAlreadyUpgradingReaderWriterReadLock
+        = "Upgradeable read lock is already in the process of being upgraded.";
+
+    internal const string CannotUpgradeAlreadyUpgradedReaderWriterReadLock = "Upgradeable read lock has already been upgraded.";
+
+    internal const string CannotReleaseUpgradingReaderWriterReadLock
+        = "Upgradeable read lock cannot be released because it's in the process of being upgraded.";
+
+    internal const string CannotReleaseUpgradedReaderWriterReadLock = "Upgradeable read lock cannot be released because it's upgraded.";
+    internal const string CannotReleaseNotUpgradedReaderWriterReadLock = "Upgraded read lock cannot be released because it's not upgraded.";
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,9 +24,9 @@ namespace LfrlAnvil.Chrono.Async;
 public readonly struct AsyncManualResetEvent : IDisposable
 {
     private readonly ValueTaskDelaySource.Node? _node;
-    private readonly uint _version;
+    private readonly ulong _version;
 
-    internal AsyncManualResetEvent(ValueTaskDelaySource.Node node, uint version)
+    internal AsyncManualResetEvent(ValueTaskDelaySource.Node node, ulong version)
     {
         _node = node;
         _version = version;
