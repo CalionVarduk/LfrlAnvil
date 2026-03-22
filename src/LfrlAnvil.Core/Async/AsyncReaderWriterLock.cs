@@ -57,19 +57,6 @@ public sealed class AsyncReaderWriterLock
     }
 
     /// <summary>
-    /// Attempts to discard unused resources.
-    /// </summary>
-    public void TrimExcess()
-    {
-        using ( AcquireLock() )
-        {
-            _entryCache = StackSlim<Entry>.Create();
-            _participants.ResetCapacity();
-            _upgradeableReadNodes.ResetCapacity();
-        }
-    }
-
-    /// <summary>
     /// Asynchronously acquires a read lock from this reader-writer lock.
     /// </summary>
     /// <param name="cancellationToken">
@@ -339,6 +326,19 @@ public sealed class AsyncReaderWriterLock
         }
     }
 
+    /// <summary>
+    /// Attempts to discard unused resources.
+    /// </summary>
+    public void TrimExcess()
+    {
+        using ( AcquireLock() )
+        {
+            _entryCache = StackSlim<Entry>.Create();
+            _participants.ResetCapacity();
+            _upgradeableReadNodes.ResetCapacity();
+        }
+    }
+
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal async ValueTask<AsyncReaderWriterLockUpgradedReadToken> UpgradeReadAsync(
         Entry entry,
@@ -523,20 +523,18 @@ public sealed class AsyncReaderWriterLock
         return true;
     }
 
-    private bool ExitUpgradedRead(Entry entry, ulong version)
+    private void ExitUpgradedRead(Entry entry, ulong version)
     {
         using ( AcquireLock() )
         {
             if ( version != entry.Version || ! _participants.IsFirst( entry.NodeId ) )
-                return false;
+                return;
 
             if ( entry.Type != EntryType.EnteredUpgradedRead )
                 ExceptionThrower.Throw( new InvalidOperationException( ExceptionResources.CannotReleaseNotUpgradedReaderWriterReadLock ) );
 
             ExitUpgradedReadCore( entry );
         }
-
-        return true;
     }
 
     private void ResetRead(Entry entry, ulong version)
@@ -1132,9 +1130,9 @@ public sealed class AsyncReaderWriterLock
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal bool ExitUpgradedRead(ulong version)
+        internal void ExitUpgradedRead(ulong version)
         {
-            return Lock.ExitUpgradedRead( this, version );
+            Lock.ExitUpgradedRead( this, version );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]

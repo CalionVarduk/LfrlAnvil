@@ -1,4 +1,4 @@
-﻿// Copyright 2025-2026 Łukasz Furlepa
+﻿// Copyright 2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,25 +17,25 @@ using System;
 namespace LfrlAnvil.Async;
 
 /// <summary>
-/// Represents an acquired lock from an <see cref="AsyncKeyedMutex{TKey}"/> instance.
+/// Represents an acquired write lock from an <see cref="AsyncKeyedReaderWriterLock{TKey}"/> instance.
 /// </summary>
 /// <typeparam name="TKey">Key's type.</typeparam>
-public readonly struct AsyncKeyedMutexToken<TKey> : IDisposable
+public readonly struct AsyncKeyedReaderWriterLockWriteToken<TKey> : IDisposable
     where TKey : notnull
 {
-    private readonly AsyncKeyedMutex<TKey>.Entry? _entry;
-    private readonly AsyncMutexToken _token;
+    private readonly AsyncKeyedReaderWriterLock<TKey>.Entry? _entry;
+    private readonly AsyncReaderWriterLockWriteToken _token;
 
-    internal AsyncKeyedMutexToken(AsyncKeyedMutex<TKey>.Entry entry, AsyncMutexToken token)
+    internal AsyncKeyedReaderWriterLockWriteToken(AsyncKeyedReaderWriterLock<TKey>.Entry entry, AsyncReaderWriterLockWriteToken token)
     {
         _entry = entry;
         _token = token;
     }
 
     /// <summary>
-    /// Associated <see cref="AsyncKeyedMutex{TKey}"/> instance.
+    /// Associated <see cref="AsyncKeyedReaderWriterLock{TKey}"/> instance.
     /// </summary>
-    public AsyncKeyedMutex<TKey>? Mutex => _entry?.KeyedMutex;
+    public AsyncKeyedReaderWriterLock<TKey>? Lock => _entry?.KeyedLock;
 
     /// <summary>
     /// Associated key.
@@ -52,7 +52,7 @@ public readonly struct AsyncKeyedMutexToken<TKey> : IDisposable
         var released = false;
         try
         {
-            released = _token.Entry.Exit( _token.Version );
+            released = _token.Entry.ExitWrite( _token.Version );
         }
         finally
         {

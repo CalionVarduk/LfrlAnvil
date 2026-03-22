@@ -2753,6 +2753,19 @@ public class AsyncReaderWriterLockTests : TestsBase
     }
 
     [Fact]
+    public async Task UpgradeableReadLockDispose_ShouldReleaseLock_WhenDoneAfterUpgradeAndDowngrade()
+    {
+        var sut = new AsyncReaderWriterLock();
+        var token = await sut.EnterUpgradeableReadAsync();
+        var upgraded = await token.UpgradeAsync();
+        upgraded.Dispose();
+
+        token.Dispose();
+
+        sut.Participants.TestEquals( 0 ).Go();
+    }
+
+    [Fact]
     public async Task UpgradeableReadLockDispose_ShouldThrowInvalidOperationException_WhenCalledOnUpgradingToken()
     {
         var sut = new AsyncReaderWriterLock();
